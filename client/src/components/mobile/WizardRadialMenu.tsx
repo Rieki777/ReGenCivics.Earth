@@ -173,7 +173,7 @@ export function WizardRadialMenu() {
 
   // Proposals shortcut: every signed-in member can vote, Co-Creators can
   // submit. The radial menu is the easiest place to reach it from any page.
-  const proposalsAction: Action = { key: "proposals", label: "Proposals", href: "/proposals", Icon: Vote };
+  const proposalsAction: Action = { key: "assembly", label: "Assembly", href: "/assembly", Icon: Vote };
 
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the

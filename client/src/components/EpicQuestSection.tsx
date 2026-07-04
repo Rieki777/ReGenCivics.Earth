@@ -298,7 +298,7 @@ export function EpicQuestSection() {
               <p className="text-white/70 text-base mb-2">
                 No {filterElement}-themed Epic Quests yet.
               </p>
-              <p className="text-white/40 text-sm mb-5">
+              <p className="text-white/70 text-sm mb-5">
                 The forest grows season by season. More quests in this element come with the next round of authoring.
               </p>
               <a

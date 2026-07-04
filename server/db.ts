@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -767,12 +767,19 @@ export async function updatePlayerProfile(id: number, data: Partial<InsertPlayer
 
   await db.update(playerProfiles).set(data).where(eq(playerProfiles.id, id));
 
-  // Reverse sync: push avatar, displayName, bio changes to userProfiles
-  // so both tables stay consistent regardless of which form saves.
-  const syncToUser: Record<string, string | undefined> = {};
+  // Reverse sync: push shared display fields to userProfiles so both tables
+  // stay consistent regardless of which form saves. Mirrors the same field
+  // set as the forward sync in upsertUserProfile (0169, Phase 2B) — keep the
+  // two lists in lockstep or the tables drift.
+  const syncToUser: Record<string, string | number | undefined> = {};
   if (data.avatarUrl !== undefined) syncToUser.avatarUrl = data.avatarUrl ?? undefined;
   if (data.displayName !== undefined) syncToUser.displayName = data.displayName;
   if (data.bio !== undefined) syncToUser.bio = data.bio ?? undefined;
+  if (data.bannerUrl !== undefined) syncToUser.bannerUrl = data.bannerUrl ?? undefined;
+  if (data.website !== undefined) syncToUser.website = data.website ?? undefined;
+  if (data.forumLocation !== undefined) syncToUser.location = data.forumLocation ?? undefined;
+  if (data.preferredLanguage !== undefined) syncToUser.preferredLanguage = data.preferredLanguage ?? undefined;
+  if (data.onboardingComplete !== undefined) syncToUser.onboardingComplete = data.onboardingComplete;
   if (Object.keys(syncToUser).length > 0) {
     try {
       const [pp] = await db.select({ userId: playerProfiles.userId })
@@ -1854,8 +1861,42 @@ export async function getCampaignConversionRate(campaignId: number): Promise<{
 // ============================================
 // User Notifications Queries
 // ============================================
+// As of migration 0163, all in-app notifications live in the consolidated
+// `notifications` table (user_notifications rows were back-filled there).
+// These helpers keep their legacy names so existing writers (campaigns,
+// hypha-bridge webhooks) work unchanged.
 
-export async function createUserNotification(data: InsertUserNotification): Promise<number> {
+/** Legacy type → in-app destination, mirroring the old NotificationBell map.
+ * New forum notifications set an explicit deep link instead. */
+function legacyNotificationLink(type: string, campaignId?: number | null): string | null {
+  switch (type) {
+    case 'contribution_accepted':
+    case 'contribution_rejected':
+    case 'new_contribution':
+      return '/profile?tab=contributions';
+    case 'campaign_milestone':
+      return campaignId ? `/campaigns/${campaignId}` : '/crowdpooling';
+    case 'quest_complete':
+      return '/quest';
+    case 'claim_complete':
+    case 'claim_failed':
+      return '/profile';
+    default:
+      return null;
+  }
+}
+
+const NOTIFICATION_TYPES = new Set(notifications.type.enumValues as readonly string[]);
+
+export async function createUserNotification(data: {
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  campaignId?: number | null;
+  contributionId?: number | null;
+  link?: string | null;
+}): Promise<number> {
   // Skip writing in-app notifications during test runs to prevent test data leaking to real users
   if (process.env.VITEST || process.env.NODE_ENV === 'test') {
     return 0;
@@ -1863,14 +1904,23 @@ export async function createUserNotification(data: InsertUserNotification): Prom
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(userNotifications).values(data);
+  const result = await db.insert(notifications).values({
+    userId: data.userId,
+    // Unknown types land as 'system' instead of failing the enum.
+    type: (NOTIFICATION_TYPES.has(data.type) ? data.type : 'system') as typeof notifications.$inferInsert.type,
+    title: data.title,
+    body: data.message,
+    link: data.link ?? legacyNotificationLink(data.type, data.campaignId),
+    campaignId: data.campaignId ?? null,
+    contributionId: data.contributionId ?? null,
+  });
 
   // Push an SSE invalidate event so the recipient's UI updates without
   // waiting for the polling fallback. Lazy import to avoid pulling the
   // SSE broadcaster into test contexts.
   if (data.userId) {
     import('./_core/sse')
-      .then(({ pushToUser }) => pushToUser(data.userId as number, {
+      .then(({ pushToUser }) => pushToUser(data.userId, {
         type: 'invalidate',
         keys: ['notifications', 'unreadCount'],
       }))
@@ -1880,49 +1930,49 @@ export async function createUserNotification(data: InsertUserNotification): Prom
   return result[0].insertId;
 }
 
-export async function getUserNotifications(userId: number, limit = 50): Promise<UserNotification[]> {
+export async function getUserNotifications(userId: number, limit = 50): Promise<Notification[]> {
   const db = await getDb();
   if (!db) return [];
-  
-  return db.select().from(userNotifications)
-    .where(eq(userNotifications.userId, userId))
-    .orderBy(desc(userNotifications.createdAt))
+
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt), desc(notifications.id))
     .limit(limit);
 }
 
 export async function getUnreadNotificationCount(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-  
-  const result = await db.select().from(userNotifications)
-    .where(and(eq(userNotifications.userId, userId), eq(userNotifications.read, false)));
-  return result.length;
+
+  const result = await db.select({ c: sql<number>`COUNT(*)` }).from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, 0)));
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function markNotificationAsRead(id: number, userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.update(userNotifications)
-    .set({ read: true })
-    .where(and(eq(userNotifications.id, id), eq(userNotifications.userId, userId)));
+
+  await db.update(notifications)
+    .set({ isRead: 1 })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
 }
 
 export async function markAllNotificationsAsRead(userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.update(userNotifications)
-    .set({ read: true })
-    .where(eq(userNotifications.userId, userId));
+
+  await db.update(notifications)
+    .set({ isRead: 1 })
+    .where(eq(notifications.userId, userId));
 }
 
 export async function deleteNotification(id: number, userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.delete(userNotifications)
-    .where(and(eq(userNotifications.id, id), eq(userNotifications.userId, userId)));
+
+  await db.delete(notifications)
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
 }
 
 
@@ -2235,7 +2285,7 @@ export async function createForumCategory(data: { name: string; slug: string; de
   return asMutationResult(result).insertId;
 }
 
-export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number }) {
+export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number; sortMode?: string }) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.update(forumCategories).set(data).where(eq(forumCategories.id, id));
@@ -2299,6 +2349,14 @@ export async function createForumPost(data: { categoryId: number; authorId: numb
     chainId: data.chainId || null,
     bioregionId: data.bioregionId || null,
   });
+  // Maintain the forum_post_tags query projection (the tags column is a
+  // JSON string only matchable with LIKE scans; the junction is indexed).
+  if (data.tags && data.tags.length > 0) {
+    await db.insert(forumPostTags)
+      .values(data.tags.map((tag) => ({ postId: result.insertId, tag })))
+      .onDuplicateKeyUpdate({ set: { id: sql`id` } })
+      .catch((err: any) => console.warn('[createForumPost] tag projection insert failed:', err?.message));
+  }
   return result.insertId;
 }
 
@@ -2734,6 +2792,7 @@ export async function upsertUserProfile(userId: number, data: {
   questInterests?: string;
   displayName?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2749,12 +2808,19 @@ export async function upsertUserProfile(userId: number, data: {
     });
   }
 
-  // Sync shared fields (avatar, banner, displayName, bio) to playerProfiles
-  // so the Overview card and member directory stay in sync with Settings.
-  const syncFields: Record<string, string | undefined> = {};
+  // Forward-sync shared fields to playerProfiles (0169, Phase 2B). The forum
+  // reads profile data from playerProfiles now, so an onboarding/settings save
+  // to userProfiles must mirror across. Symmetric with the reverse sync in
+  // updatePlayerProfile; both write the other table DIRECTLY (no recursion).
+  const syncFields: Record<string, string | number | undefined> = {};
   if (data.avatarUrl !== undefined) syncFields.avatarUrl = data.avatarUrl;
   if (data.displayName !== undefined) syncFields.displayName = data.displayName;
   if (data.bio !== undefined) syncFields.bio = data.bio;
+  if (data.bannerUrl !== undefined) syncFields.bannerUrl = data.bannerUrl;
+  if (data.website !== undefined) syncFields.website = data.website;
+  if (data.location !== undefined) syncFields.forumLocation = data.location;
+  if (data.preferredLanguage !== undefined) syncFields.preferredLanguage = data.preferredLanguage;
+  if (data.onboardingComplete !== undefined) syncFields.onboardingComplete = data.onboardingComplete;
   if (Object.keys(syncFields).length > 0) {
     try {
       const pp = await getPlayerProfileByUserId(userId);
@@ -2768,9 +2834,68 @@ export async function upsertUserProfile(userId: number, data: {
   }
 }
 
+/**
+ * The forum's view of a user's profile, read from playerProfiles (the unified
+ * model as of 0169). Field names match the old userProfiles shape the forum
+ * client expects (location = forumLocation) so no client change is needed.
+ * Returns null when the user has no playerProfiles row.
+ */
+export async function getForumProfile(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const pp = await getPlayerProfileByUserId(userId);
+  if (!pp) return null;
+  return {
+    userId,
+    displayName: pp.displayName ?? null,
+    bio: pp.bio ?? null,
+    location: (pp as any).forumLocation ?? null,
+    website: (pp as any).website ?? null,
+    avatarUrl: pp.avatarUrl ?? null,
+    bannerUrl: pp.bannerUrl ?? null,
+    reputation: (pp as any).reputation ?? 0,
+    preferredLanguage: (pp as any).preferredLanguage ?? "en",
+  };
+}
+
+/**
+ * Update the forum-editable profile fields on playerProfiles, mirroring to
+ * userProfiles so onboarding/settings surfaces stay consistent.
+ */
+export async function updateForumProfile(userId: number, data: {
+  bio?: string;
+  location?: string;
+  website?: string;
+  preferredLanguage?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const ppFields: Record<string, string | undefined> = {};
+  if (data.bio !== undefined) ppFields.bio = data.bio;
+  if (data.location !== undefined) ppFields.forumLocation = data.location;
+  if (data.website !== undefined) ppFields.website = data.website;
+  if (data.preferredLanguage !== undefined) ppFields.preferredLanguage = data.preferredLanguage;
+  if (Object.keys(ppFields).length > 0) {
+    const pp = await getPlayerProfileByUserId(userId);
+    if (pp) {
+      await db.update(playerProfiles).set(ppFields).where(eq(playerProfiles.userId, userId));
+    }
+  }
+  // Mirror to userProfiles (kept alive for onboarding fields).
+  await upsertUserProfile(userId, data);
+}
+
 export async function incrementUserReputation(userId: number, amount: number) {
   const db = await getDb();
   if (!db) return;
+  // Reputation lives on playerProfiles now (0169). Mirror to userProfiles for
+  // as long as that table is kept.
+  const pp = await getPlayerProfileByUserId(userId);
+  if (pp) {
+    await db.update(playerProfiles)
+      .set({ reputation: ((pp as any).reputation ?? 0) + amount })
+      .where(eq(playerProfiles.userId, userId));
+  }
   const profile = await getUserProfile(userId);
   if (profile) {
     await db.update(userProfiles).set({ reputation: profile.reputation + amount }).where(eq(userProfiles.userId, userId));
@@ -2806,12 +2931,14 @@ export async function getUserForumStats(userId: number) {
   const db = await getDb();
   if (!db) return { postCount: 0, replyCount: 0, reputation: 0, likesReceived: 0 };
   
-  const profile = await getUserProfile(userId);
-  
+  // Reputation reads from playerProfiles now (0169); post/reply counts have
+  // always been computed live from the row counts below.
+  const forumProfile = await getForumProfile(userId);
+
   // Count likes received on user's posts and replies
   const userPosts = await db.select().from(forumPosts).where(eq(forumPosts.authorId, userId));
   const userReplies = await db.select().from(forumReplies).where(eq(forumReplies.authorId, userId));
-  
+
   let likesReceived = 0;
   for (const post of userPosts) {
     const likes = await db.select().from(forumLikes).where(eq(forumLikes.postId, post.id));
@@ -2821,11 +2948,11 @@ export async function getUserForumStats(userId: number) {
     const likes = await db.select().from(forumLikes).where(eq(forumLikes.replyId, reply.id));
     likesReceived += likes.length;
   }
-  
+
   return {
-    postCount: profile?.postCount || userPosts.length,
-    replyCount: profile?.replyCount || userReplies.length,
-    reputation: profile?.reputation || 0,
+    postCount: userPosts.length,
+    replyCount: userReplies.length,
+    reputation: forumProfile?.reputation || 0,
     likesReceived,
   };
 }

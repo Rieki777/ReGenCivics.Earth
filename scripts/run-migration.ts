@@ -71,10 +71,17 @@ async function runMigrationFile(conn: mysql.Connection, filePath: string): Promi
   }
 
   // Read and parse SQL.
-  // Split on semicolons, then for each chunk strip leading comment-only lines
-  // (lines starting with `--` or blank). A chunk that begins with a file-level
-  // comment and then has a real CREATE/INSERT/etc below must still run.
-  const sql = fs.readFileSync(filePath, "utf-8");
+  // FIRST drop full-line `--` comments, THEN split on semicolons. A `;`
+  // inside a comment used to split a real statement in half (bit us in
+  // 0163). Full-line comments only: an inline `-- note` after SQL on the
+  // same line is left alone, so keep inline comments semicolon-free.
+  // Then for each chunk strip leading comment-only lines so a chunk that
+  // begins with an inline-comment remainder still runs its real SQL.
+  const sqlRaw = fs.readFileSync(filePath, "utf-8");
+  const sql = sqlRaw
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("--"))
+    .join("\n");
   const statements = sql
     .split(";")
     .map((chunk) => {

@@ -149,6 +149,40 @@ function renderInline(s) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 }
 
+// Special content markers are React components at runtime (see BlogPost.tsx
+// SPECIAL_MARKERS). For the static prerender we swap them for equivalent
+// markdown so the crawlable/no-JS HTML shows real content instead of the
+// literal "[MARKER]" text. Keep these in sync with SPECIAL_MARKERS.
+const SPECIAL_MARKER_MARKDOWN = {
+  "[CLAIM_SEEDS_BUTTON]":
+    "**[Claim your $ReGen for the SEEDS you bought](/claim-seeds)** — if you purchased SEEDS and want to simply claim your $ReGen, price your purchase and claim it here.",
+  "[EIGHT_FORMS_OF_CAPITAL]": [
+    "**Social capital:** relationships, networks, trust you built",
+    "**Material capital:** tools, equipment, land improvements, physical infrastructure",
+    "**Financial capital:** money or crypto invested or donated",
+    "**Living capital:** ecological restoration, food forests, soil health, biodiversity",
+    "**Intellectual capital:** research, documentation, writing, design, code",
+    "**Experiential capital:** knowledge passed on, mentorship, facilitation, training",
+    "**Spiritual capital:** ceremonies, spiritual practices, trauma work, deep healing, the intangible things that hold communities together",
+    "**Cultural capital:** art, music, stories, identity, meaning",
+  ].join("\n\n"),
+  "[FRAUD_WARNING]":
+    "**Zero tolerance for fraud.** Our ecosystem is rooted in trust. Without that we have nothing. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied, you'll lose your opportunity to claim again, and you'll be banned from participating in ReGen Civics.",
+};
+
+function expandSpecialMarkers(md) {
+  if (!md) return md;
+  return md
+    .split("\n\n")
+    .map((block) => {
+      const key = block.trim();
+      return Object.prototype.hasOwnProperty.call(SPECIAL_MARKER_MARKDOWN, key)
+        ? SPECIAL_MARKER_MARKDOWN[key]
+        : block;
+    })
+    .join("\n\n");
+}
+
 function renderMarkdown(md) {
   if (!md) return "";
   const lines = md.split(/\r?\n/);
@@ -234,7 +268,7 @@ function buildPostHtml(shell, post) {
   const url = `${SITE}/blog/${post.slug}`;
   const title = `${post.title} | ReGen Civics Blog`;
   const desc = post.excerpt || post.title;
-  const body = renderMarkdown(post.content);
+  const body = renderMarkdown(expandSpecialMarkers(post.content));
 
   const jsonld = {
     "@context": "https://schema.org",

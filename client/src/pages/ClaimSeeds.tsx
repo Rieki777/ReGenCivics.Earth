@@ -30,7 +30,10 @@ import {
   Loader2,
   ExternalLink,
   Save,
+  HelpCircle,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cdnImg } from "@/lib/utils";
 import { Link } from "wouter";
 
 type UploadedFile = {
@@ -53,6 +56,7 @@ type ClaimFormData = {
   adjustedUsd: number;
   spentAmount: number;
   hasSpentTokens: boolean;
+  confirmedAccurate: boolean;
   transactions: Transaction[];
   baseWalletAddress: string;
   email: string;
@@ -88,6 +92,7 @@ const INITIAL_FORM_DATA: ClaimFormData = {
   adjustedUsd: 0,
   spentAmount: 0,
   hasSpentTokens: false,
+  confirmedAccurate: false,
   transactions: [],
   baseWalletAddress: "",
   email: "",
@@ -169,9 +174,17 @@ export default function ClaimSeeds() {
     }
 
     setSubmitError(null);
-    const result = await lookupMutation.mutateAsync({
-      seedsAccount: formData.seedsAccount.trim(),
-    });
+    let result;
+    try {
+      result = await lookupMutation.mutateAsync({
+        seedsAccount: formData.seedsAccount.trim(),
+      });
+    } catch (err: any) {
+      // A genuine server/network error (distinct from "account not found",
+      // which returns found:false below). Surface it instead of failing silent.
+      setSubmitError(err?.message || "We couldn't look up that account. Please try again.");
+      return;
+    }
 
     if (result.found && result.totalUsd !== undefined && result.transactions) {
       updateField("totalUsd", result.totalUsd);
@@ -477,13 +490,15 @@ export default function ClaimSeeds() {
                       />
                     </div>
 
-                    {/* Adjusted Amount */}
+                    {/* Adjusted Amount. Card is always white, so pin dark text
+                        instead of theme foreground tokens (which are light in the
+                        dark theme and wash out on white). */}
                     <div className="bg-white rounded-lg p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">Adjusted USD Amount</p>
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="text-xs font-medium text-gray-600">Adjusted USD Amount</p>
+                      <p className="text-2xl font-bold text-gray-900">
                         ${formData.adjustedUsd.toFixed(2)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs font-medium text-gray-600">
                         {regenAmount.toLocaleString()} $ReGen tokens
                       </p>
                     </div>
@@ -517,7 +532,6 @@ export default function ClaimSeeds() {
                   </Button>
                   <Button
                     onClick={() => setStep(3)}
-                    disabled={!formData.hasSpentTokens && step === 2}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
@@ -659,9 +673,46 @@ export default function ClaimSeeds() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="baseWallet" className="text-base font-medium">
-                    Base Wallet Address
-                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="baseWallet" className="text-base font-medium">
+                      Base Wallet Address
+                    </Label>
+                    {/* Where-do-I-find-this tooltip. Mirrors the Hypha address
+                        popover on the profile (PlayerProfile step 2). */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Where do I find my Base wallet address?"
+                          className="text-primary hover:text-primary/70 transition-colors"
+                        >
+                          <HelpCircle className="w-4 h-4" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-3 border-b border-[#7dd87d]/20">
+                          <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
+                        </div>
+                        <div className="p-3">
+                          <img
+                            src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")}
+                            alt="Hypha profile showing account address with copy icon"
+                            className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
+                            width={600}
+                            height={400}
+                            loading="lazy"
+                          />
+                          <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                            <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
+                            <li>Look at the top right of the page</li>
+                            <li>Find your account address (e.g., 0xaAaF…354e)</li>
+                            <li>Click the <strong>copy icon</strong> next to your address</li>
+                            <li>Paste it here!</li>
+                          </ol>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                   <Input
                     id="baseWallet"
                     placeholder="0x..."
@@ -819,9 +870,9 @@ export default function ClaimSeeds() {
                   <div className="flex items-start gap-3">
                     <Checkbox
                       id="confirm"
-                      checked={formData.hasSpentTokens}
+                      checked={formData.confirmedAccurate}
                       onCheckedChange={(checked) =>
-                        updateField("hasSpentTokens", checked === true)
+                        updateField("confirmedAccurate", checked === true)
                       }
                     />
                     <label htmlFor="confirm" className="text-sm leading-relaxed text-foreground">
@@ -853,7 +904,7 @@ export default function ClaimSeeds() {
                         evidenceUrls: formData.disputeEvidence.length > 0 ? JSON.stringify(formData.disputeEvidence.map(f => f.url)) : undefined,
                       });
                     }}
-                    disabled={!formData.hasSpentTokens || submitMutation.isPending}
+                    disabled={!formData.confirmedAccurate || submitMutation.isPending}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {submitMutation.isPending ? (

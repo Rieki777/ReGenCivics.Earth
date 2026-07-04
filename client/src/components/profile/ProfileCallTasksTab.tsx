@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,6 +234,36 @@ export function ProfileCallTasksTab() {
   }, [roles]);
 
   const gh = githubQuery.data;
+
+  // Surface the result of the GitHub OAuth link round-trip (the callback
+  // redirects here with ?github=linked or ?error=github_*), then clean the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linked = params.get("github");
+    const error = params.get("error");
+    if (!linked && !error) return;
+    if (linked === "linked") {
+      toast.success("GitHub linked.");
+      githubQuery.refetch();
+    } else if (error) {
+      const reason = params.get("reason");
+      const messages: Record<string, string> = {
+        github_not_configured: "GitHub linking isn't set up yet. Check back soon.",
+        github_bad_state: "That GitHub link expired. Please try again.",
+        github_auth_required: "Please sign in, then link GitHub again.",
+        github_already_linked: "That GitHub account is already linked to another profile.",
+        github_no_code: "GitHub linking was cancelled.",
+        github_failed: `GitHub linking failed${reason ? `: ${reason}` : ". Please try again."}`,
+      };
+      if (error.startsWith("github")) toast.error(messages[error] ?? "GitHub linking failed. Please try again.");
+    }
+    // Strip the params so a refresh doesn't re-toast.
+    const url = new URL(window.location.href);
+    ["github", "error", "reason"].forEach((k) => url.searchParams.delete(k));
+    url.searchParams.set("tab", "tasks");
+    window.history.replaceState({}, "", url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-8">

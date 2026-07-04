@@ -381,7 +381,7 @@ export default function PlaySubmit() {
                           {label}
                         </h3>
                       </div>
-                      <p className="text-white/40 text-xs mb-2">
+                      <p className="text-white/70 text-xs mb-2">
                         {SECTION_HELPERS[key]}
                       </p>
                       <Textarea

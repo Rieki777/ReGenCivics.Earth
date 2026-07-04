@@ -25,9 +25,21 @@ Run `/security-review` on any code touching:
 Run `/ship` before every Railway deploy. Never push directly without it.
 
 ## Parallel Worktree Workflow
-Run parallel workstreams in separate git worktrees, one directory per stream:
-- `../regen-features`: active feature build
-- `../regen-database`: database / migration work
-- `../regen-content`: content, or a second feature / security audit
 
-Create each with `git worktree add ../regen-<name> -b <branch>`, then open a `claude` session inside that directory. Separate directories are what keep the sessions isolated. Running multiple sessions in the same directory shares one working tree and git index, so it is not isolated and can cause conflicts.
+**Never run two sessions in `~/regen-civics` at once.** They share one working tree and git index, so they cross-commit each other's files, half-apply changes, and diverge from `origin/main` in ways that need a manual rebase to untangle (this happened 2026-07-03). One session per directory, always.
+
+These worktrees are already set up (each is its own directory + branch, sharing one `.git` store):
+- `../regen-features` (branch `wt/features`): active feature build
+- `../regen-database` (branch `wt/database`): database / migration work
+- `../regen-content` (branch `wt/content`): content, or a second feature / security audit
+
+`~/regen-civics` itself stays on `main` and is the one that deploys (push to `main` auto-builds on Railway).
+
+**Start of every session:** confirm no other session is using your directory. If you need a fresh isolated stream, run `scripts/new-worktree.sh <name>` (creates `../regen-<name>` on `wt/<name>`, copies `.env`, installs deps).
+
+**Shipping from a worktree:** commit on `wt/<name>`, then land it on main to deploy:
+```bash
+cd ~/regen-civics && git fetch origin && git checkout main && git pull --ff-only
+git merge wt/<name> && git push        # push to main deploys
+```
+Resolve any conflicts in `~/regen-civics` (not the worktree). Keep each worktree rebased on `origin/main` so merges stay clean.

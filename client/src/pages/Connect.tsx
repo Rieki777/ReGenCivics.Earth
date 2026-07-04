@@ -1129,8 +1129,12 @@ export default function Connect() {
                 <div
                   key={path.id}
                   data-reveal
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Choose path: ${path.title ?? path.id}`}
                   className="cursor-pointer group relative overflow-hidden rounded-2xl border-2 border-[#7dd87d]/30 bg-white/10 backdrop-blur-sm hover:bg-white/15 hover:border-[#7dd87d]/60 hover:shadow-2xl hover:shadow-[#7dd87d]/20 hover:-translate-y-1 transition-all duration-300 p-6"
                   onClick={() => handlePathSelect(path.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePathSelect(path.id); } }}
                 >
                     {/* Subtle gradient overlay on hover */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${path.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl`} />

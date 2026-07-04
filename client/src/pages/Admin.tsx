@@ -69,27 +69,40 @@ import { NotificationPreferences } from "@/components/NotificationPreferences";
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
-import { AdminApplicationsTab } from "@/components/admin/AdminApplicationsTab";
-import { AdminAnalyticsTab } from "@/components/admin/AdminAnalyticsTab";
-import { AdminNewsletterTab } from "@/components/admin/AdminNewsletterTab";
-import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { AdminAlertBanner } from "@/components/admin/AdminAlertBanner";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
 import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
 import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
 import { AdminCitizenshipTiers } from "@/components/admin/AdminCitizenshipTiers";
-import { AdminInvestorsTab } from "@/components/admin/AdminInvestorsTab";
-import { AdminAllianceTab, AdminCreateTab, AdminLiveTab, AdminRoleTab, AdminRolesTab } from "@/components/admin/AdminAllianceTab";
-import { AdminOtherInquiriesTab } from "@/components/admin/AdminOtherInquiriesTab";
-import { AdminSeedsClaimsTab } from "@/components/admin/AdminSeedsClaimsTab";
-import { AdminKanbanTab } from "@/components/admin/AdminKanbanTab";
-import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab, AdminWidgetsTab } from "@/components/admin/AdminSimpleTabs";
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
-import { AdminRoleHoldersTab } from "@/components/admin/AdminRoleHoldersTab";
-import { AdminTasksTab } from "@/components/admin/AdminTasksTab";
-import AdminEditsTab from "@/components/admin/AdminEditsTab";
+// Tab bodies load on demand — only the active tab's chunk is fetched, keeping
+// the initial /admin payload small. The Overview tab stays eager (it is the
+// landing view). Named exports are unwrapped to the default lazy() expects.
+const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
+const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
+const AdminNewsletterTab = lazy(() => import("@/components/admin/AdminNewsletterTab").then(m => ({ default: m.AdminNewsletterTab })));
+const AdminSettingsTab = lazy(() => import("@/components/admin/AdminSettingsTab").then(m => ({ default: m.AdminSettingsTab })));
+const AdminInvestorsTab = lazy(() => import("@/components/admin/AdminInvestorsTab").then(m => ({ default: m.AdminInvestorsTab })));
+const AdminAllianceTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminAllianceTab })));
+const AdminCreateTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminCreateTab })));
+const AdminLiveTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminLiveTab })));
+const AdminRoleTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminRoleTab })));
+const AdminRolesTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminRolesTab })));
+const AdminOtherInquiriesTab = lazy(() => import("@/components/admin/AdminOtherInquiriesTab").then(m => ({ default: m.AdminOtherInquiriesTab })));
+const AdminSeedsClaimsTab = lazy(() => import("@/components/admin/AdminSeedsClaimsTab").then(m => ({ default: m.AdminSeedsClaimsTab })));
+const AdminKanbanTab = lazy(() => import("@/components/admin/AdminKanbanTab").then(m => ({ default: m.AdminKanbanTab })));
+const AdminCrowdpoolingTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminCrowdpoolingTab })));
+const AdminBroadcastTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminBroadcastTab })));
+const AdminLOITab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminLOITab })));
+const AdminBannersTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminBannersTab })));
+const AdminImagesTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminImagesTab })));
+const AdminCustomGamesTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminCustomGamesTab })));
+const AdminWidgetsTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminWidgetsTab })));
+const AdminRoleHoldersTab = lazy(() => import("@/components/admin/AdminRoleHoldersTab").then(m => ({ default: m.AdminRoleHoldersTab })));
+const AdminTasksTab = lazy(() => import("@/components/admin/AdminTasksTab").then(m => ({ default: m.AdminTasksTab })));
+const AdminEditsTab = lazy(() => import("@/components/admin/AdminEditsTab"));
 
 // ─── Audit Log Tab ─────────────────────────────────────────────────────────────
 const DATE_RANGE_OPTIONS = [
@@ -3152,7 +3165,31 @@ function AdminPlayersTab() {
 }
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("tab") || "overview"; } catch { return "overview"; }
+  });
+  // Mirror the active tab into the URL (?tab=) so admin sections are
+  // bookmarkable, shareable, survive a refresh, and respond to browser
+  // back/forward. Query-only, so wouter stays on /admin and existing
+  // /admin/* routes are untouched.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (activeTab === "overview") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", activeTab);
+      const next = url.pathname + url.search;
+      if (next !== window.location.pathname + window.location.search) {
+        window.history.pushState(null, "", next);
+      }
+    } catch { /* history unavailable */ }
+  }, [activeTab]);
+  useEffect(() => {
+    const onPop = () => {
+      try { setActiveTab(new URLSearchParams(window.location.search).get("tab") || "overview"); } catch { /* noop */ }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [investorSearch, setInvestorSearch] = useState('');
   const [appSearch, setAppSearch] = useState('');
   const [investorStatusFilter, setInvestorStatusFilter] = useState<string>('all');
@@ -3325,6 +3362,7 @@ function AdminDashboard() {
       <ShortcutHelpOverlay />
       <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <AdminCommandPalette onSelectTab={setActiveTab} />
       <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] text-white py-4 md:py-6">
@@ -3522,72 +3560,18 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <AdminAlertBanner onTabChange={setActiveTab} />
+      {/* The old alert banner is replaced by the richer "Needs you" queue at
+          the top of the Overview tab (AdminNeedsYou). */}
       {/* Scrollable main content */}
       <div className="flex-1 overflow-y-auto">
       {/* Stats */}
       <div className="container py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
-          <StatsCard 
-            title="Project Applications" 
-            value={stats.totalApplications} 
-            icon={Sprout} 
-            color="bg-[#4a7c59]"
-            description="Land project submissions"
-            onClick={() => {
-              setActiveTab("applications");
-              // Scroll to tabs on mobile
-              if (window.innerWidth < 768) {
-                setTimeout(() => {
-                  document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }
-            }}
-          />
-          <StatsCard 
-            title="Investor Inquiries" 
-            value={stats.totalInvestors} 
-            icon={TrendingUp} 
-            color="bg-amber-500"
-            description="Investment interest forms"
-            onClick={() => {
-              setActiveTab("investors");
-              // Scroll to tabs on mobile
-              if (window.innerWidth < 768) {
-                setTimeout(() => {
-                  document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }
-            }}
-          />
-          <StatsCard 
-            title="General Inquiries" 
-            value={stats.totalInquiries} 
-            icon={MessageSquare} 
-            color="bg-[#7dd87d]"
-            description="Connect form submissions"
-            onClick={() => {
-              setActiveTab("live");
-              // Scroll to tabs on mobile
-              if (window.innerWidth < 768) {
-                setTimeout(() => {
-                  document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }
-            }}
-          />
-          <StatsCard 
-            title="Pending Review" 
-            value={stats.pendingReview} 
-            icon={Eye} 
-            color="bg-[#1a472a]"
-            description="Awaiting response"
-            linkTo="/admin/applications"
-          />
-        </div>
+        {/* The clickable KPI row inside the Overview tab is the single stat
+            surface now; the old duplicate summary cards were removed. */}
 
         {/* Main Tabs - navigation is handled by AdminSidebar */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Suspense fallback={<div className="py-20 text-center text-[#1a472a]/50 text-sm">Loading section…</div>}>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
@@ -3788,6 +3772,7 @@ function AdminDashboard() {
           <TabsContent value="citizenship-tiers">
             <AdminCitizenshipTiers />
           </TabsContent>
+          </Suspense>
         </Tabs>
       </div>
       </div>{/* end flex-1 overflow-y-auto */}

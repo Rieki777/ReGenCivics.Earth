@@ -296,7 +296,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                 <label className="text-sm text-[#1a472a]/90">Base Blockchain Account</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
+                    <button type="button" aria-label="What is a Base Blockchain account?" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
                       <HelpCircle className="w-4 h-4" />
                     </button>
                   </PopoverTrigger>
@@ -2435,7 +2435,7 @@ const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[]
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
-  { id: "tasks",          label: "Call Tasks",     icon: Scroll },
+  { id: "tasks",          label: "Tasks",          icon: Scroll },
   { id: "gratitude",      label: "Gratitude",      icon: Heart },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },

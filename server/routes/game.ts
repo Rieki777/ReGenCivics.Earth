@@ -79,31 +79,18 @@ export const gameRouter = router({
       reason: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
-      // Get current value + safety bounds for history and validation
-      const [current] = await db.execute(sql`SELECT value, \`key\`, minValue, maxValue FROM game_variables WHERE id = ${input.id}`).then((r: any) => r[0] ?? []);
-      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Game variable not found" });
-
-      // Enforce the seeded min/max bounds. These are the safety rails the
-      // valuation/scoring engines rely on; without this check an admin typo
-      // (e.g. impact weight 100 instead of 1.0) silently pegs every payout to
-      // the cap. Null bounds mean "unbounded" for that side.
-      const minV = current.minValue == null ? null : Number(current.minValue);
-      const maxV = current.maxValue == null ? null : Number(current.maxValue);
-      if ((minV != null && input.value < minV) || (maxV != null && input.value > maxV)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Value ${input.value} is outside the allowed range for ${current.key} (${minV ?? "-∞"} to ${maxV ?? "∞"}).`,
-        });
+      // Shared write path with the Evolution Engine dispatcher: bounds
+      // enforced, history written, cache busted (server/lib/evolution.ts).
+      const { applyVariableChange } = await import("../lib/evolution");
+      const result = await applyVariableChange({
+        variableId: input.id,
+        newValue: input.value,
+        changedBy: ctx.user.id,
+        reason: input.reason,
+      });
+      if (!result.ok) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: result.error });
       }
-
-      // Write history
-      await db.execute(sql`INSERT INTO game_variable_history (variableId, previousValue, newValue, changedBy, reason) VALUES (${input.id}, ${current.value}, ${input.value}, ${ctx.user.id}, ${input.reason})`);
-      // Update value
-      await db.execute(sql`UPDATE game_variables SET value = ${input.value}, updatedBy = ${ctx.user.id} WHERE id = ${input.id}`);
-      // Bust cache
-      await invalidateGameVariable(current.key);
       return { ok: true };
     }),
 

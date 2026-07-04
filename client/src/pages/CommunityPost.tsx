@@ -6,7 +6,8 @@ import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2, Sparkles
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2, Sparkles,
+  BellRing, BellOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,10 +36,11 @@ import { GratitudeButton } from "@/components/GratitudeButton";
 import { ForumThreadDecisionBanner } from "@/components/governance/ForumThreadDecisionBanner";
 import { GovernanceLifecycleStrip } from "@/components/governance/GovernanceLifecycleStrip";
 import { PerspectiveControl } from "@/components/governance/PerspectiveControl";
-import { PromotionModal } from "@/components/governance/PromotionModal";
+import { RaiseModal } from "@/components/assembly/RaiseModal";
 import { Vote } from "lucide-react";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
+import { decodeEntities } from "@/utils/sanitize";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 
 function timeAgo(date: Date | string): string {
@@ -138,10 +140,31 @@ export default function CommunityPost() {
   const [editContent, setEditContent] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [promotionOpen, setPromotionOpen] = useState(false);
+  const [confirmingSensing, setConfirmingSensing] = useState(false);
   const replyRef = useRef<RichEditorHandle>(null);
   const replyFormRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
   const { language } = useLanguage();
+
+  // Governance entry: "Sense the room" moves a dialogue thread into Sensing.
+  const enterSensing = trpc.forum.enterSensing.useMutation({
+    onSuccess: () => {
+      setConfirmingSensing(false);
+      utils.forum.postById.invalidate({ id: postId });
+      utils.forum.perspectives.get.invalidate({ threadId: postId });
+    },
+    onError: (err) => {
+      setConfirmingSensing(false);
+      toast.error(err.message || "Could not enter Sensing");
+    },
+  });
+
+  // The decision row (when one exists) outranks the thread's stored stage:
+  // the ReGen Gov app moves decisions without writing back to forumPosts.
+  const { data: threadDecision } = trpc.governance.getDecisionStatus.useQuery(
+    { threadId: postId },
+    { staleTime: 30_000, enabled: postId > 0 }
+  );
   
   // Translation state
   const [translatedPost, setTranslatedPost] = useState<string | null>(null);
@@ -205,6 +228,41 @@ export default function CommunityPost() {
     { postId, userId: user?.id },
     { enabled: postId > 0 }
   );
+
+  // Participation context for the governance actions ("N people have weighed in")
+  const { data: threadPerspectives } = trpc.forum.perspectives.get.useQuery(
+    { threadId: postId },
+    {
+      staleTime: 30_000,
+      enabled:
+        postId > 0 &&
+        ((post as any)?.governanceStage === "sensing" ||
+          (post as any)?.governanceStage === "proposal" ||
+          !!threadDecision),
+    }
+  );
+  // Thread follow state (bell toggle in the post header). Null = not following.
+  const { data: subscription } = trpc.notifications.subscriptions.forThread.useQuery(
+    { postId },
+    { enabled: postId > 0 && !!user }
+  );
+  const setThreadSubscription = trpc.notifications.subscriptions.set.useMutation({
+    onSuccess: () => utils.notifications.subscriptions.forThread.invalidate({ postId }),
+  });
+
+  // Read tracking (Phase 2): viewing the thread clears its unread state
+  // everywhere. Fires once per visit, after replies settle.
+  const markPostRead = trpc.forumFeed.markPostRead.useMutation();
+  const markedReadRef = useRef(false);
+  useEffect(() => {
+    if (markedReadRef.current || !user || postId <= 0 || repliesLoading) return;
+    markedReadRef.current = true;
+    const timer = setTimeout(() => {
+      markPostRead.mutate({ postId, replyCount: replies?.length ?? 0 });
+    }, 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, postId, repliesLoading]);
 
   // Detect if this is a land project or alliance org forum space
   const isEntitySpace = post?.categorySlug === 'land-projects' || post?.categorySlug === 'alliance-partners';
@@ -321,6 +379,31 @@ export default function CommunityPost() {
     }
   }, [replyingTo]);
 
+  // Notification deep-link landing: /community/post/:id#reply-:rid scrolls to
+  // that exact comment once replies are loaded and pulses it. A deleted reply
+  // shows a small inline note instead of failing silently.
+  const [missingReplyNote, setMissingReplyNote] = useState(false);
+  const deepLinkedRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedRef.current || !replies || replies.length === 0) return;
+    const match = window.location.hash.match(/^#reply-(\d+)$/);
+    if (!match) return;
+    deepLinkedRef.current = true;
+    const targetId = parseInt(match[1]);
+    if (!replies.some((r: any) => r.id === targetId)) {
+      setMissingReplyNote(true);
+      return;
+    }
+    setTimeout(() => {
+      const el = document.getElementById(`reply-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('reply-highlight-pulse');
+        setTimeout(() => el.classList.remove('reply-highlight-pulse'), 2500);
+      }
+    }, 150);
+  }, [replies]);
+
   const handleSubmitReply = () => {
     if (!replyContent.trim()) return;
     createReplyMutation.mutate({
@@ -390,11 +473,29 @@ export default function CommunityPost() {
   const isAdminOrSuper = user?.role === 'admin' || user?.role === 'superadmin';
   const canDeletePost = user && (user.id === post.authorId || isAdminOrSuper);
 
+  // Effective governance stage. A live decision row outranks the stored stage
+  // because the ReGen Gov app advances decisions without writing forumPosts.
+  const storedStage = (post as any).governanceStage as string | null | undefined;
+  const decisionStatus = threadDecision ? String((threadDecision as any).status) : null;
+  const decisionTerminal = decisionStatus !== null && ["ratified", "declined", "cancelled"].includes(decisionStatus);
+  const effectiveStage = decisionTerminal
+    ? "decided"
+    : threadDecision
+    ? "proposal"
+    : storedStage === "sensing" || storedStage === "proposal" || storedStage === "decided"
+    ? storedStage
+    : null;
+  const inGovernance = effectiveStage !== null;
+  const perspectiveVoices = ((threadPerspectives as any)?.tallies ?? []).reduce(
+    (sum: number, t: any) => sum + Number(t.count ?? 0),
+    0
+  );
+
   return (
     <PageTransition>
     <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
       <SEO
-        title={`${post.title} | ReGen Civics Community`}
+        title={`${decodeEntities(post.title)} | ReGen Civics Community`}
         description={post.content?.slice(0, 155) || `A forum post by ${post.authorName} in the ReGen Civics community.`}
         url={`/community/post/${post.id}`}
         type="article"
@@ -413,7 +514,7 @@ export default function CommunityPost() {
               {post.categoryName}
             </Link>
             <ChevronRight className="w-3 h-3" />
-            <span className="text-white/80 truncate max-w-[200px]">{post.title}</span>
+            <span className="text-white/80 truncate max-w-[200px]">{decodeEntities(post.title)}</span>
           </div>
 
           {/* Type + stage badges */}
@@ -444,7 +545,7 @@ export default function CommunityPost() {
               className="text-xl md:text-2xl font-bold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {post.title}
+              {decodeEntities(post.title)}
             </h1>
           </div>
         </div>
@@ -487,6 +588,26 @@ export default function CommunityPost() {
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      const nextMuted = subscription ? !subscription.muted : false;
+                      setThreadSubscription.mutate({ postId, muted: nextMuted });
+                    }}
+                    className={`flex items-center gap-1 p-1 transition-colors ${
+                      subscription && !subscription.muted
+                        ? 'text-[#4a7c59] hover:text-[#1a472a]'
+                        : 'text-[#1a472a]/50 hover:text-[#4a7c59]'
+                    }`}
+                    title={subscription && !subscription.muted ? 'Following this thread. Tap to mute.' : 'Get notified about new replies'}
+                    aria-label={subscription && !subscription.muted ? 'Mute this thread' : 'Follow this thread'}
+                    aria-pressed={!!subscription && !subscription.muted}
+                  >
+                    {subscription && !subscription.muted
+                      ? <BellRing className="w-3.5 h-3.5" />
+                      : <BellOff className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+                {isAuthenticated && (
                   <div className="relative">
                     <button
                       onClick={() => setShowFlagMenu(!showFlagMenu)}
@@ -528,7 +649,7 @@ export default function CommunityPost() {
                 )}
                 {canDeletePost && !editingPost && (
                   <button
-                    onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
+                    onClick={() => { setEditTitle(decodeEntities(post.title)); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
                     className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
                     title="Edit post"
                     aria-label="Edit post"
@@ -606,36 +727,78 @@ export default function CommunityPost() {
             </div>
             )}
 
-            {/* Governance lifecycle strip — shows stage for all threads */}
-            <div className="px-4 md:px-6 pb-2 space-y-3">
-              <GovernanceLifecycleStrip
-                threadId={post.id}
-                governanceStage={(post as any).governanceStage}
-              />
-              {/* Perspective control — visible during Sensing and Proposal */}
-              {((post as any).governanceStage === "sensing" || (post as any).governanceStage === "proposal") && (
-                <PerspectiveControl threadId={post.id} />
-              )}
-            </div>
+            {/* Governance lifecycle — only once the thread has entered the pipeline */}
+            {inGovernance && (
+              <div className="px-4 md:px-6 pb-2 space-y-3">
+                <GovernanceLifecycleStrip
+                  threadId={post.id}
+                  governanceStage={effectiveStage as any}
+                  sensingStartedBy={(post as any).sensingStartedBy ?? null}
+                />
+                {(effectiveStage === "sensing" || effectiveStage === "proposal") && (
+                  <PerspectiveControl threadId={post.id} />
+                )}
+              </div>
+            )}
 
             {/* Living backlink banner: shows if this thread has been promoted to a formal decision */}
             <div className="px-4 md:px-6 pb-2">
               <ForumThreadDecisionBanner threadId={post.id} />
               {isAuthenticated && (
-                <div className="flex items-center justify-end mt-1">
+                <div className="flex items-center justify-end gap-4 mt-1 flex-wrap">
+                  {inGovernance && perspectiveVoices > 0 && (
+                    <span className="text-[11px] text-[#4a7c59]/80">
+                      {perspectiveVoices === 1 ? "1 person has" : `${perspectiveVoices} people have`} weighed in
+                    </span>
+                  )}
+                  {!inGovernance && (
+                    confirmingSensing ? (
+                      <span className="flex items-center gap-3 flex-wrap text-[11px]">
+                        <span className="text-[#1a472a]/80">
+                          Start sensing the room on this thread? This invites everyone to share where they stand.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => enterSensing.mutate({ threadId: post.id })}
+                          disabled={enterSensing.isPending}
+                          className="inline-flex items-center gap-1 font-bold text-[#1a472a] underline hover:text-[#4a7c59] transition-colors"
+                        >
+                          {enterSensing.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                          Start sensing
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingSensing(false)}
+                          className="text-[#4a7c59]/80 hover:text-[#4a7c59] transition-colors"
+                        >
+                          Not yet
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingSensing(true)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
+                        title="Gauge where we stand as we move to a formal proposal."
+                      >
+                        <Eye className="w-3 h-3" />
+                        Sense the room
+                      </button>
+                    )
+                  )}
                   <button
                     type="button"
                     onClick={() => setPromotionOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors"
-                    title="Promote this thread to a formal decision"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
+                    title="Raise this thread as a proposal in the Assembly, the Game's community-governed space."
                   >
                     <Vote className="w-3 h-3" />
-                    Promote to decision
+                    Raise in Assembly
                   </button>
                 </div>
               )}
             </div>
-            <PromotionModal threadId={post.id} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
+            <RaiseModal threadId={post.id} threadTitle={post.title} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
 
             {/* Emoji Reactions + Gratitude on post */}
             <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">
@@ -752,6 +915,11 @@ export default function CommunityPost() {
         )}
 
         {/* Replies */}
+        {missingReplyNote && (
+          <div className="mb-4 bg-[#f0ebe3] border border-[#d4a574]/40 rounded-lg px-4 py-3 text-sm text-[#92400e]">
+            That reply is no longer here.
+          </div>
+        )}
         {repliesLoading ? (
           <div className="space-y-3">
             {[1, 2].map(i => (
@@ -945,9 +1113,9 @@ export default function CommunityPost() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 mb-6">
-            <MessageCircle className="w-10 h-10 text-[#4a7c59]/20 mx-auto mb-2" />
-            <p className="text-[#1a472a]/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+          <div className="text-center py-8 mb-6 bg-white/5 border border-white/10 rounded-xl">
+            <MessageCircle className="w-10 h-10 text-white/30 mx-auto mb-2" />
+            <p className="text-white/75 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
               No replies yet. Be the first to respond!
             </p>
           </div>

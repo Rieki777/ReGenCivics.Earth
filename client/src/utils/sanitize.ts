@@ -19,3 +19,22 @@ export function sanitizeForClient(input: string): string {
     .replace(/<(?:object|embed)\b[^>]*>/gi, '')
     .trim();
 }
+
+/**
+ * Decode the five HTML entities the server-side plain-text sanitizer emits
+ * (`sanitizeInput` → sanitize-html encodes & < > " '). Plain-text fields like
+ * forum titles are stored encoded, which renders fine inside HTML bodies but
+ * shows raw entities (e.g. "Each Other&#39;s Work") when React prints them as
+ * text. Decode at render for those spots. Regex-only, so it is SSR-safe and
+ * never touches the DOM. `&amp;` is decoded last to avoid double-decoding.
+ */
+export function decodeEntities(input?: string | null): string {
+  if (!input) return '';
+  return input
+    .replace(/&#0*39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}

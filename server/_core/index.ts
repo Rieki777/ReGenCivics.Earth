@@ -20,6 +20,8 @@ function parseCookieHeader(str: string): Record<string, string> {
 }
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
+import { runNotificationDigestJob } from "../jobs/notificationDigestJob";
+import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
@@ -397,6 +399,9 @@ async function startServer() {
       { loc: '/terms-of-use',            changefreq: 'monthly', priority: '0.3' },
       { loc: '/privacy-policy',          changefreq: 'monthly', priority: '0.3' },
       { loc: '/disclaimers',             changefreq: 'monthly', priority: '0.3' },
+      // AI Accessibility Files
+      { loc: '/llms.txt',                changefreq: 'weekly',  priority: '0.8' },
+      { loc: '/llms-full.txt',           changefreq: 'weekly',  priority: '0.7' },
     ];
 
     // Static blog post slugs (content is hardcoded in client/src/data/blogPosts.ts)
@@ -456,6 +461,9 @@ async function startServer() {
   });
   app.get('/llms.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/llms.txt'));
+  });
+  app.get('/llms-full.txt', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
   });
   app.get('/llms-full.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
@@ -1061,6 +1069,27 @@ setTimeout(async () => {
     try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
   }, 7 * 24 * 60 * 60 * 1000);
 }, 60 * 1000); // first run after 1 minute
+
+// ─── Daily notification digest ───────────────────────────────────────────────
+// Batches unread, un-emailed forum notifications (mentions, replies,
+// gratitude) into one email per user per day, honoring per-type prefs.
+// Deterministic aggregation, no LLM. Idempotent via emailedAt stamps.
+setTimeout(async () => {
+  try { await runNotificationDigestJob(); } catch (e) { log.error("NotificationDigestJob error", e); }
+  setInterval(async () => {
+    try { await runNotificationDigestJob(); } catch (e) { log.error("NotificationDigestJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 5 * 60 * 1000); // first run after 5 minutes
+
+// ─── Nightly forum affinity computation ─────────────────────────────────────
+// Builds per-user category/author/tag relevance scores for the For You feed.
+// Pure SQL aggregation with recency decay; idempotent full refresh.
+setTimeout(async () => {
+  try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
+  setInterval(async () => {
+    try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 7 * 60 * 1000); // first run after 7 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

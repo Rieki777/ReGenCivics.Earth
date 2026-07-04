@@ -570,7 +570,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
           {previewContent.trim() ? (
             <ForumMarkdown content={previewContent} className="text-sm" />
           ) : (
-            <p className="text-white/30 text-sm italic">Nothing to preview yet.</p>
+            <p className="text-white/70 text-sm italic">Nothing to preview yet.</p>
           )}
         </div>
       ) : (

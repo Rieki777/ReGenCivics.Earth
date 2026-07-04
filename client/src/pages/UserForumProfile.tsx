@@ -12,9 +12,11 @@ import { Link, useParams, useLocation } from "wouter";
 import { useState } from "react";
 import {
   User, MessageSquare, Heart, Star, Calendar,
-  MapPin, Globe, Edit2, ArrowLeft, Award, TrendingUp
+  MapPin, Globe, Edit2, ArrowLeft, Award, TrendingUp,
+  VolumeX, Volume2
 } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
+import { FollowButton } from "@/components/FollowButton";
 
 export default function UserForumProfile() {
   const params = useParams<{ id: string }>();
@@ -37,6 +39,16 @@ export default function UserForumProfile() {
 
   const isOwnProfile = currentUser?.id === userId;
   const data = profileQuery.data;
+
+  // Person-level mute: their mentions/replies stop notifying or emailing you.
+  const utils = trpc.useUtils();
+  const { data: myMutes } = trpc.notifications.mutes.listMine.useQuery(undefined, {
+    enabled: isAuthenticated && !isOwnProfile,
+  });
+  const isMuted = !!myMutes?.some(m => m.mutedUserId === userId);
+  const invalidateMutes = () => utils.notifications.mutes.listMine.invalidate();
+  const setMuteMutation = trpc.notifications.mutes.set.useMutation({ onSuccess: invalidateMutes });
+  const removeMuteMutation = trpc.notifications.mutes.remove.useMutation({ onSuccess: invalidateMutes });
 
   if (profileQuery.isLoading) {
     return <TaoSpinner fullPage size={72} />;
@@ -118,6 +130,27 @@ export default function UserForumProfile() {
                 className="border-white/20 text-white/70 hover:bg-white/10"
               >
                 <Edit2 className="w-3 h-3 mr-1" /> Edit
+              </Button>
+            )}
+            {!isOwnProfile && isAuthenticated && (
+              <FollowButton targetType="user" targetId={String(userId)} />
+            )}
+            {!isOwnProfile && isAuthenticated && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (isMuted) {
+                    removeMuteMutation.mutate({ mutedUserId: userId });
+                  } else {
+                    setMuteMutation.mutate({ mutedUserId: userId, scope: 'both' });
+                  }
+                }}
+                className="border-white/20 text-white/70 hover:bg-white/10"
+                aria-pressed={isMuted}
+                title={isMuted ? 'Their mentions and replies will notify you again' : 'Their mentions and replies will stop notifying you'}
+              >
+                {isMuted ? <><Volume2 className="w-3 h-3 mr-1" /> Unmute</> : <><VolumeX className="w-3 h-3 mr-1" /> Mute</>}
               </Button>
             )}
           </div>

@@ -350,7 +350,7 @@ export default function PlayDetail() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-white/40 text-sm">
+                  <p className="text-white/70 text-sm">
                     No endorsements yet. Be the first to share your experience.
                   </p>
                 )}
@@ -366,6 +366,8 @@ export default function PlayDetail() {
                 <img
                   src={play.coverImageUrl}
                   alt={play.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full rounded-xl object-cover border border-white/10"
                 />
               ) : (

@@ -37,11 +37,13 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
+import { CommunityFeedTabs } from "@/components/CommunityFeedTabs";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { VineDivider } from "@/components/dividers/VineDivider";
 import { Pullquote } from "@/components/Pullquote";
 import { ForYouLabel } from "@/components/ForYouLabel";
+import { decodeEntities } from "@/utils/sanitize";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -105,9 +107,21 @@ export default function Community() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  // Remember which element (General/Earth/Water/Fire/Air) the player last
+  // opened, so returning from a thread or subcategory reopens that panel
+  // instead of dropping them on the bare community landing.
+  const [activeSection, setActiveSection] = useState<string | null>(() => {
+    try { return sessionStorage.getItem("community_active_section") || null; } catch { return null; }
+  });
   const sectionPanelRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      if (activeSection) sessionStorage.setItem("community_active_section", activeSection);
+      else sessionStorage.removeItem("community_active_section");
+    } catch { /* storage blocked */ }
+  }, [activeSection]);
 
   const handleSectionClick = (id: string) => {
     const next = activeSection === id ? null : id;
@@ -482,6 +496,9 @@ export default function Community() {
           </div>
         ) : null}
 
+        {/* Personalized feed tabs (signed-in only; Phase 2) */}
+        <CommunityFeedTabs />
+
         {/* ── Section Cards ───────────────────────────────────────────── */}
         <div id="community-section-picker" className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6 overflow-x-hidden">
 
@@ -732,6 +749,19 @@ export default function Community() {
                 )}
               </div>
             )}
+
+            {/* Suggest a feature — improvements to the site live in General */}
+            <div className="mt-3">
+              <Link href="/features" className="block border-l-4 border-amber-500 bg-amber-50 rounded-xl p-5 hover:bg-amber-100 transition-colors group">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔧</span>
+                  <div>
+                    <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-amber-700 transition-colors">Got an idea for a feature?</h3>
+                    <p className="text-sm text-[#1a472a]/80">Suggest improvements to the site. Vote on what gets built next.</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
           </div>
         )}
 
@@ -954,7 +984,7 @@ export default function Community() {
                         <div className="px-4 py-3 flex items-center justify-between">
                           <div className="min-w-0">
                             <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#0369a1] transition-colors truncate">
-                              {thread.title}
+                              {decodeEntities(thread.title)}
                             </p>
                             <p className="text-[#1a472a]/80 text-xs">Visit Space</p>
                           </div>
@@ -1029,14 +1059,14 @@ export default function Community() {
                 </div>
               </Link>
 
-              {/* All Quests */}
-              <Link href="/community/c/quests-gameplay">
+              {/* All the Other Quests — a fresh board for quests beyond the core path */}
+              <Link href="/community/c/all-other-quests">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-00-fire.webp" alt="Fire quest challenge" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>All Quests</p>
-                    <p className="text-white/60 text-xs">Browse the full list</p>
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>All the Other Quests</p>
+                    <p className="text-white/60 text-xs">Beyond the core path</p>
                   </div>
                 </div>
               </Link>
@@ -1071,22 +1101,13 @@ export default function Community() {
             </div>
 
             {/* Suggest a Quest */}
-            <div className="grid sm:grid-cols-2 gap-3 mt-3">
+            <div className="mt-3">
               <Link href="/community/quests" className="block border-l-4 border-green-500 bg-green-50 rounded-xl p-5 hover:bg-green-100 transition-colors group">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">💡</span>
                   <div>
                     <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-green-700 transition-colors">Got an idea for a quest?</h3>
                     <p className="text-sm text-[#1a472a]/80">Propose it here. The community votes and the best ones get built.</p>
-                  </div>
-                </div>
-              </Link>
-              <Link href="/features" className="block border-l-4 border-amber-500 bg-amber-50 rounded-xl p-5 hover:bg-amber-100 transition-colors group">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🔧</span>
-                  <div>
-                    <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-amber-700 transition-colors">Got an idea for a feature?</h3>
-                    <p className="text-sm text-[#1a472a]/80">Suggest improvements to the site. Vote on what gets built next.</p>
                   </div>
                 </div>
               </Link>
@@ -1155,7 +1176,7 @@ export default function Community() {
               </Link>
 
               {/* Roles Dialogue */}
-              <Link href="/community/post/634">
+              <Link href="/community/c/roles-dialogue">
                 <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/roles-dialogue.webp" alt="Roles dialogue" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
@@ -1166,8 +1187,8 @@ export default function Community() {
                 </div>
               </Link>
 
-              {/* Governance */}
-              <Link href="/community/c/governance">
+              {/* Governance — routes to the Assembly, where coordination happens */}
+              <Link href="/assembly">
                 <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-11-coordination-patterns.webp" alt="Governance and coordination" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
@@ -1210,7 +1231,7 @@ export default function Community() {
                       <div className="px-4 py-3 flex items-center justify-between">
                         <div className="min-w-0">
                           <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
-                            {thread.title}
+                            {decodeEntities(thread.title)}
                           </p>
                           <p className="text-[#1a472a]/80 text-xs">Join the conversation</p>
                         </div>

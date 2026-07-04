@@ -544,6 +544,16 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // User notification preferences (JSON: { communityUpdates, questAnnouncements })
   notificationPrefs: json("notificationPrefs"),
 
+  // Forum profile fields folded in from userProfiles (0169, Phase 2B). The
+  // forum reads these from playerProfiles now; userProfiles keeps its
+  // onboarding-only fields and is kept in symmetric sync via upsertUserProfile.
+  website: varchar("website", { length: 500 }),
+  forumLocation: varchar("forumLocation", { length: 255 }),
+  preferredLanguage: varchar("preferredLanguage", { length: 10 }).default("en"),
+  reputation: int("reputation").default(0).notNull(),
+  onboardingComplete: tinyint("onboardingComplete").default(0).notNull(),
+  forumLastActiveAt: timestamp("forumLastActiveAt"),
+
   // Profile layer (Phase 3)
   collaborationStatus: text("collaborationStatus"), // null | "seeking_collaborators" | "looking_to_join"
   dreamingOf: text("dreamingOf"),                  // Open text: what are you dreaming of building?
@@ -1452,6 +1462,9 @@ export const forumCategories = mysqlTable("forumCategories", {
   color: varchar("color", { length: 20 }), // hex color for category badge
   imageUrl: varchar("imageUrl", { length: 500 }),
   sortOrder: int("sortOrder").default(0).notNull(),
+  // How this board orders its threads: "activity" = latest reply first (default),
+  // "numerical" = by each post's sortOrder ascending (quest number order).
+  sortMode: varchar("sortMode", { length: 20 }).default("activity").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumCategory = typeof forumCategories.$inferSelect;
@@ -1484,10 +1497,15 @@ export const forumPosts = mysqlTable("forumPosts", {
   linkPreviews: json("linkPreviews"),
   // Seed post flag (B.3)
   isSeed: tinyint("isSeed").default(0).notNull(),
+  // Explicit ascending position for boards in "numerical" sortMode (lower shows first).
+  sortOrder: int("sortOrder").default(0).notNull(),
   // Dialogue governance lifecycle (2026-06-25 dialogue process)
   governanceStage: mysqlEnum("governanceStage", ["dialogue", "sensing", "proposal", "decided"]).default("dialogue"),
   sensingStartedAt: timestamp("sensingStartedAt"),
   sensingStartedBy: int("sensingStartedBy"),
+  // Optional Root-of-Capital a seeking-support post declares (0168). Feeds
+  // the capitals-matching boost once the composer picker ships (Phase 3.3).
+  capital: mysqlEnum("capital", ["intellectual", "social", "material", "financial", "living", "cultural", "spiritual", "experiential", "health"]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1857,6 +1875,18 @@ export const userProfiles = mysqlTable("userProfiles", {
   lastActiveAt: timestamp("lastActiveAt"),
 });
 export type UserProfile = typeof userProfiles.$inferSelect;
+
+// Display-field disagreements found during the Phase 2B back-fill (0169).
+// Empty in the current data; kept so future reconciliations are inspectable.
+export const profileMergeConflicts = mysqlTable("profile_merge_conflicts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  field: varchar("field", { length: 64 }).notNull(),
+  playerProfilesValue: text("playerProfilesValue"),
+  userProfilesValue: text("userProfilesValue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProfileMergeConflict = typeof profileMergeConflicts.$inferSelect;
 
 /**
  * Site Banner Configuration
@@ -2671,20 +2701,175 @@ export const regenTokenLedger = mysqlTable("regen_token_ledger", {
 export type RegenTokenLedger = typeof regenTokenLedger.$inferSelect;
 export type InsertRegenTokenLedger = typeof regenTokenLedger.$inferInsert;
 
-// Notifications (A.7)
+// Notifications (A.7) — the single notification spine as of 0162.
+// user_notifications rows were back-filled here and its writers repointed;
+// `link` is always a canonical in-app URL (forum events deep-link to
+// /community/post/:id#reply-:replyId). `dedupeKey` + INSERT IGNORE makes
+// fire-and-forget fan-out idempotent under retries/restarts.
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
-  playerId: int("playerId").notNull(),
-  type: mysqlEnum("type", ["forum_reply", "quest_complete", "fund_update", "vouch", "mention"]).notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", [
+    "forum_reply",
+    "quest_complete",
+    "fund_update",
+    "vouch",
+    "mention",
+    "gratitude",
+    "reaction_milestone",
+    "guide_reply",
+    "elder_reply",
+    "thread_followed_activity",
+    "governance_stage",
+    "system",
+    "contribution_accepted",
+    "contribution_rejected",
+    "campaign_milestone",
+    "new_contribution",
+    "claim_complete",
+    "claim_failed",
+  ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
   link: varchar("link", { length: 500 }),
   isRead: tinyint("isRead").default(0).notNull(),
+  // Who did the thing (for the avatar in the bell)
+  actorId: int("actorId"),
+  // Denormalized forum source (grouping: "3 new replies on X")
+  postId: int("postId"),
+  replyId: int("replyId"),
+  // Legacy campaign/contribution relations (carried over from user_notifications)
+  campaignId: int("campaignId"),
+  contributionId: int("contributionId"),
+  // Delivery stamps: set when the email/push copy went out (dedupe per channel)
+  emailedAt: timestamp("emailedAt"),
+  pushedAt: timestamp("pushedAt"),
+  // Idempotency key, e.g. "mention:reply:8821:u42". Unique; inserts use
+  // ON DUPLICATE KEY so double-fired hooks are no-ops.
+  dedupeKey: varchar("dedupeKey", { length: 191 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ([
-  index("notifications_player_unread_idx").on(t.playerId, t.isRead, t.createdAt),
+  index("notifications_player_unread_idx").on(t.userId, t.isRead, t.createdAt),
+  unique("notifications_dedupe_uq").on(t.dedupeKey),
 ]));
 export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// Forum @mentions. The unique key makes re-parsing on edit idempotent:
+// only handles not already recorded for a source produce notifications.
+export const forumMentions = mysqlTable("forum_mentions", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceType: mysqlEnum("sourceType", ["post", "reply"]).notNull(),
+  sourceId: int("sourceId").notNull(),
+  mentionedUserId: int("mentionedUserId").notNull(),
+  mentionerUserId: int("mentionerUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_mentions_source_user_uq").on(t.sourceType, t.sourceId, t.mentionedUserId),
+  index("forum_mentions_mentioned_idx").on(t.mentionedUserId),
+]));
+export type ForumMention = typeof forumMentions.$inferSelect;
+
+// Thread-level follows. Auto-created on author/reply/mention; `muted` stops
+// thread_followed_activity for that thread (direct mentions still notify).
+export const forumSubscriptions = mysqlTable("forum_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  postId: int("postId").notNull(),
+  reason: mysqlEnum("reason", ["authored", "replied", "mentioned", "manual"]).notNull(),
+  muted: tinyint("muted").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_subscriptions_user_post_uq").on(t.userId, t.postId),
+  index("forum_subscriptions_post_idx").on(t.postId),
+]));
+export type ForumSubscription = typeof forumSubscriptions.$inferSelect;
+
+// Unread state per user per thread (0168). lastSeenReplyCount powers the
+// "N new" pill; a row missing entirely means never read.
+export const forumPostReads = mysqlTable("forum_post_reads", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  postId: int("postId").notNull(),
+  lastReadAt: timestamp("lastReadAt").defaultNow().notNull(),
+  lastSeenReplyCount: int("lastSeenReplyCount").default(0).notNull(),
+}, (t) => ([
+  unique("forum_post_reads_user_post_uq").on(t.userId, t.postId),
+  index("forum_post_reads_user_read_idx").on(t.userId, t.lastReadAt),
+]));
+export type ForumPostRead = typeof forumPostReads.$inferSelect;
+
+// One polymorphic follow table (0168): users, categories, bioregions, tags.
+// targetId is VARCHAR so tag slugs and numeric ids share one column.
+export const userFollows = mysqlTable("user_follows", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag"]).notNull(),
+  targetId: varchar("targetId", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("user_follows_uq").on(t.userId, t.targetType, t.targetId),
+  index("user_follows_target_idx").on(t.targetType, t.targetId),
+]));
+export type UserFollow = typeof userFollows.$inferSelect;
+
+// Nightly-computed relevance scores (0168), written by forumAffinityJob.
+// Read-optimized: the feed query joins these, never recomputes them.
+export const userForumAffinity = mysqlTable("user_forum_affinity", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  dimension: mysqlEnum("dimension", ["category", "user", "tag"]).notNull(),
+  targetId: varchar("targetId", { length: 64 }).notNull(),
+  score: decimal("score", { precision: 8, scale: 4 }).default("0").notNull(),
+  computedAt: timestamp("computedAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("user_forum_affinity_uq").on(t.userId, t.dimension, t.targetId),
+  index("user_forum_affinity_user_idx").on(t.userId, t.dimension),
+]));
+export type UserForumAffinity = typeof userForumAffinity.$inferSelect;
+
+// Query projection of forumPosts.tags (a TEXT column holding a JSON string,
+// otherwise only matchable via LIKE scans). Maintained on createPost.
+export const forumPostTags = mysqlTable("forum_post_tags", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  tag: varchar("tag", { length: 64 }).notNull(),
+}, (t) => ([
+  unique("forum_post_tags_uq").on(t.postId, t.tag),
+  index("forum_post_tags_tag_idx").on(t.tag),
+]));
+export type ForumPostTag = typeof forumPostTags.$inferSelect;
+
+// Web push subscriptions (0164). One row per browser endpoint; endpoint is
+// unique so re-subscribing upserts. Pruned on 410/404 or repeated failures.
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  endpoint: varchar("endpoint", { length: 500 }).notNull(),
+  p256dh: varchar("p256dh", { length: 255 }).notNull(),
+  auth: varchar("auth", { length: 255 }).notNull(),
+  userAgent: varchar("userAgent", { length: 255 }),
+  failureCount: int("failureCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastSeenAt: timestamp("lastSeenAt"),
+}, (t) => ([
+  unique("push_subscriptions_endpoint_uq").on(t.endpoint),
+  index("push_subscriptions_user_idx").on(t.userId),
+]));
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// Person-level mute. scope 'notifications': their mentions/replies never
+// notify or email you. scope 'feed': reserved for the Phase 2 feed ranking.
+export const forumUserMutes = mysqlTable("forum_user_mutes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  mutedUserId: int("mutedUserId").notNull(),
+  scope: mysqlEnum("scope", ["notifications", "feed", "both"]).default("both").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_user_mutes_user_muted_uq").on(t.userId, t.mutedUserId),
+]));
+export type ForumUserMute = typeof forumUserMutes.$inferSelect;
 
 // Quest Journal (C.3)
 export const questJournal = mysqlTable("quest_journal", {
@@ -2821,6 +3006,15 @@ export const proposals = mysqlTable("proposals", {
   forumThreadId: int("forumThreadId"),
   signalVoteCount: int("signalVoteCount").default(0),
   bioregionId: int("bioregionId"),
+  // Assembly lifecycle (0165): aim line, lanes, last call, resting, launch
+  aim: varchar("aim", { length: 300 }),
+  lane: mysqlEnum("lane", ["full", "minor"]).default("full").notNull(),
+  lastCallStartedAt: timestamp("lastCallStartedAt"),
+  restingSince: timestamp("restingSince"),
+  readyToLaunchAt: timestamp("readyToLaunchAt"),
+  hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 32 }),
+  executionPayload: json("executionPayload"),
+  objectionLog: json("objectionLog"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -2835,6 +3029,58 @@ export const proposalVotes = mysqlTable("proposal_votes", {
   unique("unique_proposal_vote").on(t.proposalId, t.userId),
 ]));
 export type ProposalVote = typeof proposalVotes.$inferSelect;
+
+// ─── Assembly: the Signal + AI synthesis cache (ASSEMBLY_PAGE_SPEC.md) ─────
+// One adjustable -3..+3 signal per member per proposal. Aggregate-only:
+// individual scores are never shown to anyone. moveNote is stored only for
+// negative scores ("what would move you") and surfaces unattributed.
+export const proposalSignals = mysqlTable("proposal_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  userId: int("userId").notNull(),
+  score: tinyint("score").notNull(),
+  moveNote: varchar("moveNote", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ([
+  unique("unique_proposal_signal").on(t.proposalId, t.userId),
+  index("idx_signal_proposal").on(t.proposalId),
+]));
+export type ProposalSignal = typeof proposalSignals.$inferSelect;
+
+export const proposalSynthesis = mysqlTable("proposal_synthesis", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  pros: json("pros"),
+  cons: json("cons"),
+  steelman: text("steelman"),
+  steelmanAddressed: json("steelmanAddressed"),
+  summary: text("summary"),
+  sourceReplyCount: int("sourceReplyCount").default(0).notNull(),
+  changelog: json("changelog"),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ([
+  unique("unique_synthesis_proposal").on(t.proposalId),
+]));
+export type ProposalSynthesis = typeof proposalSynthesis.$inferSelect;
+
+// Append-only record of Evolution Engine executions (0167). Rows only ever
+// transition status/detail/executedAt, never disappear.
+export const governanceExecutions = mysqlTable("governance_executions", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  kind: mysqlEnum("kind", ["variable_change", "bounds_change", "content", "feature"]).notNull(),
+  payload: json("payload").notNull(),
+  status: mysqlEnum("status", ["pending", "applied", "shipping", "shipped", "paused", "failed", "rolled_back"]).default("pending").notNull(),
+  detail: json("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  executedAt: timestamp("executedAt"),
+}, (t) => ([
+  unique("idx_execution_proposal").on(t.proposalId), // 0172: one execution per proposal, DB-enforced
+]));
+export type GovernanceExecution = typeof governanceExecutions.$inferSelect;
 
 export const proposalUpdates = mysqlTable("proposal_updates", {
   id: int("id").autoincrement().primaryKey(),

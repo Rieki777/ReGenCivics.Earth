@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'wouter'
 import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
@@ -6,7 +7,9 @@ import {
   ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award, Scissors
 } from 'lucide-react'
 
-const NAV_GROUPS = [
+// route items navigate to a real page instead of switching an in-page tab.
+export type NavItem = { id: string; label: string; icon: typeof LayoutDashboard; route?: string }
+export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: 'Ecosystem',
     items: [
@@ -21,7 +24,7 @@ const NAV_GROUPS = [
     label: 'Fund',
     items: [
       { id: 'investors', label: 'Investors', icon: TrendingUp },
-      { id: 'lois', label: 'LOIs', icon: FileText },
+      { id: 'loi', label: 'LOIs', icon: FileText },
       { id: 'crowdpooling', label: 'Crowd Pooling', icon: Globe2 },
       { id: 'seeds-claims', label: 'SEEDS Claims', icon: Coins },
     ]
@@ -32,10 +35,9 @@ const NAV_GROUPS = [
       { id: 'events', label: 'Events', icon: Calendar },
       { id: 'recordings', label: 'Recordings', icon: Video },
       { id: 'role-holders', label: 'Role Holders', icon: Handshake },
-      { id: 'call-tasks', label: 'Call Tasks', icon: ScrollText },
+      { id: 'call-tasks', label: 'Tasks', icon: ScrollText },
       { id: 'edited-cuts', label: 'Edited Cuts', icon: Scissors },
-      { id: 'moderation', label: 'Forum', icon: Shield },
-      { id: 'quests', label: 'Quests', icon: ScrollText },
+      { id: 'moderation', label: 'Forum', icon: Shield, route: '/admin/moderation' },
       { id: 'newsletter', label: 'Newsletter', icon: Megaphone },
       { id: 'broadcast', label: 'Broadcast', icon: Search },
     ]
@@ -58,6 +60,7 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
+  const [, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('admin_sidebar_collapsed') === 'true' } catch { return false }
   })
@@ -101,7 +104,7 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
               return (
                 <button
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => item.route ? navigate(item.route) : onTabChange(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
                     active ? 'bg-green-600/20 text-green-400 border-r-2 border-green-400' : 'text-white/60 hover:text-white hover:bg-white/5'
                   } ${collapsed ? 'justify-center' : ''}`}

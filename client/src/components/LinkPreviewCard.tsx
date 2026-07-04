@@ -3,6 +3,8 @@
  * Shows OG image, site name, title, and description in a compact card.
  */
 
+import { decodeEntities } from '@/utils/sanitize';
+
 interface LinkPreviewCardProps {
   url: string;
   title?: string | null;
@@ -50,11 +52,11 @@ export function LinkPreviewCard({ url, title, description, image, siteName, load
           <p className="text-xs text-gray-300 mb-0.5 truncate">{siteName}</p>
         )}
         <p className="text-sm font-bold text-[#1a472a] truncate leading-snug">
-          {title}
+          {decodeEntities(title)}
         </p>
         {description && (
           <p className="text-sm text-gray-500 mt-0.5 line-clamp-2 leading-snug">
-            {description}
+            {decodeEntities(description)}
           </p>
         )}
       </div>

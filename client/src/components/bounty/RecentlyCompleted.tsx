@@ -49,7 +49,7 @@ export function RecentlyCompleted() {
           return (
             <div key={i} className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#0d2818]/60 px-4 py-3">
               {row.doer?.avatarUrl ? (
-                <img src={row.doer.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                <img src={row.doer.avatarUrl} alt="" loading="lazy" decoding="async" className="w-8 h-8 rounded-full object-cover shrink-0" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 text-[#7dd87d] grid place-items-center text-xs font-bold shrink-0">
                   {doerName.slice(0, 1).toUpperCase()}

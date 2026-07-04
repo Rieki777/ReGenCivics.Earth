@@ -273,5 +273,7 @@ export async function runAllGovernanceJobs(): Promise<JobReport[]> {
   reports.push(await assignStorytellers());
   reports.push(await checkSunsetting());
   reports.push(await reconcileHyphaBridges());
+  const { runAssemblyLifecycleJobs } = await import("./assemblyLifecycleJob");
+  reports.push(...(await runAssemblyLifecycleJobs()));
   return reports;
 }

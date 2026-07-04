@@ -124,7 +124,7 @@ export default function GovTenant() {
       {/* Quick links */}
       <section className="px-4 max-w-4xl mx-auto mb-12">
         <div className="grid sm:grid-cols-2 gap-3">
-          <Link href="/community/decisions" className="bg-white/5 hover:bg-white/8 border border-white/10 rounded-2xl p-4 transition-colors">
+          <Link href="/assembly" className="bg-white/5 hover:bg-white/8 border border-white/10 rounded-2xl p-4 transition-colors">
             <div className="flex items-center gap-2 mb-2">
               <Layers className="w-4 h-4 text-[#7dd87d]" />
               <span className="text-white font-bold text-sm">Open decisions</span>

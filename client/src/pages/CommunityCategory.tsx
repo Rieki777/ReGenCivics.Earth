@@ -11,6 +11,7 @@ import { TaoSpinner } from "@/components/TaoSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/BackButton";
+import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -19,6 +20,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
+import { decodeEntities } from "@/utils/sanitize";
 import KnowledgeMapPanel from "@/components/KnowledgeMapPanel";
 
 function timeAgo(date: Date | string): string {
@@ -114,6 +116,16 @@ export default function CommunityCategory() {
   );
   const posts = postsResult?.posts;
 
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const sortMode = (category?.sortMode === 'numerical') ? 'numerical' : 'activity';
+  const utils = trpc.useUtils();
+  const updateCategory = trpc.forum.updateCategory.useMutation({
+    onSuccess: () => { utils.forum.categoryBySlug.invalidate(); utils.forum.posts.invalidate(); },
+  });
+  const setPostSortOrder = trpc.forum.setPostSortOrder.useMutation({
+    onSuccess: () => { utils.forum.posts.invalidate(); },
+  });
+
   const isLoading = catLoading || postsLoading;
 
   // Soft gate for unauthenticated users -- show an inline join prompt instead of hard redirect
@@ -208,7 +220,32 @@ export default function CommunityCategory() {
                 </p>
               )}
             </div>
+            <FollowButton targetType="category" targetId={String(category.id)} targetLabel={category.name} className="flex-shrink-0" />
           </div>
+
+          {/* Admin: choose how this board orders its threads */}
+          {isAdmin && category && (
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-white/60 text-xs" style={{ fontFamily: 'var(--font-body)' }}>Sort threads by:</span>
+              <div className="inline-flex items-center gap-1 bg-[#0d2818]/60 border border-white/15 rounded-full p-0.5">
+                {([['activity', 'Latest activity'], ['numerical', 'Numerical']] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    onClick={() => updateCategory.mutate({ id: category.id, sortMode: mode })}
+                    disabled={updateCategory.isPending}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-50 ${
+                      sortMode === mode ? 'bg-[#7dd87d] text-[#0d2818]' : 'text-white/75 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {sortMode === 'numerical' && (
+                <span className="text-white/40 text-xs">Lower number shows first</span>
+              )}
+            </div>
+          )}
 
           {/* New Thread Button */}
           <div className="mt-4">
@@ -276,6 +313,26 @@ export default function CommunityCategory() {
           <div className="space-y-2">
             {posts.map((post, index) => (
               <AnimatedSection key={post.id} delay={index * 0.03}>
+                <div className="relative">
+                {isAdmin && sortMode === 'numerical' && (
+                  <div
+                    className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-white/95 rounded-lg border border-[#e8e4de] shadow-sm px-1.5 py-1"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  >
+                    <span className="text-[#4a7c59] text-xs font-semibold">#</span>
+                    <input
+                      type="number"
+                      defaultValue={post.sortOrder}
+                      aria-label="Sort position"
+                      onClick={(e) => e.preventDefault()}
+                      onBlur={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        if (!Number.isNaN(v) && v !== post.sortOrder) setPostSortOrder.mutate({ id: post.id, sortOrder: v });
+                      }}
+                      className="w-12 text-sm text-[#1a472a] bg-white border border-[#e8e4de] rounded px-1 py-0.5 focus:outline-none focus:border-[#7dd87d]"
+                    />
+                  </div>
+                )}
                 <Link href={`/community/post/${post.id}`}>
                   <div className="bg-white rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-sm transition-all duration-200 cursor-pointer group">
                     {post.generatedImageUrl && (
@@ -302,7 +359,7 @@ export default function CommunityCategory() {
                             className="font-semibold text-[#1a472a] text-sm md:text-base group-hover:text-[#4a7c59] transition-colors truncate"
                             style={{ fontFamily: 'var(--font-display)' }}
                           >
-                            {post.title}
+                            {decodeEntities(post.title)}
                           </h3>
                         </div>
 
@@ -355,6 +412,7 @@ export default function CommunityCategory() {
                     </div>
                   </div>
                 </Link>
+                </div>
               </AnimatedSection>
             ))}
           </div>

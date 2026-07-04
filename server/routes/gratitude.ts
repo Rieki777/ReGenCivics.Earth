@@ -134,22 +134,22 @@ export const gratitudeRouter = router({
 
       // NOTE: no token credit here. $ReGen flows to recipients at cycle
       // close via the distribution job (closeDueCycles). This is the
-      // economy cutover from the flat 5-per-send model.
+      // economy cutover from the flat 5-per-send model (ADR-30).
 
-      // Notify the recipient, deep-linking to their Gratitude tab.
-      try {
-        const { createUserNotification } = await import("../db");
-        const senderName = (ctx.user as any).name || `@${(ctx.user as any).handle ?? ctx.user.id}`;
-        await createUserNotification({
-          userId: recipient.id,
-          type: "gratitude",
-          title: `${senderName} sent you gratitude`,
-          message: input.message.slice(0, 280),
-          link: insertId ? `/profile?tab=gratitude&highlight=${insertId}` : `/profile?tab=gratitude`,
-        } as any);
-      } catch (err) {
-        console.warn("[gratitude.send] notification failed (non-fatal):", err);
-      }
+      // Fire-and-forget notification via the forum fan-out (dedupeKey makes
+      // retries no-ops). Deep-links to the recipient's Gratitude tab.
+      import("../lib/forum-notify")
+        .then(({ handleGratitudeSent }) =>
+          handleGratitudeSent({
+            gratitudeId: insertId ?? 0,
+            senderId: ctx.user.id,
+            recipientId: recipient.id,
+            message: input.message,
+            sourceType: input.sourceType ?? null,
+            sourceId: input.sourceId ?? null,
+          })
+        )
+        .catch((err) => console.error("[gratitude.send] notify fan-out failed:", err));
 
       const uniqueAfter = budget.uniqueRecipients + 1;
       const vars = await getGratitudeVars();

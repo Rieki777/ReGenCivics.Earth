@@ -381,10 +381,15 @@ function Quest0FlipCard() {
   const [isFlipped, setIsFlipped] = useState(false);
   
   return (
-    <div 
+    <div
       className="relative mb-8 cursor-pointer group"
       style={{ perspective: '1000px' }}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isFlipped}
+      aria-label="Flip card for quest details"
       onClick={() => setIsFlipped(!isFlipped)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsFlipped(!isFlipped); } }}
     >
       <div 
         className="relative transition-transform duration-700 w-full"

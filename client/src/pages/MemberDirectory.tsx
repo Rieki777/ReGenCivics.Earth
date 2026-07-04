@@ -59,6 +59,10 @@ function MemberCard({ member }: MemberCardProps) {
           <img
             src={resolveAssetUrl(member.avatarUrl)}
             alt={member.displayName ?? "Member"}
+            loading="lazy"
+            decoding="async"
+            width={48}
+            height={48}
             style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
           />
         ) : (

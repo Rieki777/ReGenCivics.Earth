@@ -2724,6 +2724,26 @@ html[data-contrast="high"] *:focus-visible {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Notification deep-link landing: pulse the comment the user was
+   brought to (#reply-N). Class is added on scroll-in and removed
+   after 2.5s by CommunityPost. Fades a soft canopy-green wash.
+   ════════════════════════════════════════════════════════════ */
+@keyframes reply-highlight-fade {
+  0% { background-color: rgba(125, 216, 125, 0.35); }
+  60% { background-color: rgba(125, 216, 125, 0.2); }
+  100% { background-color: transparent; }
+}
+.reply-highlight-pulse {
+  animation: reply-highlight-fade 2.5s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reply-highlight-pulse {
+    animation: none;
+    background-color: rgba(125, 216, 125, 0.2);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
    Gratitude tab (GratitudeTab.tsx). Deep-link bloom: when a note is
    opened from a "sent you gratitude" notification it pulses a gold
    ring, then settles into a steady highlight. Reduced motion is
@@ -2741,4 +2761,3 @@ html[data-contrast="high"] *:focus-visible {
   box-shadow: 0 0 0 2px #ffd700, 0 0 26px rgba(255, 215, 0, 0.38), 0 10px 26px rgba(0, 0, 0, 0.28);
   animation: gratitude-bloom-pulse 2.2s ease-out;
 }
-                                                                                       

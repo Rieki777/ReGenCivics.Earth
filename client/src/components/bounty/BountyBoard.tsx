@@ -45,7 +45,7 @@ export function BountyBoard({ emptyState, onCounts }: Props) {
   const claim = trpc.bounties.claimRole.useMutation({
     onMutate: (vars) => setClaimingRoleId(vars.roleId),
     onSuccess: () => {
-      toast.success("Claimed. Find it under your Profile, Call Tasks.");
+      toast.success("Claimed. Find it under your Profile, Tasks.");
       utils.bounties.listBoard.invalidate();
     },
     onError: (e) => toast.error(e.message),

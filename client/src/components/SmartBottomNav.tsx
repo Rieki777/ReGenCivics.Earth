@@ -123,7 +123,7 @@ export default function SmartBottomNav() {
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#ffd700] rounded-full" />
                   )}
                 </div>
-                <span className="text-[10px] font-medium">{slot.label}</span>
+                <span className="text-[11px] font-medium">{slot.label}</span>
               </Link>
             );
           })}
@@ -137,7 +137,7 @@ export default function SmartBottomNav() {
             aria-label={isPlaying ? "Pause music" : "Play music"}
           >
             {isPlaying ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
-            <span className="text-[10px] font-medium truncate max-w-[60px]">{musicLabel}</span>
+            <span className="text-[11px] font-medium truncate max-w-[60px]">{musicLabel}</span>
           </button>
 
           {/* Expand panel slot */}
@@ -150,7 +150,7 @@ export default function SmartBottomNav() {
             aria-label={panelOpen ? "More: close player" : "More: open player"}
           >
             <ChevronUp className={`w-5 h-5 transition-transform duration-200 ${panelOpen ? "rotate-180" : ""}`} />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-[11px] font-medium">More</span>
           </button>
         </div>
       </nav>

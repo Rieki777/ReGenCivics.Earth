@@ -1,0 +1,43 @@
+{
+  "_comment": "Paths the Evolution Engine's builder agent (Rung 3) may NEVER modify, regardless of a proposal's declared scopePaths. Enforced in CI by scripts/check-protected-paths.mjs, which fails-closed. Editing this file is itself a human-only PR (it lives under .github, which is protected). Spec: ASSEMBLY_PAGE_SPEC.md section 7.3.",
+  "protectedGlobs": [
+    "server/_core/**",
+    "server/lib/hypha-bridge/**",
+    "server/lib/evolution.ts",
+    "server/lib/github-governance.ts",
+    "server/webhooks/**",
+    "server/lib/stripe.ts",
+    "server/lib/zeffy.ts",
+    "server/routes/churchDonations.ts",
+    "server/routes/claims.ts",
+    "server/routes/hyphaBridge.ts",
+    ".github/**",
+    "CLAUDE.md",
+    ".ai/**",
+    "docs/GOLDEN_RULE.md",
+    "scripts/audit-truncation.py",
+    "scripts/run-migration.ts",
+    "scripts/check-protected-paths.mjs",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "tsconfig.json",
+    "tsconfig.node.json",
+    "railway.toml",
+    "nixpacks.toml",
+    "drizzle.config.ts",
+    ".env",
+    ".env.example"
+  ],
+  "_tokenComment": "Files carrying token credit/claim/ledger logic. The token model is sacred (STEERING section 5); the machine never writes tokens.",
+  "tokenGuardedGlobs": [
+    "server/db.ts",
+    "server/db/**",
+    "shared/tokens.ts",
+    "server/lib/tokenLedger.ts"
+  ],
+  "_drizzleComment": "Under drizzle/, a NEW migration that only CREATEs tables or ADDs columns or INSERTs seed rows is allowed. Any migration touching existing structure (DROP, ALTER ... MODIFY/CHANGE/DROP, TRUNCATE, RENAME, DELETE, UPDATE of live data) is rejected. Enforced by content scan in the checker.",
+  "drizzleForbiddenKeywords": ["DROP ", "TRUNCATE", "RENAME ", "DELETE FROM", "ALTER TABLE"]
+}

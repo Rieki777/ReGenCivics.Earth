@@ -96,192 +96,80 @@ function HelpTip({ text }: { text?: string | null }) {
   );
 }
 
-/* ─── Plain-language explanations for specific variable keys ─────────────
- * Keyed by the game_variables.key column. When a live variable has an
- * entry here, this copy is used in its HelpTip instead of the terse DB
- * description. Covers the keys most visible in the simulator + gratitude
- * section. Anything not listed falls back to the DB description.
- */
-const VARIABLE_HELP: Record<string, string> = {
-  "scoring.weights.quest_routine": "Points you earn for completing a routine quest. Routine quests are the small, repeatable actions that build a habit of showing up.",
-  "scoring.weights.quest_seasonal": "Points for completing a seasonal rite. These are bigger, once-a-season quests tied to the wheel of the year.",
-  "scoring.weights.quest_epic": "Points for completing an epic quest. These are multi-week, high-effort quests reserved for deep contributors.",
-  "scoring.weights.quest_welcome": "Points for completing a welcome aboard quest. Lower value because they're designed to be easy first wins.",
-  "scoring.weights.forum_post": "Points for writing a forum post. Small per-post value encourages quality over spam.",
-  "scoring.weights.forum_quality_reply": "Bonus points when one of your forum replies gets enough reactions to count as quality.",
-  "scoring.weights.event_attended": "Points for showing up to an event in person or on a call.",
-  "scoring.weights.contribution_base": "The floor value for any logged contribution before quality weighting kicks in.",
-  "scoring.weights.contribution_max": "The ceiling for a single highly-valued contribution.",
-  "scoring.weights.contribution_verified_bonus": "Extra points added on top when an admin verifies that a contribution actually happened.",
-  "scoring.weights.crowdpool_contribution": "Points you earn when you pledge to a crowd-pooling campaign for a land project.",
-  "scoring.weights.referral_signup": "Points you get when someone you invited creates an account.",
-  "scoring.weights.referral_first_quest": "Bonus points when your referral completes their first quest. Rewards actually onboarding people, not just signups.",
-  "scoring.weights.endorsement_from_project": "Points you receive when a land project endorses you. Worth more than a player endorsement because projects are rarer.",
-  "scoring.weights.endorsement_from_player": "Points you receive when another player endorses you.",
-  "scoring.weights.endorsement_given": "Small points for giving an endorsement. Kept low so endorsements stay meaningful.",
-  "scoring.weights.lunar_streak": "Points added per week when you keep engaging consistently. Compounds over the season.",
-  "scoring.weights.gratitude_received": "Points you earn for every gratitude token sent to you.",
-  "scoring.weights.gratitude_sent": "Small points for sending gratitude. Kept low so you can't farm score by spamming gratitude.",
-  "scoring.weights.flag_validated_penalty": "Points deducted if you're flagged and the flag is confirmed. Negative to discourage bad behavior.",
-  "scoring.weights.cascading_endorsement_penalty": "Small penalty if you endorsed someone who later gets flagged. Makes endorsements feel weighty.",
-
-  "trust.multiplier.min": "The lowest trust multiplier possible. A new player with zero endorsements sits near here.",
-  "trust.multiplier.max": "The highest trust multiplier possible. Long-time Stewards and Sages with lots of endorsements sit near here.",
-  "trust.multiplier.default": "The trust multiplier new players start with before any endorsements.",
-  "trust.endorsement_project_weight": "How much each project endorsement moves your trust score. Projects matter more than individual players.",
-  "trust.endorsement_player_weight": "How much each player endorsement moves your trust score.",
-  "trust.account_age_weight": "Trust bonus per completed season. Rewards people who stick around.",
-  "trust.flag_penalty_weight": "Trust loss per confirmed flag against you.",
-  "trust.endorsements_for_max": "How many weighted endorsements you need to reach the maximum trust multiplier.",
-  "trust.composting_rate": "Percentage of your trust score that composts away each season if you're inactive. Keeps trust current, not historical.",
-
-  "composting.decay_rate": "The percentage of your raw score that composts back to the pool each season. Keeps the game fresh by rewarding current effort over past glory.",
-  "composting.minimum_floor": "Your score never composts below this floor. Protects long-time players from losing everything during a quiet season.",
-  "composting.is_active": "Whether seasonal composting is turned on right now. Off in early seasons while the game is still calibrating.",
-
-  "harvest.pool_size": "The total $ReGen distributed as Harvest at the end of each season. Players get a share based on their contribution percentile.",
-  "harvest.is_active": "Whether seasonal Harvest distribution is turned on. Off until the game has enough players, orgs, and land projects.",
-  "harvest.min_score_percentile": "Players below this percentile get zero Harvest. Prevents dust-level payouts and rewards meaningful contribution.",
-  "harvest.distribution_curve": "Higher values concentrate Harvest at the top. Lower values flatten the curve.",
-  "harvest.split.contributors": "Share of the Harvest pool that goes to individual player contributors.",
-  "harvest.split.bffs": "Share of the Harvest pool that goes to Bioregional Financing Facilities.",
-  "harvest.split.orgs": "Share of the Harvest pool that goes to alliance organisations.",
-  "harvest.split.treasury": "Share of the Harvest pool retained in the treasury for ongoing work.",
-
-  "gratitude.budget_base": "Your starting gratitude budget per cycle. Multiplied by your citizenship tier, then boosted by streaks.",
-  "gratitude.budget_per_percentile": "Extra gratitude you get per percentile point of contribution. Rewards top contributors with more voice.",
-  "gratitude.max_budget": "The absolute ceiling on gratitude you can have in a single cycle.",
-  "gratitude.message_max_chars": "Character limit on the message you attach to a gratitude send. Short because gratitude is supposed to feel quick.",
-  "gratitude.multiplier.explorer": "How much weight an Explorer's gratitude carries when distributing the $ReGen pool.",
-  "gratitude.multiplier.co_creator": "How much weight a Co-Creator's gratitude carries.",
-  "gratitude.multiplier.steward": "How much weight a Steward's gratitude carries.",
-  "gratitude.multiplier.sage": "How much weight a Sage's gratitude carries. Sages have the most influence on where $ReGen flows.",
-  "gratitude.trust_graph.received_weight": "How much each gratitude you've received adds to your trust multiplier in the gratitude graph.",
-  "gratitude.trust_graph.max_bonus": "The maximum bonus you can earn from the gratitude trust graph. Caps the snowball effect.",
-
-  "citizenship.co_creator.min_percentile": "Contribution percentile you need to reach Co-Creator.",
-  "citizenship.co_creator.min_fire_quest": "Whether you must complete the Fire quest to reach Co-Creator.",
-  "citizenship.co_creator.min_rites": "Seasonal rites you need to complete to reach Co-Creator.",
-  "citizenship.co_creator.min_gratitude_sent": "Gratitude tokens you need to have sent to reach Co-Creator.",
-  "citizenship.co_creator.min_seasons": "Seasons of activity needed to reach Co-Creator.",
-  "citizenship.steward.min_percentile": "Contribution percentile needed to reach Steward.",
-  "citizenship.steward.min_epic_quests": "Epic quests you need to complete to reach Steward.",
-  "citizenship.steward.min_endorsements_project": "Project endorsements needed to reach Steward.",
-  "citizenship.steward.min_gratitude_received": "Gratitude you need to have received from others to reach Steward.",
-  "citizenship.steward.min_seasons": "Seasons of activity needed to reach Steward.",
-  "citizenship.sage.min_percentile": "Contribution percentile needed to reach Sage.",
-  "citizenship.sage.min_seasons": "Seasons of activity needed to reach Sage. Sage is a long-game tier.",
-  "citizenship.sage.min_contributions": "Total verified contributions needed to reach Sage.",
-  "citizenship.sage.min_endorsements_total": "Total endorsements received needed to reach Sage.",
-  "citizenship.grace_period_days": "Days you have to re-qualify before you're demoted. Protects you from losing a tier on a quiet week.",
-  "citizenship.gratitude_budget.explorer": "Gratitude tokens an Explorer gets per season.",
-  "citizenship.gratitude_budget.co_creator": "Gratitude tokens a Co-Creator gets per season.",
-  "citizenship.gratitude_budget.steward": "Gratitude tokens a Steward gets per season.",
-  "citizenship.gratitude_budget.sage": "Gratitude tokens a Sage gets per season.",
-
-  "projects.status.active_endorsements": "Player endorsements a land project needs to move into Active status.",
-  "projects.status.active_contributions": "Logged contributions a land project needs to move into Active status.",
-  "projects.status.established_endorsements": "Endorsements needed for Established status.",
-  "projects.status.established_campaigns": "Funded crowd-pooling campaigns needed for Established status.",
-  "projects.status.anchor_endorsements": "Endorsements needed for Anchor status. Anchors are the cornerstone land projects of the network.",
-  "projects.status.anchor_seasons": "Seasons of continuous activity needed for Anchor status.",
-
-  "forum.vote_weight_min": "Lowest forum vote weight. A brand new player's vote carries this much.",
-  "forum.vote_weight_max": "Highest forum vote weight. A Guardian's vote carries this much.",
-  "forum.quality_reply_min_reactions": "Reactions a forum reply needs to count as quality and earn bonus points.",
-
-  "quests.tier_steward_min": "Contribution percentile required to access Steward-tier quests.",
-  "quests.tier_elder_min": "Contribution percentile required to access Elder-tier quests.",
-  "quests.tier_guardian_min": "Contribution percentile required to access Guardian-tier quests.",
-  "quests.require_rites_complete": "Whether all Rites of Passage must be complete before tier quests become available.",
-
-  "governance.council_seats": "Seats on the seasonal council each season.",
-  "governance.council_min_score": "Minimum contribution percentile needed to qualify for the council.",
-  "governance.council_require_rites": "Whether council members must have completed the Rites.",
-  "governance.cocreator_threshold_percentile": "Top contribution percentile eligible for a Co-Creator invite.",
-
-  "referral.reward.signup": "$ReGen you earn when someone you invited creates an account.",
-  "referral.reward.first_quest": "$ReGen you earn when your referral completes their first quest.",
-  "referral.reward.seasonal_rite": "$ReGen you earn when your referral completes a seasonal rite.",
-  "referral.reward.crowdpooling": "$ReGen you earn when your referral contributes to a crowd-pooling campaign.",
-  "referral.reward.second_degree": "$ReGen you earn from the activity of people your referrals invited.",
-  "referral.max_rewards_per_month": "Cap on total referral rewards per user per month. Prevents referral farming.",
-  "referral.max_second_degree_per_month": "Cap on second-degree referral rewards per month.",
-
-  "proposals.signal_threshold": "Upvotes a proposal needs before it graduates from the community forum to Hypha governance.",
-
-  // Governance Mechanics (added 2026-04-09)
-  "governance.vote_weight.visitor": "How much a Visitor's stance counts in a governance decision. Visitors are still finding their footing, so their vote carries the base weight.",
-  "governance.vote_weight.citizen": "How much a Citizen's stance counts. Citizens have rooted in and carry a slightly stronger voice.",
-  "governance.vote_weight.contributor": "How much a Contributor's stance counts. Contributors are actively running quests and holding work.",
-  "governance.vote_weight.steward": "How much a Steward's stance counts. Stewards are the elders of the community and hold the most governance weight.",
-  "governance.promotion.min_thread_age_hours": "Hours a forum thread must exist before anyone can promote it to a formal decision. Gives ideas time to breathe.",
-  "governance.promotion.min_unique_voices": "Distinct citizens who must have replied in a thread before it can be promoted. Prevents one person railroading a decision.",
-  "governance.promotion.cosigner_window_hours": "Hours for a second citizen to co-sign a promotion. Dual-key promotion so decisions do not start alone.",
-  "governance.promotion.heat_score_threshold": "Composite heat score at which the green Ready-to-promote button lights up on a forum thread.",
-  "governance.default_decision_window_days": "Default days a new decision stays open for voting before it auto-closes.",
-  "governance.reflection_window_hours": "Hours after a decision opens during which people can read and discuss but not yet vote. A pause so the loudest voice does not set the tone.",
-  "governance.closing_soon_window_hours": "How many hours before close a decision gets marked closing soon so people can catch up before the window shuts.",
-  "governance.snapshot_window_hours": "Hours for a snapshot-mode urgent decision. Requires a Steward sign-off and is reserved for true emergencies.",
-  "governance.default_sunset_days": "Default days before a decision sunsets if nobody renews it. Keeps the rulebook fresh and reversible.",
-  "governance.sunset_renewal_warning_days": "Days before a sunset date that a renewal thread auto-creates in the forum so the decision can be re-examined.",
-  "governance.one_way_door_min_window_hours": "Minimum voting window in hours for one-way-door decisions. Hard to reverse moves get extra time.",
-  "governance.storyteller_threshold_tokens": "Internal token value above which a decision auto-assigns a storyteller to write its narrative for the weekly roundup.",
-  "governance.storyteller_narrative_min_words": "Minimum word count for a storyteller narrative to publish.",
-  "governance.storyteller_narrative_max_words": "Maximum word count for a storyteller narrative. Keeps stories tight.",
-  "governance.premortem.auto_create_delay_hours": "Hours after a main decision opens before the pre-mortem sub-poll auto-creates. Pre-mortems ask: if this fails, why?",
-  "governance.premortem.top_concerns_to_address": "Number of top-agreed concerns the proposer must respond to before a decision closes.",
-  "governance.claim_threshold_tokens": "Internal token balance a player must reach before they can claim to Hypha on Base. Batches small wins into meaningful on-chain moves.",
-  "governance.claim_bundle_max_items": "Maximum internal ledger entries bundled into a single Hypha claim proposal. Keeps proposals readable.",
-  "governance.claim_cooldown_days": "Days a player must wait between successful Hypha claims. Smooths on-chain traffic.",
-  "governance.delegation_max_hops": "Maximum transitive hops for proxy delegation. If A delegates to B and B to C, the vote stops flowing after this many hops.",
-  "governance.delegation_is_active": "Whether proxy delegation is turned on right now. Starts off so the community gets used to direct voting first.",
-  "governance.guide.proactive_posts_per_week": "Maximum proactive ReGen Guide posts per tenant per week. Rate limit so the Guide stays in service of the community.",
-  "governance.guide.devil_advocate_unanimity_pct": "Percentage of unanimous agreement at which the ReGen Guide chimes in with a devil-advocate perspective so group-think does not close a decision.",
-  "governance.guide.is_active": "Whether the ReGen Guide can post and comment in governance contexts at all.",
-  "governance.load.warning_threshold": "Rolling 30-day decision count above which the community load bar turns yellow. Signals the community is getting busy.",
-  "governance.load.critical_threshold": "Rolling 30-day decision count above which the load bar turns red and suggests a pause. Prevents governance burnout.",
-  "governance.backfield.review_cadence_days": "Days between Steward reviews of the Back Field backlog. The Back Field is an agricultural metaphor for fallow ideas resting until they are ready.",
-
-  // Bounty valuation (added 2026-07-01)
-  "bounty.tier.trivial.base": "Base $ReGen for a trivial bounty, a quick favor. The valuation starts here and is raised or lowered by impact and demand.",
-  "bounty.tier.small.base": "Base $ReGen for a small bounty, one clear deliverable.",
-  "bounty.tier.medium.base": "Base $ReGen for a medium bounty, a real piece of work.",
-  "bounty.tier.large.base": "Base $ReGen for a large bounty, a substantial build.",
-  "bounty.impact.low": "Multiplier for internal polish or nice-to-have work. Below 1, so it lowers the reward.",
-  "bounty.impact.normal": "Multiplier for work that moves the movement forward. Most work lands here.",
-  "bounty.impact.high": "Multiplier when work directly serves a land project, unblocks a season, or heals a real relationship or system.",
-  "bounty.priority.boost": "The nudge a specific hard-to-fill bounty gets to attract someone. Applies only when the bounty is flagged hard to fill.",
-  "bounty.anchor.weight": "How strongly a reward is pulled toward what similar work has actually paid. Zero ignores precedent, one matches it.",
-  "bounty.learning.window_days": "How far back the engine looks when it learns precedent and demand.",
-  "bounty.learning.unclaimed_days": "How long a bounty sits open before it counts as an unclaimed signal that the reward may be too low.",
-  "bounty.learning.raise_sensitivity": "How boldly the reward rises when a kind of bounty keeps going unclaimed. This is the bolder nudge, because work going undone is the worst outcome.",
-  "bounty.learning.lower_sensitivity": "How gently the reward falls when bounties are claimed instantly. Kept small, because a fast claim often just means good work.",
-  "bounty.learning.factor_min": "The lowest the learned demand factor can go.",
-  "bounty.learning.factor_max": "The highest the learned demand factor can go.",
-  "bounty.max": "A safety ceiling in $ReGen on any single bounty, whatever the factors work out to.",
-  "bounty.round_to": "Rewards round to clean multiples of this many $ReGen.",
-  "bounty.proposal_fraction": "Fraction of the delivery amount paid to the proposer when the work is delivered.",
-  "bounty.season_budget": "An optional cap on total $ReGen issued through bounties per season. Zero means no cap.",
-  "bounty.settlement_hold_hours": "Hours before bounty tokens become claimable to Base, one moon cycle by default.",
-  "bounty.large_tier_min": "Minimum citizenship tier to take on large bounties.",
-  "bounty.tier.trivial.delivery": "Legacy flat delivery amount for a trivial bounty. Superseded by the valuation engine, kept for older code paths.",
-  "bounty.tier.small.delivery": "Legacy flat delivery amount for a small bounty. Superseded by the valuation engine.",
-  "bounty.tier.medium.delivery": "Legacy flat delivery amount for a medium bounty. Superseded by the valuation engine.",
-  "bounty.tier.large.delivery": "Legacy flat delivery amount for a large bounty. Superseded by the valuation engine.",
-};
-
 /* ─── Types ──────────────────────────────────────────────────────────── */
 
 interface GameVariable {
   id: number;
   category: string;
-  subcategory?: string;
+  subcategory?: string | null;
   key: string;
   displayName: string;
-  description?: string;
-  value: number;
+  description?: string | null;
+  /** DECIMAL columns arrive from MySQL as strings, e.g. "1000.000000". */
+  value: number | string;
   valueType: string;
+  unit?: string | null;
+  minValue?: number | string | null;
+  maxValue?: number | string | null;
+}
+
+/* ─── Live game variables (shared) ────────────────────────────────────
+ * Every variable value, bound, and description on this page renders from
+ * game_variables via trpc.game.listVariables. This hook returns the rows
+ * as a Map keyed by variable key; the helpers below it are the only way
+ * the simulators and reference sections read values. Numeric literals in
+ * this file are fallbacks used while the query is in flight or when a row
+ * is missing.
+ */
+
+function useGameVariables(): Map<string, GameVariable> {
+  const { data: allVars = [] } = trpc.game.listVariables.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  return useMemo(() => {
+    const map = new Map<string, GameVariable>();
+    for (const v of allVars as GameVariable[]) map.set(v.key, v);
+    return map;
+  }, [allVars]);
+}
+
+/** Numeric value of a variable, with a fallback while the query loads. */
+function varNum(vars: Map<string, GameVariable>, key: string, fallback: number): number {
+  const raw = vars.get(key)?.value;
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/** Slider bounds from minValue/maxValue, with literal fallbacks. */
+function varBounds(
+  vars: Map<string, GameVariable>,
+  key: string,
+  fallbackMin: number,
+  fallbackMax: number,
+): { min: number; max: number } {
+  const row = vars.get(key);
+  const min = row?.minValue == null ? NaN : Number(row.minValue);
+  const max = row?.maxValue == null ? NaN : Number(row.maxValue);
+  return {
+    min: Number.isFinite(min) ? min : fallbackMin,
+    max: Number.isFinite(max) ? max : fallbackMax,
+  };
+}
+
+/** DB description for a variable's HelpTip. */
+function varHelp(vars: Map<string, GameVariable>, key: string): string | undefined {
+  return vars.get(key)?.description ?? undefined;
+}
+
+/** Percent display: fraction rows (0.05) and point rows (5) both read "5". */
+function asPercent(n: number): number {
+  const scaled = Math.abs(n) <= 1 ? n * 100 : n;
+  return Math.round(scaled * 100) / 100;
+}
+
+/** Fraction form for sim math: point rows (15) become 0.15, fractions pass through. */
+function asFraction(n: number): number {
+  return Math.abs(n) > 1 ? n / 100 : n;
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
@@ -333,7 +221,7 @@ function categoryIcon(category: string) {
   }
 }
 
-/* ─── Simulator Defaults ─────────────────────────────────────────────── */
+/* ─── Simulator state ────────────────────────────────────────────────── */
 
 interface SimState {
   questWeight: number;
@@ -349,21 +237,25 @@ interface SimState {
   claimThreshold: number;
 }
 
-const SIM_DEFAULTS: SimState = {
-  questWeight: 10,
-  forumWeight: 5,
-  trustMultiplierMin: 1.0,
-  trustMultiplierMax: 3.0,
-  compostingDecay: 0.15,
-  harvestPoolSize: 50000,
-  gratitudeBudget: 100,
-  gratitudeRecipients: 10,
-  streakCycles: 0,
-  regenDistributionPool: 10000,
-  // Matches the live governance.claim_threshold_regen game variable. The
-  // simulator sliders let visitors model other values from here.
-  claimThreshold: 1000,
-};
+/** Simulator state before live variables arrive. Values here are only a
+ * first-paint placeholder; the baseline itself comes from game_variables
+ * (see GameSimulator). gratitudeRecipients and streakCycles are simulation
+ * scenario inputs, not game variables, so they stay literal. */
+function initialSimState(): SimState {
+  return {
+    questWeight: 10,
+    forumWeight: 5,
+    trustMultiplierMin: 1.0,
+    trustMultiplierMax: 3.0,
+    compostingDecay: 0.15,
+    harvestPoolSize: 50000,
+    gratitudeBudget: 100,
+    gratitudeRecipients: 10,
+    streakCycles: 0,
+    regenDistributionPool: 10000,
+    claimThreshold: 1000,
+  };
+}
 
 /* ─── Section A: Live Variables Dashboard ──────────────────────────────
  * Read-only view for all visitors. Super admins (rieki.cordon@gmail.com)
@@ -507,7 +399,7 @@ function LiveVariablesDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {vars.map((v) => {
-                    const helpText = VARIABLE_HELP[v.key] ?? v.description ?? "";
+                    const helpText = v.description ?? "";
                     const isEditing = editingId === v.id;
                     return (
                       <div
@@ -529,7 +421,7 @@ function LiveVariablesDashboard() {
                           <div className="flex items-center gap-2 shrink-0">
                             {!isEditing && (
                               <span className="text-sm font-mono text-[#7dd87d]">
-                                {formatValue(v.value, v.valueType)}
+                                {formatValue(Number(v.value), v.valueType)}
                               </span>
                             )}
                             <Badge
@@ -690,20 +582,55 @@ function SliderRow({ label, value, min, max, step, unit, help, onChange, traject
 type HistoryEntry = { label: string; state: SimState; at: number };
 
 function GameSimulator() {
+  // Live variables drive the baseline. The literals inside varNum calls are
+  // fallbacks for while the query is in flight or if a row is missing.
+  const vars = useGameVariables();
+
+  const baseline = useMemo<SimState>(
+    () => ({
+      questWeight: varNum(vars, "scoring.weights.quest_routine", 10),
+      forumWeight: varNum(vars, "scoring.weights.forum_post", 5),
+      trustMultiplierMin: varNum(vars, "trust.multiplier.min", 1.0),
+      trustMultiplierMax: varNum(vars, "trust.multiplier.max", 3.0),
+      // Sim math works in fractions; percentage rows may store points (15 = 15%).
+      compostingDecay: asFraction(varNum(vars, "composting.decay_rate", 0.15)),
+      harvestPoolSize: varNum(vars, "harvest.pool_size", 50000),
+      gratitudeBudget: varNum(vars, "gratitude.budget_base", 100),
+      // Simulation scenario inputs, not game variables.
+      gratitudeRecipients: 10,
+      streakCycles: 0,
+      regenDistributionPool: varNum(vars, "gratitude.pool_per_cycle", 10000),
+      claimThreshold: varNum(vars, "governance.claim_threshold_regen", 1000),
+    }),
+    [vars],
+  );
+
   // Initial state can be loaded from URL hash (Permalinks, MEGA 5.6).
   const [sim, setSim] = useState<SimState>(() => {
-    if (typeof window === "undefined") return SIM_DEFAULTS;
+    const base = initialSimState();
+    if (typeof window === "undefined") return base;
     const hash = window.location.hash;
     if (hash.startsWith("#v1:")) {
       try {
         const decoded = JSON.parse(atob(hash.slice(4))) as Partial<SimState>;
-        return { ...SIM_DEFAULTS, ...decoded };
+        return { ...base, ...decoded };
       } catch { /* ignore bad hash */ }
     }
-    return SIM_DEFAULTS;
+    return base;
   });
-  const baseline = SIM_DEFAULTS;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  // Re-seed untouched state with the live baseline once variables arrive.
+  // Skipped when the visitor already moved a slider or came in through a
+  // permalink hash, so their edits never get clobbered.
+  const [seededFromDb, setSeededFromDb] = useState(false);
+  useEffect(() => {
+    if (seededFromDb || vars.size === 0) return;
+    setSeededFromDb(true);
+    const hasHash =
+      typeof window !== "undefined" && window.location.hash.startsWith("#v1:");
+    if (history.length === 0 && !hasHash) setSim(baseline);
+  }, [seededFromDb, vars, baseline, history.length]);
   const [showHistory, setShowHistory] = useState(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
@@ -979,10 +906,9 @@ function GameSimulator() {
         <CardContent className="space-y-6">
           <SliderRow
             label="Quest Points (per quest)"
-            help="How many points you earn each time you complete a routine quest. Drag this up to see how a more generous scoring rule changes your end-of-season Harvest."
+            help={varHelp(vars, "scoring.weights.quest_routine")}
             value={sim.questWeight}
-            min={1}
-            max={50}
+            {...varBounds(vars, "scoring.weights.quest_routine", 1, 50)}
             step={1}
             onChange={update("questWeight")}
             trajectory={trajectories.questWeight}
@@ -992,10 +918,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Forum Points (per post)"
-            help="How many points you earn for each forum post. Kept lower than quests because posting is easier than completing a quest."
+            help={varHelp(vars, "scoring.weights.forum_post")}
             value={sim.forumWeight}
-            min={1}
-            max={30}
+            {...varBounds(vars, "scoring.weights.forum_post", 1, 30)}
             step={1}
             onChange={update("forumWeight")}
             trajectory={trajectories.forumWeight}
@@ -1005,10 +930,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Trust Multiplier (min)"
-            help="The lowest trust multiplier in the game. A brand-new Explorer with no endorsements sits near here. Your raw score gets multiplied by your trust multiplier to get your boosted score."
+            help={varHelp(vars, "trust.multiplier.min")}
             value={sim.trustMultiplierMin}
-            min={0.5}
-            max={2.0}
+            {...varBounds(vars, "trust.multiplier.min", 0.5, 2.0)}
             step={0.1}
             unit="x"
             onChange={update("trustMultiplierMin")}
@@ -1019,10 +943,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Trust Multiplier (max)"
-            help="The highest trust multiplier in the game. Long-time Stewards and Sages with lots of endorsements sit near here. A 3x multiplier triples your raw score."
+            help={varHelp(vars, "trust.multiplier.max")}
             value={sim.trustMultiplierMax}
-            min={1.0}
-            max={5.0}
+            {...varBounds(vars, "trust.multiplier.max", 1.0, 5.0)}
             step={0.1}
             unit="x"
             onChange={update("trustMultiplierMax")}
@@ -1033,10 +956,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Composting Decay Rate"
-            help="The percentage of last season's score that composts back to the pool each new season. Keeps the game fresh so current effort matters more than past glory. Zero = nothing decays."
+            help={varHelp(vars, "composting.decay_rate")}
             value={sim.compostingDecay}
-            min={0}
-            max={0.5}
+            {...varBounds(vars, "composting.decay_rate", 0, 0.5)}
             step={0.01}
             unit="%"
             onChange={update("compostingDecay")}
@@ -1047,10 +969,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Harvest Pool Size"
-            help="The total $ReGen distributed at the end of each season. Your share depends on your contribution percentile and the distribution curve."
+            help={varHelp(vars, "harvest.pool_size")}
             value={sim.harvestPoolSize}
-            min={10000}
-            max={200000}
+            {...varBounds(vars, "harvest.pool_size", 10000, 200000)}
             step={5000}
             unit="$"
             onChange={update("harvestPoolSize")}
@@ -1061,10 +982,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Gratitude Base Budget (per cycle)"
-            help="Your starting gratitude budget each lunar cycle, before any tier multiplier or streak bonus. This is what everyone begins with."
+            help={varHelp(vars, "gratitude.budget_base")}
             value={sim.gratitudeBudget}
-            min={50}
-            max={200}
+            {...varBounds(vars, "gratitude.budget_base", 50, 200)}
             step={10}
             onChange={update("gratitudeBudget")}
             trajectory={trajectories.gratitudeBudget}
@@ -1100,10 +1020,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="$ReGen Distribution Pool (per cycle)"
-            help="The pool of $ReGen tokens distributed each gratitude cycle. Split proportionally among everyone who received gratitude, weighted by sender tier."
+            help={varHelp(vars, "gratitude.pool_per_cycle")}
             value={sim.regenDistributionPool}
-            min={1000}
-            max={50000}
+            {...varBounds(vars, "gratitude.pool_per_cycle", 1000, 50000)}
             step={1000}
             unit="$"
             onChange={update("regenDistributionPool")}
@@ -1114,10 +1033,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="$ReGen Claim Threshold"
-            help="How much $ReGen you need to accumulate before you can claim it on Hypha. Prevents tiny dust claims from clogging the system. Lower = easier to claim, higher = more meaningful claims."
+            help={varHelp(vars, "governance.claim_threshold_regen")}
             value={sim.claimThreshold}
-            min={100}
-            max={1000}
+            {...varBounds(vars, "governance.claim_threshold_regen", 100, 1000)}
             step={50}
             onChange={update("claimThreshold")}
             trajectory={trajectories.claimThreshold}
@@ -1170,7 +1088,7 @@ function GameSimulator() {
 
       {/* Export as Proposal */}
       <div className="text-center">
-        <Link href={`/proposals?${proposalParams.toString()}`}>
+        <Link href={`/assembly?${proposalParams.toString()}`}>
           <Button
             size="lg"
             className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] font-bold px-8 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all"
@@ -1267,8 +1185,22 @@ function MiniSectionSimulator({
     [variables],
   );
   const [state, setState] = useState<Record<string, number>>(initial);
+  const [dirty, setDirty] = useState(false);
   const [rationale, setRationale] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Baselines come from live game variables and arrive async. Until the
+  // visitor drags a slider, keep the mini-sim synced to the fresh baseline
+  // so a loaded value never reads as a proposed change.
+  useEffect(() => {
+    if (dirty) return;
+    setState((prev) => {
+      const same = variables.every((v) => prev[v.key] === v.baseline);
+      return same
+        ? prev
+        : (Object.fromEntries(variables.map((v) => [v.key, v.baseline])) as Record<string, number>);
+    });
+  }, [variables, dirty]);
 
   const changedKeys = useMemo(
     () => variables.filter((v) => state[v.key] !== v.baseline),
@@ -1277,6 +1209,7 @@ function MiniSectionSimulator({
 
   const resetAll = useCallback(() => {
     setState(initial);
+    setDirty(false);
     setRationale("");
   }, [initial]);
 
@@ -1366,7 +1299,10 @@ function MiniSectionSimulator({
                 min={v.min}
                 max={v.max}
                 step={v.step}
-                onValueChange={([val]) => setState((s) => ({ ...s, [v.key]: val }))}
+                onValueChange={([val]) => {
+                  setDirty(true);
+                  setState((s) => ({ ...s, [v.key]: val }));
+                }}
               />
               {v.describe && (
                 <p className="text-[11px] text-white/70 mt-1">{v.describe(current)}</p>
@@ -1409,7 +1345,7 @@ function MiniSectionSimulator({
           Copy proposed changes
         </Button>
         {copied && <span className="text-[11px] text-[#7dd87d]">Copied</span>}
-        <Link href="/proposals?category=game_variable" className="ml-auto">
+        <Link href="/assembly?category=game_variable" className="ml-auto">
           <Button size="sm" variant="ghost" className="text-white/60 hover:text-white/90 text-xs">
             Open proposal form
             <ArrowRight className="w-3 h-3 ml-1" />
@@ -1535,7 +1471,7 @@ function BountyValuationSection() {
             <div key={v.key} className="flex items-center justify-between gap-2 rounded-md bg-white/5 px-3 py-2">
               <span className="flex items-center gap-1.5 text-white/70 text-sm min-w-0">
                 <span className="truncate">{v.displayName || v.key}</span>
-                <HelpTip text={VARIABLE_HELP[v.key] ?? v.description} />
+                <HelpTip text={v.description ?? ""} />
               </span>
               <span className="text-[#7dd87d] font-mono text-sm shrink-0">{formatValue(Number(v.value), v.valueType)}</span>
             </div>
@@ -1551,7 +1487,7 @@ function BountyValuationSection() {
           rose. Precedent is the median of what similar work has actually paid.
         </p>
         {demandFactors.length === 0 ? (
-          <p className="text-white/40 text-sm italic">No learned factors yet. The engine starts everything at 1.0x and calibrates as bounties are claimed and completed.</p>
+          <p className="text-white/70 text-sm italic">No learned factors yet. The engine starts everything at 1.0x and calibrates as bounties are claimed and completed.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1664,6 +1600,9 @@ export default function GameMechanics() {
   // Live figures from the engine (game_variables). Rendered into the tier and
   // gratitude copy below so these pages never drift from the real values.
   const { mechanics: m } = useGameMechanics();
+  // Live variable rows keyed by variable key. Feeds the reference rows and
+  // mini-simulators below; literals passed alongside are load-time fallbacks.
+  const vars = useGameVariables();
   const tiers = m?.citizenship.tiers;
   const fmtX = (n: number | undefined, fallback: string) =>
     n == null ? fallback : `${n}x`;
@@ -1854,41 +1793,37 @@ export default function GameMechanics() {
                     key: "citizenship.co_creator.min_percentile",
                     label: "Co-Creator percentile threshold",
                     unit: "th",
-                    min: 10,
-                    max: 40,
+                    ...varBounds(vars, "citizenship.co_creator.min_percentile", 10, 40),
                     step: 1,
-                    baseline: 15,
-                    help: "Contribution percentile needed to reach Co-Creator. Lower = easier to promote new members.",
+                    baseline: varNum(vars, "citizenship.co_creator.min_percentile", 15),
+                    help: varHelp(vars, "citizenship.co_creator.min_percentile"),
                   },
                   {
                     key: "citizenship.steward.min_percentile",
                     label: "Steward percentile threshold",
                     unit: "th",
-                    min: 40,
-                    max: 70,
+                    ...varBounds(vars, "citizenship.steward.min_percentile", 40, 70),
                     step: 1,
-                    baseline: 50,
-                    help: "Contribution percentile needed to reach Steward. Higher = rarer, more weighted.",
+                    baseline: varNum(vars, "citizenship.steward.min_percentile", 50),
+                    help: varHelp(vars, "citizenship.steward.min_percentile"),
                   },
                   {
                     key: "citizenship.sage.min_percentile",
                     label: "Sage percentile threshold",
                     unit: "th",
-                    min: 70,
-                    max: 95,
+                    ...varBounds(vars, "citizenship.sage.min_percentile", 70, 95),
                     step: 1,
-                    baseline: 80,
-                    help: "Contribution percentile needed to reach Sage. Sage is the long-game tier.",
+                    baseline: varNum(vars, "citizenship.sage.min_percentile", 80),
+                    help: varHelp(vars, "citizenship.sage.min_percentile"),
                   },
                   {
                     key: "citizenship.grace_period_days",
                     label: "Demotion grace period",
                     unit: " days",
-                    min: 7,
-                    max: 90,
+                    ...varBounds(vars, "citizenship.grace_period_days", 7, 90),
                     step: 1,
-                    baseline: 30,
-                    help: "How long after falling below a threshold before you're demoted.",
+                    baseline: varNum(vars, "citizenship.grace_period_days", 30),
+                    help: varHelp(vars, "citizenship.grace_period_days"),
                   },
                 ]}
                 summary={(s) => {
@@ -1930,30 +1865,27 @@ export default function GameMechanics() {
                     {
                       key: "scoring.weights.quest_routine",
                       label: "Routine quest points",
-                      min: 1,
-                      max: 25,
+                      ...varBounds(vars, "scoring.weights.quest_routine", 1, 25),
                       step: 1,
-                      baseline: 10,
-                      help: "Points earned per routine quest. Raising this rewards frequent small actions.",
+                      baseline: varNum(vars, "scoring.weights.quest_routine", 10),
+                      help: varHelp(vars, "scoring.weights.quest_routine"),
                     },
                     {
                       key: "scoring.weights.forum_post",
                       label: "Forum post points",
-                      min: 1,
-                      max: 15,
+                      ...varBounds(vars, "scoring.weights.forum_post", 1, 15),
                       step: 1,
-                      baseline: 5,
-                      help: "Points per forum post. Lower than quests to avoid rewarding spam.",
+                      baseline: varNum(vars, "scoring.weights.forum_post", 5),
+                      help: varHelp(vars, "scoring.weights.forum_post"),
                     },
                     {
                       key: "trust.multiplier.max",
                       label: "Max trust multiplier",
                       unit: "x",
-                      min: 1.5,
-                      max: 5.0,
+                      ...varBounds(vars, "trust.multiplier.max", 1.5, 5.0),
                       step: 0.1,
-                      baseline: 3.0,
-                      help: "Ceiling for long-time Sages. Higher values widen the gap between Explorers and Sages.",
+                      baseline: varNum(vars, "trust.multiplier.max", 3.0),
+                      help: varHelp(vars, "trust.multiplier.max"),
                     },
                   ]}
                   summary={(s) => {
@@ -2049,9 +1981,9 @@ export default function GameMechanics() {
                   />
                   <GratVarRow
                     label="Base Budget"
-                    value="100"
+                    value={varNum(vars, "gratitude.budget_base", 100).toLocaleString()}
                     detail="Same for all tiers"
-                    help="Everyone starts every cycle with 100 base budget, regardless of tier. Your tier multiplier is applied on top of this."
+                    help={varHelp(vars, "gratitude.budget_base")}
                   />
                   <GratVarRow
                     label="Full-Power Threshold"
@@ -2115,9 +2047,9 @@ export default function GameMechanics() {
                 <CardContent className="space-y-3">
                   <GratVarRow
                     label="Pool per Cycle"
-                    value="10,000 $ReGen"
+                    value={`${varNum(vars, "gratitude.pool_per_cycle", 10000).toLocaleString()} ${vars.get("gratitude.pool_per_cycle")?.unit ?? "$ReGen"}`}
                     detail="Split by gratitude received"
-                    help="Every cycle, 10,000 $ReGen is released and split among everyone who received gratitude. Your share depends on how much gratitude you got and who it came from."
+                    help={varHelp(vars, "gratitude.pool_per_cycle")}
                   />
                   <GratVarRow
                     label="Claim Threshold"
@@ -2145,21 +2077,21 @@ export default function GameMechanics() {
                 <CardContent className="space-y-3">
                   <GratVarRow
                     label="Received Weight"
-                    value="0.10 / gratitude"
+                    value={`${varNum(vars, "gratitude.trust_graph.received_weight", 0.10).toFixed(2)} / gratitude`}
                     detail="How much each gratitude nudges your multiplier"
-                    help="Each gratitude you receive adds 0.10 to your gratitude trust multiplier. The more people who appreciate your work, the more your own gratitude carries weight."
+                    help={varHelp(vars, "gratitude.trust_graph.received_weight")}
                   />
                   <GratVarRow
                     label="Max Bonus"
-                    value="+0.50"
+                    value={`+${varNum(vars, "gratitude.trust_graph.max_bonus", 0.5).toFixed(2)}`}
                     detail="Ceiling on trust graph snowball"
-                    help="The gratitude trust graph bonus is capped at +0.50 so it can't snowball forever. Keeps influence bounded no matter how much gratitude you've accumulated."
+                    help={varHelp(vars, "gratitude.trust_graph.max_bonus")}
                   />
                   <GratVarRow
                     label="Composting Rate"
-                    value="5% / season"
+                    value={`${asPercent(varNum(vars, "trust.composting_rate", 5))}% / season`}
                     detail="Unused trust composts back"
-                    help="If you go quiet, 5% of your trust score composts back to the pool each season. Keeps the graph current instead of frozen around early adopters."
+                    help={varHelp(vars, "trust.composting_rate")}
                   />
                   <GratVarRow
                     label="Reciprocity"
@@ -2177,40 +2109,36 @@ export default function GameMechanics() {
                   {
                     key: "gratitude.budget_base",
                     label: "Base budget per cycle",
-                    min: 50,
-                    max: 300,
+                    ...varBounds(vars, "gratitude.budget_base", 50, 300),
                     step: 10,
-                    baseline: 100,
-                    help: "Starting gratitude budget each lunar cycle, before tier multipliers.",
+                    baseline: varNum(vars, "gratitude.budget_base", 100),
+                    help: varHelp(vars, "gratitude.budget_base"),
                   },
                   {
                     key: "gratitude.pool_per_cycle",
                     label: "$ReGen pool per cycle",
                     unit: " $ReGen",
-                    min: 1000,
-                    max: 50000,
+                    ...varBounds(vars, "gratitude.pool_per_cycle", 1000, 50000),
                     step: 1000,
-                    baseline: 10000,
-                    help: "Total $ReGen released each cycle and split among gratitude receivers.",
+                    baseline: varNum(vars, "gratitude.pool_per_cycle", 10000),
+                    help: varHelp(vars, "gratitude.pool_per_cycle"),
                   },
                   {
                     key: "gratitude.claim_threshold",
                     label: "Claim threshold",
                     unit: " $ReGen",
-                    min: 100,
-                    max: 1000,
+                    ...varBounds(vars, "gratitude.claim_threshold", 100, 1000),
                     step: 10,
-                    baseline: 333,
-                    help: "Minimum $ReGen you must accumulate before claiming on Hypha.",
+                    baseline: varNum(vars, "gratitude.claim_threshold", 333),
+                    help: varHelp(vars, "gratitude.claim_threshold"),
                   },
                   {
                     key: "gratitude.trust_graph.received_weight",
                     label: "Received weight (per gratitude)",
-                    min: 0.05,
-                    max: 0.30,
+                    ...varBounds(vars, "gratitude.trust_graph.received_weight", 0.05, 0.30),
                     step: 0.01,
-                    baseline: 0.10,
-                    help: "How much each gratitude you receive adds to your trust multiplier.",
+                    baseline: varNum(vars, "gratitude.trust_graph.received_weight", 0.10),
+                    help: varHelp(vars, "gratitude.trust_graph.received_weight"),
                   },
                 ]}
                 summary={(s) => {
@@ -2318,8 +2246,8 @@ export default function GameMechanics() {
                     <GratVarRow
                       label="Flower size"
                       value="flower_scale"
-                      detail="Tunable multiplier (default 1.0)"
-                      help="Multiplies the base flower radius. Scales the visual emphasis without changing the count."
+                      detail={`Tunable multiplier (currently ${varNum(vars, "living_tree.flower_scale", 1.0).toFixed(1)}x)`}
+                      help={varHelp(vars, "living_tree.flower_scale")}
                     />
                     <GratVarRow
                       label="Fruit"
@@ -2364,40 +2292,36 @@ export default function GameMechanics() {
                       key: "living_tree.trunk_max_width",
                       label: "Trunk max width",
                       unit: " px",
-                      min: 40,
-                      max: 240,
+                      ...varBounds(vars, "living_tree.trunk_max_width", 40, 240),
                       step: 5,
-                      baseline: 120,
-                      help: "The widest the trunk ever draws, reached at the highest contribution score.",
+                      baseline: varNum(vars, "living_tree.trunk_max_width", 120),
+                      help: varHelp(vars, "living_tree.trunk_max_width"),
                     },
                     {
                       key: "living_tree.longevity_threshold",
                       label: "Longevity threshold",
                       unit: " seasons",
-                      min: 3,
-                      max: 20,
+                      ...varBounds(vars, "living_tree.longevity_threshold", 3, 20),
                       step: 1,
-                      baseline: 10,
-                      help: "Seasons a player must finish before moss, birds, and undergrowth decorate the tree.",
+                      baseline: varNum(vars, "living_tree.longevity_threshold", 10),
+                      help: varHelp(vars, "living_tree.longevity_threshold"),
                     },
                     {
                       key: "living_tree.flower_scale",
                       label: "Flower scale",
-                      min: 0.5,
-                      max: 2.0,
+                      ...varBounds(vars, "living_tree.flower_scale", 0.5, 2.0),
                       step: 0.1,
-                      baseline: 1.0,
-                      help: "Multiplier on flower size. 1.0 is the current default.",
+                      baseline: varNum(vars, "living_tree.flower_scale", 1.0),
+                      help: varHelp(vars, "living_tree.flower_scale"),
                     },
                     {
                       key: "living_tree.fruit_min_points",
                       label: "Fruit minimum points",
                       unit: " pts",
-                      min: 10,
-                      max: 200,
+                      ...varBounds(vars, "living_tree.fruit_min_points", 10, 200),
                       step: 5,
-                      baseline: 50,
-                      help: "Minimum cycle points a player needs before a fruit appears on their tree.",
+                      baseline: varNum(vars, "living_tree.fruit_min_points", 50),
+                      help: varHelp(vars, "living_tree.fruit_min_points"),
                     },
                   ]}
                   summary={(s) => {
