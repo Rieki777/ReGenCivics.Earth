@@ -648,9 +648,7 @@ export default function Season2() {
             </p>
           </div>
 
-          {/* Season One projects map — the thirteen that went through.
-              TODO(rye): drop the "Growing the Diversity of Regenerative Realities"
-              graphic (the numbered project-logos map) in at this path. */}
+          {/* Season One projects map — the thirteen that went through. */}
           <figure className="mt-12">
             <img
               src="/season2/s1-projects-map.webp"
@@ -669,7 +667,21 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
-      <img src="/season2/div-soil.jpg" alt="" aria-hidden="true" loading="lazy" className="block w-full h-16 md:h-20 object-cover opacity-60" />
+      {/* Regenerative Renaissance — cinematic band between the story and the roadmap */}
+      <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
+        <img
+          src="/season2/regenerative-renaissance.webp"
+          alt="Barren land healing across the scene into abundant regenerated forest, gardens, clean water, and people planting and celebrating together beneath a banner reading The Regenerative Renaissance"
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
+        <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
+          <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
+            A movement to prototype something better, thirteen projects at a time.
+          </p>
+        </figcaption>
+      </figure>
 
       {/* ── ROADMAP ── */}
       <AnimatedSection as="section" animation="slide-up" id="journey" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
@@ -743,26 +755,34 @@ export default function Season2() {
               className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
               style={{ background: "radial-gradient(circle, rgba(125,216,125,0.22), transparent 70%)" }}
             />
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/40">
-                <Sparkles className="w-4 h-4 text-[#7dd87d]" />
-                <span className="text-white/90 text-xs font-semibold tracking-[0.18em] uppercase">
-                  New for Season Two
-                </span>
+            <div className="relative grid md:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-10 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/40">
+                  <Sparkles className="w-4 h-4 text-[#7dd87d]" />
+                  <span className="text-white/90 text-xs font-semibold tracking-[0.18em] uppercase">
+                    New for Season Two
+                  </span>
+                </div>
+                <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5" style={display}>
+                  Launch your own <span className="italic text-[#a8e6a8]">Infinite Game</span>
+                </h2>
+                <p className="text-white/80 text-lg leading-relaxed mb-4">
+                  This season we help you use AI tools and templates, starting from an
+                  open-source blueprint we have spent a lot of time building, to launch
+                  your own Infinite Game. The same kind of system we built for ReGen
+                  Civics, purpose-built for your land project and owned by you.
+                </p>
+                <p className="text-white/70 leading-relaxed">
+                  It is one of the biggest things we are adding for Season Two, and a
+                  huge value for every project that comes through.
+                </p>
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5" style={display}>
-                Launch your own <span className="italic text-[#a8e6a8]">Infinite Game</span>
-              </h2>
-              <p className="text-white/80 text-lg leading-relaxed mb-4">
-                This season we help you use AI tools and templates, starting from an
-                open-source blueprint we have spent a lot of time building, to launch
-                your own Infinite Game. The same kind of system we built for ReGen
-                Civics, purpose-built for your land project and owned by you.
-              </p>
-              <p className="text-white/70 leading-relaxed">
-                It is one of the biggest things we are adding for Season Two, and a
-                huge value for every project that comes through.
-              </p>
+              <img
+                src="/season2/launch-game.webp"
+                alt="An open blueprint book in an enchanted forest, a glowing seed rising from its pages into a thriving miniature village-world"
+                loading="lazy"
+                className="w-full rounded-2xl border border-[#7dd87d]/20 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </div>
         </div>
@@ -817,9 +837,19 @@ export default function Season2() {
           <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
             What accepted projects receive
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-12" style={display}>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-8" style={display}>
             The accelerator, <span className="italic text-[#a8e6a8]">and a stake in each other.</span>
           </h2>
+
+          <figure className="relative mb-12 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
+            <img
+              src="/season2/alliance-network.webp"
+              alt="Many small luminous project-worlds suspended in a forest, each holding a different regenerative project, all interconnected by glowing gold threads into one living alliance"
+              loading="lazy"
+              className="w-full h-40 md:h-56 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818] via-transparent to-transparent" />
+          </figure>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {GET.map((g) => {
@@ -852,11 +882,24 @@ export default function Season2() {
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
             What to bring <span className="italic text-[#a8e6a8]">when you apply</span>
           </h2>
-          <p className="text-white/75 text-lg leading-relaxed mb-10">
+          <p className="text-white/75 text-lg leading-relaxed mb-8">
             An honest look at what we're looking for in Season Two. You don't need
             to finish all of this before applying. Apply at whatever stage you're
             actually at. Tap what you already have and see where you stand.
           </p>
+
+          <figure className="relative mb-10 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
+            <img
+              src="/season2/your-team.webp"
+              alt="A small diverse team standing together on their land at golden hour, holding a seedling and tools in front of a partly-built regenerative community"
+              loading="lazy"
+              className="w-full h-44 md:h-60 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818] via-transparent to-transparent" />
+            <figcaption className="absolute inset-x-0 bottom-0 p-5 text-white/90 text-sm md:text-base font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+              Passion and a real team count for more than polish.
+            </figcaption>
+          </figure>
 
           <ReadinessCheck />
 
@@ -1221,8 +1264,8 @@ export default function Season2() {
                   at a time and go deep. That's exactly what we did with Amora.
                 </p>
                 <p className="text-white/65 leading-relaxed">
-                  When a spot opens, it goes to the next project in line. Apply
-                  now to claim yours.
+                  When a spot opens, it goes to the next best project in line.
+                  Apply now to claim yours.
                 </p>
               </div>
               <div className="md:text-right">
@@ -1243,6 +1286,22 @@ export default function Season2() {
           </div>
         </div>
       </AnimatedSection>
+
+      {/* Threshold — an inviting pause before the practical questions */}
+      <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
+        <img
+          src="/season2/threshold.webp"
+          alt="A lantern-lit path winding through a glowing enchanted forest toward a warm gathering around a fire, an inviting threshold at dusk"
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
+        <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
+          <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
+            There is a place in this for your project.
+          </p>
+        </figcaption>
+      </figure>
 
       {/* ── FAQ ── */}
       <AnimatedSection as="section" animation="slide-up" id="faq" className="py-20 md:py-28 px-4">
