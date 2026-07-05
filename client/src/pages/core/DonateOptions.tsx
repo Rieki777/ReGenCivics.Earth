@@ -12,6 +12,7 @@ import DonateForm from "./DonateForm";
  */
 export default function DonateOptions() {
   const zeffy = trpc.churchDonations.zeffyEnabled.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const stripe = trpc.churchDonations.donationsEnabled.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const [showStripe, setShowStripe] = useState(false);
 
   if (zeffy.isLoading) {
@@ -30,21 +31,25 @@ export default function DonateOptions() {
   return (
     <div>
       <ZeffyDonate />
-      <div className="center" style={{ marginTop: 24 }}>
-        {!showStripe ? (
-          <button type="button" className="btn btn-ghost" onClick={() => setShowStripe(true)}>
-            Prefer to give by card directly?
-          </button>
-        ) : (
-          <div style={{ marginTop: 8 }}>
-            <p style={{ fontSize: ".9rem", color: "var(--forest-sage)", marginBottom: 16 }}>
-              Zeffy carries no platform fees, so it is the kindest way to give. If you would rather use
-              this form, it works too.
-            </p>
-            <DonateForm />
-          </div>
-        )}
-      </div>
+      {/* Only offer the card fallback when the Stripe form is actually live;
+          otherwise it just leads to a dead "coming soon" state. */}
+      {stripe.data?.enabled && (
+        <div className="center" style={{ marginTop: 24 }}>
+          {!showStripe ? (
+            <button type="button" className="btn btn-ghost" onClick={() => setShowStripe(true)}>
+              Prefer to give by card directly?
+            </button>
+          ) : (
+            <div style={{ marginTop: 8 }}>
+              <p style={{ fontSize: ".9rem", color: "var(--forest-sage)", marginBottom: 16 }}>
+                Zeffy carries no platform fees, so it is the kindest way to give. If you would rather use
+                this form, it works too.
+              </p>
+              <DonateForm />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

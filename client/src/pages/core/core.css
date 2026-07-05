@@ -150,6 +150,18 @@
 .core-root .section-media { border-radius: var(--core-radius); overflow: hidden; box-shadow: 0 10px 30px rgba(26, 71, 42, .12); }
 .core-root .section-media.media-sm { max-width: 640px; margin-left: auto; margin-right: auto; }
 
+/* Disclosure / accordion (e.g. "Why a church?" on the home page). Native
+   <details>/<summary> for built-in accessibility and keyboard support. */
+.core-root .disclosure { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid var(--parchment-soft); border-radius: var(--core-radius); box-shadow: 0 4px 20px rgba(26, 71, 42, .06); overflow: hidden; }
+.core-root .disclosure > summary { list-style: none; cursor: pointer; padding: 24px 28px; font-family: var(--font-accent); font-size: clamp(1.3rem, 1.1rem + .8vw, 1.6rem); color: var(--forest-deep); display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.core-root .disclosure > summary::-webkit-details-marker { display: none; }
+.core-root .disclosure > summary::after { content: "+"; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: var(--spring-soft); color: var(--forest-deep); display: grid; place-items: center; font-family: var(--font-body); font-size: 1.5rem; line-height: 1; transition: background .2s ease; }
+.core-root .disclosure[open] > summary::after { content: "\2212"; }
+.core-root .disclosure > summary:hover::after { background: var(--spring-base); }
+.core-root .disclosure .disclosure-body { padding: 0 28px 26px; }
+.core-root .disclosure .disclosure-body p { color: var(--forest-moss); }
+.core-root .disclosure .disclosure-body p:first-child { margin-top: 0; }
+
 /* Bands */
 .core-root .band-forest { background: linear-gradient(160deg, var(--forest-deep), var(--forest-base)); color: var(--parchment-warm); }
 .core-root .band-forest h1, .core-root .band-forest h2, .core-root .band-forest h3 { color: var(--parchment-warm); }
@@ -262,6 +274,14 @@
   .core-root .nav-links { position: fixed; inset: var(--core-nav-h) 0 auto 0; background: var(--parchment-warm); flex-direction: column; padding: 18px 22px; gap: 16px; border-bottom: 1px solid var(--parchment-soft); display: none; z-index: 49; }
   .core-root .nav-links.open { display: flex; }
   .core-root .nav-toggle { display: flex; }
+}
+
+/* Phones: a key and a long value side-by-side (e.g. the Transparency facts,
+   where a book title sits opposite its label) squish into an unreadable narrow
+   column. Stack them instead. */
+@media (max-width: 560px) {
+  .core-root .facts .row { flex-direction: column; gap: 3px; }
+  .core-root .facts .v { text-align: left; }
 }
 
 /* Comfortable tap size for inline step links without changing the text look. */

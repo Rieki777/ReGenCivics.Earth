@@ -52,8 +52,12 @@ export default function Donate() {
             <div className="card">
               <CoreImage id="program-stewardship" className="card-media" sizes="(max-width: 860px) 100vw, 33vw" fallback={<span className="icon" aria-hidden="true">🌎</span>} />
               <h3>Healing the land</h3><p>Your giving helps steward and acquire land, plant food forests, and hold ground in trust for the Earth and the generations to come.</p></div>
-            <div className="card"><span className="icon" aria-hidden="true">🍲</span><h3>Feeding people</h3><p>Gifts sustain our work of feeding those in need and keeping abundance moving through the community.</p></div>
-            <div className="card"><span className="icon" aria-hidden="true">🤝</span><h3>Holding community</h3><p>Your support keeps our gatherings, healing circles, and sacred music alive and open to all who need them.</p></div>
+            <div className="card">
+              <CoreImage id="program-meal" className="card-media" sizes="(max-width: 860px) 100vw, 33vw" fallback={<span className="icon" aria-hidden="true">🍲</span>} />
+              <h3>Feeding people</h3><p>Gifts sustain our work of feeding those in need and keeping abundance moving through the community.</p></div>
+            <div className="card">
+              <CoreImage id="program-gathering" className="card-media" sizes="(max-width: 860px) 100vw, 33vw" fallback={<span className="icon" aria-hidden="true">🤝</span>} />
+              <h3>Holding community</h3><p>Your support keeps our gatherings, healing circles, and sacred music alive and open to all who need them.</p></div>
           </div>
         </div>
       </section>
