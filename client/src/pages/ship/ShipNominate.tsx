@@ -68,7 +68,7 @@ export default function ShipNominate() {
       <ShipSection>
         <ShipEyebrow>A bonus crew slot</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
-          <UserPlus className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+          <UserPlus className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
           Nominate a crew member
         </h1>
         <div className="max-w-3xl space-y-4 text-foreground/85">

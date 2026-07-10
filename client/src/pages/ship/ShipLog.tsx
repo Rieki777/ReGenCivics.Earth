@@ -45,7 +45,7 @@ export default function ShipLog() {
         </div>
         <ShipEyebrow>The voyage log</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
-          <ScrollText className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+          <ScrollText className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
           The story of the fleet
         </h1>
         <p className="max-w-3xl text-foreground/85">
@@ -83,7 +83,7 @@ export default function ShipLog() {
                 <div className="p-5">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
                     {typeof entry.dayNumber === "number" ? (
-                      <span className="uppercase tracking-widest text-xs font-semibold text-[#4a7c59]">
+                      <span className="uppercase tracking-widest text-xs font-semibold text-[#4a7c59] dark:text-[#7dd87d]">
                         Day {entry.dayNumber}
                       </span>
                     ) : null}

@@ -115,7 +115,7 @@ export default function ShipQuestRules() {
         </div>
         <ShipEyebrow>Official rules</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
-          <ScrollText className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+          <ScrollText className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
           Maiden Voyage Quest rules
         </h1>
         <p className="text-foreground/80 max-w-3xl">

@@ -173,7 +173,7 @@ export default function ShipConcierge() {
             <ShipEyebrow>The concierge</ShipEyebrow>
             <h1 className="text-3xl font-bold mb-2">Ahoy, welcome aboard</h1>
             <p className="text-foreground/80">Answer a few questions and I will chart a voyage for you, drawn only from the real places on the treasure map.</p>
-            {!flags.concierge && <p className="text-sm text-amber-700 mt-2">The concierge is not aboard yet. Check back soon, or explore the <a href="/ship/map" className="underline">treasure map</a>.</p>}
+            {!flags.concierge && <p className="text-sm text-amber-700 dark:text-amber-400 mt-2">The concierge is not aboard yet. Check back soon, or explore the <a href="/ship/map" className="underline">treasure map</a>.</p>}
           </div>
         </div>
 

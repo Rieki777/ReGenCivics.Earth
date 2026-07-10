@@ -76,7 +76,7 @@ export function PriceTag({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-baseline gap-3", className)}>
       <span className="text-muted-foreground line-through text-xl">${ANCHOR_NIGHTLY}</span>
-      <span className="text-3xl font-bold text-[#2f5d3a]">${TRIAL_NIGHTLY}</span>
+      <span className="text-3xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${TRIAL_NIGHTLY}</span>
       <span className="text-muted-foreground">/ night, trial year</span>
     </div>
   );
@@ -99,35 +99,59 @@ export function ShipSection({
 }
 
 export function ShipEyebrow({ children }: { children: ReactNode }) {
-  return <p className="uppercase tracking-widest text-xs font-semibold text-[#4a7c59] mb-3">{children}</p>;
+  return <p className="uppercase tracking-widest text-xs font-semibold text-[#4a7c59] dark:text-[#7dd87d] mb-3">{children}</p>;
 }
 
-/** A small link row of the ship's sub-pages, used as secondary nav on pages. */
+/**
+ * The ship's sub-page navigation as image cards. Each destination carries a
+ * picture, like the ReGen Civics landing cards. Three across on mobile, a
+ * single row of six on desktop. Cards zoom on hover and reveal on scroll.
+ */
+const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string }> = [
+  { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
+  { href: "/ship/book", label: "Book", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista." },
+  { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
+  { href: "/ship/quest", label: "The Quest", image: "ship-quest-banner.jpg", alt: "A trail under a rainbow." },
+  { href: "/ship/fleet", label: "The Fleet", image: "ship-fleet-caravan.jpg", alt: "A caravan of ships." },
+  { href: "/ship/log", label: "Voyage Log", image: "ship-campfire-dusk.jpg", alt: "A campfire at dusk." },
+];
+
 export function ShipNavRow({ current }: { current?: string }) {
-  const links: Array<[string, string]> = [
-    ["/ship", "The Ship"],
-    ["/ship/book", "Book"],
-    ["/ship/map", "Treasure Map"],
-    ["/ship/quest", "The Quest"],
-    ["/ship/fleet", "The Fleet"],
-    ["/ship/log", "Voyage Log"],
-  ];
   return (
-    <nav className="flex flex-wrap gap-2 justify-center py-4 px-4 text-sm">
-      {links.map(([href, label]) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            "px-3 py-1.5 rounded-full border transition-colors",
-            current === href
-              ? "bg-[#2f5d3a] text-white border-[#2f5d3a]"
-              : "border-[#4a7c59]/30 hover:bg-[#4a7c59]/10",
-          )}
-        >
-          {label}
-        </Link>
-      ))}
+    <nav aria-label="ReGen Ship pages" className="max-w-5xl mx-auto px-4 py-5">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
+        {NAV_CARDS.map((c, i) => {
+          const active = current === c.href;
+          return (
+            <Link
+              key={c.href}
+              href={c.href}
+              data-reveal
+              data-reveal-delay={i * 60}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "group relative block overflow-hidden rounded-xl aspect-[4/3] transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]",
+                active ? "ring-2 ring-[#ffd700] shadow-lg" : "ring-1 ring-black/10",
+              )}
+            >
+              <img
+                src={shipImg(c.image)}
+                alt={c.alt}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+              <span className={cn(
+                "absolute inset-x-0 bottom-0 p-1.5 sm:p-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-sm",
+                active && "text-[#ffd700]",
+              )}>
+                {c.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

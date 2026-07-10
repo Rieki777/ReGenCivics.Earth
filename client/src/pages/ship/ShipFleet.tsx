@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Anchor, Coins, Flag, Sprout, Tent } from "lucide-react";
+import { Anchor, Coins, Flag, Sprout, Tent, HandCoins } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 
 export default function ShipFleet() {
@@ -71,18 +71,23 @@ export default function ShipFleet() {
         <ShipEyebrow>The fleet</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-6">A traveling festival that heals the land it visits</h1>
         <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-4 text-foreground/85">
+          <div data-reveal="left" className="space-y-4 text-foreground/85">
             <p>
               The ReGen Fleet is a caravan of ships that moves from land project to land project. Where it lands, it
               builds natural homes, plants food forests, heals waterways, and turns pine plantations back into the
-              abundance they once were. It hosts markets and gatherings, then it moves on and does it again.
+              abundance they once were.
             </p>
             <p>
-              The model comes from the large RV caravans that travel New Zealand together, a rolling community that
-              shows up, sets up, and shares a place for a while. We're pointing that same idea at regeneration.
+              And we host music festivals, dances, and regular communal campfires, and so many other ways to bring
+              community and love together. Then it moves on and does it again.
+            </p>
+            <p>
+              The model is inspired by the large RV caravans that travel New Zealand together, a rolling community that
+              shows up, sets up, and shares a place for a while. We point that same spirit at regeneration and the
+              beauty we can bring while living our best lives.
             </p>
           </div>
-          <div className="aspect-[4/3]">
+          <div data-reveal="right" className="aspect-[4/3]">
             <ShipImage
               name="ship-fleet-caravan.jpg"
               alt="A caravan of ships parked together at a land project."
@@ -96,29 +101,37 @@ export default function ShipFleet() {
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>How the fleet owns itself</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">The RV DAO and the token model</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="flex flex-col gap-2">
-            <Anchor className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div data-reveal className="flex flex-col gap-2">
+            <Anchor className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
             <h3 className="font-semibold text-lg">One DAO per ship</h3>
             <p className="text-foreground/80">
               Each ship has its own DAO that reflects total ownership of the asset. The DAO is the ship, held in common
               by the people who sail her and fund her.
             </p>
           </div>
-          <div className="flex flex-col gap-2">
-            <Coins className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
+          <div data-reveal data-reveal-delay="60" className="flex flex-col gap-2">
+            <Coins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
             <h3 className="font-semibold text-lg">10% of every voyage</h3>
             <p className="text-foreground/80">
               Ten percent of every voyage buys RV tokens. Those tokens are fractional shares that buy the asset into
               community ownership over time, voyage by voyage.
             </p>
           </div>
-          <div className="flex flex-col gap-2">
-            <Sprout className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
+          <div data-reveal data-reveal-delay="120" className="flex flex-col gap-2">
+            <Sprout className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
             <h3 className="font-semibold text-lg">A model that replicates</h3>
             <p className="text-foreground/80">
               The same structure repeats for every future ship. Each one funds its own path into community hands, so the
               fleet grows without leaving ownership behind.
+            </p>
+          </div>
+          <div data-reveal data-reveal-delay="180" className="flex flex-col gap-2">
+            <HandCoins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
+            <h3 className="font-semibold text-lg">The owner, honored</h3>
+            <p className="text-foreground/80">
+              Before a ship enters the fleet, its previous owner is abundantly compensated. Community ownership begins
+              with the person who brought the ship, made whole and thanked, not asked to give her away.
             </p>
           </div>
         </div>
@@ -127,23 +140,24 @@ export default function ShipFleet() {
       {/* The Regatta */}
       <ShipSection>
         <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="aspect-[4/3] order-last md:order-first">
+          <div data-reveal="left" className="aspect-[4/3] order-last md:order-first overflow-hidden rounded-2xl group">
             <ShipImage
               name="ship-regatta.jpg"
-              alt="Ships and people gathered at a land project for the Regatta festival."
-              className="h-full"
+              alt="Ships and people gathered at a land project for a fleet festival."
+              className="h-full transition-transform duration-500 group-hover:scale-105"
             />
           </div>
-          <div>
-            <ShipEyebrow>Announcing</ShipEyebrow>
+          <div data-reveal="right">
+            <ShipEyebrow>Looking ahead</ShipEyebrow>
             <h2 className="text-3xl font-bold mb-4 flex items-center gap-3">
-              <Tent className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
-              The Regatta
+              <Tent className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
+              The Regatta, name to come
             </h2>
             <p className="text-foreground/85">
-              Once a year the whole fleet converges on one land project for the Regatta, a festival where the ships,
-              their crews, and the community come together in one place. It's the fleet's annual homecoming and the
-              biggest work party and celebration of the year.
+              One day, when the fleet is large enough, the whole fleet will gather at one land project for a yearly
+              festival. We will name it together and co-create it together. It will be hosted at a land project to
+              substantially grow that community and its capabilities: a homecoming, a work party, and a celebration all
+              at once. We will be in touch as it takes shape.
             </p>
           </div>
         </div>
@@ -153,12 +167,12 @@ export default function ShipFleet() {
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>Own an RV?</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-4 flex items-center gap-3">
-          <Flag className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+          <Flag className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
           Raise your flag
         </h2>
         <p className="max-w-2xl text-foreground/85 mb-8">
           If you own an RV and want to travel with the fleet, this is your invitation. Tell us about your ship and where
-          you're based, and we'll bring you into the fold.
+          you're based, and we'll be in touch.
         </p>
 
         <form onSubmit={onSubmit} className="max-w-xl space-y-6">

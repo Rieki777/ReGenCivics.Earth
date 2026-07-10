@@ -100,7 +100,7 @@ export default function ShipKeeper() {
         <div className="grid md:grid-cols-2 gap-6">
           {DUTIES.map((d) => (
             <div key={d.title} className="flex gap-4">
-              <d.icon className="w-8 h-8 text-[#4a7c59] shrink-0 mt-1" aria-hidden="true" />
+              <d.icon className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0 mt-1" aria-hidden="true" />
               <div>
                 <h3 className="font-semibold text-lg mb-1">{d.title}</h3>
                 <p className="text-foreground/80">{d.body}</p>

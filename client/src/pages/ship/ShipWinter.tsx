@@ -86,7 +86,7 @@ export default function ShipWinter() {
           <div>
             <ShipEyebrow>The off-season</ShipEyebrow>
             <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
-              <Snowflake className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+              <Snowflake className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
               Winter Anchorage
             </h1>
             <p className="text-foreground/85 mb-3">
@@ -131,7 +131,7 @@ export default function ShipWinter() {
       <ShipSection className="bg-[#4a7c59]/8 pt-14">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="flex gap-4">
-            <Home className="w-8 h-8 text-[#4a7c59] shrink-0 mt-1" aria-hidden="true" />
+            <Home className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0 mt-1" aria-hidden="true" />
             <div>
               <h3 className="font-semibold text-lg mb-1">Extra housing for your project</h3>
               <p className="text-foreground/80">
@@ -141,7 +141,7 @@ export default function ShipWinter() {
             </div>
           </div>
           <div className="flex gap-4">
-            <HandCoins className="w-8 h-8 text-[#4a7c59] shrink-0 mt-1" aria-hidden="true" />
+            <HandCoins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0 mt-1" aria-hidden="true" />
             <div>
               <h3 className="font-semibold text-lg mb-1">An income share for hosting</h3>
               <p className="text-foreground/80">

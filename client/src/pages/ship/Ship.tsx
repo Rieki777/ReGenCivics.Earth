@@ -46,12 +46,16 @@ export default function Ship() {
         <ShipImage name="ship-zion-redrock-hero.jpg" alt="The ReGen Ship beneath red rock cliffs in crisp daylight." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-24 text-white">
-          <p className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">A program of the Church of the Regenerative Earth</p>
-          <h1 className="text-4xl md:text-6xl font-bold mb-5">The ReGen Ship has raised her flag</h1>
-          <p className="text-lg md:text-2xl mb-8 text-white/90">{SHIP_TAGLINE}</p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Button asChild size="lg" className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/quest">Win the maiden voyage</Link></Button>
-            <Button asChild size="lg" variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/book">See open weeks</Link></Button>
+          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">A program of the Church of the Regenerative Earth</p>
+          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-6xl font-bold mb-5 drop-shadow-lg">The ReGen Ship has raised her flag</h1>
+          <p data-reveal data-reveal-delay="160" className="text-lg md:text-2xl mb-8 text-white drop-shadow">{SHIP_TAGLINE}</p>
+          <div data-reveal data-reveal-delay="240" className="flex flex-wrap gap-4 justify-center">
+            <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] animate-glow transition-shadow">
+              <Link href="/ship/quest">Win the maiden voyage</Link>
+            </Button>
+            <Button asChild size="lg" className="bg-white text-[#1a472a] font-semibold text-base px-7 hover:bg-white/90 shadow-lg">
+              <Link href="/ship/book">See open weeks</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -71,12 +75,12 @@ export default function Ship() {
       {/* The seeds */}
       <ShipSection className="bg-[#4a7c59]/8">
         <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="aspect-[4/3]"><ShipImage name="ship-seed-chest.jpg" alt="A wooden chest overflowing with labeled seed packets and chestnuts." className="h-full" /></div>
-          <div>
+          <div data-reveal="left" className="aspect-[4/3]"><ShipImage name="ship-seed-chest.jpg" alt="A wooden chest overflowing with labeled seed packets and chestnuts." className="h-full" /></div>
+          <div data-reveal="right">
             <ShipEyebrow>The treasure chest</ShipEyebrow>
             <h2 className="text-3xl font-bold mb-4">Everywhere you go, you plant</h2>
             <p className="text-foreground/90 mb-4">The chest holds seeds chosen to turn pine plantations back into the food forests they once were, the great abundance this land knew before. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole and watch a food forest grow from every crew that ever sailed.</p>
-            <a href={CHESTNUT_URL} className="text-[#2f5d3a] font-semibold underline">Read The Great American Chestnut Abundance</a>
+            <a href={CHESTNUT_URL} className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read The Great American Chestnut Abundance <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </ShipSection>
@@ -86,8 +90,10 @@ export default function Ship() {
         <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">Where she has been</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {GALLERY.map((g) => (
-            <div key={g.name} className="aspect-[4/3]"><ShipImage name={g.name} alt={g.alt} className="h-full" /></div>
+          {GALLERY.map((g, i) => (
+            <div key={g.name} data-reveal data-reveal-delay={i * 80} className="aspect-[4/3] overflow-hidden rounded-2xl group">
+              <ShipImage name={g.name} alt={g.alt} className="h-full transition-transform duration-500 group-hover:scale-105" />
+            </div>
           ))}
         </div>
         <div className="mt-6">
@@ -106,9 +112,9 @@ export default function Ship() {
         <ShipEyebrow>Everything you need for an epic regenerative adventure</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-8">What sails with you</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          {PERKS.map((p) => (
-            <div key={p.title} className="flex gap-4">
-              <p.icon className="w-8 h-8 text-[#4a7c59] shrink-0 mt-1" aria-hidden="true" />
+          {PERKS.map((p, i) => (
+            <div key={p.title} data-reveal data-reveal-delay={(i % 2) * 100} className="flex gap-4">
+              <p.icon className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0 mt-1" aria-hidden="true" />
               <div>
                 <h3 className="font-semibold text-lg mb-1">{p.title}</h3>
                 <p className="text-foreground/80">{p.body}</p>
@@ -144,13 +150,15 @@ export default function Ship() {
       {/* Quest + fleet CTAs */}
       <ShipSection className="bg-[#2f5d3a] text-white">
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="flex flex-col">
-            <Map className="w-10 h-10 text-[#ffd700] mb-3" aria-hidden="true" />
-            <h2 className="text-2xl font-bold mb-2">The maiden voyage sails this August. Win it.</h2>
-            <p className="text-white/85 mb-4 flex-1">The Maiden Voyage Quest is open to everyone. The first three to complete it sail free. Every action grows the movement.</p>
-            <Button asChild variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20 self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
+          {/* The quest, as a glowing gold callout */}
+          <div data-reveal className="quest-card-gold flex flex-col rounded-2xl p-6 bg-gradient-to-br from-[#ffd700]/20 to-[#d4a574]/10 border border-[#ffd700]/50">
+            <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
+            <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The maiden voyage</p>
+            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">It sails this August. Win the week-long adventure.</h2>
+            <p className="text-white/90 mb-4 flex-1">The Maiden Voyage Quest is open to everyone. The first three to complete it sail free. Every action grows the movement.</p>
+            <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
           </div>
-          <div className="flex flex-col">
+          <div data-reveal data-reveal-delay="120" className="flex flex-col">
             <Anchor className="w-10 h-10 text-[#ffd700] mb-3" aria-hidden="true" />
             <h2 className="text-2xl font-bold mb-2">The flagship of the ReGen Fleet</h2>
             <p className="text-white/85 mb-4 flex-1">A traveling festival that moves from land project to land project, building homes, planting food forests, and healing waterways. Own an RV? Raise your flag.</p>
