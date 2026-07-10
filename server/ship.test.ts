@@ -3,11 +3,12 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import {
   rangesOverlap, overlapsAny, isValidVoyageLength, nightsBetween,
-  computeVoyagePrice, computeQuestStandings, remainingWinnerSlots,
+  computeVoyagePrice, computeQuestStandings, countCompleted,
+  freeVoyagesUnlocked, percentBooked,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
   type QuestCompletionRow,
 } from "./lib/ship-logic";
-import { SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, WINNER_SLOTS } from "./lib/ship-config";
+import { SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES } from "./lib/ship-config";
 
 /**
  * ReGen Ship tests. The vitest env has no DATABASE_URL and no LLM key, so we
@@ -72,34 +73,40 @@ describe("ship-logic: quest standings (finish order + top-3)", () => {
     return { userId, actionId, status: "verified", verifiedAt, points, isRequired: required.includes(actionId) };
   }
 
-  it("ranks finishers by the time of their last verified required action", () => {
+  it("marks a crew a finisher only when every required action is verified, and counts the draw pool", () => {
     const rows: QuestCompletionRow[] = [
-      // user 10 finishes all 3 required, last at 10:00
+      // user 10 finishes all 3 required
       c(10, 1, "2026-08-01T09:00:00Z", 25), c(10, 2, "2026-08-01T09:30:00Z", 25), c(10, 3, "2026-08-01T10:00:00Z", 100),
-      // user 20 finishes all 3 required earlier, last at 08:00
+      // user 20 finishes all 3 required earlier
       c(20, 1, "2026-08-01T07:00:00Z", 25), c(20, 2, "2026-08-01T07:30:00Z", 25), c(20, 3, "2026-08-01T08:00:00Z", 100),
-      // user 30 only did 2 required
+      // user 30 only did 2 required, not in the draw
       c(30, 1, "2026-08-01T06:00:00Z", 25), c(30, 2, "2026-08-01T06:30:00Z", 25),
     ];
     const standings = computeQuestStandings(rows, required);
-    expect(standings[0].userId).toBe(20); // earliest finisher wins slot 1
-    expect(standings[0].winnerRank).toBe(1);
-    expect(standings[1].userId).toBe(10);
-    expect(standings[1].winnerRank).toBe(2);
-    const u30 = standings.find((s) => s.userId === 30)!;
-    expect(u30.isFinisher).toBe(false);
-    expect(u30.winnerRank).toBeNull();
+    expect(countCompleted(standings)).toBe(2); // 10 and 20 are in the draw
+    expect(standings[0].isFinisher).toBe(true);
+    expect(standings.find((s) => s.userId === 30)!.isFinisher).toBe(false);
+  });
+});
+
+describe("ship-logic: free-voyage giveaway (booking-volume driven)", () => {
+  it("gives the maiden voyage at 0% and one more per 20% booked, capped at six", () => {
+    expect(freeVoyagesUnlocked(0)).toBe(1);   // the maiden voyage
+    expect(freeVoyagesUnlocked(19)).toBe(1);
+    expect(freeVoyagesUnlocked(20)).toBe(2);
+    expect(freeVoyagesUnlocked(40)).toBe(3);
+    expect(freeVoyagesUnlocked(60)).toBe(4);
+    expect(freeVoyagesUnlocked(80)).toBe(5);
+    expect(freeVoyagesUnlocked(100)).toBe(MAX_FREE_VOYAGES); // 6 at 100%
+    expect(freeVoyagesUnlocked(140)).toBe(MAX_FREE_VOYAGES);  // never exceeds the cap
   });
 
-  it("caps winner ranks at WINNER_SLOTS", () => {
-    const rows: QuestCompletionRow[] = [];
-    for (let u = 1; u <= WINNER_SLOTS + 2; u++) {
-      required.forEach((a, i) => rows.push(c(u, a, `2026-08-0${u}T0${i}:00:00Z`, 10)));
-    }
-    const standings = computeQuestStandings(rows, required);
-    const winners = standings.filter((s) => s.winnerRank != null);
-    expect(winners.length).toBe(WINNER_SLOTS);
-    expect(remainingWinnerSlots(standings)).toBe(0);
+  it("computes percent booked against the year target", () => {
+    expect(percentBooked(0, 30)).toBe(0);
+    expect(percentBooked(6, 30)).toBe(20);
+    expect(percentBooked(30, 30)).toBe(100);
+    expect(percentBooked(45, 30)).toBe(100); // clamped
+    expect(percentBooked(5, 0)).toBe(0);     // guards divide-by-zero
   });
 });
 

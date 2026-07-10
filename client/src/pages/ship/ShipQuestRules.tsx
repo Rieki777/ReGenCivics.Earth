@@ -13,17 +13,17 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     body: (
       <p>
         The Maiden Voyage Quest is sponsored and administered by the Church of the Regenerative Earth. The church runs
-        the quest, verifies proofs, and awards the prize.
+        the quest, verifies proofs, and holds the draws that award the free voyages.
       </p>
     ),
   },
   {
-    heading: "2. A skill contest, no purchase, no chance",
+    heading: "2. How you enter, and how voyages are awarded",
     body: (
       <p>
-        This is a skill-based contest. Winners are decided by completing quest tasks and having those tasks verified, in
-        the order they finish. No purchase is needed to enter or to win, and nothing about winning is left to chance.
-        Buying anything gives no advantage.
+        To enter the draw you complete the quest: a set of real regenerative actions that are verified. That part is
+        skill, not chance, and no purchase is ever required. Among everyone who completes the quest, each free voyage is
+        then awarded by a random draw. The quest is built to take at least a week to complete, so no one has to rush.
       </p>
     ),
   },
@@ -55,31 +55,37 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     ),
   },
   {
-    heading: "5. Dates",
+    heading: "5. Dates and draws",
+    body: (
+      <>
+        <p className="mb-2">
+          The quest opens at announcement and stays open through the first sailing year. You stay in the draw once you
+          have completed it. The maiden voyage is drawn at launch. After that, one more free voyage is drawn for every
+          20% of the first year that gets booked, up to six free voyages total at a fully booked year.
+        </p>
+        <p>
+          Each draw is held among everyone who has completed the quest and has not already won. A crew can win once.
+        </p>
+      </>
+    ),
+  },
+  {
+    heading: "6. Ties, selection, and disputes",
     body: (
       <p>
-        The quest opens at announcement and stays open until three finishers complete it. There is no hard end date. Once
-        three people finish and are verified, the quest closes.
+        Every free voyage is selected at random from the crews who have completed the quest. Ties are settled at random,
+        because selection is random to begin with. The church reviews every disputed proof, and its decision is final.
       </p>
     ),
   },
   {
-    heading: "6. Ties and verification disputes",
+    heading: "7. The prizes",
     body: (
       <p>
-        Finish order is set by admin verification timestamps. When a task is verified, that timestamp governs the finish
-        order, and it settles any tie or dispute. If two entries appear close, the earlier verified timestamp wins. The
-        church reviews every disputed proof and its decision is final.
-      </p>
-    ),
-  },
-  {
-    heading: "7. The prize",
-    body: (
-      <p>
-        The prize is one free 7-night voyage on the ReGen Ship. Approximate retail value, the anchor value, is about
-        $4,200. The prize covers the voyage rental. Personal costs during the voyage, such as fuel, food, and travel to
-        and from the ship, are the winner's own.
+        Each prize is one free 7-night voyage on the ReGen Ship. Approximate retail value, the anchor value, is about
+        $4,200 per voyage. Up to six voyages are given away in the first year, starting with the maiden voyage and
+        adding one for every 20% of the year booked. A prize covers the voyage rental. Personal costs during the voyage,
+        such as fuel, food, and travel to and from the ship, are the winner's own.
       </p>
     ),
   },
@@ -99,7 +105,7 @@ export default function ShipQuestRules() {
     <PageWrapper>
       <SEO
         title="Maiden Voyage Quest Rules"
-        description="Official contest rules for the ReGen Ship Maiden Voyage Quest. A skill contest, no purchase, no chance."
+        description="Official rules for the ReGen Ship Maiden Voyage Quest. Complete the quest to enter the draw. Up to six free voyages, awarded at random as bookings grow."
         url="/ship/quest/rules"
       />
 

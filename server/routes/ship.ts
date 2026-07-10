@@ -33,10 +33,12 @@ import { sanitizeInput } from "../_core/security";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice,
-  computeQuestStandings, remainingWinnerSlots, type QuestCompletionRow,
+  computeQuestStandings, countCompleted, freeVoyagesUnlocked, percentBooked,
+  type QuestCompletionRow,
 } from "../lib/ship-logic";
 import {
   MIN_GUESTS, MAX_GUESTS, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
+  MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
 } from "../lib/ship-config";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
 import type { Itinerary } from "../lib/ship-logic";
@@ -92,6 +94,29 @@ async function loadQuestStandings() {
     isRequired: requiredIds.includes(c.actionId),
   }));
   return { standings: computeQuestStandings(rows, requiredIds), actions };
+}
+
+// ── Free-voyage giveaway status (booking-volume driven) ───────────────────────
+// The maiden voyage is free. Each 20% of the first year booked unlocks one more
+// free voyage, up to six at 100%. Each is drawn at random from quest completers.
+async function loadFreeVoyageStatus() {
+  const d = await db();
+  const booked = await d
+    .select({ id: shipBookings.id })
+    .from(shipBookings)
+    .where(inArray(shipBookings.status, ["confirmed", "active", "completed"]));
+  const bookedVoyages = booked.length;
+  const percent = percentBooked(bookedVoyages, MAIDEN_YEAR_VOYAGE_TARGET);
+  const unlocked = freeVoyagesUnlocked(percent);
+  const { standings } = await loadQuestStandings();
+  return {
+    bookedVoyages,
+    target: MAIDEN_YEAR_VOYAGE_TARGET,
+    percentBooked: percent,
+    freeVoyagesUnlocked: unlocked,
+    freeVoyagesTotal: MAX_FREE_VOYAGES,
+    poolSize: countCompleted(standings),
+  };
 }
 
 // Credit the ReGen reward + notify when a completion is verified.
@@ -294,8 +319,11 @@ export const shipRouter = router({
       const completions = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.userId, ctx.user.id));
       const { standings } = await loadQuestStandings();
       const mine = standings.find((s) => s.userId === ctx.user.id) ?? null;
-      return { completions, standing: mine, remainingSlots: remainingWinnerSlots(standings) };
+      return { completions, standing: mine, inTheDraw: Boolean(mine?.isFinisher) };
     }),
+
+    // The free-voyage meter: how many are unlocked by bookings so far.
+    freeVoyageStatus: publicProcedure.query(async () => loadFreeVoyageStatus()),
 
     submit: protectedProcedure
       .input(z.object({ actionId: z.number().int(), proofUrl: z.string().url().max(512).optional(), note: z.string().max(2000).optional() }))
@@ -351,7 +379,8 @@ export const shipRouter = router({
         : [];
       const byId = new Map(profiles.map((p) => [p.id, p]));
       return {
-        remainingSlots: remainingWinnerSlots(standings),
+        poolSize: countCompleted(standings),
+        freeVoyage: await loadFreeVoyageStatus(),
         standings: standings.slice(0, 100).map((s) => ({
           ...s,
           name: byId.get(s.userId)?.name ?? "A crew member",
@@ -755,17 +784,34 @@ export const shipRouter = router({
         await d.update(shipQuestCompletions).set({ status: input.status, verifiedByUserId: ctx.user.id, verifiedAt: input.status === "verified" ? new Date() : null }).where(eq(shipQuestCompletions.id, input.id));
         if (input.status === "verified") {
           await rewardVerifiedCompletion(input.id);
-          // If this pushed the user to finisher, notify them of a winner slot.
-          const { standings } = await loadQuestStandings();
-          const [c] = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.id, input.id)).limit(1);
-          const mine = c ? standings.find((s) => s.userId === c.userId) : null;
-          if (mine?.winnerRank) {
-            const [u] = await d.select().from(users).where(eq(users.id, mine.userId)).limit(1);
-            if (u?.email) await emailQuestWinner(u.email, mine.winnerRank);
-          }
+          // Completing the quest puts the crew in the draw. Free voyages are
+          // drawn at random at each booking milestone (admin.drawFreeVoyageWinner),
+          // not awarded by finish order, so there is nothing to notify here.
         }
         return { ok: true };
       }),
+
+    // Draw a free-voyage winner at random from crews who completed the quest and
+    // have not already won. Used at each booking milestone. Does not create the
+    // booking; the admin arranges it, then flags it a winner voyage.
+    drawFreeVoyageWinner: adminProcedure.mutation(async () => {
+      const d = await db();
+      const { standings } = await loadQuestStandings();
+      const finishers = standings.filter((s) => s.isFinisher).map((s) => s.userId);
+      if (finishers.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No crews have completed the quest yet." });
+      // Exclude anyone who already holds a winner voyage.
+      const priorWinners = await d
+        .select({ userId: shipBookings.userId })
+        .from(shipBookings)
+        .where(and(inArray(shipBookings.userId, finishers), eq(shipBookings.isWinnerVoyage, true)));
+      const priorSet = new Set(priorWinners.map((w) => w.userId));
+      const eligible = finishers.filter((id) => !priorSet.has(id));
+      if (eligible.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Every completer has already won a voyage." });
+      const winnerId = eligible[Math.floor(Math.random() * eligible.length)];
+      const [u] = await d.select().from(users).where(eq(users.id, winnerId)).limit(1);
+      if (u?.email) await emailQuestWinner(u.email);
+      return { userId: winnerId, name: u?.name ?? null, handle: u?.handle ?? null, poolSize: eligible.length };
+    }),
 
     // Referral auto-verification: called when a referred application is shortlisted.
     verifyReferralForApplication: adminProcedure.input(z.object({ applicationId: z.number().int() })).mutation(async ({ input }) => {
