@@ -32,14 +32,27 @@ These currently live in page copy (`client/src/pages/ship/ShipQuestRules.tsx`, `
 | Generator | Included, fair use | policy copy |
 | Towing | Not permitted | policy copy |
 | Cancellation | Moderate platform policy; offering always refundable | ShipBook + email copy |
-| Winner slots | Top 3 finishers | `WINNER_SLOTS` in ship-config (drives leaderboard logic) |
+| Free voyages | Maiden voyage free, plus 1 per 20% booked, up to 6 | See "Free-voyage giveaway" below |
 
 ## 3. Program-specific settings
 
 | Setting | Default | Where |
 |---|---|---|
 | Winter host income share | 25% (suggested range 20 to 30%) | `WINTER_HOST_SHARE_DEFAULT_PCT` in ship-config; stated in `ShipWinter.tsx`. Recorded per agreement by admin on acceptance. |
-| Quest close behavior | Open until 3 finishers; no hard end date | Leaderboard logic in `ship-logic.ts` (`computeQuestStandings`); stated in `ShipQuestRules.tsx`. |
+| Quest close behavior | Open through the first sailing year; no hard end date | Stated in `ShipQuestRules.tsx`. |
+
+### Free-voyage giveaway (booking-volume driven)
+
+Constants in `server/lib/ship-config.ts`. Completing the quest puts a crew in the draw; each free voyage is awarded by random draw from all completers (ties random too). The maiden voyage is free at launch, and one more free voyage unlocks for every 20% of the first year booked, up to six at 100%.
+
+| Variable | Value | Meaning |
+|---|---|---|
+| `MAIDEN_FREE_VOYAGES` | 1 | Free voyages at launch (the maiden voyage). |
+| `FREE_VOYAGE_MILESTONE_PCT` | 20 | Each this-percent booked unlocks one more free voyage. |
+| `MAX_FREE_VOYAGES` | 6 | The cap at a fully booked first year. |
+| `MAIDEN_YEAR_VOYAGE_TARGET` | 30 | Voyages that count as 100% booked. **Edit this to pace the giveaways** (it is the denominator for the percent-booked meter on `/ship/quest`). |
+
+Admin holds the draws at `/admin/ship` under Quest ("Draw a free-voyage winner"). The draw picks at random from crews who completed the quest and have not already won, and emails the winner. The public meter (`ship.quest.freeVoyageStatus`) shows voyages unlocked, percent booked, and how many crews are in the draw.
 | Maiden voyage weeks | Early-to-mid August 2026 (placeholder) | Shown as copy; set real weeks by adding availability / blackouts in `/admin/ship`. |
 | Platform pending expiry | 72 hours | `PLATFORM_PENDING_EXPIRY_HOURS` in ship-config (for the future auto-expire job). |
 | Passport GPS proximity | 2 km of the pin | `PASSPORT_PROXIMITY_M` in `server/routes/ship.ts`. |

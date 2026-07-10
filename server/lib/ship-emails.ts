@@ -88,13 +88,13 @@ export async function emailQuestActionVerified(to: string, actionTitle: string, 
   await send(to, "A ReGen Ship quest action is verified", html);
 }
 
-export async function emailQuestWinner(to: string, rank: number): Promise<void> {
+export async function emailQuestWinner(to: string): Promise<void> {
   const html =
-    h("You earned a maiden voyage") +
-    p(`You finished the Maiden Voyage Quest. You are finisher number ${rank}. Three crews sail free, and you are one of them.`) +
+    h("Your name was drawn. You sail free.") +
+    p("You completed the Maiden Voyage Quest, so your name went into the draw, and it came up. You have won a free voyage aboard the ReGen Ship.") +
     p("A crew member will reach out to arrange your week and your platform booking. Winners pay nothing and no offering is expected.") +
     btn(`${SHIP_URL}/book`, "Choose your week");
-  await send(to, "You won a ReGen Ship maiden voyage", html);
+  await send(to, "You won a free ReGen Ship voyage", html);
 }
 
 export async function emailApplicationReceived(to: string, kind: string): Promise<void> {

@@ -103,9 +103,28 @@ function MapTab({ utils, err, ok }: Common) {
 function QuestTab({ utils, err, ok }: Common) {
   const q = trpc.ship.admin.listPendingCompletions.useQuery();
   const review = trpc.ship.admin.reviewCompletion.useMutation();
+  const status = trpc.ship.quest.freeVoyageStatus.useQuery();
+  const draw = trpc.ship.admin.drawFreeVoyageWinner.useMutation();
   const refresh = () => utils.ship.admin.listPendingCompletions.invalidate();
   if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  const s = status.data;
   return (
+    <>
+      <Section title="Free voyages">
+        <div className="text-sm border rounded p-3 flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span><b>{s?.freeVoyagesUnlocked ?? "-"}</b> of {s?.freeVoyagesTotal ?? 6} unlocked</span>
+          <span>{s?.percentBooked ?? 0}% booked ({s?.bookedVoyages ?? 0}/{s?.target ?? 0} voyages)</span>
+          <span><b>{s?.poolSize ?? 0}</b> in the draw</span>
+          <Button
+            size="sm"
+            className="bg-[#2f5d3a] hover:bg-[#264a2f]"
+            disabled={draw.isPending}
+            onClick={() => draw.mutateAsync().then((r) => { toast.success(`Drawn: ${r.handle ? "@" + r.handle : r.name ?? "user " + r.userId}`); status.refetch(); }).catch(err)}
+          >
+            {draw.isPending ? "Drawing…" : "Draw a free-voyage winner"}
+          </Button>
+        </div>
+      </Section>
     <Section title="Pending quest completions">
       <div className="space-y-2">
         {(q.data ?? []).map((c: any) => (
@@ -122,6 +141,7 @@ function QuestTab({ utils, err, ok }: Common) {
         {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">Nothing pending.</p>}
       </div>
     </Section>
+    </>
   );
 }
 
