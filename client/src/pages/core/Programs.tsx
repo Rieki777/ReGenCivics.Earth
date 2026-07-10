@@ -100,6 +100,22 @@ export default function Programs() {
         </div>
       </section>
 
+      <section className="band-parch">
+        <div className="wrap center">
+          <p className="eyebrow">A traveling program</p>
+          <h2>The ReGen Ship</h2>
+          <p className="lead center">
+            A regenerative pirate ship with a chest of seeds. Crews sail Cascadia visiting the most beautiful
+            places on earth in reverence and regeneration, planting food forests as they go. Voyage offerings
+            support the church, and ten percent of every voyage buys the ship into community ownership.
+          </p>
+          <div className="btn-row">
+            <a className="btn btn-primary" href="https://regencivics.earth/ship">Board the ship</a>
+            <a className="btn btn-ghost" href="https://regencivics.earth/ship/quest">Win the maiden voyage</a>
+          </div>
+        </div>
+      </section>
+
       <section className="band-forest">
         <div className="wrap center">
           <p className="eyebrow">Gather with us</p>

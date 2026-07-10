@@ -29,6 +29,7 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     heading: "Play",
     cards: [
       { label: "Quests", sub: "The questing journey", href: "/quest", icon: "wizards", primary: true },
+      { label: "The Ship", sub: "Sail Cascadia, win the maiden voyage", href: "/ship", icon: "Anchor", primary: true },
       { label: "Bounties", sub: "Earn tokens for real work", href: "/bounties", icon: "Sparkles" },
       { label: "Community", sub: "Forum, voices, gathering grove", href: "/community", icon: "MessageCircle" },
       { label: "Schedule", sub: "Upcoming and past sessions", href: "/schedule", icon: "Calendar" },

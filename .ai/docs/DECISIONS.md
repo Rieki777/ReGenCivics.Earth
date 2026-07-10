@@ -359,6 +359,33 @@ Format per entry:
 - Trade-offs: mean-synodic boundaries drift up to ~14h from the true new moon (accepted; stability beats astronomy). The bounty path (`game.sendGratitude`, source `gratitude_bounty`) still credits at send time — folding it into acknowledgments is deferred so the GratitudeDrawer UI change ships separately. Recipients now wait until cycle close to earn, which weakens the instant-feedback loop; the tab's power meter and per-person share give the immediate feedback instead.
 - Where it lives in code: `drizzle/0163_gratitude_cycles.sql`, `drizzle/schema.ts` (gratitudeCycles, gratitudeCycleBudgets, gratitudeDistributions, gratitudeLog.cycleId/weight, userNotifications.link + gratitude type), `shared/lunar.ts`, `server/lib/gratitude-cycles.ts`, `server/routes/gratitude.ts` (send cutover + myOverview/myJournal/publicJournal/closeCycles), `server/routes/batchJobs.ts` (Step 8), `client/src/components/profile/GratitudeTab.tsx`, `client/src/pages/PlayerProfile.tsx` (gratitude tab), `client/src/components/NotificationBell.tsx` (link-first navigation), `server/gratitudeCycles.test.ts`.
 
+## ADR-31: The ReGen Ship as a CORE program with a hybrid money flow
+
+- Date: 2026-07-10. Status: Accepted.
+- Context: Rye owns a 2006 Fleetwood Revolution LE motorhome and lends it to the Church of the Regenerative Earth for a regenerative travel program, the ReGen Ship. It needs insured rentals, a booking flow, and a defensible way for crews to support the church.
+- Decision: The ship is a CORE program. Its web home is regencivics.earth/ship/* with a program card on core.regencivics.earth. Money flows in two legally separate parts: (1) the insured rental charged on the platform (Outdoorsy), which activates the coverage older rigs require, and (2) a suggested voyage offering to CORE, reusing `churchDonations` with a `program` tag (`regen_ship`, `regen_ship_gift`) so Transparency and Reconciliation segment ship revenue. Platform exposure is controlled: list at the $600/night anchor, instant book off, all dates blocked, approved guests get a custom offer at the trial rate. The offering is never required and booking never depends on it (Section 3.3 guardrails).
+- Why: Outdoorsy is the only major platform that insures rigs older than 15 years for both physical damage and liability. Keeping the rental and the offering separate keeps the church asset protection intact and the offering genuinely voluntary. Reusing churchDonations means one ledger, one reconciliation view, one webhook path.
+- Trade-offs: if the offering drifts into effectively-required territory the platform could treat it as circumvention, so the guardrails are load-bearing, not decoration. Two-line pricing is more to explain than one number, but honesty about the split is the point.
+- Where it lives: `CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md`, `server/lib/ship-config.ts` (prices, program tags, isConfigured guards), `server/routes/ship.ts`, `client/src/pages/ship/*`, `server/lib/ship-emails.ts`.
+
+## ADR-32: Leaflet + react-leaflet regional treasure map alongside GlobeMap
+
+- Date: 2026-07-10. Status: Accepted.
+- Context: The ship needs a regional, interactive treasure map of Cascadia with typed pins (springs, waterfalls, food forests, land projects), a live ship position, and seed-planting layers. The existing GlobeMap is a 3D globe for the worldwide land-project view.
+- Decision: Add Leaflet + react-leaflet v5 with OpenStreetMap tiles (no API key) as a separate regional map component (`client/src/pages/ship/ShipMap.tsx`). GlobeMap stays untouched. Pins are emoji divIcons, which avoids Leaflet broken default-marker asset behavior entirely.
+- Why: Leaflet is the standard for a 2D tiled regional map and needs no key or paid tiles. Keeping it separate from GlobeMap avoids destabilizing the existing globe. Emoji divIcons dodge the well-known bundler issue with Leaflet marker images.
+- Trade-offs: a second mapping library adds bundle weight, mitigated by the route being lazy-loaded. OSM tiles have usage etiquette; fine at this scale.
+- Where it lives: `client/src/pages/ship/ShipMap.tsx`, `package.json` (leaflet, react-leaflet, @types/leaflet).
+
+## ADR-33: The `ship_*` table family, `ship_quest` token source, and Season 2 referral attribution
+
+- Date: 2026-07-10. Status: Accepted.
+- Context: The ship needs its own persistence for bookings, locations, the quest, concierge sessions, plantings, the log, the passport, and position pings, plus a way to reward quest actions and attribute land-project referrals.
+- Decision: A 15-table `ship_*` family in `drizzle/schema.ts` (migration 0175, plus 0176 widening `linkedQuestId` to a varchar slug). Quest rewards credit `$ReGen` on the private ledger via `creditPrivateTokens` with a new source tag `ship_quest` (referral bookings use `ship_referral`), following the `quest_completion` pattern (STEERING section 5). Season 2 application referral attribution adds nullable `shipReferralHandle` / `shipReferralUserId` columns to `applications`; the referral quest action auto-verifies when that application is shortlisted.
+- Why: a dedicated table family keeps the ship self-contained and reviewable. Reusing the private-ledger credit path means the token rules already hold. Attributing referrals on the existing applications table avoids a parallel referral system.
+- Trade-offs: loose-FK convention (nullable int columns, no enforced constraints) matches the rest of the schema but pushes referential integrity into the application layer. "Shortlisted" is interpreted operationally (admin verifies) since the applications status enum has no literal `shortlisted` value.
+- Where it lives: `drizzle/schema.ts` (ship tables + applications columns), `drizzle/0175_regen_ship.sql`, `drizzle/0176_ship_quest_link.sql`, `server/lib/ship-logic.ts`, `server/routes/ship.ts`, `scripts/seed-ship-locations.ts`, `scripts/seed-ship-quest.ts`.
+
 ---
 
 ## Adding new ADRs

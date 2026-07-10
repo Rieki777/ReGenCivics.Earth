@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-10: The ReGen Ship
+
+- New CORE program: a regenerative pirate ship + the ReGen Fleet. 15-table `ship_*` family (migrations 0175, 0176) plus `applications` referral columns; `server/routes/ship.ts` tRPC router (bookings, treasure map, Maiden Voyage Quest, OpenRouter concierge, seed plantings, voyage log, digital passport, position pings, full admin surface) with `server/ship.test.ts` (16 tests: overlap, 7-night voyage length, pricing split, quest finish-order + top-3, itinerary location-id validation, program tagging, tRPC guards).
+- 13 pages under `client/src/pages/ship/` wired into `App.tsx` (`/ship`, `/ship/book`, `/ship/map`, `/ship/concierge`, `/ship/quest`, `/ship/quest/rules`, `/ship/nominate`, `/ship/fleet`, `/ship/keeper`, `/ship/winter`, `/ship/log`, `/ship/guide`, `/admin/ship`), a Play-menu nav entry, and a CORE Programs card. Treasure map is Leaflet + react-leaflet v5 (ADR-32) with emoji divIcons, live ship position, and seed-planting layers.
+- Money flow: hybrid platform rental + suggested voyage offering reusing `churchDonations` program tags `regen_ship` / `regen_ship_gift` (ADR-31). Quest rewards credit `$ReGen` via `creditPrivateTokens` source `ship_quest`; referrals `ship_referral` (ADR-33). Every env-dependent feature (concierge, Zeffy forms, Outdoorsy listing, GPS tracker) is behind an isConfigured guard so nothing blocks.
+- Ship's Manifest six-email sequence + operational emails (`server/lib/ship-emails.ts`). Seed scripts `scripts/seed-ship-locations.ts` (30 Cascadia locations) + `scripts/seed-ship-quest.ts` (7 actions), both run. 7 real exterior photos processed + 16 concept images generated into `client/public/images/ship/`. New reference doc `SHIP_VARIABLES.md` maps every price, policy, env var, and admin-editable setting.
+- Source spec: `CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md`. Companion human tasks: `RYE_BROWSER_TASKS_REGEN_SHIP.md`. Domain terms + ADR-31/32/33 recorded.
+
 ## 2026-07-04 (later): The Evolution Engine on the page
 
 - New Assembly section between Deciding and Record (`client/src/components/assembly/EvolutionEngine.tsx`): the autonomy tier as a 0-3 ladder with plain-language meaning per tier, the three guardrails at a glance (launch window hours, human-approval requirement, circuit breaker threshold), in-flight machine ships with a Steward pause control, recently shipped features. Reads `assembly.evolutionStatus` (now includes `launchRequireApproval`). Governance transparency: the community watches its own machine.

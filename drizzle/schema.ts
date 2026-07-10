@@ -1,4 +1,4 @@
-import { bigint, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -117,6 +117,13 @@ export const applications = mysqlTable("applications", {
   websiteUrl: varchar("websiteUrl", { length: 512 }),
   videoUrl: varchar("videoUrl", { length: 512 }),
   documentsUrl: text("documentsUrl"), // JSON array of S3 URLs
+
+  // ReGen Ship quest referral attribution (Maiden Voyage Quest action #3).
+  // Set from /apply?ref=<handle>. When this application reaches a shortlisted
+  // status, the matching ship_quest_completions row auto-verifies. Nullable so
+  // ordinary applications are unaffected.
+  shipReferralHandle: varchar("shipReferralHandle", { length: 40 }),
+  shipReferralUserId: int("shipReferralUserId"),
   additionalNotes: text("additionalNotes"),
   
   // Metadata
@@ -4174,3 +4181,278 @@ export const elderCorpusChunks = mysqlTable("elder_corpus_chunks", {
   index("elder_corpus_elder_idx").on(table.elder, table.chunkIndex),
 ]));
 export type ElderCorpusChunk = typeof elderCorpusChunks.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ReGen Ship (CORE program). The regenerative pirate ship + ReGen Fleet.
+// See CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md and ADR entries for
+// ReGen Ship. Loose-FK convention: nullable int columns reference other tables
+// by id without an enforced constraint, matching the rest of this schema.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Treasure-map locations: land projects, springs, waterfalls, food forests,
+// seed sites, boondocks, event venues. Verified rows render on the public map.
+export const shipLocations = mysqlTable("ship_locations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  type: mysqlEnum("type", [
+    "land_project", "spring", "waterfall", "lake", "geology",
+    "forest", "food_forest", "seed_site", "boondock", "event_venue",
+  ]).notNull(),
+  lat: double("lat").notNull(),
+  lng: double("lng").notNull(),
+  bioregion: varchar("bioregion", { length: 64 }).notNull().default("cascadia"),
+  description: text("description"),
+  websiteUrl: varchar("websiteUrl", { length: 512 }),
+  imageUrl: varchar("imageUrl", { length: 512 }),
+  isVerified: boolean("isVerified").notNull().default(false),
+  addedByUserId: int("addedByUserId"),
+  linkedEventId: int("linkedEventId"),
+  linkedApplicationId: int("linkedApplicationId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_locations_type_idx").on(table.type),
+  index("ship_locations_verified_idx").on(table.isVerified),
+  index("ship_locations_bioregion_idx").on(table.bioregion),
+]));
+export type ShipLocation = typeof shipLocations.$inferSelect;
+export type InsertShipLocation = typeof shipLocations.$inferInsert;
+
+// Voyage bookings. Our calendar is the source of truth; the platform rental is
+// a separate legal charge. Dates are YYYY-MM-DD strings for easy comparison.
+export const shipBookings = mysqlTable("ship_bookings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  guests: int("guests").notNull().default(1),
+  status: mysqlEnum("status", [
+    "requested", "approved", "platform_pending", "confirmed",
+    "active", "completed", "cancelled",
+  ]).notNull().default("requested"),
+  platformBookingRef: varchar("platformBookingRef", { length: 255 }),
+  dietCommitmentAt: timestamp("dietCommitmentAt"),
+  waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),
+  offeringDonationId: int("offeringDonationId"),
+  referredByUserId: int("referredByUserId"),
+  isWinnerVoyage: boolean("isWinnerVoyage").notNull().default(false),
+  isGifted: boolean("isGifted").notNull().default(false),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_bookings_status_idx").on(table.status),
+  index("ship_bookings_start_idx").on(table.startDate),
+  index("ship_bookings_user_idx").on(table.userId),
+]));
+export type ShipBooking = typeof shipBookings.$inferSelect;
+export type InsertShipBooking = typeof shipBookings.$inferInsert;
+
+// Admin-managed date ranges the ship is unavailable (maintenance, holds, the
+// platform's own bookings mirrored in).
+export const shipBlackoutDates = mysqlTable("ship_blackout_dates", {
+  id: int("id").autoincrement().primaryKey(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  reason: varchar("reason", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_blackout_start_idx").on(table.startDate),
+]));
+export type ShipBlackoutDate = typeof shipBlackoutDates.$inferSelect;
+
+// Seasonal pricing multipliers over date ranges (peak +25%, shoulder -20%, etc).
+export const shipPricingWindows = mysqlTable("ship_pricing_windows", {
+  id: int("id").autoincrement().primaryKey(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  multiplier: decimal("multiplier", { precision: 4, scale: 2 }).notNull().default("1.00"),
+  label: varchar("label", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_pricing_start_idx").on(table.startDate),
+]));
+export type ShipPricingWindow = typeof shipPricingWindows.$inferSelect;
+
+// The Maiden Voyage Quest checklist definitions (seeded, admin-editable order).
+export const shipQuestActions = mysqlTable("ship_quest_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 120 }).notNull().unique(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  points: int("points").notNull().default(0),
+  isRequired: boolean("isRequired").notNull().default(true),
+  proofType: mysqlEnum("proofType", [
+    "link", "photo", "referral_shortlisted", "game_quest", "forum",
+  ]).notNull().default("link"),
+  // References quest_completions.questId (a varchar slug like "quest-3"), e.g.
+  // the existing Food Foresting quest, for auto-verification.
+  linkedQuestId: varchar("linkedQuestId", { length: 100 }),
+  forumPostId: int("forumPostId"),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_quest_actions_sort_idx").on(table.sortOrder),
+]));
+export type ShipQuestAction = typeof shipQuestActions.$inferSelect;
+
+// A player's submission/completion of a quest action. Unique per (user, action).
+export const shipQuestCompletions = mysqlTable("ship_quest_completions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  actionId: int("actionId").notNull(),
+  proofUrl: varchar("proofUrl", { length: 512 }),
+  note: text("note"),
+  status: mysqlEnum("status", ["pending", "verified", "rejected"]).notNull().default("pending"),
+  verifiedByUserId: int("verifiedByUserId"),
+  verifiedAt: timestamp("verifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("ship_quest_completion_uq").on(table.userId, table.actionId),
+  index("ship_quest_completion_user_idx").on(table.userId),
+  index("ship_quest_completion_status_idx").on(table.status),
+]));
+export type ShipQuestCompletion = typeof shipQuestCompletions.$inferSelect;
+
+// Nomination track: anyone can nominate anyone (including self) for a bonus slot.
+export const shipNominations = mysqlTable("ship_nominations", {
+  id: int("id").autoincrement().primaryKey(),
+  nominatorUserId: int("nominatorUserId"),
+  nomineeName: varchar("nomineeName", { length: 200 }).notNull(),
+  nomineeContact: varchar("nomineeContact", { length: 320 }),
+  reason: text("reason").notNull(),
+  isSelfNomination: boolean("isSelfNomination").notNull().default(false),
+  status: mysqlEnum("status", ["submitted", "shortlisted", "selected"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_nominations_status_idx").on(table.status),
+]));
+export type ShipNomination = typeof shipNominations.$inferSelect;
+
+// Ship Keeper role applications ($200 per turnover).
+export const shipKeeperApplications = mysqlTable("ship_keeper_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  location: varchar("location", { length: 255 }),
+  experience: text("experience"),
+  availability: text("availability"),
+  status: mysqlEnum("status", ["submitted", "interviewing", "accepted", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_keeper_status_idx").on(table.status),
+]));
+export type ShipKeeperApplication = typeof shipKeeperApplications.$inferSelect;
+
+// Raise-your-flag: RV owners applying to add a ship to the ReGen Fleet.
+export const shipFleetApplications = mysqlTable("ship_fleet_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerName: varchar("ownerName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  rvYearMakeModel: varchar("rvYearMakeModel", { length: 255 }),
+  location: varchar("location", { length: 255 }),
+  message: text("message"),
+  status: mysqlEnum("status", ["submitted", "in_conversation", "joined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_fleet_status_idx").on(table.status),
+]));
+export type ShipFleetApplication = typeof shipFleetApplications.$inferSelect;
+
+// Winter Anchorage: land projects applying to host the ship off-season.
+export const shipWinterHostApplications = mysqlTable("ship_winter_host_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  projectName: varchar("projectName", { length: 200 }).notNull(),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  location: varchar("location", { length: 255 }),
+  powerHookup: boolean("powerHookup").notNull().default(false),
+  freezeProtectionPlan: text("freezeProtectionPlan"),
+  siteDescription: text("siteDescription"),
+  proposedShare: varchar("proposedShare", { length: 120 }),
+  status: mysqlEnum("status", ["submitted", "in_conversation", "accepted", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_winter_host_status_idx").on(table.status),
+]));
+export type ShipWinterHostApplication = typeof shipWinterHostApplications.$inferSelect;
+
+// AI concierge sessions: intake answers, generated itinerary, chat transcript.
+export const shipConciergeSessions = mysqlTable("ship_concierge_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  bookingId: int("bookingId"),
+  profileAnswers: json("profileAnswers"),
+  itinerary: json("itinerary"),
+  messages: json("messages"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_concierge_user_idx").on(table.userId),
+]));
+export type ShipConciergeSession = typeof shipConciergeSessions.$inferSelect;
+
+// Seed plantings logged via the one-QR chest card. Verified rows appear on the map.
+export const shipSeedPlantings = mysqlTable("ship_seed_plantings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  bookingId: int("bookingId"),
+  locationId: int("locationId"),
+  lat: double("lat"),
+  lng: double("lng"),
+  species: varchar("species", { length: 200 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  notes: text("notes"),
+  isVerified: boolean("isVerified").notNull().default(false),
+  plantedAt: timestamp("plantedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_seed_plantings_user_idx").on(table.userId),
+  index("ship_seed_plantings_verified_idx").on(table.isVerified),
+]));
+export type ShipSeedPlanting = typeof shipSeedPlantings.$inferSelect;
+
+// Public voyage log: daily/bi-daily crew entries.
+export const shipLogEntries = mysqlTable("ship_log_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId").notNull(),
+  userId: int("userId").notNull(),
+  dayNumber: int("dayNumber"),
+  title: varchar("title", { length: 200 }),
+  content: text("content").notNull(),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  isPublic: boolean("isPublic").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_log_booking_idx").on(table.bookingId),
+  index("ship_log_public_idx").on(table.isPublic),
+]));
+export type ShipLogEntry = typeof shipLogEntries.$inferSelect;
+
+// Digital passport: one stamp per (user, location).
+export const shipPassportStamps = mysqlTable("ship_passport_stamps", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  locationId: int("locationId").notNull(),
+  bookingId: int("bookingId"),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  stampedAt: timestamp("stampedAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("ship_passport_uq").on(table.userId, table.locationId),
+  index("ship_passport_user_idx").on(table.userId),
+]));
+export type ShipPassportStamp = typeof shipPassportStamps.$inferSelect;
+
+// Live ship position pings (manual v1, GPS tracker v2). Latest row is "she sails here".
+export const shipPositionPings = mysqlTable("ship_position_pings", {
+  id: int("id").autoincrement().primaryKey(),
+  lat: double("lat").notNull(),
+  lng: double("lng").notNull(),
+  source: mysqlEnum("source", ["manual", "tracker"]).notNull().default("manual"),
+  note: varchar("note", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_position_created_idx").on(table.createdAt),
+]));
+export type ShipPositionPing = typeof shipPositionPings.$inferSelect;

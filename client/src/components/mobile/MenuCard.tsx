@@ -4,12 +4,12 @@
 import { Link } from "wouter";
 import {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
-  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll,
+  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll, Anchor,
 } from "lucide-react";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
-  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll,
+  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll, Anchor,
 };
 
 type Props = {
