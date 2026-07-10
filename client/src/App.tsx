@@ -205,6 +205,20 @@ const ShapeNextSession = lazy(() => import("./pages/ShapeNextSession"));
 const Checkin = lazy(() => import("./pages/Checkin"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Accessibility = lazy(() => import("./pages/Accessibility"));
+// ReGen Ship (CORE program)
+const Ship = lazy(() => import("./pages/ship/Ship"));
+const ShipBook = lazy(() => import("./pages/ship/ShipBook"));
+const ShipMap = lazy(() => import("./pages/ship/ShipMap"));
+const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
+const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
+const ShipQuestRules = lazy(() => import("./pages/ship/ShipQuestRules"));
+const ShipNominate = lazy(() => import("./pages/ship/ShipNominate"));
+const ShipFleet = lazy(() => import("./pages/ship/ShipFleet"));
+const ShipKeeper = lazy(() => import("./pages/ship/ShipKeeper"));
+const ShipWinter = lazy(() => import("./pages/ship/ShipWinter"));
+const ShipLog = lazy(() => import("./pages/ship/ShipLog"));
+const ShipGuide = lazy(() => import("./pages/ship/ShipGuide"));
+const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -230,6 +244,21 @@ function Router() {
       <Route path={"/church"}>{() => { window.location.replace('https://core.regencivics.earth'); return null; }}</Route>
       <Route path={"/quest/:slug"}><EB><Quest /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
+
+      {/* ReGen Ship (CORE program) */}
+      <Route path={"/ship"}><EB><Ship /></EB></Route>
+      <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
+      <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>
+      <Route path={"/ship/concierge"}><EB><ShipConcierge /></EB></Route>
+      <Route path={"/ship/quest/rules"}><EB><ShipQuestRules /></EB></Route>
+      <Route path={"/ship/quest"}><EB><ShipQuest /></EB></Route>
+      <Route path={"/ship/nominate"}><EB><ShipNominate /></EB></Route>
+      <Route path={"/ship/fleet"}><EB><ShipFleet /></EB></Route>
+      <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
+      <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
+      <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>
+      <Route path={"/ship/guide"}><EB><ShipGuide /></EB></Route>
+      <Route path={"/admin/ship"}><EB><ShipAdmin /></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
       <Route path={"/land"}><EB><Land /></EB></Route>
       <Route path={"/ally"}><EB><Ally /></EB></Route>

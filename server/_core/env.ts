@@ -99,4 +99,20 @@ export const ENV = {
   zeffyEmbedUrl: process.env.ZEFFY_EMBED_URL ?? "",
   zeffyApiKey: process.env.ZEFFY_API_KEY ?? "",
   zeffyWebhookToken: process.env.ZEFFY_WEBHOOK_TOKEN ?? "",
+
+  // ReGen Ship (CORE program). Every ship feature is built behind an
+  // isConfigured guard (see server/lib/ship-config.ts) so the whole system
+  // ships and each feature lights up when its var lands on Railway.
+  //  - The two Zeffy form URLs are dashboard-generated share links (public,
+  //    same class as any <iframe src>), one for the suggested voyage offering
+  //    and one for Gift a Voyage (2x). Stripe fallback renders when unset.
+  //  - The Outdoorsy listing URL is shown on the booking page and in the
+  //    approved-booking email that instructs the guest through the platform.
+  //  - The GPS tracker vars power the live position pin v2; manual pings work
+  //    without them.
+  shipZeffyOfferingUrl: process.env.SHIP_ZEFFY_OFFERING_URL ?? "",
+  shipZeffyGiftUrl: process.env.SHIP_ZEFFY_GIFT_URL ?? "",
+  shipOutdoorsyListingUrl: process.env.SHIP_OUTDOORSY_LISTING_URL ?? "",
+  shipGpsTrackerApiUrl: process.env.SHIP_GPS_TRACKER_API_URL ?? "",
+  shipGpsTrackerApiKey: process.env.SHIP_GPS_TRACKER_API_KEY ?? "",
 };

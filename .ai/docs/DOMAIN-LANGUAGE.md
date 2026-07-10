@@ -222,3 +222,20 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 - "Bioregional" (region + ecological character; preferred over "regional" alone).
 - "The Field Guide" (the canonical Game player's guide).
 - "Welcome Aboard" (the onboarding moment; capitalized).
+
+## ReGen Ship terms
+
+- **ReGen Ship**: the regenerative pirate ship (a 2006 Fleetwood Revolution LE motorhome), a CORE program. Always capitalized.
+- **ReGen Fleet**: the growing fleet of regenerative ships; a traveling festival moving from land project to land project. The ReGen Ship is its flagship.
+- **Voyage**: one 7-night booking cycle aboard the ship (set by tank capacity).
+- **Ship Keeper**: the paid role ($200 per turnover) that cleans, resets, and runs the two-hour crew orientation.
+- **Treasure Map**: the interactive Leaflet map of Cascadia locations at /ship/map.
+- **Voyage Offering**: the suggested donation to CORE that accompanies a voyage. Legally voluntary, never required, never a rental charge.
+- **Healing Hole**: the planting site at the anchorage where returning crews plant their saved seeds.
+- **Anchorage**: the ship's home base, currently The Sanctuary / Tao Hermitage in Ashland, Oregon.
+- **Ship's Bell**: the ship's referral program (referral codes, `ship_referral` credits, quest board points).
+- **Ship's Manifest**: the six-email pre-voyage sequence (welcome through homecoming).
+- **Water Doctrine**: the input-control practice aboard (only the ship's soaps and cleaners, no chemical body products, vegan-diet inputs) that lets black and gray water return be regenerative on consenting private land.
+- **Winter Anchorage**: the off-season program where the ship becomes stationary sanctuary housing at a host land project.
+- **Passport**: the digital land-project stamp book (one stamp per location), physical stamp book later.
+- **The Regatta**: the annual fleet convergence festival at one land project, announced at fleet launch.
