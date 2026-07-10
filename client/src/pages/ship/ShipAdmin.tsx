@@ -57,7 +57,7 @@ function BookingsTab({ utils, err, ok }: Common) {
   const setStatus = trpc.ship.admin.setBookingStatus.useMutation();
   const [refs, setRefs] = useState<Record<number, string>>({});
   const refresh = () => utils.ship.admin.listBookings.invalidate();
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Bookings">
       <div className="space-y-2">
@@ -85,7 +85,7 @@ function MapTab({ utils, err, ok }: Common) {
   const q = trpc.ship.admin.listLocations.useQuery();
   const verify = trpc.ship.admin.verifyLocation.useMutation();
   const refresh = () => utils.ship.admin.listLocations.invalidate();
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Locations">
       <div className="space-y-1">
@@ -104,14 +104,14 @@ function QuestTab({ utils, err, ok }: Common) {
   const q = trpc.ship.admin.listPendingCompletions.useQuery();
   const review = trpc.ship.admin.reviewCompletion.useMutation();
   const refresh = () => utils.ship.admin.listPendingCompletions.invalidate();
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Pending quest completions">
       <div className="space-y-2">
         {(q.data ?? []).map((c: any) => (
           <div key={c.id} className="border rounded p-3 text-sm">
             <div>{c.name ?? "user " + c.userId} · {c.actionTitle} ({c.points} pts)</div>
-            {c.proofUrl && <a href={c.proofUrl} target="_blank" rel="noreferrer" className="text-[#2f5d3a] underline break-all">{c.proofUrl}</a>}
+            {c.proofUrl && <a href={c.proofUrl} target="_blank" rel="noreferrer" className="text-[#2f5d3a] dark:text-[#9de89d] underline break-all">{c.proofUrl}</a>}
             {c.note && <p className="text-muted-foreground">{c.note}</p>}
             <div className="flex gap-2 mt-2">
               <Button size="sm" onClick={() => review.mutateAsync({ id: c.id, status: "verified" }).then(() => ok("Verified")(refresh)).catch(err)} className="bg-[#2f5d3a] hover:bg-[#264a2f]">Verify</Button>
@@ -129,7 +129,7 @@ function PlantingsTab({ utils, err, ok }: Common) {
   const q = trpc.ship.admin.listPendingPlantings.useQuery();
   const verify = trpc.ship.admin.verifyPlanting.useMutation();
   const refresh = () => utils.ship.admin.listPendingPlantings.invalidate();
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Pending seed plantings">
       <div className="space-y-1">
@@ -149,7 +149,7 @@ function NominationsTab({ utils, err, ok }: Common) {
   const q = trpc.ship.admin.listNominations.useQuery();
   const review = trpc.ship.admin.reviewNomination.useMutation();
   const refresh = () => utils.ship.admin.listNominations.invalidate();
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Nominations">
       <div className="space-y-2">
@@ -172,7 +172,7 @@ function NominationsTab({ utils, err, ok }: Common) {
 function ApplicationsTab({ err, ok, utils }: Common) {
   const [kind, setKind] = useState<"keeper" | "fleet" | "winter">("keeper");
   const q = trpc.ship.admin.listApplications.useQuery({ kind });
-  if (q.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <Section title="Applications">
       <div className="flex gap-2 mb-3">
@@ -219,7 +219,7 @@ function PricingTab({ utils, err, ok }: Common) {
   const [b, setB] = useState({ startDate: "", endDate: "", reason: "" });
   const rWin = () => utils.ship.admin.listPricingWindows.invalidate();
   const rBk = () => utils.ship.admin.listBlackouts.invalidate();
-  if (windows.isError) return <p className="text-amber-700">Admin access required.</p>;
+  if (windows.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
     <>
       <Section title="Seasonal pricing windows">

@@ -36,12 +36,12 @@ function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: 
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            {verified && <Check className="w-4 h-4 text-[#2f5d3a]" />}
+            {verified && <Check className="w-4 h-4 text-[#2f5d3a] dark:text-[#9de89d]" />}
             <h3 className="font-semibold">{action.title}</h3>
           </div>
           {action.description && <p className="text-sm text-foreground/80 mt-1">{action.description}</p>}
         </div>
-        <span className="shrink-0 text-sm font-bold text-[#2f5d3a] bg-[#ffd700]/30 rounded-full px-3 py-1">{action.points} pts</span>
+        <span className="shrink-0 text-sm font-bold text-[#2f5d3a] dark:text-[#9de89d] bg-[#ffd700]/30 rounded-full px-3 py-1">{action.points} pts</span>
       </div>
       {!verified && (
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -53,7 +53,7 @@ function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: 
           </Button>
         </div>
       )}
-      {pending && <p className="text-xs text-amber-700 mt-2">Submitted. Waiting on verification.</p>}
+      {pending && <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">Submitted. Waiting on verification.</p>}
     </div>
   );
 }
@@ -102,7 +102,7 @@ export default function ShipQuest() {
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>The checklist</ShipEyebrow>
         <h2 className="text-2xl font-bold mb-5">Seven actions to earn your voyage</h2>
-        {myProgress.isError && <p className="text-sm text-amber-700 mb-4">Sign in to track your progress and submit proofs.</p>}
+        {myProgress.isError && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
         <div className="space-y-3">
           {(actions.data ?? []).map((a) => (
             <ActionRow key={a.id} action={a} myStatus={myByAction.get(a.id)} onSubmitted={refresh} />
@@ -125,7 +125,7 @@ export default function ShipQuest() {
                 {s.isFinisher && <span className="ml-2 text-xs bg-[#2f5d3a] text-white rounded-full px-2 py-0.5">Finisher</span>}
                 {s.winnerRank && <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/40 rounded-full px-2 py-0.5"><Anchor className="w-3 h-3" /> Voyage {s.winnerRank}</span>}
               </div>
-              <span className="text-sm font-semibold text-[#2f5d3a]">{s.verifiedPoints} pts</span>
+              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{s.verifiedPoints} pts</span>
             </div>
           ))}
           {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No verified actions yet. Be the first to set sail.</p>}

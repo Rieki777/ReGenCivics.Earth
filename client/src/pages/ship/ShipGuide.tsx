@@ -11,7 +11,7 @@ import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 function WalkthroughPlaceholder() {
   return (
     <div className="mt-4 rounded-2xl border border-dashed border-[#4a7c59]/40 bg-[#4a7c59]/5 flex flex-col items-center justify-center text-center p-8">
-      <Video className="w-8 h-8 text-[#4a7c59]/70 mb-2" aria-hidden="true" />
+      <Video className="w-8 h-8 text-[#4a7c59]/70 dark:text-[#7dd87d]/70 mb-2" aria-hidden="true" />
       <p className="text-sm text-muted-foreground">Captain's walkthrough coming aboard soon</p>
     </div>
   );
@@ -154,7 +154,7 @@ export default function ShipGuide() {
       <ShipSection>
         <ShipEyebrow>The voyage guide</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
-          <Compass className="w-8 h-8 text-[#4a7c59] shrink-0" aria-hidden="true" />
+          <Compass className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
           Everything you need to sail her well
         </h1>
         <div className="max-w-3xl rounded-2xl border border-[#d4a574]/50 bg-[#d4a574]/10 p-5">
