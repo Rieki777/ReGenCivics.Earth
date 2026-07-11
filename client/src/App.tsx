@@ -258,6 +258,8 @@ function Router() {
       <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
       <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>
       <Route path={"/ship/guide"}><EB><ShipGuide /></EB></Route>
+      {/* The Love Voyage article lives in the blog; /ship/honeymoon is the friendly shortcut. */}
+      <Route path={"/ship/honeymoon"}>{() => { window.location.replace('/blog/more-than-one-honeymoon'); return null; }}</Route>
       <Route path={"/admin/ship"}><EB><ShipAdmin /></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
       <Route path={"/land"}><EB><Land /></EB></Route>

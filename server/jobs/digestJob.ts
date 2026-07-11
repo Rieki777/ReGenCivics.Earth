@@ -21,6 +21,7 @@ const BLOG_HIGHLIGHTS = [
   { title: "Your SEEDS Contributions Live On", slug: "your-seeds-contributions-live-on" },
   { title: "Your Space Is Waiting: How to Claim Your Land Project or Organisation", slug: "claim-your-land-project-or-organisation" },
   { title: "How to Set Up Your Player Profile: Connect to the Game", slug: "how-to-set-up-player-profile" },
+  { title: "You're Allowed to Have More Than One Honeymoon", slug: "more-than-one-honeymoon" },
 ];
 
 // Site sections to rotate through in the "have you seen this?" block.

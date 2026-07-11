@@ -77,6 +77,19 @@ export default function Ship() {
         </div>
       </ShipSection>
 
+      {/* The love voyage */}
+      <ShipSection className="bg-[#d4a574]/10">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div data-reveal="left" className="aspect-[4/3]"><ShipImage name="ship-campfire-dusk.jpg" alt="A couple resting by a fire ring beside the ship at dusk." className="h-full" /></div>
+          <div data-reveal="right">
+            <ShipEyebrow>The Love Voyage</ShipEyebrow>
+            <h2 className="text-3xl font-bold mb-4">You're allowed to have more than one honeymoon</h2>
+            <p className="text-foreground/90 mb-4">The old honeymoon was a full moon of honey and healing before a couple stepped into their next season together. The ReGen Ship gives you that week again: springs to drink from, waterfalls to swim under, land to serve, and a chest of seeds you plant side by side. Bring your partner, bring the kids, bring the crew of four.</p>
+            <a href="/blog/more-than-one-honeymoon" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read: You're Allowed to Have More Than One Honeymoon <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </ShipSection>
+
       {/* The seeds */}
       <ShipSection className="bg-[#4a7c59]/8">
         <div className="grid md:grid-cols-2 gap-8 items-center">

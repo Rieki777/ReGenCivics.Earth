@@ -34,11 +34,13 @@ import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice,
   computeQuestStandings, countCompleted, freeVoyagesUnlocked, percentBooked,
+  enumerateVoyageWeeks,
   type QuestCompletionRow,
 } from "../lib/ship-logic";
 import {
   MIN_GUESTS, MAX_GUESTS, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
   MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
+  SHIP_SEASON_START_YMD, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
 } from "../lib/ship-config";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
 import type { Itinerary } from "../lib/ship-logic";
@@ -155,17 +157,37 @@ export const shipRouter = router({
     }),
 
   // ── Availability ────────────────────────────────────────────────────────────
+  // Returns the enumerated voyage-week grid (the booking page's source of truth)
+  // plus the raw unavailable ranges and pricing windows for compatibility.
   availability: publicProcedure.query(async () => {
     const d = await db();
-    const bookings = await d
-      .select({ startDate: shipBookings.startDate, endDate: shipBookings.endDate, status: shipBookings.status })
+    const blocking = await d
+      .select({ startDate: shipBookings.startDate, endDate: shipBookings.endDate })
       .from(shipBookings)
       .where(inArray(shipBookings.status, [...BLOCKING_STATUSES]));
+    const requested = await d
+      .select({ startDate: shipBookings.startDate, endDate: shipBookings.endDate })
+      .from(shipBookings)
+      .where(eq(shipBookings.status, "requested"));
     const blackouts = await d.select().from(shipBlackoutDates);
     const pricing = await d.select().from(shipPricingWindows).orderBy(asc(shipPricingWindows.startDate));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const weeks = enumerateVoyageWeeks({
+      seasonStart: SHIP_SEASON_START_YMD,
+      horizonWeeks: SHIP_BOOKING_HORIZON_WEEKS,
+      today,
+      booked: blocking.map((b) => ({ startDate: b.startDate, endDate: b.endDate })),
+      requested: requested.map((b) => ({ startDate: b.startDate, endDate: b.endDate })),
+      blackouts: blackouts.map((b) => ({ startDate: b.startDate, endDate: b.endDate, reason: b.reason })),
+      pricingWindows: pricing.map((p) => ({ startDate: p.startDate, endDate: p.endDate, multiplier: p.multiplier, label: p.label })),
+      bands: SHIP_SEASONAL_BANDS,
+    });
+
     return {
+      weeks,
       unavailable: [
-        ...bookings.map((b) => ({ startDate: b.startDate, endDate: b.endDate, kind: "booked" as const })),
+        ...blocking.map((b) => ({ startDate: b.startDate, endDate: b.endDate, kind: "booked" as const })),
         ...blackouts.map((b) => ({ startDate: b.startDate, endDate: b.endDate, kind: "blackout" as const })),
       ],
       pricingWindows: pricing,

@@ -88,6 +88,120 @@ export function programTagForBooking(opts: { isGifted?: boolean }): string {
   return opts.isGifted ? SHIP_GIFT_PROGRAM_TAG : SHIP_PROGRAM_TAG;
 }
 
+// ── Voyage week grid ──────────────────────────────────────────────────────────
+/** Add whole days to a YYYY-MM-DD string, returning YYYY-MM-DD. */
+export function addDaysYmd(ymd: string, days: number): string {
+  const t = Date.parse(`${ymd}T00:00:00Z`);
+  if (Number.isNaN(t)) return ymd;
+  return new Date(t + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+export type WeekState = "open" | "requested" | "booked" | "turnover" | "migration";
+
+export type SeasonalBand = {
+  startDate: string;
+  endDate: string;
+  bioregion: string;
+  migration?: boolean;
+};
+
+export type VoyageWeek = {
+  /** Saturday the voyage begins (YYYY-MM-DD). */
+  startDate: string;
+  /** The following Saturday: turnover day, exclusive end of the 7 nights. */
+  endDate: string;
+  state: WeekState;
+  /** Where she is projected to be that week. */
+  bioregion: string;
+  /** True when she is repositioning between bioregions (not bookable). */
+  migration: boolean;
+  /** True when a guest can request this week (open or requested-by-others). */
+  selectable: boolean;
+  priceMultiplier: number;
+  price: VoyagePrice;
+  /** Pricing-window label, when one applies (e.g. "Peak"). */
+  windowLabel: string | null;
+};
+
+type DateRange = { startDate: string; endDate: string };
+
+export type EnumerateWeeksInput = {
+  /** Anchor Saturday the grid starts from. */
+  seasonStart: string;
+  /** How many upcoming weeks to return. */
+  horizonWeeks: number;
+  /** Today as YYYY-MM-DD; weeks that have fully passed are dropped. */
+  today: string;
+  /** Blocking bookings (approved and later). */
+  booked: DateRange[];
+  /** Requested-but-unconfirmed bookings (do not block, shown as "requested"). */
+  requested: DateRange[];
+  /** Admin holds; a reason mentioning "turnover" renders as the turnover state. */
+  blackouts: Array<DateRange & { reason?: string | null }>;
+  /** Seasonal pricing windows (multiplier as number or decimal string). */
+  pricingWindows: Array<DateRange & { multiplier: number | string; label?: string | null }>;
+  /** Projected bioregion bands, including migration passages. */
+  bands: SeasonalBand[];
+};
+
+/**
+ * Enumerate the bookable voyage-week grid. Weeks run Saturday to Saturday on a
+ * fixed anchor; the shared Saturday is the turnover day (half-open ranges, so a
+ * week ending the day another starts does not overlap). Each week resolves to a
+ * single state, a projected bioregion, and a seasonal price. This is the source
+ * of truth for the booking page: the guest never deduces a valid start date.
+ */
+export function enumerateVoyageWeeks(input: EnumerateWeeksInput): VoyageWeek[] {
+  const out: VoyageWeek[] = [];
+  let cursor = input.seasonStart;
+  // Hard cap on iterations so a bad anchor can never loop forever.
+  for (let i = 0; i < 520 && out.length < input.horizonWeeks; i++) {
+    const startDate = cursor;
+    const endDate = addDaysYmd(startDate, VOYAGE_NIGHTS);
+    cursor = endDate; // next week begins on the turnover Saturday
+    if (startDate <= input.today) continue; // already begun or past: cannot start it
+
+    const band = input.bands.find((b) => startDate >= b.startDate && startDate < b.endDate);
+    const bioregion = band?.bioregion ?? "Cascadia";
+    const migration = Boolean(band?.migration);
+
+    const win = input.pricingWindows.find((w) => rangesOverlap(startDate, endDate, w.startDate, w.endDate));
+    const priceMultiplier = win ? Number(win.multiplier) || 1 : 1;
+
+    let state: WeekState;
+    if (migration) {
+      state = "migration";
+    } else if (overlapsAny(startDate, endDate, input.booked)) {
+      state = "booked";
+    } else if (
+      input.blackouts.some(
+        (b) => rangesOverlap(startDate, endDate, b.startDate, b.endDate) && /turnover/i.test(b.reason ?? ""),
+      )
+    ) {
+      state = "turnover";
+    } else if (overlapsAny(startDate, endDate, input.blackouts)) {
+      state = "booked";
+    } else if (overlapsAny(startDate, endDate, input.requested)) {
+      state = "requested";
+    } else {
+      state = "open";
+    }
+
+    out.push({
+      startDate,
+      endDate,
+      state,
+      bioregion,
+      migration,
+      selectable: state === "open" || state === "requested",
+      priceMultiplier,
+      price: computeVoyagePrice(VOYAGE_NIGHTS, priceMultiplier),
+      windowLabel: win?.label ?? null,
+    });
+  }
+  return out;
+}
+
 // ── Itinerary validation (concierge safety) ──────────────────────────────────
 export type ItineraryDay = { day: number; title?: string; locationIds: number[]; notes?: string };
 export type Itinerary = { days: ItineraryDay[]; summary?: string };

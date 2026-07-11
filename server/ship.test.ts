@@ -6,6 +6,7 @@ import {
   computeVoyagePrice, computeQuestStandings, countCompleted,
   freeVoyagesUnlocked, percentBooked,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
+  addDaysYmd, enumerateVoyageWeeks, type SeasonalBand,
   type QuestCompletionRow,
 } from "./lib/ship-logic";
 import { SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES } from "./lib/ship-config";
@@ -50,6 +51,79 @@ describe("ship-logic: date ranges + voyage length", () => {
     expect(isValidVoyageLength("2026-08-01", "2026-08-05")).toBe(false); // 4
     expect(isValidVoyageLength("2026-08-01", "2026-08-11")).toBe(false); // 10
     expect(isValidVoyageLength("2026-08-08", "2026-08-01")).toBe(false); // negative
+  });
+});
+
+describe("ship-logic: voyage week grid", () => {
+  const bands: SeasonalBand[] = [
+    { startDate: "2026-07-25", endDate: "2026-08-22", bioregion: "Rogue" },
+    { startDate: "2026-08-22", endDate: "2026-08-29", bioregion: "On passage", migration: true },
+    { startDate: "2026-08-29", endDate: "2026-12-31", bioregion: "Gorge" },
+  ];
+  function enumerate(over: Partial<Parameters<typeof enumerateVoyageWeeks>[0]> = {}) {
+    return enumerateVoyageWeeks({
+      seasonStart: "2026-07-25",
+      horizonWeeks: 6,
+      today: "2026-07-01",
+      booked: [],
+      requested: [],
+      blackouts: [],
+      pricingWindows: [],
+      bands,
+      ...over,
+    });
+  }
+
+  it("addDaysYmd advances calendar days across month boundaries", () => {
+    expect(addDaysYmd("2026-07-25", 7)).toBe("2026-08-01");
+    expect(addDaysYmd("2026-08-29", 7)).toBe("2026-09-05");
+  });
+
+  it("enumerates a Saturday-to-Saturday grid where each week ends where the next begins", () => {
+    const weeks = enumerate();
+    expect(weeks).toHaveLength(6);
+    expect(weeks[0].startDate).toBe("2026-07-25");
+    expect(weeks[0].endDate).toBe("2026-08-01");
+    expect(weeks[1].startDate).toBe("2026-08-01"); // shared turnover Saturday
+    expect(weeks[0].price.total).toBe(299 * 7);
+  });
+
+  it("drops fully-past weeks relative to today", () => {
+    const weeks = enumerate({ today: "2026-08-05", horizonWeeks: 3 });
+    // The 07-25 and 08-01 weeks have ended; first offered week starts 08-08.
+    expect(weeks[0].startDate).toBe("2026-08-08");
+  });
+
+  it("marks migration bands as on-passage and not selectable", () => {
+    const weeks = enumerate();
+    const passage = weeks.find((w) => w.startDate === "2026-08-22");
+    expect(passage?.state).toBe("migration");
+    expect(passage?.migration).toBe(true);
+    expect(passage?.selectable).toBe(false);
+    expect(passage?.bioregion).toBe("On passage");
+  });
+
+  it("resolves booked, requested, and turnover states", () => {
+    const weeks = enumerate({
+      booked: [{ startDate: "2026-08-01", endDate: "2026-08-08" }],
+      requested: [{ startDate: "2026-08-08", endDate: "2026-08-15" }],
+      blackouts: [{ startDate: "2026-08-15", endDate: "2026-08-22", reason: "turnover deep clean" }],
+    });
+    expect(weeks.find((w) => w.startDate === "2026-08-01")?.state).toBe("booked");
+    expect(weeks.find((w) => w.startDate === "2026-08-01")?.selectable).toBe(false);
+    const requested = weeks.find((w) => w.startDate === "2026-08-08");
+    expect(requested?.state).toBe("requested");
+    expect(requested?.selectable).toBe(true); // still bookable by others
+    expect(weeks.find((w) => w.startDate === "2026-08-15")?.state).toBe("turnover");
+  });
+
+  it("applies a seasonal pricing multiplier to the week price", () => {
+    const weeks = enumerate({
+      pricingWindows: [{ startDate: "2026-07-25", endDate: "2026-08-01", multiplier: "1.25", label: "Peak" }],
+    });
+    expect(weeks[0].windowLabel).toBe("Peak");
+    expect(weeks[0].priceMultiplier).toBe(1.25);
+    expect(weeks[0].price.total).toBe(Math.round(149 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
   });
 });
 

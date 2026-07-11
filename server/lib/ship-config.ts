@@ -28,6 +28,40 @@ export const TRIAL_TOTAL_NIGHTLY_USD = TRIAL_RENTAL_NIGHTLY_USD + TRIAL_OFFERING
 export const VOYAGE_NIGHTS = 7;
 export const MIN_GUESTS = 1;
 export const MAX_GUESTS = 4;
+/** Most consecutive weeks a crew can chain into one voyage (7, 14, or 21 nights). */
+export const MAX_VOYAGE_WEEKS = 3;
+
+// ── Voyage week grid + seasonal bands ────────────────────────────────────────
+// Bookable weeks derive from a fixed Saturday grid, not a free date field. Each
+// voyage runs Saturday to Saturday (7 nights); the shared Saturday is the
+// turnover day when the Keeper resets her for the next crew. A guest never has
+// to deduce a valid start date: the server enumerates the grid and the booking
+// page renders only real weeks. Edit the anchor and horizon here.
+/** The first bookable Saturday of the trial year. Must be a Saturday. */
+export const SHIP_SEASON_START_YMD = "2026-07-25";
+/** How many weeks forward the booking page offers at once. */
+export const SHIP_BOOKING_HORIZON_WEEKS = 20;
+
+/**
+ * Projected bioregion by date range (the seasonal band data the booking cards
+ * show). A band with `migration: true` is a passage week: she is relocating
+ * between bioregions and is not bookable. These are trial-year projections Rye
+ * tunes as the itinerary firms up; nothing here blocks a week on its own except
+ * a migration band. Dates are half-open [startDate, endDate).
+ */
+export type ShipSeasonalBand = {
+  startDate: string;
+  endDate: string;
+  bioregion: string;
+  migration?: boolean;
+};
+export const SHIP_SEASONAL_BANDS: ShipSeasonalBand[] = [
+  { startDate: "2026-07-25", endDate: "2026-09-19", bioregion: "Rogue & Southern Cascadia" },
+  { startDate: "2026-09-19", endDate: "2026-09-26", bioregion: "On passage north", migration: true },
+  { startDate: "2026-09-26", endDate: "2026-11-14", bioregion: "Willamette & the Columbia Gorge" },
+  { startDate: "2026-11-14", endDate: "2027-03-13", bioregion: "Winter anchorage, Ashland" },
+  { startDate: "2027-03-13", endDate: "2027-06-30", bioregion: "Rogue & Southern Cascadia" },
+];
 
 /** Flat Ship Keeper pay per turnover. */
 export const KEEPER_PAY_USD = 200;

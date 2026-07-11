@@ -50,6 +50,8 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
           <li>Any driver must be 25 or older.</li>
           <li>Any driver must hold a valid, current driver license.</li>
           <li>The driver is verified by the platform before the voyage begins.</li>
+          <li>The driver must be capable of driving a 40-foot vehicle on the route of your choosing.</li>
+          <li>It is highly advisable to stay on the main roads and use the bikes to get around towns.</li>
         </ul>
       </>
     ),
@@ -114,8 +116,8 @@ export default function ShipQuestRules() {
       <ShipSection>
         <div className="aspect-[21/9] mb-8">
           <ShipImage
-            name="ship-quest-banner.jpg"
-            alt="A treasure map banner for the Maiden Voyage Quest."
+            name="ship-art-arrival-welcome.webp"
+            alt="Storybook painting of the ship arriving into a regenerative village, community waving and children running alongside orchards in golden evening light."
             className="h-full"
           />
         </div>

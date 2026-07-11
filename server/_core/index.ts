@@ -420,6 +420,9 @@ async function startServer() {
       'what-makes-land-project-good-investment',
       'claim-your-land-project-or-organisation',
       'your-seeds-contributions-live-on',
+      'the-regen-ship',
+      'food-producers-first',
+      'more-than-one-honeymoon',
     ];
 
     // Dynamic DB entries (best-effort, sitemap still serves if DB is down)
