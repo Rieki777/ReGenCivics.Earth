@@ -13,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Trophy, Anchor, Check } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage } from "./shipShared";
+import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
 
 function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: string; onSubmitted: () => void }) {
   const submit = trpc.ship.quest.submit.useMutation();
@@ -68,8 +69,6 @@ export default function ShipQuest() {
   const fv = leaderboard.data?.freeVoyage;
   const unlocked = fv?.freeVoyagesUnlocked ?? 1;
   const totalFree = fv?.freeVoyagesTotal ?? 6;
-  const percentBookedNow = fv?.percentBooked ?? 0;
-  const poolSize = leaderboard.data?.poolSize ?? 0;
 
   function refresh() {
     void utils.ship.quest.myProgress.invalidate();
@@ -108,27 +107,10 @@ export default function ShipQuest() {
         <div data-reveal>
           <ShipEyebrow>How the free voyages work</ShipEyebrow>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">The more we book, the more sail free</h2>
-          <p className="text-foreground/85 max-w-3xl mb-6">Complete the quest and your name goes in the draw. The maiden voyage sails free right away. Then, for every 20% of the first year that gets booked, we draw one more free voyage from everyone who has completed the quest. At a full year booked, six crews sail free. If you want a better chance, help us get the word out: more bookings means more free voyages, and every completer is in every draw.</p>
+          <p className="text-foreground/85 max-w-3xl mb-6">Complete the quest and your name goes in the draw. The maiden voyage sails free right away. Then, for every 20% of the first year that gets booked, we draw one more free voyage from everyone who has completed the quest. At a full year booked, six crews sail free. If you want a better chance, help get the word out: more bookings means more free voyages, and every completer is in every draw.</p>
 
-          {/* Free-voyage meter */}
-          <div className="rounded-2xl border bg-card p-6 max-w-3xl">
-            <div className="flex items-baseline justify-between mb-2">
-              <span className="font-semibold">Free voyages unlocked</span>
-              <span className="text-2xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">{unlocked} <span className="text-base font-normal text-muted-foreground">of {totalFree}</span></span>
-            </div>
-            <div className="flex gap-1.5 mb-4" aria-hidden="true">
-              {Array.from({ length: totalFree }).map((_, i) => (
-                <div key={i} className={`h-3 flex-1 rounded-full ${i < unlocked ? "bg-[#ffd700]" : "bg-[#4a7c59]/20"}`} />
-              ))}
-            </div>
-            <div className="flex items-baseline justify-between text-sm text-muted-foreground mb-1">
-              <span>First year booked</span>
-              <span>{percentBookedNow}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-[#4a7c59]/15 overflow-hidden">
-              <div className="h-full bg-[#4a7c59] transition-all duration-700" style={{ width: `${percentBookedNow}%` }} />
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">{poolSize} {poolSize === 1 ? "crew has" : "crews have"} completed the quest and {poolSize === 1 ? "is" : "are"} in the draw. Ties are always settled at random.</p>
+          <div className="max-w-3xl">
+            <FreeVoyageLadder />
           </div>
         </div>
       </ShipSection>
