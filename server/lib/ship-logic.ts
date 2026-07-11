@@ -11,7 +11,9 @@ import {
   ANCHOR_NIGHTLY_USD,
   TRIAL_RENTAL_NIGHTLY_USD,
   TRIAL_OFFERING_NIGHTLY_USD,
-  WINNER_SLOTS,
+  MAIDEN_FREE_VOYAGES,
+  FREE_VOYAGE_MILESTONE_PCT,
+  MAX_FREE_VOYAGES,
   SHIP_PROGRAM_TAG,
   SHIP_GIFT_PROGRAM_TAG,
 } from "./ship-config";
@@ -132,11 +134,10 @@ export type QuestStanding = {
   userId: number;
   verifiedPoints: number;
   requiredVerified: number;
+  /** True once every required action is verified: this crew is in the draw. */
   isFinisher: boolean;
   /** ms timestamp of the last verified REQUIRED action, when all required done. */
   finishAt: number | null;
-  /** 1-based winner rank among the first WINNER_SLOTS finishers, else null. */
-  winnerRank: number | null;
 };
 
 function toMs(v: Date | string | null): number | null {
@@ -146,9 +147,10 @@ function toMs(v: Date | string | null): number | null {
 }
 
 /**
- * Compute per-user standings from verified completions.
- * Finish order = timestamp of the last verified REQUIRED action once every
- * required action is verified. The first WINNER_SLOTS finishers get a rank.
+ * Compute per-user standings from verified completions. A crew that has every
+ * required action verified is a finisher, meaning they are in the draw for a
+ * free voyage. Free voyages are awarded by random selection (see
+ * freeVoyagesUnlocked), not by finish order, so no one has to rush.
  */
 export function computeQuestStandings(
   completions: QuestCompletionRow[],
@@ -184,12 +186,11 @@ export function computeQuestStandings(
       requiredVerified,
       isFinisher,
       finishAt,
-      winnerRank: null,
     });
   }
 
-  // Order: finishers first by finishAt asc (earliest wins), then the rest by
-  // points desc, then by requiredVerified desc for a stable, fair board.
+  // Order: finishers first by finishAt asc (earliest completers shown first,
+  // though selection is random), then the rest by points, then progress.
   standings.sort((a, b) => {
     if (a.isFinisher && b.isFinisher) return (a.finishAt! - b.finishAt!);
     if (a.isFinisher) return -1;
@@ -198,18 +199,27 @@ export function computeQuestStandings(
     return b.requiredVerified - a.requiredVerified;
   });
 
-  let rank = 0;
-  for (const s of standings) {
-    if (s.isFinisher && rank < WINNER_SLOTS) {
-      rank += 1;
-      s.winnerRank = rank;
-    }
-  }
   return standings;
 }
 
-/** How many winner slots remain open. */
-export function remainingWinnerSlots(standings: QuestStanding[]): number {
-  const taken = standings.filter((s) => s.winnerRank != null).length;
-  return Math.max(0, WINNER_SLOTS - taken);
+/** How many crews have completed the quest (the size of the draw pool). */
+export function countCompleted(standings: QuestStanding[]): number {
+  return standings.filter((s) => s.isFinisher).length;
+}
+
+// ── Free-voyage giveaway (booking-volume driven, random selection) ────────────
+/** Percent of the first year booked, from booked voyages against the target. */
+export function percentBooked(bookedVoyages: number, target: number): number {
+  if (target <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((bookedVoyages / target) * 100)));
+}
+
+/**
+ * How many free voyages are unlocked at a given percent booked. The maiden
+ * voyage is free from the start; each FREE_VOYAGE_MILESTONE_PCT booked unlocks
+ * one more, capped at MAX_FREE_VOYAGES (six at 100% booked).
+ */
+export function freeVoyagesUnlocked(percent: number): number {
+  const milestones = Math.floor(Math.max(0, Math.min(100, percent)) / FREE_VOYAGE_MILESTONE_PCT);
+  return Math.min(MAX_FREE_VOYAGES, MAIDEN_FREE_VOYAGES + milestones);
 }

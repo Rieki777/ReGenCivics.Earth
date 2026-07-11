@@ -31,8 +31,22 @@ export const MAX_GUESTS = 4;
 
 /** Flat Ship Keeper pay per turnover. */
 export const KEEPER_PAY_USD = 200;
-/** The first N finishers of the Maiden Voyage Quest win a free voyage. */
-export const WINNER_SLOTS = 3;
+
+// ── Free-voyage giveaway model (booking-volume driven) ───────────────────────
+// The maiden voyage is given away free. Then one more free voyage unlocks for
+// every FREE_VOYAGE_MILESTONE_PCT of the first year that gets booked, up to
+// MAX_FREE_VOYAGES total at 100% booked. Each free voyage is drawn at random
+// from everyone who has completed the Maiden Voyage Quest. This aligns everyone
+// around spreading the word: more bookings unlock more free voyages, and every
+// quest-completer is in every draw.
+/** Free voyages given at launch (the maiden voyage). */
+export const MAIDEN_FREE_VOYAGES = 1;
+/** Each this-percent of the year booked unlocks one more free voyage. */
+export const FREE_VOYAGE_MILESTONE_PCT = 20;
+/** The most free voyages we give away in the first year (at 100% booked). */
+export const MAX_FREE_VOYAGES = 6;
+/** Voyages that count as 100% booked for the first year. Edit to pace giveaways. */
+export const MAIDEN_YEAR_VOYAGE_TARGET = 40;
 /** Suggested winter host income share (church council sets per agreement). */
 export const WINTER_HOST_SHARE_DEFAULT_PCT = 25;
 /** Share of church ship revenue routed to RV token buyback. */

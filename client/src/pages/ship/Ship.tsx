@@ -23,11 +23,13 @@ const PERKS = [
 ];
 
 const GALLERY = [
+  { name: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the Cascadia pines, awning out, a paddleboard leaning against her, someone playing guitar." },
   { name: "ship-cascadia-forest.jpg", alt: "The ship nestled in old-growth Cascadia conifers." },
   { name: "ship-double-rainbow.jpg", alt: "A double rainbow arching over the ship." },
-  { name: "ship-tipis-prairie.jpg", alt: "The ship between two tipis under a big sky." },
+  { name: "ship-canyon-overlook.jpg", alt: "Feet resting over a canyon river at a Cascadia overlook." },
   { name: "ship-campfire-dusk.jpg", alt: "A fire ring and chairs beside the ship at dusk." },
-  { name: "ship-desert-sunset-boondock.jpg", alt: "The ship silhouetted against a desert sunset." },
+  { name: "ship-riverbank-rest.jpg", alt: "Resting barefoot by a calm forest river in the pines." },
+  { name: "ship-tipis-prairie.jpg", alt: "The ship between two tipis under a big sky." },
   { name: "ship-lake-powell-overlook.jpg", alt: "The ship above a wide lake vista." },
 ];
 
@@ -69,6 +71,9 @@ export default function Ship() {
         <div className="prose prose-lg max-w-none text-foreground/90 space-y-4">
           <p>She is a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Hosts two couples in comfort.</p>
           <p>You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.</p>
+        </div>
+        <div className="mt-5">
+          <a href="/blog/the-regen-ship" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read her full story <span aria-hidden="true">→</span></a>
         </div>
       </ShipSection>
 
@@ -155,7 +160,7 @@ export default function Ship() {
             <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
             <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The maiden voyage</p>
             <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">It sails this August. Win the week-long adventure.</h2>
-            <p className="text-white/90 mb-4 flex-1">The Maiden Voyage Quest is open to everyone. The first three to complete it sail free. Every action grows the movement.</p>
+            <p className="text-white/90 mb-4 flex-1">Complete the quest and you're in the draw. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six. Help fill the calendar and your odds go up.</p>
             <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
           </div>
           <div data-reveal data-reveal-delay="120" className="flex flex-col">
