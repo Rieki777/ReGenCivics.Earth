@@ -4,13 +4,21 @@
  * seasonal pricing + blackouts. Server-side adminProcedure guards every call.
  */
 import { useState } from "react";
+import { MapContainer, Circle, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { BasemapLayer } from "./shipMapLayers";
+import { CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM } from "./shipMapConfig";
 
-const TABS = ["Bookings", "Map", "Quest", "Plantings", "Nominations", "Applications", "Position", "Pricing"] as const;
+const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Position", "Pricing"] as const;
 type Tab = (typeof TABS)[number];
+
+// 50 miles in metres — the v1 proxy for a ~60-minute drive (isochrones later).
+const COVERAGE_RADIUS_M = 80467;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -38,6 +46,8 @@ export default function ShipAdmin() {
 
       {tab === "Bookings" && <BookingsTab utils={utils} err={err} ok={ok} />}
       {tab === "Map" && <MapTab utils={utils} err={err} ok={ok} />}
+      {tab === "Coverage" && <CoverageTab err={err} ok={ok} />}
+      {tab === "Flags" && <FlagsTab utils={utils} err={err} ok={ok} />}
       {tab === "Quest" && <QuestTab utils={utils} err={err} ok={ok} />}
       {tab === "Plantings" && <PlantingsTab utils={utils} err={err} ok={ok} />}
       {tab === "Nominations" && <NominationsTab utils={utils} err={err} ok={ok} />}
@@ -95,6 +105,65 @@ function MapTab({ utils, err, ok }: Common) {
             <Button size="sm" variant="outline" onClick={() => verify.mutateAsync({ id: l.id, isVerified: !l.isVerified }).then(() => ok("Updated")(refresh)).catch(err)}>{l.isVerified ? "Unverify" : "Verify"}</Button>
           </div>
         ))}
+      </div>
+    </Section>
+  );
+}
+
+// Coverage / gap view: verified boondocks with 50-mile (≈60-min drive) proxy
+// circles over the Tier 1+2 voyage zone, so gaps are visible and research is
+// targeted. Unverified (research-target) boondocks show as faded pins.
+function CoverageTab({ err, ok }: Common) {
+  const q = trpc.ship.admin.coverage.useQuery();
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  const boondocks = q.data?.boondocks ?? [];
+  const verified = boondocks.filter((b: any) => b.isVerified);
+  const unverified = boondocks.filter((b: any) => !b.isVerified);
+  return (
+    <Section title={`Coverage — ${q.data?.verifiedCount ?? 0} verified boondocks (50-mi drive proxy)`}>
+      <p className="text-sm text-muted-foreground mb-3">Green circles are a ~1-hour drive of a verified 40-ft-capable boondock. White space over the Ashland→Portland corridor is a gap to research. Faded pins are researched but not yet ground-truthed.</p>
+      <div className="rounded-2xl overflow-hidden border" style={{ height: "60vh", minHeight: 420 }}>
+        <MapContainer center={[43.5, -122.4]} zoom={7} minZoom={MAP_MIN_ZOOM} maxZoom={MAP_MAX_ZOOM} maxBounds={CASCADIA_MAX_BOUNDS} style={{ height: "100%", width: "100%", background: "#e9e4d6" }} scrollWheelZoom>
+          <BasemapLayer />
+          {verified.map((b: any) => (
+            <Circle key={`c-${b.id}`} center={[b.lat, b.lng]} radius={COVERAGE_RADIUS_M} pathOptions={{ color: "#2f5d3a", fillColor: "#2f5d3a", fillOpacity: 0.12, weight: 1 }} />
+          ))}
+          {verified.map((b: any) => (
+            <Marker key={`v-${b.id}`} position={[b.lat, b.lng]} icon={L.divIcon({ className: "cov-pin", html: `<div style="width:14px;height:14px;border-radius:50%;background:#2f5d3a;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] })}>
+              <Popup><strong>{b.name}</strong>{b.maxRigLengthFt != null && <div style={{ fontSize: 12 }}>Up to {b.maxRigLengthFt} ft</div>}</Popup>
+            </Marker>
+          ))}
+          {unverified.map((b: any) => (
+            <Marker key={`u-${b.id}`} position={[b.lat, b.lng]} icon={L.divIcon({ className: "cov-pin", html: `<div style="width:12px;height:12px;border-radius:50%;background:#b5762f;opacity:.55;border:2px dashed #fff"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })}>
+              <Popup><strong>{b.name}</strong><div style={{ fontSize: 12 }}>Research target (not ground-truthed)</div></Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+    </Section>
+  );
+}
+
+function FlagsTab({ utils, err, ok }: Common) {
+  const q = trpc.ship.admin.listFlags.useQuery();
+  const resolve = trpc.ship.admin.resolveFlag.useMutation();
+  const refresh = () => utils.ship.admin.listFlags.invalidate();
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  return (
+    <Section title="Field-verification flags">
+      <div className="space-y-2">
+        {(q.data ?? []).map((f: any) => (
+          <div key={f.id} className="border rounded p-3 text-sm">
+            <div className="flex justify-between gap-2">
+              <span>
+                {f.locationSlug ? <a className="underline" href={`/ship/map?pin=${f.locationSlug}`} target="_blank" rel="noreferrer">{f.locationName ?? `location ${f.locationId}`}</a> : (f.locationName ?? `location ${f.locationId}`)}
+              </span>
+              <Button size="sm" variant="outline" onClick={() => resolve.mutateAsync({ id: f.id }).then(() => ok("Resolved")(refresh)).catch(err)}>Resolve</Button>
+            </div>
+            <p className="text-muted-foreground mt-1">{f.reason}</p>
+          </div>
+        ))}
+        {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No open flags.</p>}
       </div>
     </Section>
   );

@@ -17,12 +17,12 @@
  *    revenue is segmentable. This router never moves money.
  */
 import { z } from "zod";
-import { and, or, eq, desc, asc, inArray, sql } from "drizzle-orm";
+import { and, or, eq, desc, asc, inArray, sql, gte, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
-  shipLocations, shipBookings, shipBlackoutDates, shipPricingWindows,
+  shipLocations, shipLocationFlags, shipBookings, shipBlackoutDates, shipPricingWindows,
   shipQuestActions, shipQuestCompletions, shipNominations, shipKeeperApplications,
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
@@ -229,22 +229,66 @@ export const shipRouter = router({
 
   // ── Treasure map ──────────────────────────────────────────────────────────
   map: router({
+    // Lean projection for the clustered map. Returns verified pins (the treasure)
+    // plus bulk-imported unverified pins (styled translucent on the client) so
+    // the map is populated; the "verified only" filter hides the latter. The
+    // detail drawer fetches the full row via `get`. Capped so an importer that
+    // seeds thousands of pins can't blow up the payload (ADR-35).
     list: publicProcedure
-      .input(z.object({ type: z.string().max(40).optional(), bioregion: z.string().max(64).optional() }).optional())
+      .input(
+        z
+          .object({
+            type: z.string().max(40).optional(),
+            bioregion: z.string().max(64).optional(),
+            verifiedOnly: z.boolean().optional(),
+            fits40: z.boolean().optional(),
+            hasWater: z.boolean().optional(),
+            freeCamping: z.boolean().optional(),
+            limit: z.number().int().min(1).max(10000).optional(),
+          })
+          .optional(),
+      )
       .query(async ({ input }) => {
         const d = await db();
-        const conds = [eq(shipLocations.isVerified, true)];
+        const conds = [eq(shipLocations.bioregion, input?.bioregion ?? "cascadia")];
+        if (input?.verifiedOnly) conds.push(eq(shipLocations.isVerified, true));
         if (input?.type) conds.push(eq(shipLocations.type, input.type as any));
-        if (input?.bioregion) conds.push(eq(shipLocations.bioregion, input.bioregion));
-        return d.select().from(shipLocations).where(and(...conds)).orderBy(asc(shipLocations.name));
+        if (input?.fits40) conds.push(gte(shipLocations.maxRigLengthFt, 40));
+        if (input?.hasWater) conds.push(isNotNull(shipLocations.waterQualityUrl));
+        if (input?.freeCamping) conds.push(eq(shipLocations.type, "boondock"));
+        return d
+          .select({
+            id: shipLocations.id,
+            slug: shipLocations.slug,
+            name: shipLocations.name,
+            type: shipLocations.type,
+            lat: shipLocations.lat,
+            lng: shipLocations.lng,
+            isVerified: shipLocations.isVerified,
+            source: shipLocations.source,
+            maxRigLengthFt: shipLocations.maxRigLengthFt,
+            hasWater: sql<boolean>`${shipLocations.waterQualityUrl} IS NOT NULL`,
+            lastVerifiedAt: shipLocations.lastVerifiedAt,
+          })
+          .from(shipLocations)
+          .where(and(...conds))
+          // Verified (treasure) first so it wins the cluster's representative pin.
+          .orderBy(desc(shipLocations.isVerified), asc(shipLocations.name))
+          .limit(input?.limit ?? 8000);
       }),
 
-    get: publicProcedure.input(z.object({ slug: z.string().max(200) })).query(async ({ input }) => {
-      const d = await db();
-      const [row] = await d.select().from(shipLocations).where(eq(shipLocations.slug, input.slug)).limit(1);
-      return row ?? null;
-    }),
+    get: publicProcedure
+      .input(z.object({ slug: z.string().max(200).optional(), id: z.number().int().optional() }))
+      .query(async ({ input }) => {
+        const d = await db();
+        if (!input.slug && input.id == null) return null;
+        const where = input.slug ? eq(shipLocations.slug, input.slug) : eq(shipLocations.id, input.id!);
+        const [row] = await d.select().from(shipLocations).where(where).limit(1);
+        return row ?? null;
+      }),
 
+    // "Add to the map" (the FAB). Crew-sourced, unverified, feeds the admin
+    // queue; verification auto-completes the Maiden Voyage add-a-location action.
     suggest: protectedProcedure
       .input(
         z.object({
@@ -254,6 +298,9 @@ export const shipRouter = router({
           lng: z.number().min(-180).max(180),
           description: z.string().max(2000).optional(),
           websiteUrl: z.string().url().max(512).optional(),
+          imageUrl: z.string().url().max(512).optional(),
+          accessNotes: z.string().max(2000).optional(),
+          maxRigLengthFt: z.number().int().min(0).max(100).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -267,11 +314,44 @@ export const shipRouter = router({
           type: input.type,
           lat: input.lat,
           lng: input.lng,
+          source: "crew",
+          sourceLicense: "original",
           description: input.description ? sanitizeInput(input.description) : null,
           websiteUrl: input.websiteUrl ?? null,
+          imageUrl: input.imageUrl ?? null,
+          accessNotes: input.accessNotes ? sanitizeInput(input.accessNotes) : null,
+          maxRigLengthFt: input.maxRigLengthFt ?? null,
           isVerified: false,
           addedByUserId: ctx.user.id,
         });
+        return { ok: true, slug };
+      }),
+
+    // Verify-in-the-field: a crew confirms a pin is still true. Bumps the
+    // freshness so stale pins (18+ months) can fade on the client.
+    confirm: protectedProcedure
+      .input(z.object({ id: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_map_confirm");
+        const d = await db();
+        const [loc] = await d.select({ id: shipLocations.id }).from(shipLocations).where(eq(shipLocations.id, input.id)).limit(1);
+        if (!loc) throw new TRPCError({ code: "NOT_FOUND", message: "That location is not on the map." });
+        await d
+          .update(shipLocations)
+          .set({ lastVerifiedAt: new Date(), verifiedCount: sql`${shipLocations.verifiedCount} + 1` })
+          .where(eq(shipLocations.id, input.id));
+        return { ok: true };
+      }),
+
+    // Flag a problem (gate locked, spring dry, rig no longer fits). Admin queue.
+    flag: protectedProcedure
+      .input(z.object({ id: z.number().int(), reason: z.string().min(3).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_map_flag");
+        const d = await db();
+        const [loc] = await d.select({ id: shipLocations.id }).from(shipLocations).where(eq(shipLocations.id, input.id)).limit(1);
+        if (!loc) throw new TRPCError({ code: "NOT_FOUND", message: "That location is not on the map." });
+        await d.insert(shipLocationFlags).values({ locationId: input.id, userId: ctx.user.id, reason: sanitizeInput(input.reason) });
         return { ok: true };
       }),
 
@@ -722,6 +802,48 @@ export const shipRouter = router({
           }
         }
       }
+      return { ok: true };
+    }),
+
+    // Coverage / gap view: verified boondocks for the 60-min-drive proxy circles
+    // over the Tier 1+2 voyage zone, so gaps are visible and research is targeted.
+    coverage: adminProcedure.query(async () => {
+      const d = await db();
+      const boondocks = await d
+        .select({
+          id: shipLocations.id, name: shipLocations.name, lat: shipLocations.lat, lng: shipLocations.lng,
+          maxRigLengthFt: shipLocations.maxRigLengthFt, isVerified: shipLocations.isVerified,
+          lastVerifiedAt: shipLocations.lastVerifiedAt,
+        })
+        .from(shipLocations)
+        .where(eq(shipLocations.type, "boondock"))
+        .orderBy(desc(shipLocations.isVerified));
+      const [{ count: verifiedCount }] = await d
+        .select({ count: sql<number>`count(*)` })
+        .from(shipLocations)
+        .where(and(eq(shipLocations.type, "boondock"), eq(shipLocations.isVerified, true)));
+      return { boondocks, verifiedCount: Number(verifiedCount ?? 0) };
+    }),
+
+    // Field-verification flags queue.
+    listFlags: adminProcedure.query(async () => {
+      const d = await db();
+      return d
+        .select({
+          id: shipLocationFlags.id, locationId: shipLocationFlags.locationId, reason: shipLocationFlags.reason,
+          createdAt: shipLocationFlags.createdAt, userId: shipLocationFlags.userId,
+          locationName: shipLocations.name, locationSlug: shipLocations.slug,
+        })
+        .from(shipLocationFlags)
+        .leftJoin(shipLocations, eq(shipLocations.id, shipLocationFlags.locationId))
+        .where(isNull(shipLocationFlags.resolvedAt))
+        .orderBy(desc(shipLocationFlags.createdAt))
+        .limit(300);
+    }),
+
+    resolveFlag: adminProcedure.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
+      const d = await db();
+      await d.update(shipLocationFlags).set({ resolvedAt: new Date(), resolvedByUserId: ctx.user.id }).where(eq(shipLocationFlags.id, input.id));
       return { ok: true };
     }),
 

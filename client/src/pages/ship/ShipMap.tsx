@@ -1,14 +1,14 @@
 /**
- * /ship/map - The treasure map. Leaflet + OpenStreetMap tiles (no API key).
- * Verified locations as typed pins, the live ship position ("she sails here"),
- * verified seed plantings as a celebration layer, filter pills, and a
- * suggest-a-location form that feeds admin verification.
+ * /ship/map — the treasure map, v2. A self-hosted PMTiles basemap on R2
+ * (ADR-34), locked to the Cascadia bioregion, with clustered typed pins, a
+ * detail drawer, filters, an "Add to the map" flow, a client-side voyage
+ * builder with GPX / Google Maps export, field verification, and deep links.
  *
- * GlobeMap is untouched; this is a separate regional map (see the ReGen Ship
- * ADR for Leaflet alongside GlobeMap).
+ * The heavy Leaflet work lives in shipMapLayers.tsx (imperative layers); this
+ * file is the page shell, the drawer, the filters, and the add flow.
  */
-import { useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { MapContainer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { SEO } from "@/components/SEO";
@@ -19,96 +19,175 @@ import { Label } from "@/components/ui/label";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import {
+  TYPE_META, BOOL_FILTERS, type MapBoolFilter, type ShipLocationType,
+  CASCADIA_CENTER, CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM, MAP_DEFAULT_ZOOM,
+} from "./shipMapConfig";
+import {
+  BasemapLayer, CascadiaBoundary, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
+} from "./shipMapLayers";
+import {
+  loadVoyage, addToVoyage, removeFromVoyage, clearVoyage,
+  downloadVoyageGpx, voyageToGoogleMapsUrl, type VoyagePin,
+} from "./shipVoyage";
 
-const TYPE_META: Record<string, { emoji: string; label: string }> = {
-  land_project: { emoji: "🏕️", label: "Land project" },
-  spring: { emoji: "💧", label: "Spring" },
-  waterfall: { emoji: "🌊", label: "Waterfall" },
-  lake: { emoji: "🏞️", label: "Lake" },
-  geology: { emoji: "🪨", label: "Geology" },
-  forest: { emoji: "🌲", label: "Forest" },
-  food_forest: { emoji: "🌳", label: "Food forest" },
-  seed_site: { emoji: "🌱", label: "Seed site" },
-  boondock: { emoji: "🚐", label: "Boondock" },
-  event_venue: { emoji: "🎪", label: "Event venue" },
-};
+const PINS_CACHE_KEY = "ship_map_pins_v1";
 
-const CASCADIA_CENTER: [number, number] = [43.8, -121.5];
-
-function emojiIcon(emoji: string, ring = "#2f5d3a") {
+function shipPositionIcon() {
   return L.divIcon({
-    className: "ship-pin",
-    html: `<div style="font-size:22px;line-height:32px;width:32px;height:32px;text-align:center;background:#fff;border:2px solid ${ring};border-radius:50% 50% 50% 0;transform:rotate(45deg);box-shadow:0 2px 6px rgba(0,0,0,.3)"><span style="display:inline-block;transform:rotate(-45deg)">${emoji}</span></div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -30],
+    className: "ship-position",
+    html: `<div style="font-size:26px;line-height:38px;width:38px;height:38px;text-align:center;background:#fff;border:3px solid #1a472a;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.4)">⛵</div>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  });
+}
+function plantingIcon() {
+  return L.divIcon({
+    className: "ship-planting",
+    html: `<div style="font-size:16px;line-height:24px;width:24px;height:24px;text-align:center">🌱</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 }
 
+const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "food_forest", "land_project", "lake", "geology", "forest", "seed_site", "event_venue"];
+
 export default function ShipMap() {
-  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
-  const locations = trpc.ship.map.list.useQuery({});
-  const position = trpc.ship.map.position.useQuery();
-  const plantings = trpc.ship.seeds.listVerified.useQuery();
-  const suggest = trpc.ship.map.suggest.useMutation();
+  const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
-  const [form, setForm] = useState({ name: "", type: "spring", lat: "", lng: "", description: "" });
+  // Pin data (all sources; filtered client-side for instant response). Seeded
+  // from localStorage so the map shows pins offline on the next visit.
+  const cached = useMemo<MapPin[]>(() => {
+    try { const r = localStorage.getItem(PINS_CACHE_KEY); return r ? JSON.parse(r) : []; } catch { return []; }
+  }, []);
+  const pinsQuery = trpc.ship.map.list.useQuery({}, { staleTime: 5 * 60 * 1000 });
+  const allPins: MapPin[] = (pinsQuery.data as MapPin[] | undefined) ?? cached;
+  useEffect(() => {
+    if (pinsQuery.data) {
+      try { localStorage.setItem(PINS_CACHE_KEY, JSON.stringify(pinsQuery.data)); } catch { /* non-fatal */ }
+    }
+  }, [pinsQuery.data]);
+
+  const position = trpc.ship.map.position.useQuery();
+  const plantings = trpc.ship.seeds.listVerified.useQuery();
+
+  // Filters.
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
+  const [boolFilters, setBoolFilters] = useState<Set<MapBoolFilter>>(new Set());
+  const [showBoundary, setShowBoundary] = useState(true);
+  const [showPlantings, setShowPlantings] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
+
+  // Selection / drawer.
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const detail = trpc.ship.map.get.useQuery({ id: selectedId ?? undefined }, { enabled: selectedId != null });
+
+  // Voyage builder.
+  const [voyage, setVoyage] = useState<VoyagePin[]>([]);
+  const [voyageOpen, setVoyageOpen] = useState(false);
+  useEffect(() => { setVoyage(loadVoyage()); }, []);
+  useEffect(() => {
+    const h = () => setVoyage(loadVoyage());
+    window.addEventListener("ship-voyage-changed", h);
+    return () => window.removeEventListener("ship-voyage-changed", h);
+  }, []);
+
+  // Add-to-map flow.
+  const [adding, setAdding] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", type: "spring", lat: null as number | null, lng: null as number | null, description: "", accessNotes: "", imageUrl: "", maxRigLengthFt: "" });
+  const suggest = trpc.ship.map.suggest.useMutation();
+  const confirm = trpc.ship.map.confirm.useMutation();
+  const flag = trpc.ship.map.flag.useMutation();
+
+  // Deep links: ?type=spring, ?pin=<slug>.
+  const [deepPinSlug, setDeepPinSlug] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("type");
+    if (t && TYPE_META[t]) setActiveTypes(new Set([t]));
+    const pin = params.get("pin");
+    if (pin) setDeepPinSlug(pin);
+  }, []);
+  const deepPin = trpc.ship.map.get.useQuery({ slug: deepPinSlug ?? undefined }, { enabled: !!deepPinSlug });
+  useEffect(() => {
+    if (deepPin.data) setSelectedId(deepPin.data.id);
+  }, [deepPin.data]);
 
   const filtered = useMemo(() => {
-    const all = locations.data ?? [];
-    if (activeTypes.size === 0) return all;
-    return all.filter((l) => activeTypes.has(l.type));
-  }, [locations.data, activeTypes]);
-
-  function toggleType(t: string) {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
+    return allPins.filter((p) => {
+      if (activeTypes.size > 0 && !activeTypes.has(p.type)) return false;
+      if (boolFilters.has("verifiedOnly") && !p.isVerified) return false;
+      if (boolFilters.has("freeCamping") && p.type !== "boondock") return false;
+      if (boolFilters.has("fits40") && !((p as any).maxRigLengthFt >= 40)) return false;
+      if (boolFilters.has("hasWater") && !(p as any).hasWater) return false;
+      return true;
     });
-  }
+  }, [allPins, activeTypes, boolFilters]);
 
-  async function submitSuggestion(e: React.FormEvent) {
+  const toggleType = (t: string) => setActiveTypes((prev) => { const n = new Set(prev); n.has(t) ? n.delete(t) : n.add(t); return n; });
+  const toggleBool = (k: MapBoolFilter) => setBoolFilters((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
+
+  const onSelect = useCallback((id: number) => { setSelectedId(id); setVoyageOpen(false); }, []);
+
+  function startAdd() {
+    if (!isAuthenticated) { toast.error("Please sign in to add to the map."); window.location.href = getLoginUrl(); return; }
+    setSelectedId(null);
+    setAdding(true);
+    setAddForm((f) => ({ ...f, lat: null, lng: null }));
+    toast("Tap the map to drop your pin, or use your location.");
+  }
+  const onPick = useCallback((lat: number, lng: number) => {
+    setAddForm((f) => ({ ...f, lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) }));
+  }, []);
+  function useMyLocation() {
+    if (!navigator.geolocation) { toast.error("Location is not available on this device."); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setAddForm((f) => ({ ...f, lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)) })),
+      () => toast.error("Could not get your location."),
+    );
+  }
+  async function submitAdd(e: React.FormEvent) {
     e.preventDefault();
-    const lat = parseFloat(form.lat);
-    const lng = parseFloat(form.lng);
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      toast.error("Please enter valid coordinates.");
-      return;
-    }
+    if (addForm.lat == null || addForm.lng == null) { toast.error("Drop a pin on the map first."); return; }
     try {
       await suggest.mutateAsync({
-        name: form.name,
-        type: form.type as "land_project" | "spring" | "waterfall" | "lake" | "geology" | "forest" | "food_forest" | "seed_site" | "boondock" | "event_venue",
-        lat,
-        lng,
-        description: form.description || undefined,
+        name: addForm.name,
+        type: addForm.type as ShipLocationType,
+        lat: addForm.lat,
+        lng: addForm.lng,
+        description: addForm.description || undefined,
+        accessNotes: addForm.accessNotes || undefined,
+        imageUrl: addForm.imageUrl || undefined,
+        maxRigLengthFt: addForm.type === "boondock" && addForm.maxRigLengthFt ? Number(addForm.maxRigLengthFt) : undefined,
       });
-      toast.success("Thank you. Your location is in for review.");
-      setForm({ name: "", type: "spring", lat: "", lng: "", description: "" });
+      toast.success("Thank you. Your pin is on the map and in for review.");
+      setAdding(false);
+      setAddForm({ name: "", type: "spring", lat: null, lng: null, description: "", accessNotes: "", imageUrl: "", maxRigLengthFt: "" });
       void utils.ship.map.list.invalidate();
     } catch (err: any) {
-      toast.error(err?.message ?? "Please sign in to suggest a location.");
+      toast.error(err?.message ?? "Could not add your pin.");
     }
   }
 
   const pos = position.data;
+  const d = detail.data;
 
   return (
     <PageWrapper>
-      <SEO title="The Treasure Map" description="Springs, waterfalls, food forests, and the land projects regenerating Cascadia. Chart your voyage." url="/ship/map" />
+      <SEO title="The Treasure Map" description="Springs, waterfalls, food forests, free boondocks, and the land projects regenerating Cascadia. Chart your voyage." url="/ship/map" />
       <ShipNavRow current="/ship/map" />
 
       <ShipSection>
         <ShipEyebrow>The treasure map</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Chart your voyage through Cascadia</h1>
-        <p className="text-foreground/80 mb-5">Every pin is a place a crew can serve, drink from, rest at, or plant seeds. The ship pin shows where she sails now.</p>
+        <p className="text-foreground/80 mb-5">Every pin is a place a crew can serve, drink from, rest at, or plant seeds. Solid pins are verified treasure; faded pins are waiting for a crew to confirm them. The ship pin shows where she sails now.</p>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        {/* Type filters */}
+        <div className="flex flex-wrap gap-2 mb-3">
           {Object.entries(TYPE_META).map(([t, meta]) => (
             <button
               key={t}
@@ -123,87 +202,262 @@ export default function ShipMap() {
           )}
         </div>
 
-        <div className="rounded-2xl overflow-hidden border" style={{ height: "60vh", minHeight: 420 }}>
-          <MapContainer center={CASCADIA_CENTER} zoom={6} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {filtered.map((l) => (
-              <Marker key={l.id} position={[l.lat, l.lng]} icon={emojiIcon(TYPE_META[l.type]?.emoji ?? "📍")}>
-                <Popup>
-                  <div style={{ minWidth: 180 }}>
-                    <strong>{l.name}</strong>
-                    <div style={{ fontSize: 12, color: "#666" }}>{TYPE_META[l.type]?.label ?? l.type}</div>
-                    {l.description && <p style={{ margin: "6px 0", fontSize: 13 }}>{l.description}</p>}
-                    {l.websiteUrl && <a href={l.websiteUrl} target="_blank" rel="noreferrer">Visit</a>}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-            {(plantings.data ?? []).filter((p) => p.lat != null && p.lng != null).map((p) => (
-              <Marker key={`seed-${p.id}`} position={[p.lat as number, p.lng as number]} icon={emojiIcon("🌱", "#d4a574")}>
-                <Popup>
-                  <strong>A crew planted here</strong>
-                  {p.species && <div style={{ fontSize: 13 }}>{p.species}</div>}
-                </Popup>
+        {/* Boolean filters + layer toggles */}
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          {BOOL_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => toggleBool(f.key)}
+              className={`px-3 py-1 rounded-full border text-xs transition-colors ${boolFilters.has(f.key) ? "bg-[#b5762f] text-white border-[#b5762f]" : "border-[#b5762f]/40 hover:bg-[#b5762f]/10"}`}
+            >
+              {f.label}
+            </button>
+          ))}
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showBoundary} onChange={(e) => setShowBoundary(e.target.checked)} /> Bioregion</label>
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showPlantings} onChange={(e) => setShowPlantings(e.target.checked)} /> Seed plantings</label>
+          <button onClick={() => setVoyageOpen((v) => !v)} className="ml-auto px-3 py-1 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
+            ⛵ My voyage{voyage.length ? ` (${voyage.length})` : ""}
+          </button>
+        </div>
+
+        <div className="relative rounded-2xl overflow-hidden border" style={{ height: "62vh", minHeight: 440 }}>
+          <MapContainer
+            center={CASCADIA_CENTER}
+            zoom={MAP_DEFAULT_ZOOM}
+            minZoom={MAP_MIN_ZOOM}
+            maxZoom={MAP_MAX_ZOOM}
+            maxBounds={CASCADIA_MAX_BOUNDS}
+            maxBoundsViscosity={0.9}
+            style={{ height: "100%", width: "100%", background: "#e9e4d6" }}
+            scrollWheelZoom
+          >
+            <BasemapLayer />
+            <CascadiaBoundary show={showBoundary} />
+            <ClusterLayer pins={filtered} onSelect={onSelect} />
+            {voyage.length > 0 && <VoyageRoute stops={voyage.map((v, i) => ({ lat: v.lat, lng: v.lng, day: i + 1, name: v.name }))} />}
+            <CrosshairPicker active={adding} onPick={onPick} />
+            {showPlantings && (plantings.data ?? []).filter((p) => p.lat != null && p.lng != null).map((p) => (
+              <Marker key={`seed-${p.id}`} position={[p.lat as number, p.lng as number]} icon={plantingIcon()}>
+                <Popup><strong>A crew planted here</strong>{p.species && <div style={{ fontSize: 13 }}>{p.species}</div>}</Popup>
               </Marker>
             ))}
             {pos && (
-              <Marker position={[pos.lat, pos.lng]} icon={emojiIcon("⛵", "#1a472a")}>
-                <Popup>
-                  <strong>She sails here</strong>
-                  {pos.note && <div style={{ fontSize: 13 }}>{pos.note}</div>}
-                </Popup>
+              <Marker position={[pos.lat, pos.lng]} icon={shipPositionIcon()} zIndexOffset={1000}>
+                <Popup><strong>She sails here</strong>{pos.note && <div style={{ fontSize: 13 }}>{pos.note}</div>}</Popup>
               </Marker>
             )}
           </MapContainer>
+
+          {/* Attribution (protomaps-leaflet also sets it, this is the always-visible corner) */}
+          <div className="absolute bottom-0 right-0 z-[500] bg-white/70 dark:bg-black/50 text-[10px] px-1.5 py-0.5 rounded-tl">© OpenStreetMap contributors, Protomaps</div>
+
+          {/* Add-to-map FAB */}
+          {!adding && (
+            <button
+              onClick={startAdd}
+              className="absolute bottom-4 left-4 z-[500] px-4 py-2.5 rounded-full bg-[#ffd700] text-[#1a472a] font-semibold shadow-lg hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a472a]"
+            >
+              ＋ Add to the map
+            </button>
+          )}
+          {adding && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] bg-white dark:bg-neutral-900 border rounded-full px-3 py-1.5 text-sm shadow flex items-center gap-2">
+              <span>{addForm.lat != null ? "Pin dropped. Fill the form below." : "Tap the map to drop your pin"}</span>
+              <button onClick={useMyLocation} className="underline text-[#2f5d3a] dark:text-[#9de89d]">Use my location</button>
+              <button onClick={() => setAdding(false)} className="text-muted-foreground">Cancel</button>
+            </div>
+          )}
         </div>
-        {locations.isLoading && <p className="text-sm text-muted-foreground mt-3">Loading the map…</p>}
-        {!locations.isLoading && (locations.data?.length ?? 0) === 0 && (
-          <p className="text-sm text-muted-foreground mt-3">The map is being charted. Verified locations will appear here soon.</p>
+
+        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+          <p className="text-sm text-muted-foreground">
+            {pinsQuery.isLoading && allPins.length === 0 ? "Loading the map…" : `${filtered.length} of ${allPins.length} places shown`}
+          </p>
+          <button onClick={() => setLegendOpen((v) => !v)} className="text-sm underline text-[#2f5d3a] dark:text-[#9de89d]">{legendOpen ? "Hide legend" : "What do the pins mean?"}</button>
+        </div>
+
+        {/* Legend + story strip */}
+        {legendOpen && (
+          <div className="mt-3 grid sm:grid-cols-2 gap-2 rounded-xl border p-4 bg-[#4a7c59]/5">
+            {Object.entries(TYPE_META).map(([t, meta]) => (
+              <div key={t} className="flex items-start gap-2 text-sm"><span aria-hidden>{meta.emoji}</span><span className="text-foreground/80">{meta.blurb}</span></div>
+            ))}
+            <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed pins are unverified — pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
+          </div>
         )}
       </ShipSection>
 
-      {/* Suggest a location */}
-      <ShipSection className="bg-[#4a7c59]/8">
-        <ShipEyebrow>Add to the map</ShipEyebrow>
-        <h2 className="text-2xl font-bold mb-4">Know a spring, a waterfall, or a land project?</h2>
-        <p className="text-foreground/80 mb-4">Suggest it. A crew member reviews every location before it appears on the map.</p>
-        <form onSubmit={submitSuggestion} className="grid sm:grid-cols-2 gap-4 max-w-2xl">
-          <div className="sm:col-span-2">
-            <Label htmlFor="loc-name">Name</Label>
-            <Input id="loc-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required minLength={2} maxLength={200} />
-          </div>
-          <div>
-            <Label htmlFor="loc-type">Type</Label>
-            <select id="loc-type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full h-10 rounded-md border bg-background px-3">
-              {Object.entries(TYPE_META).map(([t, meta]) => (
-                <option key={t} value={t}>{meta.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="loc-lat">Latitude</Label>
-              <Input id="loc-lat" value={form.lat} onChange={(e) => setForm({ ...form, lat: e.target.value })} placeholder="42.19" required />
+      {/* Add form (appears while adding) */}
+      {adding && (
+        <ShipSection className="bg-[#ffd700]/8">
+          <ShipEyebrow>Add to the map</ShipEyebrow>
+          <h2 className="text-2xl font-bold mb-3">Your pin</h2>
+          <form onSubmit={submitAdd} className="grid sm:grid-cols-2 gap-4 max-w-2xl">
+            <div className="sm:col-span-2 text-sm text-muted-foreground">
+              {addForm.lat != null ? <>Location: {addForm.lat}, {addForm.lng} · <button type="button" className="underline" onClick={() => setAddForm((f) => ({ ...f, lat: null, lng: null }))}>change</button></> : "Tap the map above to set the location."}
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="add-name">Name</Label>
+              <Input id="add-name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} required minLength={2} maxLength={200} />
             </div>
             <div>
-              <Label htmlFor="loc-lng">Longitude</Label>
-              <Input id="loc-lng" value={form.lng} onChange={(e) => setForm({ ...form, lng: e.target.value })} placeholder="-122.71" required />
+              <Label htmlFor="add-type">Type</Label>
+              <select id="add-type" value={addForm.type} onChange={(e) => setAddForm({ ...addForm, type: e.target.value })} className="w-full h-10 rounded-md border bg-background px-3">
+                {ADD_TYPES.map((t) => (<option key={t} value={t}>{TYPE_META[t].label}</option>))}
+              </select>
             </div>
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="loc-desc">Description</Label>
-            <Textarea id="loc-desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={2000} rows={3} />
-          </div>
-          <div className="sm:col-span-2">
-            <Button type="submit" disabled={suggest.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-              {suggest.isPending ? "Sending…" : "Suggest this location"}
-            </Button>
-          </div>
-        </form>
-      </ShipSection>
+            {addForm.type === "boondock" && (
+              <div>
+                <Label htmlFor="add-rig">Largest rig confirmed (ft)</Label>
+                <Input id="add-rig" type="number" min={0} max={100} value={addForm.maxRigLengthFt} onChange={(e) => setAddForm({ ...addForm, maxRigLengthFt: e.target.value })} placeholder="40" />
+              </div>
+            )}
+            <div className="sm:col-span-2">
+              <Label htmlFor="add-photo">Photo URL (optional)</Label>
+              <Input id="add-photo" value={addForm.imageUrl} onChange={(e) => setAddForm({ ...addForm, imageUrl: e.target.value })} placeholder="https://…" maxLength={512} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="add-desc">Description</Label>
+              <Textarea id="add-desc" value={addForm.description} onChange={(e) => setAddForm({ ...addForm, description: e.target.value })} maxLength={2000} rows={2} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="add-access">Access notes (road, turnaround, cell signal, gates)</Label>
+              <Textarea id="add-access" value={addForm.accessNotes} onChange={(e) => setAddForm({ ...addForm, accessNotes: e.target.value })} maxLength={2000} rows={2} />
+            </div>
+            <div className="sm:col-span-2 flex gap-2">
+              <Button type="submit" disabled={suggest.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">{suggest.isPending ? "Sending…" : "Add this pin"}</Button>
+              <Button type="button" variant="outline" onClick={() => setAdding(false)}>Cancel</Button>
+            </div>
+          </form>
+        </ShipSection>
+      )}
+
+      {/* Detail drawer */}
+      {selectedId != null && d && (
+        <DetailDrawer
+          detail={d}
+          onClose={() => setSelectedId(null)}
+          inVoyage={voyage.some((v) => v.id === d.id)}
+          onToggleVoyage={() => {
+            if (voyage.some((v) => v.id === d.id)) removeFromVoyage(d.id);
+            else addToVoyage({ id: d.id, slug: d.slug, name: d.name, type: d.type, lat: d.lat, lng: d.lng });
+          }}
+          isAuthenticated={isAuthenticated}
+          onConfirm={async () => {
+            try { await confirm.mutateAsync({ id: d.id }); toast.success("Thank you. Marked confirmed."); void utils.ship.map.get.invalidate(); void utils.ship.map.list.invalidate(); }
+            catch (e: any) { toast.error(e?.message ?? "Could not confirm."); }
+          }}
+          onFlag={async (reason) => {
+            try { await flag.mutateAsync({ id: d.id, reason }); toast.success("Thank you. A crew member will look into it."); }
+            catch (e: any) { toast.error(e?.message ?? "Could not send the flag."); }
+          }}
+        />
+      )}
+
+      {/* Voyage panel */}
+      {voyageOpen && (
+        <VoyagePanel
+          voyage={voyage}
+          onRemove={(id) => removeFromVoyage(id)}
+          onClear={() => clearVoyage()}
+          onClose={() => setVoyageOpen(false)}
+        />
+      )}
     </PageWrapper>
+  );
+}
+
+// ── Detail drawer ─────────────────────────────────────────────────────────────
+type LocationDetail = {
+  id: number; slug: string; name: string; type: string; lat: number; lng: number;
+  description?: string | null; websiteUrl?: string | null; imageUrl?: string | null;
+  source?: string | null; sourceUrl?: string | null; sourceLicense?: string | null;
+  accessNotes?: string | null; waterQualityUrl?: string | null; maxRigLengthFt?: number | null;
+  lastVerifiedAt?: string | Date | null; isVerified: boolean;
+};
+
+function DetailDrawer({ detail, onClose, inVoyage, onToggleVoyage, isAuthenticated, onConfirm, onFlag }: {
+  detail: LocationDetail; onClose: () => void; inVoyage: boolean; onToggleVoyage: () => void;
+  isAuthenticated: boolean; onConfirm: () => void; onFlag: (reason: string) => void;
+}) {
+  const meta = TYPE_META[detail.type] ?? { emoji: "📍", label: detail.type };
+  const [flagOpen, setFlagOpen] = useState(false);
+  const [flagReason, setFlagReason] = useState("");
+  const shareUrl = `${window.location.origin}/ship/map?pin=${encodeURIComponent(detail.slug)}`;
+  return (
+    <ShipSection className="bg-[#2f5d3a]/5">
+      <div className="max-w-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <ShipEyebrow>{meta.emoji} {meta.label}{!detail.isVerified && " · unverified"}</ShipEyebrow>
+            <h2 className="text-2xl font-bold">{detail.name}</h2>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+        </div>
+        {detail.imageUrl && <img src={detail.imageUrl} alt={detail.name} loading="lazy" className="mt-3 rounded-xl max-h-64 w-full object-cover" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")} />}
+        {detail.description && <p className="mt-3 text-foreground/85">{detail.description}</p>}
+
+        <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          {detail.maxRigLengthFt != null && (<div><dt className="text-muted-foreground">Rig fit</dt><dd>Up to {detail.maxRigLengthFt} ft</dd></div>)}
+          {detail.accessNotes && (<div className="sm:col-span-2"><dt className="text-muted-foreground">Access</dt><dd>{detail.accessNotes}</dd></div>)}
+          {detail.lastVerifiedAt && (<div><dt className="text-muted-foreground">Last confirmed</dt><dd>{new Date(detail.lastVerifiedAt).toLocaleDateString()}</dd></div>)}
+          {detail.waterQualityUrl && (<div><dt className="text-muted-foreground">Water tests</dt><dd><a className="underline text-[#2f5d3a] dark:text-[#9de89d]" href={detail.waterQualityUrl} target="_blank" rel="noreferrer">View results</a></dd></div>)}
+          {detail.websiteUrl && (<div><dt className="text-muted-foreground">Website</dt><dd><a className="underline text-[#2f5d3a] dark:text-[#9de89d]" href={detail.websiteUrl} target="_blank" rel="noreferrer">Visit</a></dd></div>)}
+          {detail.sourceUrl && (<div><dt className="text-muted-foreground">Source</dt><dd><a className="underline text-[#2f5d3a] dark:text-[#9de89d]" href={detail.sourceUrl} target="_blank" rel="noreferrer">{detail.source ?? "origin"}</a>{detail.sourceLicense ? ` · ${detail.sourceLicense}` : ""}</dd></div>)}
+        </dl>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button size="sm" onClick={onToggleVoyage} className={inVoyage ? "bg-[#b5762f] hover:brightness-95" : "bg-[#2f5d3a] hover:bg-[#264a2f]"}>{inVoyage ? "In your voyage ✓" : "Add to my voyage"}</Button>
+          <Button size="sm" variant="outline" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("Link copied"); }}>Share</Button>
+          {isAuthenticated && (
+            <>
+              <Button size="sm" variant="outline" onClick={onConfirm}>Confirmed, still true</Button>
+              <Button size="sm" variant="outline" onClick={() => setFlagOpen((v) => !v)}>Flag a problem</Button>
+            </>
+          )}
+        </div>
+        {flagOpen && (
+          <div className="mt-3 flex gap-2 items-start">
+            <Input value={flagReason} onChange={(e) => setFlagReason(e.target.value)} placeholder="What's wrong? (gate locked, spring dry, rig no longer fits…)" maxLength={500} />
+            <Button size="sm" onClick={() => { if (flagReason.trim().length >= 3) { onFlag(flagReason.trim()); setFlagReason(""); setFlagOpen(false); } }}>Send</Button>
+          </div>
+        )}
+      </div>
+    </ShipSection>
+  );
+}
+
+// ── Voyage panel ──────────────────────────────────────────────────────────────
+function VoyagePanel({ voyage, onRemove, onClear, onClose }: { voyage: VoyagePin[]; onRemove: (id: number) => void; onClear: () => void; onClose: () => void }) {
+  return (
+    <ShipSection className="bg-[#b5762f]/8">
+      <div className="max-w-2xl">
+        <div className="flex items-center justify-between">
+          <ShipEyebrow>⛵ My voyage</ShipEyebrow>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+        </div>
+        <h2 className="text-2xl font-bold mb-3">{voyage.length ? `${voyage.length} stop${voyage.length > 1 ? "s" : ""}` : "No stops yet"}</h2>
+        {voyage.length === 0 ? (
+          <p className="text-foreground/80">Open a pin and tap “Add to my voyage” to start charting a route. Then export it to your nav app.</p>
+        ) : (
+          <>
+            <ol className="space-y-1 mb-4">
+              {voyage.map((v, i) => (
+                <li key={v.id} className="flex items-center justify-between border rounded p-2 text-sm">
+                  <span><span className="inline-block w-6 font-semibold text-[#b5762f]">{i + 1}</span>{TYPE_META[v.type]?.emoji} {v.name}</span>
+                  <button onClick={() => onRemove(v.id)} className="text-muted-foreground hover:text-foreground text-xs underline">remove</button>
+                </li>
+              ))}
+            </ol>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" className="bg-[#2f5d3a] hover:bg-[#264a2f]" onClick={() => downloadVoyageGpx(voyage)}>Export GPX</Button>
+              <a href={voyageToGoogleMapsUrl(voyage)} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">Open in Google Maps</Button></a>
+              <Button size="sm" variant="outline" onClick={onClear}>Clear</Button>
+            </div>
+          </>
+        )}
+      </div>
+    </ShipSection>
   );
 }

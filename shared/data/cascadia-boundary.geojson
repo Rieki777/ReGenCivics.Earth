@@ -1,0 +1,50 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "name": "Cascadia bioregion (US portion, approximate)",
+    "approximate": true,
+    "source": "Hand-simplified from David McCloskey (Cascadia Institute) published maps and the Cascadia Department of Bioregion. Placeholder until the official shapefile lands via partnership (companion Task 10). US-side only for now; the shape follows the Pacific coast on the west, the US-Canada border on the north, and roughly the continental divide on the east.",
+    "note": "Marked approximate:true on purpose. Swap this Feature's geometry for the canonical McCloskey shape when it arrives. Do not treat these vertices as authoritative."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Cascadia", "approximate": true },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-124.36, 40.44],
+            [-124.11, 41.05],
+            [-124.21, 42.00],
+            [-124.40, 43.35],
+            [-124.06, 44.63],
+            [-123.97, 45.50],
+            [-124.08, 46.27],
+            [-124.10, 47.35],
+            [-124.73, 48.39],
+            [-123.10, 48.50],
+            [-122.76, 49.00],
+            [-120.00, 49.00],
+            [-117.03, 49.00],
+            [-116.05, 49.00],
+            [-115.00, 48.20],
+            [-113.30, 47.00],
+            [-113.20, 45.80],
+            [-113.44, 44.50],
+            [-114.30, 43.60],
+            [-115.50, 43.30],
+            [-116.90, 43.60],
+            [-117.20, 43.00],
+            [-118.00, 42.00],
+            [-120.00, 41.90],
+            [-121.50, 41.20],
+            [-122.50, 41.00],
+            [-123.20, 40.60],
+            [-124.36, 40.44]
+          ]
+        ]
+      }
+    }
+  ]
+}

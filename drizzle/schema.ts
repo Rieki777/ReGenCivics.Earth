@@ -4199,12 +4199,26 @@ export const shipLocations = mysqlTable("ship_locations", {
     "land_project", "spring", "waterfall", "lake", "geology",
     "forest", "food_forest", "seed_site", "boondock", "event_venue",
   ]).notNull(),
+  // Provenance (ADR-35). NULL for hand-suggested crew pins. Bulk imports stamp
+  // where each pin came from and under what license; the detail drawer shows it.
+  source: varchar("source", { length: 40 }),
+  sourceUrl: varchar("sourceUrl", { length: 512 }),
+  sourceLicense: varchar("sourceLicense", { length: 40 }),
+  externalId: varchar("externalId", { length: 128 }),
   lat: double("lat").notNull(),
   lng: double("lng").notNull(),
   bioregion: varchar("bioregion", { length: 64 }).notNull().default("cascadia"),
+  region: varchar("region", { length: 64 }),
   description: text("description"),
   websiteUrl: varchar("websiteUrl", { length: 512 }),
   imageUrl: varchar("imageUrl", { length: 512 }),
+  // Field-verifiable columns (boondocks + springs). maxRigLengthFt drives the
+  // "fits 40 ft" filter; waterQualityUrl links spring test results.
+  maxRigLengthFt: int("maxRigLengthFt"),
+  accessNotes: text("accessNotes"),
+  waterQualityUrl: varchar("waterQualityUrl", { length: 512 }),
+  lastVerifiedAt: timestamp("lastVerifiedAt"),
+  verifiedCount: int("verifiedCount").notNull().default(0),
   isVerified: boolean("isVerified").notNull().default(false),
   addedByUserId: int("addedByUserId"),
   linkedEventId: int("linkedEventId"),
@@ -4215,9 +4229,27 @@ export const shipLocations = mysqlTable("ship_locations", {
   index("ship_locations_type_idx").on(table.type),
   index("ship_locations_verified_idx").on(table.isVerified),
   index("ship_locations_bioregion_idx").on(table.bioregion),
+  index("ship_locations_source_idx").on(table.source),
+  uniqueIndex("ship_locations_source_external_idx").on(table.source, table.externalId),
 ]));
 export type ShipLocation = typeof shipLocations.$inferSelect;
 export type InsertShipLocation = typeof shipLocations.$inferInsert;
+
+// Field-verification flags: a crew reports a problem with a pin (gate locked,
+// spring dry, rig no longer fits). Feeds the admin queue. See ADR-35.
+export const shipLocationFlags = mysqlTable("ship_location_flags", {
+  id: int("id").autoincrement().primaryKey(),
+  locationId: int("locationId").notNull(),
+  userId: int("userId"),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedByUserId: int("resolvedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_location_flags_location_idx").on(table.locationId),
+  index("ship_location_flags_open_idx").on(table.resolvedAt),
+]));
+export type ShipLocationFlag = typeof shipLocationFlags.$inferSelect;
 
 // Voyage bookings. Our calendar is the source of truth; the platform rental is
 // a separate legal charge. Dates are YYYY-MM-DD strings for easy comparison.

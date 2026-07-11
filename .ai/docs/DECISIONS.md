@@ -388,6 +388,26 @@ Format per entry:
 
 ---
 
+## ADR-34: Self-hosted PMTiles basemap for the treasure map (kill the OSM tile dependency)
+
+- Date: 2026-07-10. Status: Accepted. Supersedes the raster-tile choice in ADR-32.
+- Context: The `/ship/map` basemap was blank in production. `ShipMap.tsx` requested raster tiles from `https://{s}.tile.openstreetmap.org/...`, but the CSP `img-src` in `server/_core/security.ts` never listed that origin, so every tile request was blocked. Pins (local DOM) rendered over a gray box.
+- Decision: Self-host the whole basemap as a single PMTiles archive on R2 (`assets.regencivics.earth/ship/basemap.pmtiles`), extracted from the Protomaps daily build clipped to the US-Cascadia bbox `[-126.0, 39.5, -110.5, 49.5]`. Render it with `protomaps-leaflet` reading the R2 URL over HTTP range requests. No OSM tile origin, no CSP widening (`img-src`/`connect-src` already allow `*.regencivics.earth`). A dev-only `VITE_SHIP_BASEMAP_DEV_OSM` flag falls back to raster OSM for local work when the PMTiles file is not yet uploaded.
+- Why: (1) The CSP will never need to trust a third-party tile CDN, closing the class of bug that broke the map. (2) R2 has no egress fees, so an in-region basemap is effectively free bandwidth and faster than public OSM tiles. (3) A single PMTiles file is the groundwork for offline caching (a voyage happens where there is no cell signal). (4) Bounds are locked to the bioregion, so the extract stays small (1-3 GB) and the map is Cascadia, not the whole planet.
+- Trade-offs: `protomaps-leaflet` is in maintenance mode; the future upgrade path if we outgrow it is MapLibre GL with the same PMTiles source (no data re-extraction). The basemap must be refreshed manually (quarterly, or when the region needs newer OSM edits) by re-running `scripts/build-ship-basemap.ts`. The extract + upload needs R2 creds; when they are absent locally the script emits the exact command for the credential holder to run once.
+- Where it lives: `scripts/build-ship-basemap.ts` (extract + multipart upload), `client/src/pages/ship/ShipMap.tsx` (protomaps-leaflet layer), `client/src/pages/ship/shipMapConfig.ts` (bbox, zoom, basemap URL, dev flag), `server/_core/security.ts` (dead OSM URL removed from the comment history; no directive change needed), `drizzle/README.md` (refresh command).
+
+## ADR-35: Ship map v2 data model — multi-source provenance and the verified/unverified tiers
+
+- Date: 2026-07-10. Status: Accepted. Extends ADR-33.
+- Context: The map needed to hold both a hand-curated verified tier and a bulk open-data tier (OSM springs, NOAA thermal springs, Falling Fruit food forests) pulled from external datasets under different licenses, plus field-verifiable boondock metadata for the "40-ft-capable free camping within an hour" coverage goal.
+- Decision: Extend `ship_locations` with provenance and field columns (`source`, `sourceUrl`, `sourceLicense`, `externalId`, `maxRigLengthFt`, `accessNotes`, `waterQualityUrl`, `lastVerifiedAt`, `verifiedCount`, `region`) plus a composite unique index `(source, externalId)` so every importer is idempotent (upsert on re-run). Bulk-imported rows land `isVerified=false` and render translucent/dashed; only hand-confirmed or admin-verified rows are the "treasure." Attribution (`sourceUrl` + `sourceLicense`) is stamped on every imported row and shown in the detail drawer, satisfying ODbL/CC-BY-NC-SA.
+- Why: one table with a `source` tag keeps the map queryable as a single layer while preserving where each pin came from and under what license. The composite unique lets importers re-run safely against production. Field columns turn the map into a working tool for RV voyages (rig fit, road access, water tests) rather than a pretty pin board.
+- Trade-offs: Falling Fruit is CC-BY-NC-SA (non-commercial); the map is a free community feature of a church program and Rye is securing explicit blessing (companion Task 10), so the importer header flags the license and the data stays attributed and removable by `source`. Coordinates for sensitive springs stay unverified until reviewed.
+- Where it lives: `drizzle/schema.ts` (`shipLocations`), `drizzle/0177_ship_map_v2.sql`, `scripts/seed-ship-springs-osm.ts`, `scripts/seed-ship-hotsprings.ts`, `scripts/seed-ship-foodforest-ff.ts`, `scripts/seed-ship-curated.ts`, `server/routes/ship.ts` (`map.*`).
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.

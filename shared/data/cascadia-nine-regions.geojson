@@ -1,0 +1,9 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "name": "Cascadia nine bioregions (placeholder)",
+    "approximate": true,
+    "note": "Empty until the Cascadia Department of Bioregion's simplified nine-region boundaries arrive via partnership (companion Task 10). The map's 'Nine regions' toggle reads this file; the layer renders nothing while it is empty. Populate features with a `region` slug matching ship_locations.region so pins can be attributed to a region."
+  },
+  "features": []
+}
