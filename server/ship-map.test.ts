@@ -3,6 +3,9 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { inBbox, inCascadiaPolygon, importSlug } from "../scripts/ship-import-lib";
 import { voyageToGpx, voyageToGoogleMapsUrl, type VoyagePin } from "../client/src/pages/ship/shipVoyage";
+import {
+  ANCHORAGE, VOYAGE_RADIUS_MILES, haversineMiles, withinVoyageRange, rangeRing,
+} from "../client/src/pages/ship/shipMapConfig";
 
 /**
  * Ship treasure-map v2 tests. No DATABASE_URL in the vitest env, so we cover the
@@ -38,6 +41,34 @@ describe("ship-map importer: bbox + bioregion clipping", () => {
     expect(inCascadiaPolygon(-122.33, 47.61)).toBe(true); // Seattle
     expect(inCascadiaPolygon(-111.89, 40.76)).toBe(false); // Salt Lake City (Great Basin)
     expect(inCascadiaPolygon(-115.14, 36.17)).toBe(false); // Las Vegas
+  });
+});
+
+describe("ship-map: voyage range (the game board, ADR-36)", () => {
+  it("measures great-circle distance sanely (Portland to Seattle ~145 mi)", () => {
+    const d = haversineMiles(45.5152, -122.6784, 47.6062, -122.3321);
+    expect(d).toBeGreaterThan(135);
+    expect(d).toBeLessThan(155);
+  });
+
+  it("keeps the near board in range and pushes the far world into fog", () => {
+    expect(withinVoyageRange(ANCHORAGE[0], ANCHORAGE[1])).toBe(true); // the anchorage itself
+    expect(withinVoyageRange(45.5152, -122.6784)).toBe(true); // Portland
+    expect(withinVoyageRange(47.6062, -122.3321)).toBe(true); // Seattle
+    expect(withinVoyageRange(43.6187, -116.2146)).toBe(true); // Boise
+    expect(withinVoyageRange(51.0447, -114.0719)).toBe(false); // Calgary
+    expect(withinVoyageRange(39.7392, -104.9903)).toBe(false); // Denver
+  });
+
+  it("draws the horizon as a closed ring of points at the range radius", () => {
+    const ring = rangeRing(ANCHORAGE, VOYAGE_RADIUS_MILES, 90);
+    expect(ring.length).toBe(91); // closed: first point repeated
+    expect(ring[0][0]).toBeCloseTo(ring[ring.length - 1][0], 6);
+    expect(ring[0][1]).toBeCloseTo(ring[ring.length - 1][1], 6);
+    for (const [lat, lng] of ring) {
+      const d = haversineMiles(ANCHORAGE[0], ANCHORAGE[1], lat, lng);
+      expect(Math.abs(d - VOYAGE_RADIUS_MILES)).toBeLessThan(1);
+    }
   });
 });
 

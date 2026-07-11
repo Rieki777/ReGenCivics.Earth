@@ -406,6 +406,15 @@ Format per entry:
 - Trade-offs: Falling Fruit is CC-BY-NC-SA (non-commercial); the map is a free community feature of a church program and Rye is securing explicit blessing (companion Task 10), so the importer header flags the license and the data stays attributed and removable by `source`. Coordinates for sensitive springs stay unverified until reviewed.
 - Where it lives: `drizzle/schema.ts` (`shipLocations`), `drizzle/0177_ship_map_v2.sql`, `scripts/seed-ship-springs-osm.ts`, `scripts/seed-ship-hotsprings.ts`, `scripts/seed-ship-foodforest-ff.ts`, `scripts/seed-ship-curated.ts`, `server/routes/ship.ts` (`map.*`).
 
+## ADR-36: Game-board treasure map — Esri satellite basemap + voyage-range rendering
+
+- Date: 2026-07-10. Status: Accepted. Extends ADR-34 (does not supersede it: the self-hosted PMTiles archive stays on R2 as the offline/fallback basemap).
+- Context: Rye wanted the treasure map to (1) reduce overwhelm by always rendering only what sits within a reasonable 3-day drive of the anchorage (Ashland for now; the anchorage will move with the ship), and (2) read as a game board over satellite imagery. Satellite raster cannot practically be self-hosted at useful zooms today (a public-domain NAIP pipeline was considered and deferred: multi-hour build, ~10+ GB), so this decision re-admits exactly one third-party tile origin.
+- Decision: Esri World Imagery + the World Boundaries and Places reference labels (both on `https://server.arcgisonline.com`, one CSP `img-src` origin, image tiles only). All range rendering derives from a single `ANCHORAGE` constant: 250 road miles/day × 3 days ÷ 1.3 road-to-crow factor ≈ 577 mi straight-line horizon. `VoyageRangeLayer` draws fog beyond the horizon, gold per-day rings, and a compass rose at home port; `ClusterLayer` splits pins into an interactive in-range index and a dimmed, unclickable beyond-horizon index; map bounds lock to the range bbox. Rye chose 250 mi/day, dimmed-not-hidden out-of-range pins, and the day rings explicitly (2026-07-10).
+- Why: (1) The anchorage-relative board is one constant away from following the ship's live position later. (2) Dimming behind fog keeps the wider world legible without cluttering play. (3) One img-src origin for image tiles is a far smaller CSP surface than the script/fetch origins ADR-34 was written to prevent.
+- Trade-offs: a third-party dependency for imagery (Esri terms require attribution, which the map shows in two places); imagery unavailable offline (the PMTiles fallback path remains); Esri could change tile endpoints (single constant in `shipMapConfig.ts`).
+- Where it lives: `client/src/pages/ship/shipMapConfig.ts` (ANCHORAGE, range math, tile URLs), `client/src/pages/ship/shipMapLayers.tsx` (BasemapLayer, VoyageRangeLayer, ClusterLayer split), `client/src/pages/ship/ShipMap.tsx` (bounds, copy, counts), `server/_core/security.ts` (img-src), `server/ship-map.test.ts` (range tests).
+
 ---
 
 ## Adding new ADRs

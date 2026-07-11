@@ -1,15 +1,18 @@
 /**
  * Leaflet layer components for the ReGen Ship treasure map. Each is a headless
  * react-leaflet child that reaches for the map via useMap() and manages a raw
- * Leaflet layer imperatively (the performant path for a self-hosted vector
+ * Leaflet layer imperatively (the performant path for a raster satellite
  * basemap + thousands of clustered pins).
  *
- *  - BasemapLayer    self-hosted PMTiles via protomaps-leaflet (ADR-34); a
- *                    dev-only raster OSM fallback when the archive is not yet up.
- *  - CascadiaBoundary the bioregion glow: a soft boundary line + an outside mask
- *                    that dims everything beyond Cascadia.
- *  - ClusterLayer    supercluster-backed clustered markers; verified pins solid,
- *                    unverified translucent/dashed, stale (18+ mo) faded.
+ *  - BasemapLayer    Esri World Imagery satellite + reference labels (ADR-36).
+ *  - VoyageRangeLayer the game board: fog beyond the 3-day horizon, gold day
+ *                    rings, and a compass rose at the anchorage.
+ *  - CascadiaBoundary the bioregion line (the fog mask now lives in
+ *                    VoyageRangeLayer, so this is just the soft dashed edge).
+ *  - ClusterLayer    supercluster-backed clustered markers; in-range pins are
+ *                    interactive game tokens, beyond-horizon pins render dimmed
+ *                    and unclickable. Verified solid, unverified dashed,
+ *                    stale (18+ mo) faded.
  *  - VoyageRoute     the concierge itinerary / "my voyage" as an ordered dashed
  *                    route with day numbers.
  *  - CrosshairPicker one-shot map-click capture for the "Add to the map" flow.
@@ -18,29 +21,121 @@ import { useEffect, useMemo, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import Supercluster from "supercluster";
-import { leafletLayer } from "protomaps-leaflet";
 import boundaryRaw from "@shared/data/cascadia-boundary.geojson?raw";
 import {
-  SHIP_BASEMAP_URL, SHIP_BASEMAP_DEV_OSM, TYPE_META, MAP_MAX_ZOOM,
+  TYPE_META, MAP_MAX_ZOOM,
+  SATELLITE_TILE_URL, SATELLITE_LABELS_URL, SATELLITE_ATTRIBUTION,
+  ANCHORAGE, VOYAGE_DAYS, VOYAGE_RADIUS_MILES, crowMilesForDays, rangeRing, withinVoyageRange,
 } from "./shipMapConfig";
 
-const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="https://protomaps.com">Protomaps</a>';
 const STALE_MS = 18 * 30 * 24 * 60 * 60 * 1000; // ~18 months
 
-// ── Basemap ───────────────────────────────────────────────────────────────────
+// ── Basemap: satellite + labels (ADR-36) ──────────────────────────────────────
 export function BasemapLayer() {
   const map = useMap();
   useEffect(() => {
-    let layer: L.Layer;
-    if (SHIP_BASEMAP_DEV_OSM) {
-      // Dev-only. This origin is NOT allowed by the production CSP.
-      layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: ATTRIBUTION, maxZoom: MAP_MAX_ZOOM });
-    } else {
-      layer = leafletLayer({ url: SHIP_BASEMAP_URL, flavor: "light", lang: "en", attribution: ATTRIBUTION }) as unknown as L.Layer;
-    }
-    layer.addTo(map);
-    return () => { map.removeLayer(layer); };
+    const imagery = L.tileLayer(SATELLITE_TILE_URL, {
+      attribution: SATELLITE_ATTRIBUTION, maxZoom: MAP_MAX_ZOOM, maxNativeZoom: 17,
+    }).addTo(map);
+    const labels = L.tileLayer(SATELLITE_LABELS_URL, {
+      maxZoom: MAP_MAX_ZOOM, maxNativeZoom: 12, opacity: 0.9,
+    }).addTo(map);
+    return () => { map.removeLayer(imagery); map.removeLayer(labels); };
   }, [map]);
+  return null;
+}
+
+// ── The game board: voyage range fog, day rings, compass rose ────────────────
+const GOLD = "#ffd700";
+const FOG = "#0a140d";
+
+function compassRoseIcon(): L.DivIcon {
+  // An inline SVG compass rose on a dark disc with a gold rim: the home-port
+  // token on the board.
+  const svg =
+    `<svg viewBox="0 0 48 48" width="44" height="44" xmlns="http://www.w3.org/2000/svg">` +
+    `<circle cx="24" cy="24" r="22" fill="#12241a" stroke="${GOLD}" stroke-width="2.5"/>` +
+    `<circle cx="24" cy="24" r="16" fill="none" stroke="${GOLD}" stroke-width="0.8" opacity="0.55"/>` +
+    `<polygon points="24,5 27,21 24,24 21,21" fill="${GOLD}"/>` +
+    `<polygon points="24,43 27,27 24,24 21,27" fill="#e6e0c8"/>` +
+    `<polygon points="5,24 21,21 24,24 21,27" fill="#e6e0c8"/>` +
+    `<polygon points="43,24 27,27 24,24 27,21" fill="#e6e0c8"/>` +
+    `<circle cx="24" cy="24" r="3" fill="${GOLD}"/>` +
+    `</svg>`;
+  return L.divIcon({
+    className: "ship-compass-rose",
+    html: `<div style="filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))">${svg}</div>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  });
+}
+
+function dayLabelIcon(text: string): L.DivIcon {
+  return L.divIcon({
+    className: "ship-day-label",
+    html:
+      `<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;padding:2px 10px;` +
+      `border-radius:999px;background:rgba(10,20,13,.78);border:1px solid ${GOLD};color:${GOLD};` +
+      `font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;` +
+      `box-shadow:0 2px 6px rgba(0,0,0,.5)">${text}</div>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+}
+
+/**
+ * Renders the board itself: everything beyond a 3-day sail of the anchorage
+ * sinks into fog, gold rings mark how far each voyage day reaches, and a
+ * compass rose marks home port. All geometry radiates from ANCHORAGE, so when
+ * she weighs anchor the whole board moves with her.
+ */
+export function VoyageRangeLayer({ anchorage = ANCHORAGE }: { anchorage?: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    const group = L.layerGroup().addTo(map);
+    const horizon = rangeRing(anchorage, VOYAGE_RADIUS_MILES);
+    const horizonLatLngs = horizon.map(([lat, lng]) => L.latLng(lat, lng));
+
+    // Fog of the unexplored: a world rectangle with the voyage range punched
+    // out, so the board glows and the beyond dims.
+    const world: L.LatLngExpression[] = [[85, -180], [85, 180], [-85, 180], [-85, -180]];
+    L.polygon([world, horizonLatLngs] as unknown as L.LatLngExpression[][], {
+      stroke: false, fillColor: FOG, fillOpacity: 0.62, interactive: false,
+    }).addTo(group);
+
+    // A soft glow just inside the horizon, then the gold horizon edge itself.
+    L.polyline(horizonLatLngs, {
+      color: GOLD, weight: 10, opacity: 0.12, interactive: false,
+    }).addTo(group);
+    L.polyline(horizonLatLngs, {
+      color: GOLD, weight: 2.5, opacity: 0.85, dashArray: "10 8", interactive: false,
+    }).addTo(group);
+
+    // Interior day rings: how far each sailing day reaches.
+    for (let day = 1; day < VOYAGE_DAYS; day++) {
+      const ring = rangeRing(anchorage, crowMilesForDays(day)).map(([lat, lng]) => L.latLng(lat, lng));
+      L.polyline(ring, {
+        color: GOLD, weight: 1.25, opacity: 0.35, dashArray: "2 10", interactive: false,
+      }).addTo(group);
+    }
+
+    // Day labels at the northern point of each ring.
+    for (let day = 1; day <= VOYAGE_DAYS; day++) {
+      const labelLat = anchorage[0] + crowMilesForDays(day) / 69;
+      L.marker([labelLat, anchorage[1]], {
+        icon: dayLabelIcon(day === VOYAGE_DAYS ? `Day ${day} · the horizon` : `Day ${day}`),
+        interactive: false,
+        keyboard: false,
+      }).addTo(group);
+    }
+
+    // The compass rose at home port.
+    const rose = L.marker(anchorage, { icon: compassRoseIcon(), zIndexOffset: 900, title: "The anchorage" });
+    rose.bindPopup(`<strong>The anchorage</strong><div style="font-size:13px">Ashland, Oregon. Every voyage on this board starts here. The gold rings mark each day of sail; past the horizon lies fog.</div>`);
+    rose.addTo(group);
+
+    return () => { map.removeLayer(group); };
+  }, [map, anchorage]);
   return null;
 }
 
@@ -63,19 +158,13 @@ export function CascadiaBoundary({ show = true }: { show?: boolean }) {
     if (ring.length === 0) return;
     const latlngs = ring.map(([lng, lat]) => L.latLng(lat, lng));
 
-    // Outside mask: a world rectangle with the bioregion punched out as a hole,
-    // so everything beyond Cascadia dims and the bioregion glows.
-    const world: L.LatLngExpression[] = [ [85, -180], [85, 180], [-85, 180], [-85, -180] ];
-    const mask = L.polygon([world, latlngs] as unknown as L.LatLngExpression[][], {
-      stroke: false, fillColor: "#1a2b1f", fillOpacity: 0.28, interactive: false,
-    }).addTo(map);
-
-    // Soft boundary line.
+    // Soft boundary line only. The outside-dimming mask that used to live here
+    // moved to VoyageRangeLayer (the fog), which now owns "beyond the board".
     const line = L.polyline(latlngs.concat([latlngs[0]]), {
-      color: "#2f5d3a", weight: 2, opacity: 0.6, dashArray: "2 6", interactive: false,
+      color: "#7fd695", weight: 2, opacity: 0.55, dashArray: "2 6", interactive: false,
     }).addTo(map);
 
-    return () => { map.removeLayer(mask); map.removeLayer(line); };
+    return () => { map.removeLayer(line); };
   }, [map, show]);
   return null;
 }
@@ -92,53 +181,76 @@ export type MapPin = {
   lastVerifiedAt?: string | Date | null;
 };
 
-function pinIcon(pin: MapPin): L.DivIcon {
+function pinIcon(pin: MapPin, beyondHorizon = false): L.DivIcon {
   const meta = TYPE_META[pin.type] ?? { emoji: "📍", ring: "#2f5d3a" };
   const stale = pin.lastVerifiedAt ? Date.now() - new Date(pin.lastVerifiedAt).getTime() > STALE_MS : false;
-  const opacity = pin.isVerified ? (stale ? 0.6 : 1) : 0.55;
-  const border = pin.isVerified ? `2px solid ${meta.ring}` : `2px dashed ${meta.ring}`;
-  const bg = pin.isVerified ? "#fff" : "#f3efe4";
+  const opacity = beyondHorizon ? 0.3 : pin.isVerified ? (stale ? 0.65 : 1) : 0.6;
+  const border = pin.isVerified ? `2.5px solid ${meta.ring}` : `2.5px dashed ${meta.ring}`;
+  // Game-token treatment: ivory face with a soft top-light, the type ring as
+  // the rim, and a heavier drop shadow so tokens sit above the satellite board.
+  const bg = pin.isVerified
+    ? "linear-gradient(145deg,#fffef7,#ece5cf)"
+    : "linear-gradient(145deg,#f5f0e0,#e2d9bf)";
+  const fog = beyondHorizon ? "filter:grayscale(.8);" : "";
   return L.divIcon({
     className: "ship-pin",
     html:
-      `<div style="opacity:${opacity};font-size:18px;line-height:28px;width:28px;height:28px;text-align:center;background:${bg};border:${border};border-radius:50% 50% 50% 0;transform:rotate(45deg);box-shadow:0 2px 5px rgba(0,0,0,.3)">` +
+      `<div style="opacity:${opacity};${fog}font-size:18px;line-height:28px;width:28px;height:28px;text-align:center;background:${bg};border:${border};border-radius:50% 50% 50% 0;transform:rotate(45deg);box-shadow:0 3px 7px rgba(0,0,0,.5)">` +
       `<span style="display:inline-block;transform:rotate(-45deg)">${meta.emoji}</span></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 28],
   });
 }
 
-function clusterIcon(count: number): L.DivIcon {
+function clusterIcon(count: number, beyondHorizon = false): L.DivIcon {
   const size = count < 10 ? 34 : count < 100 ? 42 : 52;
+  // Game-chip treatment: a dark green disc with a gold rim, lit from the
+  // upper left like a stacked token. Fogged chips are ghosts of themselves.
+  const face = beyondHorizon
+    ? "radial-gradient(circle at 30% 30%, rgba(63,122,78,.35), rgba(31,68,41,.35))"
+    : "radial-gradient(circle at 30% 30%, #3f7a4e, #1f4429)";
+  const rim = beyondHorizon ? "rgba(255,215,0,.3)" : "#ffd700";
+  const text = beyondHorizon ? "rgba(255,255,255,.55)" : "#fff";
   return L.divIcon({
     className: "ship-cluster",
     html:
-      `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(47,93,58,.9);color:#fff;` +
+      `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${face};color:${text};` +
       `display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${count < 100 ? 13 : 12}px;` +
-      `border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)">${count}</div>`,
+      `border:2px solid ${rim};box-shadow:0 2px 6px rgba(0,0,0,.45)">${count}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 }
 
-export function ClusterLayer({ pins, onSelect }: { pins: MapPin[]; onSelect: (id: number) => void }) {
+function buildIndex(pins: MapPin[]): Supercluster<{ id: number }, Record<string, never>> {
+  const sc = new Supercluster<{ id: number }, Record<string, never>>({ radius: 60, maxZoom: MAP_MAX_ZOOM - 1 });
+  sc.load(
+    pins
+      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
+      .map((p) => ({
+        type: "Feature" as const,
+        id: p.id,
+        properties: { id: p.id },
+        geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      })),
+  );
+  return sc;
+}
+
+export function ClusterLayer({ pins, onSelect, anchorage = ANCHORAGE }: {
+  pins: MapPin[]; onSelect: (id: number) => void; anchorage?: [number, number];
+}) {
   const map = useMap();
   const group = useRef<L.LayerGroup | null>(null);
 
-  const index = useMemo(() => {
-    const sc = new Supercluster<{ id: number }, Record<string, never>>({ radius: 60, maxZoom: MAP_MAX_ZOOM - 1 });
-    sc.load(
-      pins
-        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
-        .map((p) => ({
-          type: "Feature" as const,
-          id: p.id,
-          properties: { id: p.id },
-          geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
-        })),
-    );
-    return sc;
-  }, [pins]);
+  // Two boards: pins within the voyage range play normally; pins beyond the
+  // horizon cluster separately and render as fog-dimmed, unclickable ghosts.
+  const { indexIn, indexOut } = useMemo(() => {
+    const within: MapPin[] = [];
+    const beyond: MapPin[] = [];
+    for (const p of pins) (withinVoyageRange(p.lat, p.lng, anchorage) ? within : beyond).push(p);
+    return { indexIn: buildIndex(within), indexOut: buildIndex(beyond) };
+  }, [pins, anchorage]);
 
   const byId = useMemo(() => new Map(pins.map((p) => [p.id, p])), [pins]);
 
@@ -151,14 +263,27 @@ export function ClusterLayer({ pins, onSelect }: { pins: MapPin[]; onSelect: (id
       const b = map.getBounds();
       const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
       const zoom = Math.round(map.getZoom());
-      const clusters = index.getClusters(bbox, zoom);
-      for (const c of clusters) {
+
+      // Beyond the horizon first, so in-range tokens always sit on top.
+      for (const c of indexOut.getClusters(bbox, zoom)) {
+        const [lng, lat] = c.geometry.coordinates;
+        const props = c.properties as { cluster?: boolean; point_count?: number; id?: number };
+        if (props.cluster) {
+          L.marker([lat, lng], { icon: clusterIcon(props.point_count ?? 0, true), interactive: false, keyboard: false }).addTo(layer);
+        } else {
+          const pin = byId.get(props.id!);
+          if (!pin) continue;
+          L.marker([lat, lng], { icon: pinIcon(pin, true), interactive: false, keyboard: false }).addTo(layer);
+        }
+      }
+
+      for (const c of indexIn.getClusters(bbox, zoom)) {
         const [lng, lat] = c.geometry.coordinates;
         const props = c.properties as { cluster?: boolean; point_count?: number; cluster_id?: number; id?: number };
         if (props.cluster) {
           const m = L.marker([lat, lng], { icon: clusterIcon(props.point_count ?? 0) });
           m.on("click", () => {
-            const expansion = Math.min(index.getClusterExpansionZoom(props.cluster_id!), MAP_MAX_ZOOM);
+            const expansion = Math.min(indexIn.getClusterExpansionZoom(props.cluster_id!), MAP_MAX_ZOOM);
             map.setView([lat, lng], expansion, { animate: true });
           });
           m.addTo(layer);
@@ -178,7 +303,7 @@ export function ClusterLayer({ pins, onSelect }: { pins: MapPin[]; onSelect: (id
       map.off("moveend zoomend", render);
       layer.clearLayers();
     };
-  }, [map, index, byId, onSelect]);
+  }, [map, indexIn, indexOut, byId, onSelect]);
 
   useEffect(() => () => { if (group.current) { map.removeLayer(group.current); group.current = null; } }, [map]);
   return null;

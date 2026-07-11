@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-10 (night): Treasure Map v3, the game board (satellite + voyage range)
+
+- The map now always renders the voyage range: everything within a 3-day sail of the anchorage (Ashland; a single `ANCHORAGE` constant so the board follows the ship later). Range math in `shipMapConfig.ts`: 250 road mi/day × 3 days ÷ 1.3 road-to-crow ≈ 577 mi horizon, `withinVoyageRange` / `haversineMiles` / `rangeRing` helpers, bounds locked to the range bbox. Rye picked the pace, fog treatment, and day rings explicitly.
+- Game-board rendering (`VoyageRangeLayer` in `shipMapLayers.tsx`): fog beyond the gold dashed horizon, per-day gold rings with Day 1/2/3 labels, an SVG compass rose at home port, a board vignette on the map frame. Pins restyled as game tokens (ivory faces, type-ring rims, deeper shadows); clusters as gold-rimmed chips. Beyond-horizon pins cluster separately and render dimmed, grayscale, unclickable (`ClusterLayer` two-index split). `CascadiaBoundary` keeps its line, loses its mask (fog owns dimming now).
+- Basemap swapped to Esri World Imagery satellite + World Boundaries and Places labels (ADR-36, extends ADR-34; PMTiles archive stays on R2 as fallback). One CSP `img-src` origin added: `https://server.arcgisonline.com` (`server/_core/security.ts`), image tiles only.
+- Page copy, legend, and counts reworked for the board ("X places within a 3-day sail · Y in the fog beyond"). Attribution corner now credits Esri.
+- Tests: `server/ship-map.test.ts` grows 3 range cases (14 total in file). Full suite 367 pass / 0 fail. Ship gate: truncation audit 0/0, typecheck exit 0. Note: running vitest on this machine needs `NODE_ENV=test` (a global `NODE_ENV=production` env var breaks React component tests with `React.act is not a function`; not a code issue).
+
 ## 2026-07-10 (latest): Ship basemap upload + the First Mate + the dataset door
 
 - Basemap: uploaded the self-hosted Cascadia PMTiles archive to R2 (`assets.regencivics.earth/ship/basemap.pmtiles`) so the live treasure map renders terrain instead of gray (the v2 code was correct; the archive was just never uploaded). Ran `scripts/build-ship-basemap.ts` with the R2 creds; extract of the US-Cascadia bbox `[-126,39.5,-110.5,49.5]` maxzoom 15, multipart upload. Also fixed the script's Windows extract path (Git's GNU `tar` misreads `C:\...` as a remote host; now uses PowerShell `Expand-Archive` on win32). No deploy needed for the basemap.

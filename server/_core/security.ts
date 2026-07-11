@@ -68,7 +68,10 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "default-src 'self'",
     `script-src 'self' ${nonceToken} 'unsafe-inline' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com`.trim(),
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://www.gstatic.com",
-    "img-src 'self' data: blob: https://assets.regencivics.earth https://regencivics.earth https://*.googleapis.com https://*.gstatic.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.googleusercontent.com https://storage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com",
+    // https://server.arcgisonline.com serves the Esri World Imagery satellite
+    // basemap + reference labels for the ship treasure map (ADR-36). Image
+    // tiles only; no script or fetch access is granted to that origin.
+    "img-src 'self' data: blob: https://assets.regencivics.earth https://regencivics.earth https://*.googleapis.com https://*.gstatic.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.googleusercontent.com https://storage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com https://server.arcgisonline.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "media-src 'self' https: blob:",
     // Whitelisted outbound origins for fetch/XHR/EventSource. Was `https:`

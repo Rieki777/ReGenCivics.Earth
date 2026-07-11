@@ -24,10 +24,11 @@ import { getLoginUrl } from "@/const";
 import { ShipSection, ShipEyebrow, ShipNavRow, useShipFlags } from "./shipShared";
 import {
   TYPE_META, BOOL_FILTERS, type MapBoolFilter, type ShipLocationType,
-  CASCADIA_CENTER, CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM, MAP_DEFAULT_ZOOM,
+  ANCHORAGE, VOYAGE_MAX_BOUNDS, VOYAGE_DAYS, withinVoyageRange,
+  MAP_MIN_ZOOM, MAP_MAX_ZOOM, MAP_DEFAULT_ZOOM,
 } from "./shipMapConfig";
 import {
-  BasemapLayer, CascadiaBoundary, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
+  BasemapLayer, VoyageRangeLayer, CascadiaBoundary, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
 } from "./shipMapLayers";
 import {
   loadVoyage, addToVoyage, removeFromVoyage, clearVoyage, saveVoyage,
@@ -171,6 +172,11 @@ export default function ShipMap() {
     });
   }, [allPins, activeTypes, boolFilters]);
 
+  const withinCount = useMemo(
+    () => filtered.filter((p) => withinVoyageRange(p.lat, p.lng)).length,
+    [filtered],
+  );
+
   const toggleType = (t: string) => setActiveTypes((prev) => { const n = new Set(prev); n.has(t) ? n.delete(t) : n.add(t); return n; });
   const toggleBool = (k: MapBoolFilter) => setBoolFilters((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
@@ -227,7 +233,7 @@ export default function ShipMap() {
       <ShipSection>
         <ShipEyebrow>The treasure map</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Chart your voyage through Cascadia</h1>
-        <p className="text-foreground/80 mb-5">Every pin is a place a crew can serve, drink from, rest at, or plant seeds. Solid pins are verified treasure; faded pins are waiting for a crew to confirm them. The ship pin shows where she sails now.</p>
+        <p className="text-foreground/80 mb-5">The board shows everything within a {VOYAGE_DAYS}-day sail of the anchorage. The compass rose marks home port, the gold rings mark each day of reach, and past the horizon lies fog. Every token is a place a crew can serve, drink from, rest at, or plant seeds. Solid tokens are verified treasure; faded ones wait for a crew to confirm them. The ship pin shows where she sails now.</p>
 
         {/* Type filters */}
         <div className="flex flex-wrap gap-2 mb-3">
@@ -266,17 +272,18 @@ export default function ShipMap() {
 
         <div className="relative rounded-2xl overflow-hidden border" style={{ height: "62vh", minHeight: 440 }}>
           <MapContainer
-            center={CASCADIA_CENTER}
+            center={ANCHORAGE}
             zoom={MAP_DEFAULT_ZOOM}
             minZoom={MAP_MIN_ZOOM}
             maxZoom={MAP_MAX_ZOOM}
-            maxBounds={CASCADIA_MAX_BOUNDS}
+            maxBounds={VOYAGE_MAX_BOUNDS}
             maxBoundsViscosity={0.9}
-            style={{ height: "100%", width: "100%", background: "#e9e4d6" }}
+            style={{ height: "100%", width: "100%", background: "#0a140d" }}
             scrollWheelZoom
           >
             <MapReady onReady={onMapReady} />
             <BasemapLayer />
+            <VoyageRangeLayer />
             <CascadiaBoundary show={showBoundary} />
             <ClusterLayer pins={filtered} onSelect={onSelect} />
             {voyage.length > 0 && <VoyageRoute stops={voyage.map((v, i) => ({ lat: v.lat, lng: v.lng, day: i + 1, name: v.name }))} />}
@@ -293,8 +300,11 @@ export default function ShipMap() {
             )}
           </MapContainer>
 
-          {/* Attribution (protomaps-leaflet also sets it, this is the always-visible corner) */}
-          <div className="absolute bottom-0 right-0 z-[500] bg-white/70 dark:bg-black/50 text-[10px] px-1.5 py-0.5 rounded-tl">© OpenStreetMap contributors, Protomaps</div>
+          {/* Board vignette: darkened corners so the map reads as a game board. */}
+          <div aria-hidden className="absolute inset-0 z-[450] pointer-events-none" style={{ boxShadow: "inset 0 0 90px 24px rgba(6,14,9,.55)", borderRadius: "inherit" }} />
+
+          {/* Attribution (the Leaflet control also sets it, this is the always-visible corner) */}
+          <div className="absolute bottom-0 right-0 z-[500] bg-white/70 dark:bg-black/50 text-[10px] px-1.5 py-0.5 rounded-tl">Imagery © Esri, Maxar, Earthstar Geographics</div>
 
           {/* Add-to-map FAB */}
           {!adding && (
@@ -316,7 +326,9 @@ export default function ShipMap() {
 
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <p className="text-sm text-muted-foreground">
-            {pinsQuery.isLoading && allPins.length === 0 ? "Loading the map…" : `${filtered.length} of ${allPins.length} places shown`}
+            {pinsQuery.isLoading && allPins.length === 0
+              ? "Loading the board…"
+              : `${withinCount} places within a ${VOYAGE_DAYS}-day sail${filtered.length - withinCount > 0 ? ` · ${filtered.length - withinCount} in the fog beyond` : ""}`}
           </p>
           <button onClick={() => setLegendOpen((v) => !v)} className="text-sm underline text-[#2f5d3a] dark:text-[#9de89d]">{legendOpen ? "Hide legend" : "What do the pins mean?"}</button>
         </div>
@@ -327,7 +339,8 @@ export default function ShipMap() {
             {Object.entries(TYPE_META).map(([t, meta]) => (
               <div key={t} className="flex items-start gap-2 text-sm"><span aria-hidden>{meta.emoji}</span><span className="text-foreground/80">{meta.blurb}</span></div>
             ))}
-            <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed pins are unverified — pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed tokens are unverified: pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">The gold rings radiate from the anchorage, one per day of sail. Tokens past the {VOYAGE_DAYS}-day horizon sit in the fog, dimmed and out of play until she sails closer.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">Some pins come from partner datasets offered by other projects and networks. Those places carry a credit line to their source.</p>
           </div>
         )}
