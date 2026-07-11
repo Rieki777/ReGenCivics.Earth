@@ -50,7 +50,7 @@ Constants in `server/lib/ship-config.ts`. Completing the quest puts a crew in th
 | `MAIDEN_FREE_VOYAGES` | 1 | Free voyages at launch (the maiden voyage). |
 | `FREE_VOYAGE_MILESTONE_PCT` | 20 | Each this-percent booked unlocks one more free voyage. |
 | `MAX_FREE_VOYAGES` | 6 | The cap at a fully booked first year. |
-| `MAIDEN_YEAR_VOYAGE_TARGET` | 30 | Voyages that count as 100% booked. **Edit this to pace the giveaways** (it is the denominator for the percent-booked meter on `/ship/quest`). |
+| `MAIDEN_YEAR_VOYAGE_TARGET` | 40 | Voyages that count as 100% booked. **Edit this to pace the giveaways** (it is the denominator for the percent-booked meter on `/ship/quest`). |
 
 Admin holds the draws at `/admin/ship` under Quest ("Draw a free-voyage winner"). The draw picks at random from crews who completed the quest and have not already won, and emails the winner. The public meter (`ship.quest.freeVoyageStatus`) shows voyages unlocked, percent booked, and how many crews are in the draw.
 | Maiden voyage weeks | Early-to-mid August 2026 (placeholder) | Shown as copy; set real weeks by adding availability / blackouts in `/admin/ship`. |
