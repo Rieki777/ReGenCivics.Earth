@@ -16,6 +16,7 @@ import { Trophy, Anchor, Check } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
 import { CrewProfileEditor, CrewsSection } from "@/components/ship/CrewProfiles";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: string; onSubmitted: () => void }) {
   const submit = trpc.ship.quest.submit.useMutation();
@@ -62,9 +63,13 @@ function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: 
 }
 
 export default function ShipQuest() {
+  // Only the signed-in view fires the protected myProgress query. Firing it
+  // logged out trips the global auth redirect (main.tsx QueryCache handler),
+  // which would bounce public visitors of this shareable page to sign-in.
+  const { isAuthenticated } = useAuth();
   const actions = trpc.ship.quest.actions.useQuery();
   const leaderboard = trpc.ship.quest.leaderboard.useQuery();
-  const myProgress = trpc.ship.quest.myProgress.useQuery(undefined, { retry: false });
+  const myProgress = trpc.ship.quest.myProgress.useQuery(undefined, { enabled: isAuthenticated, retry: false });
   const flags = useShipFlags();
   const utils = trpc.useUtils();
 
@@ -151,7 +156,7 @@ export default function ShipQuest() {
         <ShipEyebrow>The ways to earn</ShipEyebrow>
         <h2 className="text-2xl font-bold mb-2">Seven ways to earn your voyage</h2>
         <p className="text-foreground/80 mb-5 max-w-3xl">Reach {threshold} points and you are in every draw. Every point above raises your odds. No single action is required, so pick the ones that fit you.</p>
-        {myProgress.isError && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
+        {!isAuthenticated && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
         <div className="space-y-3">
           {(actions.data ?? []).map((a) => (
             <ActionRow key={a.id} action={a} myStatus={myByAction.get(a.id)} onSubmitted={refresh} />
