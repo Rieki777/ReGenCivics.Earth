@@ -4115,6 +4115,10 @@ export const churchDonations = mysqlTable("church_donations", {
   currency: varchar("currency", { length: 8 }).notNull().default("usd"),
   giftInterval: mysqlEnum("giftInterval", ["one_time", "monthly"]).notNull().default("one_time"),
   status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).notNull().default("pending"),
+  // Program tag (e.g. regen_ship_gift) + optional crew profile ref so ship-gift
+  // revenue is segmentable by crew in Reconciliation/Transparency.
+  program: varchar("program", { length: 64 }),
+  crewProfileId: int("crewProfileId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
@@ -4355,12 +4359,62 @@ export const shipNominations = mysqlTable("ship_nominations", {
   nomineeContact: varchar("nomineeContact", { length: 320 }),
   reason: text("reason").notNull(),
   isSelfNomination: boolean("isSelfNomination").notNull().default(false),
-  status: mysqlEnum("status", ["submitted", "shortlisted", "selected"]).notNull().default("submitted"),
+  status: mysqlEnum("status", ["submitted", "shortlisted", "selected", "approved_for_draw"]).notNull().default("submitted"),
+  // Set once the nominee has an account: an approved nomination becomes a live,
+  // winnable draw entry only when the nominee is reachable.
+  nomineeUserId: int("nomineeUserId"),
+  inviteEmailSentAt: timestamp("inviteEmailSentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("ship_nominations_status_idx").on(table.status),
 ]));
 export type ShipNomination = typeof shipNominations.$inferSelect;
+
+// Crew profile: the sponsorable card a crew fills in on entering the draw
+// (threshold reached or nomination approved). Linked to a user or a nomination.
+export const shipCrewProfiles = mysqlTable("ship_crew_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  nominationId: int("nominationId"),
+  displayName: varchar("displayName", { length: 200 }).notNull(),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  bio: text("bio"),
+  intent: text("intent"),
+  videoUrl: varchar("videoUrl", { length: 512 }),
+  isPublic: boolean("isPublic").notNull().default(false),
+  sponsorGoalCents: int("sponsorGoalCents").notNull().default(210000),
+  sponsoredCents: int("sponsoredCents").notNull().default(0),
+  status: mysqlEnum("status", ["draft", "published", "sponsored", "sailed"]).notNull().default("draft"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("ship_crew_user_uq").on(table.userId),
+  unique("ship_crew_nomination_uq").on(table.nominationId),
+  index("ship_crew_status_idx").on(table.status),
+  index("ship_crew_public_idx").on(table.isPublic),
+]));
+export type ShipCrewProfile = typeof shipCrewProfiles.$inferSelect;
+export type InsertShipCrewProfile = typeof shipCrewProfiles.$inferInsert;
+
+// Audit log of each free-voyage drawing: the eligible set, weights, seed, roll,
+// and winner. A drawing is weighted-random by tickets; storing the seed + audit
+// makes every draw reproducible and checkable.
+export const shipGiveawayDrawings = mysqlTable("ship_giveaway_drawings", {
+  id: int("id").autoincrement().primaryKey(),
+  drawnByUserId: int("drawnByUserId"),
+  seed: bigint("seed", { mode: "number" }).notNull(),
+  totalTickets: int("totalTickets").notNull(),
+  roll: decimal("roll", { precision: 20, scale: 4 }).notNull(),
+  eligibleCount: int("eligibleCount").notNull().default(0),
+  winnerUserId: int("winnerUserId"),
+  winnerNominationId: int("winnerNominationId"),
+  winnerLabel: varchar("winnerLabel", { length: 200 }),
+  audit: json("audit"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_giveaway_created_idx").on(table.createdAt),
+]));
+export type ShipGiveawayDrawing = typeof shipGiveawayDrawings.$inferSelect;
 
 // Ship Keeper role applications ($200 per turnover).
 export const shipKeeperApplications = mysqlTable("ship_keeper_applications", {

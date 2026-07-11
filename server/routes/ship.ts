@@ -27,6 +27,7 @@ import {
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
   shipDatasetOffers,
+  shipCrewProfiles, shipGiveawayDrawings, churchDonations,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
@@ -35,21 +36,24 @@ import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice,
-  computeQuestStandings, countCompleted, freeVoyagesUnlocked, percentBooked,
-  enumerateVoyageWeeks,
-  type QuestCompletionRow,
+  computeQuestStandings, countEntered, maidenVoyageUserId, freeVoyagesUnlocked, percentBooked,
+  weightedDraw, sponsorshipProgress, enumerateVoyageWeeks,
+  type QuestCompletionRow, type DrawEntry,
 } from "../lib/ship-logic";
 import {
   MIN_GUESTS, MAX_GUESTS, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
   MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
   SHIP_SEASON_START_YMD, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
+  SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
 } from "../lib/ship-config";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
 import type { Itinerary } from "../lib/ship-logic";
+import { getStripe, isStripeConfigured } from "../lib/stripe";
 import {
   emailBookingReceived, emailBookingApproved, emailBookingConfirmed,
   emailQuestActionVerified, emailQuestWinner, emailApplicationReceived, emailNominationReceived,
   emailDatasetOfferReceived,
+  emailEnteredTheDraw, emailCrewProfileInvite,
 } from "../lib/ship-emails";
 
 const YMD = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
@@ -81,10 +85,12 @@ function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): 
 const PASSPORT_PROXIMITY_M = 2_000; // within 2km of the pin counts as a visit
 
 // ── Quest standings helper (verified completions -> standings) ────────────────
+// Entry is a points threshold now, not a checklist: a crew with at least
+// SHIP_ENTRY_THRESHOLD_POINTS verified points is in every draw, tickets equal to
+// its points. No single action is required.
 async function loadQuestStandings() {
   const d = await db();
   const actions = await d.select().from(shipQuestActions);
-  const requiredIds = actions.filter((a) => a.isRequired).map((a) => a.id);
   const pointsById = new Map(actions.map((a) => [a.id, a.points]));
   const completions = await d
     .select()
@@ -96,9 +102,8 @@ async function loadQuestStandings() {
     status: c.status,
     verifiedAt: c.verifiedAt,
     points: pointsById.get(c.actionId) ?? 0,
-    isRequired: requiredIds.includes(c.actionId),
   }));
-  return { standings: computeQuestStandings(rows, requiredIds), actions };
+  return { standings: computeQuestStandings(rows, SHIP_ENTRY_THRESHOLD_POINTS), actions };
 }
 
 // ── Free-voyage giveaway status (booking-volume driven) ───────────────────────
@@ -120,11 +125,25 @@ async function loadFreeVoyageStatus() {
     percentBooked: percent,
     freeVoyagesUnlocked: unlocked,
     freeVoyagesTotal: MAX_FREE_VOYAGES,
-    poolSize: countCompleted(standings),
+    poolSize: countEntered(standings),
+    entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
   };
 }
 
-// Credit the ReGen reward + notify when a completion is verified.
+// A user's total verified quest points (used to detect a threshold crossing).
+async function verifiedPointsForUser(userId: number): Promise<number> {
+  const d = await db();
+  const [row] = await d
+    .select({ total: sql<number>`COALESCE(SUM(${shipQuestActions.points}), 0)` })
+    .from(shipQuestCompletions)
+    .innerJoin(shipQuestActions, eq(shipQuestActions.id, shipQuestCompletions.actionId))
+    .where(and(eq(shipQuestCompletions.userId, userId), eq(shipQuestCompletions.status, "verified")));
+  return Number(row?.total ?? 0);
+}
+
+// Credit the ReGen reward + notify when a completion is verified. When this
+// verification is the one that carries the crew across the entry threshold, send
+// the "you are in the draw, make your crew profile" email exactly once.
 async function rewardVerifiedCompletion(completionId: number) {
   const d = await db();
   const [c] = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.id, completionId)).limit(1);
@@ -142,6 +161,13 @@ async function rewardVerifiedCompletion(completionId: number) {
   });
   const [u] = await d.select().from(users).where(eq(users.id, c.userId)).limit(1);
   if (u?.email) await emailQuestActionVerified(u.email, action.title, action.points);
+
+  // Threshold crossing: after includes this action, before excludes it.
+  const after = await verifiedPointsForUser(c.userId);
+  const before = after - (action.points || 0);
+  if (before < SHIP_ENTRY_THRESHOLD_POINTS && after >= SHIP_ENTRY_THRESHOLD_POINTS && u?.email) {
+    await emailEnteredTheDraw(u.email);
+  }
 }
 
 export const shipRouter = router({
@@ -424,7 +450,14 @@ export const shipRouter = router({
       const completions = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.userId, ctx.user.id));
       const { standings } = await loadQuestStandings();
       const mine = standings.find((s) => s.userId === ctx.user.id) ?? null;
-      return { completions, standing: mine, inTheDraw: Boolean(mine?.isFinisher) };
+      const [crew] = await d.select().from(shipCrewProfiles).where(eq(shipCrewProfiles.userId, ctx.user.id)).limit(1);
+      return {
+        completions,
+        standing: mine,
+        inTheDraw: Boolean(mine?.isEntered),
+        entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
+        crewProfile: crew ?? null,
+      };
     }),
 
     // The free-voyage meter: how many are unlocked by bookings so far.
@@ -483,16 +516,178 @@ export const shipRouter = router({
         ? await d.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, ids))
         : [];
       const byId = new Map(profiles.map((p) => [p.id, p]));
+      const maidenId = maidenVoyageUserId(standings);
       return {
-        poolSize: countCompleted(standings),
+        poolSize: countEntered(standings),
+        entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
+        maidenVoyageUserId: maidenId,
         freeVoyage: await loadFreeVoyageStatus(),
         standings: standings.slice(0, 100).map((s) => ({
           ...s,
+          isMaidenVoyage: s.userId === maidenId,
           name: byId.get(s.userId)?.name ?? "A crew member",
           handle: byId.get(s.userId)?.handle ?? null,
         })),
       };
     }),
+  }),
+
+  // ── Crew profiles + sponsorship ─────────────────────────────────────────────
+  crew: router({
+    // My crew profile (by account). Null until I make one.
+    mine: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      const [crew] = await d.select().from(shipCrewProfiles).where(eq(shipCrewProfiles.userId, ctx.user.id)).limit(1);
+      return crew ?? null;
+    }),
+
+    // Create or update my crew profile. Publishing (a public card) is gated: a
+    // crew is only shown publicly once it is in the draw (threshold reached) or
+    // linked to an approved nomination. Passing a nominationId activates that
+    // nomination for the signed-in account.
+    upsert: protectedProcedure
+      .input(
+        z.object({
+          displayName: z.string().min(2).max(200),
+          bio: z.string().max(2000).optional(),
+          intent: z.string().max(2000).optional(),
+          photoUrl: z.string().url().max(512).optional(),
+          videoUrl: z.string().url().max(512).optional(),
+          isPublic: z.boolean().optional(),
+          nominationId: z.number().int().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_crew_upsert");
+        const d = await db();
+
+        // Activate a nomination for this account, if one was passed.
+        let nominationId: number | null = null;
+        if (input.nominationId) {
+          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, input.nominationId)).limit(1);
+          if (nom && (nom.nomineeUserId == null || nom.nomineeUserId === ctx.user.id)) {
+            nominationId = nom.id;
+            if (nom.nomineeUserId == null) {
+              await d.update(shipNominations).set({ nomineeUserId: ctx.user.id }).where(eq(shipNominations.id, nom.id));
+            }
+          }
+        }
+
+        // Am I eligible for a public card? (in the draw or an approved nominee)
+        const { standings } = await loadQuestStandings();
+        const mine = standings.find((s) => s.userId === ctx.user.id);
+        let nominationApproved = false;
+        if (nominationId) {
+          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, nominationId)).limit(1);
+          nominationApproved = nom?.status === "approved_for_draw";
+        }
+        const eligibleForPublic = Boolean(mine?.isEntered) || nominationApproved;
+        const isPublic = Boolean(input.isPublic) && eligibleForPublic;
+
+        const values = {
+          displayName: sanitizeInput(input.displayName),
+          bio: input.bio ? sanitizeInput(input.bio) : null,
+          intent: input.intent ? sanitizeInput(input.intent) : null,
+          photoUrl: input.photoUrl ?? null,
+          videoUrl: input.videoUrl ?? null,
+          isPublic,
+          status: (isPublic ? "published" : "draft") as "published" | "draft",
+        };
+
+        const [existing] = await d.select().from(shipCrewProfiles).where(eq(shipCrewProfiles.userId, ctx.user.id)).limit(1);
+        if (existing) {
+          // Never demote a crew that is already sponsored/sailed.
+          const keepStatus = existing.status === "sponsored" || existing.status === "sailed";
+          await d
+            .update(shipCrewProfiles)
+            .set({ ...values, ...(keepStatus ? { status: existing.status } : {}), ...(nominationId ? { nominationId } : {}) })
+            .where(eq(shipCrewProfiles.id, existing.id));
+          return { id: existing.id, isPublic };
+        }
+        const [res] = await d.insert(shipCrewProfiles).values({
+          userId: ctx.user.id,
+          nominationId,
+          sponsorGoalCents: CREW_SPONSOR_GOAL_CENTS,
+          ...values,
+        });
+        return { id: (res as { insertId?: number }).insertId ?? null, isPublic };
+      }),
+
+    // Public crew cards for the quest page. Only crews that are truly in the
+    // draw appear (threshold entrants + approved nominees), so a public card
+    // always maps to a live draw entry.
+    listPublished: publicProcedure.query(async () => {
+      const d = await db();
+      const crews = await d
+        .select()
+        .from(shipCrewProfiles)
+        .where(eq(shipCrewProfiles.isPublic, true))
+        .orderBy(desc(shipCrewProfiles.createdAt))
+        .limit(200);
+      if (crews.length === 0) return [];
+
+      const { standings } = await loadQuestStandings();
+      const enteredIds = new Set(standings.filter((s) => s.isEntered).map((s) => s.userId));
+      const nomIds = crews.map((c) => c.nominationId).filter((n): n is number => n != null);
+      const approvedNoms = nomIds.length
+        ? await d.select({ id: shipNominations.id }).from(shipNominations).where(and(inArray(shipNominations.id, nomIds), eq(shipNominations.status, "approved_for_draw")))
+        : [];
+      const approvedNomSet = new Set(approvedNoms.map((n) => n.id));
+
+      return crews
+        .filter((c) => (c.userId != null && enteredIds.has(c.userId)) || (c.nominationId != null && approvedNomSet.has(c.nominationId)))
+        .map((c) => ({
+          id: c.id,
+          displayName: c.displayName,
+          bio: c.bio,
+          intent: c.intent,
+          photoUrl: c.photoUrl,
+          videoUrl: c.videoUrl,
+          status: c.status,
+          ...sponsorshipProgress(c.sponsoredCents, c.sponsorGoalCents),
+        }));
+    }),
+
+    // Sponsor a crew's voyage. Creates a hosted Stripe Checkout tagged with the
+    // ship-gift program + crewProfileId so the succeeded donation reconciles onto
+    // the crew (see server/lib/ship-sponsorship.ts, called by the Stripe webhook).
+    sponsor: publicProcedure
+      .input(z.object({ crewProfileId: z.number().int(), amountCents: z.number().int().min(500).max(210000), donorEmail: z.string().email().max(320).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_crew_sponsor");
+        if (!isStripeConfigured()) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Sponsorship is not live yet. Please try again soon." });
+        }
+        const d = await db();
+        const [crew] = await d.select().from(shipCrewProfiles).where(eq(shipCrewProfiles.id, input.crewProfileId)).limit(1);
+        if (!crew || !crew.isPublic) throw new TRPCError({ code: "NOT_FOUND", message: "That crew is not sailing yet." });
+
+        const stripe = getStripe();
+        const donorUserId = ctx.user?.id ?? null;
+        const email = ctx.user?.email ?? input.donorEmail ?? undefined;
+        const metadata = { source: "ship_crew_sponsor", crewProfileId: String(crew.id), program: CREW_SPONSOR_PROGRAM_TAG, donorUserId: donorUserId ? String(donorUserId) : "" };
+        const successUrl = `https://regencivics.earth/ship/quest?sponsored=${crew.id}&session_id={CHECKOUT_SESSION_ID}`;
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: input.amountCents, product_data: { name: `Sponsor a ReGen Ship voyage: ${crew.displayName}` } } }],
+          success_url: successUrl,
+          cancel_url: "https://regencivics.earth/ship/quest",
+          metadata,
+          ...(email ? { customer_email: email } : {}),
+        });
+        await d.insert(churchDonations).values({
+          stripeSessionId: session.id,
+          donorUserId,
+          donorEmail: email ?? null,
+          amountCents: input.amountCents,
+          currency: "usd",
+          giftInterval: "one_time",
+          status: "pending",
+          program: CREW_SPONSOR_PROGRAM_TAG,
+          crewProfileId: crew.id,
+        });
+        return { url: session.url };
+      }),
   }),
 
   // ── Nominations + applications (public forms) ───────────────────────────────
@@ -983,26 +1178,71 @@ export const shipRouter = router({
         return { ok: true };
       }),
 
-    // Draw a free-voyage winner at random from crews who completed the quest and
-    // have not already won. Used at each booking milestone. Does not create the
-    // booking; the admin arranges it, then flags it a winner voyage.
-    drawFreeVoyageWinner: adminProcedure.mutation(async () => {
+    // Draw a free-voyage winner, weighted by tickets, from everyone in the draw
+    // (threshold entrants + approved nominees) who has not already won. The draw
+    // is logged to ship_giveaway_drawings (eligible set, weights, seed, roll) so
+    // it is reproducible and auditable. Does not create the booking; the admin
+    // arranges it, then flags it a winner voyage.
+    drawFreeVoyageWinner: adminProcedure.mutation(async ({ ctx }) => {
       const d = await db();
       const { standings } = await loadQuestStandings();
-      const finishers = standings.filter((s) => s.isFinisher).map((s) => s.userId);
-      if (finishers.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No crews have completed the quest yet." });
-      // Exclude anyone who already holds a winner voyage.
-      const priorWinners = await d
-        .select({ userId: shipBookings.userId })
-        .from(shipBookings)
-        .where(and(inArray(shipBookings.userId, finishers), eq(shipBookings.isWinnerVoyage, true)));
-      const priorSet = new Set(priorWinners.map((w) => w.userId));
-      const eligible = finishers.filter((id) => !priorSet.has(id));
-      if (eligible.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Every completer has already won a voyage." });
-      const winnerId = eligible[Math.floor(Math.random() * eligible.length)];
-      const [u] = await d.select().from(users).where(eq(users.id, winnerId)).limit(1);
-      if (u?.email) await emailQuestWinner(u.email);
-      return { userId: winnerId, name: u?.name ?? null, handle: u?.handle ?? null, poolSize: eligible.length };
+
+      // Prior winners: anyone holding a winner voyage, plus prior draw winners.
+      const priorBookings = await d.select({ userId: shipBookings.userId }).from(shipBookings).where(eq(shipBookings.isWinnerVoyage, true));
+      const priorDraws = await d.select({ winnerUserId: shipGiveawayDrawings.winnerUserId, winnerNominationId: shipGiveawayDrawings.winnerNominationId }).from(shipGiveawayDrawings);
+      const excludeUserIds = new Set<number>([
+        ...priorBookings.map((b) => b.userId),
+        ...priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null),
+      ]);
+      const wonNominationIds = new Set<number>(priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null));
+
+      // Threshold entrants: tickets equal to points.
+      const entries: DrawEntry[] = standings
+        .filter((s) => s.isEntered)
+        .map((s) => ({ userId: s.userId, tickets: s.tickets, kind: "threshold" as const, label: `user:${s.userId}` }));
+
+      // Approved nominees: a flat ticket count. Skip nominations that already won.
+      const approvedNoms = await d.select().from(shipNominations).where(eq(shipNominations.status, "approved_for_draw"));
+      for (const nom of approvedNoms) {
+        if (wonNominationIds.has(nom.id)) continue;
+        entries.push({ userId: nom.nomineeUserId ?? null, nominationId: nom.id, tickets: NOMINATION_TICKETS, kind: "nomination", label: `nomination:${nom.id} (${nom.nomineeName})` });
+      }
+
+      const seed = Math.floor(Math.random() * 2_147_483_647);
+      const result = weightedDraw(entries, seed, excludeUserIds);
+      if (!result) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No one is in the draw yet." });
+      const { winner, audit } = result;
+
+      // Resolve the winner for notification + display.
+      let name: string | null = null;
+      let handle: string | null = null;
+      let winnerEmail: string | null = null;
+      if (winner.userId) {
+        const [u] = await d.select().from(users).where(eq(users.id, winner.userId)).limit(1);
+        name = u?.name ?? null;
+        handle = u?.handle ?? null;
+        winnerEmail = u?.email ?? null;
+      } else if (winner.nominationId) {
+        const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, winner.nominationId)).limit(1);
+        name = nom?.nomineeName ?? null;
+        winnerEmail = nom?.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
+      }
+
+      const eligibleCount = audit.entries.filter((e) => !e.excluded).length;
+      await d.insert(shipGiveawayDrawings).values({
+        drawnByUserId: ctx.user.id,
+        seed,
+        totalTickets: audit.totalTickets,
+        roll: audit.roll.toFixed(4),
+        eligibleCount,
+        winnerUserId: winner.userId ?? null,
+        winnerNominationId: winner.nominationId ?? null,
+        winnerLabel: winner.label ?? null,
+        audit: audit as unknown as object,
+      });
+
+      if (winnerEmail) await emailQuestWinner(winnerEmail);
+      return { userId: winner.userId ?? null, nominationId: winner.nominationId ?? null, name, handle, poolSize: eligibleCount, totalTickets: audit.totalTickets };
     }),
 
     // Referral auto-verification: called when a referred application is shortlisted.
@@ -1032,10 +1272,52 @@ export const shipRouter = router({
     }),
 
     listNominations: adminProcedure.query(async () => (await db()).select().from(shipNominations).orderBy(desc(shipNominations.createdAt)).limit(500)),
-    reviewNomination: adminProcedure.input(z.object({ id: z.number().int(), status: z.enum(["submitted", "shortlisted", "selected"]) })).mutation(async ({ input }) => {
+    // Approving a nomination for the draw (joint ReGen Civics + CORE review)
+    // creates a draw entry at NOMINATION_TICKETS. If the nominee has no account,
+    // link one by email if it exists and send the profile invite so they can
+    // activate their entry and become reachable if drawn.
+    reviewNomination: adminProcedure
+      .input(z.object({ id: z.number().int(), status: z.enum(["submitted", "shortlisted", "selected", "approved_for_draw"]) }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, input.id)).limit(1);
+        if (!nom) throw new TRPCError({ code: "NOT_FOUND", message: "Nomination not found." });
+
+        const patch: Partial<typeof shipNominations.$inferInsert> = { status: input.status };
+        if (input.status === "approved_for_draw") {
+          // Link an existing account by contact email, when we can.
+          let nomineeUserId = nom.nomineeUserId;
+          const email = nom.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
+          if (!nomineeUserId && email) {
+            const [u] = await d.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+            if (u) nomineeUserId = u.id;
+          }
+          if (nomineeUserId) patch.nomineeUserId = nomineeUserId;
+          if (!nom.inviteEmailSentAt && email) {
+            await emailCrewProfileInvite(email, nom.nomineeName);
+            patch.inviteEmailSentAt = new Date();
+          }
+        }
+        await d.update(shipNominations).set(patch).where(eq(shipNominations.id, input.id));
+        return { ok: true };
+      }),
+
+    // Crew profiles admin surface: list all, and mark a sponsored crew sailed
+    // once the church books the week (isGifted, like a winner voyage).
+    listCrewProfiles: adminProcedure.query(async () => {
       const d = await db();
-      await d.update(shipNominations).set({ status: input.status }).where(eq(shipNominations.id, input.id));
-      return { ok: true };
+      return d.select().from(shipCrewProfiles).orderBy(desc(shipCrewProfiles.createdAt)).limit(500);
+    }),
+    setCrewStatus: adminProcedure
+      .input(z.object({ id: z.number().int(), status: z.enum(["draft", "published", "sponsored", "sailed"]) }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        await d.update(shipCrewProfiles).set({ status: input.status }).where(eq(shipCrewProfiles.id, input.id));
+        return { ok: true };
+      }),
+    listDrawings: adminProcedure.query(async () => {
+      const d = await db();
+      return d.select().from(shipGiveawayDrawings).orderBy(desc(shipGiveawayDrawings.createdAt)).limit(100);
     }),
 
     listApplications: adminProcedure

@@ -173,7 +173,7 @@ export default function Ship() {
             <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
             <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The maiden voyage</p>
             <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">It sails this August. Win the week-long adventure.</h2>
-            <p className="text-white/90 mb-4 flex-1">Complete the quest and you're in the draw. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six. Help fill the calendar and your odds go up.</p>
+            <p className="text-white/90 mb-4 flex-1">Reach 150 points and you're in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
             <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
           </div>
           <div data-reveal data-reveal-delay="120" className="flex flex-col">

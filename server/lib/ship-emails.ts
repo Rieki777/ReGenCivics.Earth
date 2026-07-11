@@ -91,10 +91,59 @@ export async function emailQuestActionVerified(to: string, actionTitle: string, 
 export async function emailQuestWinner(to: string): Promise<void> {
   const html =
     h("Your name was drawn. You sail free.") +
-    p("You completed the Maiden Voyage Quest, so your name went into the draw, and it came up. You have won a free voyage aboard the ReGen Ship.") +
+    p("You were in the draw, and your name came up. You have won a free voyage aboard the ReGen Ship.") +
     p("A crew member will reach out to arrange your week and your platform booking. Winners pay nothing and no offering is expected.") +
     btn(`${SHIP_URL}/book`, "Choose your week");
   await send(to, "You won a free ReGen Ship voyage", html);
+}
+
+// Sent when a crew crosses the points threshold: they are in every draw, and
+// now they can fill in a crew profile so sponsors can find them.
+export async function emailEnteredTheDraw(to: string): Promise<void> {
+  const html =
+    h("You are in the draw") +
+    p("You reached the points threshold, so you are in every free-voyage drawing from here on. Every point above the line raises your odds.") +
+    p("Now make your crew profile. Add a photo, a short bio, what you intend to do on your voyage, and a 60 second video if you can. Your card sails on the quest page, where anyone can sponsor your week.") +
+    btn(`${SHIP_URL}/quest`, "Make your crew profile");
+  await send(to, "You are in the ReGen Ship draw", html);
+}
+
+// Sent to an approved nominee who does not yet have an account: they are in the
+// draw once they create their profile.
+export async function emailCrewProfileInvite(to: string, nomineeName: string): Promise<void> {
+  const html =
+    h("You were nominated, and approved") +
+    p(`${nomineeName}, the ReGen Civics and CORE teams reviewed your nomination and welcomed you into the draw for a free voyage aboard the ReGen Ship. No quest required.`) +
+    p("Create your profile to activate your entry and add your crew card, so sponsors can find you and back your week. You need an account to be reachable if your name is drawn.") +
+    btn(`${SHIP_URL}/quest`, "Create your profile");
+  await send(to, "You are invited aboard the ReGen Ship", html);
+}
+
+function usd(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+// Sent to a crew when someone sponsors part of their voyage.
+export async function emailSponsorshipReceived(
+  to: string,
+  opts: { amountCents: number; sponsoredCents: number; goalCents: number },
+): Promise<void> {
+  const html =
+    h("Someone sponsored your voyage") +
+    p(`A supporter put ${usd(opts.amountCents)} toward your week aboard the ReGen Ship.`) +
+    p(`You are at ${usd(opts.sponsoredCents)} of ${usd(opts.goalCents)}. When the goal is met, the church books your week and you sail.`) +
+    btn(`${SHIP_URL}/quest`, "See your crew card");
+  await send(to, "A sponsor backed your ReGen Ship voyage", html);
+}
+
+// Sent to the crew (and Rye) when a crew's sponsorship goal is met.
+export async function emailSponsorGoalReached(to: string, crewName: string): Promise<void> {
+  const html =
+    h("The goal is met. This crew sails.") +
+    p(`${crewName} reached the full voyage goal of ${usd(210000)}. Sponsors covered the week.`) +
+    p("A crew member will book the voyage and reach out with the details. The church covers the platform booking, the same as a winner voyage.") +
+    btn(`${SHIP_URL}/quest`, "See the crew");
+  await send(to, "A ReGen Ship crew reached its goal", html);
 }
 
 export async function emailApplicationReceived(to: string, kind: string): Promise<void> {
@@ -117,7 +166,7 @@ export async function emailDatasetOfferReceived(to: string, orgName: string): Pr
 export async function emailNominationReceived(to: string, nomineeName: string): Promise<void> {
   const html =
     h("Nomination received") +
-    p(`Thank you for nominating ${nomineeName} for a crew slot. The church council reviews nominations for a bonus voyage.`) +
+    p(`Thank you for nominating ${nomineeName}. The ReGen Civics and CORE teams review nominations together. If it is approved, ${nomineeName} enters the draw, no quest required.`) +
     btn(`${SHIP_URL}/quest`, "See the quest");
   await send(to, "Your ReGen Ship nomination", html);
 }

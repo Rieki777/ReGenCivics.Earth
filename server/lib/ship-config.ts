@@ -66,13 +66,31 @@ export const SHIP_SEASONAL_BANDS: ShipSeasonalBand[] = [
 /** Flat Ship Keeper pay per turnover. */
 export const KEEPER_PAY_USD = 200;
 
+// ── Entry model (points threshold, weighted draw) ────────────────────────────
+// Entry is a points threshold, not a checklist. Reach SHIP_ENTRY_THRESHOLD_POINTS
+// verified points and you are in every future drawing. No single action is
+// mandatory. Draws are weighted-random: your points are your raffle tickets, so
+// every point above the threshold raises your odds. Approved nominations enter
+// at NOMINATION_TICKETS, the same footing as a threshold entrant. The maiden
+// voyage goes to the first crew to cross the threshold.
+/** Verified points that put a crew in every future drawing. */
+export const SHIP_ENTRY_THRESHOLD_POINTS = 150;
+/** Raffle tickets an approved nomination enters with (same as the threshold). */
+export const NOMINATION_TICKETS = SHIP_ENTRY_THRESHOLD_POINTS;
+
+// ── Crew profiles + sponsorship ──────────────────────────────────────────────
+/** The full voyage ask a crew can be sponsored toward, in cents ($2,100). */
+export const CREW_SPONSOR_GOAL_CENTS = 210_000;
+/** churchDonations program tag for crew sponsorships (same as gifted voyages). */
+export const CREW_SPONSOR_PROGRAM_TAG = "regen_ship_gift";
+
 // ── Free-voyage giveaway model (booking-volume driven) ───────────────────────
 // The maiden voyage is given away free. Then one more free voyage unlocks for
 // every FREE_VOYAGE_MILESTONE_PCT of the first year that gets booked, up to
-// MAX_FREE_VOYAGES total at 100% booked. Each free voyage is drawn at random
-// from everyone who has completed the Maiden Voyage Quest. This aligns everyone
-// around spreading the word: more bookings unlock more free voyages, and every
-// quest-completer is in every draw.
+// MAX_FREE_VOYAGES total at 100% booked. Each free voyage is drawn weighted at
+// random from everyone in the draw (threshold entrants + approved nominees).
+// This aligns everyone around spreading the word: more bookings unlock more free
+// voyages, and everyone in the draw has a shot at each one.
 /** Free voyages given at launch (the maiden voyage). */
 export const MAIDEN_FREE_VOYAGES = 1;
 /** Each this-percent of the year booked unlocks one more free voyage. */
@@ -146,5 +164,10 @@ export function shipFeatureFlags() {
     platformListing: isPlatformListingConfigured(),
     platformListingUrl: getPlatformListingUrl(),
     tracker: isTrackerConfigured(),
+    // Crew sponsorship checkout is live when Stripe is configured.
+    sponsor: isStripeConfigured(),
+    // The quest entry model, so copy can read one source of truth.
+    entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
+    sponsorGoalCents: CREW_SPONSOR_GOAL_CENTS,
   };
 }

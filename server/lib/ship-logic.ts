@@ -234,24 +234,25 @@ export function sanitizeItinerary(itinerary: Itinerary, allowedIds: Iterable<num
   };
 }
 
-// ── Quest standings (finish order + top-3) ───────────────────────────────────
+// ── Quest standings (points threshold + weighted draw) ───────────────────────
 export type QuestCompletionRow = {
   userId: number;
   actionId: number;
   status: "pending" | "verified" | "rejected";
   verifiedAt: Date | string | null;
   points: number; // points of the linked action
-  isRequired: boolean;
 };
 
 export type QuestStanding = {
   userId: number;
   verifiedPoints: number;
-  requiredVerified: number;
-  /** True once every required action is verified: this crew is in the draw. */
-  isFinisher: boolean;
-  /** ms timestamp of the last verified REQUIRED action, when all required done. */
-  finishAt: number | null;
+  verifiedCount: number;
+  /** Raffle tickets for the draw: your verified points once you are in, else 0. */
+  tickets: number;
+  /** True once verified points reach the threshold: this crew is in every draw. */
+  isEntered: boolean;
+  /** ms timestamp when cumulative verified points first crossed the threshold. */
+  enteredAt: number | null;
 };
 
 function toMs(v: Date | string | null): number | null {
@@ -261,64 +262,142 @@ function toMs(v: Date | string | null): number | null {
 }
 
 /**
- * Compute per-user standings from verified completions. A crew that has every
- * required action verified is a finisher, meaning they are in the draw for a
- * free voyage. Free voyages are awarded by random selection (see
- * freeVoyagesUnlocked), not by finish order, so no one has to rush.
+ * Compute per-user standings from verified completions. Entry is a points
+ * threshold, not a checklist: a crew with at least `thresholdPoints` verified
+ * points is in every future drawing, with tickets equal to its points (every
+ * point above the line raises its odds). `enteredAt` is the moment cumulative
+ * points first crossed the line, so the maiden voyage can go to the first crew
+ * to cross it. No single action is mandatory.
  */
 export function computeQuestStandings(
   completions: QuestCompletionRow[],
-  requiredActionIds: number[],
+  thresholdPoints: number,
 ): QuestStanding[] {
-  const required = new Set(requiredActionIds);
-  const byUser = new Map<number, { points: number; requiredTimes: Map<number, number> }>();
-
+  const byUser = new Map<number, Array<{ ts: number; points: number }>>();
   for (const c of completions) {
     if (c.status !== "verified") continue;
-    let u = byUser.get(c.userId);
-    if (!u) {
-      u = { points: 0, requiredTimes: new Map() };
-      byUser.set(c.userId, u);
-    }
-    u.points += c.points || 0;
-    if (required.has(c.actionId)) {
-      const ts = toMs(c.verifiedAt) ?? 0;
-      // Keep the latest verification time for each required action.
-      const prev = u.requiredTimes.get(c.actionId);
-      if (prev == null || ts > prev) u.requiredTimes.set(c.actionId, ts);
-    }
+    const list = byUser.get(c.userId) ?? [];
+    list.push({ ts: toMs(c.verifiedAt) ?? 0, points: c.points || 0 });
+    byUser.set(c.userId, list);
   }
 
   const standings: QuestStanding[] = [];
-  for (const [userId, u] of byUser) {
-    const requiredVerified = u.requiredTimes.size;
-    const isFinisher = required.size > 0 && requiredVerified === required.size;
-    const finishAt = isFinisher ? Math.max(...Array.from(u.requiredTimes.values())) : null;
+  for (const [userId, rows] of byUser) {
+    // Accumulate in verification order to find the crossing moment.
+    rows.sort((a, b) => a.ts - b.ts);
+    let running = 0;
+    let enteredAt: number | null = null;
+    for (const r of rows) {
+      running += r.points;
+      if (enteredAt == null && running >= thresholdPoints) enteredAt = r.ts;
+    }
+    const isEntered = running >= thresholdPoints;
     standings.push({
       userId,
-      verifiedPoints: u.points,
-      requiredVerified,
-      isFinisher,
-      finishAt,
+      verifiedPoints: running,
+      verifiedCount: rows.length,
+      tickets: isEntered ? running : 0,
+      isEntered,
+      enteredAt,
     });
   }
 
-  // Order: finishers first by finishAt asc (earliest completers shown first,
-  // though selection is random), then the rest by points, then progress.
+  // Order: entered crews first by enteredAt asc (the maiden-voyage race, though
+  // each draw is weighted-random), then the rest by points descending.
   standings.sort((a, b) => {
-    if (a.isFinisher && b.isFinisher) return (a.finishAt! - b.finishAt!);
-    if (a.isFinisher) return -1;
-    if (b.isFinisher) return 1;
-    if (b.verifiedPoints !== a.verifiedPoints) return b.verifiedPoints - a.verifiedPoints;
-    return b.requiredVerified - a.requiredVerified;
+    if (a.isEntered && b.isEntered) return (a.enteredAt ?? 0) - (b.enteredAt ?? 0);
+    if (a.isEntered) return -1;
+    if (b.isEntered) return 1;
+    return b.verifiedPoints - a.verifiedPoints;
   });
 
   return standings;
 }
 
-/** How many crews have completed the quest (the size of the draw pool). */
-export function countCompleted(standings: QuestStanding[]): number {
-  return standings.filter((s) => s.isFinisher).length;
+/** How many crews are in the draw (verified points at or above the threshold). */
+export function countEntered(standings: QuestStanding[]): number {
+  return standings.filter((s) => s.isEntered).length;
+}
+
+/** The crew that crossed the threshold first, for the maiden voyage. */
+export function maidenVoyageUserId(standings: QuestStanding[]): number | null {
+  const entered = standings.filter((s) => s.isEntered && s.enteredAt != null);
+  if (entered.length === 0) return null;
+  return entered.reduce((first, s) => (s.enteredAt! < first.enteredAt! ? s : first)).userId;
+}
+
+// ── Weighted draw (auditable) ────────────────────────────────────────────────
+export type DrawEntry = {
+  /** The account, when the entrant has one. Null for a not-yet-activated nominee. */
+  userId: number | null;
+  /** Set for nomination entries. */
+  nominationId?: number | null;
+  /** Raffle tickets (points for threshold entrants, a flat count for nominees). */
+  tickets: number;
+  /** Human label for the audit log. */
+  label?: string;
+  kind: "threshold" | "nomination";
+};
+
+export type DrawAudit = {
+  seed: number;
+  totalTickets: number;
+  roll: number;
+  winnerIndex: number;
+  entries: Array<DrawEntry & { cumulative: number; excluded: boolean }>;
+};
+
+/** Deterministic PRNG (mulberry32) so a stored seed reproduces the draw exactly. */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Weighted-random draw. Each entry's odds are proportional to its tickets.
+ * Entries whose account is in `excludeUserIds` (prior winners) or that hold no
+ * tickets are ineligible. Deterministic in `seed`, and returns a full audit
+ * (eligible set, per-entry cumulative weight, seed, roll) so a drawing can be
+ * logged and re-checked. Returns null when no one is eligible.
+ */
+export function weightedDraw(
+  entries: DrawEntry[],
+  seed: number,
+  excludeUserIds: Iterable<number> = [],
+): { winner: DrawEntry; audit: DrawAudit } | null {
+  const excluded = new Set<number>(excludeUserIds);
+  let cumulative = 0;
+  const annotated = entries.map((e) => {
+    const isExcluded = (e.userId != null && excluded.has(e.userId)) || e.tickets <= 0;
+    if (!isExcluded) cumulative += e.tickets;
+    return { ...e, cumulative, excluded: isExcluded };
+  });
+  const totalTickets = cumulative;
+  if (totalTickets <= 0) return null;
+
+  const roll = mulberry32(seed)() * totalTickets;
+  let winnerIndex = -1;
+  for (let i = 0; i < annotated.length; i++) {
+    if (annotated[i].excluded) continue;
+    if (roll < annotated[i].cumulative) {
+      winnerIndex = i;
+      break;
+    }
+  }
+  if (winnerIndex < 0) {
+    // Floating-point edge: fall back to the last eligible entry.
+    for (let i = annotated.length - 1; i >= 0; i--) {
+      if (!annotated[i].excluded) { winnerIndex = i; break; }
+    }
+  }
+  const { cumulative: _c, excluded: _e, ...winner } = annotated[winnerIndex];
+  return { winner, audit: { seed, totalTickets, roll, winnerIndex, entries: annotated } };
 }
 
 // ── Free-voyage giveaway (booking-volume driven, random selection) ────────────
@@ -336,4 +415,40 @@ export function percentBooked(bookedVoyages: number, target: number): number {
 export function freeVoyagesUnlocked(percent: number): number {
   const milestones = Math.floor(Math.max(0, Math.min(100, percent)) / FREE_VOYAGE_MILESTONE_PCT);
   return Math.min(MAX_FREE_VOYAGES, MAIDEN_FREE_VOYAGES + milestones);
+}
+
+// ── Crew sponsorship (accumulation toward the voyage goal) ────────────────────
+export type SponsorshipProgress = {
+  sponsoredCents: number;
+  goalCents: number;
+  percent: number;
+  goalReached: boolean;
+};
+
+/** Progress toward a crew's voyage goal, clamped to 100%. */
+export function sponsorshipProgress(sponsoredCents: number, goalCents: number): SponsorshipProgress {
+  const goal = goalCents > 0 ? goalCents : 1;
+  const sponsored = Math.max(0, sponsoredCents);
+  return {
+    sponsoredCents: sponsored,
+    goalCents,
+    percent: Math.max(0, Math.min(100, Math.round((sponsored / goal) * 100))),
+    goalReached: sponsored >= goalCents,
+  };
+}
+
+/**
+ * Apply a sponsorship contribution to a running total. Returns the new total
+ * and whether this contribution is the one that crossed the goal (so the caller
+ * fires the goal-reached notice exactly once).
+ */
+export function applySponsorship(
+  currentCents: number,
+  addCents: number,
+  goalCents: number,
+): { sponsoredCents: number; goalReached: boolean; newlyReached: boolean } {
+  const before = Math.max(0, currentCents);
+  const sponsoredCents = before + Math.max(0, addCents);
+  const goalReached = sponsoredCents >= goalCents;
+  return { sponsoredCents, goalReached, newlyReached: goalReached && before < goalCents };
 }

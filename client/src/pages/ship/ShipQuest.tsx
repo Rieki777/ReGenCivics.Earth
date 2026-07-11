@@ -1,7 +1,8 @@
 /**
  * /ship/quest - The Maiden Voyage Quest. The heart of the announcement.
- * Full story, the 7-action checklist with submission, the live leaderboard
- * (finish order + top-3 winner slots), and the nomination track callout.
+ * Full story, seven ways to earn points toward the 150-point entry threshold,
+ * the live draw board with the threshold line, the crew cards you can sponsor,
+ * and the nomination track callout.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -12,8 +13,9 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Trophy, Anchor, Check } from "lucide-react";
-import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage } from "./shipShared";
+import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
+import { CrewProfileEditor, CrewsSection } from "@/components/ship/CrewProfiles";
 
 function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: string; onSubmitted: () => void }) {
   const submit = trpc.ship.quest.submit.useMutation();
@@ -63,21 +65,27 @@ export default function ShipQuest() {
   const actions = trpc.ship.quest.actions.useQuery();
   const leaderboard = trpc.ship.quest.leaderboard.useQuery();
   const myProgress = trpc.ship.quest.myProgress.useQuery(undefined, { retry: false });
+  const flags = useShipFlags();
   const utils = trpc.useUtils();
 
   const myByAction = new Map<number, string>((myProgress.data?.completions ?? []).map((c: any) => [c.actionId, c.status]));
   const fv = leaderboard.data?.freeVoyage;
   const unlocked = fv?.freeVoyagesUnlocked ?? 1;
   const totalFree = fv?.freeVoyagesTotal ?? 6;
+  const threshold = leaderboard.data?.entryThreshold ?? myProgress.data?.entryThreshold ?? 150;
+  const myPoints = myProgress.data?.standing?.verifiedPoints ?? 0;
+  const inTheDraw = Boolean(myProgress.data?.inTheDraw);
+  const signedIn = !myProgress.isError && myProgress.data != null;
 
   function refresh() {
     void utils.ship.quest.myProgress.invalidate();
     void utils.ship.quest.leaderboard.invalidate();
+    void utils.ship.crew.listPublished.invalidate();
   }
 
   return (
     <PageWrapper>
-      <SEO title="The Maiden Voyage Quest" description="Complete the quest and you're in the draw. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
+      <SEO title="The Maiden Voyage Quest" description="Reach 150 points and you are in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
       <ShipNavRow current="/ship/quest" />
 
       {/* Hero */}
@@ -86,15 +94,38 @@ export default function ShipQuest() {
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-16 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The Maiden Voyage Quest</p>
-          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Complete the quest. Sail free.</h1>
-          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Everyone who completes the quest goes in the draw. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
+          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points. Sail free.</h1>
+          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Reach {threshold} points and you are in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
           <p data-reveal data-reveal-delay="240" className="mt-4 inline-flex items-center gap-2 bg-[#ffd700]/20 border border-[#ffd700]/50 rounded-full px-4 py-2 font-semibold"><Trophy className="w-5 h-5 text-[#ffd700]" /> {unlocked} of {totalFree} free voyages unlocked</p>
         </div>
       </section>
 
+      {/* Your progress toward the threshold (signed in) */}
+      {signedIn && (
+        <ShipSection className="py-8">
+          <div data-reveal className="rounded-2xl border bg-card p-5 max-w-3xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+              <h2 className="text-lg font-bold">{inTheDraw ? "You are in the draw" : "Your points so far"}</h2>
+              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{myPoints} / {threshold} points</span>
+            </div>
+            <div className="h-2 rounded-full bg-[#4a7c59]/15 overflow-hidden">
+              <div className="h-full bg-[#ffd700]" style={{ width: `${Math.min(100, Math.round((myPoints / threshold) * 100))}%` }} />
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              {inTheDraw
+                ? "You are aboard the draw. Every point above the line raises your odds. Now make your crew card so sponsors can find you."
+                : `${Math.max(0, threshold - myPoints)} more points and you are in every draw. Any mix of the actions below gets you there.`}
+            </p>
+            <div className="mt-4">
+              <CrewProfileEditor inTheDraw={inTheDraw} existing={myProgress.data?.crewProfile ?? null} onSaved={refresh} />
+            </div>
+          </div>
+        </ShipSection>
+      )}
+
       {/* Story */}
       <ShipSection>
-        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The ship sets sail on her maiden voyage this August, through Cascadia, anchored at The Sanctuary in Ashland. The quest is open to everyone, and every action in it grows the movement. It announces ReGen Civics, launches Season 2, and fills the treasure map. It takes at least a week to complete, on purpose, so no one has to rush.</p>
+        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The ship sets sail on her maiden voyage this August, through Cascadia, anchored at The Sanctuary in Ashland. The quest is open to everyone, and every action in it grows the movement. It announces ReGen Civics, launches Season 2, and fills the treasure map. No single action is required. Reach {threshold} points any way you like.</p>
         <div data-reveal data-reveal-delay="80" className="mt-4 flex flex-wrap gap-3">
           <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/blog/the-regen-ship">Read the full story</Link></Button>
           <Button asChild variant="outline"><Link href="/ship/quest/rules">Read the official rules</Link></Button>
@@ -107,7 +138,7 @@ export default function ShipQuest() {
         <div data-reveal>
           <ShipEyebrow>How the free voyages work</ShipEyebrow>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">The more we book, the more sail free</h2>
-          <p className="text-foreground/85 max-w-3xl mb-6">Complete the quest and your name goes in the draw. The maiden voyage sails free right away. Then, for every 20% of the first year that gets booked, we draw one more free voyage from everyone who has completed the quest. At a full year booked, six crews sail free. If you want a better chance, help get the word out: more bookings means more free voyages, and every completer is in every draw.</p>
+          <p className="text-foreground/85 max-w-3xl mb-6">Reach {threshold} points and you are in the draw. The maiden voyage sails free right away, to the first crew across the line. Then, for every 20% of the first year that gets booked, we draw one more free voyage from everyone in the draw. Each draw is weighted by points: your points are your raffle tickets, so every point above {threshold} raises your odds. At a full year booked, six crews sail free. Want a better chance? Help get the word out and earn more points.</p>
 
           <div className="max-w-3xl">
             <FreeVoyageLadder />
@@ -115,45 +146,66 @@ export default function ShipQuest() {
         </div>
       </ShipSection>
 
-      {/* Checklist */}
+      {/* The seven ways to earn points */}
       <ShipSection className="bg-[#4a7c59]/8">
-        <ShipEyebrow>The checklist</ShipEyebrow>
-        <h2 className="text-2xl font-bold mb-5">Seven actions to earn your voyage</h2>
+        <ShipEyebrow>The ways to earn</ShipEyebrow>
+        <h2 className="text-2xl font-bold mb-2">Seven ways to earn your voyage</h2>
+        <p className="text-foreground/80 mb-5 max-w-3xl">Reach {threshold} points and you are in every draw. Every point above raises your odds. No single action is required, so pick the ones that fit you.</p>
         {myProgress.isError && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
         <div className="space-y-3">
           {(actions.data ?? []).map((a) => (
             <ActionRow key={a.id} action={a} myStatus={myByAction.get(a.id)} onSubmitted={refresh} />
           ))}
-          {actions.isLoading && <p className="text-sm text-muted-foreground">Loading the checklist…</p>}
+          {actions.isLoading && <p className="text-sm text-muted-foreground">Loading the ways to earn…</p>}
           {!actions.isLoading && (actions.data?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">The quest opens with the announcement. Check back shortly.</p>}
         </div>
       </ShipSection>
 
-      {/* The draw pool */}
+      {/* The draw board (threshold line) */}
       <ShipSection>
-        <ShipEyebrow>The crews</ShipEyebrow>
-        <h2 className="text-2xl font-bold mb-5">Everyone who completes the quest is in the draw</h2>
+        <ShipEyebrow>The draw board</ShipEyebrow>
+        <h2 className="text-2xl font-bold mb-1">Reach {threshold} points and you are aboard the draw</h2>
+        <p className="text-sm text-muted-foreground mb-5">The line marks {threshold} points. Above it, you are in every draw. Your points are your raffle tickets.</p>
         <div className="space-y-2">
-          {(leaderboard.data?.standings ?? []).map((s: any, i: number) => (
-            <div key={s.userId} data-reveal data-reveal-delay={Math.min(i, 8) * 40} className="flex items-center gap-3 rounded-lg border p-3">
-              <span className="w-8 text-center font-bold text-muted-foreground">{i + 1}</span>
-              <div className="flex-1">
-                <span className="font-medium">{s.handle ? `@${s.handle}` : s.name}</span>
-                {s.isFinisher
-                  ? <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/40 rounded-full px-2 py-0.5"><Anchor className="w-3 h-3" /> In the draw</span>
-                  : <span className="ml-2 text-xs bg-[#4a7c59]/15 rounded-full px-2 py-0.5 text-muted-foreground">On the way</span>}
+          {(() => {
+            const standings = (leaderboard.data?.standings ?? []) as any[];
+            const firstBelow = standings.findIndex((s) => !s.isEntered);
+            return standings.map((s: any, i: number) => (
+              <div key={s.userId}>
+                {i === firstBelow && (
+                  <div className="flex items-center gap-3 my-3" aria-hidden="true">
+                    <div className="h-px flex-1 bg-[#ffd700]" />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#b8860b] dark:text-[#ffd700]">{threshold}-point line</span>
+                    <div className="h-px flex-1 bg-[#ffd700]" />
+                  </div>
+                )}
+                <div data-reveal data-reveal-delay={Math.min(i, 8) * 40} className="flex items-center gap-3 rounded-lg border p-3">
+                  <span className="w-8 text-center font-bold text-muted-foreground">{i + 1}</span>
+                  <div className="flex-1">
+                    <span className="font-medium">{s.handle ? `@${s.handle}` : s.name}</span>
+                    {s.isMaidenVoyage && <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/60 rounded-full px-2 py-0.5"><Trophy className="w-3 h-3" /> Maiden voyage</span>}
+                    {s.isEntered
+                      ? <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/40 rounded-full px-2 py-0.5"><Anchor className="w-3 h-3" /> Aboard the draw</span>
+                      : <span className="ml-2 text-xs bg-[#4a7c59]/15 rounded-full px-2 py-0.5 text-muted-foreground">On the way</span>}
+                  </div>
+                  <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{s.verifiedPoints} pts</span>
+                </div>
               </div>
-              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{s.verifiedPoints} pts</span>
-            </div>
-          ))}
-          {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No crews yet. Be the first to set sail.</p>}
+            ));
+          })()}
+          {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No crews yet. Be the first across the line.</p>}
         </div>
+      </ShipSection>
+
+      {/* The crews (sponsorable cards) */}
+      <ShipSection className="bg-[#4a7c59]/8">
+        <CrewsSection sponsorEnabled={Boolean(flags.sponsor)} />
       </ShipSection>
 
       {/* Nomination callout */}
       <ShipSection className="bg-[#2f5d3a] text-white">
         <h2 className="text-2xl font-bold mb-2">The nomination track</h2>
-        <p className="text-white/85 mb-4 max-w-2xl">Anyone can nominate anyone, including themselves, who would be a vital resource touring a bioregion: builders, mediators, food forest designers, storytellers. The church council selects one nominee for a bonus crew slot.</p>
+        <p className="text-white/85 mb-4 max-w-2xl">Anyone can nominate anyone, including themselves, who would be a vital resource touring a bioregion: builders, mediators, food forest designers, storytellers. If you are nominated and approved by the ReGen Civics and CORE teams, you are in the draw, no quest required.</p>
         <Button asChild variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/nominate">Nominate someone</Link></Button>
       </ShipSection>
     </PageWrapper>

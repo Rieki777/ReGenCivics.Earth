@@ -17,11 +17,11 @@ export function FreeVoyageLadder() {
   );
 }
 
-/** Three active cards: complete the quest, you're in the draw, bookings unlock more. */
+/** Three active cards: reach 150 points, you're in the draw, bookings unlock more. */
 export function ShipQuestSteps() {
   const steps = [
-    { icon: ClipboardCheck, title: "Complete the quest", body: "Real regenerative actions, each one verified. It takes at least a week, so no one has to rush." },
-    { icon: Dice5, title: "You're in the draw", body: "Every crew who completes it goes in the same draw. Ties are settled at random, because the whole draw is random." },
+    { icon: ClipboardCheck, title: "Reach 150 points", body: "Real regenerative actions, each worth points, each one verified. No single action is required." },
+    { icon: Dice5, title: "You're in the draw", body: "Reach 150 points and you're in every draw. Your points are your raffle tickets, so every point above raises your odds." },
     { icon: Share2, title: "Bookings unlock more", body: "Help fill the calendar. Every 20% booked draws another free voyage, and you're in every single draw." },
   ];
   return (
