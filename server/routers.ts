@@ -53,6 +53,7 @@ import { churchDonationsRouter } from "./routes/churchDonations";
 import { elderChatRouter } from "./routes/elderChat";
 import { shipRouter } from "./routes/ship";
 import { companionRouter } from "./routes/companion";
+import { guideRouter } from "./routes/guide";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -214,6 +215,7 @@ export const appRouter = router({
   // CORE: The ReGen Ship (bookings, treasure map, quest, concierge, fleet)
   ship: shipRouter,
   companion: companionRouter,
+  guide: guideRouter,
 });
 
 export type AppRouter = typeof appRouter;

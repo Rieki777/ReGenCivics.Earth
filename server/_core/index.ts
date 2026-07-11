@@ -46,6 +46,8 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes, CHAT_SYSTEM_PROMPT } from "./oauth";
 import { streamLLM } from "./llm";
+import { sdk } from "./sdk";
+import { buildGuidePersona, buildGuideContext, fetchGuidePreferences } from "../lib/guide-companion";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -502,9 +504,28 @@ async function startServer() {
       ? `\n\n## USER CONTEXT\n${PATH_GREETINGS[userPath]}`
       : "";
 
+    // Personalize the Guide for the signed-in member: their chosen name + tone,
+    // and their OWN data (tokens, voyages) loaded strictly by their user id.
+    // Unauthenticated visitors get the normal general assistant, no personal data.
+    let guidePersona = "";
+    let guideContext = "";
     try {
+      const authedUser = await sdk.authenticateRequest(req);
+      if (authedUser) {
+        const prefs = await fetchGuidePreferences(authedUser.id);
+        guidePersona = buildGuidePersona(prefs);
+        guideContext = await buildGuideContext(authedUser);
+      }
+    } catch {
+      // Not signed in, or session invalid: fall back to the generic guide.
+    }
+
+    try {
+      const systemPrompt = [guidePersona, CHAT_SYSTEM_PROMPT + pathContext + guideContext]
+        .filter(Boolean)
+        .join("\n\n");
       const llmMessages = [
-        { role: 'system' as const, content: CHAT_SYSTEM_PROMPT + pathContext },
+        { role: 'system' as const, content: systemPrompt },
         ...messages
           .filter((m) => m.role === 'user' || m.role === 'assistant')
           .slice(-20)

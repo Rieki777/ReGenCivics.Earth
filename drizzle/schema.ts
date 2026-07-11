@@ -4561,3 +4561,20 @@ export const shipPositionPings = mysqlTable("ship_position_pings", {
   index("ship_position_created_idx").on(table.createdAt),
 ]));
 export type ShipPositionPing = typeof shipPositionPings.$inferSelect;
+/**
+ * user_guide_preferences: each member's personally designed ReGen Guide (the
+ * general companion). Name, chosen face, tone, and whether voice is on. One row
+ * per user. The Guide's forum/governance behavior (ADR-23) is unrelated and
+ * unchanged; this only personalizes the general assistant.
+ */
+export const userGuidePreferences = mysqlTable("user_guide_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  guideName: varchar("guideName", { length: 60 }).notNull(),
+  portraitKey: varchar("portraitKey", { length: 32 }).notNull().default("guide-archetype-1"),
+  tone: varchar("tone", { length: 16 }).notNull().default("gentle"),
+  voiceEnabled: boolean("voiceEnabled").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserGuidePreferences = typeof userGuidePreferences.$inferSelect;
