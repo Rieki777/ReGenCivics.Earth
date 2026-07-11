@@ -407,6 +407,11 @@ export default function BlogPost() {
                     em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
                     code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
                     pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                    img: ({src, alt}: {src?: string; alt?: string}) => <img src={src} alt={alt ?? ''} loading="lazy" className="w-full rounded-2xl my-8 shadow-lg" />,
+                    table: ({children}: {children?: React.ReactNode}) => <div className="overflow-x-auto my-6"><table className="w-full text-sm border-collapse">{children}</table></div>,
+                    thead: ({children}: {children?: React.ReactNode}) => <thead className="bg-[#7dd87d]/15">{children}</thead>,
+                    th: ({children}: {children?: React.ReactNode}) => <th className="text-left font-semibold px-3 py-2 border-b border-[#7dd87d]/30">{children}</th>,
+                    td: ({children}: {children?: React.ReactNode}) => <td className="px-3 py-2 border-b border-white/10">{children}</td>,
                   };
 
                   if (!hasMarkers) {

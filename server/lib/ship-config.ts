@@ -46,7 +46,7 @@ export const FREE_VOYAGE_MILESTONE_PCT = 20;
 /** The most free voyages we give away in the first year (at 100% booked). */
 export const MAX_FREE_VOYAGES = 6;
 /** Voyages that count as 100% booked for the first year. Edit to pace giveaways. */
-export const MAIDEN_YEAR_VOYAGE_TARGET = 30;
+export const MAIDEN_YEAR_VOYAGE_TARGET = 40;
 /** Suggested winter host income share (church council sets per agreement). */
 export const WINTER_HOST_SHARE_DEFAULT_PCT = 25;
 /** Share of church ship revenue routed to RV token buyback. */

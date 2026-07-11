@@ -33,9 +33,13 @@ She is a regenerative pirate ship, complete with your treasure chest of seeds. S
 
 You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
 
+![Feet resting over a canyon river at a Cascadia overlook](/images/ship/ship-canyon-overlook.jpg)
+
 ## The chest is a chest of seeds
 
 Everywhere you go, you plant. The treasure chest holds seeds chosen to turn pine plantations back into the food forests they once were, the great abundance this land knew before. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole. A food forest grows from every crew that ever sailed.
+
+![A wooden treasure chest overflowing with seeds and chestnuts](/images/ship/ship-seed-chest.jpg)
 
 If you want the fuller story of why this matters, read [The Great American Chestnut Abundance](/blog/great-american-chestnut-abundance).
 
@@ -43,11 +47,17 @@ If you want the fuller story of why this matters, read [The Great American Chest
 
 The ReGen Fleet is a caravan of ships that moves from land project to land project. Where it lands, it builds natural homes, plants food forests, heals waterways, and turns pine plantations back into the abundance they once were. And we host music festivals, dances, and regular communal campfires, and so many other ways to bring community and love together. Then it moves on and does it again. The model is inspired by the large RV caravans that travel New Zealand together, a rolling community that shows up, sets up, and shares a place for a while. We point that same spirit at regeneration.
 
+![A caravan of ships gathered together at a land project](/images/ship/ship-fleet-caravan.jpg)
+
 Ten percent of every voyage buys the ship herself back into community ownership over time, a model that repeats for every future ship. Before a ship joins the fleet, its previous owner is abundantly compensated and thanked, not asked to give her away.
+
+![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
 
 ## The maiden voyage sails this August. You can win it.
 
 Her first crews are not chosen. They are earned. The Maiden Voyage Quest is open to everyone, and here is the part worth reading closely, because it is designed so that all of our interests point the same direction.
+
+![A hand drawing a folded name from the seed chest](/images/ship/ship-free-voyage-draw.jpg)
 
 **Completing the quest puts you in the draw.** The quest is a set of real regenerative actions: share the announcement, tell your origin story, refer a land project, complete the Food Foresting quest, add a place to the treasure map, and more. Each one is verified. It is built to take at least a week to finish, on purpose, so no one has to rush and everyone gets a fair shot.
 
@@ -68,6 +78,8 @@ Her first crews are not chosen. They are earned. The Maiden Voyage Quest is open
 
 ## Why it works this way
 
+![Community gathered around a table and campfire at a land project at golden hour](/images/ship/ship-community-share.jpg)
+
 This aligns all of us. If you want a better chance at a free voyage, the most powerful thing you can do is help us get the word out and help the calendar fill. More bookings unlock more free voyages, and you are in every single draw. Spreading the word is not a favor you do for us. It is how the prizes grow, for you and for everyone else who completed the quest.
 
 So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more of us who help her fill her calendar, the more of us sail free.
@@ -76,7 +88,7 @@ So share it. Bring a friend. Refer a land project. Plant a seed on the map. The 
     author: 'Rye',
     date: '2026-07-10',
     readTime: '6 min read',
-    image: '/images/ship/ship-zion-redrock-hero.jpg',
+    image: '/images/ship/ship-forest-camp-guitar.jpg',
     tags: ['Story', 'ReGen Ship', 'Quest'],
     isVideo: false,
   },

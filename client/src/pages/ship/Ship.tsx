@@ -23,11 +23,13 @@ const PERKS = [
 ];
 
 const GALLERY = [
+  { name: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the Cascadia pines, awning out, a paddleboard leaning against her, someone playing guitar." },
   { name: "ship-cascadia-forest.jpg", alt: "The ship nestled in old-growth Cascadia conifers." },
   { name: "ship-double-rainbow.jpg", alt: "A double rainbow arching over the ship." },
-  { name: "ship-tipis-prairie.jpg", alt: "The ship between two tipis under a big sky." },
+  { name: "ship-canyon-overlook.jpg", alt: "Feet resting over a canyon river at a Cascadia overlook." },
   { name: "ship-campfire-dusk.jpg", alt: "A fire ring and chairs beside the ship at dusk." },
-  { name: "ship-desert-sunset-boondock.jpg", alt: "The ship silhouetted against a desert sunset." },
+  { name: "ship-riverbank-rest.jpg", alt: "Resting barefoot by a calm forest river in the pines." },
+  { name: "ship-tipis-prairie.jpg", alt: "The ship between two tipis under a big sky." },
   { name: "ship-lake-powell-overlook.jpg", alt: "The ship above a wide lake vista." },
 ];
 
