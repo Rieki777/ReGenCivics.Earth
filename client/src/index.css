@@ -305,6 +305,20 @@
       line-height: 1.6 !important;
     }
   }
+  /* iOS Safari auto-zooms when a focused form control renders under 16px.
+     The base Input/Textarea are 16px on mobile, but some inputs across the
+     site carry an explicit text-sm (14px) override (footer newsletter, a few
+     admin and modal fields), which reintroduces the zoom. Force a 16px floor
+     on mobile for text-entry controls so no form zooms on focus; desktop keeps
+     the compact size. Checkboxes, radios, ranges, and color pickers are
+     excluded since font-size does not apply to them. */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),

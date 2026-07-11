@@ -13,6 +13,11 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-11: Site-wide mobile audit
+
+- Programmatic horizontal-overflow sweep at 375px across the site (home, community, governance, apply, fund, connect, tokenomics, map, bounties, assembly, blog article, and all ship pages). No page scrolls sideways; the one wide element (the /tokenomics table) is correctly inside an `overflow-x-auto` scroll container. No console errors on the pages checked.
+- Fixed the one systemic issue found: some inputs carry an explicit `text-sm` (14px) override (the footer newsletter on every page, the ship quest proof field, the assembly raise modal, a few admin fields), which triggers iOS Safari's zoom-on-focus. Added a mobile-only 16px floor for text-entry controls in `client/src/index.css` (`@media (max-width: 767px)`, excluding checkbox/radio/range/color/file), verified live to bump the offending inputs 14px to 16px. Desktop keeps its compact sizing.
+
 ## 2026-07-10 (night, latest): Ship Quest v2 (points threshold, weighted draws, nominations, crew sponsorship)
 
 - Entry changed from "complete all 7 required actions" to a **150-point threshold**. Reach 150 verified points and you are in every future draw; points are raffle tickets so every point above the line raises your odds. `computeQuestStandings` rewritten (isEntered, tickets, enteredAt); the maiden voyage goes to the first crew across the line. Threshold + sponsor goal are config constants (`SHIP_ENTRY_THRESHOLD_POINTS=150`, `CREW_SPONSOR_GOAL_CENTS=210000`) surfaced via featureFlags.
