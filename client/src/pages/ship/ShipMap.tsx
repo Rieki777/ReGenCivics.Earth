@@ -35,6 +35,7 @@ import {
   downloadVoyageGpx, voyageToGoogleMapsUrl, type VoyagePin,
 } from "./shipVoyage";
 import { FirstMatePlanner, FIRST_MATE_GREETING, type Itinerary } from "./ShipFirstMate";
+import { FormCompanion } from "@/components/companion";
 
 const PINS_CACHE_KEY = "ship_map_pins_v1";
 
@@ -381,6 +382,18 @@ export default function ShipMap() {
         <ShipSection className="bg-[#ffd700]/8">
           <ShipEyebrow>Add to the map</ShipEyebrow>
           <h2 className="text-2xl font-bold mb-3">Your pin</h2>
+          <div className="max-w-2xl">
+            <FormCompanion
+              formId="map-add"
+              collected={{ name: addForm.name, type: addForm.type, description: addForm.description, accessNotes: addForm.accessNotes }}
+              onField={(key, value) => {
+                if (key === "name") setAddForm((f) => ({ ...f, name: value }));
+                else if (key === "type") { if ((ADD_TYPES as string[]).includes(value)) setAddForm((f) => ({ ...f, type: value as ShipLocationType })); }
+                else if (key === "description") setAddForm((f) => ({ ...f, description: value }));
+                else if (key === "accessNotes") setAddForm((f) => ({ ...f, accessNotes: value }));
+              }}
+            />
+          </div>
           <form onSubmit={submitAdd} className="grid sm:grid-cols-2 gap-4 max-w-2xl">
             <div className="sm:col-span-2 text-sm text-muted-foreground">
               {addForm.lat != null ? <>Location: {addForm.lat}, {addForm.lng} · <button type="button" className="underline" onClick={() => setAddForm((f) => ({ ...f, lat: null, lng: null }))}>change</button></> : "Tap the map above to set the location."}

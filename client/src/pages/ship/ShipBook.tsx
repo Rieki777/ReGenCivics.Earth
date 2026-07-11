@@ -5,7 +5,7 @@
  * deduce a start date), commit to the vegan diet and the water doctrine, and
  * submit. The insured rental is arranged separately on the platform.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { MapPin, Compass, LayoutGrid, List as ListIcon } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag } from "./shipShared";
+import { FormCompanion } from "@/components/companion";
+import { companionBool } from "@shared/companions";
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -49,6 +51,7 @@ export default function ShipBook() {
   const [diet, setDiet] = useState(false);
   const [water, setWater] = useState(false);
   const [notes, setNotes] = useState("");
+  const submitRef = useRef<HTMLDivElement | null>(null);
 
   const MAX_WEEKS = 3;
   const selected = startIdx === null ? [] : weeks.slice(startIdx, startIdx + count);
@@ -230,6 +233,32 @@ export default function ShipBook() {
               </div>
             )}
 
+            {startDate && (
+              <FormCompanion
+                formId="booking-request"
+                context={`The guest has chosen the week ${fmtDay(startDate)} to ${fmtDay(endDate)}, ${nights} nights through ${bioregions.join(" and ")}. Confirm that week with them warmly, then ask how many are sailing and get an explicit yes to both commitments.`}
+                collected={{
+                  guests: String(guests),
+                  dietCommitment: diet ? "yes" : "",
+                  waterDoctrineCommitment: water ? "yes" : "",
+                  notes,
+                }}
+                onField={(key, value) => {
+                  if (key === "guests") {
+                    const n = Number(value.match(/\d+/)?.[0] ?? value);
+                    if (Number.isFinite(n) && n >= 1) setGuests(Math.max(1, Math.min(4, Math.round(n))));
+                  } else if (key === "dietCommitment") {
+                    if (companionBool(value)) setDiet(true);
+                  } else if (key === "waterDoctrineCommitment") {
+                    if (companionBool(value)) setWater(true);
+                  } else if (key === "notes") {
+                    setNotes(value);
+                  }
+                }}
+                onReadyForReview={() => submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              />
+            )}
+
             <div className="max-w-xs">
               <Label htmlFor="guests">Guests</Label>
               <select id="guests" value={guests} onChange={(e) => setGuests(Number(e.target.value))} className="w-full h-10 rounded-md border bg-background px-3">
@@ -252,7 +281,7 @@ export default function ShipBook() {
               <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={2000} />
             </div>
             {ref && <p className="text-xs text-muted-foreground">Referred by @{ref.replace(/^@/, "")}. Thank them at the healing hole.</p>}
-            <div>
+            <div ref={submitRef}>
               <Button type="submit" size="lg" disabled={request.isPending || Boolean(submitReason)} className="w-full sm:w-auto bg-[#ffd700] text-[#1a472a] font-bold text-base px-8 shadow-[0_0_24px_rgba(255,215,0,0.5)] hover:bg-[#ffe14d] hover:shadow-[0_0_36px_rgba(255,215,0,0.85)] transition-shadow disabled:opacity-50 disabled:shadow-none">
                 {request.isPending ? "Sending…" : "Request this voyage"}
               </Button>

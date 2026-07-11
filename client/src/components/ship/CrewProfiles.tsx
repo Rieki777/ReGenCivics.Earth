@@ -20,6 +20,15 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Anchor, Heart, Play } from "lucide-react";
 import { ShipEyebrow } from "@/pages/ship/shipShared";
+import { FormCompanion } from "@/components/companion";
+
+// Keep the focused field visible above the on-screen keyboard on mobile. The
+// dialog already lifts above the keyboard; this nudges the specific field into
+// view once the keyboard has settled, so a lower field is never hidden.
+function keepInView(e: React.FocusEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+}
 
 function usd(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -78,29 +87,39 @@ export function CrewProfileEditor({
         <DialogHeader>
           <DialogTitle>Your crew profile</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground -mt-2">
+        <p className="text-sm text-muted-foreground">
           Who you are and what you intend to do on your voyage. A short video is the strongest pitch: 60 seconds on who you are and what you will bring to the Renaissance. Sponsors read these to choose a crew to back.
         </p>
-        <div className="space-y-3 mt-1">
+        <FormCompanion
+          formId="crew-profile"
+          collected={{ displayName, bio, intent, videoUrl }}
+          onField={(key, value) => {
+            if (key === "displayName") setDisplayName(value);
+            else if (key === "bio") setBio(value);
+            else if (key === "intent") setIntent(value);
+            else if (key === "videoUrl") setVideoUrl(value);
+          }}
+        />
+        <div className="space-y-4">
           <div>
             <Label htmlFor="crew-name">Crew name</Label>
-            <Input id="crew-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name or crew name" maxLength={200} />
+            <Input id="crew-name" value={displayName} onFocus={keepInView} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name or crew name" maxLength={200} />
           </div>
           <div>
             <Label htmlFor="crew-photo">Photo URL</Label>
-            <Input id="crew-photo" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" maxLength={512} />
+            <Input id="crew-photo" value={photoUrl} onFocus={keepInView} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" maxLength={512} inputMode="url" />
           </div>
           <div>
             <Label htmlFor="crew-bio">Short bio</Label>
-            <Textarea id="crew-bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="A few lines about you." maxLength={2000} rows={3} />
+            <Textarea id="crew-bio" value={bio} onFocus={keepInView} onChange={(e) => setBio(e.target.value)} placeholder="A few lines about you." maxLength={2000} rows={3} className="min-h-[88px] text-base md:text-sm" />
           </div>
           <div>
             <Label htmlFor="crew-intent">What you intend to do on your voyage</Label>
-            <Textarea id="crew-intent" value={intent} onChange={(e) => setIntent(e.target.value)} placeholder="Where you will go, what you will plant, who you will visit." maxLength={2000} rows={3} />
+            <Textarea id="crew-intent" value={intent} onFocus={keepInView} onChange={(e) => setIntent(e.target.value)} placeholder="Where you will go, what you will plant, who you will visit." maxLength={2000} rows={3} className="min-h-[88px] text-base md:text-sm" />
           </div>
           <div>
             <Label htmlFor="crew-video">Video URL (YouTube or Loom)</Label>
-            <Input id="crew-video" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://…" maxLength={512} />
+            <Input id="crew-video" value={videoUrl} onFocus={keepInView} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://…" maxLength={512} inputMode="url" />
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-2">

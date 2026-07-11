@@ -8,13 +8,14 @@
  * The route path stays /ship/concierge and the tRPC namespace stays
  * ship.concierge; only the persona name changed to the First Mate (2026-07-10).
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { FormCompanion } from "@/components/companion";
 
 export const FIRST_MATE_GREETING =
   "Ahoy. I'm your First Mate. Tell me who you are and I'll chart your voyage.";
@@ -79,6 +80,7 @@ export function FirstMatePlanner({
   const [chatInput, setChatInput] = useState("");
 
   const busy = start.isPending || generate.isPending;
+  const submitRef = useRef<HTMLDivElement | null>(null);
 
   async function generateItinerary(e: React.FormEvent) {
     e.preventDefault();
@@ -112,6 +114,14 @@ export function FirstMatePlanner({
 
   return (
     <div className={compact ? "space-y-4" : "space-y-6"}>
+      {!itinerary && conciergeAboard && (
+        <FormCompanion
+          formId="concierge-intake"
+          collected={answers}
+          onField={(key, value) => setAnswers((a) => ({ ...a, [key]: value }))}
+          onReadyForReview={() => submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        />
+      )}
       {!itinerary && (
         <form onSubmit={generateItinerary} className={compact ? "space-y-3" : "space-y-4 max-w-2xl"}>
           {FIRST_MATE_QUESTIONS.map((q) => (
@@ -122,9 +132,11 @@ export function FirstMatePlanner({
                 : <Input id={`fm-${q.id}`} value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} maxLength={1000} />}
             </div>
           ))}
-          <Button type="submit" disabled={!conciergeAboard || busy} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-            {busy ? "Charting…" : "Chart my voyage"}
-          </Button>
+          <div ref={submitRef}>
+            <Button type="submit" disabled={!conciergeAboard || busy} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+              {busy ? "Charting…" : "Chart my voyage"}
+            </Button>
+          </div>
         </form>
       )}
 
