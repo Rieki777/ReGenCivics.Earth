@@ -26,7 +26,7 @@ export const blogPosts: BlogPost[] = [
     id: 'the-regen-ship',
     slug: 'the-regen-ship',
     title: 'The ReGen Ship: A Pirate Ship, a Chest of Seeds, and a Voyage You Can Win',
-    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Complete the quest and you are in the draw. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six.',
+    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points and you are in every draw. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six.',
     content: `The ReGen Ship has raised her flag.
 
 She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Hosts two couples in comfort.
@@ -65,11 +65,11 @@ Here is how it works, and it is built so that all of our interests point the sam
 
 [SHIP_QUEST_STEPS]
 
-The maiden voyage sails free right away, drawn from everyone who has completed the quest. After that, the free voyages grow with the bookings: every 20% of the first year that books draws one more, up to six at a fully booked year. Drag the ladder to see how it grows.
+The maiden voyage sails free right away, to the first crew across the 150-point line. After that, the free voyages grow with the bookings: every 20% of the first year that books draws one more, up to six at a fully booked year. Drag the ladder to see how it grows.
 
 [SHIP_FREE_VOYAGE_LADDER]
 
-Every draw is random, and every crew who completes the quest is in every draw. Ties are settled at random too. A crew can win once.
+Every draw is weighted by points, and every crew in the draw has a shot at every draw. Your points are your raffle tickets, so every point above 150 raises your odds. A crew can win once. You can also enter by nomination: if the ReGen Civics and CORE teams approve you, you are in the draw with no quest required.
 
 [SHIP_PULLQUOTE]
 
@@ -77,7 +77,7 @@ Every draw is random, and every crew who completes the quest is in every draw. T
 
 ![Community gathered around a table and campfire at a land project at golden hour](/images/ship/ship-community-share.jpg)
 
-This is the whole idea. Complete the quest and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
+This is the whole idea. Reach 150 points and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
 
 So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more the fleet sails, the more of us sail free.
 

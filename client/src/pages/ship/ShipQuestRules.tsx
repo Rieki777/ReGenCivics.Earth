@@ -21,14 +21,26 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     heading: "2. How you enter, and how voyages are awarded",
     body: (
       <p>
-        To enter the draw you complete the quest: a set of real regenerative actions that are verified. That part is
-        skill, not chance, and no purchase is ever required. Among everyone who completes the quest, each free voyage is
-        then awarded by a random draw. The quest is built to take at least a week to complete, so no one has to rush.
+        Entry is a points threshold. Each quest action is worth points, and the moment your verified points reach 150 you
+        are in every future draw. No single action is required and no purchase is ever required. Earning points is skill,
+        not chance. Each free voyage is then awarded by a weighted random draw among everyone in the draw: your points are
+        your raffle tickets, so every point above 150 raises your odds.
       </p>
     ),
   },
   {
-    heading: "3. Eligibility",
+    heading: "3. Nominations",
+    body: (
+      <p>
+        You can also enter by nomination. Anyone can nominate anyone, including themselves. If a nomination is approved by
+        a joint review of the ReGen Civics and CORE teams, that person is in the draw with no quest required, on the same
+        footing as a crew that reached 150 points. A nominee without an account is invited to create one, and their entry
+        activates once they do, so they are reachable if their name is drawn.
+      </p>
+    ),
+  },
+  {
+    heading: "4. Eligibility",
     body: (
       <ul className="list-disc pl-5 space-y-1">
         <li>You must be 18 or older to enter.</li>
@@ -38,7 +50,7 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     ),
   },
   {
-    heading: "4. Driving the ship",
+    heading: "5. Driving the ship",
     body: (
       <>
         <p className="mb-2">
@@ -55,31 +67,35 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     ),
   },
   {
-    heading: "5. Dates and draws",
+    heading: "6. Dates and draws",
     body: (
       <>
         <p className="mb-2">
-          The quest opens at announcement and stays open through the first sailing year. You stay in the draw once you
-          have completed it. The maiden voyage is drawn at launch. After that, one more free voyage is drawn for every
-          20% of the first year that gets booked, up to six free voyages total at a fully booked year.
+          The quest opens at announcement and stays open through the first sailing year. You stay in the draw once your
+          verified points reach 150. The maiden voyage goes to the first crew across the 150-point line. After that, one
+          more free voyage is drawn for every 20% of the first year that gets booked, up to six free voyages total at a
+          fully booked year.
         </p>
         <p>
-          Each draw is held among everyone who has completed the quest and has not already won. A crew can win once.
+          Each draw is a weighted random draw among everyone in the draw who has not already won, with each entrant
+          weighted by points. Approved nominees enter each draw at 150 tickets. A crew can win once.
         </p>
       </>
     ),
   },
   {
-    heading: "6. Ties, selection, and disputes",
+    heading: "7. Weighting, ties, and disputes",
     body: (
       <p>
-        Every free voyage is selected at random from the crews who have completed the quest. Ties are settled at random,
-        because selection is random to begin with. The church reviews every disputed proof, and its decision is final.
+        Each draw is weighted by points: your points are your raffle tickets, so more points mean better odds, never a
+        guaranteed win. The seed and the eligible set of every draw are logged so a draw can be checked. Ties do not
+        arise, because the draw is a single weighted selection. The teams review every disputed proof, and the decision
+        is final.
       </p>
     ),
   },
   {
-    heading: "7. The prizes",
+    heading: "8. The prizes",
     body: (
       <p>
         Each prize is one free 7-night voyage on the ReGen Ship. Approximate retail value, the anchor value, is about
@@ -90,7 +106,7 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     ),
   },
   {
-    heading: "8. Fair play",
+    heading: "9. Fair play",
     body: (
       <p>
         The church may disqualify any entry with gamed, faked, or dishonest proofs. Quest tasks are meant to be done
@@ -105,7 +121,7 @@ export default function ShipQuestRules() {
     <PageWrapper>
       <SEO
         title="Maiden Voyage Quest Rules"
-        description="Official rules for the ReGen Ship Maiden Voyage Quest. Complete the quest to enter the draw. Up to six free voyages, awarded at random as bookings grow."
+        description="Official rules for the ReGen Ship Maiden Voyage Quest. Reach 150 points to enter the draw, or enter by approved nomination. Up to six free voyages, awarded by weighted random draw as bookings grow."
         url="/ship/quest/rules"
       />
 

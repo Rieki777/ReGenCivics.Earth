@@ -78,8 +78,8 @@ export default function ShipNominate() {
             stories make a place better while they pass through.
           </p>
           <p>
-            The church council selects one nominee for a bonus crew slot on a voyage. Tell us who they are and why they'd
-            add something to the land and the crew.
+            If you're nominated and approved by the ReGen Civics and CORE teams, you're in the draw, no quest required.
+            Tell us who they are and why they'd add something to the land and the crew.
           </p>
         </div>
       </ShipSection>
