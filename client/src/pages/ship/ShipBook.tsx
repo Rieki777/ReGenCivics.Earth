@@ -242,7 +242,10 @@ export default function ShipBook() {
             </div>
             <div className="flex items-start gap-3">
               <Checkbox id="water" checked={water} onCheckedChange={(v) => setWater(Boolean(v))} />
-              <Label htmlFor="water" className="font-normal leading-snug">I commit to the ship's water doctrine: only the soaps and cleaning materials aboard, no chemical body products. <Link href="/ship/guide" className="underline">Read the doctrine</Link>.</Label>
+              <p className="font-normal leading-snug text-sm">
+                <Label htmlFor="water" className="font-normal">I commit to the ship's water doctrine: only the soaps and cleaning materials aboard, no chemical body products.</Label>{" "}
+                <Link href="/ship/guide" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the doctrine</Link>.
+              </p>
             </div>
             <div>
               <Label htmlFor="notes">Anything we should know</Label>
@@ -250,7 +253,7 @@ export default function ShipBook() {
             </div>
             {ref && <p className="text-xs text-muted-foreground">Referred by @{ref.replace(/^@/, "")}. Thank them at the healing hole.</p>}
             <div>
-              <Button type="submit" disabled={request.isPending || Boolean(submitReason)} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+              <Button type="submit" size="lg" disabled={request.isPending || Boolean(submitReason)} className="w-full sm:w-auto bg-[#ffd700] text-[#1a472a] font-bold text-base px-8 shadow-[0_0_24px_rgba(255,215,0,0.5)] hover:bg-[#ffe14d] hover:shadow-[0_0_36px_rgba(255,215,0,0.85)] transition-shadow disabled:opacity-50 disabled:shadow-none">
                 {request.isPending ? "Sending…" : "Request this voyage"}
               </Button>
               {submitReason && <p className="text-xs text-muted-foreground mt-2">{submitReason}</p>}

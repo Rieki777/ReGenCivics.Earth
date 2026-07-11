@@ -99,7 +99,7 @@ export default function ShipQuest() {
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-16 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The Maiden Voyage Quest</p>
-          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points. Sail free.</h1>
+          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points to qualify for the drawing.</h1>
           <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Reach {threshold} points and you are in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
           <p data-reveal data-reveal-delay="240" className="mt-4 inline-flex items-center gap-2 bg-[#ffd700]/20 border border-[#ffd700]/50 rounded-full px-4 py-2 font-semibold"><Trophy className="w-5 h-5 text-[#ffd700]" /> {unlocked} of {totalFree} free voyages unlocked</p>
         </div>
