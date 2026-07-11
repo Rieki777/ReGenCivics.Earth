@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-10 (latest): Ship QC pass, honeymoon article, voyage week picker
+
+- Published "You're Allowed to Have More Than One Honeymoon" as a blog post (`client/src/data/blogPosts.ts`, hero `ship-campfire-dusk.jpg`, tags Story / ReGen Ship / Love Voyage). Linked from a new Love Voyage band on `/ship` and from `/ship/honeymoon` (a redirect to the article, since no such page existed). Sitemap (`server/_core/index.ts`) + weekly digest highlights (`server/jobs/digestJob.ts`) updated. Live at `regencivics.earth/blog/more-than-one-honeymoon`.
+- Booking rebuilt: the raw `<input type="date">` is gone. `ship.availability` now enumerates a Saturday-to-Saturday voyage-week grid server-side with per-week state (open / requested / booked / turnover / migration), projected bioregion, and seasonal price (`server/lib/ship-config.ts` `SHIP_SEASON_START_YMD` + `SHIP_SEASONAL_BANDS`, `server/lib/ship-logic.ts` `enumerateVoyageWeeks`). `ShipBook.tsx` renders selectable week cards with a Cards/List accessible fallback, multi-week chaining (up to 3), and disabled-until-valid submit. New week-grid unit tests in `server/ship.test.ts` (23 pass).
+- Rye's four review fixes: new storybook arrival hero on `/ship/quest/rules` (`ship-art-arrival-welcome.webp`, generated via nano-banana-pro), two added driving-requirement lines, and the compliance-guarded voluntary-offering copy on `/ship/book`.
+- Full world-class audit across every ship page at 390px + 1440px, light + dark (Playwright, 68 screenshots). No horizontal overflow, no missing alts, no real icon-button naming gaps. Findings + evidence + handoff in `SHIP_QC_AUDIT_2026-07-10.md`. Source spec: `CLAUDE_CODE_PROMPT_2026-07-10_SHIP_QC_WORLDCLASS.md`. Carryover (Rye): tune `SHIP_SEASONAL_BANDS` to the real itinerary; decide whether `/ship/experiences` and `/ship/stops` (in the audit list, never built) should be built or dropped; optional map list-view + game-feel micro-animations.
+
 ## 2026-07-10 (later): Ship Treasure Map v2 (self-hosted basemap, data-rich Cascadia)
 
 - Fixed the blank production map: `ShipMap.tsx` requested OSM raster tiles the CSP `img-src` never allowed. Replaced with a self-hosted PMTiles basemap on R2 (`assets.regencivics.earth/ship/basemap.pmtiles`) rendered by `protomaps-leaflet`, no CSP change needed (`connect-src` already allows `*.regencivics.earth`). Dev-only `VITE_SHIP_BASEMAP_DEV_OSM` raster fallback. ADR-34. Build/upload script `scripts/build-ship-basemap.ts` (go-pmtiles extract of the US-Cascadia bbox `[-126,39.5,-110.5,49.5]`, multipart R2 upload, `--dry-run`).
