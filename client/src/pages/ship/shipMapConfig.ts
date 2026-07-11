@@ -40,7 +40,9 @@ export const CASCADIA_CENTER: [number, number] = [43.8, -121.5];
 // (fog, rings, bounds, pin dimming) follows.
 export const ANCHORAGE: [number, number] = ASHLAND;
 export const VOYAGE_DAYS = 3;
-export const ROAD_MILES_PER_DAY = 250;
+// A gentle pace: we keep the miles low on the RV for now and can open the range
+// back up later by raising this one number (the whole board follows).
+export const ROAD_MILES_PER_DAY = 125;
 // Roads wander; a mile as the crow flies costs about 1.3 on the odometer.
 export const ROAD_TO_CROW = 1.3;
 export const MILES_TO_METERS = 1609.344;
@@ -50,7 +52,7 @@ export function crowMilesForDays(days: number): number {
   return (days * ROAD_MILES_PER_DAY) / ROAD_TO_CROW;
 }
 
-/** The horizon: straight-line radius of the full voyage range (~577 mi). */
+/** The horizon: straight-line radius of the full voyage range (~288 mi). */
 export const VOYAGE_RADIUS_MILES = crowMilesForDays(VOYAGE_DAYS);
 
 /** Great-circle distance in miles. */

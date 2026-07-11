@@ -52,10 +52,11 @@ describe("ship-map: voyage range (the game board, ADR-36)", () => {
   });
 
   it("keeps the near board in range and pushes the far world into fog", () => {
+    // The range is a gentle 3-day sail at 125 road-mi/day (~288 mi horizon).
     expect(withinVoyageRange(ANCHORAGE[0], ANCHORAGE[1])).toBe(true); // the anchorage itself
-    expect(withinVoyageRange(45.5152, -122.6784)).toBe(true); // Portland
-    expect(withinVoyageRange(47.6062, -122.3321)).toBe(true); // Seattle
-    expect(withinVoyageRange(43.6187, -116.2146)).toBe(true); // Boise
+    expect(withinVoyageRange(45.5152, -122.6784)).toBe(true); // Portland — a day and change north
+    expect(withinVoyageRange(47.6062, -122.3321)).toBe(false); // Seattle — beyond the tighter horizon
+    expect(withinVoyageRange(43.6187, -116.2146)).toBe(false); // Boise — beyond the tighter horizon
     expect(withinVoyageRange(51.0447, -114.0719)).toBe(false); // Calgary
     expect(withinVoyageRange(39.7392, -104.9903)).toBe(false); // Denver
   });
