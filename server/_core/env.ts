@@ -50,6 +50,15 @@ export const ENV = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "openrouter/auto",
+  // Conversational Companion voice layer (all optional; browser SpeechRecognition
+  // + speechSynthesis are the free v1 default). STT_API_KEY lights up the server
+  // fallback transcription endpoint for browsers without SpeechRecognition
+  // (notably some iOS versions). STT_PROVIDER picks the vendor (groq | openai),
+  // both of which serve a Whisper transcription endpoint. TTS_API_KEY is the v2
+  // hosted-voice upgrade path (e.g. ElevenLabs), read as a flag for now.
+  sttApiKey: process.env.STT_API_KEY ?? "",
+  sttProvider: process.env.STT_PROVIDER ?? "groq",
+  ttsApiKey: process.env.TTS_API_KEY ?? "",
   // Cloudflare Workers AI image generation
   imageGenWorkerUrl: process.env.IMAGE_GEN_WORKER_URL ?? "",
   imageGenSecret: process.env.IMAGE_GEN_SECRET ?? "",
