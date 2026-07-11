@@ -24,6 +24,7 @@ import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
 import { EightFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
+import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
 import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 
 export default function BlogPost() {
@@ -387,6 +388,10 @@ export default function BlogPost() {
                     '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
                     '[EIGHT_FORMS_OF_CAPITAL]': <EightFormsOfCapital />,
                     '[FRAUD_WARNING]': <FraudWarningCallout />,
+                    '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
+                    '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
+                    '[SHIP_PULLQUOTE]': <ShipPullQuote />,
+                    '[SHIP_CTA]': <ShipArticleCTA />,
                   };
 
                   const hasMarkers = Object.keys(SPECIAL_MARKERS).some(

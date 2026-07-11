@@ -43,13 +43,15 @@ Everywhere you go, you plant. The treasure chest holds seeds chosen to turn pine
 
 If you want the fuller story of why this matters, read [The Great American Chestnut Abundance](/blog/great-american-chestnut-abundance).
 
+![A thriving food forest replacing a pine plantation](/images/ship/ship-food-forest-abundance.jpg)
+
 ## She is the flagship of the ReGen Fleet
 
 The ReGen Fleet is a caravan of ships that moves from land project to land project. Where it lands, it builds natural homes, plants food forests, heals waterways, and turns pine plantations back into the abundance they once were. And we host music festivals, dances, and regular communal campfires, and so many other ways to bring community and love together. Then it moves on and does it again. The model is inspired by the large RV caravans that travel New Zealand together, a rolling community that shows up, sets up, and shares a place for a while. We point that same spirit at regeneration.
 
 ![A caravan of ships gathered together at a land project](/images/ship/ship-fleet-caravan.jpg)
 
-Ten percent of every voyage buys the ship herself back into community ownership over time, a model that repeats for every future ship. Before a ship joins the fleet, its previous owner is abundantly compensated and thanked, not asked to give her away.
+Ten percent of every voyage buys the ship herself into community ownership over time, a model that repeats for every future ship. As a ship joins the fleet, that 10% goes to work buying out the owner and every existing token holder, through open purchases on the open market. The owner is the dominant token holder, so the owner effectively sets the market rate. Community ownership grows by buying in at a fair price, voyage by voyage, and the person who brought the ship is made whole for her full value.
 
 ![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
 
@@ -59,32 +61,27 @@ Her first crews are not chosen. They are earned. The Maiden Voyage Quest is open
 
 ![A hand drawing a folded name from the seed chest](/images/ship/ship-free-voyage-draw.jpg)
 
-**Completing the quest puts you in the draw.** The quest is a set of real regenerative actions: share the announcement, tell your origin story, refer a land project, complete the Food Foresting quest, add a place to the treasure map, and more. Each one is verified. It is built to take at least a week to finish, on purpose, so no one has to rush and everyone gets a fair shot.
+Here is how it works, and it is built so that all of our interests point the same direction.
 
-**The maiden voyage is the first free one.** It goes to a crew drawn from everyone who has completed the quest.
+[SHIP_QUEST_STEPS]
 
-**Then the free voyages grow with the bookings.** For every 20% of the first year that gets booked, we draw one more free voyage from everyone who has completed the quest. At a fully booked year, six crews sail free.
+The maiden voyage sails free right away, drawn from everyone who has completed the quest. After that, the free voyages grow with the bookings: every 20% of the first year that books draws one more, up to six at a fully booked year. Drag the ladder to see how it grows.
 
-| First year booked | Free voyages given away |
-|---|---|
-| Launch (the maiden voyage) | 1 |
-| 20% booked | 2 |
-| 40% booked | 3 |
-| 60% booked | 4 |
-| 80% booked | 5 |
-| 100% booked | 6 |
+[SHIP_FREE_VOYAGE_LADDER]
 
-**Every draw is random, and every completer is in every draw.** Ties are settled at random too, because the whole selection is random to begin with. A crew can win once.
+Every draw is random, and every crew who completes the quest is in every draw. Ties are settled at random too. A crew can win once.
+
+[SHIP_PULLQUOTE]
 
 ## Why it works this way
 
 ![Community gathered around a table and campfire at a land project at golden hour](/images/ship/ship-community-share.jpg)
 
-This aligns all of us. If you want a better chance at a free voyage, the most powerful thing you can do is help us get the word out and help the calendar fill. More bookings unlock more free voyages, and you are in every single draw. Spreading the word is not a favor you do for us. It is how the prizes grow, for you and for everyone else who completed the quest.
+This is the whole idea. Complete the quest and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
 
-So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more of us who help her fill her calendar, the more of us sail free.
+So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more the fleet sails, the more of us sail free.
 
-[Enter the Maiden Voyage Quest](/ship/quest) and [read the official rules](/ship/quest/rules).`,
+[SHIP_CTA]`,
     author: 'Rye',
     date: '2026-07-10',
     readTime: '6 min read',

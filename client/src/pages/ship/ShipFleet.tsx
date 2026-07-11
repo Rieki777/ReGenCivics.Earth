@@ -128,10 +128,11 @@ export default function ShipFleet() {
           </div>
           <div data-reveal data-reveal-delay="180" className="flex flex-col gap-2">
             <HandCoins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-            <h3 className="font-semibold text-lg">The owner, honored</h3>
+            <h3 className="font-semibold text-lg">The owner, made whole</h3>
             <p className="text-foreground/80">
-              Before a ship enters the fleet, its previous owner is abundantly compensated. Community ownership begins
-              with the person who brought the ship, made whole and thanked, not asked to give her away.
+              As a ship joins the fleet, that 10% buys out the owner and existing token holders through open purchases
+              on the open market. The owner is the dominant token holder, so the owner effectively sets the market
+              rate. Community ownership grows by buying in at a fair price, voyage by voyage.
             </p>
           </div>
         </div>
