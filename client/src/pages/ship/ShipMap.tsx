@@ -7,8 +7,8 @@
  * The heavy Leaflet work lives in shipMapLayers.tsx (imperative layers); this
  * file is the page shell, the drawer, the filters, and the add flow.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, Popup } from "react-leaflet";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { SEO } from "@/components/SEO";
@@ -21,7 +21,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipSection, ShipEyebrow, ShipNavRow, useShipFlags } from "./shipShared";
 import {
   TYPE_META, BOOL_FILTERS, type MapBoolFilter, type ShipLocationType,
   CASCADIA_CENTER, CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM, MAP_DEFAULT_ZOOM,
@@ -30,11 +30,19 @@ import {
   BasemapLayer, CascadiaBoundary, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
 } from "./shipMapLayers";
 import {
-  loadVoyage, addToVoyage, removeFromVoyage, clearVoyage,
+  loadVoyage, addToVoyage, removeFromVoyage, clearVoyage, saveVoyage,
   downloadVoyageGpx, voyageToGoogleMapsUrl, type VoyagePin,
 } from "./shipVoyage";
+import { FirstMatePlanner, FIRST_MATE_GREETING, type Itinerary } from "./ShipFirstMate";
 
 const PINS_CACHE_KEY = "ship_map_pins_v1";
+
+/** Headless child that hands the Leaflet map instance up to the page (for panning). */
+function MapReady({ onReady }: { onReady: (map: L.Map) => void }) {
+  const map = useMap();
+  useEffect(() => { onReady(map); }, [map, onReady]);
+  return null;
+}
 
 function shipPositionIcon() {
   return L.divIcon({
@@ -58,6 +66,9 @@ const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "food_
 export default function ShipMap() {
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
+  const flags = useShipFlags();
+  const mapRef = useRef<L.Map | null>(null);
+  const onMapReady = useCallback((m: L.Map) => { mapRef.current = m; }, []);
 
   // Pin data (all sources; filtered client-side for instant response). Seeded
   // from localStorage so the map shows pins offline on the next visit.
@@ -95,6 +106,38 @@ export default function ShipMap() {
     window.addEventListener("ship-voyage-changed", h);
     return () => window.removeEventListener("ship-voyage-changed", h);
   }, []);
+
+  // The First Mate: a compact voyage-planning drawer over the map. When she
+  // charts an itinerary, resolve its location ids to pins, load them into
+  // "My voyage" (shared state), draw the route, and pan to it.
+  const [firstMateOpen, setFirstMateOpen] = useState(false);
+  const onItinerary = useCallback((itinerary: Itinerary) => {
+    const byId = new Map(allPins.map((p) => [p.id, p]));
+    const seen = new Set<number>();
+    const stops: VoyagePin[] = [];
+    for (const day of itinerary.days ?? []) {
+      for (const id of day.locationIds ?? []) {
+        if (seen.has(id)) continue;
+        const p = byId.get(id);
+        if (!p || p.lat == null || p.lng == null) continue;
+        seen.add(id);
+        stops.push({ id: p.id, slug: p.slug, name: p.name, type: p.type, lat: p.lat, lng: p.lng });
+      }
+    }
+    if (stops.length === 0) {
+      toast("The First Mate charted your days. Open a pin and add it to draw the route.");
+      return;
+    }
+    saveVoyage(stops); // fires ship-voyage-changed -> voyage state + VoyageRoute update
+    const map = mapRef.current;
+    if (map) {
+      map.fitBounds(L.latLngBounds(stops.map((s) => [s.lat, s.lng] as [number, number])), { padding: [60, 60], maxZoom: 11 });
+    }
+    toast.success("Your voyage is charted on the map. Close this to see the route.");
+  }, [allPins]);
+
+  // Dataset door ("Add your database to the map").
+  const [datasetOpen, setDatasetOpen] = useState(false);
 
   // Add-to-map flow.
   const [adding, setAdding] = useState(false);
@@ -232,6 +275,7 @@ export default function ShipMap() {
             style={{ height: "100%", width: "100%", background: "#e9e4d6" }}
             scrollWheelZoom
           >
+            <MapReady onReady={onMapReady} />
             <BasemapLayer />
             <CascadiaBoundary show={showBoundary} />
             <ClusterLayer pins={filtered} onSelect={onSelect} />
@@ -284,9 +328,40 @@ export default function ShipMap() {
               <div key={t} className="flex items-start gap-2 text-sm"><span aria-hidden>{meta.emoji}</span><span className="text-foreground/80">{meta.blurb}</span></div>
             ))}
             <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed pins are unverified — pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">Some pins come from partner datasets offered by other projects and networks. Those places carry a credit line to their source.</p>
           </div>
         )}
       </ShipSection>
+
+      {/* Plan your voyage with the First Mate */}
+      <ShipSection className="bg-[#2f5d3a]/6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between max-w-3xl">
+          <div>
+            <ShipEyebrow>The First Mate</ShipEyebrow>
+            <h2 className="text-2xl font-bold mb-1">Plan your voyage with the First Mate</h2>
+            <p className="text-foreground/80">{FIRST_MATE_GREETING} She draws it live on the map, only from the real places here, and the plan becomes your voyage.</p>
+          </div>
+          <Button onClick={() => setFirstMateOpen(true)} className="bg-[#2f5d3a] hover:bg-[#264a2f] shrink-0">⛵ Chart with the First Mate</Button>
+        </div>
+      </ShipSection>
+
+      {/* The dataset door */}
+      <ShipSection className="bg-[#b5762f]/8">
+        <div className="max-w-3xl">
+          <ShipEyebrow>Grow the map</ShipEyebrow>
+          <h2 className="text-2xl font-bold mb-2">Have a project or network in the Regenerative Renaissance? Add your database to the map.</h2>
+          <p className="text-foreground/80 mb-3">If you hold a dataset of places that belong on the treasure map, offer it here. Accepted datasets flow onto the map through our source-stamped importer, and every partner dataset carries a credit line to you on its pins.</p>
+          <Button onClick={() => setDatasetOpen(true)} className="bg-[#b5762f] hover:brightness-95">Add your database</Button>
+        </div>
+      </ShipSection>
+
+      {/* First Mate drawer (slides over the map on mobile, side panel on desktop) */}
+      {firstMateOpen && (
+        <FirstMateDrawer conciergeAboard={flags.concierge} onItinerary={onItinerary} onClose={() => setFirstMateOpen(false)} />
+      )}
+
+      {/* Dataset offer form */}
+      {datasetOpen && <DatasetOfferDialog onClose={() => setDatasetOpen(false)} />}
 
       {/* Add form (appears while adding) */}
       {adding && (
@@ -459,5 +534,117 @@ function VoyagePanel({ voyage, onRemove, onClear, onClose }: { voyage: VoyagePin
         )}
       </div>
     </ShipSection>
+  );
+}
+
+// ── First Mate drawer ─────────────────────────────────────────────────────────
+// Slides over the map on mobile (full width), a side panel on desktop. Reuses
+// the shared FirstMatePlanner; when she charts an itinerary the host draws it on
+// the map and it becomes "My voyage".
+function FirstMateDrawer({ conciergeAboard, onItinerary, onClose }: {
+  conciergeAboard: boolean; onItinerary: (itinerary: Itinerary) => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[1200]" role="dialog" aria-modal="true" aria-label="Plan your voyage with the First Mate">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-y-0 right-0 w-full sm:w-[440px] max-w-full bg-background shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background px-5 py-4">
+          <div>
+            <ShipEyebrow>The First Mate</ShipEyebrow>
+            <p className="text-sm text-foreground/80">{FIRST_MATE_GREETING}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+        </div>
+        <div className="p-5">
+          {!conciergeAboard && (
+            <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">The First Mate is not aboard yet. Check back soon, or build a voyage by hand from the pins.</p>
+          )}
+          <FirstMatePlanner conciergeAboard={conciergeAboard} onItinerary={onItinerary} compact />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Dataset door ──────────────────────────────────────────────────────────────
+// "Add your database to the map." A partner or network offers a dataset of
+// places; accepted offers flow through the source-stamped importer and are
+// credited on the pins.
+function DatasetOfferDialog({ onClose }: { onClose: () => void }) {
+  const submit = trpc.ship.datasetOffer.submit.useMutation();
+  const [f, setF] = useState({ orgName: "", contactName: "", email: "", description: "", approxCount: "", dataUrl: "", license: false });
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!f.license) { toast.error("Please confirm you have the right to share this data."); return; }
+    try {
+      await submit.mutateAsync({
+        orgName: f.orgName,
+        contactName: f.contactName,
+        email: f.email,
+        description: f.description,
+        approxCount: f.approxCount ? Number(f.approxCount) : undefined,
+        dataUrl: f.dataUrl || undefined,
+        licenseConfirmed: true,
+      });
+      toast.success("Thank you. Your dataset offer is in. We will be in touch.");
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not send your offer.");
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[1200] flex items-start sm:items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Add your database to the map">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-background rounded-2xl shadow-2xl w-full max-w-lg my-8 p-6">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <ShipEyebrow>Grow the map</ShipEyebrow>
+            <h2 className="text-xl font-bold">Add your database to the map</h2>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+        </div>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div>
+            <Label htmlFor="ds-org">Organization or network name</Label>
+            <Input id="ds-org" value={f.orgName} onChange={(e) => setF({ ...f, orgName: e.target.value })} required minLength={2} maxLength={200} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="ds-contact">Contact name</Label>
+              <Input id="ds-contact" value={f.contactName} onChange={(e) => setF({ ...f, contactName: e.target.value })} required minLength={2} maxLength={200} />
+            </div>
+            <div>
+              <Label htmlFor="ds-email">Email</Label>
+              <Input id="ds-email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} required maxLength={320} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="ds-desc">What does the dataset hold?</Label>
+            <Textarea id="ds-desc" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} required minLength={10} maxLength={2000} placeholder="Springs, food forests, land projects, events…" />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="ds-count">Roughly how many places?</Label>
+              <Input id="ds-count" type="number" min={0} max={10000000} value={f.approxCount} onChange={(e) => setF({ ...f, approxCount: e.target.value })} placeholder="120" />
+            </div>
+            <div>
+              <Label htmlFor="ds-url">Link to the data or its home (optional)</Label>
+              <Input id="ds-url" value={f.dataUrl} onChange={(e) => setF({ ...f, dataUrl: e.target.value })} placeholder="https://…" maxLength={512} />
+            </div>
+          </div>
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input type="checkbox" checked={f.license} onChange={(e) => setF({ ...f, license: e.target.checked })} className="mt-1" />
+            <span>We have the right to share this data and welcome its use on the treasure map, with attribution.</span>
+          </label>
+          <p className="text-xs text-muted-foreground">Partner datasets get a credit line on their pins and in the map legend.</p>
+          <div className="flex gap-2 pt-1">
+            <Button type="submit" disabled={submit.isPending} className="bg-[#b5762f] hover:brightness-95">{submit.isPending ? "Sending…" : "Offer this dataset"}</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

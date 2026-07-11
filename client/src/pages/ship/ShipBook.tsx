@@ -264,7 +264,7 @@ export default function ShipBook() {
               <ol className="space-y-2 text-foreground/80 list-decimal pl-5 text-sm">
                 <li>You request a week here. A crew member confirms it.</li>
                 <li>The insured rental is arranged on the platform through a custom offer for your dates. That charge activates the coverage the ship sails under.</li>
-                <li>After the platform booking, a suggested voyage offering to the church covers the seed chest, the treasure map, the concierge, the fleet building, and the real costs of keeping her sailing: maintenance, cleaning, and everything it takes to run this program. We strongly encourage giving at least the suggested offering so the program can keep running. Every gift is received with deep appreciation and used with utmost care, as with all funds, to serve the Regenerative Renaissance and CORE's spiritual mission. It is a gift, always voluntary, and your booking never depends on it.</li>
+                <li>After the platform booking, a suggested voyage offering to the church covers the seed chest, the treasure map, the First Mate, the fleet building, and the real costs of keeping her sailing: maintenance, cleaning, and everything it takes to run this program. We strongly encourage giving at least the suggested offering so the program can keep running. Every gift is received with deep appreciation and used with utmost care, as with all funds, to serve the Regenerative Renaissance and CORE's spiritual mission. It is a gift, always voluntary, and your booking never depends on it.</li>
               </ol>
             </div>
             <div className="rounded-2xl border bg-card p-6">

@@ -4410,6 +4410,25 @@ export const shipWinterHostApplications = mysqlTable("ship_winter_host_applicati
 ]));
 export type ShipWinterHostApplication = typeof shipWinterHostApplications.$inferSelect;
 
+// The dataset door: a project or network offers a dataset of places for the
+// treasure map. Accepted offers flow through the source-stamped importer (source
+// = org slug, sourceUrl, sourceLicense) and are credited on the pins.
+export const shipDatasetOffers = mysqlTable("ship_dataset_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  orgName: varchar("orgName", { length: 200 }).notNull(),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  description: text("description").notNull(),
+  approxCount: int("approxCount"),
+  dataUrl: varchar("dataUrl", { length: 512 }),
+  licenseNote: varchar("licenseNote", { length: 500 }),
+  status: mysqlEnum("status", ["submitted", "reviewing", "imported", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_dataset_offers_status_idx").on(table.status),
+]));
+export type ShipDatasetOffer = typeof shipDatasetOffers.$inferSelect;
+
 // AI concierge sessions: intake answers, generated itinerary, chat transcript.
 export const shipConciergeSessions = mysqlTable("ship_concierge_sessions", {
   id: int("id").autoincrement().primaryKey(),

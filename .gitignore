@@ -172,3 +172,7 @@ imports-log.txt
 
 # Elder backfill review artifact (generated, not source)
 ELDER_BACKFILL_REVIEW.md
+
+# go-pmtiles binary + extract cache (build artifacts, never commit)
+scripts/.bin/
+scripts/.cache/

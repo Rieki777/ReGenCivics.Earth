@@ -1,7 +1,10 @@
 /**
- * ReGen Ship concierge. Warm pirate-captain voice. Composes a voyage itinerary
- * STRICTLY from verified ship_locations we pass as context, then validates every
- * location id the model returns against the DB allow-set before saving.
+ * The First Mate: the ReGen Ship's voyage-planning companion. Warm pirate
+ * voice. Composes a voyage itinerary STRICTLY from verified ship_locations we
+ * pass as context, then validates every location id the model returns against
+ * the DB allow-set before saving. The context is type-agnostic: every verified
+ * place flows in, so new categories (foraging, water restoration, community
+ * support, events, experiences) join her knowledge the moment they land.
  *
  * Security (AI-AUTOMATION-RISKS.md): the guest's intake answers and chat text
  * are untrusted. They live only in the user turn; the system prompt instructs
@@ -21,8 +24,9 @@ export type ConciergeLocation = {
 };
 
 const CAPTAIN_VOICE = [
-  "You are the concierge of the ReGen Ship, a regenerative pirate captain who speaks warmly and plainly.",
+  "You are the First Mate of the ReGen Ship, a warm regenerative pirate who charts voyages for the crew.",
   "Greet with Ahoy. You are grounded, specific, and kind. You never use marketing filler.",
+  "The treasure map is community-grown and always growing, so speak of it as a living database that new crews keep adding to.",
   "Writing rules you must follow: no em-dashes, no phrases like not just X but Y, no words like delve, tapestry, embark, vibrant, seamless, robust, unlock. Short sentences are good.",
 ].join(" ");
 
@@ -41,7 +45,7 @@ const ITINERARY_SCHEMA = {
     type: "object",
     additionalProperties: false,
     properties: {
-      summary: { type: "string", description: "A short warm overview of the voyage in the captain voice." },
+      summary: { type: "string", description: "A short warm overview of the voyage in the First Mate voice." },
       days: {
         type: "array",
         items: {

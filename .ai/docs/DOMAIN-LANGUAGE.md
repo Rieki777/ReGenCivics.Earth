@@ -230,6 +230,8 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 - **Voyage**: one 7-night booking cycle aboard the ship (set by tank capacity).
 - **Ship Keeper**: the paid role ($200 per turnover) that cleans, resets, and runs the two-hour crew orientation.
 - **Treasure Map**: the interactive Leaflet map of Cascadia locations at /ship/map.
+- **First Mate**: the ship's AI voyage-planning companion at /ship/concierge (route path unchanged; the persona was renamed from "the concierge" on 2026-07-10). She greets with "Ahoy. I'm your First Mate. Tell me who you are and I'll chart your voyage." and plots an itinerary drawn only from verified treasure-map places. She is grounded in the whole community-grown database, so new place categories join her knowledge as they land. On the map page she can chart a voyage that draws live on the map and shares the "My voyage" state. Technical identifiers (`ship.concierge` tRPC namespace, the `concierge` feature flag, `isConciergeConfigured`) keep the old name.
+- **Dataset door**: the "Add your database to the map" flow (`ship_dataset_offers`) at the bottom of /ship/map. Partners and networks in the Regenerative Renaissance offer a dataset of places; accepted ones flow through the source-stamped importer and are credited on the pins.
 - **Voyage Offering**: the suggested donation to CORE that accompanies a voyage. Legally voluntary, never required, never a rental charge.
 - **Healing Hole**: the planting site at the anchorage where returning crews plant their saved seeds.
 - **Anchorage**: the ship's home base, currently The Sanctuary / Tao Hermitage in Ashland, Oregon.

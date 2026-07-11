@@ -19,7 +19,7 @@ const PERKS = [
   { icon: Wifi, title: "Fully off-grid, fully connected", body: "Generator and electrical system meet 100% of your energy needs. Starlink internet anywhere on earth. Propane cooking and hot water. A full-size washing machine with drying stand." },
   { icon: Bike, title: "The adventure pack", body: "Electric bike. Stand-up paddleboard. Paddle ball. Hammocks. Cascadia field guides, instruments, and games." },
   { icon: ShipIcon, title: "Room to live", body: "Forty feet, three slide-outs, two bedrooms, two bathrooms, and a living room big enough for morning yoga. Designed for a couple; hosts two couples in comfort." },
-  { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a ship's concierge that plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
+  { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
 ];
 
 const GALLERY = [

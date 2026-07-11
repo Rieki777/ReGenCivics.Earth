@@ -59,7 +59,7 @@ export async function emailBookingApproved(to: string, booking: Booking): Promis
     p("Good news. Your voyage week is open and yours to claim.") +
     p("The rental itself is arranged through our insured platform listing. That charge activates the coverage the ship sails under. We will send you a custom offer for your exact dates.") +
     (listing ? btn(listing, "Go to the platform listing") : p("We will send your platform booking link shortly.")) +
-    p("Once the platform booking is confirmed, your full welcome arrives: the voyage guide, the concierge to chart your treasure map, and the suggested voyage offering to the church.");
+    p("Once the platform booking is confirmed, your full welcome arrives: the voyage guide, the First Mate to chart your treasure map, and the suggested voyage offering to the church.");
   await send(to, "Your ReGen Ship week is approved", html);
 }
 
@@ -71,7 +71,7 @@ export async function emailBookingConfirmed(to: string, booking: Booking): Promi
     p("She is a regenerative pirate ship, complete with your treasure chest of seeds. You do not just rent her. You take her on a voyage through Cascadia, visiting the most beautiful places on earth in reverence and regeneration.") +
     p("Everywhere you go, you plant. The chest holds seeds chosen to turn pine plantations back into food forests, the abundance this land knew before.") +
     btn(`${SHIP_URL}/guide`, "Open the voyage guide") +
-    btn(`${SHIP_URL}/concierge`, "Meet the concierge and chart your map") +
+    btn(`${SHIP_URL}/concierge`, "Meet the First Mate and chart your map") +
     (offering
       ? p(`When you are ready, the suggested voyage offering to the church is here: <a href="${offering}">make an offering</a>. It is a gift, never a rental charge, and never required.`)
       : p("The suggested voyage offering details will follow.")) +
@@ -105,6 +105,15 @@ export async function emailApplicationReceived(to: string, kind: string): Promis
   await send(to, `Your ReGen Ship ${kind} application`, html);
 }
 
+export async function emailDatasetOfferReceived(to: string, orgName: string): Promise<void> {
+  const html =
+    h("Thank you for offering your dataset") +
+    p(`We received the dataset offer from ${orgName}. Thank you for helping grow the treasure map.`) +
+    p("A crew member will review it and reach out. When a partner dataset joins the map, every pin from it carries a credit line back to you.") +
+    btn(`${SHIP_URL}/map`, "See the treasure map");
+  await send(to, "Your ReGen Ship dataset offer", html);
+}
+
 export async function emailNominationReceived(to: string, nomineeName: string): Promise<void> {
   const html =
     h("Nomination received") +
@@ -132,7 +141,7 @@ export function manifestBody(stage: ManifestStage): { subject: string; html: str
         subject: "Your Treasure Map, ReGen Ship",
         html:
           h("Your Treasure Map") +
-          p("Two weeks out. Time to chart your voyage. The concierge will plot springs, waterfalls, food forests, and the land projects on your route, plus any events and open bounties during your week.") +
+          p("Two weeks out. Time to chart your voyage. The First Mate will plot springs, waterfalls, food forests, and the land projects on your route, plus any events and open bounties during your week.") +
           btn(`${SHIP_URL}/concierge`, "Chart your map"),
       };
     case "t7":

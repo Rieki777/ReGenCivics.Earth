@@ -105,9 +105,18 @@ async function ensurePmtilesBinary(): Promise<string> {
   const { writeFileSync } = await import("node:fs");
   writeFileSync(archivePath, buf);
 
-  // Extract. `tar` (bsdtar) ships on Windows 10+, macOS, and Linux and handles
-  // both .tar.gz and .zip; use it uniformly.
-  const ex = spawnSync("tar", ["-xf", archivePath, "-C", BIN_DIR], { stdio: "inherit" });
+  // Extract. On Windows, a GNU `tar` on PATH (e.g. Git Bash) misreads the
+  // `C:\...` archive path as a remote host ("Cannot connect to C:"), so use
+  // PowerShell's Expand-Archive there. bsdtar handles both .tar.gz and .zip
+  // uniformly on macOS/Linux.
+  const ex =
+    process.platform === "win32"
+      ? spawnSync(
+          "powershell",
+          ["-NoProfile", "-Command", `Expand-Archive -Path "${archivePath}" -DestinationPath "${BIN_DIR}" -Force`],
+          { stdio: "inherit" },
+        )
+      : spawnSync("tar", ["-xf", archivePath, "-C", BIN_DIR], { stdio: "inherit" });
   if (ex.status !== 0) throw new Error(`Failed to extract ${asset}. Extract it manually into ${BIN_DIR}.`);
   if (!existsSync(localExe)) throw new Error(`Extracted archive but ${localExe} not found. Check the release layout.`);
   if (process.platform !== "win32") spawnSync("chmod", ["+x", localExe]);

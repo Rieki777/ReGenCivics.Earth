@@ -26,10 +26,12 @@ import {
   shipQuestActions, shipQuestCompletions, shipNominations, shipKeeperApplications,
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
+  shipDatasetOffers,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { sanitizeInput } from "../_core/security";
+import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice,
@@ -47,6 +49,7 @@ import type { Itinerary } from "../lib/ship-logic";
 import {
   emailBookingReceived, emailBookingApproved, emailBookingConfirmed,
   emailQuestActionVerified, emailQuestWinner, emailApplicationReceived, emailNominationReceived,
+  emailDatasetOfferReceived,
 } from "../lib/ship-emails";
 
 const YMD = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
@@ -595,6 +598,51 @@ export const shipRouter = router({
       return { ok: true };
     }),
 
+  // ── The dataset door ("Add your database to the map") ───────────────────────
+  // A project or network offers a dataset of places. Public, rate-limited,
+  // sanitized. Accepted offers flow through the source-stamped importer (source
+  // = org slug, sourceUrl, sourceLicense) and are credited on the pins. This
+  // router only records the offer and notifies; it never imports automatically.
+  datasetOffer: router({
+    submit: publicProcedure
+      .input(
+        z.object({
+          orgName: z.string().min(2).max(200),
+          contactName: z.string().min(2).max(200),
+          email: z.string().email().max(320),
+          description: z.string().min(10).max(2000),
+          approxCount: z.number().int().min(0).max(10_000_000).optional(),
+          dataUrl: z.string().url().max(512).optional(),
+          licenseConfirmed: z.literal(true),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_dataset_offer");
+        const d = await db();
+        await d.insert(shipDatasetOffers).values({
+          orgName: sanitizeInput(input.orgName),
+          contactName: sanitizeInput(input.contactName),
+          email: input.email,
+          description: sanitizeInput(input.description),
+          approxCount: input.approxCount ?? null,
+          dataUrl: input.dataUrl ?? null,
+          licenseNote: "Confirmed right to share, welcomes use with attribution.",
+        });
+        await emailDatasetOfferReceived(input.email, input.orgName);
+        await notifyOwner({
+          title: `New treasure-map dataset offer: ${input.orgName}`,
+          content: [
+            `${input.contactName} (${input.email}) offered a dataset for the treasure map.`,
+            input.approxCount != null ? `Approx places: ${input.approxCount}` : null,
+            input.dataUrl ? `Data: ${input.dataUrl}` : null,
+            "",
+            input.description,
+          ].filter(Boolean).join("\n"),
+        }).catch(() => {});
+        return { ok: true };
+      }),
+  }),
+
   // ── Concierge ───────────────────────────────────────────────────────────────
   concierge: router({
     start: publicProcedure
@@ -1012,6 +1060,14 @@ export const shipRouter = router({
     setWinterHostStatus: adminProcedure.input(z.object({ id: z.number().int(), status: z.enum(["submitted", "in_conversation", "accepted", "declined"]) })).mutation(async ({ input }) => {
       const d = await db();
       await d.update(shipWinterHostApplications).set({ status: input.status }).where(eq(shipWinterHostApplications.id, input.id));
+      return { ok: true };
+    }),
+
+    // Dataset door queue.
+    listDatasetOffers: adminProcedure.query(async () => (await db()).select().from(shipDatasetOffers).orderBy(desc(shipDatasetOffers.createdAt)).limit(500)),
+    setDatasetOfferStatus: adminProcedure.input(z.object({ id: z.number().int(), status: z.enum(["submitted", "reviewing", "imported", "declined"]) })).mutation(async ({ input }) => {
+      const d = await db();
+      await d.update(shipDatasetOffers).set({ status: input.status }).where(eq(shipDatasetOffers.id, input.id));
       return { ok: true };
     }),
 

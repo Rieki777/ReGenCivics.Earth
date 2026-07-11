@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { BasemapLayer } from "./shipMapLayers";
 import { CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM } from "./shipMapConfig";
 
-const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Position", "Pricing"] as const;
+const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Datasets", "Position", "Pricing"] as const;
 type Tab = (typeof TABS)[number];
 
 // 50 miles in metres — the v1 proxy for a ~60-minute drive (isochrones later).
@@ -52,6 +52,7 @@ export default function ShipAdmin() {
       {tab === "Plantings" && <PlantingsTab utils={utils} err={err} ok={ok} />}
       {tab === "Nominations" && <NominationsTab utils={utils} err={err} ok={ok} />}
       {tab === "Applications" && <ApplicationsTab err={err} ok={ok} utils={utils} />}
+      {tab === "Datasets" && <DatasetsTab utils={utils} err={err} ok={ok} />}
       {tab === "Position" && <PositionTab err={err} ok={ok} />}
       {tab === "Pricing" && <PricingTab utils={utils} err={err} ok={ok} />}
     </div>
@@ -277,6 +278,40 @@ function ApplicationsTab({ err, ok, utils }: Common) {
           </div>
         ))}
         {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No applications yet.</p>}
+      </div>
+    </Section>
+  );
+}
+
+function DatasetsTab({ utils, err, ok }: Common) {
+  const q = trpc.ship.admin.listDatasetOffers.useQuery();
+  const setStatus = trpc.ship.admin.setDatasetOfferStatus.useMutation();
+  const refresh = () => utils.ship.admin.listDatasetOffers.invalidate();
+  if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  const STATUSES = ["submitted", "reviewing", "imported", "declined"] as const;
+  return (
+    <Section title="Dataset offers (Add your database to the map)">
+      <p className="text-sm text-muted-foreground mb-3">On acceptance, import via the source-stamped conventions (source = org slug, sourceUrl, sourceLicense) so each partner dataset is idempotent and credited on its pins.</p>
+      <div className="space-y-2">
+        {(q.data ?? []).map((o: any) => (
+          <div key={o.id} className="border rounded p-3 text-sm">
+            <div className="flex justify-between gap-2">
+              <span className="font-medium">{o.orgName} · {o.contactName} · {o.email}</span>
+              <span className="font-semibold">{o.status}</span>
+            </div>
+            <p className="text-muted-foreground mt-1">{o.description}</p>
+            <div className="text-xs text-muted-foreground mt-1">
+              {o.approxCount != null && <>~{o.approxCount} places · </>}
+              {o.dataUrl && <a className="underline break-all" href={o.dataUrl} target="_blank" rel="noreferrer">{o.dataUrl}</a>}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {STATUSES.map((s) => (
+                <Button key={s} size="sm" variant={o.status === s ? "default" : "outline"} className={o.status === s ? "bg-[#2f5d3a] hover:bg-[#264a2f]" : ""} onClick={() => setStatus.mutateAsync({ id: o.id, status: s }).then(() => ok("Updated")(refresh)).catch(err)}>{s}</Button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No dataset offers yet.</p>}
       </div>
     </Section>
   );
