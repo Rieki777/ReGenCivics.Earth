@@ -168,6 +168,23 @@ const SPECIAL_MARKER_MARKDOWN = {
   ].join("\n\n"),
   "[FRAUD_WARNING]":
     "**Zero tolerance for fraud.** Our ecosystem is rooted in trust. Without that we have nothing. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied, you'll lose your opportunity to claim again, and you'll be banned from participating in ReGen Civics.",
+  "[SHIP_QUEST_STEPS]": [
+    "**Complete the quest.** Real regenerative actions, each one verified. It takes at least a week, so no one has to rush.",
+    "**You're in the draw.** Every crew who completes it goes in the same draw. Ties are settled at random.",
+    "**Bookings unlock more.** Every 20% of the year booked draws another free voyage, and you're in every single draw.",
+  ].join("\n\n"),
+  "[SHIP_FREE_VOYAGE_LADDER]": [
+    "The free-voyage ladder:",
+    "",
+    "- **Launch:** the maiden voyage sails free (1 of 6)",
+    "- **20% booked:** 2 of 6 sail free",
+    "- **40% booked:** 3 of 6 sail free",
+    "- **60% booked:** 4 of 6 sail free",
+    "- **80% booked:** 5 of 6 sail free",
+    "- **100% booked:** all 6 sail free",
+  ].join("\n"),
+  "[SHIP_PULLQUOTE]": "> The more the fleet sails, the more of us sail free.",
+  "[SHIP_CTA]": "**[Enter the Maiden Voyage Quest](/ship/quest)** and [read the official rules](/ship/quest/rules).",
 };
 
 function expandSpecialMarkers(md) {
