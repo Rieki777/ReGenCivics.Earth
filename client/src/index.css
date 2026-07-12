@@ -319,6 +319,37 @@
       font-size: 16px !important;
     }
   }
+  /* Touch targets: iPhone/Safari is the primary platform. Give every standalone
+     control at least a 44px tall tap area on touch viewports (Apple HIG). Only
+     min-height, so nothing grows horizontally and inline text links (which
+     ignore min-height) are untouched. Checkboxes/radios keep their size. The
+     !important reliably wins over the h-8/h-9 utilities on shadcn buttons. */
+  @media (max-width: 767px) {
+    [data-slot="button"],
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    select:not(:disabled),
+    summary {
+      min-height: 44px !important;
+    }
+    /* Leaflet map controls (the treasure map is a key mobile surface). */
+    .leaflet-bar a {
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Breadcrumb + footer navigation links: comfortable tap height without
+       changing the text size. inline-flex + align-items keeps them centered.
+       Scoped to these nav regions so inline prose links are never affected. */
+    nav[aria-label="Breadcrumb"] a,
+    footer a[href] {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
