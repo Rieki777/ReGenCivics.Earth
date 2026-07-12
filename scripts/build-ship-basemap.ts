@@ -127,6 +127,9 @@ function s3(): S3Client {
   return new S3Client({
     region: process.env.AWS_REGION || "auto",
     ...(process.env.AWS_ENDPOINT_URL ? { endpoint: process.env.AWS_ENDPOINT_URL } : {}),
+    // R2 uploads over a home connection can reset mid-part; give the SDK more
+    // attempts on top of the manual per-part retry below.
+    maxAttempts: 8,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
@@ -134,7 +137,9 @@ function s3(): S3Client {
   });
 }
 
-const PART_SIZE = 100 * 1024 * 1024; // 100 MB parts
+// Smaller parts survive a flaky link far better than 100 MB parts: each PUT is
+// shorter, so a reset costs one small part, not a huge one.
+const PART_SIZE = 16 * 1024 * 1024; // 16 MB parts
 
 async function multipartUpload(file: string) {
   const client = s3();
@@ -156,10 +161,25 @@ async function multipartUpload(file: string) {
       const body = Buffer.concat(chunks, chunksLen);
       chunks = [];
       chunksLen = 0;
-      const res = await client.send(new UploadPartCommand({ Bucket, Key: R2_KEY, UploadId: uploadId, PartNumber: partNumber, Body: body }));
-      parts.push({ ETag: res.ETag!, PartNumber: partNumber });
-      console.log(`  part ${partNumber} (${(body.length / 1e6).toFixed(0)} MB)`);
-      partNumber++;
+      const thisPart = partNumber;
+      // Manual per-part retry: the whole part is in memory, so re-sending the
+      // same buffer after an ECONNRESET is safe and idempotent.
+      let lastErr: unknown;
+      for (let attempt = 1; attempt <= 6; attempt++) {
+        try {
+          const res = await client.send(new UploadPartCommand({ Bucket, Key: R2_KEY, UploadId: uploadId, PartNumber: thisPart, Body: body }));
+          parts.push({ ETag: res.ETag!, PartNumber: thisPart });
+          console.log(`  part ${thisPart} (${(body.length / 1e6).toFixed(0)} MB)${attempt > 1 ? ` after ${attempt} tries` : ""}`);
+          partNumber++;
+          return;
+        } catch (err) {
+          lastErr = err;
+          const wait = Math.min(30000, 1000 * 2 ** (attempt - 1));
+          console.warn(`  part ${thisPart} attempt ${attempt} failed (${(err as { code?: string })?.code ?? "error"}); retrying in ${wait / 1000}s`);
+          await new Promise((r) => setTimeout(r, wait));
+        }
+      }
+      throw lastErr;
     };
     for await (const chunk of fd) {
       chunks.push(chunk as Buffer);
