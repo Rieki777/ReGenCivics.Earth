@@ -12,6 +12,7 @@ import {
   ShipImage, InteriorPlaceholder, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
   SHIP_TAGLINE, CHESTNUT_URL,
 } from "./shipShared";
+import { ShipInventory } from "@/components/ship/ShipInventory";
 
 const PERKS = [
   { icon: Sun, title: "The healthiest coach on the road", body: "A 2006 luxury build chosen on purpose: real wood and stone trim, cured decades past off-gassing. 100% organic linens and towels, cast iron and natural cookware, organic soaps and body products stocked for you." },
@@ -75,6 +76,14 @@ export default function Ship() {
         <div className="mt-5">
           <a href="/blog/the-regen-ship" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read her full story <span aria-hidden="true">→</span></a>
         </div>
+      </ShipSection>
+
+      {/* The Ship's Inventory (the bag). Renders only once items are seeded. */}
+      <ShipSection className="bg-[#0d1f16]/[0.03] dark:bg-[#0d1f16]/30">
+        <ShipEyebrow>The bag</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-2">Everything she carries</h2>
+        <p className="text-foreground/80 max-w-2xl mb-6">Open the bag. Every tool, toy, and bit of magic aboard, from the paddleboard to the walking staff that plants a forest as you go. Tap a slot to see what it does and where she keeps it.</p>
+        <ShipInventory />
       </ShipSection>
 
       {/* The love voyage */}

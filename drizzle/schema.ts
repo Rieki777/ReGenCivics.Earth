@@ -4567,6 +4567,118 @@ export const shipPositionPings = mysqlTable("ship_position_pings", {
   index("ship_position_created_idx").on(table.createdAt),
 ]));
 export type ShipPositionPing = typeof shipPositionPings.$inferSelect;
+
+// ── Ship's Inventory (the bag) ────────────────────────────────────────────────
+// Everything she carries, as game-style item slots (SHIP_MAINTAINER_INVENTORY
+// Section 2). Public read of visible items; admin CRUD. Icons come from the
+// locked-style pipeline (scripts/generate-ship-item-icon.ts).
+export const shipInventoryItems = mysqlTable("ship_inventory_items", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  slug: varchar("slug", { length: 160 }).notNull().unique(),
+  category: mysqlEnum("category", [
+    "adventure", "galley", "water", "power", "connectivity", "tools", "magic", "comfort", "safety",
+  ]).notNull().default("comfort"),
+  description: text("description"),
+  lore: text("lore"),
+  iconUrl: varchar("iconUrl", { length: 512 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  quantity: int("quantity").notNull().default(1),
+  storagePlace: varchar("storagePlace", { length: 200 }),
+  activityTags: json("activityTags"),
+  isVisible: boolean("isVisible").notNull().default(true),
+  /** Flagged for the boarding/return gear check (V5 gear manifest). */
+  isGearChecked: boolean("isGearChecked").notNull().default(false),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_inventory_category_idx").on(table.category),
+  index("ship_inventory_sort_idx").on(table.sortOrder),
+  index("ship_inventory_visible_idx").on(table.isVisible),
+]));
+export type ShipInventoryItem = typeof shipInventoryItems.$inferSelect;
+export type InsertShipInventoryItem = typeof shipInventoryItems.$inferInsert;
+
+// ── The Shipwright: maintainer knowledge base + case log ──────────────────────
+// Retrieval, not training (SHIP_MAINTAINER_INVENTORY Section 1). Approved chunks
+// answer questions; resolved cases can be drafted into new chunks after human
+// approval so bad advice never compounds automatically.
+export const shipKnowledgeChunks = mysqlTable("ship_knowledge_chunks", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  system: mysqlEnum("system", [
+    "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+    "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+  ]).notNull().default("general"),
+  sourceType: mysqlEnum("sourceType", ["manual", "service_bulletin", "forum_wisdom", "resolved_case"]).notNull().default("manual"),
+  sourceRef: varchar("sourceRef", { length: 512 }),
+  tags: json("tags"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_knowledge_system_idx").on(table.system),
+  index("ship_knowledge_approved_idx").on(table.isApproved),
+]));
+export type ShipKnowledgeChunk = typeof shipKnowledgeChunks.$inferSelect;
+
+export const shipMaintenanceCases = mysqlTable("ship_maintenance_cases", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId"),
+  reportedByUserId: int("reportedByUserId").notNull(),
+  system: mysqlEnum("system", [
+    "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+    "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+  ]).notNull().default("general"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  photoUrls: json("photoUrls"),
+  conversation: json("conversation"),
+  status: mysqlEnum("status", ["open", "advised", "resolved", "escalated"]).notNull().default("open"),
+  isEscalation: boolean("isEscalation").notNull().default(false),
+  resolution: text("resolution"),
+  whatWorked: text("whatWorked"),
+  approvedIntoKb: boolean("approvedIntoKb").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => ([
+  index("ship_case_status_idx").on(table.status),
+  index("ship_case_booking_idx").on(table.bookingId),
+]));
+export type ShipMaintenanceCase = typeof shipMaintenanceCases.$inferSelect;
+
+// ── Gear manifest checks (V5 Section 1) ───────────────────────────────────────
+// Boarding + return photo-verified checklist of high-value gear.
+export const shipGearChecks = mysqlTable("ship_gear_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId").notNull(),
+  phase: mysqlEnum("phase", ["boarding", "return"]).notNull(),
+  items: json("items"),
+  completedByUserId: int("completedByUserId"),
+  witnessedByKeeperId: int("witnessedByKeeperId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_gear_booking_idx").on(table.bookingId),
+]));
+export type ShipGearCheck = typeof shipGearChecks.$inferSelect;
+
+// ── Crew list (V5 Section 4) ──────────────────────────────────────────────────
+// Email capture on non-open week cards. Double-opt-in, one-click unsubscribe.
+export const shipCrewListSignups = mysqlTable("ship_crew_list_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  userId: int("userId"),
+  interests: json("interests"),
+  source: varchar("source", { length: 120 }),
+  confirmedAt: timestamp("confirmedAt"),
+  unsubscribeToken: varchar("unsubscribeToken", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_crewlist_email_idx").on(table.email),
+]));
+export type ShipCrewListSignup = typeof shipCrewListSignups.$inferSelect;
+
 /**
  * user_guide_preferences: each member's personally designed ReGen Guide (the
  * general companion). Name, chosen face, tone, and whether voice is on. One row

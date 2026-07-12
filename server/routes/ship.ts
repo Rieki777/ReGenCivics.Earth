@@ -27,7 +27,7 @@ import {
   shipQuestActions, shipQuestCompletions, shipNominations, shipKeeperApplications,
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
-  shipDatasetOffers,
+  shipDatasetOffers, shipInventoryItems,
   shipCrewProfiles, shipGiveawayDrawings, churchDonations,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
@@ -923,7 +923,14 @@ export const shipRouter = router({
         const history = ((session.messages as Array<{ role: "user" | "assistant"; content: string }>) ?? []).concat({ role: "user", content: sanitizeInput(input.message) });
         const locs = await d.select().from(shipLocations).where(eq(shipLocations.isVerified, true));
         const locations: ConciergeLocation[] = locs.map((l) => ({ id: l.id, name: l.name, type: l.type, bioregion: l.bioregion, description: l.description }));
-        const reply = await conciergeReply({ history, locations, itinerary: (session.itinerary as Itinerary | null) ?? null });
+        // The First Mate knows the bag: pass visible inventory so "what should we
+        // bring to the lake" answers from real gear aboard (Section 2.1).
+        const bag = await d
+          .select({ name: shipInventoryItems.name, category: shipInventoryItems.category, activityTags: shipInventoryItems.activityTags })
+          .from(shipInventoryItems)
+          .where(eq(shipInventoryItems.isVisible, true));
+        const inventory = bag.map((b) => ({ name: b.name, category: b.category, activityTags: Array.isArray(b.activityTags) ? (b.activityTags as string[]) : [] }));
+        const reply = await conciergeReply({ history, locations, itinerary: (session.itinerary as Itinerary | null) ?? null, inventory });
         const messages = history.concat({ role: "assistant", content: reply });
         await d.update(shipConciergeSessions).set({ messages }).where(eq(shipConciergeSessions.id, input.sessionId));
         return { reply, messages };
@@ -1055,6 +1062,19 @@ export const shipRouter = router({
     mine: protectedProcedure.query(async ({ ctx }) => {
       const d = await db();
       return d.select().from(shipPassportStamps).where(eq(shipPassportStamps.userId, ctx.user.id));
+    }),
+  }),
+
+  // ── The Ship's Inventory (the bag) ──────────────────────────────────────────
+  inventory: router({
+    // Public: every visible item, grouped client-side into the grid.
+    list: publicProcedure.query(async () => {
+      const d = await db();
+      return d
+        .select()
+        .from(shipInventoryItems)
+        .where(eq(shipInventoryItems.isVisible, true))
+        .orderBy(asc(shipInventoryItems.sortOrder), asc(shipInventoryItems.name));
     }),
   }),
 
@@ -1408,6 +1428,55 @@ export const shipRouter = router({
     deleteBlackout: adminProcedure.input(z.object({ id: z.number().int() })).mutation(async ({ input }) => {
       const d = await db();
       await d.delete(shipBlackoutDates).where(eq(shipBlackoutDates.id, input.id));
+      return { ok: true };
+    }),
+
+    // Ship's Inventory CRUD (SHIP_MAINTAINER_INVENTORY Section 2).
+    listInventory: adminProcedure.query(async () => (await db()).select().from(shipInventoryItems).orderBy(asc(shipInventoryItems.sortOrder), asc(shipInventoryItems.name))),
+    upsertInventory: adminProcedure
+      .input(z.object({
+        id: z.number().int().optional(),
+        name: z.string().min(1).max(160),
+        slug: z.string().min(1).max(160).regex(/^[a-z0-9-]+$/, "lowercase, digits, and dashes only"),
+        category: z.enum(["adventure", "galley", "water", "power", "connectivity", "tools", "magic", "comfort", "safety"]),
+        description: z.string().max(4000).optional(),
+        lore: z.string().max(2000).optional(),
+        iconUrl: z.string().max(512).optional(),
+        photoUrl: z.string().max(512).optional(),
+        quantity: z.number().int().min(0).max(9999).default(1),
+        storagePlace: z.string().max(200).optional(),
+        activityTags: z.array(z.string().max(40)).max(20).optional(),
+        isVisible: z.boolean().default(true),
+        isGearChecked: z.boolean().default(false),
+        sortOrder: z.number().int().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        const values = {
+          name: sanitizeInput(input.name),
+          slug: input.slug,
+          category: input.category,
+          description: input.description ? sanitizeInput(input.description) : null,
+          lore: input.lore ? sanitizeInput(input.lore) : null,
+          iconUrl: input.iconUrl || null,
+          photoUrl: input.photoUrl || null,
+          quantity: input.quantity,
+          storagePlace: input.storagePlace ? sanitizeInput(input.storagePlace) : null,
+          activityTags: input.activityTags ?? [],
+          isVisible: input.isVisible,
+          isGearChecked: input.isGearChecked,
+          sortOrder: input.sortOrder,
+        };
+        if (input.id) {
+          await d.update(shipInventoryItems).set(values).where(eq(shipInventoryItems.id, input.id));
+          return { id: input.id };
+        }
+        const [res] = await d.insert(shipInventoryItems).values(values);
+        return { id: (res as { insertId?: number }).insertId ?? null };
+      }),
+    deleteInventory: adminProcedure.input(z.object({ id: z.number().int() })).mutation(async ({ input }) => {
+      const d = await db();
+      await d.delete(shipInventoryItems).where(eq(shipInventoryItems.id, input.id));
       return { ok: true };
     }),
   }),
