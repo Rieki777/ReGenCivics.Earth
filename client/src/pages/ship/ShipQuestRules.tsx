@@ -100,8 +100,8 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     heading: "8. The prizes",
     body: (
       <p>
-        Each prize is one free 7-night voyage on the ReGen Ship. Approximate retail value, the anchor value, is about
-        $4,200 per voyage. Up to six voyages are given away in the first year, starting with the maiden voyage and
+        Each prize is one free voyage week on the ReGen Ship, boarding Monday and returning Sunday. Approximate retail
+        value, the anchor value, is about $4,200 per voyage. Up to six voyages are given away in the first year, starting with the maiden voyage and
         adding one for every 20% of the year booked. A prize covers the voyage rental. Personal costs during the voyage,
         such as fuel, food, and travel to and from the ship, are the winner's own.
       </p>

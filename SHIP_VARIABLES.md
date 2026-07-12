@@ -6,17 +6,27 @@ Every number, policy, and setting the ReGen Ship uses, and where to change each 
 
 All of these are constants in `server/lib/ship-config.ts`. Change them there and both the site and the emails update together. The strikethrough display on the site reads from `client/src/pages/ship/shipShared.tsx` (`ANCHOR_NIGHTLY`, `TRIAL_NIGHTLY`), so keep those two in sync with the server file if you change prices.
 
+**Pricing is per voyage now, not nightly** (confirmed by Rye 2026-07-11). The nightly numbers are the derivation basis; a voyage bills a 7-night tank cycle, so the per-voyage totals are seven times these. The $600/night anchor stays as the struck-through reference everywhere (per voyage that reads $4,200).
+
 | Variable | Value | Meaning |
 |---|---|---|
-| `ANCHOR_NIGHTLY_USD` | $600 | The listed anchor price, shown struck through everywhere. |
-| `TRIAL_RENTAL_NIGHTLY_USD` | $149 | The insured platform rental (custom offer). |
-| `TRIAL_OFFERING_NIGHTLY_USD` | $150 | The suggested voyage offering to the church. |
-| `TRIAL_TOTAL_NIGHTLY_USD` | $299 | The two combined (display total). |
-| `VOYAGE_NIGHTS` | 7 | One tank cycle. Bookings must be whole multiples of this. |
+| `ANCHOR_NIGHTLY_USD` | $600 | The per-night anchor value, struck through as the reference. |
+| `ANCHOR_VOYAGE_USD` | $4,200 | The per-voyage anchor ($600 × 7), struck through on the site. |
+| `TRIAL_RENTAL_NIGHTLY_USD` | $149 | Per-night basis of the insured platform rental. |
+| `TRIAL_OFFERING_NIGHTLY_USD` | $150 | Per-night basis of the suggested church offering. |
+| `TRIAL_TOTAL_NIGHTLY_USD` | $299 | Per-night basis of the two combined. |
+| `TRIAL_RENTAL_VOYAGE_USD` | $1,043 | Trial-year platform rental for one voyage week. |
+| `TRIAL_OFFERING_VOYAGE_USD` | $1,050 | Trial-year suggested offering for one voyage week. |
+| `TRIAL_TOTAL_VOYAGE_USD` | $2,093 | Trial-year total ask per voyage week (~$2,100). |
+| `VOYAGE_NIGHTS` | 7 | One tank cycle (the pricing slot). Bookings must be whole multiples of this. |
+| `YEAR2_PRICE_MULTIPLIER` | 2 | Year-two weeks bill at double the trial (~$4,200, her full rate). |
+| `SHIP_YEAR2_START_YMD` | 2027-07-26 | First Monday of year two; weeks on/after it bill at the full rate. |
 | `KEEPER_PAY_USD` | $200 | Flat Ship Keeper pay per turnover. |
 | `FLEET_BUYBACK_PCT` | 10% | Share of church ship revenue routed to RV token buyback. |
 
-Seasonal multipliers (peak +25%, shoulder -20%, event weeks) are NOT constants. They are rows in `ship_pricing_windows`, editable live in admin at `/admin/ship` under Pricing.
+**Voyage cycle (confirmed 2026-07-11):** each voyage boards **Monday 3pm** and returns the following **Sunday 11am**; turnover runs Sunday afternoon into Monday morning. The grid anchors on Monday `SHIP_SEASON_START_YMD` (2026-07-27) and runs `SHIP_BOOKING_HORIZON_WEEKS` (104, through the end of year two). All in `server/lib/ship-config.ts`.
+
+Seasonal multipliers (peak +25%, shoulder -20%, event weeks) are NOT constants. They are rows in `ship_pricing_windows`, editable live in admin at `/admin/ship` under Pricing. The year-two multiplier composes with any seasonal window.
 
 ## 2. Policy defaults (Section 13 of the spec)
 
@@ -25,7 +35,7 @@ These currently live in page copy (`client/src/pages/ship/ShipQuestRules.tsx`, `
 | Policy | Default | Where stated |
 |---|---|---|
 | Minimum driver age | 25, platform-verified driver | `MIN_DRIVER_AGE` in ship-config; ShipQuestRules copy |
-| Guests per voyage | 1 to 4 | `MIN_GUESTS` / `MAX_GUESTS` in ship-config (enforced in the booking form + server) |
+| Guests per voyage | Up to 4 aboard, or 5 when at least 3 are children | `isValidCrewSize(adults, children)` in ship-config (`MAX_GUESTS` 4, `MAX_GUESTS_WITH_KIDS` 5, `MIN_CHILDREN_FOR_FIVE` 3); enforced in the booking form + server. `ship_bookings.children` records the split. |
 | Smoking | Never, anywhere | policy copy (not yet on a page; add if needed) |
 | Pets | No pets year 1 | policy copy |
 | Mileage | 1,000 included, then $0.50/mile | `MILES_INCLUDED` / `OVERAGE_PER_MILE_USD` in ship-config |
@@ -86,5 +96,16 @@ Every one of these is optional. The feature it gates renders a graceful fallback
 
 - `npx tsx scripts/seed-ship-locations.ts` — 30 starter Cascadia locations. Public natural landmarks are seeded verified; springs, boondocks, land projects, seed sites, and the anchorage are seeded unverified pending your review in admin.
 - `npx tsx scripts/seed-ship-quest.ts` — the 7 quest actions. The Food Foresting action links to quest-14; the referral action auto-verifies on Season 2 shortlist; the map action auto-verifies when a user's suggested location is verified.
+- `npx tsx scripts/seed-ship-inventory.ts` — the 16 starter Ship's Inventory items (the bag). Idempotent by slug. Icons attach later via the pipeline below.
+- `npx tsx scripts/seed-ship-knowledge.ts` — the Shipwright knowledge base seed. General class-A operation + safety guidance is approved; model-specific Fleetwood/Spartan notes are seeded unapproved (forum_wisdom) pending your review in admin, so nothing unverified is ever served as fact.
 
-Both accept `--dry-run`.
+All accept `--dry-run`.
+
+## 7. New feature surfaces (this build, 2026-07-12)
+
+- **Ship's Inventory (the bag):** `/ship` grid, `ship_inventory_items`, admin CRUD at `/admin/ship`. Icon pipeline: `npx tsx scripts/generate-ship-item-icon.ts --slug <slug> --item "<subject>"` (needs `GEMINI_API_KEY`; `--print` shows the locked style template).
+- **The Shipwright (maintainer AI):** "Ask the Shipwright" on `/ship/guide` and in the Captain's Book; `ship_knowledge_chunks` + `ship_maintenance_cases`. Safety rails (propane, brakes, steering, chassis air, burning smell, fire, CO) are hard-coded server-side and never coach DIY. Admin: cases queue, resolve, approve-into-KB.
+- **The Captain's Book:** `/ship/voyage`, unlocked while a booking is confirmed/active. Crew roles + pre-sail checklist stored on `ship_bookings` (`crewRoles`, `preSailLog`).
+- **State of the Ship:** public trust dashboard on `/ship` (`ship.stateOfShip`). RV-token ownership % and carbon-tree count need an asset-value variable + token ledger (not yet built).
+- **Orientation gate:** a booking cannot go `active` until `admin.completeOrientation` is run (columns `orientationCompletedAt` / `orientationKeeperId`); admin override is logged.
+- **Basemap:** the live map renders Esri satellite tiles (ADR-36). The `ship/basemap.pmtiles` archive (ADR-34, offline/fallback) still needs uploading once from a stable connection: `railway run -s "ReGenCivics.Earth" -- npx tsx scripts/build-ship-basemap.ts --skip-extract` (the 2GB extract is already cached at `scripts/.cache/ship-basemap.pmtiles`).

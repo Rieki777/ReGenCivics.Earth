@@ -81,7 +81,7 @@ Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, te
     excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points and you are in every draw. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six.',
     content: `The ReGen Ship has raised her flag.
 
-She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Hosts two couples in comfort.
+She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
 
 You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
 
