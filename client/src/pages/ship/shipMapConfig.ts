@@ -122,7 +122,8 @@ export const SHIP_BASEMAP_DEV_OSM =
 
 export type ShipLocationType =
   | "land_project" | "spring" | "waterfall" | "lake" | "geology"
-  | "forest" | "food_forest" | "seed_site" | "boondock" | "event_venue";
+  | "forest" | "food_forest" | "seed_site" | "boondock" | "event_venue"
+  | "commercial_boondock";
 
 export const TYPE_META: Record<string, { emoji: string; label: string; ring: string; blurb: string }> = {
   land_project: { emoji: "🏕️", label: "Land project", ring: "#2f5d3a", blurb: "Land projects: serve the crews regenerating Cascadia." },
@@ -134,8 +135,72 @@ export const TYPE_META: Record<string, { emoji: string; label: string; ring: str
   food_forest:  { emoji: "🌳", label: "Food forest", ring: "#4a7c59", blurb: "Food forests: abundance you can eat." },
   seed_site:    { emoji: "🌱", label: "Seed site", ring: "#6ca34f", blurb: "Seed sites: where the next forest begins." },
   boondock:     { emoji: "🚐", label: "Boondock", ring: "#b5762f", blurb: "Boondocks: free, beautiful, 40-ft-capable rest." },
+  // High-traffic paved rest: rest areas, Walmarts, Home Depots, and their kin.
+  // The asphalt-gray ring and the parking glyph mark it apart from wild sites.
+  commercial_boondock: { emoji: "🅿️", label: "Commercial boondock", ring: "#708090", blurb: "Commercial boondocks: rest areas and big paved lots for a quick legal night between wild stops. Check posted signs." },
   event_venue:  { emoji: "🎪", label: "Event venue", ring: "#a8478a", blurb: "Venues: where the fleet converges." },
 };
+
+// ── Chakra points: the subtle body of the bioregion ──────────────────────────
+// Symbolic energy centers mapped onto the land around the anchorage. Three are
+// named; Rye is researching the rest. To light a new node, fill in its place,
+// lat, lng, and practice: the layer, the line, and the poster all follow.
+export type ChakraPoint = {
+  order: number;            // 1 root .. 7 crown
+  key: string;
+  name: string;
+  sanskrit: string;
+  color: string;
+  place: string | null;     // null = still being divined
+  lat: number | null;
+  lng: number | null;
+  practice: string;
+};
+
+export const CHAKRA_POINTS: ChakraPoint[] = [
+  {
+    order: 1, key: "root", name: "Root", sanskrit: "Muladhara", color: "#d9302c",
+    place: "Mount Shasta", lat: 41.4099, lng: -122.1949,
+    practice: "Ground here. Release what keeps you bracing, let the mountain hold your weight, and leave feeling safe in your body.",
+  },
+  {
+    order: 2, key: "sacral", name: "Sacral", sanskrit: "Svadhisthana", color: "#f28c28",
+    place: null, lat: null, lng: null,
+    practice: "This node is still being divined. Its land will be named soon.",
+  },
+  {
+    order: 3, key: "solar_plexus", name: "Solar Plexus", sanskrit: "Manipura", color: "#f2c744",
+    place: null, lat: null, lng: null,
+    practice: "This node is still being divined. Its land will be named soon.",
+  },
+  {
+    order: 4, key: "heart", name: "Heart", sanskrit: "Anahata", color: "#3fa060",
+    place: "Mount Ashland", lat: 42.0806, lng: -122.7156,
+    practice: "The heart node shares its slopes with home port. Release old grief in your own time, and let love move both ways, given and received.",
+  },
+  {
+    order: 5, key: "throat", name: "Throat", sanskrit: "Vishuddha", color: "#3b7fd0",
+    place: null, lat: null, lng: null,
+    practice: "This node is still being divined. Its land will be named soon.",
+  },
+  {
+    order: 6, key: "third_eye", name: "Third Eye", sanskrit: "Ajna", color: "#5b4bb5",
+    place: null, lat: null, lng: null,
+    practice: "This node is still being divined. Its land will be named soon.",
+  },
+  {
+    order: 7, key: "crown", name: "Crown", sanskrit: "Sahasrara", color: "#8a5fc9",
+    place: "Crater Lake", lat: 42.9446, lng: -122.109,
+    practice: "Sit where the deepest lake holds the clearest sky. Release the need to know, and let the whole picture arrive.",
+  },
+];
+
+/** The chakra nodes that have land under them, in energy order. */
+export function litChakraPoints(): Array<ChakraPoint & { lat: number; lng: number }> {
+  return CHAKRA_POINTS
+    .filter((c): c is ChakraPoint & { lat: number; lng: number } => c.lat != null && c.lng != null)
+    .sort((a, b) => a.order - b.order);
+}
 
 /** Boolean filters beyond the type pills. */
 export type MapBoolFilter = "fits40" | "verifiedOnly" | "hasWater" | "freeCamping";

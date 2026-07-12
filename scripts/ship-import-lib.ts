@@ -188,3 +188,39 @@ export async function runImport(sourceLabel: string, rows: ImportRow[]) {
 export function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+// ── Commercial boondocks (rest areas + retail lots) ───────────────────────────
+
+export type CommercialKind = "rest_area" | "walmart" | "home_depot";
+
+/**
+ * Classify an OSM element as a commercial boondock, or null. Rest areas match
+ * on highway=rest_area. Retail lots match on the brand wikidata ids
+ * (Walmart Q483551, The Home Depot Q864407) or a brand/name match, and must
+ * be the store itself: the shop tag is restricted to whole-store values so
+ * in-store department nodes (garden centre, auto care, pharmacy) and
+ * brand-tagged fuel pumps don't become duplicate pins. Disused, abandoned,
+ * and "(historical)" features are refused.
+ */
+const WALMART_SHOPS = new Set(["supermarket", "department_store", "wholesale", "variety_store"]);
+const HOME_DEPOT_SHOPS = new Set(["doityourself", "hardware", "trade"]);
+
+export function classifyCommercial(tags: Record<string, string>): { kind: CommercialKind; fallback: string } | null {
+  if (/\(historical/i.test(tags.name ?? "")) return null;
+  for (const k of Object.keys(tags)) {
+    if (k === "disused" || k === "abandoned" || k.startsWith("disused:") || k.startsWith("abandoned:")) return null;
+  }
+  if (tags.highway === "rest_area") return { kind: "rest_area", fallback: "Rest area" };
+  const brand = `${tags["brand:wikidata"] ?? ""}|${tags.brand ?? ""}|${tags.name ?? ""}`;
+  if (WALMART_SHOPS.has(tags.shop ?? "") && (brand.includes("Q483551") || /walmart/i.test(brand))) return { kind: "walmart", fallback: "Walmart" };
+  if (HOME_DEPOT_SHOPS.has(tags.shop ?? "") && (brand.includes("Q864407") || /home depot/i.test(brand))) return { kind: "home_depot", fallback: "Home Depot" };
+  return null;
+}
+
+/** The field-honest access note stamped on every imported commercial boondock. */
+export function commercialAccessNote(kind: CommercialKind): string {
+  if (kind === "rest_area") {
+    return "Highway rest area. Overnight rules vary by state: Oregon allows up to 12 hours, Washington 8 hours, California prohibits camping at rest areas. Check posted signs; quiet night in the rig only, no setup.";
+  }
+  return "Big paved lot. Many stores welcome one quiet night; some lots prohibit it. Check posted signs and ask inside before settling. Park at the edge, keep it low-key, nothing set up outside.";
+}

@@ -4202,6 +4202,7 @@ export const shipLocations = mysqlTable("ship_locations", {
   type: mysqlEnum("type", [
     "land_project", "spring", "waterfall", "lake", "geology",
     "forest", "food_forest", "seed_site", "boondock", "event_venue",
+    "commercial_boondock",
   ]).notNull(),
   // Provenance (ADR-35). NULL for hand-suggested crew pins. Bulk imports stamp
   // where each pin came from and under what license; the detail drawer shows it.

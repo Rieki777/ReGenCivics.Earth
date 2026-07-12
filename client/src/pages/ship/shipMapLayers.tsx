@@ -26,6 +26,7 @@ import {
   TYPE_META, MAP_MAX_ZOOM,
   SATELLITE_TILE_URL, SATELLITE_LABELS_URL, SATELLITE_ATTRIBUTION,
   ANCHORAGE, VOYAGE_DAYS, VOYAGE_RADIUS_MILES, crowMilesForDays, rangeRing, withinVoyageRange,
+  litChakraPoints,
 } from "./shipMapConfig";
 
 const STALE_MS = 18 * 30 * 24 * 60 * 60 * 1000; // ~18 months
@@ -165,6 +166,59 @@ export function CascadiaBoundary({ show = true }: { show?: boolean }) {
     }).addTo(map);
 
     return () => { map.removeLayer(line); };
+  }, [map, show]);
+  return null;
+}
+
+// ── Chakra points: the subtle body of the bioregion ──────────────────────────
+function chakraIcon(color: string, name: string): L.DivIcon {
+  return L.divIcon({
+    className: "ship-chakra",
+    html:
+      `<div title="${name}" style="width:34px;height:34px;border-radius:50%;` +
+      `background:radial-gradient(circle at 50% 42%, #fff 0%, ${color} 55%, ${color} 100%);` +
+      `border:2px solid rgba(255,255,255,.9);` +
+      `box-shadow:0 0 18px 4px ${color}99, 0 2px 6px rgba(0,0,0,.45);` +
+      `display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;` +
+      `text-shadow:0 1px 2px rgba(0,0,0,.5)">✦</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
+
+/**
+ * The chakra layer: symbolic energy centers of the region, joined into one
+ * line of light. Voyagers are invited to focus, release, clear, and heal the
+ * energy of each center when they visit its land. Nodes come from
+ * CHAKRA_POINTS in shipMapConfig.ts; unfilled nodes simply wait unlit.
+ */
+export function ChakraLayer({ show = true }: { show?: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!show) return;
+    const lit = litChakraPoints();
+    if (lit.length === 0) return;
+    const group = L.layerGroup().addTo(map);
+
+    // The energy line: a soft white glow under a fine violet thread.
+    if (lit.length > 1) {
+      const path = lit.map((c) => [c.lat, c.lng]) as L.LatLngExpression[];
+      L.polyline(path, { color: "#ffffff", weight: 7, opacity: 0.14, interactive: false }).addTo(group);
+      L.polyline(path, { color: "#e8d9ff", weight: 1.75, opacity: 0.8, dashArray: "1 7", interactive: false }).addTo(group);
+    }
+
+    for (const c of lit) {
+      const m = L.marker([c.lat, c.lng], { icon: chakraIcon(c.color, `${c.name} · ${c.place ?? ""}`), zIndexOffset: 800, title: `${c.name} chakra` });
+      m.bindPopup(
+        `<strong>${c.name} <span style="font-weight:400;opacity:.75">· ${c.sanskrit}</span></strong>` +
+        `<div style="font-size:13px;margin-top:2px">${c.place ?? ""}</div>` +
+        `<div style="font-size:13px;margin-top:6px">${c.practice}</div>` +
+        `<div style="font-size:12px;margin-top:6px;opacity:.75">Focus this center when you visit. Release, clear, heal.</div>`,
+      );
+      m.addTo(group);
+    }
+
+    return () => { map.removeLayer(group); };
   }, [map, show]);
   return null;
 }

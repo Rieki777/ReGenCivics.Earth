@@ -28,8 +28,9 @@ import {
   MAP_MIN_ZOOM, MAP_MAX_ZOOM, MAP_DEFAULT_ZOOM,
 } from "./shipMapConfig";
 import {
-  BasemapLayer, VoyageRangeLayer, CascadiaBoundary, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
+  BasemapLayer, VoyageRangeLayer, CascadiaBoundary, ChakraLayer, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
 } from "./shipMapLayers";
+import { InnerCompassSection } from "./shipInnerCompass";
 import {
   loadVoyage, addToVoyage, removeFromVoyage, clearVoyage, saveVoyage,
   downloadVoyageGpx, voyageToGoogleMapsUrl, type VoyagePin,
@@ -63,7 +64,7 @@ function plantingIcon() {
   });
 }
 
-const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "food_forest", "land_project", "lake", "geology", "forest", "seed_site", "event_venue"];
+const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "commercial_boondock", "food_forest", "land_project", "lake", "geology", "forest", "seed_site", "event_venue"];
 
 export default function ShipMap() {
   const { isAuthenticated } = useAuth();
@@ -93,7 +94,11 @@ export default function ShipMap() {
   const [boolFilters, setBoolFilters] = useState<Set<MapBoolFilter>>(new Set());
   const [showBoundary, setShowBoundary] = useState(true);
   const [showPlantings, setShowPlantings] = useState(false);
+  const [showChakras, setShowChakras] = useState(true);
   const [legendOpen, setLegendOpen] = useState(false);
+
+  // The Inner Compass: the intuition practice + printable map builder.
+  const [innerCompassOpen, setInnerCompassOpen] = useState(false);
 
   // Selection / drawer.
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -266,7 +271,14 @@ export default function ShipMap() {
           <span className="mx-1 h-4 w-px bg-border" aria-hidden />
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showBoundary} onChange={(e) => setShowBoundary(e.target.checked)} /> Bioregion</label>
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showPlantings} onChange={(e) => setShowPlantings(e.target.checked)} /> Seed plantings</label>
-          <button onClick={() => setVoyageOpen((v) => !v)} className="ml-auto px-3 py-1 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showChakras} onChange={(e) => setShowChakras(e.target.checked)} /> Chakra points</label>
+          <button
+            onClick={() => { setInnerCompassOpen((v) => !v); setVoyageOpen(false); }}
+            className="ml-auto px-3.5 py-1.5 rounded-full text-sm font-semibold bg-[#8a5fc9] text-white shadow hover:brightness-105"
+          >
+            🧭 Inner Compass
+          </button>
+          <button onClick={() => setVoyageOpen((v) => !v)} className="px-3 py-1 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
             ⛵ My voyage{voyage.length ? ` (${voyage.length})` : ""}
           </button>
         </div>
@@ -286,6 +298,7 @@ export default function ShipMap() {
             <BasemapLayer />
             <VoyageRangeLayer />
             <CascadiaBoundary show={showBoundary} />
+            <ChakraLayer show={showChakras} />
             <ClusterLayer pins={filtered} onSelect={onSelect} />
             {voyage.length > 0 && <VoyageRoute stops={voyage.map((v, i) => ({ lat: v.lat, lng: v.lng, day: i + 1, name: v.name }))} />}
             <CrosshairPicker active={adding} onPick={onPick} />
@@ -343,9 +356,15 @@ export default function ShipMap() {
             <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed tokens are unverified: pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">The gold rings radiate from the anchorage, one per day of sail. Tokens past the {VOYAGE_DAYS}-day horizon sit in the fog, dimmed and out of play until she sails closer.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">Some pins come from partner datasets offered by other projects and networks. Those places carry a credit line to their source.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">The glowing colored orbs are chakra points: symbolic energy centers of the region, joined into one line of light. Visit one and focus its center. Release, clear, heal. More nodes will be named as the research lands.</p>
           </div>
         )}
       </ShipSection>
+
+      {/* The Inner Compass: intuition practice + printable map builder */}
+      {innerCompassOpen && (
+        <InnerCompassSection pins={allPins} activeTypes={activeTypes} onClose={() => setInnerCompassOpen(false)} />
+      )}
 
       {/* Plan your voyage with the First Mate */}
       <ShipSection className="bg-[#2f5d3a]/6">

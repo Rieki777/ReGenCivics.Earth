@@ -369,7 +369,7 @@ export const shipRouter = router({
       .input(
         z.object({
           name: z.string().min(2).max(200),
-          type: z.enum(["land_project", "spring", "waterfall", "lake", "geology", "forest", "food_forest", "seed_site", "boondock", "event_venue"]),
+          type: z.enum(["land_project", "spring", "waterfall", "lake", "geology", "forest", "food_forest", "seed_site", "boondock", "event_venue", "commercial_boondock"]),
           lat: z.number().min(-90).max(90),
           lng: z.number().min(-180).max(180),
           description: z.string().max(2000).optional(),

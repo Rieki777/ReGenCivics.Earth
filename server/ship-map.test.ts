@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { inBbox, inCascadiaPolygon, importSlug } from "../scripts/ship-import-lib";
+import { inBbox, inCascadiaPolygon, importSlug, classifyCommercial, commercialAccessNote } from "../scripts/ship-import-lib";
 import { voyageToGpx, voyageToGoogleMapsUrl, type VoyagePin } from "../client/src/pages/ship/shipVoyage";
 import {
   ANCHORAGE, VOYAGE_RADIUS_MILES, haversineMiles, withinVoyageRange, rangeRing,
@@ -70,6 +70,33 @@ describe("ship-map: voyage range (the game board, ADR-36)", () => {
       const d = haversineMiles(ANCHORAGE[0], ANCHORAGE[1], lat, lng);
       expect(Math.abs(d - VOYAGE_RADIUS_MILES)).toBeLessThan(1);
     }
+  });
+});
+
+describe("ship-map importer: commercial boondocks", () => {
+  it("classifies rest areas, Walmarts, and Home Depots", () => {
+    expect(classifyCommercial({ highway: "rest_area" })?.kind).toBe("rest_area");
+    expect(classifyCommercial({ shop: "supermarket", "brand:wikidata": "Q483551" })?.kind).toBe("walmart");
+    expect(classifyCommercial({ shop: "department_store", name: "Walmart Supercenter" })?.kind).toBe("walmart");
+    expect(classifyCommercial({ shop: "doityourself", "brand:wikidata": "Q864407" })?.kind).toBe("home_depot");
+    expect(classifyCommercial({ shop: "doityourself", name: "The Home Depot" })?.kind).toBe("home_depot");
+  });
+
+  it("refuses non-stores, in-store departments, and dead features", () => {
+    expect(classifyCommercial({ amenity: "fuel", "brand:wikidata": "Q483551" })).toBeNull(); // Walmart gas, no shop tag
+    expect(classifyCommercial({ shop: "garden_centre", name: "Walmart Garden Center" })).toBeNull(); // department inside the store
+    expect(classifyCommercial({ shop: "car_repair", name: "Walmart Auto Care Center" })).toBeNull();
+    expect(classifyCommercial({ highway: "rest_area", name: "(historical)Cow Creek Safety Rest Area SB" })).toBeNull();
+    expect(classifyCommercial({ highway: "rest_area", "disused:highway": "rest_area" })).toBeNull();
+    expect(classifyCommercial({ shop: "supermarket", name: "Safeway" })).toBeNull();
+    expect(classifyCommercial({ natural: "spring" })).toBeNull();
+    expect(classifyCommercial({})).toBeNull();
+  });
+
+  it("stamps field-honest access notes", () => {
+    expect(commercialAccessNote("rest_area")).toContain("Oregon allows up to 12 hours");
+    expect(commercialAccessNote("walmart")).toContain("Check posted signs");
+    expect(commercialAccessNote("home_depot")).toContain("ask inside");
   });
 });
 
