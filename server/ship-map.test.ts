@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { inBbox, inCascadiaPolygon, importSlug, classifyCommercial, commercialAccessNote } from "../scripts/ship-import-lib";
+import { inBbox, inCascadiaPolygon, importSlug, classifyCommercial, commercialAccessNote, classifyIoverlander } from "../scripts/ship-import-lib";
+import { isLocationVisible, isCrewOnlySource } from "@shared/shipVisibility";
 import { voyageToGpx, voyageToGoogleMapsUrl, type VoyagePin } from "../client/src/pages/ship/shipVoyage";
 import {
   ANCHORAGE, VOYAGE_RADIUS_MILES, haversineMiles, withinVoyageRange, rangeRing,
@@ -97,6 +98,52 @@ describe("ship-map importer: commercial boondocks", () => {
     expect(commercialAccessNote("rest_area")).toContain("Oregon allows up to 12 hours");
     expect(commercialAccessNote("walmart")).toContain("Check posted signs");
     expect(commercialAccessNote("home_depot")).toContain("ask inside");
+  });
+});
+
+describe("ship-map importer: iOverlander category mapping", () => {
+  it("maps camping categories to boondock", () => {
+    expect(classifyIoverlander("Wild Camping")?.type).toBe("boondock");
+    expect(classifyIoverlander("Informal Campsite")?.type).toBe("boondock");
+    const est = classifyIoverlander("Established Campground");
+    expect(est?.type).toBe("boondock");
+    expect(est?.accessNote).toContain("may charge a fee");
+  });
+
+  it("maps big-lot overnights to commercial_boondock", () => {
+    expect(classifyIoverlander("Walmart")?.type).toBe("commercial_boondock");
+    expect(classifyIoverlander("Casino")?.type).toBe("commercial_boondock");
+    expect(classifyIoverlander("Walmart")?.accessNote).toContain("Check posted signs");
+  });
+
+  it("maps water and hot springs to spring", () => {
+    expect(classifyIoverlander("Water")?.type).toBe("spring");
+    expect(classifyIoverlander("Drinking Water")?.type).toBe("spring");
+    const hot = classifyIoverlander("Hot Springs");
+    expect(hot?.type).toBe("spring");
+    expect(hot?.hotSpring).toBe(true);
+  });
+
+  it("skips services and empty categories", () => {
+    for (const svc of ["Fuel Station", "Propane", "Dump Station", "Laundromat", "Mechanic", "Medical", "Restaurant", "Wifi", "Showers", "Shopping", "Tourist Attraction", "Hotel", ""]) {
+      expect(classifyIoverlander(svc)).toBeNull();
+    }
+    expect(classifyIoverlander(null)).toBeNull();
+  });
+});
+
+describe("ship-map: crew-gating (iOverlander, people-we-know scope)", () => {
+  it("hides crew-only sources from anonymous viewers and shows them to signed-in crew", () => {
+    expect(isCrewOnlySource("ioverlander")).toBe(true);
+    expect(isCrewOnlySource("osm_overpass")).toBe(false);
+    expect(isCrewOnlySource(null)).toBe(false);
+    // anonymous
+    expect(isLocationVisible("ioverlander", false)).toBe(false);
+    expect(isLocationVisible("osm_overpass", false)).toBe(true);
+    expect(isLocationVisible(null, false)).toBe(true); // base seeds / crew pins
+    // signed in
+    expect(isLocationVisible("ioverlander", true)).toBe(true);
+    expect(isLocationVisible("osm_overpass", true)).toBe(true);
   });
 });
 

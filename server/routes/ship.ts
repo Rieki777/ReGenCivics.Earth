@@ -17,7 +17,8 @@
  *    revenue is segmentable. This router never moves money.
  */
 import { z } from "zod";
-import { and, or, eq, desc, asc, inArray, sql, gte, isNull, isNotNull } from "drizzle-orm";
+import { and, or, eq, desc, asc, inArray, notInArray, sql, gte, isNull, isNotNull } from "drizzle-orm";
+import { CREW_ONLY_SOURCES, isLocationVisible } from "@shared/shipVisibility";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -324,7 +325,7 @@ export const shipRouter = router({
           })
           .optional(),
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const d = await db();
         const conds = [eq(shipLocations.bioregion, input?.bioregion ?? "cascadia")];
         if (input?.verifiedOnly) conds.push(eq(shipLocations.isVerified, true));
@@ -332,6 +333,13 @@ export const shipRouter = router({
         if (input?.fits40) conds.push(gte(shipLocations.maxRigLengthFt, 40));
         if (input?.hasWater) conds.push(isNotNull(shipLocations.waterQualityUrl));
         if (input?.freeCamping) conds.push(eq(shipLocations.type, "boondock"));
+        // Crew-gate partner data used under a people-we-know scope (iOverlander,
+        // Section 1 of the import spec): anonymous visitors never receive those
+        // pins. Enforced server-side so they never reach the client. NULL-source
+        // rows (base seeds, crew pins) always pass.
+        if (!ctx.user) {
+          conds.push(or(isNull(shipLocations.source), notInArray(shipLocations.source, [...CREW_ONLY_SOURCES]))!);
+        }
         return d
           .select({
             id: shipLocations.id,
@@ -355,12 +363,15 @@ export const shipRouter = router({
 
     get: publicProcedure
       .input(z.object({ slug: z.string().max(200).optional(), id: z.number().int().optional() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const d = await db();
         if (!input.slug && input.id == null) return null;
         const where = input.slug ? eq(shipLocations.slug, input.slug) : eq(shipLocations.id, input.id!);
         const [row] = await d.select().from(shipLocations).where(where).limit(1);
-        return row ?? null;
+        if (!row) return null;
+        // Same crew-gate as map.list: never leak a crew-only pin to anonymous.
+        if (!isLocationVisible(row.source, Boolean(ctx.user))) return null;
+        return row;
       }),
 
     // "Add to the map" (the FAB). Crew-sourced, unverified, feeds the admin

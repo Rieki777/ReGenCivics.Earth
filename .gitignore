@@ -176,3 +176,7 @@ ELDER_BACKFILL_REVIEW.md
 # go-pmtiles binary + extract cache (build artifacts, never commit)
 scripts/.bin/
 scripts/.cache/
+
+# iOverlander CSV exports: partner data used with permission (personal use +
+# people we know). Never commit; lives only on this machine + the production DB.
+data/ioverlander/

@@ -356,6 +356,7 @@ export default function ShipMap() {
             <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed tokens are unverified: pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">The gold rings radiate from the anchorage, one per day of sail. Tokens past the {VOYAGE_DAYS}-day horizon sit in the fog, dimmed and out of play until she sails closer.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">Some pins come from partner datasets offered by other projects and networks. Those places carry a credit line to their source.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">Some places are shared with permission from iOverlander and visible to signed-in crew.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">The glowing colored orbs are chakra points: symbolic energy centers of the region, joined into one line of light. Visit one and focus its center. Release, clear, heal. More nodes will be named as the research lands.</p>
           </div>
         )}

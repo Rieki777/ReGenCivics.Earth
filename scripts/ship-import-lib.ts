@@ -224,3 +224,49 @@ export function commercialAccessNote(kind: CommercialKind): string {
   }
   return "Big paved lot. Many stores welcome one quiet night; some lots prohibit it. Check posted signs and ask inside before settling. Park at the edge, keep it low-key, nothing set up outside.";
 }
+
+// ── iOverlander category mapping ──────────────────────────────────────────────
+
+export type IoverlanderClass = {
+  /** The ship_locations type this category maps to. */
+  type: "boondock" | "commercial_boondock" | "spring";
+  /** Optional access note to stamp (established campgrounds, commercial lots). */
+  accessNote?: string;
+  /** True for hot springs, so the importer keeps "hot springs" in the blurb. */
+  hotSpring?: boolean;
+};
+
+/**
+ * Map an iOverlander category to a treasure-map type, or null to skip.
+ *
+ * Only three things are treasure here: free/rough camping (boondock), big-lot
+ * overnights (commercial_boondock), and water (spring). Everything else on
+ * iOverlander is a service (fuel, propane, dump, laundry, mechanic, medical,
+ * restaurant, wifi, showers, shopping, tourist attraction, lodging, border) and
+ * is skipped. Matching is case-insensitive substring so it survives small
+ * naming differences between exports.
+ */
+export function classifyIoverlander(category: string | null | undefined): IoverlanderClass | null {
+  const c = (category ?? "").trim().toLowerCase();
+  if (!c) return null;
+
+  // Water first (hot springs before generic water).
+  if (c.includes("hot spring")) return { type: "spring", hotSpring: true };
+  if (c.includes("water")) return { type: "spring" }; // "Water", "Drinking Water"
+
+  // Big-lot overnights → commercial_boondock, reusing the retail-lot wording.
+  if (/(walmart|casino|truck stop|rest area|parking|big box|store|mall|lot)/.test(c)) {
+    return { type: "commercial_boondock", accessNote: commercialAccessNote("walmart") };
+  }
+
+  // Camping.
+  if (c.includes("established campground") || (c.includes("campground") && !c.includes("informal"))) {
+    return { type: "boondock", accessNote: "Established campground, may charge a fee." };
+  }
+  if (/(wild camp|informal|dispersed|boondock|campsite)/.test(c)) {
+    return { type: "boondock" };
+  }
+
+  // Everything else is a service, not treasure.
+  return null;
+}
