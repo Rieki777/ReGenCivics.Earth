@@ -27,7 +27,7 @@ import {
   shipQuestActions, shipQuestCompletions, shipNominations, shipKeeperApplications,
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
-  shipDatasetOffers, shipInventoryItems,
+  shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
   shipCrewProfiles, shipGiveawayDrawings, churchDonations,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
@@ -47,6 +47,7 @@ import {
   SHIP_SEASON_START_YMD, SHIP_YEAR2_START_YMD, YEAR2_PRICE_MULTIPLIER, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
   SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
 } from "../lib/ship-config";
+import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
 import type { Itinerary } from "../lib/ship-logic";
 import { getStripe, isStripeConfigured } from "../lib/stripe";
@@ -1065,6 +1066,91 @@ export const shipRouter = router({
     }),
   }),
 
+  // ── The Shipwright (ship maintainer AI) ─────────────────────────────────────
+  shipwright: router({
+    // A voyager asks a maintenance/operation question. Retrieval over approved
+    // knowledge + similar resolved cases; safety triggers hard-route to make-safe
+    // guidance and mark the case as an escalation. Every ask logs a case so the
+    // Keeper sees the ship's running health.
+    ask: protectedProcedure
+      .input(z.object({
+        question: z.string().min(2).max(2000),
+        system: z.enum([
+          "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+          "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+        ]).default("general"),
+        caseId: z.number().int().optional(),
+        photoUrls: z.array(z.string().max(512)).max(6).optional(),
+        bookingId: z.number().int().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_shipwright");
+        const d = await db();
+        const question = sanitizeInput(input.question);
+
+        // Retrieve approved knowledge for this system (FULLTEXT, with a LIKE
+        // fallback) plus similar resolved cases in the same system.
+        let chunks: Array<{ title: string; content: string; system: string; sourceRef: string | null }> = [];
+        try {
+          chunks = await d
+            .select({ title: shipKnowledgeChunks.title, content: shipKnowledgeChunks.content, system: shipKnowledgeChunks.system, sourceRef: shipKnowledgeChunks.sourceRef })
+            .from(shipKnowledgeChunks)
+            .where(and(
+              eq(shipKnowledgeChunks.isApproved, true),
+              or(eq(shipKnowledgeChunks.system, input.system), sql`MATCH(${shipKnowledgeChunks.title}, ${shipKnowledgeChunks.content}) AGAINST (${question})`),
+            ))
+            .limit(6);
+        } catch {
+          chunks = await d
+            .select({ title: shipKnowledgeChunks.title, content: shipKnowledgeChunks.content, system: shipKnowledgeChunks.system, sourceRef: shipKnowledgeChunks.sourceRef })
+            .from(shipKnowledgeChunks)
+            .where(and(eq(shipKnowledgeChunks.isApproved, true), eq(shipKnowledgeChunks.system, input.system)))
+            .limit(6);
+        }
+        const priorCases = await d
+          .select({ title: shipMaintenanceCases.title, resolution: shipMaintenanceCases.resolution, whatWorked: shipMaintenanceCases.whatWorked })
+          .from(shipMaintenanceCases)
+          .where(and(eq(shipMaintenanceCases.system, input.system), eq(shipMaintenanceCases.status, "resolved")))
+          .limit(4);
+
+        const { reply, escalated, reason } = await askShipwright({
+          question,
+          chunks,
+          cases: priorCases.map((c) => ({ title: c.title, resolution: c.resolution, whatWorked: c.whatWorked })),
+          hasPhoto: Boolean(input.photoUrls?.length),
+        });
+
+        // Log/append the case so the ship's health has a continuous history.
+        const turn = [
+          { role: "user" as const, content: question },
+          { role: "assistant" as const, content: reply },
+        ];
+        let caseId = input.caseId ?? null;
+        if (caseId) {
+          const [existing] = await d.select().from(shipMaintenanceCases).where(eq(shipMaintenanceCases.id, caseId)).limit(1);
+          const convo = Array.isArray(existing?.conversation) ? (existing!.conversation as unknown[]) : [];
+          await d.update(shipMaintenanceCases)
+            .set({ conversation: [...convo, ...turn], status: escalated ? "escalated" : "advised", isEscalation: escalated || Boolean(existing?.isEscalation) })
+            .where(eq(shipMaintenanceCases.id, caseId));
+        } else {
+          const [res] = await d.insert(shipMaintenanceCases).values({
+            bookingId: input.bookingId ?? null,
+            reportedByUserId: ctx.user.id,
+            system: input.system as ShipSystem,
+            title: question.slice(0, 120),
+            description: question,
+            photoUrls: input.photoUrls ?? [],
+            conversation: turn,
+            status: escalated ? "escalated" : "advised",
+            isEscalation: escalated,
+          });
+          caseId = (res as { insertId?: number }).insertId ?? null;
+          if (escalated) await notifyOwner({ title: "Ship Shipwright escalation", content: `${reason}: ${question.slice(0, 200)}` }).catch(() => {});
+        }
+        return { reply, escalated, reason, caseId };
+      }),
+  }),
+
   // ── The Ship's Inventory (the bag) ──────────────────────────────────────────
   inventory: router({
     // Public: every visible item, grouped client-side into the grid.
@@ -1477,6 +1563,61 @@ export const shipRouter = router({
     deleteInventory: adminProcedure.input(z.object({ id: z.number().int() })).mutation(async ({ input }) => {
       const d = await db();
       await d.delete(shipInventoryItems).where(eq(shipInventoryItems.id, input.id));
+      return { ok: true };
+    }),
+
+    // The Shipwright: cases queue, resolution, and approve-into-KB. Escalations
+    // surface first. Bad advice never compounds automatically: a resolved case
+    // becomes a knowledge chunk only when Rye or the Keeper approves it.
+    listMaintenanceCases: adminProcedure.query(async () => {
+      const d = await db();
+      return d.select().from(shipMaintenanceCases).orderBy(desc(shipMaintenanceCases.isEscalation), desc(shipMaintenanceCases.createdAt)).limit(500);
+    }),
+    resolveMaintenanceCase: adminProcedure
+      .input(z.object({
+        id: z.number().int(),
+        status: z.enum(["open", "advised", "resolved", "escalated"]),
+        resolution: z.string().max(4000).optional(),
+        whatWorked: z.string().max(2000).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        await d.update(shipMaintenanceCases).set({
+          status: input.status,
+          resolution: input.resolution ? sanitizeInput(input.resolution) : null,
+          whatWorked: input.whatWorked ? sanitizeInput(input.whatWorked) : null,
+          resolvedAt: input.status === "resolved" ? new Date() : null,
+        }).where(eq(shipMaintenanceCases.id, input.id));
+        return { ok: true };
+      }),
+    approveCaseIntoKb: adminProcedure
+      .input(z.object({ id: z.number().int() }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        const [c] = await d.select().from(shipMaintenanceCases).where(eq(shipMaintenanceCases.id, input.id)).limit(1);
+        if (!c) throw new TRPCError({ code: "NOT_FOUND", message: "Case not found." });
+        if (!c.resolution) throw new TRPCError({ code: "BAD_REQUEST", message: "Resolve the case first, so there is a fix to record." });
+        if (c.approvedIntoKb) return { ok: true, already: true };
+        const content = [c.description ? `Symptom: ${c.description}` : "", c.resolution ? `Fix: ${c.resolution}` : "", c.whatWorked ? `What worked: ${c.whatWorked}` : ""].filter(Boolean).join("\n");
+        await d.insert(shipKnowledgeChunks).values({
+          title: c.title,
+          content,
+          system: c.system,
+          sourceType: "resolved_case",
+          sourceRef: `case #${c.id}`,
+          tags: [],
+          isApproved: true,
+        });
+        await d.update(shipMaintenanceCases).set({ approvedIntoKb: true }).where(eq(shipMaintenanceCases.id, input.id));
+        return { ok: true };
+      }),
+    listKnowledgeChunks: adminProcedure.query(async () => {
+      const d = await db();
+      return d.select().from(shipKnowledgeChunks).orderBy(desc(shipKnowledgeChunks.createdAt)).limit(500);
+    }),
+    approveKnowledgeChunk: adminProcedure.input(z.object({ id: z.number().int(), isApproved: z.boolean().default(true) })).mutation(async ({ input }) => {
+      const d = await db();
+      await d.update(shipKnowledgeChunks).set({ isApproved: input.isApproved }).where(eq(shipKnowledgeChunks.id, input.id));
       return { ok: true };
     }),
   }),

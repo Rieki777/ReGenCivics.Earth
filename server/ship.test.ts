@@ -15,6 +15,7 @@ import {
   SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES,
   SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
 } from "./lib/ship-config";
+import { detectEscalation, makeSafeMessage } from "./lib/ship-shipwright";
 
 /**
  * ReGen Ship tests. The vitest env has no DATABASE_URL and no LLM key, so we
@@ -174,6 +175,29 @@ describe("ship-logic: crew capacity (four aboard, five for a family)", () => {
   it("rejects six or more, and requires an adult", () => {
     expect(isValidCrewSize(3, 3)).toBe(false);
     expect(isValidCrewSize(0, 3)).toBe(false);
+  });
+});
+
+describe("ship-shipwright: safety-rail escalation detection", () => {
+  it("escalates propane, brakes, steering, air, burning, fire, and CO", () => {
+    expect(detectEscalation("I smell propane near the stove").escalate).toBe(true);
+    expect(detectEscalation("there's a rotten egg smell").escalate).toBe(true);
+    expect(detectEscalation("the brakes feel spongy and won't stop").escalate).toBe(true);
+    expect(detectEscalation("the steering is pulling hard to one side").escalate).toBe(true);
+    expect(detectEscalation("she dropped on one side, air suspension leak").escalate).toBe(true);
+    expect(detectEscalation("there's a burning smell from the dash").escalate).toBe(true);
+    expect(detectEscalation("smoke is coming from the engine, maybe fire").escalate).toBe(true);
+    expect(detectEscalation("the carbon monoxide alarm is going off").escalate).toBe(true);
+  });
+  it("does not escalate ordinary questions", () => {
+    expect(detectEscalation("how do I bring the slide-outs in?").escalate).toBe(false);
+    expect(detectEscalation("where is the drinking water filter?").escalate).toBe(false);
+    expect(detectEscalation("the Starlink dropped, what do I do?").escalate).toBe(false);
+  });
+  it("make-safe message always tells them to call the Keeper", () => {
+    const msg = makeSafeMessage("a propane smell or leak");
+    expect(msg).toContain("Keeper");
+    expect(msg.toLowerCase()).toContain("propane");
   });
 });
 

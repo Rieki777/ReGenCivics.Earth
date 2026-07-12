@@ -6,6 +6,7 @@ import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { Video, Compass } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { AskShipwright } from "@/components/ship/AskShipwright";
 
 /** Empty-state slot for a captain's video walkthrough still to come. */
 function WalkthroughPlaceholder() {
@@ -50,17 +51,50 @@ const SECTIONS: Section[] = [
   },
   {
     id: "driving",
-    title: "Driving the 40-foot ship",
+    title: "Driving the 40-foot ship: you are the captain",
     walkthrough: true,
     body: (
       <>
         <p>
-          She's 40 feet with three slide-outs. Driving her is calm once you respect her size: wide turns, slow into
-          camp, and eyes on your mirrors and clearances. Your driver must be 25 or older, hold a valid license, and be
-          verified before the voyage.
+          You are the captain of a ship, and that is the point. She is 40 feet long. The ship language exists to break
+          the "just another car" mindset, because that mindset is dangerous in an RV. Wide turns. Steer toward the
+          center. She is an entirely different beast, and captaining her differently is what keeps everyone safe. Your
+          driver must be 25 or older, hold a valid license, and be verified before the voyage.
+        </p>
+        <p><strong>MCS: Mindful, Careful, Slow.</strong></p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Mindful:</strong> your full mind aware, conscious of your surroundings, fully present.</li>
+          <li><strong>Careful:</strong> your heart present, centered, and joyful. Never take the captain's seat angry, anxious, or overwhelmed.</li>
+          <li><strong>Slow:</strong> take it easy. An accident causes far more traffic than you ever will by going gently.</li>
+        </ul>
+        <p>
+          The driver must be capable of driving a 40-foot vehicle on the route of your choosing. It is highly advisable
+          to stay on the main roads and use the bikes to get around towns.
+        </p>
+        <p>
+          <strong>The cannabis rule, plainly:</strong> we sail Oregon, Washington, and California, where the sacrament is
+          legal, and driving after partaking is never okay. You are liable for damages and the insurance deductible.
+          Arrive, set up fully, confirm the ship will not move again today, and then enjoy what you enjoy.
+        </p>
+        <p>
+          <strong>Her quirks, honestly:</strong> she is 20-plus years old, and like every ship her age she has quirks.
+          Right now one leveling jack needs manual operation, and you do not strictly need the jacks; they are a nice
+          touch. Quirks like these are exactly why the trial year is discounted, and trial-year revenue funds the
+          year-two upgrades. None of it stands between you and an epic voyage.
         </p>
         <p>The orientation covers setup and breakdown of the slide-outs, leveling, and hitching the tow gear.</p>
       </>
+    ),
+  },
+  {
+    id: "food-aboard",
+    title: "Is there food aboard?",
+    body: (
+      <p>
+        There is, and the pantry is a commons. It is your responsibility: if you take from it, please replenish for the
+        next crew. The ship's way is stopping to make food and share a view, so buy local, cook real meals, and leave
+        her galley stocked the way you would want to find it.
+      </p>
     ),
   },
   {
@@ -174,6 +208,12 @@ export default function ShipGuide() {
               {s.walkthrough ? <WalkthroughPlaceholder /> : null}
             </section>
           ))}
+        </div>
+      </ShipSection>
+
+      <ShipSection className="pt-0">
+        <div className="max-w-3xl">
+          <AskShipwright />
         </div>
       </ShipSection>
     </PageWrapper>
