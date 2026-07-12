@@ -176,6 +176,31 @@ export const shipRouter = router({
   // What is live (concierge, offering/gift forms, platform listing, tracker).
   featureFlags: publicProcedure.query(() => shipFeatureFlags()),
 
+  // State of the Ship: the public trust dashboard (SHIP_V5_FLYWHEEL Section 3).
+  // The collective-ownership story, live and provable. Cached client-side.
+  stateOfShip: publicProcedure.query(async () => {
+    const d = await db();
+    const free = await loadFreeVoyageStatus();
+    const [seeds] = await d
+      .select({ n: sql<number>`COUNT(*)` })
+      .from(shipSeedPlantings)
+      .where(eq(shipSeedPlantings.isVerified, true));
+    const sailed = await d
+      .select({ id: shipBookings.id })
+      .from(shipBookings)
+      .where(eq(shipBookings.status, "completed"));
+    return {
+      percentBooked: free.percentBooked,
+      bookedVoyages: free.bookedVoyages,
+      target: free.target,
+      freeVoyagesUnlocked: free.freeVoyagesUnlocked,
+      freeVoyagesTotal: free.freeVoyagesTotal,
+      poolSize: free.poolSize,
+      seedsPlanted: Number(seeds?.n ?? 0),
+      voyagesSailed: sailed.length,
+    };
+  }),
+
   // Trial-year price for a set of dates, breakdown for the two-line display.
   quote: publicProcedure
     .input(z.object({ startDate: YMD, endDate: YMD }))
@@ -1247,10 +1272,34 @@ export const shipRouter = router({
       }),
 
     setBookingStatus: adminProcedure
-      .input(z.object({ id: z.number().int(), status: z.enum(["requested", "approved", "platform_pending", "confirmed", "active", "completed", "cancelled"]), isWinnerVoyage: z.boolean().optional(), isGifted: z.boolean().optional() }))
-      .mutation(async ({ input }) => {
+      .input(z.object({ id: z.number().int(), status: z.enum(["requested", "approved", "platform_pending", "confirmed", "active", "completed", "cancelled"]), isWinnerVoyage: z.boolean().optional(), isGifted: z.boolean().optional(), overrideOrientation: z.boolean().optional(), overrideReason: z.string().max(500).optional() }))
+      .mutation(async ({ ctx, input }) => {
         const d = await db();
+        // The orientation gate (SHIP_V5_FLYWHEEL Section 5): a booking cannot move
+        // to `active` until the Keeper has run the 2-hour walkthrough, unless an
+        // admin overrides it with a logged reason.
+        if (input.status === "active") {
+          const [b] = await d.select().from(shipBookings).where(eq(shipBookings.id, input.id)).limit(1);
+          if (b && !b.orientationCompletedAt) {
+            if (!input.overrideOrientation) {
+              throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No captain sails her without the handing of the keys. Mark orientation complete first, or override with a reason." });
+            }
+            console.warn(`[ship] orientation gate overridden for booking ${input.id} by user ${ctx.user.id}: ${input.overrideReason ?? "(no reason)"}`);
+          }
+        }
         await d.update(shipBookings).set({ status: input.status, ...(input.isWinnerVoyage != null ? { isWinnerVoyage: input.isWinnerVoyage } : {}), ...(input.isGifted != null ? { isGifted: input.isGifted } : {}) }).where(eq(shipBookings.id, input.id));
+        return { ok: true };
+      }),
+    // The Keeper (or an admin) marks the orientation walkthrough complete, which
+    // unlocks the booking to become `active` and the driving-day features.
+    completeOrientation: adminProcedure
+      .input(z.object({ bookingId: z.number().int(), complete: z.boolean().default(true) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        await d.update(shipBookings).set({
+          orientationCompletedAt: input.complete ? new Date() : null,
+          orientationKeeperId: input.complete ? ctx.user.id : null,
+        }).where(eq(shipBookings.id, input.bookingId));
         return { ok: true };
       }),
 

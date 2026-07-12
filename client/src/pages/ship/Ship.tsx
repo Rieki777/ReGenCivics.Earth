@@ -13,6 +13,7 @@ import {
   SHIP_TAGLINE, CHESTNUT_URL,
 } from "./shipShared";
 import { ShipInventory } from "@/components/ship/ShipInventory";
+import { StateOfShip } from "@/components/ship/StateOfShip";
 
 const PERKS = [
   { icon: Sun, title: "The healthiest coach on the road", body: "A 2006 luxury build chosen on purpose: real wood and stone trim, cured decades past off-gassing. 100% organic linens and towels, cast iron and natural cookware, organic soaps and body products stocked for you." },
@@ -172,6 +173,14 @@ export default function Ship() {
             <p className="text-sm text-muted-foreground mt-3">Ten percent of every voyage buys the ship herself back into community ownership.</p>
           </div>
         </div>
+      </ShipSection>
+
+      {/* State of the Ship: the public trust dashboard */}
+      <ShipSection className="bg-[#2b7fb8]/[0.06]">
+        <ShipEyebrow>State of the ship</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-2">She belongs to the movement, and here is the proof, live</h2>
+        <p className="text-foreground/80 max-w-2xl mb-6">The whole community watches the tide rise together. Getting the word out is the game.</p>
+        <div className="max-w-4xl"><StateOfShip /></div>
       </ShipSection>
 
       {/* Quest + fleet CTAs */}
