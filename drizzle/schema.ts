@@ -4273,6 +4273,10 @@ export const shipBookings = mysqlTable("ship_bookings", {
   /** Keeper-run orientation gate: set when the 2-hour walkthrough is complete. */
   orientationCompletedAt: timestamp("orientationCompletedAt"),
   orientationKeeperId: int("orientationKeeperId"),
+  /** Crew roles for this voyage: { captain, navigator, quartermaster, bosun, seedKeeper }. */
+  crewRoles: json("crewRoles"),
+  /** Pre-sail checklist completions, one per drive: [{ at, byName }]. */
+  preSailLog: json("preSailLog"),
   platformBookingRef: varchar("platformBookingRef", { length: 255 }),
   dietCommitmentAt: timestamp("dietCommitmentAt"),
   waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),

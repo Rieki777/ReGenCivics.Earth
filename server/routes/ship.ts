@@ -322,6 +322,46 @@ export const shipRouter = router({
     return { booking: active, itinerary: (session?.itinerary as Itinerary | null) ?? null, logEntries, plantings, stamps };
   }),
 
+  // ── The Captain's Book (active-voyage hub) ──────────────────────────────────
+  voyage: router({
+    // Set the crew roles for the sailing voyage (Captain, Navigator, and so on).
+    setRoles: protectedProcedure
+      .input(z.object({
+        captain: z.string().max(120).optional(),
+        navigator: z.string().max(120).optional(),
+        quartermaster: z.string().max(120).optional(),
+        bosun: z.string().max(120).optional(),
+        seedKeeper: z.string().max(120).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [active] = await d.select().from(shipBookings)
+          .where(and(eq(shipBookings.userId, ctx.user.id), inArray(shipBookings.status, ["confirmed", "active"])))
+          .orderBy(asc(shipBookings.startDate)).limit(1);
+        if (!active) throw new TRPCError({ code: "NOT_FOUND", message: "No sailing voyage to set roles on." });
+        const roles = Object.fromEntries(
+          Object.entries(input).filter(([, v]) => v).map(([k, v]) => [k, sanitizeInput(v as string)]),
+        );
+        await d.update(shipBookings).set({ crewRoles: roles }).where(eq(shipBookings.id, active.id));
+        return { ok: true, roles };
+      }),
+    // Log a completed pre-sail checklist run (one per drive), for the crew's and
+    // the church's protection on damage questions.
+    logPreSail: protectedProcedure
+      .input(z.object({ byName: z.string().min(1).max(120) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [active] = await d.select().from(shipBookings)
+          .where(and(eq(shipBookings.userId, ctx.user.id), inArray(shipBookings.status, ["confirmed", "active"])))
+          .orderBy(asc(shipBookings.startDate)).limit(1);
+        if (!active) throw new TRPCError({ code: "NOT_FOUND", message: "No sailing voyage to log against." });
+        const prior = Array.isArray(active.preSailLog) ? (active.preSailLog as Array<{ at: string; byName: string }>) : [];
+        const entry = { at: new Date().toISOString(), byName: sanitizeInput(input.byName) };
+        await d.update(shipBookings).set({ preSailLog: [...prior, entry] }).where(eq(shipBookings.id, active.id));
+        return { ok: true, entry, count: prior.length + 1 };
+      }),
+  }),
+
   // ── Treasure map ──────────────────────────────────────────────────────────
   map: router({
     // Lean projection for the clustered map. Returns verified pins (the treasure)
@@ -1149,6 +1189,17 @@ export const shipRouter = router({
         }
         return { reply, escalated, reason, caseId };
       }),
+
+    // The crew's own maintenance log (their cases), newest first.
+    myCases: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      return d
+        .select({ id: shipMaintenanceCases.id, system: shipMaintenanceCases.system, title: shipMaintenanceCases.title, status: shipMaintenanceCases.status, isEscalation: shipMaintenanceCases.isEscalation, createdAt: shipMaintenanceCases.createdAt })
+        .from(shipMaintenanceCases)
+        .where(eq(shipMaintenanceCases.reportedByUserId, ctx.user.id))
+        .orderBy(desc(shipMaintenanceCases.createdAt))
+        .limit(50);
+    }),
   }),
 
   // ── The Ship's Inventory (the bag) ──────────────────────────────────────────
