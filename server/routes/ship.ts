@@ -42,9 +42,9 @@ import {
   type QuestCompletionRow, type DrawEntry,
 } from "../lib/ship-logic";
 import {
-  MIN_GUESTS, MAX_GUESTS, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
+  MIN_GUESTS, MAX_GUESTS, MAX_GUESTS_WITH_KIDS, isValidCrewSize, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
   MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
-  SHIP_SEASON_START_YMD, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
+  SHIP_SEASON_START_YMD, SHIP_YEAR2_START_YMD, YEAR2_PRICE_MULTIPLIER, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
   SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
 } from "../lib/ship-config";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
@@ -205,6 +205,8 @@ export const shipRouter = router({
     const today = new Date().toISOString().slice(0, 10);
     const weeks = enumerateVoyageWeeks({
       seasonStart: SHIP_SEASON_START_YMD,
+      year2Start: SHIP_YEAR2_START_YMD,
+      year2Multiplier: YEAR2_PRICE_MULTIPLIER,
       horizonWeeks: SHIP_BOOKING_HORIZON_WEEKS,
       today,
       booked: blocking.map((b) => ({ startDate: b.startDate, endDate: b.endDate })),
@@ -231,7 +233,11 @@ export const shipRouter = router({
         .object({
           startDate: YMD,
           endDate: YMD,
-          guests: z.number().int().min(MIN_GUESTS).max(MAX_GUESTS),
+          // adults + children, capped by the crew-size rule. `guests` kept as a
+          // fallback total for older clients; adults defaults from it.
+          adults: z.number().int().min(1).max(MAX_GUESTS_WITH_KIDS).optional(),
+          children: z.number().int().min(0).max(MAX_GUESTS_WITH_KIDS).default(0),
+          guests: z.number().int().min(MIN_GUESTS).max(MAX_GUESTS_WITH_KIDS).optional(),
           dietCommitment: z.literal(true),
           waterDoctrineCommitment: z.literal(true),
           ref: z.string().max(40).optional(),
@@ -240,6 +246,13 @@ export const shipRouter = router({
         .refine((v) => isValidVoyageLength(v.startDate, v.endDate), {
           message: "A voyage is a whole number of 7-night cycles. Pick dates 7, 14, or 21 nights apart.",
           path: ["endDate"],
+        })
+        .refine((v) => {
+          const adults = v.adults ?? Math.max(1, (v.guests ?? 1) - (v.children ?? 0));
+          return isValidCrewSize(adults, v.children ?? 0);
+        }, {
+          message: "Up to four aboard, or five when at least three are children.",
+          path: ["adults"],
         }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -265,11 +278,15 @@ export const shipRouter = router({
       }
 
       const now = new Date();
+      const children = input.children ?? 0;
+      const adults = input.adults ?? Math.max(1, (input.guests ?? 1) - children);
+      const totalGuests = adults + children;
       const [res] = await d.insert(shipBookings).values({
         userId: ctx.user.id,
         startDate: input.startDate,
         endDate: input.endDate,
-        guests: input.guests,
+        guests: totalGuests,
+        children,
         status: "requested",
         dietCommitmentAt: now,
         waterDoctrineCommitmentAt: now,
@@ -278,7 +295,7 @@ export const shipRouter = router({
       });
       const id = (res as { insertId?: number }).insertId ?? null;
       if (ctx.user.email) {
-        await emailBookingReceived(ctx.user.email, { id: id ?? 0, startDate: input.startDate, endDate: input.endDate, guests: input.guests });
+        await emailBookingReceived(ctx.user.email, { id: id ?? 0, startDate: input.startDate, endDate: input.endDate, guests: totalGuests });
       }
       return { id };
     }),

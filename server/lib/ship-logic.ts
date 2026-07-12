@@ -106,10 +106,14 @@ export type SeasonalBand = {
 };
 
 export type VoyageWeek = {
-  /** Saturday the voyage begins (YYYY-MM-DD). */
+  /** Monday the voyage boards, 3pm (YYYY-MM-DD). */
   startDate: string;
-  /** The following Saturday: turnover day, exclusive end of the 7 nights. */
+  /** The following Sunday she returns, 11am (display date; six days after boarding). */
+  returnDate: string;
+  /** The following Monday: exclusive end of the 7-day slot, shared with the next week. */
   endDate: string;
+  /** True when this week bills at the year-two full rate. */
+  isYear2: boolean;
   state: WeekState;
   /** Where she is projected to be that week. */
   bioregion: string;
@@ -126,8 +130,12 @@ export type VoyageWeek = {
 type DateRange = { startDate: string; endDate: string };
 
 export type EnumerateWeeksInput = {
-  /** Anchor Saturday the grid starts from. */
+  /** Anchor Monday the grid starts from. */
   seasonStart: string;
+  /** First Monday of year two; weeks on/after it bill at the full rate. */
+  year2Start?: string;
+  /** Base multiplier applied to year-two weeks (e.g. 2 for double the trial). */
+  year2Multiplier?: number;
   /** How many upcoming weeks to return. */
   horizonWeeks: number;
   /** Today as YYYY-MM-DD; weeks that have fully passed are dropped. */
@@ -145,28 +153,34 @@ export type EnumerateWeeksInput = {
 };
 
 /**
- * Enumerate the bookable voyage-week grid. Weeks run Saturday to Saturday on a
- * fixed anchor; the shared Saturday is the turnover day (half-open ranges, so a
- * week ending the day another starts does not overlap). Each week resolves to a
- * single state, a projected bioregion, and a seasonal price. This is the source
- * of truth for the booking page: the guest never deduces a valid start date.
+ * Enumerate the bookable voyage-week grid. Each week boards Monday 3pm and
+ * returns the following Sunday 11am; the 7-day slot is shared at the Monday
+ * boundary (half-open ranges, so a week ending the day another starts does not
+ * overlap), and the Sunday-into-Monday window is turnover. Each week resolves to
+ * a single state, a projected bioregion, and a per-voyage price (doubled in year
+ * two). This is the source of truth for the booking page: the guest never
+ * deduces a valid start date.
  */
 export function enumerateVoyageWeeks(input: EnumerateWeeksInput): VoyageWeek[] {
   const out: VoyageWeek[] = [];
   let cursor = input.seasonStart;
+  const year2Mult = input.year2Multiplier ?? 1;
   // Hard cap on iterations so a bad anchor can never loop forever.
   for (let i = 0; i < 520 && out.length < input.horizonWeeks; i++) {
     const startDate = cursor;
     const endDate = addDaysYmd(startDate, VOYAGE_NIGHTS);
-    cursor = endDate; // next week begins on the turnover Saturday
+    const returnDate = addDaysYmd(startDate, VOYAGE_NIGHTS - 1); // Sunday she returns
+    cursor = endDate; // next week boards the following Monday
     if (startDate <= input.today) continue; // already begun or past: cannot start it
 
     const band = input.bands.find((b) => startDate >= b.startDate && startDate < b.endDate);
     const bioregion = band?.bioregion ?? "Cascadia";
     const migration = Boolean(band?.migration);
 
+    const isYear2 = Boolean(input.year2Start && startDate >= input.year2Start);
+    const baseMultiplier = isYear2 ? year2Mult : 1;
     const win = input.pricingWindows.find((w) => rangesOverlap(startDate, endDate, w.startDate, w.endDate));
-    const priceMultiplier = win ? Number(win.multiplier) || 1 : 1;
+    const priceMultiplier = baseMultiplier * (win ? Number(win.multiplier) || 1 : 1);
 
     let state: WeekState;
     if (migration) {
@@ -189,14 +203,16 @@ export function enumerateVoyageWeeks(input: EnumerateWeeksInput): VoyageWeek[] {
 
     out.push({
       startDate,
+      returnDate,
       endDate,
+      isYear2,
       state,
       bioregion,
       migration,
       selectable: state === "open" || state === "requested",
       priceMultiplier,
       price: computeVoyagePrice(VOYAGE_NIGHTS, priceMultiplier),
-      windowLabel: win?.label ?? null,
+      windowLabel: win?.label ?? (isYear2 ? "Year two, full rate" : null),
     });
   }
   return out;

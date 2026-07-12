@@ -47,7 +47,11 @@ export default function ShipBook() {
   const [startIdx, setStartIdx] = useState<number | null>(null);
   const [count, setCount] = useState(1);
   const [view, setView] = useState<"cards" | "list">("cards");
-  const [guests, setGuests] = useState(2);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const guests = adults + children;
+  // Up to four aboard, or five when at least three are children.
+  const crewOk = guests <= 4 || (guests === 5 && children >= 3);
   const [diet, setDiet] = useState(false);
   const [water, setWater] = useState(false);
   const [notes, setNotes] = useState("");
@@ -57,7 +61,6 @@ export default function ShipBook() {
   const selected = startIdx === null ? [] : weeks.slice(startIdx, startIdx + count);
   const startDate = selected[0]?.startDate ?? "";
   const endDate = selected[selected.length - 1]?.endDate ?? "";
-  const nights = selected.length * 7;
   const total = selected.reduce((sum, w) => sum + w.price.total, 0);
   const bioregions = Array.from(new Set(selected.map((w) => w.bioregion)));
 
@@ -96,11 +99,14 @@ export default function ShipBook() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!startDate) return toast.error("Pick a voyage week.");
+    if (!crewOk) return toast.error("Up to four aboard, or five when at least three are children.");
     if (!diet || !water) return toast.error("Both commitments are required to sail.");
     try {
       await request.mutateAsync({
         startDate,
         endDate,
+        adults,
+        children,
         guests,
         dietCommitment: true,
         waterDoctrineCommitment: true,
@@ -121,20 +127,22 @@ export default function ShipBook() {
 
   const submitReason = !startDate
     ? "Pick a voyage week to continue."
-    : !diet || !water
-      ? "Confirm both commitments to sail."
-      : null;
+    : !crewOk
+      ? "Up to four aboard, or five when at least three are children."
+      : !diet || !water
+        ? "Confirm both commitments to sail."
+        : null;
 
   return (
     <PageWrapper>
-      <SEO title="Book a Voyage" description="Request an open week aboard the ReGen Ship. Seven-night voyages through Cascadia." url="/ship/book" />
+      <SEO title="Book a Voyage" description="Request an open voyage week aboard the ReGen Ship through Cascadia. Board Monday, return Sunday." url="/ship/book" />
       <ShipNavRow current="/ship/book" />
 
       <ShipSection>
         <ShipEyebrow>Book a voyage</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Choose your voyage week</h1>
         <PriceTag className="mb-4" />
-        <p className="text-foreground/80 max-w-2xl">Voyages run Saturday to Saturday, one seven-night tank cycle at a time. The Saturday she changes hands is her turnover day, when the Keeper resets her for the next crew. Chain up to three weeks for a longer sail; she resets on each turnover. Every week below is a real open week on her calendar.</p>
+        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to three weeks for a longer sail; she resets her tanks on each turnover. Every week below is a real open week on her calendar.</p>
       </ShipSection>
 
       <ShipSection className="bg-[#4a7c59]/8 pt-0">
@@ -180,14 +188,14 @@ export default function ShipBook() {
                   {weeks.map((wk, i) => {
                     const meta = STATE_META[wk.state as WeekState];
                     const sel = isSelected(i);
-                    const perNight = Math.round(wk.price.total / 7);
+                    const returnDay = (wk as { returnDate?: string }).returnDate ?? wk.endDate;
                     return (
                       <li key={wk.startDate} role="option" aria-selected={sel}>
                         <button
                           type="button"
                           onClick={() => clickWeek(i)}
                           disabled={!wk.selectable}
-                          aria-label={`Sail ${fmtDay(wk.startDate)} to ${fmtDay(wk.endDate)}, ${wk.bioregion}, ${meta.label}, $${wk.price.total.toLocaleString()} the week`}
+                          aria-label={`Board ${fmtDay(wk.startDate)} 3pm, return ${fmtDay(returnDay)} 11am, ${wk.bioregion}, ${meta.label}, $${wk.price.total.toLocaleString()} the voyage`}
                           className={[
                             "w-full text-left rounded-2xl border p-4 transition-all",
                             view === "list" ? "flex items-center justify-between gap-4" : "",
@@ -198,7 +206,7 @@ export default function ShipBook() {
                           <div className={view === "list" ? "" : "mb-2"}>
                             <div className="flex items-center gap-2 font-semibold">
                               <Compass className="w-4 h-4 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
-                              Sail {fmtDay(wk.startDate)} <span aria-hidden="true">→</span> {fmtDay(wk.endDate)}
+                              Board {fmtDay(wk.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}
                             </div>
                             <div className="flex items-center gap-1.5 text-sm text-foreground/70 mt-1">
                               <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> {wk.bioregion}
@@ -208,7 +216,7 @@ export default function ShipBook() {
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.badge}`}>{meta.label}</span>
                             <span className="block text-sm mt-1">
                               <span className="font-semibold">${wk.price.total.toLocaleString()}</span>
-                              <span className="text-muted-foreground"> · ${perNight}/night</span>
+                              <span className="text-muted-foreground"> the voyage</span>
                               {wk.windowLabel && <span className="text-muted-foreground"> · {wk.windowLabel}</span>}
                             </span>
                           </div>
@@ -225,10 +233,10 @@ export default function ShipBook() {
               <div className="rounded-2xl border border-[#ffd700]/60 bg-[#ffd700]/10 p-4">
                 <p className="font-semibold">Your voyage: {fmtDay(startDate)} to {fmtDay(endDate)}</p>
                 <p className="text-sm text-foreground/80 mt-1">
-                  {selected.length} {selected.length === 1 ? "week" : "weeks"}, {nights} nights through {bioregions.join(" and ")}. Suggested total ask ${total.toLocaleString()} across the rental and the offering.
+                  {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}. Suggested total ask ${total.toLocaleString()} across the rental and the offering.
                 </p>
                 {selected.length > 1 && (
-                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks on each turnover Saturday.</p>
+                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks on each Sunday-to-Monday turnover.</p>
                 )}
               </div>
             )}
@@ -236,7 +244,7 @@ export default function ShipBook() {
             {startDate && (
               <FormCompanion
                 formId="booking-request"
-                context={`The guest has chosen the week ${fmtDay(startDate)} to ${fmtDay(endDate)}, ${nights} nights through ${bioregions.join(" and ")}. Confirm that week with them warmly, then ask how many are sailing and get an explicit yes to both commitments.`}
+                context={`The guest has chosen the voyage week boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm that week with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
                 collected={{
                   guests: String(guests),
                   dietCommitment: diet ? "yes" : "",
@@ -246,7 +254,7 @@ export default function ShipBook() {
                 onField={(key, value) => {
                   if (key === "guests") {
                     const n = Number(value.match(/\d+/)?.[0] ?? value);
-                    if (Number.isFinite(n) && n >= 1) setGuests(Math.max(1, Math.min(4, Math.round(n))));
+                    if (Number.isFinite(n) && n >= 1) setAdults(Math.max(1, Math.min(4, Math.round(n))));
                   } else if (key === "dietCommitment") {
                     if (companionBool(value)) setDiet(true);
                   } else if (key === "waterDoctrineCommitment") {
@@ -259,11 +267,22 @@ export default function ShipBook() {
               />
             )}
 
-            <div className="max-w-xs">
-              <Label htmlFor="guests">Guests</Label>
-              <select id="guests" value={guests} onChange={(e) => setGuests(Number(e.target.value))} className="w-full h-10 rounded-md border bg-background px-3">
-                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
+            <div className="flex flex-wrap gap-4">
+              <div className="w-32">
+                <Label htmlFor="adults">Adults</Label>
+                <select id="adults" value={adults} onChange={(e) => setAdults(Number(e.target.value))} className="w-full h-11 rounded-md border bg-background px-3 text-base">
+                  {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="w-32">
+                <Label htmlFor="children">Children</Label>
+                <select id="children" value={children} onChange={(e) => setChildren(Number(e.target.value))} className="w-full h-11 rounded-md border bg-background px-3 text-base">
+                  {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <p className="w-full text-xs text-muted-foreground -mt-1">
+                Up to four aboard, or five when at least three are children. {guests > 0 && (crewOk ? `${guests} sailing.` : "That crew is over her berths.")}
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <Checkbox id="diet" checked={diet} onCheckedChange={(v) => setDiet(Boolean(v))} />
@@ -301,7 +320,7 @@ export default function ShipBook() {
             </div>
             <div className="rounded-2xl border bg-card p-6">
               <h3 className="font-semibold text-lg mb-2">Reading the calendar</h3>
-              <p className="text-sm text-foreground/80">Each card is one seven-night voyage. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. The projected bioregion tells you roughly where she will be.</p>
+              <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 3pm, return Sunday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. Year-two weeks sail at her full rate. The projected bioregion tells you roughly where she will be.</p>
             </div>
           </div>
         </div>

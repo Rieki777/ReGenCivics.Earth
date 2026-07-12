@@ -13,7 +13,7 @@ import {
 } from "./lib/ship-logic";
 import {
   SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES,
-  SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS,
+  SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
 } from "./lib/ship-config";
 
 /**
@@ -84,13 +84,26 @@ describe("ship-logic: voyage week grid", () => {
     expect(addDaysYmd("2026-08-29", 7)).toBe("2026-09-05");
   });
 
-  it("enumerates a Saturday-to-Saturday grid where each week ends where the next begins", () => {
+  it("enumerates a Monday-to-Monday grid where each week ends where the next begins", () => {
     const weeks = enumerate();
     expect(weeks).toHaveLength(6);
-    expect(weeks[0].startDate).toBe("2026-07-25");
-    expect(weeks[0].endDate).toBe("2026-08-01");
-    expect(weeks[1].startDate).toBe("2026-08-01"); // shared turnover Saturday
+    expect(weeks[0].startDate).toBe("2026-07-25"); // boards this day, 3pm
+    expect(weeks[0].returnDate).toBe("2026-07-31"); // returns the following Sunday, 11am (start + 6)
+    expect(weeks[0].endDate).toBe("2026-08-01"); // exclusive end of the 7-day slot
+    expect(weeks[1].startDate).toBe("2026-08-01"); // shared turnover boundary
+    expect(weeks[0].isYear2).toBe(false);
     expect(weeks[0].price.total).toBe(299 * 7);
+  });
+
+  it("doubles the price and labels year-two weeks", () => {
+    const weeks = enumerate({ year2Start: "2026-08-08", year2Multiplier: 2, horizonWeeks: 4 });
+    const y1 = weeks.find((w) => w.startDate === "2026-08-01");
+    const y2 = weeks.find((w) => w.startDate === "2026-08-08");
+    expect(y1?.isYear2).toBe(false);
+    expect(y2?.isYear2).toBe(true);
+    expect(y2?.priceMultiplier).toBe(2);
+    expect(y2?.windowLabel).toBe("Year two, full rate");
+    expect(y2?.price.total).toBe(299 * 7 * 2);
   });
 
   it("drops fully-past weeks relative to today", () => {
@@ -143,6 +156,24 @@ describe("ship-logic: pricing", () => {
   it("applies a seasonal multiplier", () => {
     const p = computeVoyagePrice(7, 1.25);
     expect(p.total).toBe(Math.round(149 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
+  });
+});
+
+describe("ship-logic: crew capacity (four aboard, five for a family)", () => {
+  it("allows up to four aboard", () => {
+    expect(isValidCrewSize(1, 0)).toBe(true);
+    expect(isValidCrewSize(2, 2)).toBe(true);
+    expect(isValidCrewSize(4, 0)).toBe(true);
+  });
+  it("allows five only when at least three are children", () => {
+    expect(isValidCrewSize(2, 3)).toBe(true); // family of five
+    expect(isValidCrewSize(1, 4)).toBe(true);
+    expect(isValidCrewSize(3, 2)).toBe(false); // five, but only two children
+    expect(isValidCrewSize(5, 0)).toBe(false);
+  });
+  it("rejects six or more, and requires an adult", () => {
+    expect(isValidCrewSize(3, 3)).toBe(false);
+    expect(isValidCrewSize(0, 3)).toBe(false);
   });
 });
 
@@ -313,10 +344,10 @@ describe("ship router guards (reject before any DB call)", () => {
     expect(flags.concierge).toBe(false);
   });
 
-  it("requestBooking rejects more than 4 guests", async () => {
+  it("requestBooking rejects five adults (only a family of five may sail)", async () => {
     const caller = appRouter.createCaller(makeCtx(user()));
     await expect(
-      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", guests: 5, dietCommitment: true, waterDoctrineCommitment: true }),
+      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", adults: 5, children: 0, guests: 5, dietCommitment: true, waterDoctrineCommitment: true }),
     ).rejects.toBeTruthy();
   });
 

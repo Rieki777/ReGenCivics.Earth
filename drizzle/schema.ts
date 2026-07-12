@@ -4264,10 +4264,15 @@ export const shipBookings = mysqlTable("ship_bookings", {
   startDate: date("startDate", { mode: "string" }).notNull(),
   endDate: date("endDate", { mode: "string" }).notNull(),
   guests: int("guests").notNull().default(1),
+  /** How many of the crew are children (the fifth berth opens only for a family). */
+  children: int("children").notNull().default(0),
   status: mysqlEnum("status", [
     "requested", "approved", "platform_pending", "confirmed",
     "active", "completed", "cancelled",
   ]).notNull().default("requested"),
+  /** Keeper-run orientation gate: set when the 2-hour walkthrough is complete. */
+  orientationCompletedAt: timestamp("orientationCompletedAt"),
+  orientationKeeperId: int("orientationKeeperId"),
   platformBookingRef: varchar("platformBookingRef", { length: 255 }),
   dietCommitmentAt: timestamp("dietCommitmentAt"),
   waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),

@@ -10,6 +10,10 @@ import { cn } from "@/lib/utils";
 
 export const ANCHOR_NIGHTLY = 600;
 export const TRIAL_NIGHTLY = 299;
+// Pricing is per voyage now (Mon 3pm board to Sun 11am return). Keep these in
+// sync with server/lib/ship-config.ts (ANCHOR_VOYAGE_USD / TRIAL_TOTAL_VOYAGE_USD).
+export const ANCHOR_VOYAGE = ANCHOR_NIGHTLY * 7; // 4200, struck through
+export const TRIAL_VOYAGE = TRIAL_NIGHTLY * 7; // 2093, the trial-year voyage total
 export const SHIP_TAGLINE = "Visiting the most beautiful places on earth in reverence and regeneration.";
 export const CHESTNUT_URL = "https://regencivics.earth/blog/great-american-chestnut-abundance";
 
@@ -71,13 +75,14 @@ export function InteriorPlaceholder({ label }: { label: string }) {
   );
 }
 
-/** The two-line price display: anchor struck through, trial rate shown. */
+/** The price display: per-voyage anchor struck through, trial voyage rate shown. */
 export function PriceTag({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-baseline gap-3", className)}>
-      <span className="text-muted-foreground line-through text-xl">${ANCHOR_NIGHTLY}</span>
-      <span className="text-3xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${TRIAL_NIGHTLY}</span>
-      <span className="text-muted-foreground">/ night, trial year</span>
+    <div className={cn("flex items-baseline gap-3 flex-wrap", className)}>
+      <span className="text-muted-foreground line-through text-xl">${ANCHOR_VOYAGE.toLocaleString()}</span>
+      <span className="text-3xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${TRIAL_VOYAGE.toLocaleString()}</span>
+      <span className="text-muted-foreground">per voyage week, trial year</span>
+      <span className="text-xs text-muted-foreground/80 w-full">Her ${ANCHOR_NIGHTLY}/night value, one Monday-to-Sunday voyage at a time.</span>
     </div>
   );
 }

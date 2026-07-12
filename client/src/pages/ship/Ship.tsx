@@ -18,7 +18,7 @@ const PERKS = [
   { icon: Droplets, title: "Water like nowhere else", body: "Whole-coach filtration strips chlorine from any city fill. Filtered showers. Gravity-filtered drinking water. And a spring-water intake pump that fills your tanks straight from a living spring up to 50 feet away." },
   { icon: Wifi, title: "Fully off-grid, fully connected", body: "Generator and electrical system meet 100% of your energy needs. Starlink internet anywhere on earth. Propane cooking and hot water. A full-size washing machine with drying stand." },
   { icon: Bike, title: "The adventure pack", body: "Electric bike. Stand-up paddleboard. Paddle ball. Hammocks. Cascadia field guides, instruments, and games." },
-  { icon: ShipIcon, title: "Room to live", body: "Forty feet, three slide-outs, two bedrooms, two bathrooms, and a living room big enough for morning yoga. Designed for a couple; hosts two couples in comfort." },
+  { icon: ShipIcon, title: "Room to live", body: "Forty feet, three slide-outs, two bedrooms, two bathrooms, and a living room big enough for morning yoga. Designed for a couple; up to four aboard in comfort, or five when at least three are children." },
   { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
 ];
 
@@ -69,7 +69,7 @@ export default function Ship() {
         <ShipEyebrow>The ship</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">A regenerative pirate ship, complete with your treasure chest of seeds</h2>
         <div className="prose prose-lg max-w-none text-foreground/90 space-y-4">
-          <p>She is a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Hosts two couples in comfort.</p>
+          <p>She is a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.</p>
           <p>You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.</p>
         </div>
         <div className="mt-5">

@@ -15,32 +15,80 @@ import { isZeffyConfigured } from "./zeffy";
 import { isStripeConfigured } from "./stripe";
 
 // ── Pricing (trial year) ─────────────────────────────────────────────────────
-/** The listed anchor price the ship is worth; the strikethrough everywhere. */
+// Pricing is PER VOYAGE, not nightly (confirmed by Rye 2026-07-11). The nightly
+// numbers below are the derivation basis only: a voyage bills a 7-night tank
+// cycle, so the per-voyage totals are seven times these. The $600/night anchor
+// is kept as the struck-through reference everywhere (supersession ledger).
+/** The listed anchor price the ship is worth, per night; struck through as the reference. */
 export const ANCHOR_NIGHTLY_USD = 600;
-/** Trial-year insured rental charged on the platform (custom offer). */
+/** Trial-year insured rental charged on the platform (custom offer), per-night basis. */
 export const TRIAL_RENTAL_NIGHTLY_USD = 149;
-/** Trial-year suggested voyage offering to CORE (legally voluntary). */
+/** Trial-year suggested voyage offering to CORE (legally voluntary), per-night basis. */
 export const TRIAL_OFFERING_NIGHTLY_USD = 150;
-/** Trial-year total ask per night (rental + offering). */
+/** Trial-year total ask per night (rental + offering), the per-voyage derivation basis. */
 export const TRIAL_TOTAL_NIGHTLY_USD = TRIAL_RENTAL_NIGHTLY_USD + TRIAL_OFFERING_NIGHTLY_USD; // 299
 
-/** One voyage is a single 7-night tank cycle. */
+/** One voyage is a single 7-night tank cycle (Mon 3pm board to Sun 11am return). */
 export const VOYAGE_NIGHTS = 7;
+
+// Per-voyage totals (the numbers a guest actually sees; the site is per-voyage).
+/** Anchor value of one voyage week, struck through ($600 × 7). */
+export const ANCHOR_VOYAGE_USD = ANCHOR_NIGHTLY_USD * VOYAGE_NIGHTS; // 4200
+/** Trial-year platform rental for one voyage week (~$1,043). */
+export const TRIAL_RENTAL_VOYAGE_USD = TRIAL_RENTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 1043
+/** Trial-year suggested offering for one voyage week (~$1,050). */
+export const TRIAL_OFFERING_VOYAGE_USD = TRIAL_OFFERING_NIGHTLY_USD * VOYAGE_NIGHTS; // 1050
+/** Trial-year total ask for one voyage week (~$2,100). */
+export const TRIAL_TOTAL_VOYAGE_USD = TRIAL_TOTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 2093
+
+/**
+ * Year two sails at her full rate: double the trial (~$4,200 per voyage, near
+ * the $600/night anchor). Applied as a base multiplier to any week on or after
+ * the year-2 boundary, composed with seasonal windows. See §3 of
+ * CLAUDE_CODE_PROMPT_2026-07-11_SHIP_MAINTAINER_INVENTORY.md.
+ */
+export const YEAR2_PRICE_MULTIPLIER = 2;
+/** First bookable Monday of year two. Weeks on/after this bill at the full rate. */
+export const SHIP_YEAR2_START_YMD = "2027-07-26";
+
+// ── Crew capacity ────────────────────────────────────────────────────────────
+// Four guests max, designed for one couple and comfortable for two. A fifth
+// berth opens only for a family: five is allowed when at least three of the crew
+// are children (SHIP_V4_LOVE, confirmed in the supersession ledger).
 export const MIN_GUESTS = 1;
+/** Standard maximum crew. */
 export const MAX_GUESTS = 4;
+/** The most a family crew can bring (only with MIN_CHILDREN_FOR_FIVE children). */
+export const MAX_GUESTS_WITH_KIDS = 5;
+/** Children required before the fifth berth opens. */
+export const MIN_CHILDREN_FOR_FIVE = 3;
 /** Most consecutive weeks a crew can chain into one voyage (7, 14, or 21 nights). */
 export const MAX_VOYAGE_WEEKS = 3;
 
+/**
+ * True when a crew of `adults` + `children` may sail: up to four aboard, or five
+ * when at least three are children. At least one adult must sail.
+ */
+export function isValidCrewSize(adults: number, children: number): boolean {
+  if (!Number.isInteger(adults) || !Number.isInteger(children)) return false;
+  if (adults < 1 || children < 0) return false;
+  const total = adults + children;
+  if (total <= MAX_GUESTS) return true;
+  return total === MAX_GUESTS_WITH_KIDS && children >= MIN_CHILDREN_FOR_FIVE;
+}
+
 // ── Voyage week grid + seasonal bands ────────────────────────────────────────
-// Bookable weeks derive from a fixed Saturday grid, not a free date field. Each
-// voyage runs Saturday to Saturday (7 nights); the shared Saturday is the
-// turnover day when the Keeper resets her for the next crew. A guest never has
-// to deduce a valid start date: the server enumerates the grid and the booking
-// page renders only real weeks. Edit the anchor and horizon here.
-/** The first bookable Saturday of the trial year. Must be a Saturday. */
-export const SHIP_SEASON_START_YMD = "2026-07-25";
-/** How many weeks forward the booking page offers at once. */
-export const SHIP_BOOKING_HORIZON_WEEKS = 20;
+// Bookable weeks derive from a fixed Monday grid, not a free date field. Each
+// voyage boards Monday 3pm and returns the following Sunday 11am; turnover runs
+// Sunday afternoon into Monday morning (a weekday window so propane fills and
+// other services are open before the next crew boards). The 7-day slot is shared
+// at the Monday boundary (half-open ranges). A guest never has to deduce a valid
+// start date: the server enumerates the grid and the booking page renders only
+// real weeks. Edit the anchor and horizon here.
+/** The first bookable Monday of the trial year. Must be a Monday. */
+export const SHIP_SEASON_START_YMD = "2026-07-27";
+/** How many weeks forward the booking page offers at once (through the end of year two). */
+export const SHIP_BOOKING_HORIZON_WEEKS = 104;
 
 /**
  * Projected bioregion by date range (the seasonal band data the booking cards
@@ -56,11 +104,18 @@ export type ShipSeasonalBand = {
   migration?: boolean;
 };
 export const SHIP_SEASONAL_BANDS: ShipSeasonalBand[] = [
-  { startDate: "2026-07-25", endDate: "2026-09-19", bioregion: "Rogue & Southern Cascadia" },
-  { startDate: "2026-09-19", endDate: "2026-09-26", bioregion: "On passage north", migration: true },
-  { startDate: "2026-09-26", endDate: "2026-11-14", bioregion: "Willamette & the Columbia Gorge" },
-  { startDate: "2026-11-14", endDate: "2027-03-13", bioregion: "Winter anchorage, Ashland" },
-  { startDate: "2027-03-13", endDate: "2027-06-30", bioregion: "Rogue & Southern Cascadia" },
+  // Year one
+  { startDate: "2026-07-27", endDate: "2026-09-21", bioregion: "Rogue & Southern Cascadia" },
+  { startDate: "2026-09-21", endDate: "2026-09-28", bioregion: "On passage north", migration: true },
+  { startDate: "2026-09-28", endDate: "2026-11-16", bioregion: "Willamette & the Columbia Gorge" },
+  { startDate: "2026-11-16", endDate: "2027-03-15", bioregion: "Winter anchorage, Ashland" },
+  { startDate: "2027-03-15", endDate: "2027-07-26", bioregion: "Rogue & Southern Cascadia" },
+  // Year two (full rate) — projections firm up as the itinerary does
+  { startDate: "2027-07-26", endDate: "2027-09-20", bioregion: "Rogue & Southern Cascadia" },
+  { startDate: "2027-09-20", endDate: "2027-09-27", bioregion: "On passage north", migration: true },
+  { startDate: "2027-09-27", endDate: "2027-11-15", bioregion: "Willamette & the Columbia Gorge" },
+  { startDate: "2027-11-15", endDate: "2028-03-13", bioregion: "Winter, projected southern bioregion" },
+  { startDate: "2028-03-13", endDate: "2028-08-01", bioregion: "Rogue & Southern Cascadia" },
 ];
 
 /** Flat Ship Keeper pay per turnover. */
