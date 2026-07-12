@@ -83,7 +83,7 @@ export function CrewProfileEditor({
           {hasProfile ? "Edit your crew profile" : "Make your crew profile"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <DialogHeader>
           <DialogTitle>Your crew profile</DialogTitle>
         </DialogHeader>
@@ -122,11 +122,11 @@ export function CrewProfileEditor({
             <Input id="crew-video" value={videoUrl} onFocus={keepInView} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://…" maxLength={512} inputMode="url" />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Button onClick={() => save(true)} disabled={upsert.isPending || !inTheDraw} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-2">
+          <Button onClick={() => save(true)} disabled={upsert.isPending || !inTheDraw} className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11 w-full sm:w-auto">
             {inTheDraw ? "Publish my crew card" : "Reach 150 points to publish"}
           </Button>
-          <Button onClick={() => save(false)} disabled={upsert.isPending} variant="outline">
+          <Button onClick={() => save(false)} disabled={upsert.isPending} variant="outline" className="min-h-11 w-full sm:w-auto">
             Save draft
           </Button>
         </div>
