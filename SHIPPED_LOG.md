@@ -13,6 +13,12 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-14: LLM provider fix + the Weaver wraps the alliance application
+
+- **LLM was 404ing in production for every AI feature** (Guide, FormCompanion, concierge). The code spoke the Anthropic Messages protocol to OpenRouter's `/api/v1/messages`, which only routes to the `anthropic` provider, and this OpenRouter account has no access to it ("No allowed providers are available for the selected model"). Fixed in `server/_core/llm.ts`: prefer the first-party Anthropic API when `ANTHROPIC_API_KEY` is set, fall back to OpenRouter only when it is not; on the direct path use a bare `claude-*` model (default `claude-haiku-4-5-20251001`, overridable via `AI_MODEL`). Verified live: `/api/chat/stream` now streams a real answer instead of "Stream failed".
+- **The Weaver wraps the alliance application** (`/connect?path=alliance`): the conversational free-text fields (organization link, how the org supports land projects, the partnership vision) are now fillable by talking with the Weaver, who onboards village projects like a friend who already believes in them. The structured pickers (org selection, roles, capital, map pin) stay visual; the person reviews and submits. Second persona wired into the reusable `<FormCompanion>` pattern, drop-in as designed. New `alliance-application` form config in `shared/companions.ts`.
+- Verify: typecheck exit 0, full build green, companion + guide tests pass (added an alliance-form registry assertion). Note: this landed during heavy concurrent ship work on `main`; the fix + wrap are isolated to `llm.ts`, `shared/companions.ts`, and the alliance branch of `Connect.tsx`.
+
 ## 2026-07-12 (later): Ship build batch — cycle, inventory, Shipwright, Captain's Book, flywheel
 
 Executed the NOT-STARTED ship docs from `SHIP_BUILD_INDEX.md` in order.

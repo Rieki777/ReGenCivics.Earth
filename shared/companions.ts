@@ -122,7 +122,8 @@ export type CompanionFormId =
   | "concierge-intake"
   | "booking-request"
   | "crew-profile"
-  | "map-add";
+  | "map-add"
+  | "alliance-application";
 
 export type CompanionFormConfig = {
   id: CompanionFormId;
@@ -200,6 +201,19 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
       { key: "bio", label: "Tell me about yourselves. A few lines about who you are.", type: "longtext" },
       { key: "intent", label: "What do you intend to do on your voyage? Where you'll go, what you'll plant, who you'll visit.", type: "longtext" },
       { key: "videoUrl", label: "Do you have a short video pitch? If so, what's the link (YouTube or Loom)?", type: "text", guidance: "Only fill this if they give an actual URL. If they describe a video but have no link yet, leave it and encourage them to add one." },
+    ],
+  },
+  "alliance-application": {
+    id: "alliance-application",
+    personaId: "weaver",
+    title: "Join the alliance",
+    entryLabel: "Talk it through with the Weaver",
+    completion:
+      "You are ready to review once you understand what their organization does to support land projects and how they see the partnership growing regenerative cultures. The best link is a bonus, not required.",
+    fields: [
+      { key: "organizationUrl", label: "What's the best link to explore your organization?", type: "text", guidance: "Only fill this if they give an actual URL." },
+      { key: "allianceSupportDescription", label: "How does your organization support land projects? The services, resources, or expertise you offer.", type: "longtext", required: true },
+      { key: "partnershipDescription", label: "How do you see our partnership helping grow a diversity of regenerative cultures?", type: "longtext" },
     ],
   },
   "map-add": {
