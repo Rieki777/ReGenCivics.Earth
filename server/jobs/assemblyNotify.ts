@@ -61,6 +61,7 @@ export async function notifySubscribersOfReadyProposals(rows: { id: number; titl
     rows.length === 1 ? `Ready to launch: ${rows[0].title}` : `${rows.length} proposals are ready to launch`,
     `<p>Last call passed quietly. ${rows.length === 1 ? "This proposal is" : "These proposals are"} ready for the binding vote on Hypha:</p>
      <ul>${items}</ul>
-     <p><a href="https://regencivics.earth/assembly">Open the Assembly</a> to launch or read the full trail.</p>`
+     <p><a href="https://regencivics.earth/assembly">Open the Assembly</a> to launch or read the full trail.</p>
+     <p>After you launch a vote on Hypha, paste the Hypha proposal link back into the Assembly. That link is how the result finds its way home and applies itself when the vote closes. Without it, a human has to relay the outcome by hand.</p>`
   );
 }
