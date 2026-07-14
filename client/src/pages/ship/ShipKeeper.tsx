@@ -87,6 +87,9 @@ export default function ShipKeeper() {
               It's flat pay, two hundred dollars per turnover, for someone who's careful, reliable, and glad to hand each
               crew a clean, well-kept ship.
             </p>
+            <p className="mt-3">
+              <a href="/blog/keeper-of-the-fleet" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4">Read the full role: The Keeper of the Fleet <span aria-hidden="true">→</span></a>
+            </p>
           </div>
           <div className="aspect-[4/3]">
             <ShipImage name="ship-keeper.jpg" alt="A Ship Keeper preparing the coach between voyages." className="h-full" />

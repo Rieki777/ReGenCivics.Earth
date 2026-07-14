@@ -4,7 +4,7 @@
  * "She belongs to the movement, and here is the proof, live."
  */
 import { trpc } from "@/lib/trpc";
-import { Sprout, Anchor, Users, Ticket } from "lucide-react";
+import { Sprout, Anchor, Users, Ticket, TreePine, HeartHandshake } from "lucide-react";
 
 function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
@@ -43,6 +43,12 @@ export function StateOfShip() {
         <Tile icon={<Anchor className="w-6 h-6" />} value={data.voyagesSailed.toLocaleString()} label="Voyages sailed" />
         <Tile icon={<Ticket className="w-6 h-6" />} value={data.freeVoyagesUnlocked.toLocaleString()} label="Free voyages unlocked" />
         <Tile icon={<Users className="w-6 h-6" />} value={data.poolSize.toLocaleString()} label="Crews in the draw" />
+        {(data.treesPlanted ?? 0) > 0 && (
+          <Tile icon={<TreePine className="w-6 h-6" />} value={(data.treesPlanted ?? 0).toLocaleString()} label="Trees planted for carbon" />
+        )}
+        {(data.assetValueUsd ?? 0) > 0 && (
+          <Tile icon={<HeartHandshake className="w-6 h-6" />} value={`${data.communityOwnedPct ?? 0}%`} label="Owned by the movement" />
+        )}
       </div>
     </div>
   );

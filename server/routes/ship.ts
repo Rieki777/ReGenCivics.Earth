@@ -193,6 +193,13 @@ export const shipRouter = router({
       .select({ id: shipBookings.id })
       .from(shipBookings)
       .where(eq(shipBookings.status, "completed"));
+    // Admin-editable game variables (asset value, community-owned so far, trees).
+    // Absent variables fall back to 0 so the tiles degrade gracefully.
+    const { getGameVariables } = await import("../game");
+    const vars = await getGameVariables(["ship.asset_value_usd", "ship.community_owned_usd", "ship.trees_planted"]).catch(() => ({} as Record<string, number>));
+    const assetValue = vars["ship.asset_value_usd"] ?? 0;
+    const communityOwned = vars["ship.community_owned_usd"] ?? 0;
+    const communityOwnedPct = assetValue > 0 ? Math.max(0, Math.min(100, Math.round((communityOwned / assetValue) * 100))) : 0;
     return {
       percentBooked: free.percentBooked,
       bookedVoyages: free.bookedVoyages,
@@ -202,6 +209,10 @@ export const shipRouter = router({
       poolSize: free.poolSize,
       seedsPlanted: Number(seeds?.n ?? 0),
       voyagesSailed: sailed.length,
+      assetValueUsd: assetValue,
+      communityOwnedUsd: communityOwned,
+      communityOwnedPct,
+      treesPlanted: vars["ship.trees_planted"] ?? 0,
     };
   }),
 

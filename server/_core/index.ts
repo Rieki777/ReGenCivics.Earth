@@ -25,6 +25,7 @@ import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
+import { runShipCrewListJob } from "../jobs/shipCrewList";
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -1114,6 +1115,17 @@ setTimeout(async () => {
     try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
   }, 24 * 60 * 60 * 1000);
 }, 7 * 60 * 1000); // first run after 7 minutes
+
+// ─── Daily ReGen Ship crew-list trigger ─────────────────────────────────────
+// Emails confirmed crew-list signups when a bookable week now matches their
+// interests (any week / this season / winter / year two), at most once a
+// fortnight per signup. Deterministic enumeration, idempotent via lastNotifiedAt.
+setTimeout(async () => {
+  try { await runShipCrewListJob(); } catch (e) { log.error("ShipCrewListJob error", e); }
+  setInterval(async () => {
+    try { await runShipCrewListJob(); } catch (e) { log.error("ShipCrewListJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 9 * 60 * 1000); // first run after 9 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

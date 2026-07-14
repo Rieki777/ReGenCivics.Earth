@@ -4680,6 +4680,8 @@ export const shipCrewListSignups = mysqlTable("ship_crew_list_signups", {
   interests: json("interests"),
   source: varchar("source", { length: 120 }),
   confirmedAt: timestamp("confirmedAt"),
+  /** Last time the nightly job emailed this signup about an opening (throttle). */
+  lastNotifiedAt: timestamp("lastNotifiedAt"),
   unsubscribeToken: varchar("unsubscribeToken", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([

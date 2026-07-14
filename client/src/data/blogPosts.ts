@@ -23,6 +23,52 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    id: 'keeper-of-the-fleet',
+    slug: 'keeper-of-the-fleet',
+    title: 'The Keeper of the Fleet',
+    excerpt: 'Between every voyage, someone holds the ship. The Keeper is the steward who resets her, hands the keys to each new crew, and keeps her healthy for the next family. This is the role, in full.',
+    content: `Between every voyage, someone holds the ship.
+
+The crews come and go. They board on a Monday, sail their week through Cascadia, plant their seeds, and hand her back on a Sunday. In the quiet hours between one crew and the next, the ReGen Ship is held by a Keeper. The Keeper is why the next family walks into a clean, full, ready ship and feels, from the first step, that she has been cared for.
+
+This is the role, in full, so you know what you would be saying yes to.
+
+![A ship keeper tending the vintage motorhome between voyages at a forest homestead](${cdnImg('https://assets.regencivics.earth/generated/blog/keeper-of-the-fleet-2026-07-14T17-39-37.png', 1200)})
+
+## The turnover
+
+The heart of the role is the turnover. A voyage ends Sunday at eleven, and the next one boards Monday at three. That window, Sunday afternoon into Monday morning, is yours. We set it that way on purpose, so a weekday morning is always inside the turnover and the services that close on Sundays, propane fills and the like, are open before the next crew boards.
+
+In that window you reset her completely. Dump and rinse the tanks. Fill fresh water, ideally from a spring. Deep clean the galley, the bathrooms, the bedrooms, and the living room. Launder and fold the linens and towels. Restock the pantry commons and the cleaning materials, using only the soaps and body-safe products the ship sails under. Check that the adventure gear is aboard and sound. Top up propane. Walk her outside and in. When you are done, she looks and feels the way you would want to find her if you were the one arriving.
+
+The pay is a flat two hundred dollars per turnover. It is honest pay for a real morning of work, and it is also something more than pay, which is the next part.
+
+## The handing of the keys
+
+Every first-time crew begins with a two-hour orientation, and you run it. You walk the whole ship with them, hands on, and teach her systems: the slides, the leveling, the water doctrine, the spring pump, the generator, the driving. You cover the pre-sail checklist together and run it once, side by side.
+
+No captain sails her without the handing of the keys. We mean that literally: a booking cannot become an active voyage until you mark the orientation complete. You are the person who decides that a crew is ready to captain a forty-foot ship, and that judgment protects them, protects everyone on the road, and protects her. It is the cheapest insurance we have, and it is a ceremony, not a form.
+
+## Counting her treasures
+
+The platform coverage protects the vehicle. What protects the e-bike, the paddleboard, the Starlink, the walking staff, and the treasure chest is you and the crew, walking the gear manifest together. At boarding you count her treasures with the captain, item by item, condition noted. At return the captain runs it again. If something comes home worn, damaged, or missing, it surfaces for review with the boarding notes beside it. Ten minutes, twice a voyage, and nothing precious quietly disappears.
+
+## Keeping her healthy
+
+You also hold her long-term health. Every voyage leaves a maintenance log, and you read across it, so the ship has a continuous history instead of a series of forgotten small things. When a crew has a problem, they can ask the Shipwright, her maintainer companion, and you are one of the two people, with Rye, who approve what a resolved case teaches the next crew. Bad advice never compounds on its own, because a human who knows her signs off first. And when something is unsafe, propane, brakes, steering, a burning smell, you are the hotline. The crews are told, plainly and often: if anything feels unsafe, stop and call your Keeper.
+
+## Who this is for
+
+A Keeper is practical, steady, and kind. You do not need to be a mechanic, though comfort around systems helps. You need to care about a thing being done right, to enjoy handing someone a ship that is ready, and to hold the trust that comes with the keys. You are close to the anchorage, or willing to be there on turnover mornings. You treat the ship the way you would treat a spring you drink from.
+
+If that is you, raise your flag. Apply to keep her, and let us talk.`,
+    author: 'Rye',
+    date: '2026-07-14',
+    readTime: '5 min read',
+    image: cdnImg('https://assets.regencivics.earth/generated/blog/keeper-of-the-fleet-2026-07-14T17-39-37.png', 1200),
+    tags: ['ReGen Ship', 'The Fleet', 'Roles'],
+  },
+  {
     id: 'more-than-one-honeymoon',
     slug: 'more-than-one-honeymoon',
     title: "You're Allowed to Have More Than One Honeymoon",
