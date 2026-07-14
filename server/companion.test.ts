@@ -128,6 +128,17 @@ describe("companionBool (commitments require an explicit yes)", () => {
   });
 });
 
+describe("alliance application (the Weaver)", () => {
+  it("is registered and points at the weaver persona with its free-text fields", () => {
+    const form = COMPANION_FORMS["alliance-application"];
+    expect(form).toBeTruthy();
+    expect(form.personaId).toBe("weaver");
+    const keys = form.fields.map((f) => f.key);
+    expect(keys).toContain("allianceSupportDescription");
+    expect(keys).toContain("partnershipDescription");
+  });
+});
+
 describe("form registry integrity", () => {
   it("every form points at a real persona and has at least one required field where it matters", () => {
     for (const form of Object.values(COMPANION_FORMS)) {

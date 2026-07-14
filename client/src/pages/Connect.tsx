@@ -21,6 +21,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { PageWrapper } from "@/components/PageWrapper";
+import { FormCompanion } from "@/components/companion";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { cdnImg } from "@/lib/utils";
 
@@ -580,6 +581,15 @@ export default function Connect() {
       case "alliance":
         return (
           <div className="space-y-6">
+            <FormCompanion
+              formId="alliance-application"
+              collected={{ organizationUrl, allianceSupportDescription, partnershipDescription }}
+              onField={(key, value) => {
+                if (key === "organizationUrl") setOrganizationUrl(value);
+                else if (key === "allianceSupportDescription") setAllianceSupportDescription(value);
+                else if (key === "partnershipDescription") setPartnershipDescription(value);
+              }}
+            />
             <div>
               <Label htmlFor="orgUrl" className="text-white/90">Best link to explore your organization?</Label>
               <Input
