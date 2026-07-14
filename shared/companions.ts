@@ -123,7 +123,8 @@ export type CompanionFormId =
   | "booking-request"
   | "crew-profile"
   | "map-add"
-  | "alliance-application";
+  | "alliance-application"
+  | "land-application";
 
 export type CompanionFormConfig = {
   id: CompanionFormId;
@@ -214,6 +215,62 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
       { key: "organizationUrl", label: "What's the best link to explore your organization?", type: "text", guidance: "Only fill this if they give an actual URL." },
       { key: "allianceSupportDescription", label: "How does your organization support land projects? The services, resources, or expertise you offer.", type: "longtext", required: true },
       { key: "partnershipDescription", label: "How do you see our partnership helping grow a diversity of regenerative cultures?", type: "longtext" },
+    ],
+  },
+  "land-application": {
+    id: "land-application",
+    personaId: "gardener",
+    title: "Apply for a season",
+    entryLabel: "Talk it through with the Gardener",
+    completion:
+      "You are ready to review once every required field holds a real picture in the person's own words: the project's name, type, place, and vision, the land situation, the team, their practices, governance, community ties, time availability, and what funding they need. Take your time, one thing at a time, and let them tell stories. When you set readyForReview true, remind them the review screen also has a map pin and a place to attach documents if they have any.",
+    fields: [
+      { key: "projectName", label: "What's your project called?", type: "text", required: true },
+      {
+        key: "projectType",
+        label: "Is the project early stage or mature?",
+        type: "enum",
+        required: true,
+        enumValues: ["early_stage", "mature"],
+        guidance: "Map their description. Just past land acquisition or still forming is early_stage. Established and ready for funding is mature. If unsure, ask how far along they are.",
+      },
+      { key: "location", label: "Where is the land? City or region, and country.", type: "text", required: true },
+      { key: "vision", label: "What's the vision? What are you dreaming this place becomes?", type: "longtext", required: true },
+      {
+        key: "landStatus",
+        label: "What's your relationship to the land right now?",
+        type: "enum",
+        required: true,
+        enumValues: ["owned", "leased", "committed", "seeking"],
+        guidance: "owned means they hold title, leased means a lease, committed means land is promised or under contract, seeking means still looking. Map their words to one of these.",
+      },
+      {
+        key: "projectSizeHectares",
+        label: "How big is the land?",
+        type: "number",
+        guidance: "A number in hectares. If they answer in acres, convert it: one acre is 0.4047 hectares. Say the converted number back to them so they can correct you.",
+      },
+      {
+        key: "teamSize",
+        label: "How many people are on the core team?",
+        type: "number",
+        required: true,
+        guidance: "A whole number.",
+      },
+      { key: "teamDescription", label: "Tell me about the team. Who are they, what do they carry, what have they done?", type: "longtext", required: true },
+      { key: "regenerativePractices", label: "What regenerative practices are you working with? Soil, water, forests, restoration.", type: "longtext", required: true },
+      { key: "governanceApproach", label: "How do you make decisions together?", type: "longtext", required: true },
+      { key: "communityEngagement", label: "How does the project connect with and serve the wider community around it?", type: "longtext", required: true },
+      {
+        key: "timeCommitment",
+        label: "The season asks for about one day a week from your team. What does your availability look like?",
+        type: "longtext",
+        required: true,
+        guidance: "Capture their availability in their own words. If they cannot commit a day a week, note what they can do honestly. Never write a commitment they did not say.",
+      },
+      { key: "currentFunding", label: "What funding or resources does the project have right now, if any?", type: "longtext" },
+      { key: "fundingNeeds", label: "What funding or resources do you need to move forward?", type: "longtext", required: true },
+      { key: "additionalNotes", label: "Anything else you want the reviewers to know?", type: "longtext" },
     ],
   },
   "map-add": {

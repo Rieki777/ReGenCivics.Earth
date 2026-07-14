@@ -36,6 +36,12 @@ export type FormCompanionProps = {
   onField: (key: string, value: string) => void;
   /** Fired once the companion is ready for the human to review and submit. */
   onReadyForReview?: () => void;
+  /**
+   * Fired after every turn with the full conversation so far. Hosts that keep a
+   * record (e.g. the land application saves it for reviewers) subscribe here;
+   * everything else ignores it and the conversation stays ephemeral.
+   */
+  onTranscript?: (turns: Turn[]) => void;
   /** Trusted grounding for the form, e.g. the chosen booking week. */
   context?: string;
   /** Current host values, passed back so the companion knows what is filled. */
@@ -48,7 +54,7 @@ function portraitUrl(name: string): string {
 }
 
 export default function FormCompanion(props: FormCompanionProps) {
-  const { formId, onField, onReadyForReview, context, collected, className } = props;
+  const { formId, onField, onReadyForReview, onTranscript, context, collected, className } = props;
   const form = COMPANION_FORMS[formId];
   const persona = form ? COMPANION_PERSONAS[form.personaId] : null;
 
@@ -84,6 +90,12 @@ export default function FormCompanion(props: FormCompanionProps) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [transcript, caption]);
+
+  // Hand the running transcript to hosts that keep a record of the conversation.
+  useEffect(() => {
+    if (transcript.length > 0) onTranscript?.(transcript);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript]);
 
   const applyUpdates = useCallback((updates: Array<{ field: string; value: string }>) => {
     for (const u of updates) onField(u.field, u.value);

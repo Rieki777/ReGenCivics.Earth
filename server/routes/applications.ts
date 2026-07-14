@@ -99,6 +99,17 @@ export const applicationsRouter = router({
         latitude: z.number().optional(),
         longitude: z.number().optional(),
         country: z.string().optional(),
+        // Size + community metrics. The form always sent these; zod strips
+        // unknown keys, so before this they were silently dropped (bug fix).
+        projectSizeHectares: z.number().optional(),
+        currentPeopleCount: z.number().optional(),
+        currentHouseholdCount: z.number().optional(),
+        intendedPeopleCount: z.number().optional(),
+        intendedHouseholdCount: z.number().optional(),
+        mixedUse: z.string().optional(), // JSON array string
+        // Conversation record from the Gardener companion on /apply. JSON array
+        // of turns; capped well above the client's 60-turn ceiling.
+        companionTranscript: z.string().max(400_000).optional(),
       }),
     }))
     .mutation(async ({ ctx, input }) => {

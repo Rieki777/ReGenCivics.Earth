@@ -125,6 +125,12 @@ export const applications = mysqlTable("applications", {
   shipReferralHandle: varchar("shipReferralHandle", { length: 40 }),
   shipReferralUserId: int("shipReferralUserId"),
   additionalNotes: text("additionalNotes"),
+
+  // Conversation record from the Gardener (the /apply Conversational Companion).
+  // JSON array of { role: "user" | "assistant", content } turns, saved with the
+  // draft so reviewers can read how the applicant talked about their project.
+  // MEDIUMTEXT in the database (migration 0188); nullable, typed apps unaffected.
+  companionTranscript: text("companionTranscript"),
   
   // Metadata
   submittedAt: timestamp("submittedAt"),

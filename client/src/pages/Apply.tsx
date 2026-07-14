@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useLocation, Link } from "wouter";
+import { FormCompanion } from "@/components/companion";
 import { getLoginUrl } from "@/const";
 import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
@@ -78,7 +79,10 @@ const INITIAL_FORM_DATA: FormData = {
   country: "",
   vision: "",
   landStatus: "",
-  teamSize: 2,
+  // 0 = not answered yet. It used to default to 2, which made every draft
+  // claim a team of two before anyone said so; the Gardener flow needs to
+  // know which fields were actually answered.
+  teamSize: 0,
   teamDescription: "",
   // Project Size & Community Metrics
   projectSizeHectares: null,
@@ -102,6 +106,46 @@ const INITIAL_FORM_DATA: FormData = {
   documents: [],
 };
 
+type CompanionTurn = { role: "user" | "assistant"; content: string };
+
+/**
+ * The fields the Gardener needs a real answer for before the application is
+ * ready to review. Mirrors the required fields of the land-application form
+ * spec in shared/companions.ts; used for the live progress card.
+ */
+const GARDENER_REQUIRED: Array<{ key: keyof FormData; label: string }> = [
+  { key: "projectName", label: "Project name" },
+  { key: "projectType", label: "Project type" },
+  { key: "location", label: "Location" },
+  { key: "vision", label: "Vision" },
+  { key: "landStatus", label: "Land status" },
+  { key: "teamSize", label: "Team size" },
+  { key: "teamDescription", label: "Team" },
+  { key: "regenerativePractices", label: "Regenerative practices" },
+  { key: "governanceApproach", label: "Governance" },
+  { key: "communityEngagement", label: "Community" },
+  { key: "timeCommitment", label: "Time commitment" },
+  { key: "fundingNeeds", label: "Funding needs" },
+];
+
+/** Every field the Gardener conversation can fill (strings shown to the model). */
+const GARDENER_FIELD_KEYS: Array<keyof FormData> = [
+  "projectName", "projectType", "location", "vision", "landStatus",
+  "projectSizeHectares", "teamSize", "teamDescription", "regenerativePractices",
+  "governanceApproach", "communityEngagement", "timeCommitment",
+  "currentFunding", "fundingNeeds", "additionalNotes",
+];
+
+/** Trusted grounding for the Gardener so she can answer program questions. */
+const GARDENER_CONTEXT = [
+  "This is the ReGen Civics land project application for the next incubator season.",
+  "Facts you can share if asked: applying is free. Season 2 applications are for September 2026.",
+  "Review takes roughly 4 to 8 weeks after submission, and decisions land before season kickoff.",
+  "If a project is picked, the team commits about one day a week during the season.",
+  "Projects at any stage are welcome: ecovillages, food forests, intentional communities, regenerative farms.",
+  "After the talk, the review screen also lets them pin the land on the map, add website and video links, and attach documents.",
+].join(" ");
+
 export default function Apply() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -115,6 +159,23 @@ export default function Apply() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showOptionalStep1, setShowOptionalStep1] = useState(false);
   const [showOptionalStep2, setShowOptionalStep2] = useState(false);
+
+  // Chat-first: the Gardener leads, the classic wizard is the review surface.
+  // "talk" is the default; "form" is either the full review (reviewAll) after
+  // the conversation, or the classic 5-step wizard for people who prefer typing.
+  const [mode, setMode] = useState<"talk" | "form">("talk");
+  const [reviewAll, setReviewAll] = useState(false);
+  const [fromGardener, setFromGardener] = useState(false);
+  const [transcript, setTranscript] = useState<CompanionTurn[]>([]);
+  /** Status of a pre-existing application (the server returns it instead of
+   *  creating a duplicate). Pauses autosave for anything already submitted. */
+  const [existingAppStatus, setExistingAppStatus] = useState<string | null>(null);
+
+  // If the companion is not aboard (no LLM configured), fall back to the form.
+  const companionFlags = trpc.companion.flags.useQuery(undefined, { staleTime: 60_000 });
+  useEffect(() => {
+    if (companionFlags.data && !companionFlags.data.companion) setMode("form");
+  }, [companionFlags.data]);
 
   // Fetch the user's extended profile for pre-fill
   const { data: userProfile } = trpc.userProfiles.getMe.useQuery(undefined, {
@@ -164,7 +225,9 @@ export default function Apply() {
 
   const saveDraft = async () => {
     if (!applicationId) {
-      // Create new application
+      // Create new application. The server returns the user's existing
+      // application if they already have one, so check its status: the talk
+      // autosave must never silently rewrite a submitted application.
       const result = await createMutation.mutateAsync({
         projectName: formData.projectName || "Untitled Project",
         projectType: formData.projectType || "early_stage",
@@ -172,6 +235,8 @@ export default function Apply() {
       });
       analytics.applyStarted();
       setApplicationId(result.id);
+      const status = (result as any).status as string | undefined;
+      if (status && status !== "draft") setExistingAppStatus(status);
       return result.id;
     } else {
       // Update existing application - filter out empty strings
@@ -189,6 +254,11 @@ export default function Apply() {
           updateData[key] = value;
         }
       });
+      // Keep the Gardener conversation with the draft so reviewers can read
+      // how the applicant talked about their project, not just the fields.
+      if (transcript.length > 0) {
+        updateData.companionTranscript = JSON.stringify(transcript).slice(0, 400_000);
+      }
       await updateMutation.mutateAsync({
         id: applicationId,
         data: updateData,
@@ -196,6 +266,89 @@ export default function Apply() {
       return applicationId;
     }
   };
+
+  // ── The Gardener (chat-first application) ──────────────────────────────────
+
+  /** Values the conversation already holds, so the Gardener never re-asks. */
+  const companionCollected = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const key of GARDENER_FIELD_KEYS) {
+      const v = formData[key];
+      if (typeof v === "string" && v.trim()) out[key] = v;
+      else if (typeof v === "number" && v > 0) out[key] = String(v);
+    }
+    return out;
+  }, [formData]);
+
+  const gardenerFilledCount = GARDENER_REQUIRED.filter(({ key }) => {
+    const v = formData[key];
+    return typeof v === "string" ? v.trim() !== "" : typeof v === "number" && v > 0;
+  }).length;
+
+  /** Map a value the Gardener heard into typed form state. Defense in depth:
+   *  enums are normalized, numbers parsed, unknown keys ignored. */
+  const handleGardenerField = useCallback((key: string, value: string) => {
+    const v = value.trim();
+    if (!v) return;
+    switch (key) {
+      case "projectType": {
+        const low = v.toLowerCase();
+        if (low.includes("mature")) updateField("projectType", "mature");
+        else if (low.includes("early")) updateField("projectType", "early_stage");
+        return;
+      }
+      case "landStatus": {
+        const low = v.toLowerCase();
+        const match = (["owned", "leased", "committed", "seeking"] as const).find((s) => low.includes(s.slice(0, 4)));
+        if (match) updateField("landStatus", match);
+        return;
+      }
+      case "teamSize": {
+        const n = parseInt(v, 10);
+        if (Number.isFinite(n) && n > 0) updateField("teamSize", n);
+        return;
+      }
+      case "projectSizeHectares": {
+        const n = parseFloat(v);
+        if (Number.isFinite(n) && n > 0) updateField("projectSizeHectares", n);
+        return;
+      }
+      default: {
+        if ((GARDENER_FIELD_KEYS as string[]).includes(key)) updateField(key as keyof FormData, v);
+      }
+    }
+  }, []);
+
+  /** Move from the conversation to the full review (all sections on one page). */
+  const goToReview = useCallback((viaGardener: boolean) => {
+    setFromGardener(viaGardener);
+    setReviewAll(true);
+    setMode("form");
+    setCurrentStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    void saveDraft().catch(() => { /* autosave retries on next change */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, transcript, applicationId]);
+
+  // Debounced server autosave while talking, so a closed tab loses nothing.
+  const talkSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const talkSaveBusy = useRef(false);
+  useEffect(() => {
+    if (mode !== "talk") return;
+    // Never autosave over an application that is already in review or beyond.
+    if (existingAppStatus && !["draft", "changes_requested"].includes(existingAppStatus)) return;
+    const hasContent = Object.keys(companionCollected).length > 0 || transcript.length > 1;
+    if (!hasContent) return;
+    if (talkSaveTimer.current) clearTimeout(talkSaveTimer.current);
+    talkSaveTimer.current = setTimeout(async () => {
+      if (talkSaveBusy.current) return;
+      talkSaveBusy.current = true;
+      try { await saveDraft(); } catch { /* transient; next change retries */ }
+      finally { talkSaveBusy.current = false; }
+    }, 3000);
+    return () => { if (talkSaveTimer.current) clearTimeout(talkSaveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companionCollected, transcript, mode]);
 
   const handleNext = async () => {
     await saveDraft();
@@ -297,7 +450,111 @@ export default function Apply() {
           </p>
         </div>
 
-        {/* Step progress bar */}
+        {/* Chat-first: the Gardener leads the application. */}
+        {mode === "talk" && (
+          <Card className="p-6 sm:p-8 bg-white apply-form-dark mb-8">
+            {draftRestored && (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#4a7c59]/30 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">
+                <span>Draft restored from your last session. The Gardener can pick up where you left off.</span>
+                <button
+                  type="button"
+                  className="text-xs underline opacity-70 hover:opacity-100"
+                  onClick={() => {
+                    setFormData(INITIAL_FORM_DATA);
+                    try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+                    setDraftRestored(false);
+                  }}
+                >
+                  Clear &amp; start over
+                </button>
+              </div>
+            )}
+
+            {existingAppStatus && !["draft", "changes_requested"].includes(existingAppStatus) && (
+              <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-[#7a5a00]">
+                You already have a submitted application, so nothing here saves automatically.{" "}
+                <Link href="/apply/status" className="underline">Check your application status</Link>.
+              </div>
+            )}
+
+            <FormCompanion
+              formId="land-application"
+              context={GARDENER_CONTEXT}
+              collected={companionCollected}
+              onField={handleGardenerField}
+              onTranscript={setTranscript}
+              onReadyForReview={() => goToReview(true)}
+            />
+
+            {/* Live progress: what she has written down so far. */}
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[#1a472a]">What she's written down</p>
+                <span className="text-xs text-[#1a472a]/70">{gardenerFilledCount} of {GARDENER_REQUIRED.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {GARDENER_REQUIRED.map(({ key, label }) => {
+                  const v = formData[key];
+                  const filled = typeof v === "string" ? v.trim() !== "" : typeof v === "number" && v > 0;
+                  return (
+                    <span
+                      key={key}
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
+                        filled
+                          ? "border-[#7dd87d] bg-[#7dd87d]/15 text-[#1a472a]"
+                          : "border-[#1a472a]/15 text-[#1a472a]/50"
+                      }`}
+                    >
+                      {filled && <CheckCircle2 className="w-3 h-3 text-[#4a7c59]" />}
+                      {label}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-6 pt-5 border-t border-[#1a472a]/10">
+              <Button
+                onClick={() => goToReview(gardenerFilledCount > 0)}
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold"
+              >
+                Review and submit
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <button
+                type="button"
+                onClick={() => { setReviewAll(false); setFromGardener(false); setMode("form"); }}
+                className="text-sm text-[#4a7c59] underline underline-offset-2 hover:text-[#1a472a]"
+              >
+                I'd rather fill out the form myself
+              </button>
+            </div>
+          </Card>
+        )}
+
+        {/* Arrived from the conversation: one green banner, then the review. */}
+        {mode === "form" && fromGardener && (
+          <div className="mb-6 rounded-lg border-2 border-[#7dd87d]/60 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">
+            The Gardener wrote this down with you. Look everything over, fix anything she misheard,
+            add the map pin or documents if you have them, then submit.
+          </div>
+        )}
+
+        {/* Reopener back to the conversation. */}
+        {mode === "form" && companionFlags.data?.companion !== false && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setMode("talk")}
+              className="text-sm text-[#4a7c59] underline underline-offset-2 hover:text-[#1a472a]"
+            >
+              Talk it out with the Gardener instead
+            </button>
+          </div>
+        )}
+
+        {/* Step progress bar (classic wizard only; review shows everything). */}
+        {mode === "form" && !reviewAll && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-[#1a472a]/80">Step {currentStep} of {totalSteps}</span>
@@ -310,11 +567,20 @@ export default function Apply() {
             />
           </div>
         </div>
+        )}
+
+        {mode === "form" && reviewAll && (
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-[#1a472a]">Review your application</h2>
+            <p className="text-sm text-[#1a472a]/80">Every section is on this one page. Edit anything, then submit at the bottom.</p>
+          </div>
+        )}
 
         {/* Form Steps. apply-form-dark scopes the shared Label/Input/Select
             tokens (tuned for dark surfaces) back to the forest palette so
             labels, headings, field text, and placeholders render dark enough
             to read on the parchment Card background. */}
+        {mode === "form" && (
         <Card className="p-8 bg-white apply-form-dark">
           {/* Draft restored banner */}
           {draftRestored && (
@@ -335,7 +601,7 @@ export default function Apply() {
           )}
 
           {/* Step 1: Basic Information */}
-          {currentStep === 1 && (
+          {(reviewAll || currentStep === 1) && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Basic Information
@@ -610,7 +876,7 @@ export default function Apply() {
           )}
 
           {/* Step 2: Land & Team */}
-          {currentStep === 2 && (
+          {(reviewAll || currentStep === 2) && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Land & Team
@@ -814,8 +1080,9 @@ export default function Apply() {
                   id="teamSize"
                   type="number"
                   min="1"
-                  value={formData.teamSize}
-                  onChange={(e) => updateField("teamSize", parseInt(e.target.value) || 1)}
+                  value={formData.teamSize || ""}
+                  placeholder="# of people on the core team"
+                  onChange={(e) => updateField("teamSize", parseInt(e.target.value) || 0)}
                   className="mt-1"
                 />
               </div>
@@ -835,7 +1102,7 @@ export default function Apply() {
           )}
 
           {/* Step 3: Values & Alignment */}
-          {currentStep === 3 && (
+          {(reviewAll || currentStep === 3) && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Values & Alignment
@@ -925,7 +1192,7 @@ export default function Apply() {
           )}
 
           {/* Step 4: Commitment & Resources */}
-          {currentStep === 4 && (
+          {(reviewAll || currentStep === 4) && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Commitment & Resources
@@ -970,7 +1237,7 @@ export default function Apply() {
           )}
 
           {/* Step 5: Additional Information */}
-          {currentStep === 5 && (
+          {(reviewAll || currentStep === 5) && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Additional Information
@@ -1046,6 +1313,7 @@ export default function Apply() {
 
           {/* Navigation Buttons - Mobile Optimized */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-8 pt-6 border-t">
+            {!reviewAll && (
             <Button
               variant="outline"
               onClick={handleBack}
@@ -1055,6 +1323,7 @@ export default function Apply() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 order-1 sm:order-2">
               <Button
@@ -1067,7 +1336,7 @@ export default function Apply() {
                 Save Draft
               </Button>
 
-              {currentStep < totalSteps ? (
+              {!reviewAll && currentStep < totalSteps ? (
                 <Button
                   onClick={handleNext}
                   disabled={isLoading}
@@ -1102,6 +1371,7 @@ export default function Apply() {
             <DataProtectionBadge compact className="mt-3 justify-center" />
           </div>
         </Card>
+        )}
       </div>
     </div>
     </PageWrapper>

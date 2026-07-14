@@ -139,6 +139,48 @@ describe("alliance application (the Weaver)", () => {
   });
 });
 
+describe("land application (the Gardener)", () => {
+  it("is registered, points at the gardener, and covers every required application field", () => {
+    const form = COMPANION_FORMS["land-application"];
+    expect(form).toBeTruthy();
+    expect(form.personaId).toBe("gardener");
+    const keys = form.fields.map((f) => f.key);
+    // These keys must match the applications table columns the /apply form
+    // writes, so the extracted values flow straight into the draft.
+    for (const required of [
+      "projectName", "projectType", "location", "vision", "landStatus",
+      "teamSize", "teamDescription", "regenerativePractices",
+      "governanceApproach", "communityEngagement", "timeCommitment", "fundingNeeds",
+    ]) {
+      expect(keys).toContain(required);
+      expect(form.fields.find((f) => f.key === required)?.required).toBe(true);
+    }
+  });
+
+  it("constrains projectType and landStatus to the database enums", () => {
+    const form = COMPANION_FORMS["land-application"];
+    expect(form.fields.find((f) => f.key === "projectType")?.enumValues).toEqual(["early_stage", "mature"]);
+    expect(form.fields.find((f) => f.key === "landStatus")?.enumValues).toEqual(["owned", "leased", "committed", "seeking"]);
+  });
+
+  it("never lets the model write outside the declared land fields", async () => {
+    modelReturns({
+      reply: "Beautiful. Tell me about the team.",
+      updates: [
+        { field: "vision", value: "a food forest village on 30 hectares" },
+        { field: "status", value: "approved" }, // not a declared field
+      ],
+      readyForReview: false,
+    });
+    const res = await companionTurn({
+      form: COMPANION_FORMS["land-application"],
+      history: [{ role: "user", content: "we're building a food forest village" }],
+      collected: {},
+    });
+    expect(res.updates.map((u) => u.field)).toEqual(["vision"]);
+  });
+});
+
 describe("form registry integrity", () => {
   it("every form points at a real persona and has at least one required field where it matters", () => {
     for (const form of Object.values(COMPANION_FORMS)) {
