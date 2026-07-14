@@ -25,19 +25,39 @@ import { logger } from "../../_core/logger";
 
 const log = logger("hypha-alchemy");
 
-const ALCHEMY_SIGNING_KEY = process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "";
+// One or more Alchemy signing keys, comma-separated. Alchemy issues a distinct
+// signing key per webhook, and more than one webhook (the token address-activity
+// feed plus the governance DAOProposals log feed) POSTs to this single endpoint,
+// so we accept any of the configured keys. A single-key value keeps working
+// unchanged. Whitespace around each key is trimmed.
+const ALCHEMY_SIGNING_KEYS = (process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "")
+  .split(",")
+  .map((k) => k.trim())
+  .filter((k) => k.length > 0);
 const BASESCAN_TX_BASE = "https://basescan.org/tx/";
 
 /** Verify the Alchemy webhook signature header. Alchemy signs the raw body
- * with HMAC-SHA256 using the signing key from the dashboard. */
+ * with HMAC-SHA256 using the signing key from the dashboard. Returns true if
+ * the signature matches ANY configured key, so several webhooks that share this
+ * endpoint (each with its own Alchemy signing key) all verify. */
 function verifyAlchemySignature(rawBody: string, signature: string | undefined): boolean {
-  if (!ALCHEMY_SIGNING_KEY || !signature) return false;
-  const computed = crypto.createHmac("sha256", ALCHEMY_SIGNING_KEY).update(rawBody).digest("hex");
+  if (ALCHEMY_SIGNING_KEYS.length === 0 || !signature) return false;
+  let sigBuf: Buffer;
   try {
-    return crypto.timingSafeEqual(Buffer.from(computed, "hex"), Buffer.from(signature, "hex"));
+    sigBuf = Buffer.from(signature, "hex");
   } catch {
     return false;
   }
+  return ALCHEMY_SIGNING_KEYS.some((key) => {
+    const computed = crypto.createHmac("sha256", key).update(rawBody).digest("hex");
+    const computedBuf = Buffer.from(computed, "hex");
+    if (computedBuf.length !== sigBuf.length) return false;
+    try {
+      return crypto.timingSafeEqual(computedBuf, sigBuf);
+    } catch {
+      return false;
+    }
+  });
 }
 
 /** Extract a bridge key from a proposal title's [rc:xxxxxxxx] marker. */
