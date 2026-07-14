@@ -620,6 +620,36 @@ export default function Team() {
               <a href="/community/c/roles-dialogue" className="text-[#7dd87d] underline hover:text-[#9de89d] transition-colors">Tell us in the Roles Dialogue thread.</a>
             </p>
           </div>
+
+          {/* Fleet Roles: the ReGen Ship + Fleet operating roles (paid in USD). */}
+          <div className="mt-12">
+            <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#2b7fb8]/40 rounded-2xl p-4 md:p-5 text-center">
+              <p className="text-white/85 text-sm md:text-base leading-relaxed">
+                These roles keep the <span className="font-bold text-[#7dd87d]">ReGen Fleet</span> sailing.
+                They hold the ships between voyages, in real life, on the land. Paid per turnover.
+              </p>
+            </div>
+            <div className="max-w-3xl mx-auto bg-[#0d2818]/70 border border-white/15 rounded-2xl p-6 md:p-7">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl" aria-hidden="true">⚓</span>
+                <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>The Keeper of the Fleet</h3>
+              </div>
+              <p className="text-white/80 leading-relaxed mb-4">
+                Between every voyage, someone holds the ship. The Keeper resets her on the Sunday-into-Monday
+                turnover, runs the two-hour orientation and the handing of the keys for every first-time crew,
+                counts her treasures at boarding and return, and keeps her healthy voyage after voyage. Flat pay,
+                two hundred dollars per turnover.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a href="/blog/keeper-of-the-fleet" className="inline-flex items-center gap-1.5 bg-[#7dd87d] text-[#0d2818] font-semibold px-4 py-2 rounded-full hover:bg-[#9de89d] transition-colors">
+                  Read the full role <span aria-hidden="true">→</span>
+                </a>
+                <a href="/ship/keeper" className="inline-flex items-center gap-1.5 border border-white/30 text-white font-semibold px-4 py-2 rounded-full hover:bg-white/10 transition-colors">
+                  Apply to keep her
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
