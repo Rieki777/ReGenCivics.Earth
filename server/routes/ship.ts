@@ -28,9 +28,13 @@ import {
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
   shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
+  shipCrewListSignups, shipGearChecks,
   shipCrewProfiles, shipGiveawayDrawings, churchDonations,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
+import { ENV } from "../_core/env";
+import { SignJWT, jwtVerify } from "jose";
+import crypto from "node:crypto";
 import { checkRateLimit } from "../rate-limit";
 import { sanitizeInput } from "../_core/security";
 import { notifyOwner } from "../_core/notification";
@@ -384,6 +388,60 @@ export const shipRouter = router({
         const entry = { at: new Date().toISOString(), byName: sanitizeInput(input.byName) };
         await d.update(shipBookings).set({ preSailLog: [...prior, entry] }).where(eq(shipBookings.id, active.id));
         return { ok: true, entry, count: prior.length + 1 };
+      }),
+
+    // Crew hides or shows their own Homecoming recap page (SHIP_V5_FLYWHEEL §2).
+    setHomecomingHidden: protectedProcedure
+      .input(z.object({ hidden: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [b] = await d.select({ id: shipBookings.id }).from(shipBookings)
+          .where(and(eq(shipBookings.userId, ctx.user.id), eq(shipBookings.status, "completed")))
+          .orderBy(desc(shipBookings.startDate)).limit(1);
+        if (!b) throw new TRPCError({ code: "NOT_FOUND", message: "No completed voyage to hide." });
+        await d.update(shipBookings).set({ homecomingHidden: input.hidden }).where(eq(shipBookings.id, b.id));
+        return { ok: true };
+      }),
+
+    // The gear manifest (SHIP_V5_FLYWHEEL §1): the high-value gear she carries,
+    // plus this voyage's boarding/return checks.
+    gearManifest: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      const [active] = await d.select().from(shipBookings)
+        .where(and(eq(shipBookings.userId, ctx.user.id), inArray(shipBookings.status, ["confirmed", "active", "completed"])))
+        .orderBy(desc(shipBookings.startDate)).limit(1);
+      const gear = await d.select({ id: shipInventoryItems.id, name: shipInventoryItems.name, category: shipInventoryItems.category })
+        .from(shipInventoryItems)
+        .where(and(eq(shipInventoryItems.isVisible, true), eq(shipInventoryItems.isGearChecked, true)))
+        .orderBy(asc(shipInventoryItems.sortOrder));
+      const checks = active
+        ? await d.select().from(shipGearChecks).where(eq(shipGearChecks.bookingId, active.id))
+        : [];
+      return { bookingId: active?.id ?? null, gear, checks };
+    }),
+    submitGearCheck: protectedProcedure
+      .input(z.object({
+        phase: z.enum(["boarding", "return"]),
+        items: z.array(z.object({
+          itemId: z.number().int(),
+          present: z.boolean(),
+          condition: z.enum(["good", "worn", "damaged", "missing"]),
+          photoUrl: z.string().max(512).optional(),
+        })).max(100),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [active] = await d.select().from(shipBookings)
+          .where(and(eq(shipBookings.userId, ctx.user.id), inArray(shipBookings.status, ["confirmed", "active"])))
+          .orderBy(asc(shipBookings.startDate)).limit(1);
+        if (!active) throw new TRPCError({ code: "NOT_FOUND", message: "No sailing voyage for a gear check." });
+        await d.insert(shipGearChecks).values({ bookingId: active.id, phase: input.phase, items: input.items, completedByUserId: ctx.user.id });
+        // On a return check, flag discrepancies to the owner.
+        const bad = input.items.filter((i) => !i.present || i.condition === "damaged" || i.condition === "missing");
+        if (input.phase === "return" && bad.length) {
+          await notifyOwner({ title: "Ship gear check: discrepancies at return", content: `Booking ${active.id}: ${bad.length} item(s) worn, damaged, or missing.` }).catch(() => {});
+        }
+        return { ok: true, discrepancies: bad.length };
       }),
   }),
 
@@ -1084,6 +1142,43 @@ export const shipRouter = router({
         if (input?.bookingId) conds.push(eq(shipLogEntries.bookingId, input.bookingId));
         return d.select().from(shipLogEntries).where(and(...conds)).orderBy(desc(shipLogEntries.createdAt)).limit(200);
       }),
+
+    // The Homecoming timeline: completed, non-hidden voyages (SHIP_V5_FLYWHEEL §2).
+    recaps: publicProcedure.query(async () => {
+      const d = await db();
+      const rows = await d
+        .select({ slug: shipBookings.publicSlug, startDate: shipBookings.startDate, endDate: shipBookings.endDate, crewRoles: shipBookings.crewRoles })
+        .from(shipBookings)
+        .where(and(eq(shipBookings.status, "completed"), eq(shipBookings.homecomingHidden, false), isNotNull(shipBookings.publicSlug)))
+        .orderBy(desc(shipBookings.startDate))
+        .limit(200);
+      return rows.map((r) => ({ slug: r.slug, startDate: r.startDate, endDate: r.endDate, crewName: (r.crewRoles as { captain?: string } | null)?.captain ?? "A crew" }));
+    }),
+
+    // One voyage's auto-compiled recap page. Public, respects privacy toggles.
+    recap: publicProcedure
+      .input(z.object({ slug: z.string().min(4).max(80) }))
+      .query(async ({ input }) => {
+        const d = await db();
+        const [b] = await d.select().from(shipBookings).where(eq(shipBookings.publicSlug, input.slug)).limit(1);
+        if (!b || b.status !== "completed" || b.homecomingHidden) return null;
+        const entries = await d.select().from(shipLogEntries).where(and(eq(shipLogEntries.bookingId, b.id), eq(shipLogEntries.isPublic, true))).orderBy(asc(shipLogEntries.dayNumber));
+        const plantings = await d.select().from(shipSeedPlantings).where(and(eq(shipSeedPlantings.bookingId, b.id), eq(shipSeedPlantings.isVerified, true)));
+        const stamps = await d.select().from(shipPassportStamps).where(eq(shipPassportStamps.bookingId, b.id));
+        const [captain] = await d.select({ handle: users.handle }).from(users).where(eq(users.id, b.userId)).limit(1);
+        const roles = (b.crewRoles as { captain?: string } | null) ?? {};
+        return {
+          slug: b.publicSlug,
+          crewName: roles.captain ?? "A crew",
+          startDate: b.startDate,
+          endDate: b.endDate,
+          referralHandle: captain?.handle ?? null,
+          entries: entries.map((e) => ({ id: e.id, dayNumber: e.dayNumber, title: e.title, content: e.content, photoUrl: e.photoUrl })),
+          plantingCount: plantings.length,
+          stampCount: stamps.length,
+          closingLine: "She came home fuller than she left. Fair winds to the next crew.",
+        };
+      }),
   }),
 
   // ── Passport ────────────────────────────────────────────────────────────────
@@ -1227,6 +1322,71 @@ export const shipRouter = router({
     }),
   }),
 
+  // ── The Crew List (capture demand on non-open weeks) ────────────────────────
+  crewList: router({
+    // Join the crew list from a non-open week card. Double opt-in: the row is
+    // stored unconfirmed and a confirmation email is sent (GDPR). One-click
+    // unsubscribe token is minted now (SHIP_V5_FLYWHEEL Section 4).
+    join: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        interests: z.array(z.enum(["any_week", "this_season", "winter", "year_2", "price_change"])).max(5).default([]),
+        source: z.string().max(120).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_crew_list");
+        const d = await db();
+        const unsubscribeToken = crypto.randomBytes(24).toString("hex");
+        const [existing] = await d.select({ id: shipCrewListSignups.id }).from(shipCrewListSignups).where(eq(shipCrewListSignups.email, input.email)).limit(1);
+        if (existing) {
+          await d.update(shipCrewListSignups).set({ interests: input.interests, source: input.source ?? "week_card" }).where(eq(shipCrewListSignups.id, existing.id));
+        } else {
+          await d.insert(shipCrewListSignups).values({ email: input.email, interests: input.interests, source: input.source ?? "week_card", unsubscribeToken });
+        }
+        // Confirmation email (best-effort, non-fatal).
+        try {
+          const secret = new TextEncoder().encode(ENV.cookieSecret);
+          const token = await new SignJWT({ email: input.email, purpose: "ship-crewlist-confirm" })
+            .setProtectedHeader({ alg: "HS256" }).setExpirationTime("14d").sign(secret);
+          const confirmUrl = `${ENV.appUrl}/ship/crew-list/confirm?token=${encodeURIComponent(token)}`;
+          const unsubUrl = `${ENV.appUrl}/ship/crew-list/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
+          const { sendEmail } = await import("../_core/email");
+          await sendEmail({
+            to: input.email,
+            subject: "Confirm your spot on the ReGen Ship crew list",
+            html: `<h2>Almost aboard</h2><p>Confirm you want word when a voyage week opens for you, and we'll keep you posted, in the ship's voice, one short note at a time.</p><p style="margin:24px 0;"><a href="${confirmUrl}" style="background:#1a472a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">Confirm my spot</a></p><p style="color:#888;font-size:12px;">If you did not ask for this, ignore this email. <a href="${unsubUrl}" style="color:#999;">Unsubscribe</a>.</p>`,
+          });
+        } catch { /* email failure is non-fatal */ }
+        return { ok: true, pendingConfirmation: true };
+      }),
+    confirm: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          const secret = new TextEncoder().encode(ENV.cookieSecret);
+          const { payload } = await jwtVerify(input.token, secret);
+          if (payload.purpose !== "ship-crewlist-confirm" || typeof payload.email !== "string") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid confirmation link." });
+          }
+          const d = await db();
+          await d.update(shipCrewListSignups).set({ confirmedAt: new Date() }).where(eq(shipCrewListSignups.email, payload.email));
+          return { ok: true };
+        } catch (err) {
+          if (err instanceof TRPCError) throw err;
+          throw new TRPCError({ code: "BAD_REQUEST", message: "That confirmation link is invalid or expired." });
+        }
+      }),
+    unsubscribe: publicProcedure
+      .input(z.object({ token: z.string().min(8).max(64) }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_crew_list");
+        const d = await db();
+        await d.delete(shipCrewListSignups).where(eq(shipCrewListSignups.unsubscribeToken, input.token));
+        // Always succeed (no enumeration signal).
+        return { ok: true };
+      }),
+  }),
+
   // ── The Ship's Inventory (the bag) ──────────────────────────────────────────
   inventory: router({
     // Public: every visible item, grouped client-side into the grid.
@@ -1287,8 +1447,14 @@ export const shipRouter = router({
             console.warn(`[ship] orientation gate overridden for booking ${input.id} by user ${ctx.user.id}: ${input.overrideReason ?? "(no reason)"}`);
           }
         }
-        await d.update(shipBookings).set({ status: input.status, ...(input.isWinnerVoyage != null ? { isWinnerVoyage: input.isWinnerVoyage } : {}), ...(input.isGifted != null ? { isGifted: input.isGifted } : {}) }).where(eq(shipBookings.id, input.id));
-        return { ok: true };
+        // Mint a Homecoming slug when the voyage completes (SHIP_V5_FLYWHEEL §2).
+        let publicSlug: string | undefined;
+        if (input.status === "completed") {
+          const [b] = await d.select({ slug: shipBookings.publicSlug }).from(shipBookings).where(eq(shipBookings.id, input.id)).limit(1);
+          if (!b?.slug) publicSlug = `voyage-${crypto.randomBytes(5).toString("hex")}`;
+        }
+        await d.update(shipBookings).set({ status: input.status, ...(publicSlug ? { publicSlug } : {}), ...(input.isWinnerVoyage != null ? { isWinnerVoyage: input.isWinnerVoyage } : {}), ...(input.isGifted != null ? { isGifted: input.isGifted } : {}) }).where(eq(shipBookings.id, input.id));
+        return { ok: true, publicSlug };
       }),
     // The Keeper (or an admin) marks the orientation walkthrough complete, which
     // unlocks the booking to become `active` and the driving-day features.
@@ -1719,6 +1885,19 @@ export const shipRouter = router({
       const d = await db();
       await d.update(shipKnowledgeChunks).set({ isApproved: input.isApproved }).where(eq(shipKnowledgeChunks.id, input.id));
       return { ok: true };
+    }),
+
+    // Crew list: the demand signal (confirmed signups + interest counts).
+    crewListSummary: adminProcedure.query(async () => {
+      const d = await db();
+      const rows = await d.select({ interests: shipCrewListSignups.interests, confirmedAt: shipCrewListSignups.confirmedAt }).from(shipCrewListSignups);
+      const byInterest: Record<string, number> = {};
+      let confirmed = 0;
+      for (const r of rows) {
+        if (r.confirmedAt) confirmed++;
+        for (const i of (Array.isArray(r.interests) ? (r.interests as string[]) : [])) byInterest[i] = (byInterest[i] ?? 0) + 1;
+      }
+      return { total: rows.length, confirmed, byInterest };
     }),
   }),
 });

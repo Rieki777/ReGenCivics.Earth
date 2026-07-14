@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, Wrench, Anchor, ClipboardCheck, Users, ScrollText, AlertTriangle } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import { AskShipwright } from "@/components/ship/AskShipwright";
+import { GearManifest } from "@/components/ship/GearManifest";
 
 const ROLES = [
   { key: "captain", label: "The Captain", desc: "The driver, head of the ship, fully responsible for her under way." },
@@ -155,6 +156,11 @@ export default function CaptainsBook() {
                 <Link href="/ship/log" className="text-[#2f5d3a] dark:text-[#7dd87d] font-medium underline">Open the voyage log</Link>
               </div>
             </div>
+          </ShipSection>
+
+          {/* Gear manifest */}
+          <ShipSection className="pt-0">
+            <div className="max-w-2xl"><GearManifest /></div>
           </ShipSection>
 
           {/* 5. Crew roles */}

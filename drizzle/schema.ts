@@ -4277,6 +4277,10 @@ export const shipBookings = mysqlTable("ship_bookings", {
   crewRoles: json("crewRoles"),
   /** Pre-sail checklist completions, one per drive: [{ at, byName }]. */
   preSailLog: json("preSailLog"),
+  /** Public slug for the Homecoming recap page, minted when the voyage completes. */
+  publicSlug: varchar("publicSlug", { length: 80 }),
+  /** Crew can hide the whole Homecoming page. */
+  homecomingHidden: boolean("homecomingHidden").notNull().default(false),
   platformBookingRef: varchar("platformBookingRef", { length: 255 }),
   dietCommitmentAt: timestamp("dietCommitmentAt"),
   waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),

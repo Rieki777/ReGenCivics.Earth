@@ -219,6 +219,7 @@ const ShipWinter = lazy(() => import("./pages/ship/ShipWinter"));
 const ShipLog = lazy(() => import("./pages/ship/ShipLog"));
 const ShipGuide = lazy(() => import("./pages/ship/ShipGuide"));
 const CaptainsBook = lazy(() => import("./pages/ship/CaptainsBook"));
+const ShipCrewListAction = lazy(() => import("./pages/ship/ShipCrewListAction"));
 const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
 
 // Loading spinner component using Seed of Life
@@ -260,6 +261,8 @@ function Router() {
       <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>
       <Route path={"/ship/guide"}><EB><ShipGuide /></EB></Route>
       <Route path={"/ship/voyage"}><EB><CaptainsBook /></EB></Route>
+      <Route path={"/ship/crew-list/confirm"}><EB><ShipCrewListAction mode="confirm" /></EB></Route>
+      <Route path={"/ship/crew-list/unsubscribe"}><EB><ShipCrewListAction mode="unsubscribe" /></EB></Route>
       {/* The Love Voyage article lives in the blog; /ship/honeymoon is the friendly shortcut. */}
       <Route path={"/ship/honeymoon"}>{() => { window.location.replace('/blog/more-than-one-honeymoon'); return null; }}</Route>
       <Route path={"/admin/ship"}><EB><ShipAdmin /></EB></Route>

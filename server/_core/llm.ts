@@ -57,8 +57,24 @@ export function isLLMConfigured(): boolean {
   return Boolean(ENV.openrouterApiKey || ENV.anthropicApiKey);
 }
 
+// Default first-party Anthropic model for the site chat + companion + concierge.
+// Fast and inexpensive, and it supports the tool-forced structured output the
+// companion relies on. Override with AI_MODEL set to any bare `claude-*` id.
+const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
+
+function usingDirectAnthropic(): boolean {
+  return Boolean(ENV.anthropicApiKey);
+}
+
 function getModel(): string {
-  return ENV.openrouterApiKey ? ENV.aiModel : "claude-sonnet-4-6";
+  // Direct Anthropic path: use a bare claude-* model id. Respect AI_MODEL only
+  // when it names one (AI_MODEL is often "openrouter/auto", which is not valid
+  // against the first-party API).
+  if (usingDirectAnthropic()) {
+    return ENV.aiModel.startsWith("claude-") ? ENV.aiModel : DEFAULT_ANTHROPIC_MODEL;
+  }
+  // OpenRouter fallback: use the configured routing model.
+  return ENV.aiModel || "openrouter/auto";
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
@@ -79,7 +95,14 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
 
 function getClient(): Anthropic {
   if (!_client) {
-    if (ENV.openrouterApiKey) {
+    // Prefer the first-party Anthropic API when its key is set: it is the most
+    // reliable path and needs no provider allow-list. OpenRouter is a fallback
+    // aggregator, and its account must have the requested provider enabled (this
+    // project's OpenRouter key cannot reach the anthropic provider, which 404s
+    // every Claude call), so we only use it when no direct Anthropic key exists.
+    if (ENV.anthropicApiKey) {
+      _client = new Anthropic({ apiKey: ENV.anthropicApiKey });
+    } else if (ENV.openrouterApiKey) {
       _client = new Anthropic({
         authToken: ENV.openrouterApiKey,
         baseURL: OPENROUTER_BASE_URL,
@@ -88,10 +111,8 @@ function getClient(): Anthropic {
           "X-Title": "ReGen Civics",
         },
       });
-    } else if (ENV.anthropicApiKey) {
-      _client = new Anthropic({ apiKey: ENV.anthropicApiKey });
     } else {
-      throw new Error("Neither OPENROUTER_API_KEY nor ANTHROPIC_API_KEY is configured");
+      throw new Error("Neither ANTHROPIC_API_KEY nor OPENROUTER_API_KEY is configured");
     }
   }
   return _client;

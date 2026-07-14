@@ -19,6 +19,7 @@ import { MapPin, Compass, LayoutGrid, List as ListIcon } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag } from "./shipShared";
 import { FormCompanion } from "@/components/companion";
 import { companionBool } from "@shared/companions";
+import { CrewListJoin } from "@/components/ship/CrewListJoin";
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -322,6 +323,7 @@ export default function ShipBook() {
               <h3 className="font-semibold text-lg mb-2">Reading the calendar</h3>
               <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 3pm, return Sunday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. Year-two weeks sail at her full rate. The projected bioregion tells you roughly where she will be.</p>
             </div>
+            {weeks.some((w) => !w.selectable) && <CrewListJoin source="book_page" />}
           </div>
         </div>
       </ShipSection>
