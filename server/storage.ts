@@ -115,3 +115,33 @@ export async function storageStream(
     contentLength: resp.ContentLength,
   };
 }
+
+/**
+ * Range-aware stream from R2, so large files (e.g. the PMTiles basemap that
+ * protomaps-leaflet reads by HTTP range) can be proxied through the app instead
+ * of depending on R2's custom domain serving sub-paths. Pass the request's Range
+ * header through verbatim. Returns 206 with Content-Range when a range is served.
+ */
+export async function storageStreamRange(
+  relKey: string,
+  range?: string,
+): Promise<{
+  body: Readable;
+  contentType: string;
+  contentLength: number | undefined;
+  contentRange: string | undefined;
+  statusCode: 200 | 206;
+}> {
+  const key = relKey.replace(/^\/+/, "");
+  const client = getS3Client();
+  const resp = await client.send(
+    new GetObjectCommand({ Bucket: getBucket(), Key: key, ...(range ? { Range: range } : {}) }),
+  );
+  return {
+    body: resp.Body as Readable,
+    contentType: resp.ContentType ?? "application/octet-stream",
+    contentLength: resp.ContentLength,
+    contentRange: resp.ContentRange,
+    statusCode: resp.ContentRange ? 206 : 200,
+  };
+}

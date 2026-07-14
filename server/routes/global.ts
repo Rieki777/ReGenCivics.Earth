@@ -9,7 +9,7 @@ import { forumPosts, campaigns as campaignsTable } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { ENV } from "../_core/env";
 import { nanoid } from "nanoid";
-import { storagePut, storageStream } from "../storage";
+import { storagePut, storageStream, storageStreamRange } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
 import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
@@ -154,6 +154,30 @@ const imageCache = new LRUCache<string, Buffer>({
 // shared with any future proxy that needs the same gate.
 
 export function registerImageOptimization(app: Express) {
+  // Same-origin, range-capable proxy for the ship treasure-map basemap. The
+  // 2GB PMTiles archive lives in R2 at ship/basemap.pmtiles; R2's custom domain
+  // does not serve that sub-path, so protomaps-leaflet reads it from here via
+  // HTTP range requests. Streamed straight from R2 with the Range header passed
+  // through (206 + Content-Range), no re-encode, long cache.
+  app.get('/api/ship/basemap.pmtiles', async (req, res) => {
+    try {
+      const range = typeof req.headers.range === 'string' ? req.headers.range : undefined;
+      const { body, contentType, contentLength, contentRange, statusCode } = await storageStreamRange('ship/basemap.pmtiles', range);
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', contentType || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      if (contentRange) res.setHeader('Content-Range', contentRange);
+      if (contentLength != null) res.setHeader('Content-Length', String(contentLength));
+      res.status(statusCode);
+      body.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
+      body.pipe(res);
+    } catch (err: any) {
+      const notFound = err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404;
+      res.status(notFound ? 404 : 502).json({ error: notFound ? 'basemap not uploaded yet' : 'basemap proxy error' });
+    }
+  });
+
   app.get('/api/img', async (req, res) => {
     try {
       const { url, w, h, q } = req.query as Record<string, string>;

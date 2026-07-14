@@ -107,8 +107,13 @@ export const VOYAGE_MAX_BOUNDS: [[number, number], [number, number]] = [
   [ANCHORAGE[0] + rangeLatDeg + RANGE_PAD_DEG, ANCHORAGE[1] + rangeLngDeg + RANGE_PAD_DEG],
 ];
 
-/** The self-hosted basemap (ADR-34), kept for offline/fallback use. */
-export const SHIP_BASEMAP_URL = "https://assets.regencivics.earth/ship/basemap.pmtiles";
+/**
+ * The self-hosted PMTiles basemap (ADR-34), kept for offline/fallback use.
+ * Served through the app's same-origin range proxy (/api/ship/basemap.pmtiles)
+ * because R2's custom domain does not serve the ship/ sub-path. protomaps-leaflet
+ * reads it by HTTP range; the proxy streams straight from R2 with 206 responses.
+ */
+export const SHIP_BASEMAP_URL = "/api/ship/basemap.pmtiles";
 
 /** Esri World Imagery satellite + reference labels (ADR-36). One origin. */
 export const SATELLITE_TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
