@@ -13,6 +13,12 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-14 (later): LLM automatic failover to OpenRouter
+
+- The LLM now runs an ordered provider chain in `server/_core/llm.ts`: first-party Anthropic first, and OpenRouter comes online automatically as a fallback when Anthropic errors on credit/quota/rate limits (`isFailoverError` covers 402/429/529 and credit/billing/quota/balance/overloaded messages; Anthropic returns a 400 "credit balance is too low" when a workspace runs dry). Both `invokeLLM` (incl. tool-forced structured output) and `streamLLM` fail over; streaming only fails over before the first token so an answer is never doubled. Ordinary errors (bad request, 401, 404) do NOT fail over, so real bugs still surface.
+- OpenRouter fallback uses a routable, non-anthropic model by default (`OPENROUTER_MODEL`, default `openai/gpt-4o-mini`) since this OpenRouter account cannot reach the anthropic provider. Override with the `OPENROUTER_MODEL` Railway var to pick any OpenRouter model.
+- Verify: typecheck exit 0, full build green, new `isFailoverError` unit tests (credit/quota/rate-limit → fail over; bad-request/401/404 → do not) plus companion + guide suites pass.
+
 ## 2026-07-14: LLM provider fix + the Weaver wraps the alliance application
 
 - **LLM was 404ing in production for every AI feature** (Guide, FormCompanion, concierge). The code spoke the Anthropic Messages protocol to OpenRouter's `/api/v1/messages`, which only routes to the `anthropic` provider, and this OpenRouter account has no access to it ("No allowed providers are available for the selected model"). Fixed in `server/_core/llm.ts`: prefer the first-party Anthropic API when `ANTHROPIC_API_KEY` is set, fall back to OpenRouter only when it is not; on the direct path use a bare `claude-*` model (default `claude-haiku-4-5-20251001`, overridable via `AI_MODEL`). Verified live: `/api/chat/stream` now streams a real answer instead of "Stream failed".

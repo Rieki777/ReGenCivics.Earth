@@ -50,6 +50,11 @@ export const ENV = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "openrouter/auto",
+  // Model used when a call fails over from first-party Anthropic to OpenRouter
+  // (e.g. Anthropic is out of credits). It must route to a provider this
+  // OpenRouter account can reach, so it is NOT a claude/anthropic model by
+  // default. Override with OPENROUTER_MODEL (any OpenRouter model slug).
+  openrouterModel: process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini",
   // Conversational Companion voice layer (all optional; browser SpeechRecognition
   // + speechSynthesis are the free v1 default). STT_API_KEY lights up the server
   // fallback transcription endpoint for browsers without SpeechRecognition
