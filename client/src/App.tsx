@@ -220,6 +220,7 @@ const ShipLog = lazy(() => import("./pages/ship/ShipLog"));
 const ShipGuide = lazy(() => import("./pages/ship/ShipGuide"));
 const CaptainsBook = lazy(() => import("./pages/ship/CaptainsBook"));
 const ShipCrewListAction = lazy(() => import("./pages/ship/ShipCrewListAction"));
+const ShipHomecoming = lazy(() => import("./pages/ship/ShipHomecoming"));
 const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
 
 // Loading spinner component using Seed of Life
@@ -259,6 +260,7 @@ function Router() {
       <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
       <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
       <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>
+      <Route path={"/ship/log/:slug"}><EB><ShipHomecoming /></EB></Route>
       <Route path={"/ship/guide"}><EB><ShipGuide /></EB></Route>
       <Route path={"/ship/voyage"}><EB><CaptainsBook /></EB></Route>
       <Route path={"/ship/crew-list/confirm"}><EB><ShipCrewListAction mode="confirm" /></EB></Route>
