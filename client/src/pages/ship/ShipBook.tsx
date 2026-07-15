@@ -88,6 +88,8 @@ export default function ShipBook() {
   const flags = useShipFlags();
   const [voyageId, setVoyageId] = useState<SuggestedVoyageId | null>(null);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  // True once the First Mate charts a real itinerary; the rough days step back.
+  const [fmCharted, setFmCharted] = useState(false);
 
   const MAX_WEEKS = MAX_VOYAGE_WEEKS;
   const selected = startIdx === null ? [] : weeks.slice(startIdx, startIdx + count);
@@ -112,6 +114,7 @@ export default function ShipBook() {
     setCount(v.weeks);
     setVoyageId(v.id);
     setCustomizeOpen(false);
+    setFmCharted(false);
     window.setTimeout(() => chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
@@ -121,6 +124,7 @@ export default function ShipBook() {
     // Hand-picking weeks leaves the suggested-voyage flow; the form stays.
     setVoyageId(null);
     setCustomizeOpen(false);
+    setFmCharted(false);
     // Toggle off if it is the only selected week.
     if (startIdx !== null && count === 1 && startIdx === i) {
       setStartIdx(null);
@@ -181,6 +185,7 @@ export default function ShipBook() {
       setNotes("");
       setVoyageId(null);
       setCustomizeOpen(false);
+      setFmCharted(false);
       availability.refetch();
     } catch (err: any) {
       toast.error(err?.message ?? "Something went wrong. Please try again.");
@@ -364,7 +369,7 @@ export default function ShipBook() {
                   </div>
                   <p className="text-sm text-foreground/80 italic mt-2">{roughChart.summary}</p>
                 </div>
-                {!customizeOpen && (
+                {!(customizeOpen && fmCharted) && (
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {roughChart.days.map((d) => (
                       <div key={d.day} className="rounded-xl border bg-background/60 p-3">
@@ -388,6 +393,7 @@ export default function ShipBook() {
                   <FirstMateQuickCustomize
                     key={`${voyagePkg.id}-${startDate}-${selected.length}`}
                     seedAnswers={firstMateSeedAnswers(voyagePkg, { startDate, endDate, bioregions })}
+                    onItinerary={() => setFmCharted(true)}
                   />
                 )}
                 <p className="text-xs text-muted-foreground">

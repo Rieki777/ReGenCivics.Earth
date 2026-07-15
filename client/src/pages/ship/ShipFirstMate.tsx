@@ -62,7 +62,14 @@ export function ItineraryView({ itinerary }: { itinerary: Itinerary | null }) {
  * and the guest refines it by chat. The full planner (/ship/concierge) stays the
  * longer pass after booking. Remount (key) to re-chart for a new selection.
  */
-export function FirstMateQuickCustomize({ seedAnswers }: { seedAnswers: Record<string, string> }) {
+export function FirstMateQuickCustomize({
+  seedAnswers,
+  onItinerary,
+}: {
+  seedAnswers: Record<string, string>;
+  /** Fires when a real chart lands, so the host can retire its rough chart. */
+  onItinerary?: (itinerary: Itinerary) => void;
+}) {
   const start = trpc.ship.concierge.start.useMutation();
   const generate = trpc.ship.concierge.generate.useMutation();
   const chat = trpc.ship.concierge.chat.useMutation();
@@ -85,7 +92,14 @@ export function FirstMateQuickCustomize({ seedAnswers }: { seedAnswers: Record<s
       setSessionId(sid);
       setSessionToken(s.token ?? null);
       const res = await generate.mutateAsync({ sessionId: sid, token: s.token ?? undefined });
-      setItinerary(res.itinerary as Itinerary);
+      const charted = res.itinerary as Itinerary;
+      // A chart with no days is a failed sail, not a result. Offer the retry.
+      if (!charted?.days?.length) {
+        setError("She could not chart the whole sail just now. Give it another go.");
+        return;
+      }
+      setItinerary(charted);
+      onItinerary?.(charted);
     } catch (err: any) {
       setError(err?.message ?? "The First Mate could not chart just now. Try again in a moment.");
     }
