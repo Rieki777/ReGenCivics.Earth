@@ -6,6 +6,13 @@ export type Role = "system" | "user" | "assistant";
 export type Message = {
   role: Role;
   content: string;
+  /**
+   * Optional image URLs attached to this message (user turns only). Each becomes
+   * an image block ahead of the text, so vision-capable models actually see the
+   * picture. URLs must be publicly reachable (our R2 asset domain qualifies);
+   * callers are responsible for only passing our own asset URLs.
+   */
+  imageUrls?: string[];
 };
 
 export type JsonSchema = {
@@ -58,6 +65,21 @@ const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
 export function isLLMConfigured(): boolean {
   return Boolean(ENV.openrouterApiKey || ENV.anthropicApiKey);
+}
+
+/**
+ * Convert one of our messages to the Anthropic wire shape. Text-only messages
+ * pass the string straight through; messages carrying imageUrls become a block
+ * array (images first, then the text) so the model sees the pictures.
+ */
+function toAnthropicMessage(m: Message): { role: "user" | "assistant"; content: string | Anthropic.ContentBlockParam[] } {
+  const role = m.role as "user" | "assistant";
+  if (!m.imageUrls?.length) return { role, content: m.content };
+  const blocks: Anthropic.ContentBlockParam[] = m.imageUrls
+    .slice(0, 4)
+    .map((url) => ({ type: "image" as const, source: { type: "url" as const, url } }));
+  blocks.push({ type: "text" as const, text: m.content });
+  return { role, content: blocks };
 }
 
 type Provider = "anthropic" | "openrouter";
@@ -176,7 +198,7 @@ export async function streamLLM(
   const systemMessage = params.messages.find((m) => m.role === "system")?.content;
   const conversationMessages = params.messages
     .filter((m) => m.role !== "system")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+    .map(toAnthropicMessage);
 
   const chain = providerChain();
   let lastErr: unknown;
@@ -226,10 +248,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const systemMessage = messages.find((m) => m.role === "system")?.content;
   const conversationMessages = messages
     .filter((m) => m.role !== "system")
-    .map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
+    .map(toAnthropicMessage);
 
   // Determine if structured JSON output is needed
   const schema = outputSchema ?? output_schema;

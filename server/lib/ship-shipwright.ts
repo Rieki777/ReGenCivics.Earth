@@ -96,7 +96,8 @@ export async function askShipwright(params: {
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   chunks: KnowledgeChunk[];
   cases: PriorCase[];
-  hasPhoto?: boolean;
+  /** Photos of the problem, already validated by the router to be our own asset URLs. The model sees them. */
+  photoUrls?: string[];
 }): Promise<{ reply: string; escalated: boolean; reason: string | null }> {
   const esc = detectEscalation(params.question);
   if (esc.escalate) {
@@ -109,17 +110,20 @@ export async function askShipwright(params: {
       reason: null,
     };
   }
+  const photos = (params.photoUrls ?? []).slice(0, 4);
   const system = [
     SHIPWRIGHT_VOICE,
     "",
     referenceBlock(params.chunks, params.cases),
-    params.hasPhoto ? "\nThe guest attached a photo for the Keeper's log. You cannot view images, so never claim to see it; if the picture matters, ask the guest to describe what they see." : "",
+    photos.length
+      ? "\nThe guest attached photos of what they are seeing; the pictures are part of their message. Say what you actually observe in them and use it to sharpen your answer. If a photo shows anything on a danger system (propane, brakes, steering, chassis air, burnt or melted wiring, fire, CO), give make-safe steps only and send them to the Keeper. Never guess at details a photo does not clearly show."
+      : "",
   ].join("\n");
 
   const messages = [
     { role: "system" as const, content: system },
     ...(params.history ?? []).slice(-8),
-    { role: "user" as const, content: params.question },
+    { role: "user" as const, content: params.question, ...(photos.length ? { imageUrls: photos } : {}) },
   ];
   const result = await invokeLLM({ messages, maxTokens: 700 });
   const reply = (result.choices?.[0]?.message?.content ?? "").trim() ||

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { BasemapLayer } from "./shipMapLayers";
 import { CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM } from "./shipMapConfig";
 
-const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Datasets", "Position", "Pricing"] as const;
+const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Datasets", "Position", "Pricing", "Shipwright"] as const;
 type Tab = (typeof TABS)[number];
 
 // 50 miles in metres — the v1 proxy for a ~60-minute drive (isochrones later).
@@ -55,6 +55,7 @@ export default function ShipAdmin() {
       {tab === "Datasets" && <DatasetsTab utils={utils} err={err} ok={ok} />}
       {tab === "Position" && <PositionTab err={err} ok={ok} />}
       {tab === "Pricing" && <PricingTab utils={utils} err={err} ok={ok} />}
+      {tab === "Shipwright" && <ShipwrightTab utils={utils} err={err} ok={ok} />}
     </div>
   );
 }
@@ -368,6 +369,103 @@ function PricingTab({ utils, err, ok }: Common) {
         {(blackouts.data ?? []).map((x: any) => (
           <div key={x.id} className="flex justify-between border rounded p-2 text-sm"><span>{x.startDate} to {x.endDate} · {x.reason}</span><Button size="sm" variant="outline" onClick={() => delBk.mutateAsync({ id: x.id }).then(() => ok("Removed")(rBk)).catch(err)}>Delete</Button></div>
         ))}
+      </Section>
+    </>
+  );
+}
+
+const KB_SYSTEMS = [
+  "general", "chassis", "engine", "propane", "electrical", "plumbing", "slides",
+  "generator", "appliances", "starlink", "water_filtration", "tires_brakes", "hvac",
+] as const;
+
+function ShipwrightTab({ utils, err, ok }: Common) {
+  const chunks = trpc.ship.admin.listKnowledgeChunks.useQuery();
+  const cases = trpc.ship.admin.listMaintenanceCases.useQuery();
+  const add = trpc.ship.admin.addKnowledgeChunk.useMutation();
+  const approve = trpc.ship.admin.approveKnowledgeChunk.useMutation();
+  const del = trpc.ship.admin.deleteKnowledgeChunk.useMutation();
+  const resolve = trpc.ship.admin.resolveMaintenanceCase.useMutation();
+  const intoKb = trpc.ship.admin.approveCaseIntoKb.useMutation();
+  const [nk, setNk] = useState({ title: "", system: "general", sourceRef: "", content: "" });
+  const [resolution, setResolution] = useState<Record<number, string>>({});
+  const rChunks = () => utils.ship.admin.listKnowledgeChunks.invalidate();
+  const rCases = () => utils.ship.admin.listMaintenanceCases.invalidate();
+  if (chunks.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  return (
+    <>
+      <Section title="Teach the Shipwright (paste a manual section, a fix, a spec)">
+        <p className="text-sm text-muted-foreground mb-2">One fact per entry works best: a symptom and its fix, a spec table, a how-to. It goes live for the Shipwright immediately.</p>
+        <div className="space-y-2 max-w-2xl">
+          <div className="flex flex-wrap gap-2">
+            <Input className="h-9 flex-1 min-w-56" placeholder="Title, e.g. Generator won't start: first checks" value={nk.title} onChange={(e) => setNk({ ...nk, title: e.target.value })} />
+            <select className="h-9 rounded-md border bg-background px-2 text-sm" value={nk.system} onChange={(e) => setNk({ ...nk, system: e.target.value })}>
+              {KB_SYSTEMS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <Input className="h-9 w-56" placeholder="Source (manual p.12, iRV2 thread…)" value={nk.sourceRef} onChange={(e) => setNk({ ...nk, sourceRef: e.target.value })} />
+          </div>
+          <textarea
+            className="w-full rounded-md border bg-background p-2 text-sm min-h-32"
+            placeholder="The knowledge itself. Plain language. Steps, specs, part numbers, what worked."
+            value={nk.content}
+            maxLength={8000}
+            onChange={(e) => setNk({ ...nk, content: e.target.value })}
+          />
+          <Button
+            size="sm"
+            className="bg-[#2f5d3a] hover:bg-[#264a2f]"
+            disabled={nk.title.trim().length < 2 || nk.content.trim().length < 10 || add.isPending}
+            onClick={() => add.mutateAsync({ title: nk.title.trim(), content: nk.content.trim(), system: nk.system as (typeof KB_SYSTEMS)[number], sourceRef: nk.sourceRef.trim() || undefined })
+              .then(() => { setNk({ title: "", system: nk.system, sourceRef: "", content: "" }); ok("She knows it now")(rChunks); })
+              .catch(err)}
+          >
+            {add.isPending ? "Adding…" : "Add to her knowledge"}
+          </Button>
+        </div>
+      </Section>
+
+      <Section title={`Knowledge (${chunks.data?.length ?? 0})`}>
+        <div className="space-y-2">
+          {(chunks.data ?? []).map((c: any) => (
+            <div key={c.id} className="border rounded p-2 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{c.title} <span className="font-normal text-muted-foreground">· {c.system} · {c.sourceType}{c.sourceRef ? ` · ${c.sourceRef}` : ""}</span></span>
+                <span className="flex gap-2">
+                  <Button size="sm" variant={c.isApproved ? "default" : "outline"} className={c.isApproved ? "bg-[#2f5d3a] hover:bg-[#264a2f]" : ""} onClick={() => approve.mutateAsync({ id: c.id, isApproved: !c.isApproved }).then(() => ok(c.isApproved ? "Hidden from her" : "Live")(rChunks)).catch(err)}>{c.isApproved ? "Approved" : "Approve"}</Button>
+                  <Button size="sm" variant="outline" onClick={() => del.mutateAsync({ id: c.id }).then(() => ok("Removed")(rChunks)).catch(err)}>Delete</Button>
+                </span>
+              </div>
+              <p className="text-muted-foreground mt-1 whitespace-pre-line line-clamp-3">{c.content}</p>
+            </div>
+          ))}
+          {(chunks.data?.length ?? 0) === 0 && <p className="text-muted-foreground">Nothing yet. Teach her above, or run the seed script.</p>}
+        </div>
+      </Section>
+
+      <Section title={`Maintenance cases (${cases.data?.length ?? 0})`}>
+        <div className="space-y-2">
+          {(cases.data ?? []).map((c: any) => (
+            <div key={c.id} className={`border rounded p-2 text-sm ${c.isEscalation ? "border-red-500/50" : ""}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{c.isEscalation ? "⚠ " : ""}{c.title} <span className="font-normal text-muted-foreground">· {c.system} · {c.status}</span></span>
+                <span className="flex gap-2">
+                  {c.status !== "resolved" && (
+                    <Button size="sm" variant="outline" disabled={!resolution[c.id]?.trim()} onClick={() => resolve.mutateAsync({ id: c.id, status: "resolved", resolution: resolution[c.id] }).then(() => ok("Resolved")(rCases)).catch(err)}>Resolve</Button>
+                  )}
+                  {c.status === "resolved" && !c.approvedIntoKb && (
+                    <Button size="sm" className="bg-[#2f5d3a] hover:bg-[#264a2f]" onClick={() => intoKb.mutateAsync({ id: c.id }).then(() => { ok("In her knowledge now")(rCases); rChunks(); }).catch(err)}>Into knowledge</Button>
+                  )}
+                  {c.approvedIntoKb && <span className="text-xs text-muted-foreground self-center">in KB</span>}
+                </span>
+              </div>
+              {c.description && <p className="text-muted-foreground mt-1 line-clamp-2">{c.description}</p>}
+              {c.status !== "resolved" && (
+                <Input className="h-8 mt-2" placeholder="What fixed it? (fills the resolution)" value={resolution[c.id] ?? ""} onChange={(e) => setResolution((r) => ({ ...r, [c.id]: e.target.value }))} />
+              )}
+            </div>
+          ))}
+          {(cases.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No cases logged yet.</p>}
+        </div>
       </Section>
     </>
   );

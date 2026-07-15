@@ -59,18 +59,34 @@ describe("askShipwright", () => {
     expect(call.messages[call.messages.length - 1]).toEqual({ role: "user", content: "fuel is fine, what next?" });
   });
 
-  it("never claims to see an attached photo", async () => {
-    modelReturns("Noted.");
+  it("passes attached photos to the model as images on the final user turn", async () => {
+    modelReturns("I can see the fitting is weeping at the compression nut. If anything feels unsafe, stop and call your Keeper.");
     await askShipwright({
       question: "the water pump is rattling, photo attached",
       chunks: [],
       cases: [],
-      hasPhoto: true,
+      photoUrls: ["https://assets.regencivics.earth/uploads/7/pump.jpg"],
     });
     const call = invokeLLM.mock.calls[0][0] as LLMCall;
+    const last = call.messages[call.messages.length - 1] as { role: string; content: string; imageUrls?: string[] };
+    expect(last.role).toBe("user");
+    expect(last.imageUrls).toEqual(["https://assets.regencivics.earth/uploads/7/pump.jpg"]);
     const system = call.messages[0].content;
-    expect(system).toContain("cannot view images");
-    expect(system).not.toContain("describe what you see if it helps");
+    expect(system).toContain("attached photos");
+    expect(system).toContain("make-safe steps only");
+  });
+
+  it("caps photos at four and sends none when none attached", async () => {
+    modelReturns("Noted.");
+    await askShipwright({
+      question: "how do I level her on a slope?",
+      chunks: [],
+      cases: [],
+    });
+    const call = invokeLLM.mock.calls[0][0] as LLMCall;
+    const last = call.messages[call.messages.length - 1] as { role: string; content: string; imageUrls?: string[] };
+    expect(last.imageUrls).toBeUndefined();
+    expect(call.messages[0].content).not.toContain("attached photos");
   });
 
   it("grounds the prompt in the retrieved reference notes", async () => {

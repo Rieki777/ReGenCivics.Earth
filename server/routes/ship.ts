@@ -90,6 +90,16 @@ function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): 
 }
 const PASSPORT_PROXIMITY_M = 2_000; // within 2km of the pin counts as a visit
 
+// The public host our R2 uploads are served from. Photos handed to the
+// Shipwright's vision must live here (see the shipwright.ask allow-list).
+const ASSET_HOST = (() => {
+  try {
+    return new URL(process.env.STORAGE_PUBLIC_URL ?? "https://assets.regencivics.earth").hostname;
+  } catch {
+    return "assets.regencivics.earth";
+  }
+})();
+
 // ── Concierge session capability ──────────────────────────────────────────────
 // Session ids are sequential ints, so the id alone must not grant access to a
 // session's answers and chat (they hold personal detail: who the crew is, diet,
@@ -1351,12 +1361,25 @@ export const shipRouter = router({
           .where(and(eq(shipMaintenanceCases.system, input.system), eq(shipMaintenanceCases.status, "resolved")))
           .limit(4);
 
+        // Only our own asset URLs reach the model as images: an arbitrary URL
+        // would let a guest feed the Shipwright attacker-controlled pictures
+        // hosted anywhere (AI-AUTOMATION-RISKS). Uploads land on the R2 asset
+        // domain, so that host is the allow-list.
+        const safePhotoUrls = (input.photoUrls ?? []).filter((u) => {
+          try {
+            const parsed = new URL(u);
+            return parsed.protocol === "https:" && parsed.hostname === ASSET_HOST;
+          } catch {
+            return false;
+          }
+        }).slice(0, 4);
+
         const { reply, escalated, reason } = await askShipwright({
           question,
           history,
           chunks,
           cases: priorCases.map((c) => ({ title: c.title, resolution: c.resolution, whatWorked: c.whatWorked })),
-          hasPhoto: Boolean(input.photoUrls?.length),
+          photoUrls: safePhotoUrls,
         });
 
         // Log/append the case so the ship's health has a continuous history.
@@ -1961,6 +1984,38 @@ export const shipRouter = router({
     listKnowledgeChunks: adminProcedure.query(async () => {
       const d = await db();
       return d.select().from(shipKnowledgeChunks).orderBy(desc(shipKnowledgeChunks.createdAt)).limit(500);
+    }),
+    // Add ship knowledge directly: paste a manual section, a service bulletin,
+    // or forum wisdom, pick the system, done. Approved immediately since only
+    // admins can call this; the Shipwright can use it on the next question.
+    addKnowledgeChunk: adminProcedure
+      .input(z.object({
+        title: z.string().min(2).max(255),
+        content: z.string().min(10).max(8000),
+        system: z.enum([
+          "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+          "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+        ]).default("general"),
+        sourceType: z.enum(["manual", "service_bulletin", "forum_wisdom"]).default("manual"),
+        sourceRef: z.string().max(512).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const d = await db();
+        const [res] = await d.insert(shipKnowledgeChunks).values({
+          title: sanitizeInput(input.title),
+          content: sanitizeInput(input.content),
+          system: input.system,
+          sourceType: input.sourceType,
+          sourceRef: input.sourceRef ? sanitizeInput(input.sourceRef) : null,
+          tags: [],
+          isApproved: true,
+        });
+        return { id: (res as { insertId?: number }).insertId ?? null };
+      }),
+    deleteKnowledgeChunk: adminProcedure.input(z.object({ id: z.number().int() })).mutation(async ({ input }) => {
+      const d = await db();
+      await d.delete(shipKnowledgeChunks).where(eq(shipKnowledgeChunks.id, input.id));
+      return { ok: true };
     }),
     approveKnowledgeChunk: adminProcedure.input(z.object({ id: z.number().int(), isApproved: z.boolean().default(true) })).mutation(async ({ input }) => {
       const d = await db();
