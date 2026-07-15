@@ -13,7 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
-## 2026-07-14 (latest): The Sanctuary of Love docking theme
+## 2026-07-15 (latest): Suggested voyages, one-tap booking, and the four-week lunar cycle
+
+- **Four one-tap voyage packages on /ship/book**: The Standard Sail (1 week), The Half Honeymoon (1 week), The Honeymoon (2 weeks), The Full Lunar Cycle (4 weeks, a whole 28-day moon). One tap claims the first open run on the calendar, writes a deterministic rough day-by-day chart (no LLM, `shared/shipVoyages.ts`, tested), and scrolls the guest straight to the booking form. The chosen package rides into the booking notes so the crew and the First Mate know the intent.
+- **First Mate quick customize before booking**: a "Chat with your First Mate to customize your itinerary" button charts a personalized itinerary from the real treasure map (`FirstMateQuickCustomize` in `ShipFirstMate.tsx`, session-capability tokens carried) and opens a refine chat. The full planner at /ship/concierge stays the longer post-booking pass. `ship.concierge.generate` now honors a `voyage_nights` intake seed (7 to 28, validated deterministically by `voyageNightsFromAnswers`), with a token budget that scales with the chart length.
+- **Week cap raised 3 → 4 everywhere**: client picker MAX_WEEKS, server `isValidVoyageLength` (now also capped at 28 nights), `MAX_VOYAGE_WEEKS` canonical in `shared/shipVoyages.ts`, booking-page copy, and the zod error message.
+- **Deploy incident fixed along the way**: every Railway build after 05:56 failed instantly with no CLI logs; the dashboard showed `ERR_PNPM_FETCH_404` fetching `ox` from an expired pkg.pr.new preview tarball that viem 2.51.0 shipped with. `pnpm update viem` → 2.54.1 with real npm ox; lockfile carries no pkg.pr.new URLs anymore.
+- Commits: `da957fb` (feature, carried the parallel session's concierge capability tokens + shipwright hardening + Ship table section), `7eaceb2` (multi-week token budget), `22816ca` (viem/ox deps fix). Verify: truncation 0/0, `pnpm check` exit 0, 49 ship tests + 5 shipwright tests green, gate 2 no-op (Tailwind utilities only), and the full flow reproduced live in production: card tap → 4 weeks claimed ($8,372) → rough chart → First Mate charted a real 28-day itinerary from map places → booking form.
+
+## 2026-07-14: The Sanctuary of Love docking theme
 
 - **The ship takes the theme of wherever she is docked.** She is docked at The Sanctuary in Ashland, Oregon, so her first sailing season runs as The Sanctuary of Love, with love as the foundation of her interior, her quests, and her voyages. The doctrine is reusable: `CURRENT_THEME`, `FOUR_LOVES`, `RITES`, `INTERIOR`, and `LOVE_ACTIONS` are top-of-file constants in `ShipTheme.tsx`, so a new dock swaps the theme and the page is made again.
 - New `/ship/theme` page (`client/src/pages/ship/ShipTheme.tsx`, lazy route in `App.tsx`): hero, the docking doctrine, the four loves aboard (Beloved, Body, Land, Beautiful), the Love Voyage band, the Quest of Love (seven days, seven rites), the six themed actions, the interior direction, and why CORE runs the ship (10% of every voyage buys her back into community ownership).
