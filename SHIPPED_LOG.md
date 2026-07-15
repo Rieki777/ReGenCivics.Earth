@@ -13,7 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
-## 2026-07-14 (latest): The Gardener leads the land application, /apply goes chat-first
+## 2026-07-14 (latest): The Sanctuary of Love docking theme
+
+- **The ship takes the theme of wherever she is docked.** She is docked at The Sanctuary in Ashland, Oregon, so her first sailing season runs as The Sanctuary of Love, with love as the foundation of her interior, her quests, and her voyages. The doctrine is reusable: `CURRENT_THEME`, `FOUR_LOVES`, `RITES`, `INTERIOR`, and `LOVE_ACTIONS` are top-of-file constants in `ShipTheme.tsx`, so a new dock swaps the theme and the page is made again.
+- New `/ship/theme` page (`client/src/pages/ship/ShipTheme.tsx`, lazy route in `App.tsx`): hero, the docking doctrine, the four loves aboard (Beloved, Body, Land, Beautiful), the Love Voyage band, the Quest of Love (seven days, seven rites), the six themed actions, the interior direction, and why CORE runs the ship (10% of every voyage buys her back into community ownership).
+- A seventh ship nav card ("The Theme") with the grid bumped `md:grid-cols-6` → `md:grid-cols-7` (`shipShared.tsx`); a current-docking band on `/ship` linking the theme; and `/ship/quest`'s heading is now driven by `actions.data.length` so it stays honest as the docking's actions rotate.
+- Six themed quest actions seeded (`scripts/seed-ship-quest.ts`, sortOrder 8-13, idempotent by slug): love-letter-to-a-landscape, moon-of-honey, cook-for-your-beloved, plant-together, give-a-day-to-the-land, bring-a-couple-aboard. 225 points of optional supply, so a crew can now reach the 150-point line entirely through acts of love. Seed run live: 6 inserted, 7 updated.
+- Verify: truncation audit 0/0, `pnpm check` exit 0. Gate 2 (className grep) a no-op (no new CSS). Committed surgically as `a30e801` (only the six files + prompt doc; a concurrent session's unrelated companion work and an in-flight "The table" edit to `Ship.tsx` were kept out via a per-hunk stage). Source doc: `CLAUDE_CODE_PROMPT_2026-07-14_SHIP_SANCTUARY_OF_LOVE.md`.
+- Carryover (not built here): Rite of Truth prompt cards as real content in `CaptainsBook.tsx`; a "Quest of Love completed" flag on the Homecoming recap; interior refit photos into `client/public/images/ship/`.
+
+## 2026-07-14: The Gardener leads the land application, /apply goes chat-first
 
 - **/apply is now primarily a conversation with the Gardener.** Talk mode is the default: the Gardener (voice or typing, reusable `<FormCompanion>`) fills the application by talking, with a live "what she's written down" progress card over the 12 required fields. When she's ready (or whenever the person clicks Review and submit), the whole application renders as ONE review page (all five wizard sections stacked, `reviewAll`), the person fixes anything, adds the map pin / documents / URLs, and submits. The classic 5-step wizard stays one click away ("I'd rather fill out the form myself") and is the automatic fallback when no LLM is configured (`companion.flags`).
 - New `land-application` form config in `shared/companions.ts` (third persona wired in): 15 fields matching the `applications` columns, enums constrained to the DB enums (`projectType`, `landStatus`), acres-to-hectares guidance, and a time-commitment note that forbids writing a commitment the person didn't say. Client maps extracted values defensively (enum normalization, number parsing, key whitelist).
