@@ -12,6 +12,26 @@ import { redisRateLimit, isCacheAvailable } from "./cache";
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
 const MAX_SUBMISSIONS_PER_WINDOW = 7;
 
+/**
+ * Per-action limits. The default of 7 per 15 minutes fits one-shot form
+ * submissions, but a conversation is many small turns: the Gardener's land
+ * application runs 15 to 30 turns, the First Mate's intake about 10, and a
+ * talk with an Elder has no fixed length. Without these overrides every
+ * conversational character died mid-sentence at turn 8. Caps stay tight
+ * enough to stop scripted abuse (a human turn takes 10+ seconds anyway).
+ */
+const ACTION_LIMITS: Record<string, number> = {
+  companion_turn: 60,        // one full application conversation, with room to wander
+  companion_transcribe: 60,  // one STT call per spoken answer tracks turn volume
+  elder_chat: 40,
+  ship_concierge_chat: 40,
+  ship_shipwright: 20,
+};
+
+function maxForAction(action: string): number {
+  return ACTION_LIMITS[action] ?? MAX_SUBMISSIONS_PER_WINDOW;
+}
+
 // ── In-memory fallback (single-process only) ─────────────────────────────────
 interface RateLimitEntry {
   timestamps: number[];
@@ -32,7 +52,8 @@ setInterval(() => {
 }, 10 * 60 * 1000);
 
 function memoryRateLimit(
-  key: string
+  key: string,
+  max: number = MAX_SUBMISSIONS_PER_WINDOW
 ): { allowed: boolean; count: number; resetAt: number } {
   const now = Date.now();
   let entry = memoryStore.get(key);
@@ -46,7 +67,7 @@ function memoryRateLimit(
   );
 
   const count = entry.timestamps.length;
-  const allowed = count < MAX_SUBMISSIONS_PER_WINDOW;
+  const allowed = count < max;
   const oldestTs = entry.timestamps[0] ?? now;
   const resetAt = oldestTs + RATE_LIMIT_WINDOW_MS;
 
@@ -81,6 +102,7 @@ export async function checkRateLimit(
 ): Promise<void> {
   const ip = getClientIp(ctx.req);
   const key = `ratelimit:${ip}:${action}`;
+  const max = maxForAction(action);
 
   let allowed: boolean;
   let resetAt: number;
@@ -88,11 +110,11 @@ export async function checkRateLimit(
   if (isCacheAvailable()) {
     ({ allowed, resetAt } = await redisRateLimit(
       key,
-      MAX_SUBMISSIONS_PER_WINDOW,
+      max,
       RATE_LIMIT_WINDOW_MS
     ));
   } else {
-    ({ allowed, resetAt } = memoryRateLimit(key));
+    ({ allowed, resetAt } = memoryRateLimit(key, max));
   }
 
   if (!allowed) {
@@ -102,7 +124,7 @@ export async function checkRateLimit(
     );
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
-      message: `You've reached the maximum number of submissions (${MAX_SUBMISSIONS_PER_WINDOW} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
+      message: `You've reached the maximum number of submissions (${max} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
 }
