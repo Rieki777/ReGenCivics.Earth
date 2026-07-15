@@ -208,6 +208,7 @@ const Accessibility = lazy(() => import("./pages/Accessibility"));
 // ReGen Ship (CORE program)
 const Ship = lazy(() => import("./pages/ship/Ship"));
 const ShipBook = lazy(() => import("./pages/ship/ShipBook"));
+const ShipTheme = lazy(() => import("./pages/ship/ShipTheme"));
 const ShipMap = lazy(() => import("./pages/ship/ShipMap"));
 const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
 const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
@@ -251,6 +252,7 @@ function Router() {
       {/* ReGen Ship (CORE program) */}
       <Route path={"/ship"}><EB><Ship /></EB></Route>
       <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
+      <Route path={"/ship/theme"}><EB><ShipTheme /></EB></Route>
       <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>
       <Route path={"/ship/concierge"}><EB><ShipConcierge /></EB></Route>
       <Route path={"/ship/quest/rules"}><EB><ShipQuestRules /></EB></Route>

@@ -1,5 +1,6 @@
 /**
- * Seed the Maiden Voyage Quest checklist (7 required actions).
+ * Seed the Maiden Voyage Quest checklist: the 7 founding actions plus the
+ * 6 actions of the current docking theme (The Sanctuary of Love, /ship/theme).
  *
  * Idempotent by slug. The Food Foresting action links to the existing quest
  * completion "quest-14" (Food Foresting) for auto-verification. The map action
@@ -37,6 +38,18 @@ const ACTIONS: Action[] = [
   { slug: "food-foresting", title: "Complete the Food Foresting quest", description: "Complete the existing Food Foresting quest once. This verifies automatically from your quest history.", points: 50, proofType: "game_quest", linkedQuestId: "quest-14", sortOrder: 5 },
   { slug: "add-map-location", title: "Add a location to the treasure map", description: "Suggest a location on the treasure map. This verifies when a crew member verifies your location.", points: 50, proofType: "link", sortOrder: 6 },
   { slug: "attend-partner-event", title: "Attend or host a partner event", description: "Attend or host a partner event or land project workshop, then share a photo or link. A crew member verifies it.", points: 50, proofType: "photo", sortOrder: 7 },
+
+  // ── The Sanctuary of Love actions (the current docking theme, /ship/theme) ──
+  // She takes the theme of wherever she is docked. She is docked at The
+  // Sanctuary in Ashland, so this season's earning actions are acts of love you
+  // can do from home, before you ever board. When she docks somewhere new,
+  // retire these (set isRequired 0 / drop the rows) and seed the new theme's set.
+  { slug: "love-letter-to-a-landscape", title: "Write a love letter to a landscape", description: "Write a love letter to the place that made you, and post it on the quest forum thread. Paste the link.", points: 25, proofType: "forum", sortOrder: 8 },
+  { slug: "moon-of-honey", title: "Keep a moon of honey", description: "Find a beekeeper working wild-flowering land near you and get a jar from them. Share who they are and a photo. A crew member verifies it.", points: 25, proofType: "photo", sortOrder: 9 },
+  { slug: "cook-for-your-beloved", title: "Cook a local meal for someone you love", description: "One meal, sourced as close to your home ground as you can get it. Share the photo and the story.", points: 25, proofType: "photo", sortOrder: 10 },
+  { slug: "plant-together", title: "Plant something with another person", description: "Two pairs of hands, one hole. Share a photo of both of you planting. A crew member verifies it.", points: 50, proofType: "photo", sortOrder: 11 },
+  { slug: "give-a-day-to-the-land", title: "Give a day to a land project near you", description: "A full day of whatever they need doing at a land project near you. Share what you did and a photo. A crew member verifies it.", points: 50, proofType: "photo", sortOrder: 12 },
+  { slug: "bring-a-couple-aboard", title: "Bring a couple onto the crew list", description: "Send the honeymoon story to a couple who needs their next honeymoon and get them onto the crew list. Paste the link or name them.", points: 50, proofType: "link", sortOrder: 13 },
 ];
 
 async function main() {

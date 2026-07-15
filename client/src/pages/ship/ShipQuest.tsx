@@ -154,8 +154,8 @@ export default function ShipQuest() {
       {/* The seven ways to earn points */}
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>The ways to earn</ShipEyebrow>
-        <h2 className="text-2xl font-bold mb-2">Seven ways to earn your voyage</h2>
-        <p className="text-foreground/80 mb-5 max-w-3xl">Reach {threshold} points and you are in every draw. Every point above raises your odds. No single action is required, so pick the ones that fit you.</p>
+        <h2 className="text-2xl font-bold mb-2">{(actions.data?.length ?? 0) > 0 ? `${actions.data?.length} ways to earn your voyage` : "Ways to earn your voyage"}</h2>
+        <p className="text-foreground/80 mb-5 max-w-3xl">Reach {threshold} points and you are in every draw. Every point above raises your odds. No single action is required, so pick the ones that fit you. Six of them come from her current docking, <Link href="/ship/theme" className="underline decoration-2 underline-offset-4 font-semibold">The Sanctuary of Love</Link>.</p>
         {!isAuthenticated && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
         <div className="space-y-3">
           {(actions.data ?? []).map((a) => (

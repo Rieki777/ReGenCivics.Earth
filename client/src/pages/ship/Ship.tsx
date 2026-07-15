@@ -66,6 +66,16 @@ export default function Ship() {
 
       <ShipNavRow current="/ship" />
 
+      {/* The current docking sets the season's theme */}
+      <ShipSection className="py-8">
+        <div data-reveal className="rounded-2xl border border-[#ffd700]/50 bg-gradient-to-br from-[#ffd700]/12 to-[#d4a574]/8 p-6">
+          <ShipEyebrow>The current docking</ShipEyebrow>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">She sails this season as The Sanctuary of Love</h2>
+          <p className="text-foreground/85 max-w-3xl mb-4">The ship takes the theme of wherever she is docked. She is docked at The Sanctuary in Ashland, Oregon, so love is the foundation of her first season: her interior, her quests, and every day of the voyage. Seven days aboard, seven rites, one Quest of Love.</p>
+          <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/theme">Enter the Sanctuary of Love</Link></Button>
+        </div>
+      </ShipSection>
+
       {/* The story */}
       <ShipSection>
         <ShipEyebrow>The ship</ShipEyebrow>
