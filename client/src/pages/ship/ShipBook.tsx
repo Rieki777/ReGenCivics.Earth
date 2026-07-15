@@ -15,11 +15,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { MapPin, Compass, LayoutGrid, List as ListIcon } from "lucide-react";
-import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag } from "./shipShared";
+import { MapPin, Compass, LayoutGrid, List as ListIcon, Moon, Heart, Sailboat, type LucideIcon } from "lucide-react";
+import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag, useShipFlags } from "./shipShared";
 import { FormCompanion } from "@/components/companion";
 import { companionBool } from "@shared/companions";
+import {
+  SUGGESTED_VOYAGES, MAX_VOYAGE_WEEKS, buildRoughChart, firstMateSeedAnswers, suggestedVoyageById,
+  type SuggestedVoyage, type SuggestedVoyageId,
+} from "@shared/shipVoyages";
+import { FirstMateQuickCustomize } from "./ShipFirstMate";
 import { CrewListJoin } from "@/components/ship/CrewListJoin";
+
+/** Card icons for the suggested voyages. */
+const VOYAGE_ICONS: Record<SuggestedVoyageId, LucideIcon> = {
+  standard: Sailboat,
+  half_honeymoon: Heart,
+  honeymoon: Heart,
+  lunar_cycle: Moon,
+};
+
+/** First index where `len` consecutive weeks are all selectable, or null. */
+function findRun(weeks: Array<{ selectable: boolean }>, len: number): number | null {
+  for (let i = 0; i + len <= weeks.length; i++) {
+    let ok = true;
+    for (let j = 0; j < len; j++) {
+      if (!weeks[i + j]?.selectable) { ok = false; break; }
+    }
+    if (ok) return i;
+  }
+  return null;
+}
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -57,17 +82,45 @@ export default function ShipBook() {
   const [water, setWater] = useState(false);
   const [notes, setNotes] = useState("");
   const submitRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<HTMLDivElement | null>(null);
 
-  const MAX_WEEKS = 3;
+  // A chosen suggested voyage (one-tap package) + its First Mate quick pass.
+  const flags = useShipFlags();
+  const [voyageId, setVoyageId] = useState<SuggestedVoyageId | null>(null);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+
+  const MAX_WEEKS = MAX_VOYAGE_WEEKS;
   const selected = startIdx === null ? [] : weeks.slice(startIdx, startIdx + count);
   const startDate = selected[0]?.startDate ?? "";
   const endDate = selected[selected.length - 1]?.endDate ?? "";
   const total = selected.reduce((sum, w) => sum + w.price.total, 0);
   const bioregions = Array.from(new Set(selected.map((w) => w.bioregion)));
 
+  const voyagePkg = voyageId ? suggestedVoyageById(voyageId) : null;
+  // The rough chart is deterministic: recomputed instantly from the package and
+  // the claimed weeks, no LLM call (STEERING deterministic-first).
+  const roughChart = useMemo(() => {
+    if (!voyagePkg || selected.length === 0) return null;
+    return buildRoughChart(voyagePkg, selected.map((w) => ({ startDate: w.startDate, bioregion: w.bioregion })));
+  }, [voyagePkg, selected]);
+
+  /** One tap: claim the first open run for this package and chart it. */
+  function chooseSuggested(v: SuggestedVoyage) {
+    const i = findRun(weeks, v.weeks);
+    if (i === null) return;
+    setStartIdx(i);
+    setCount(v.weeks);
+    setVoyageId(v.id);
+    setCustomizeOpen(false);
+    window.setTimeout(() => chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
   function clickWeek(i: number) {
     const wk = weeks[i];
     if (!wk?.selectable) return;
+    // Hand-picking weeks leaves the suggested-voyage flow; the form stays.
+    setVoyageId(null);
+    setCustomizeOpen(false);
     // Toggle off if it is the only selected week.
     if (startIdx !== null && count === 1 && startIdx === i) {
       setStartIdx(null);
@@ -103,6 +156,12 @@ export default function ShipBook() {
     if (!crewOk) return toast.error("Up to four aboard, or five when at least three are children.");
     if (!diet || !water) return toast.error("Both commitments are required to sail.");
     try {
+      // Carry the chosen suggested voyage to the crew in the notes, so the
+      // confirmation and the First Mate both know the intent.
+      const noteParts = [
+        voyagePkg ? `Suggested voyage: ${voyagePkg.name} (${selected.length} ${selected.length === 1 ? "week" : "weeks"}).` : null,
+        notes || null,
+      ].filter(Boolean) as string[];
       await request.mutateAsync({
         startDate,
         endDate,
@@ -112,7 +171,7 @@ export default function ShipBook() {
         dietCommitment: true,
         waterDoctrineCommitment: true,
         ref: ref || undefined,
-        notes: notes || undefined,
+        notes: noteParts.length ? noteParts.join("\n") : undefined,
       });
       toast.success("Your voyage request is in. We will confirm your week soon.");
       setStartIdx(null);
@@ -120,6 +179,8 @@ export default function ShipBook() {
       setDiet(false);
       setWater(false);
       setNotes("");
+      setVoyageId(null);
+      setCustomizeOpen(false);
       availability.refetch();
     } catch (err: any) {
       toast.error(err?.message ?? "Something went wrong. Please try again.");
@@ -143,8 +204,59 @@ export default function ShipBook() {
         <ShipEyebrow>Book a voyage</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Choose your voyage week</h1>
         <PriceTag className="mb-4" />
-        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to three weeks for a longer sail; she resets her tanks on each turnover. Every week below is a real open week on her calendar.</p>
+        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover. Every week below is a real open week on her calendar.</p>
       </ShipSection>
+
+      {/* Suggested voyages: one tap claims the first open run and charts it. */}
+      {weeks.length > 0 && (
+        <ShipSection className="pt-0">
+          <ShipEyebrow>Suggested voyages</ShipEyebrow>
+          <h2 className="text-2xl font-bold mb-2">Pick a voyage, she charts the rest</h2>
+          <p className="text-foreground/80 max-w-2xl mb-6">One tap claims the first open run on her calendar and writes a rough chart of your days, so you can go straight to booking. City life sits heavy on a nervous system. These voyages sail to sacred power places in living nature, where hearts open and whole systems settle and reset. Customize yours with your First Mate, a quick pass now and the full pass after you book.</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {SUGGESTED_VOYAGES.map((v) => {
+              const run = findRun(weeks, v.weeks);
+              const price = run === null ? null : weeks.slice(run, run + v.weeks).reduce((sum, w) => sum + w.price.total, 0);
+              const active = voyageId === v.id;
+              const Icon = VOYAGE_ICONS[v.id];
+              return (
+                <button
+                  type="button"
+                  key={v.id}
+                  onClick={() => chooseSuggested(v)}
+                  disabled={run === null}
+                  aria-pressed={active}
+                  className={[
+                    "flex flex-col text-left rounded-2xl border p-4 transition-all",
+                    run === null ? "opacity-55 cursor-not-allowed bg-card" : "hover:border-[#2f5d3a] hover:-translate-y-0.5 cursor-pointer",
+                    active ? "border-[#ffd700] ring-2 ring-[#ffd700] bg-[#ffd700]/10" : "bg-card",
+                  ].join(" ")}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Icon className="w-5 h-5 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
+                    <span className="font-semibold">{v.name}</span>
+                  </div>
+                  <p className="text-sm text-foreground/80">{v.tagline}</p>
+                  <p className="text-xs text-foreground/70 mt-1.5 flex-1">{v.description}</p>
+                  <div className="mt-3 pt-3 border-t text-sm">
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d] mr-2">
+                      {v.weeks} {v.weeks === 1 ? "week" : "weeks"}
+                    </span>
+                    {price !== null ? (
+                      <span><span className="font-semibold">${price.toLocaleString()}</span><span className="text-muted-foreground"> the voyage</span></span>
+                    ) : (
+                      <span className="text-muted-foreground">No open run of {v.weeks} weeks right now</span>
+                    )}
+                    {run !== null && (
+                      <span className="block text-xs text-[#2f5d3a] dark:text-[#7dd87d] font-semibold mt-1.5">Tap to claim {fmtDay(weeks[run].startDate)} and chart it</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </ShipSection>
+      )}
 
       <ShipSection className="bg-[#4a7c59]/8 pt-0">
         <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 items-start">
@@ -242,10 +354,54 @@ export default function ShipBook() {
               </div>
             )}
 
+            {/* The rough chart for a chosen suggested voyage + the First Mate quick pass */}
+            {voyagePkg && roughChart && (
+              <div ref={chartRef} className="rounded-2xl border bg-card p-5 space-y-4">
+                <div>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h3 className="font-semibold text-lg">Your rough chart</h3>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d]">{voyagePkg.name}</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 italic mt-2">{roughChart.summary}</p>
+                </div>
+                {!customizeOpen && (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {roughChart.days.map((d) => (
+                      <div key={d.day} className="rounded-xl border bg-background/60 p-3">
+                        <p className="font-medium text-sm">Day {d.day} · {fmtDay(d.date)}: {d.title}</p>
+                        <p className="text-xs text-foreground/70 mt-0.5">{d.notes}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {flags.concierge && !customizeOpen && (
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={() => setCustomizeOpen(true)}
+                    className="w-full bg-[#2f5d3a] hover:bg-[#264a2f] text-white font-semibold"
+                  >
+                    Chat with your First Mate to customize your itinerary
+                  </Button>
+                )}
+                {flags.concierge && customizeOpen && (
+                  <FirstMateQuickCustomize
+                    key={`${voyagePkg.id}-${startDate}-${selected.length}`}
+                    seedAnswers={firstMateSeedAnswers(voyagePkg, { startDate, endDate, bioregions })}
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {flags.concierge
+                    ? "Or go straight to booking below. After you book, the full First Mate session charts every day with you."
+                    : "After you book, your First Mate charts every day of it with you."}
+                </p>
+              </div>
+            )}
+
             {startDate && (
               <FormCompanion
                 formId="booking-request"
-                context={`The guest has chosen the voyage week boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm that week with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
+                context={`${voyagePkg ? `The guest chose the suggested ${voyagePkg.name} voyage (${selected.length} ${selected.length === 1 ? "week" : "weeks"}). ` : ""}The guest has chosen the voyage boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm those dates with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
                 collected={{
                   guests: String(guests),
                   dietCommitment: diet ? "yes" : "",

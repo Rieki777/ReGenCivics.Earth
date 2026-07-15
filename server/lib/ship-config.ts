@@ -62,8 +62,12 @@ export const MAX_GUESTS = 4;
 export const MAX_GUESTS_WITH_KIDS = 5;
 /** Children required before the fifth berth opens. */
 export const MIN_CHILDREN_FOR_FIVE = 3;
-/** Most consecutive weeks a crew can chain into one voyage (7, 14, or 21 nights). */
-export const MAX_VOYAGE_WEEKS = 3;
+/**
+ * Most consecutive weeks a crew can chain into one voyage (7, 14, 21, or 28
+ * nights; four weeks is a full lunar cycle). Canonical in shared/shipVoyages.ts
+ * so the booking page and the suggested voyages read the same cap.
+ */
+export { MAX_VOYAGE_WEEKS } from "@shared/shipVoyages";
 
 /**
  * True when a crew of `adults` + `children` may sail: up to four aboard, or five

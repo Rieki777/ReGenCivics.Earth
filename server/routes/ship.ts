@@ -40,7 +40,7 @@ import { sanitizeInput } from "../_core/security";
 import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
-  isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice,
+  isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice, voyageNightsFromAnswers,
   computeQuestStandings, countEntered, maidenVoyageUserId, freeVoyagesUnlocked, percentBooked,
   weightedDraw, sponsorshipProgress, enumerateVoyageWeeks,
   type QuestCompletionRow, type DrawEntry,
@@ -89,6 +89,38 @@ function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): 
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 const PASSPORT_PROXIMITY_M = 2_000; // within 2km of the pin counts as a visit
+
+// ── Concierge session capability ──────────────────────────────────────────────
+// Session ids are sequential ints, so the id alone must not grant access to a
+// session's answers and chat (they hold personal detail: who the crew is, diet,
+// kids). `start` mints a signed token; every later call needs the token, or a
+// signed-in user whose id matches the session's owner. Wrong or missing proof
+// reads as NOT_FOUND so ids cannot be probed.
+async function mintConciergeToken(sessionId: number): Promise<string> {
+  const secret = new TextEncoder().encode(ENV.cookieSecret);
+  return new SignJWT({ sid: sessionId, purpose: "ship-concierge" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("30d")
+    .sign(secret);
+}
+
+async function assertConciergeAccess(
+  session: { id: number; userId: number | null },
+  token: string | undefined,
+  userId: number | undefined,
+): Promise<void> {
+  if (session.userId != null && userId != null && session.userId === userId) return;
+  if (token) {
+    try {
+      const secret = new TextEncoder().encode(ENV.cookieSecret);
+      const { payload } = await jwtVerify(token, secret);
+      if (payload.purpose === "ship-concierge" && Number(payload.sid) === session.id) return;
+    } catch {
+      /* invalid or expired token falls through to NOT_FOUND */
+    }
+  }
+  throw new TRPCError({ code: "NOT_FOUND", message: "Session not found." });
+}
 
 // ── Quest standings helper (verified completions -> standings) ────────────────
 // Entry is a points threshold now, not a checklist: a crew with at least
@@ -285,7 +317,7 @@ export const shipRouter = router({
           notes: z.string().max(2000).optional(),
         })
         .refine((v) => isValidVoyageLength(v.startDate, v.endDate), {
-          message: "A voyage is a whole number of 7-night cycles. Pick dates 7, 14, or 21 nights apart.",
+          message: "A voyage is a whole number of 7-night cycles, up to four weeks. Pick dates 7, 14, 21, or 28 nights apart.",
           path: ["endDate"],
         })
         .refine((v) => {
@@ -1014,11 +1046,15 @@ export const shipRouter = router({
           profileAnswers: input.answers,
           messages: [],
         });
-        return { id: (res as { insertId?: number }).insertId ?? null };
+        const id = (res as { insertId?: number }).insertId ?? null;
+        // The token is the capability for this session: without it (or the
+        // signed-in owner), sequential ids grant nothing.
+        const token = id != null ? await mintConciergeToken(id) : null;
+        return { id, token };
       }),
 
     generate: publicProcedure
-      .input(z.object({ sessionId: z.number().int() }))
+      .input(z.object({ sessionId: z.number().int(), token: z.string().max(2000).optional() }))
       .mutation(async ({ ctx, input }) => {
         await checkRateLimit(ctx, "ship_concierge_generate");
         if (!isConciergeConfigured()) {
@@ -1027,13 +1063,18 @@ export const shipRouter = router({
         const d = await db();
         const [session] = await d.select().from(shipConciergeSessions).where(eq(shipConciergeSessions.id, input.sessionId)).limit(1);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found." });
+        await assertConciergeAccess(session, input.token, ctx.user?.id);
 
         const locs = await d.select().from(shipLocations).where(eq(shipLocations.isVerified, true));
         const locations: ConciergeLocation[] = locs.map((l) => ({ id: l.id, name: l.name, type: l.type, bioregion: l.bioregion, description: l.description }));
         try {
+          const answers = (session.profileAnswers as Record<string, unknown>) ?? {};
           const { itinerary, invalidIds } = await generateItinerary({
-            answers: (session.profileAnswers as Record<string, unknown>) ?? {},
+            answers,
             locations,
+            // Suggested voyages seed voyage_nights so multi-week charts run the
+            // whole sail (7 to 28 nights, validated deterministically).
+            nights: voyageNightsFromAnswers(answers),
           });
           if (invalidIds.length) console.warn("[ship-concierge] dropped invented location ids:", invalidIds);
           await d.update(shipConciergeSessions).set({ itinerary }).where(eq(shipConciergeSessions.id, input.sessionId));
@@ -1045,7 +1086,7 @@ export const shipRouter = router({
       }),
 
     chat: publicProcedure
-      .input(z.object({ sessionId: z.number().int(), message: z.string().min(1).max(1000) }))
+      .input(z.object({ sessionId: z.number().int(), message: z.string().min(1).max(1000), token: z.string().max(2000).optional() }))
       .mutation(async ({ ctx, input }) => {
         await checkRateLimit(ctx, "ship_concierge_chat");
         if (!isConciergeConfigured()) {
@@ -1054,6 +1095,7 @@ export const shipRouter = router({
         const d = await db();
         const [session] = await d.select().from(shipConciergeSessions).where(eq(shipConciergeSessions.id, input.sessionId)).limit(1);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found." });
+        await assertConciergeAccess(session, input.token, ctx.user?.id);
 
         const history = ((session.messages as Array<{ role: "user" | "assistant"; content: string }>) ?? []).concat({ role: "user", content: sanitizeInput(input.message) });
         const locs = await d.select().from(shipLocations).where(eq(shipLocations.isVerified, true));
@@ -1066,16 +1108,22 @@ export const shipRouter = router({
           .where(eq(shipInventoryItems.isVisible, true));
         const inventory = bag.map((b) => ({ name: b.name, category: b.category, activityTags: Array.isArray(b.activityTags) ? (b.activityTags as string[]) : [] }));
         const reply = await conciergeReply({ history, locations, itinerary: (session.itinerary as Itinerary | null) ?? null, inventory });
-        const messages = history.concat({ role: "assistant", content: reply });
+        // Cap the stored transcript so a long-running session cannot grow the
+        // JSON column without bound; the model only reads the recent turns anyway.
+        const messages = history.concat({ role: "assistant", content: reply }).slice(-60);
         await d.update(shipConciergeSessions).set({ messages }).where(eq(shipConciergeSessions.id, input.sessionId));
         return { reply, messages };
       }),
 
-    getSession: publicProcedure.input(z.object({ sessionId: z.number().int() })).query(async ({ input }) => {
-      const d = await db();
-      const [session] = await d.select().from(shipConciergeSessions).where(eq(shipConciergeSessions.id, input.sessionId)).limit(1);
-      return session ?? null;
-    }),
+    getSession: publicProcedure
+      .input(z.object({ sessionId: z.number().int(), token: z.string().max(2000).optional() }))
+      .query(async ({ ctx, input }) => {
+        const d = await db();
+        const [session] = await d.select().from(shipConciergeSessions).where(eq(shipConciergeSessions.id, input.sessionId)).limit(1);
+        if (!session) return null;
+        await assertConciergeAccess(session, input.token, ctx.user?.id);
+        return session;
+      }),
   }),
 
   // ── Seeds (chest QR log) ────────────────────────────────────────────────────
@@ -1259,8 +1307,26 @@ export const shipRouter = router({
         const d = await db();
         const question = sanitizeInput(input.question);
 
+        // Continuing a case: it must exist and belong to this crew member (case
+        // ids are sequential ints; without this check anyone signed in could
+        // append to another crew's log). The prior conversation becomes the
+        // model's memory, so follow-ups keep their context.
+        let existingCase: typeof shipMaintenanceCases.$inferSelect | undefined;
+        let history: Array<{ role: "user" | "assistant"; content: string }> = [];
+        if (input.caseId) {
+          const [row] = await d.select().from(shipMaintenanceCases).where(eq(shipMaintenanceCases.id, input.caseId)).limit(1);
+          if (!row || row.reportedByUserId !== ctx.user.id) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Case not found." });
+          }
+          existingCase = row;
+          history = (Array.isArray(row.conversation) ? (row.conversation as Array<{ role?: unknown; content?: unknown }>) : [])
+            .filter((m): m is { role: "user" | "assistant"; content: string } =>
+              Boolean(m) && (m.role === "user" || m.role === "assistant") && typeof m.content === "string");
+        }
+
         // Retrieve approved knowledge for this system (FULLTEXT, with a LIKE
-        // fallback) plus similar resolved cases in the same system.
+        // fallback) plus similar resolved cases in the same system. Best text
+        // matches first, so the six chunks we keep are the six most relevant.
         let chunks: Array<{ title: string; content: string; system: string; sourceRef: string | null }> = [];
         try {
           chunks = await d
@@ -1270,6 +1336,7 @@ export const shipRouter = router({
               eq(shipKnowledgeChunks.isApproved, true),
               or(eq(shipKnowledgeChunks.system, input.system), sql`MATCH(${shipKnowledgeChunks.title}, ${shipKnowledgeChunks.content}) AGAINST (${question})`),
             ))
+            .orderBy(sql`MATCH(${shipKnowledgeChunks.title}, ${shipKnowledgeChunks.content}) AGAINST (${question}) DESC`)
             .limit(6);
         } catch {
           chunks = await d
@@ -1286,6 +1353,7 @@ export const shipRouter = router({
 
         const { reply, escalated, reason } = await askShipwright({
           question,
+          history,
           chunks,
           cases: priorCases.map((c) => ({ title: c.title, resolution: c.resolution, whatWorked: c.whatWorked })),
           hasPhoto: Boolean(input.photoUrls?.length),
@@ -1297,12 +1365,14 @@ export const shipRouter = router({
           { role: "assistant" as const, content: reply },
         ];
         let caseId = input.caseId ?? null;
-        if (caseId) {
-          const [existing] = await d.select().from(shipMaintenanceCases).where(eq(shipMaintenanceCases.id, caseId)).limit(1);
-          const convo = Array.isArray(existing?.conversation) ? (existing!.conversation as unknown[]) : [];
+        if (caseId && existingCase) {
+          const convo = Array.isArray(existingCase.conversation) ? (existingCase.conversation as unknown[]) : [];
           await d.update(shipMaintenanceCases)
-            .set({ conversation: [...convo, ...turn], status: escalated ? "escalated" : "advised", isEscalation: escalated || Boolean(existing?.isEscalation) })
+            .set({ conversation: [...convo, ...turn].slice(-40), status: escalated ? "escalated" : "advised", isEscalation: escalated || Boolean(existingCase.isEscalation) })
             .where(eq(shipMaintenanceCases.id, caseId));
+          if (escalated && !existingCase.isEscalation) {
+            await notifyOwner({ title: "Ship Shipwright escalation", content: `${reason}: ${question.slice(0, 200)}` }).catch(() => {});
+          }
         } else {
           const [res] = await d.insert(shipMaintenanceCases).values({
             bookingId: input.bookingId ?? null,

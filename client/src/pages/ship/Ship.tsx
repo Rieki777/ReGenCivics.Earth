@@ -10,10 +10,11 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { Anchor, Map, Sprout, Ship as ShipIcon, Droplets, Wifi, Bike, Sun } from "lucide-react";
 import {
   ShipImage, InteriorPlaceholder, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
-  SHIP_TAGLINE, CHESTNUT_URL,
+  SHIP_TAGLINE, CHESTNUT_URL, shipImg,
 } from "./shipShared";
 import { ShipInventory } from "@/components/ship/ShipInventory";
 import { StateOfShip } from "@/components/ship/StateOfShip";
+import AutoplayVideo from "@/components/AutoplayVideo";
 
 const PERKS = [
   { icon: Sun, title: "The healthiest coach on the road", body: "A 2006 luxury build chosen on purpose: real wood and stone trim, cured decades past off-gassing. 100% organic linens and towels, cast iron and natural cookware, organic soaps and body products stocked for you." },
@@ -119,6 +120,30 @@ export default function Ship() {
             <h2 className="text-3xl font-bold mb-4">Everywhere you go, you plant</h2>
             <p className="text-foreground/90 mb-4">The chest holds seeds chosen to turn pine plantations back into the food forests they once were, the great abundance this land knew before. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole and watch a food forest grow from every crew that ever sailed.</p>
             <a href={CHESTNUT_URL} className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read The Great American Chestnut Abundance <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </ShipSection>
+
+      {/* The table: how we eat aboard, and why it feeds the land */}
+      <ShipSection className="bg-[#2f5d3a]/[0.05]">
+        <ShipEyebrow>The table</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-6">How we eat aboard, and why it feeds the land</h2>
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div data-reveal="left" className="prose prose-lg max-w-none text-foreground/90 space-y-4">
+            <p>The pantry is a gift economy. She sails stocked, so eat what is aboard, cook freely, and set a full table. The one rule of an abundant ship is that you leave her fuller than you found her. When you use something up, replace it with something of equal or greater value, so the next crew boards into the same abundance you did. Live abundantly, and take care of the people voyaging after you.</p>
+            <p>Everything aboard is organic, plant-based, and as local as the road allows. The food, the soaps, the oils, and the cleaners are all chosen so that anything going down her drains is safe to give back to the earth.</p>
+            <p>That choice is the heart of her regenerative footprint. Because she runs plant-based and organic, the greywater and blackwater in her tanks leave clean enough to nourish an ecosystem. At the end of a voyage you empty her tanks into a healing hole, plant it, and the whole journey returns to the land as food for a forest. What the crew eats becomes what the land drinks.</p>
+          </div>
+          <div data-reveal="right">
+            <AutoplayVideo
+              comingSoon
+              videoId=""
+              title="Emptying the blackwater and planting a healing hole"
+              thumbnailUrl={shipImg("ship-healing-hole.jpg")}
+              thumbnailAlt="A freshly planted healing hole beside the ship, where the voyage's water returns to the land."
+              playLabel="Emptying the tanks, planting a healing hole"
+            />
+            <p className="text-sm text-muted-foreground mt-3">A short film on emptying the black and greywater and using it to nourish a living landscape. Coming aboard soon.</p>
           </div>
         </div>
       </ShipSection>

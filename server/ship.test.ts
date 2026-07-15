@@ -8,9 +8,12 @@ import {
   computeVoyagePrice, computeQuestStandings, countEntered, maidenVoyageUserId,
   freeVoyagesUnlocked, percentBooked, weightedDraw, sponsorshipProgress, applySponsorship,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
-  addDaysYmd, enumerateVoyageWeeks, type SeasonalBand,
+  addDaysYmd, enumerateVoyageWeeks, voyageNightsFromAnswers, type SeasonalBand,
   type QuestCompletionRow, type DrawEntry,
 } from "./lib/ship-logic";
+import {
+  SUGGESTED_VOYAGES, MAX_VOYAGE_WEEKS, buildRoughChart, firstMateSeedAnswers, suggestedVoyageById,
+} from "@shared/shipVoyages";
 import {
   SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES,
   SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
@@ -50,13 +53,89 @@ describe("ship-logic: date ranges + voyage length", () => {
     expect(overlapsAny("2026-08-15", "2026-08-22", existing)).toBe(false);
   });
 
-  it("accepts 7-night multiples only", () => {
+  it("accepts 7-night multiples up to four weeks", () => {
     expect(nightsBetween("2026-08-01", "2026-08-08")).toBe(7);
     expect(isValidVoyageLength("2026-08-01", "2026-08-08")).toBe(true); // 7
     expect(isValidVoyageLength("2026-08-01", "2026-08-15")).toBe(true); // 14
+    expect(isValidVoyageLength("2026-08-01", "2026-08-29")).toBe(true); // 28, a full lunar cycle
     expect(isValidVoyageLength("2026-08-01", "2026-08-05")).toBe(false); // 4
     expect(isValidVoyageLength("2026-08-01", "2026-08-11")).toBe(false); // 10
+    expect(isValidVoyageLength("2026-08-01", "2026-09-05")).toBe(false); // 35, over the cap
     expect(isValidVoyageLength("2026-08-08", "2026-08-01")).toBe(false); // negative
+  });
+
+  it("reads voyage_nights from intake answers with a safe fallback", () => {
+    expect(voyageNightsFromAnswers({})).toBe(7);
+    expect(voyageNightsFromAnswers({ voyage_nights: "28" })).toBe(28);
+    expect(voyageNightsFromAnswers({ voyage_nights: "14" })).toBe(14);
+    expect(voyageNightsFromAnswers({ voyage_nights: "13" })).toBe(7); // not a 7-multiple
+    expect(voyageNightsFromAnswers({ voyage_nights: "35" })).toBe(7); // over the cap
+    expect(voyageNightsFromAnswers({ voyage_nights: "0" })).toBe(7);
+    expect(voyageNightsFromAnswers({ voyage_nights: "a pirate's dozen" })).toBe(7);
+  });
+});
+
+describe("suggested voyages + the rough chart", () => {
+  const weeksOf = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      startDate: addDaysYmd("2026-07-27", i * 7),
+      bioregion: i < 2 ? "Rogue & Southern Cascadia" : "Willamette & the Columbia Gorge",
+    }));
+
+  it("defines the four packages within the week cap", () => {
+    const byId = Object.fromEntries(SUGGESTED_VOYAGES.map((v) => [v.id, v.weeks]));
+    expect(byId).toEqual({ standard: 1, half_honeymoon: 1, honeymoon: 2, lunar_cycle: 4 });
+    for (const v of SUGGESTED_VOYAGES) {
+      expect(v.weeks).toBeGreaterThanOrEqual(1);
+      expect(v.weeks).toBeLessThanOrEqual(MAX_VOYAGE_WEEKS);
+      expect(v.weekThemes.length).toBeGreaterThanOrEqual(1);
+    }
+    expect(suggestedVoyageById("lunar_cycle")?.name).toBe("The Full Lunar Cycle");
+    expect(suggestedVoyageById("nope")).toBeNull();
+  });
+
+  it("charts one entry per day with boarding, turnovers, and the return", () => {
+    const lunar = suggestedVoyageById("lunar_cycle")!;
+    const chart = buildRoughChart(lunar, weeksOf(4));
+    expect(chart.days).toHaveLength(28);
+    expect(chart.days[0].title).toContain("New moon");
+    expect(chart.days[0].notes).toContain("Board Monday at 3pm");
+    expect(chart.days[0].date).toBe("2026-07-27");
+    // Non-final Sundays are turnover days; the last day sails home.
+    expect(chart.days[6].title).toBe("Turnover rest");
+    expect(chart.days[13].title).toBe("Turnover rest");
+    expect(chart.days[27].title).toBe("Return");
+    expect(chart.days[27].notes).toContain("Sunday at 11am");
+    // Week-two day one carries the waxing theme and the fresh-week note.
+    expect(chart.days[7].title).toContain("Waxing moon");
+    expect(chart.summary).toContain("Rogue & Southern Cascadia");
+    expect(chart.summary).toContain("Willamette");
+  });
+
+  it("keeps a single week simple: no turnover day, arc titles intact", () => {
+    const std = suggestedVoyageById("standard")!;
+    const chart = buildRoughChart(std, weeksOf(1));
+    expect(chart.days).toHaveLength(7);
+    expect(chart.days[0].title).toBe("Board and settle");
+    expect(chart.days[6].title).toBe("Return");
+    expect(chart.days.some((d) => d.title === "Turnover rest")).toBe(false);
+  });
+
+  it("seeds the First Mate with the voyage length", () => {
+    const honeymoon = suggestedVoyageById("honeymoon")!;
+    const seeds = firstMateSeedAnswers(honeymoon, {
+      startDate: "2026-07-27",
+      endDate: "2026-08-10",
+      bioregions: ["Rogue & Southern Cascadia"],
+    });
+    expect(seeds.voyage_nights).toBe("14");
+    expect(voyageNightsFromAnswers(seeds)).toBe(14);
+    expect(seeds.group).toContain("couple");
+  });
+
+  it("obeys the writing rules: no em-dashes in any guest-facing copy", () => {
+    const copy = JSON.stringify(SUGGESTED_VOYAGES) + JSON.stringify(buildRoughChart(suggestedVoyageById("lunar_cycle")!, weeksOf(4)));
+    expect(copy.includes("—")).toBe(false);
   });
 });
 

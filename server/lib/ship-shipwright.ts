@@ -113,7 +113,7 @@ export async function askShipwright(params: {
     SHIPWRIGHT_VOICE,
     "",
     referenceBlock(params.chunks, params.cases),
-    params.hasPhoto ? "\nThe guest attached a photo; describe what you see if it helps, but never coach a repair on a danger system." : "",
+    params.hasPhoto ? "\nThe guest attached a photo for the Keeper's log. You cannot view images, so never claim to see it; if the picture matters, ask the guest to describe what they see." : "",
   ].join("\n");
 
   const messages = [

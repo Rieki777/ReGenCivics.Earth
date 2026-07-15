@@ -8,7 +8,7 @@
  * The route path stays /ship/concierge and the tRPC namespace stays
  * ship.concierge; only the persona name changed to the First Mate (2026-07-10).
  */
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,124 @@ export function ItineraryView({ itinerary }: { itinerary: Itinerary | null }) {
 }
 
 /**
+ * The First Mate quick customization: the brief pre-booking pass used by the
+ * suggested voyages on /ship/book. Seed answers go in (voyage, dates, pace,
+ * voyage_nights), she charts an itinerary from the real treasure map on mount,
+ * and the guest refines it by chat. The full planner (/ship/concierge) stays the
+ * longer pass after booking. Remount (key) to re-chart for a new selection.
+ */
+export function FirstMateQuickCustomize({ seedAnswers }: { seedAnswers: Record<string, string> }) {
+  const start = trpc.ship.concierge.start.useMutation();
+  const generate = trpc.ship.concierge.generate.useMutation();
+  const chat = trpc.ship.concierge.chat.useMutation();
+
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  // The session capability minted at start; every later call carries it so
+  // session ids alone grant nothing (server: assertConciergeAccess).
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [itinerary, setItinerary] = useState<Itinerary | null>(null);
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const startedRef = useRef(false);
+
+  const begin = useCallback(async () => {
+    setError(null);
+    try {
+      const s = await start.mutateAsync({ answers: seedAnswers });
+      const sid = s.id as number;
+      setSessionId(sid);
+      setSessionToken(s.token ?? null);
+      const res = await generate.mutateAsync({ sessionId: sid, token: s.token ?? undefined });
+      setItinerary(res.itinerary as Itinerary);
+    } catch (err: any) {
+      setError(err?.message ?? "The First Mate could not chart just now. Try again in a moment.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedAnswers]);
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    void begin();
+  }, [begin]);
+
+  // No <form> here on purpose: this component can live inside the booking form
+  // on /ship/book, and nested forms misfire. Enter and the Send button both call
+  // this directly.
+  async function sendChat() {
+    if (!sessionId || !chatInput.trim()) return;
+    const mine = chatInput;
+    setChatInput("");
+    setMessages((m) => [...m, { role: "user", content: mine }]);
+    try {
+      const res = await chat.mutateAsync({ sessionId, message: mine, token: sessionToken ?? undefined });
+      setMessages(res.messages);
+    } catch (err: any) {
+      toast.error(err?.message ?? "The First Mate is quiet just now.");
+    }
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="text-sm text-foreground/80">{error}</p>
+        <Button type="button" onClick={() => void begin()} className="mt-3 bg-[#2f5d3a] hover:bg-[#264a2f]">
+          Chart it again
+        </Button>
+      </div>
+    );
+  }
+
+  if (!itinerary) {
+    return (
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="text-sm text-foreground/80 animate-pulse motion-reduce:animate-none">
+          Your First Mate is charting your voyage from the treasure map…
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="max-h-80 overflow-y-auto pr-1">
+        <ItineraryView itinerary={itinerary} />
+      </div>
+      <div className="rounded-2xl border bg-card p-5">
+        <h4 className="font-semibold mb-2">Tell her what to change</h4>
+        <div className="space-y-2 mb-3 max-h-64 overflow-y-auto">
+          {messages.map((m, i) => (
+            <div key={i} className={m.role === "user" ? "text-right" : ""}>
+              <span className={`inline-block px-3 py-2 rounded-lg text-sm ${m.role === "user" ? "bg-[#2f5d3a] text-white" : "bg-muted"}`}>{m.content}</span>
+            </div>
+          ))}
+          {chat.isPending && <span className="inline-block px-3 py-2 rounded-lg text-sm bg-muted text-muted-foreground">…</span>}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void sendChat();
+              }
+            }}
+            placeholder="More rest days, a waterfall, a service day…"
+            maxLength={1000}
+            enterKeyHint="send"
+            aria-label="Tell the First Mate what to change"
+          />
+          <Button type="button" onClick={() => void sendChat()} disabled={chat.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">Send</Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">This is the quick pass. After you book, the full First Mate session charts every day with you.</p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The First Mate planner. Holds the intake -> generate -> chat flow. `onItinerary`
  * fires whenever a fresh itinerary is charted so the host can draw it on the map.
  * `compact` tightens the layout for the map drawer.
@@ -75,6 +193,9 @@ export function FirstMatePlanner({
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [sessionId, setSessionId] = useState<number | null>(null);
+  // The session capability minted at start; every later call carries it so
+  // session ids alone grant nothing (server: assertConciergeAccess).
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [chatInput, setChatInput] = useState("");
@@ -89,7 +210,8 @@ export function FirstMatePlanner({
       const s = await start.mutateAsync({ answers: filled });
       const sid = s.id as number;
       setSessionId(sid);
-      const res = await generate.mutateAsync({ sessionId: sid });
+      setSessionToken(s.token ?? null);
+      const res = await generate.mutateAsync({ sessionId: sid, token: s.token ?? undefined });
       setItinerary(res.itinerary as Itinerary);
       onItinerary?.(res.itinerary as Itinerary);
       toast.success("Your treasure map is charted.");
@@ -105,7 +227,7 @@ export function FirstMatePlanner({
     setChatInput("");
     setMessages((m) => [...m, { role: "user", content: mine }]);
     try {
-      const res = await chat.mutateAsync({ sessionId, message: mine });
+      const res = await chat.mutateAsync({ sessionId, message: mine, token: sessionToken ?? undefined });
       setMessages(res.messages);
     } catch (err: any) {
       toast.error(err?.message ?? "The First Mate is quiet just now.");

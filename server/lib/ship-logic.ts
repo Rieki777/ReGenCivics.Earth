@@ -8,6 +8,7 @@
  */
 import {
   VOYAGE_NIGHTS,
+  MAX_VOYAGE_WEEKS,
   ANCHOR_NIGHTLY_USD,
   TRIAL_RENTAL_NIGHTLY_USD,
   TRIAL_OFFERING_NIGHTLY_USD,
@@ -34,11 +35,32 @@ export function nightsBetween(startYmd: string, endYmd: string): number {
 
 /**
  * A voyage is a whole number of 7-night tank cycles. Multi-week voyages are
- * allowed (guest resets systems mid-voyage) but must land on a 7-night multiple.
+ * allowed (guest resets systems mid-voyage) but must land on a 7-night multiple,
+ * capped at MAX_VOYAGE_WEEKS (four weeks, a full lunar cycle).
  */
 export function isValidVoyageLength(startYmd: string, endYmd: string): boolean {
   const nights = nightsBetween(startYmd, endYmd);
-  return Number.isInteger(nights) && nights >= VOYAGE_NIGHTS && nights % VOYAGE_NIGHTS === 0;
+  return (
+    Number.isInteger(nights) &&
+    nights >= VOYAGE_NIGHTS &&
+    nights <= MAX_VOYAGE_WEEKS * VOYAGE_NIGHTS &&
+    nights % VOYAGE_NIGHTS === 0
+  );
+}
+
+/**
+ * How many nights the concierge should chart, read from a session's intake
+ * answers (the suggested voyages seed `voyage_nights`). Falls back to one
+ * voyage week when absent or out of bounds. Deterministic and testable.
+ */
+export function voyageNightsFromAnswers(answers: Record<string, unknown>): number {
+  const raw = Number(String(answers?.voyage_nights ?? ""));
+  const valid =
+    Number.isInteger(raw) &&
+    raw >= VOYAGE_NIGHTS &&
+    raw <= MAX_VOYAGE_WEEKS * VOYAGE_NIGHTS &&
+    raw % VOYAGE_NIGHTS === 0;
+  return valid ? raw : VOYAGE_NIGHTS;
 }
 
 /**
