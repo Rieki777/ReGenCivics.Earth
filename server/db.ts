@@ -2332,6 +2332,15 @@ export async function getForumPost(id: number) {
   return row || null;
 }
 
+// Read-only fetch for the crawler content injector: no view-count increment,
+// so bot traffic never inflates community stats.
+export async function getForumPostSnapshot(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(forumPosts).where(eq(forumPosts.id, id)).limit(1);
+  return row || null;
+}
+
 export async function createForumPost(data: { categoryId: number; authorId: number; title: string; content: string; tags?: string[]; postType?: string; isPinned?: number; threadStage?: string; chainId?: number; bioregionId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

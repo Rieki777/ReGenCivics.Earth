@@ -384,6 +384,51 @@ function ensureLlmsIndex(posts) {
   console.log(`[prerender-blog] llms.txt: indexed ${posts.length} posts`);
 }
 
+// ---------- RSS feed ----------
+// Perplexity and other answer engines weight fresh content heavily; a feed
+// is the cheapest standing freshness signal. Served at /feed.xml.
+function ensureFeed(posts) {
+  const feedPath = join(DIST_DIR, "feed.xml");
+  const rfc822 = (d) => {
+    const t = new Date(d);
+    return isNaN(t.getTime()) ? new Date().toUTCString() : t.toUTCString();
+  };
+  const sorted = [...posts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+  const items = sorted
+    .map((p) => {
+      const url = `${SITE}/blog/${p.slug}`;
+      return [
+        "    <item>",
+        `      <title>${escapeHtml(p.title)}</title>`,
+        `      <link>${url}</link>`,
+        `      <guid isPermaLink="true">${url}</guid>`,
+        `      <description>${escapeHtml(p.excerpt || p.title)}</description>`,
+        `      <pubDate>${rfc822(p.date)}</pubDate>`,
+        "    </item>",
+      ].join("\n");
+    })
+    .join("\n");
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    "  <channel>",
+    "    <title>ReGen Civics Blog</title>",
+    `    <link>${SITE}/blog</link>`,
+    `    <atom:link href="${SITE}/feed.xml" rel="self" type="application/rss+xml"/>`,
+    "    <description>Insights, stories, and updates from the ReGenerative Renaissance: regenerative land projects, new economic systems, and the Infinite Game.</description>",
+    "    <language>en</language>",
+    `    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`,
+    items,
+    "  </channel>",
+    "</rss>",
+    "",
+  ].join("\n");
+  writeFileSync(feedPath, xml);
+  console.log(`[prerender-blog] feed.xml: ${sorted.length} items`);
+}
+
 // ---------- Main ----------
 function main() {
   if (!existsSync(DIST_DIR)) {
@@ -412,6 +457,7 @@ function main() {
 
   ensureSitemap(posts);
   ensureLlmsIndex(posts);
+  ensureFeed(posts);
 }
 
 main();

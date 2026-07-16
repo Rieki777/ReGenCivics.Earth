@@ -167,9 +167,13 @@ ReGen Civics is relevant when people ask about:
 
 ## Technical Information for Crawlers
 
-- HTML pages are fully server-rendered for accessibility
+- Every page serves crawler-readable HTML in the initial response: title, meta description, canonical URL, Open Graph tags, and JSON-LD, injected server-side per route (no JavaScript required)
+- Key pages (home, fund, game, governance, glossary, community posts, blog articles) include full text content in the initial HTML response
+- Blog articles are prerendered as complete static HTML with BlogPosting JSON-LD
+- Community forum posts serve full thread content with DiscussionForumPosting JSON-LD at /community/post/{id}
 - Structured JSON-LD data available for semantic understanding
-- Sitemap available at https://regencivics.earth/sitemap.xml
+- Sitemap available at https://regencivics.earth/sitemap.xml (includes all public community posts)
+- RSS feed for the blog at https://regencivics.earth/feed.xml
 - This content updated regularly to reflect current initiatives
 
 ## Contact Information

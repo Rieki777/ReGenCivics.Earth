@@ -215,7 +215,7 @@ A: Through GitHub, bounty programs, or joining as a technical partner.
 
 ## Key Pages and Navigation Paths
 
-All URLs are accessible to crawlers and provide meaningful content when JavaScript is disabled.
+All URLs below exist and are open to crawlers. Every page serves title, description, canonical, and JSON-LD in the initial HTML; key pages also serve full text content without JavaScript.
 
 ### Main Entry Points
 - Homepage: https://regencivics.earth/
@@ -226,25 +226,25 @@ All URLs are accessible to crawlers and provide meaningful content when JavaScri
 ### For Land Projects
 - Project Directory: https://regencivics.earth/land
 - Season Information: https://regencivics.earth/seasons
-- Incubator Details: https://regencivics.earth/incubator
+- Incubator Application: https://regencivics.earth/apply
 
 ### For Community Members
 - Community Forum: https://regencivics.earth/community
 - Quest Board: https://regencivics.earth/quest
 - Bounties Marketplace: https://regencivics.earth/bounties
-- Player Profiles: https://regencivics.earth/profile
+- Tools Library: https://regencivics.earth/tools
+- Plays Library: https://regencivics.earth/plays
 
 ### Learning Resources
 - Full Blog Archive: https://regencivics.earth/blog
 - Glossary of Terms: https://regencivics.earth/glossary
-- Educational Videos: https://regencivics.earth/videos
-- Research Library: https://regencivics.earth/research
+- Blog RSS Feed: https://regencivics.earth/feed.xml
 
 ### Governance and Operations
 - Decision Making: https://regencivics.earth/governance
 - Tokenomics Overview: https://regencivics.earth/tokenomics
-- DAO Operations: https://regencivics.earth/dao
-- Financial Reports: https://regencivics.earth/reports
+- Community Proposals: https://regencivics.earth/proposals
+- Game Mechanics: https://regencivics.earth/game-mechanics
 
 ## Contact Information
 

@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { resolveCrawlerContent, type CrawlerContent } from "./crawler-content";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -249,7 +250,7 @@ export function serveStatic(app: Express) {
     res.send(applyNonce(html, nonce));
   });
 
-  app.use("*", (_req, res) => {
+  app.use("*", async (_req, res) => {
     if (_req.originalUrl.startsWith("/api/")) {
       res.status(404).json({ error: "Not found" });
       return;
@@ -289,6 +290,17 @@ export function serveStatic(app: Express) {
       ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
     }
 
+    // Crawler-visible content: real HTML body + JSON-LD for key routes and
+    // community posts. AI crawlers (GPTBot, ClaudeBot, PerplexityBot) fetch
+    // HTML without executing JS, so without this they see an empty shell.
+    // Never block page serving on it.
+    let crawlerContent: CrawlerContent | null = null;
+    try {
+      crawlerContent = await resolveCrawlerContent(reqPath);
+    } catch { /* serve the plain shell on any failure */ }
+    if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
+    if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
+
     // Inject into the <head>, replace placeholder tags written into index.html
     // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
     const escapedTitle = meta.title.replace(/"/g, "&quot;");
@@ -319,10 +331,26 @@ export function serveStatic(app: Express) {
       .replace(/(<link rel="canonical" href=")[^"]*(")/,
         `$1${canonical}$2`);
 
+    // Inject crawler content: JSON-LD into <head>, prose before <div id="root">
+    // (same placement as the blog prerender output).
+    let withContent = injected;
+    if (crawlerContent) {
+      if (crawlerContent.jsonld) {
+        withContent = withContent.replace(
+          /<\/head>/i,
+          `<script type="application/ld+json">${JSON.stringify(crawlerContent.jsonld)}</script></head>`,
+        );
+      }
+      withContent = withContent.replace(
+        /<div id="root">/i,
+        `${crawlerContent.bodyHtml}<div id="root">`,
+      );
+    }
+
     // Per-request CSP nonce substitution. Same applyNonce helper used
     // by the dedicated /offline.html and / handlers above.
     const nonce = (res.locals.nonce as string) || "";
-    const withNonce = applyNonce(injected, nonce);
+    const withNonce = applyNonce(withContent, nonce);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // See note above about no-store: prevents 304 revalidation from

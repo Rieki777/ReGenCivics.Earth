@@ -35,6 +35,21 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
 User-agent: Claude-Web
 Allow: /
 Disallow: /admin
@@ -46,6 +61,11 @@ Disallow: /admin
 Disallow: /api/
 
 User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Perplexity-User
 Allow: /
 Disallow: /admin
 Disallow: /api/
@@ -75,6 +95,51 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
+User-agent: Applebot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Bytespider
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: MistralAI-User
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
 # Special directives for AI model training
 User-agent: AI-data-fetcher
 Allow: /
@@ -94,6 +159,7 @@ Disallow: /settings
 Allow: /llms.txt
 Allow: /llms-full.txt
 Allow: /sitemap.xml
+Allow: /feed.xml
 
 # Rate limiting for aggressive crawlers
 # (Handled by server-side middleware in production)

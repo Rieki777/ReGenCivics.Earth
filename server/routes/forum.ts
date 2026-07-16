@@ -12,6 +12,7 @@ import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
 import { maybePostVideoSummary } from "../lib/videoSummary";
+import { pingIndexNow } from "../lib/indexnow";
 import {
   handleForumPostCreated,
   handleForumPostEdited,
@@ -536,6 +537,10 @@ export const forumRouter = router({
         title: cleanTitle,
         content: cleanContent,
       }).catch((err) => console.error(`[forum.createPost] notify fan-out failed for ${postId}`, err));
+      // Fire-and-forget IndexNow ping so Bing (and via Bing, ChatGPT search)
+      // discovers the new thread within hours. Community posts are public
+      // and in the sitemap by decision (2026-07-15).
+      pingIndexNow([`/community/post/${postId}`]);
       // Fire-and-forget image generation -- don't block mutation response
       generateImage({
         contentType: "forum",

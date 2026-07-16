@@ -162,6 +162,19 @@ async function startServer() {
     next();
   });
 
+  // AI crawler telemetry: one greppable log line per AI-bot page fetch so we
+  // can verify from Railway logs which engines crawl us and what they read.
+  // Grep with: railway logs | grep '\[ai-crawler\]'
+  const AI_CRAWLER_RE = /(GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|Claude-Web|Anthropic-AI|PerplexityBot|Perplexity-User|Google-Extended|CCBot|Bytespider|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot|cohere-ai|MistralAI-User|Amazonbot|DuckAssistBot|YouBot)/i;
+  app.use((req, _res, next) => {
+    const ua = req.headers["user-agent"];
+    if (ua && !req.path.startsWith("/assets/") && req.path !== "/health") {
+      const m = ua.match(AI_CRAWLER_RE);
+      if (m) console.log(`[ai-crawler] ${m[1]} ${req.method} ${req.path}`);
+    }
+    next();
+  });
+
   // Security middleware. cspNonceMiddleware MUST run before cspMiddleware
   // so res.locals.nonce is set in time to be embedded in the CSP header.
   app.use(cspNonceMiddleware);
@@ -436,7 +449,7 @@ async function startServer() {
       campaignIds = campaigns.map((c: { id: number }) => c.id);
     } catch { /* DB unavailable, skip dynamic campaigns */ }
     try {
-      const posts = await db.listForumPosts(undefined, 200, 0);
+      const posts = await db.listForumPosts(undefined, 2000, 0);
       forumPostIds = posts.map((p: { id: number }) => p.id);
     } catch { /* DB unavailable, skip dynamic forum posts */ }
 
@@ -451,7 +464,11 @@ async function startServer() {
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
       ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
-      // Community posts excluded from sitemap to save crawl budget (thin user-generated content)
+      // Community posts included by decision (2026-07-15): real conversations
+      // by practitioners are what answer engines cite. Each post URL serves
+      // full thread HTML + DiscussionForumPosting JSON-LD via the crawler
+      // content injector (server/_core/crawler-content.ts).
+      ...forumPostIds.map(id => urlTag(`/community/post/${id}`, 'weekly', '0.5')),
       '</urlset>',
     ];
 
