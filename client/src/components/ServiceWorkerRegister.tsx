@@ -24,14 +24,14 @@ export function ServiceWorkerRegister() {
         const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         if (import.meta.env.DEV) console.log('[SW] Service worker registered:', registration);
 
-        // Check for updates periodically (every 6 hours)
-        setInterval(async () => {
-          try {
-            await registration.update();
-          } catch (error) {
-            console.error('[SW] Update check failed:', error);
-          }
-        }, 6 * 60 * 60 * 1000);
+        // Check for updates periodically (every 6 hours) and whenever the tab
+        // comes back to the foreground, so a long-open tab still picks up a new
+        // deploy soon after the user returns to it.
+        const checkForUpdate = () => registration.update().catch((e) => console.error('[SW] Update check failed:', e));
+        setInterval(checkForUpdate, 6 * 60 * 60 * 1000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') checkForUpdate();
+        });
 
         // Listen for updates
         registration.addEventListener('updatefound', () => {
@@ -53,10 +53,22 @@ export function ServiceWorkerRegister() {
 
     registerSW();
 
-    // Handle controller change (new service worker activated)
+    // Deliver updates instead of stranding users on stale cached JS. The
+    // generated SW calls skipWaiting()+clientsClaim(), so a new deploy activates
+    // and takes control on its own; when it does, reload once so the page picks
+    // up the fresh assets. Without this, a fixed bug keeps happening for anyone
+    // whose browser is still running the previously cached bundle.
+    //
+    // Guards: `hadController` skips the first-ever install (a brand new visitor
+    // is not controlled yet, so the initial clientsClaim is not an update and
+    // needs no reload); `refreshing` prevents any reload loop.
+    const hadController = !!navigator.serviceWorker.controller;
+    let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (import.meta.env.DEV) console.log('[SW] Service worker controller changed');
-      // Page will be controlled by new service worker
+      if (!hadController || refreshing) return;
+      refreshing = true;
+      window.location.reload();
     });
   }, []);
 
