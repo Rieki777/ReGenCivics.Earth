@@ -25,9 +25,8 @@ import { GALLEY_CARDS, type GalleyCard, type GalleyCategory } from "@/data/galle
 import { GATHER_SPOTS, SEASON_WINDOWS } from "@/data/galleySeasons";
 import { Coffee, Sun, Moon, MapPin, Download, Search, Utensils } from "lucide-react";
 
-// The printable food treasure map (Rye produces it in Cowork). Flip to true when
-// client/public/ship/ship-food-treasure-map.pdf lands.
-const TREASURE_MAP_READY = false;
+// The printable food treasure map. Landed at client/public/ship/ship-food-treasure-map.pdf.
+const TREASURE_MAP_READY = true;
 const TREASURE_MAP_URL = "/ship/ship-food-treasure-map.pdf";
 
 const CATEGORY_LABELS: Record<GalleyCategory, string> = {
