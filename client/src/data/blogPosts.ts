@@ -62,7 +62,7 @@ You also hold her long-term health. Every voyage leaves a maintenance log, and y
 A Keeper is practical, steady, and kind. You do not need to be a mechanic, though comfort around systems helps. You need to care about a thing being done right, to enjoy handing someone a ship that is ready, and to hold the trust that comes with the keys. You are close to the anchorage, or willing to be there on turnover mornings. You treat the ship the way you would treat a spring you drink from.
 
 If that is you, raise your flag. Apply to keep her, and let us talk.`,
-    author: 'Rye',
+    author: 'CORE Team',
     date: '2026-07-14',
     readTime: '5 min read',
     image: cdnImg('https://assets.regencivics.earth/generated/blog/keeper-of-the-fleet-2026-07-14T17-39-37.png', 1200),
@@ -112,7 +112,7 @@ Her trial year is now: one-week voyages at $299 a night (the rate climbs as she 
 Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, tenth one. You're allowed.
 
 [SHIP_CTA]`,
-    author: 'Rye',
+    author: 'CORE Team',
     date: '2026-07-10',
     readTime: '4 min read',
     image: '/images/ship/ship-campfire-dusk.jpg',
@@ -180,7 +180,7 @@ This is the whole idea. Reach 150 points and you are in every draw, and every vo
 So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more the fleet sails, the more of us sail free.
 
 [SHIP_CTA]`,
-    author: 'Rye',
+    author: 'CORE Team',
     date: '2026-07-10',
     readTime: '6 min read',
     image: '/images/ship/ship-forest-camp-guitar.jpg',
