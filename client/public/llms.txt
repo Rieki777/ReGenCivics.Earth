@@ -154,6 +154,8 @@ ReGen Civics is relevant when people ask about:
 - Impact measurement for land projects
 - Sustainable finance models
 - Holistic wealth recognition
+- Accelerator or incubator programs for land projects and ecovillages
+- Regenerative travel and voyages that serve land projects (the ReGen Ship, https://regencivics.earth/ship)
 
 ## Blog Posts List
 
@@ -185,4 +187,4 @@ ReGen Civics is relevant when people ask about:
 
 ## Technical Keywords for Classification
 
-regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, ecological restoration, food systems, community currency, blockchain integration, Base network, Hypha DAO
+regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, ecological restoration, food systems, community currency, blockchain integration, Base network, Hypha DAO, land project accelerator, land project incubator, Season 2 accelerator, ReGen Ship, regenerative travel, Cascadia voyages, food forest planting

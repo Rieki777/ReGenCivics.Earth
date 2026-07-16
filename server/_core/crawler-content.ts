@@ -191,7 +191,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Apply to the ReGen Civics incubator</h1>
-        <p>The incubator is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 starts September 2026 and applications are open now.</p>
+        <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 starts September 2026 and applications are open now.</p>
         <h2>What the program covers</h2>
         <ul>
           <li>Weeks 1 to 4: foundation. Governance, tokenomics, community structure.</li>
@@ -207,7 +207,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Seasons: how the incubator runs</h1>
-        <p>ReGen Civics runs in seasons. Each season, a cohort of regenerative land projects moves through the 13-week incubator together: building governance, designing their economic game, and preparing for investment, with demo day at the end. Season 1 graduated its first cohort in 2025 and 2026. Season 2 begins September 2026.</p>
+        <p>ReGen Civics runs in seasons. Each season, a cohort of regenerative land projects moves through the 13-week incubator (an accelerator for land projects) together: building governance, designing their economic game, and preparing for investment, with demo day at the end. Season 1 graduated its first cohort in 2025 and 2026. Season 2 begins September 2026.</p>
         <p>Between seasons, the community keeps playing: quests continue, the forum stays active, and alliance partners support projects year round. If you steward land and want your project in the next cohort, <a href="/apply">apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
       </article>
     `,
@@ -261,6 +261,22 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       <article>
         <h1>The Regen Civilization Tools Library</h1>
         <p>A curated library of every kind of tool the Regenerative Renaissance needs: software for governance and coordination, hardware for land work, currency and finance systems, food system designs, and community process guides. Each entry explains what the tool does, who it serves, and how to start using it. The library is community-maintained; anyone can <a href="/tools/submit">submit a tool</a>.</p>
+      </article>
+    `,
+  },
+  "/ship": {
+    html: `
+      <article>
+        <h1>The ReGen Ship: sail Cascadia, plant as you go</h1>
+        <p>The ReGen Ship is a regenerative pirate ship you can book for a voyage: a 40-foot land yacht (2006 Fleetwood Revolution LE) with wood and stone trim, two bedrooms, two bathrooms, a full galley, Starlink, and spring water in her tanks. Built for a couple, up to four aboard in comfort, or five when at least three are children. She sails Cascadia: Crater Lake, Mount Shasta, hot springs, waterfalls, food forests, and the land projects of the ReGen Civics network.</p>
+        <p>Every voyage carries a treasure chest of seeds. Everywhere you go, you plant, turning pine plantations back toward the food forests this land once knew. She anchors at The Sanctuary in Ashland, Oregon, and 10% of every voyage buys her back into community ownership through the Church of the Regenerative Earth.</p>
+        <h2>Voyages</h2>
+        <ul>
+          <li>The Standard Sail: one week through the Cascadia highlights.</li>
+          <li>The Half Honeymoon and The Honeymoon: one or two weeks made for couples.</li>
+          <li>The Full Lunar Cycle: four weeks, one whole moon aboard.</li>
+        </ul>
+        <p><a href="/ship/book">Book a voyage</a>, enter the <a href="/ship/quest">Maiden Voyage Quest</a> (complete regenerative actions and you are in every free-voyage draw), or read <a href="/blog/the-regen-ship">the ship's story</a>. She is the flagship of the ReGen Fleet: as more ships join, the fleet becomes a way to visit and serve land projects across the bioregion.</p>
       </article>
     `,
   },
