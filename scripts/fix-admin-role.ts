@@ -1,4 +1,7 @@
 /**
+ * ⚠️ DANGER: PRIVILEGE-GRANTING SCRIPT. Sets role='admin' on the database
+ * DATABASE_URL points at. Check DATABASE_URL twice before running.
+ *
  * fix-admin-role.ts — Sets a user's role to 'admin' by email address.
  *
  * Usage (Windows PowerShell — run from project root):

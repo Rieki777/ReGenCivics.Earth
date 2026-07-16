@@ -1,4 +1,8 @@
 /**
+ * ⚠️ DANGER: PRIVILEGE-GRANTING SCRIPT. Writes role='superadmin' to the
+ * database DATABASE_URL points at. Check DATABASE_URL twice; use --dry-run
+ * first.
+ *
  * Set rieki.cordon@gmail.com as superadmin
  * Usage: npx tsx scripts/set-superadmin.ts [--dry-run]
  *

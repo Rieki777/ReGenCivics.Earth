@@ -1,3 +1,9 @@
+/**
+ * ⚠️ DANGER: PRIVILEGE-GRANTING SCRIPT. Writes role='superadmin' directly to
+ * whatever database DATABASE_URL points at, with no prompt and no dry-run.
+ * Check DATABASE_URL twice before running. Prefer scripts/set-superadmin.ts,
+ * which has a --dry-run flag.
+ */
 import mysql from 'mysql2/promise';
 
 const conn = await mysql.createConnection(process.env.DATABASE_URL);
