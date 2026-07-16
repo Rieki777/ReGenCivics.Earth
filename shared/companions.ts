@@ -101,6 +101,37 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
   },
 };
 
+/**
+ * The Ship's Cook (Galley spec section 6e). A chat persona, not a form companion,
+ * so she stands apart from the CompanionPersonaId union: she cooks from the crew's
+ * logged haul and photos instead of filling a form. Display metadata is client-safe;
+ * her system prompt is server-only in server/lib/ship-cook.ts.
+ */
+export type ChatPersona = {
+  id: "ships-cook";
+  name: string;
+  portrait: string;
+  role: string;
+  greeting: string;
+  invitations: string[];
+  accent: string;
+};
+
+export const SHIPS_COOK: ChatPersona = {
+  id: "ships-cook",
+  name: "the Ship's Cook",
+  portrait: "persona-ships-cook.webp",
+  role: "cooks the valley into a feast",
+  greeting:
+    "Welcome to the galley. Tell me what you gathered, or snap a photo of your haul, and I'll cook you something alive from it. Pick your track and let's play.",
+  invitations: [
+    "Show me what you found at the market and I'll turn it into dinner.",
+    "Log your haul or snap a photo, and I'll remix it into something you'll want to make.",
+    "You gathered it, I'll cook it. Tell me what's on the counter.",
+  ],
+  accent: "text-[#b5651d] dark:text-[#e8a866] border-[#b5651d]/40",
+};
+
 // ── Form field specs ──────────────────────────────────────────────────────────
 
 export type CompanionFieldType = "text" | "longtext" | "boolean" | "number" | "enum";

@@ -210,6 +210,7 @@ const Ship = lazy(() => import("./pages/ship/Ship"));
 const ShipBook = lazy(() => import("./pages/ship/ShipBook"));
 const ShipTheme = lazy(() => import("./pages/ship/ShipTheme"));
 const ShipMap = lazy(() => import("./pages/ship/ShipMap"));
+const Galley = lazy(() => import("./pages/ship/Galley"));
 const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
 const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
 const ShipQuestRules = lazy(() => import("./pages/ship/ShipQuestRules"));
@@ -254,6 +255,7 @@ function Router() {
       <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
       <Route path={"/ship/theme"}><EB><ShipTheme /></EB></Route>
       <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>
+      <Route path={"/ship/galley"}><EB><Galley /></EB></Route>
       <Route path={"/ship/concierge"}><EB><ShipConcierge /></EB></Route>
       <Route path={"/ship/quest/rules"}><EB><ShipQuestRules /></EB></Route>
       <Route path={"/ship/quest"}><EB><ShipQuest /></EB></Route>

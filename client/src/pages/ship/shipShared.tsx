@@ -110,13 +110,14 @@ export function ShipEyebrow({ children }: { children: ReactNode }) {
 /**
  * The ship's sub-page navigation as image cards. Each destination carries a
  * picture, like the ReGen Civics landing cards. Three across on mobile, a
- * single row of seven on desktop. Cards zoom on hover and reveal on scroll.
+ * single row of eight on desktop. Cards zoom on hover and reveal on scroll.
  */
 const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string }> = [
   { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
   { href: "/ship/theme", label: "The Theme", image: "ship-double-rainbow.jpg", alt: "A double rainbow over the ship." },
   { href: "/ship/book", label: "Book", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista." },
   { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
+  { href: "/ship/galley", label: "The Galley", image: "ship-galley-table.jpg", alt: "A galley table of ripe fruit and greens." },
   { href: "/ship/quest", label: "The Quest", image: "ship-quest-banner.jpg", alt: "A trail under a rainbow." },
   { href: "/ship/fleet", label: "The Fleet", image: "ship-fleet-caravan.jpg", alt: "A caravan of ships." },
   { href: "/ship/log", label: "Voyage Log", image: "ship-campfire-dusk.jpg", alt: "A campfire at dusk." },
@@ -125,7 +126,7 @@ const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string
 export function ShipNavRow({ current }: { current?: string }) {
   return (
     <nav aria-label="ReGen Ship pages" className="max-w-5xl mx-auto px-4 py-5">
-      <div className="grid grid-cols-3 md:grid-cols-7 gap-2 sm:gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-8 gap-2 sm:gap-3">
         {NAV_CARDS.map((c, i) => {
           const active = current === c.href;
           return (

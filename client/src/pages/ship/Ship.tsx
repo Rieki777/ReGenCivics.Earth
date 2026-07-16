@@ -148,6 +148,19 @@ export default function Ship() {
         </div>
       </ShipSection>
 
+      {/* The Galley: cook what you gather */}
+      <ShipSection className="bg-[#d4a574]/10">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div data-reveal="left">
+            <ShipEyebrow>The Galley</ShipEyebrow>
+            <h2 className="text-3xl font-bold mb-4">Cook the valley into a feast</h2>
+            <p className="text-foreground/90 mb-4">The ship eats organic, plant-based, and mostly raw, because that keeps the water clean enough to nourish the land. The Galley shows you how, with a cookbook of build-your-own formulas and a remixer that turns your market haul into dishes. Log what you gathered, pick your track, and cook.</p>
+            <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/galley">Enter the Galley</Link></Button>
+          </div>
+          <div data-reveal="right" className="aspect-[4/3]"><ShipImage name="ship-galley-table.jpg" alt="A galley table laid with ripe fruit, greens, and shared plates." className="h-full" /></div>
+        </div>
+      </ShipSection>
+
       {/* Gallery */}
       <ShipSection>
         <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>

@@ -30,6 +30,7 @@ import {
   shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
   shipCrewListSignups, shipGearChecks,
   shipCrewProfiles, shipGiveawayDrawings, churchDonations,
+  galleyHauls, galleyHaulItems, galleyRemixes,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
@@ -52,6 +53,9 @@ import {
   SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
 } from "../lib/ship-config";
 import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
+import { remixHaul, rollRemix, type HaulItemInput } from "../lib/galley-remix";
+import { askShipCook } from "../lib/ship-cook";
+import type { GalleyTrack } from "../../shared/galleyCards";
 import { generateItinerary, conciergeReply, type ConciergeLocation } from "../lib/ship-concierge";
 import type { Itinerary } from "../lib/ship-logic";
 import { getStripe, isStripeConfigured } from "../lib/stripe";
@@ -89,6 +93,20 @@ function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): 
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 const PASSPORT_PROXIMITY_M = 2_000; // within 2km of the pin counts as a visit
+
+// Keep only our own R2 asset URLs. An arbitrary URL would let a guest feed a
+// vision model attacker-controlled pictures hosted anywhere (AI-AUTOMATION-RISKS).
+// Uploads land on the R2 asset domain, so that host is the allow-list.
+function assetPhotoUrls(urls: string[] | undefined, cap = 4): string[] {
+  return (urls ?? []).filter((u) => {
+    try {
+      const parsed = new URL(u);
+      return parsed.protocol === "https:" && parsed.hostname === ASSET_HOST;
+    } catch {
+      return false;
+    }
+  }).slice(0, cap);
+}
 
 // The public host our R2 uploads are served from. Photos handed to the
 // Shipwright's vision must live here (see the shipwright.ask allow-list).
@@ -216,6 +234,29 @@ async function rewardVerifiedCompletion(completionId: number) {
   if (before < SHIP_ENTRY_THRESHOLD_POINTS && after >= SHIP_ENTRY_THRESHOLD_POINTS && u?.email) {
     await emailEnteredTheDraw(u.email);
   }
+}
+
+// ── Galley helpers ────────────────────────────────────────────────────────────
+type ShipDb = Awaited<ReturnType<typeof db>>;
+
+// The user's active (confirmed or sailing) voyage, so a haul links to it.
+async function activeVoyageBookingId(userId: number): Promise<number | null> {
+  const d = await db();
+  const [active] = await d
+    .select({ id: shipBookings.id })
+    .from(shipBookings)
+    .where(and(eq(shipBookings.userId, userId), inArray(shipBookings.status, ["confirmed", "active"])))
+    .orderBy(asc(shipBookings.startDate))
+    .limit(1);
+  return active?.id ?? null;
+}
+
+// A haul must exist and belong to this crew member (ids are sequential ints).
+// A miss reads as NOT_FOUND so ids cannot be probed.
+async function assertHaulOwner(d: ShipDb, haulId: number, userId: number) {
+  const [haul] = await d.select().from(galleyHauls).where(eq(galleyHauls.id, haulId)).limit(1);
+  if (!haul || haul.userId !== userId) throw new TRPCError({ code: "NOT_FOUND", message: "Haul not found." });
+  return haul;
 }
 
 export const shipRouter = router({
@@ -1504,6 +1545,285 @@ export const shipRouter = router({
     }),
   }),
 
+  // ── The Galley (food experience) ────────────────────────────────────────────
+  // A crew logs what they gathered and remixes it into dishes that follow the
+  // ship's diet. Two engines: the deterministic remix (galley-remix.ts, works with
+  // no LLM) and the Ship's Cook AI (ship-cook.ts). Hauls and remixes belong to the
+  // crew's account and link to the active voyage when there is one. All user text
+  // is untrusted (AI-AUTOMATION-RISKS): sanitized on write, treated as data by the
+  // Cook. Photos handed to the Cook are filtered to our own asset URLs.
+  galley: router({
+    // The caller's hauls, newest first, each with its items.
+    myHauls: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      const hauls = await d.select().from(galleyHauls).where(eq(galleyHauls.userId, ctx.user.id)).orderBy(desc(galleyHauls.createdAt)).limit(100);
+      if (!hauls.length) return [];
+      const items = await d.select().from(galleyHaulItems).where(inArray(galleyHaulItems.haulId, hauls.map((h) => h.id)));
+      const byHaul = new Map<number, typeof items>();
+      for (const it of items) {
+        const arr = byHaul.get(it.haulId) ?? [];
+        arr.push(it);
+        byHaul.set(it.haulId, arr);
+      }
+      return hauls.map((h) => ({ ...h, items: byHaul.get(h.id) ?? [] }));
+    }),
+
+    createHaul: protectedProcedure
+      .input(z.object({
+        title: z.string().max(200).optional(),
+        visibility: z.enum(["crew", "public"]).default("crew"),
+        bookingId: z.number().int().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_haul");
+        const d = await db();
+        // Link to the active voyage automatically when the crew is sailing.
+        const bookingId = input.bookingId ?? (await activeVoyageBookingId(ctx.user.id));
+        const [res] = await d.insert(galleyHauls).values({
+          userId: ctx.user.id,
+          bookingId,
+          title: input.title ? sanitizeInput(input.title) : null,
+          visibility: input.visibility,
+        });
+        return { id: (res as { insertId?: number }).insertId ?? null, bookingId };
+      }),
+
+    addItem: protectedProcedure
+      .input(z.object({
+        haulId: z.number().int(),
+        name: z.string().min(1).max(200),
+        note: z.string().max(500).optional(),
+        photoUrl: z.string().max(512).optional(),
+        category: z.enum(["produce", "pantry", "protein", "sauce", "other"]).default("produce"),
+        source: z.enum(["market", "ship", "forage", "store"]).default("market"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_item");
+        const d = await db();
+        await assertHaulOwner(d, input.haulId, ctx.user.id);
+        const [photo] = assetPhotoUrls(input.photoUrl ? [input.photoUrl] : [], 1);
+        const [res] = await d.insert(galleyHaulItems).values({
+          haulId: input.haulId,
+          name: sanitizeInput(input.name),
+          note: input.note ? sanitizeInput(input.note) : null,
+          photoUrl: photo ?? null,
+          category: input.category,
+          source: input.source,
+        });
+        return { id: (res as { insertId?: number }).insertId ?? null };
+      }),
+
+    removeItem: protectedProcedure
+      .input(z.object({ itemId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [item] = await d.select().from(galleyHaulItems).where(eq(galleyHaulItems.id, input.itemId)).limit(1);
+        if (!item) return { ok: true };
+        await assertHaulOwner(d, item.haulId, ctx.user.id);
+        await d.delete(galleyHaulItems).where(eq(galleyHaulItems.id, input.itemId));
+        return { ok: true };
+      }),
+
+    setHaulVisibility: protectedProcedure
+      .input(z.object({ haulId: z.number().int(), visibility: z.enum(["crew", "public"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        await assertHaulOwner(d, input.haulId, ctx.user.id);
+        await d.update(galleyHauls).set({ visibility: input.visibility }).where(eq(galleyHauls.id, input.haulId));
+        return { ok: true };
+      }),
+
+    // Deterministic remix: build 1 to 3 dishes from a haul (or a raw item list)
+    // for the chosen track. No LLM. Persists the remix so it can join the log.
+    remix: protectedProcedure
+      .input(z.object({
+        haulId: z.number().int().optional(),
+        items: z.array(z.object({ name: z.string().min(1).max(200), note: z.string().max(500).optional() })).max(60).optional(),
+        track: z.enum(["table", "reset"]).default("table"),
+        save: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_remix");
+        const d = await db();
+        let bookingId: number | null = null;
+        let haulItems: HaulItemInput[] = [];
+        if (input.haulId) {
+          const haul = await assertHaulOwner(d, input.haulId, ctx.user.id);
+          bookingId = haul.bookingId ?? null;
+          const items = await d.select().from(galleyHaulItems).where(eq(galleyHaulItems.haulId, input.haulId));
+          haulItems = items.map((i) => ({ name: i.name, note: i.note }));
+        } else if (input.items?.length) {
+          haulItems = input.items.map((i) => ({ name: i.name, note: i.note ?? null }));
+        } else {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Log a few items first, then remix." });
+        }
+
+        const result = remixHaul(haulItems, input.track as GalleyTrack, 3);
+        let remixId: number | null = null;
+        if (input.save && result.dishes.length) {
+          const [res] = await d.insert(galleyRemixes).values({
+            haulId: input.haulId ?? null,
+            bookingId,
+            userId: ctx.user.id,
+            dishName: result.dishes[0].name.slice(0, 200),
+            engine: "deterministic",
+            cardSlugs: result.dishes.map((x) => x.cardSlug),
+            recipe: result.dishes as unknown as object,
+            visibility: "crew",
+          });
+          remixId = (res as { insertId?: number }).insertId ?? null;
+        }
+        return { ...result, remixId };
+      }),
+
+    // Roll the Tide: one random valid dish from the haul (Galley spec 6g). No save.
+    roll: protectedProcedure
+      .input(z.object({
+        haulId: z.number().int().optional(),
+        items: z.array(z.object({ name: z.string().min(1).max(200), note: z.string().max(500).optional() })).max(60).optional(),
+        track: z.enum(["table", "reset"]).default("table"),
+        seed: z.number().int().min(0).max(1_000_000).default(0),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_remix");
+        const d = await db();
+        let haulItems: HaulItemInput[] = [];
+        if (input.haulId) {
+          await assertHaulOwner(d, input.haulId, ctx.user.id);
+          const items = await d.select().from(galleyHaulItems).where(eq(galleyHaulItems.haulId, input.haulId));
+          haulItems = items.map((i) => ({ name: i.name, note: i.note }));
+        } else if (input.items?.length) {
+          haulItems = input.items.map((i) => ({ name: i.name, note: i.note ?? null }));
+        }
+        return { dish: rollRemix(haulItems, input.track as GalleyTrack, input.seed) };
+      }),
+
+    // The Ship's Cook: AI dish from the haul + photos + a free-text ask. Reuses the
+    // vision pipeline. Persists the conversation, the dish, and the photos.
+    cook: protectedProcedure
+      .input(z.object({
+        haulId: z.number().int().optional(),
+        remixId: z.number().int().optional(),
+        message: z.string().min(1).max(1000),
+        track: z.enum(["table", "reset"]).default("table"),
+        photoUrls: z.array(z.string().max(512)).max(4).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_cook");
+        const d = await db();
+        const message = sanitizeInput(input.message);
+        let bookingId: number | null = null;
+        let haulItems: Array<{ name: string; note?: string | null }> = [];
+        if (input.haulId) {
+          const haul = await assertHaulOwner(d, input.haulId, ctx.user.id);
+          bookingId = haul.bookingId ?? null;
+          const items = await d.select().from(galleyHaulItems).where(eq(galleyHaulItems.haulId, input.haulId));
+          haulItems = items.map((i) => ({ name: i.name, note: i.note }));
+        }
+        const safePhotos = assetPhotoUrls(input.photoUrls, 4);
+
+        // Continue an existing Cook thread (must belong to this crew member).
+        let existing: typeof galleyRemixes.$inferSelect | undefined;
+        let history: Array<{ role: "user" | "assistant"; content: string }> = [];
+        if (input.remixId) {
+          const [row] = await d.select().from(galleyRemixes).where(eq(galleyRemixes.id, input.remixId)).limit(1);
+          if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND", message: "Remix not found." });
+          existing = row;
+          history = (Array.isArray(row.conversation) ? (row.conversation as Array<{ role?: unknown; content?: unknown }>) : [])
+            .filter((m): m is { role: "user" | "assistant"; content: string } =>
+              Boolean(m) && (m.role === "user" || m.role === "assistant") && typeof m.content === "string");
+        }
+
+        const { reply, dish } = await askShipCook({
+          message,
+          track: input.track as GalleyTrack,
+          haulItems,
+          history,
+          photoUrls: safePhotos,
+        });
+
+        const turn = [
+          { role: "user" as const, content: message },
+          { role: "assistant" as const, content: reply },
+        ];
+        let remixId = input.remixId ?? null;
+        if (existing) {
+          const convo = Array.isArray(existing.conversation) ? (existing.conversation as unknown[]) : [];
+          await d.update(galleyRemixes).set({
+            conversation: [...convo, ...turn].slice(-40),
+            ...(dish ? { dishName: dish.dishName.slice(0, 200), recipe: dish as unknown as object } : {}),
+            ...(safePhotos.length ? { photoUrls: safePhotos } : {}),
+          }).where(eq(galleyRemixes.id, existing.id));
+        } else {
+          const [res] = await d.insert(galleyRemixes).values({
+            haulId: input.haulId ?? null,
+            bookingId,
+            userId: ctx.user.id,
+            dishName: (dish?.dishName ?? "The Cook's dish").slice(0, 200),
+            engine: "cook",
+            recipe: dish ? (dish as unknown as object) : null,
+            conversation: turn,
+            photoUrls: safePhotos.length ? safePhotos : null,
+            visibility: "crew",
+          });
+          remixId = (res as { insertId?: number }).insertId ?? null;
+        }
+        return { reply, dish, remixId };
+      }),
+
+    // My saved remixes, newest first (the voyage log's Galley strip reads these).
+    myRemixes: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      return d.select().from(galleyRemixes).where(eq(galleyRemixes.userId, ctx.user.id)).orderBy(desc(galleyRemixes.createdAt)).limit(100);
+    }),
+
+    // Submit a favorite remix to the shared cookbook. Never auto-publishes: this
+    // sets the crew's visibility choice and queues it for admin approval (mirrors
+    // the resolved_case -> knowledge chunk pattern). It goes live only on approval.
+    publishToCookbook: protectedProcedure
+      .input(z.object({ remixId: z.number().int(), visibility: z.enum(["crew", "public"]).default("public") }))
+      .mutation(async ({ ctx, input }) => {
+        await checkRateLimit(ctx, "ship_galley_publish");
+        const d = await db();
+        const [row] = await d.select().from(galleyRemixes).where(eq(galleyRemixes.id, input.remixId)).limit(1);
+        if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND", message: "Remix not found." });
+        await d.update(galleyRemixes).set({
+          visibility: input.visibility,
+          cookbookStatus: "pending",
+          publishedToCookbook: false,
+          submittedToCookbookAt: new Date(),
+        }).where(eq(galleyRemixes.id, input.remixId));
+        await notifyOwner({ title: "Galley: a crew submitted a remix", content: `"${row.dishName}" submitted to the cookbook for review.` }).catch(() => {});
+        return { ok: true, pendingReview: true };
+      }),
+
+    // The community idea board: approved, public remixes ("From the Crews").
+    publicFeed: publicProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(100).optional() }).optional())
+      .query(async ({ input }) => {
+        const d = await db();
+        const rows = await d
+          .select({
+            id: galleyRemixes.id, dishName: galleyRemixes.dishName, engine: galleyRemixes.engine,
+            recipe: galleyRemixes.recipe, photoUrls: galleyRemixes.photoUrls, createdAt: galleyRemixes.createdAt,
+            userId: galleyRemixes.userId,
+          })
+          .from(galleyRemixes)
+          .where(and(eq(galleyRemixes.publishedToCookbook, true), eq(galleyRemixes.visibility, "public")))
+          .orderBy(desc(galleyRemixes.createdAt))
+          .limit(input?.limit ?? 60);
+        if (!rows.length) return [];
+        const ids = Array.from(new Set(rows.map((r) => r.userId)));
+        const crews = await d.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, ids));
+        const byId = new Map(crews.map((c) => [c.id, c]));
+        return rows.map((r) => ({
+          id: r.id, dishName: r.dishName, engine: r.engine, recipe: r.recipe, photoUrls: r.photoUrls, createdAt: r.createdAt,
+          crewName: byId.get(r.userId)?.name ?? "A crew",
+          crewHandle: byId.get(r.userId)?.handle ?? null,
+        }));
+      }),
+  }),
+
   // ── Admin ─────────────────────────────────────────────────────────────────
   admin: router({
     listBookings: adminProcedure.query(async () => {
@@ -2035,5 +2355,34 @@ export const shipRouter = router({
       }
       return { total: rows.length, confirmed, byInterest };
     }),
+
+    // ── Galley cookbook moderation ──────────────────────────────────────────────
+    // Crew submissions to the shared cookbook queue here. Approving flips the
+    // remix live into the public "From the Crews" section; nothing auto-publishes.
+    listCookbookSubmissions: adminProcedure.query(async () => {
+      const d = await db();
+      const rows = await d
+        .select()
+        .from(galleyRemixes)
+        .where(notInArray(galleyRemixes.cookbookStatus, ["none"]))
+        .orderBy(desc(galleyRemixes.submittedToCookbookAt))
+        .limit(300);
+      if (!rows.length) return [];
+      const ids = Array.from(new Set(rows.map((r) => r.userId)));
+      const crews = await d.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, ids));
+      const byId = new Map(crews.map((c) => [c.id, c]));
+      return rows.map((r) => ({ ...r, crewName: byId.get(r.userId)?.name ?? "A crew", crewHandle: byId.get(r.userId)?.handle ?? null }));
+    }),
+    reviewCookbookSubmission: adminProcedure
+      .input(z.object({ id: z.number().int(), status: z.enum(["approved", "rejected"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        await d.update(galleyRemixes).set({
+          cookbookStatus: input.status,
+          publishedToCookbook: input.status === "approved",
+          approvedByUserId: input.status === "approved" ? ctx.user.id : null,
+        }).where(eq(galleyRemixes.id, input.id));
+        return { ok: true };
+      }),
   }),
 });

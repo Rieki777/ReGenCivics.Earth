@@ -4677,6 +4677,73 @@ export const shipGearChecks = mysqlTable("ship_gear_checks", {
 ]));
 export type ShipGearCheck = typeof shipGearChecks.$inferSelect;
 
+// ── The Galley (food experience) ──────────────────────────────────────────────
+// A crew logs what they gathered (market haul + what is aboard), then remixes it
+// into dishes that follow the ship's diet. Two engines: the deterministic remix
+// (server/lib/galley-remix.ts) and the Ship's Cook AI. Hauls and remixes save to
+// the crew's account and, when a voyage is active, link to that booking. Photos
+// mirror the ship_maintenance_cases pattern (json photoUrls, json conversation).
+export const galleyHauls = mysqlTable("galley_hauls", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId"),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 200 }),
+  visibility: mysqlEnum("visibility", ["crew", "public"]).notNull().default("crew"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("galley_hauls_booking_idx").on(table.bookingId),
+  index("galley_hauls_user_idx").on(table.userId),
+  index("galley_hauls_visibility_idx").on(table.visibility),
+]));
+export type GalleyHaul = typeof galleyHauls.$inferSelect;
+export type InsertGalleyHaul = typeof galleyHauls.$inferInsert;
+
+export const galleyHaulItems = mysqlTable("galley_haul_items", {
+  id: int("id").autoincrement().primaryKey(),
+  haulId: int("haulId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  note: varchar("note", { length: 500 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  category: mysqlEnum("category", ["produce", "pantry", "protein", "sauce", "other"]).notNull().default("produce"),
+  source: mysqlEnum("source", ["market", "ship", "forage", "store"]).notNull().default("market"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("galley_haul_items_haul_idx").on(table.haulId),
+]));
+export type GalleyHaulItem = typeof galleyHaulItems.$inferSelect;
+export type InsertGalleyHaulItem = typeof galleyHaulItems.$inferInsert;
+
+export const galleyRemixes = mysqlTable("galley_remixes", {
+  id: int("id").autoincrement().primaryKey(),
+  haulId: int("haulId"),
+  bookingId: int("bookingId"),
+  userId: int("userId").notNull(),
+  dishName: varchar("dishName", { length: 200 }).notNull(),
+  engine: mysqlEnum("engine", ["deterministic", "cook"]).notNull().default("deterministic"),
+  cardSlugs: json("cardSlugs"),
+  /** The composed dish: { base, fillings, toppings, sauce, method, why }. */
+  recipe: json("recipe"),
+  /** The Cook thread, when engine = cook. */
+  conversation: json("conversation"),
+  photoUrls: json("photoUrls"),
+  visibility: mysqlEnum("visibility", ["crew", "public"]).notNull().default("crew"),
+  /** Admin-approved into the public "From the Crews" cookbook. */
+  publishedToCookbook: boolean("publishedToCookbook").notNull().default(false),
+  /** Moderation state for a crew submission to the shared cookbook. */
+  cookbookStatus: mysqlEnum("cookbookStatus", ["none", "pending", "approved", "rejected"]).notNull().default("none"),
+  submittedToCookbookAt: timestamp("submittedToCookbookAt"),
+  approvedByUserId: int("approvedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("galley_remixes_haul_idx").on(table.haulId),
+  index("galley_remixes_user_idx").on(table.userId),
+  index("galley_remixes_published_idx").on(table.publishedToCookbook),
+  index("galley_remixes_visibility_idx").on(table.visibility),
+]));
+export type GalleyRemix = typeof galleyRemixes.$inferSelect;
+export type InsertGalleyRemix = typeof galleyRemixes.$inferInsert;
+
 // ── Crew list (V5 Section 4) ──────────────────────────────────────────────────
 // Email capture on non-open week cards. Double-opt-in, one-click unsubscribe.
 export const shipCrewListSignups = mysqlTable("ship_crew_list_signups", {
