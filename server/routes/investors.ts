@@ -1,5 +1,5 @@
 // server/routes/investors.ts
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
@@ -253,20 +253,14 @@ export const investorInquiriesRouter = router({
     }),
 
   // Admin: Get all investor inquiries
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  list: adminProcedure.query(async () => {
     return db.getAllInvestorInquiries();
   }),
 
   // Admin: Get investor inquiry by ID
-  getById: protectedProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       const inquiry = await db.getInvestorInquiryById(input.id);
       if (!inquiry) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Inquiry not found" });
@@ -275,15 +269,12 @@ export const investorInquiriesRouter = router({
     }),
 
   // Admin: Update investor inquiry status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["new", "contacted", "in_discussion", "committed", "declined", "archived"]),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateInvestorInquiry(input.id, { status: input.status });
       return { success: true };
     }),
@@ -436,30 +427,21 @@ export const generalInquiriesRouter = router({
     }),
 
   // Admin: Get all general inquiries
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  list: adminProcedure.query(async () => {
     return db.getAllGeneralInquiries();
   }),
 
   // Admin: Get general inquiries by path
-  listByPath: protectedProcedure
+  listByPath: adminProcedure
     .input(z.object({ pathType: z.string() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       return db.getGeneralInquiriesByPath(input.pathType);
     }),
 
   // Admin: Get general inquiry by ID
-  getById: protectedProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       const inquiry = await db.getGeneralInquiryById(input.id);
       if (!inquiry) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Inquiry not found" });
@@ -468,15 +450,12 @@ export const generalInquiriesRouter = router({
     }),
 
   // Admin: Update general inquiry status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["new", "contacted", "in_progress", "completed", "archived"]),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateGeneralInquiry(input.id, { status: input.status });
       return { success: true };
     }),
@@ -557,41 +536,29 @@ export const loiRouter = router({
     }),
 
   // Get all LOIs (admin only)
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  list: adminProcedure.query(async () => {
     return db.getAllLettersOfIntent();
   }),
 
   // Get LOI stats (admin only)
-  stats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  stats: adminProcedure.query(async () => {
     return db.getLetterOfIntentStats();
   }),
 
   // Get LOI by ID (admin only)
-  getById: protectedProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       return db.getLetterOfIntentById(input.id);
     }),
 
   // Update LOI status (admin only)
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["pending", "confirmed", "withdrawn", "converted"]),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateLetterOfIntentStatus(input.id, input.status);
       return { success: true };
     }),
@@ -599,15 +566,12 @@ export const loiRouter = router({
 
 export const reviewerEmailsRouter = router({
   // Admin: Get all reviewer emails
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  list: adminProcedure.query(async () => {
     return db.getAllReviewerEmails();
   }),
 
   // Admin: Add a new reviewer email
-  create: protectedProcedure
+  create: adminProcedure
     .input(z.object({
       email: z.string().email(),
       name: z.string().optional(),
@@ -616,10 +580,7 @@ export const reviewerEmailsRouter = router({
       notifyInquiries: z.boolean().default(true),
       inquiryTypes: z.array(z.string()).optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const reviewerId = await db.createReviewerEmail({
         email: input.email,
         name: input.name || null,
@@ -633,7 +594,7 @@ export const reviewerEmailsRouter = router({
     }),
 
   // Admin: Update a reviewer email
-  update: protectedProcedure
+  update: adminProcedure
     .input(z.object({
       id: z.number(),
       data: z.object({
@@ -646,10 +607,7 @@ export const reviewerEmailsRouter = router({
         isActive: z.boolean().optional(),
       }),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const updateData: Record<string, unknown> = {};
       if (input.data.email !== undefined) updateData.email = input.data.email;
       if (input.data.name !== undefined) updateData.name = input.data.name;
@@ -664,26 +622,22 @@ export const reviewerEmailsRouter = router({
     }),
 
   // Admin: Delete a reviewer email
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.deleteReviewerEmail(input.id);
       return { success: true };
     }),
 });
 
 export const contactNotesRouter = router({
-  list: protectedProcedure
+  list: adminProcedure
     .input(z.object({ contactType: z.string(), contactId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .query(async ({ input }) => {
       return await db.getContactNotes(input.contactType, input.contactId);
     }),
 
-  create: protectedProcedure
+  create: adminProcedure
     .input(z.object({
       contactType: z.string(),
       contactId: z.number(),
@@ -691,7 +645,6 @@ export const contactNotesRouter = router({
       authorName: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return await db.createContactNote({
         contactType: input.contactType,
         contactId: input.contactId,
@@ -700,30 +653,27 @@ export const contactNotesRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       await db.deleteContactNote(input.id);
     }),
 });
 
 export const contactTagsRouter = router({
-  list: protectedProcedure
+  list: adminProcedure
     .input(z.object({ contactType: z.string(), contactId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .query(async ({ input }) => {
       return await db.getContactTags(input.contactType, input.contactId);
     }),
 
-  add: protectedProcedure
+  add: adminProcedure
     .input(z.object({
       contactType: z.string(),
       contactId: z.number(),
       tag: z.string().min(1).max(100),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       return await db.addContactTag({
         contactType: input.contactType,
         contactId: input.contactId,
@@ -731,10 +681,9 @@ export const contactTagsRouter = router({
       });
     }),
 
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       await db.removeContactTag(input.id);
     }),
 });

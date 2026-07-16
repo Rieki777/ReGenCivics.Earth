@@ -346,12 +346,9 @@ export const playerProfilesRouter = router({
   }),
 
   // Admin: Verify a player profile
-  verify: protectedProcedure
+  verify: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updatePlayerProfile(input.id, { isVerified: 1 });
       return { success: true };
     }),
@@ -868,15 +865,12 @@ export const playerProfilesRouter = router({
     }),
 
   // Admin: Award badge
-  awardBadge: protectedProcedure
+  awardBadge: adminProcedure
     .input(z.object({
       id: z.number(),
       badgeId: z.string(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const profile = await db.getPlayerProfileById(input.id);
       if (!profile) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });

@@ -592,10 +592,7 @@ export const crowdPoolingProjectsRouter = router({
   }),
 
   // Get all projects including inactive (admin only)
-  listAll: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  listAll: adminProcedure.query(async () => {
     return db.getAllCrowdPoolingProjects();
   }),
 
@@ -607,7 +604,7 @@ export const crowdPoolingProjectsRouter = router({
     }),
 
   // Create new project (admin only)
-  create: protectedProcedure
+  create: adminProcedure
     .input(z.object({
       projectName: z.string(),
       projectDescription: z.string(),
@@ -621,10 +618,7 @@ export const crowdPoolingProjectsRouter = router({
       projectUrl: z.string().optional(),
       applicationId: z.number().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const projectId = await db.createCrowdPoolingProject({
         ...input,
         isVisible: 1,
@@ -633,7 +627,7 @@ export const crowdPoolingProjectsRouter = router({
     }),
 
   // Update project (admin only)
-  update: protectedProcedure
+  update: adminProcedure
     .input(z.object({
       id: z.number(),
       projectName: z.string().optional(),
@@ -648,22 +642,16 @@ export const crowdPoolingProjectsRouter = router({
       projectUrl: z.string().optional(),
       isVisible: z.number().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const { id, ...data } = input;
       await db.updateCrowdPoolingProject(id, data);
       return { success: true };
     }),
 
   // Delete project (admin only - soft delete)
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.deleteCrowdPoolingProject(input.id);
       return { success: true };
     }),
@@ -723,26 +711,20 @@ export const crowdPoolingProposalsRouter = router({
     }),
 
   // Get all proposals for a project (admin only)
-  getByProject: protectedProcedure
+  getByProject: adminProcedure
     .input(z.object({ projectId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       return db.getProposalsByProject(input.projectId);
     }),
 
   // Update proposal status (admin only)
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["pending", "accepted", "rejected", "withdrawn"]),
       reviewNotes: z.string().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateProposalStatus(input.id, input.status, input.reviewNotes);
       return { success: true };
     }),

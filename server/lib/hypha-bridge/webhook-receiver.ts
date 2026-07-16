@@ -18,7 +18,7 @@ import {
 } from "../../db";
 import { hyphaBridges, users } from "../../../drizzle/schema";
 import { stripTitleMarker } from "./prefill";
-import { checkCitizenshipTiers } from "../../routes/batchJobs";
+import { checkCitizenshipTiers } from "../citizenship";
 import type { QuestBridgeMetadata } from "./types";
 import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
 import { logger } from "../../_core/logger";

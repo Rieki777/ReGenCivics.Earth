@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { checkCitizenshipTiers } from "./routes/batchJobs";
+import { checkCitizenshipTiers } from "./lib/citizenship";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 

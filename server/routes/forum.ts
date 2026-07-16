@@ -1162,33 +1162,24 @@ export const moderationRouter = router({
     }),
 
   // List moderators (admin only)
-  moderators: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== 'admin') {
-      throw new TRPCError({ code: 'FORBIDDEN' });
-    }
+  moderators: adminProcedure.query(async () => {
     const mods = await db.listForumModerators();
     const usersMap = await db.getUsersByIds(mods.map(m => m.userId));
     return mods.map((m) => ({ ...m, userName: usersMap[m.userId]?.name || 'Unknown', userEmail: usersMap[m.userId]?.email || '' }));
   }),
 
   // Add moderator (admin only)
-  addModerator: protectedProcedure
+  addModerator: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN' });
-      }
       await db.addForumModerator(input.userId, ctx.user.id);
       return { success: true };
     }),
 
   // Remove moderator (admin only)
-  removeModerator: protectedProcedure
+  removeModerator: adminProcedure
     .input(z.object({ userId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN' });
-      }
+    .mutation(async ({ input }) => {
       await db.removeForumModerator(input.userId);
       return { success: true };
     }),

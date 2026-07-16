@@ -910,7 +910,7 @@ async function startServer() {
     try {
       const { getDb } = await import("../db");
       const { sql: dbSql } = await import("drizzle-orm");
-      const { checkCitizenshipTiers } = await import("../routes/batchJobs");
+      const { checkCitizenshipTiers } = await import("../lib/citizenship");
       const database = await getDb();
       if (!database) return res.json({ skipped: true, reason: "no db" });
 

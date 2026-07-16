@@ -34,7 +34,8 @@ export function registerSseRoutes(app: Express) {
   app.get('/api/sse/_metrics', async (req: Request, res: Response) => {
     try {
       const user = await sdk.authenticateRequest(req);
-      if (user.role !== 'admin') {
+      // Same rule as adminProcedure: superadmin implies admin.
+      if (user.role !== 'admin' && user.role !== 'superadmin') {
         return res.status(403).json({ error: 'admin only' });
       }
     } catch {

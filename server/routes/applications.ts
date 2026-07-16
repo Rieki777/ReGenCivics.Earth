@@ -261,15 +261,12 @@ export const applicationsRouter = router({
     }),
 
   // Admin: Update application status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested"]),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
       await db.updateApplication(input.id, { status: input.status });
 
       // Inline tier detection on approval. Land Project Co-Creator
@@ -585,7 +582,7 @@ export const applicantsForCampaignRouter = router({
 
 export const reviewsRouter = router({
   // Admin: Create a review
-  create: protectedProcedure
+  create: adminProcedure
     .input(z.object({
       applicationId: z.number(),
       decision: z.enum(["approve", "reject", "request_changes", "pending"]),
@@ -597,9 +594,6 @@ export const reviewsRouter = router({
       teamScore: z.number().min(1).max(5).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
       const reviewId = await db.createReview({
         ...input,
         reviewerId: ctx.user.id,
