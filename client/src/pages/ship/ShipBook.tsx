@@ -242,6 +242,7 @@ export default function ShipBook() {
                     <span className="font-semibold">{v.name}</span>
                   </div>
                   <p className="text-sm text-foreground/80">{v.tagline}</p>
+                  <p className="text-xs font-semibold text-[#2f5d3a] dark:text-[#7dd87d] mt-1">Sails {v.routeName}</p>
                   <p className="text-xs text-foreground/70 mt-1.5 flex-1">{v.description}</p>
                   <div className="mt-3 pt-3 border-t text-sm">
                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d] mr-2">
@@ -365,7 +366,7 @@ export default function ShipBook() {
                 <div>
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <h3 className="font-semibold text-lg">Your rough chart</h3>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d]">{voyagePkg.name}</span>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d]">{voyagePkg.name} · {voyagePkg.routeName}</span>
                   </div>
                   <p className="text-sm text-foreground/80 italic mt-2">{roughChart.summary}</p>
                 </div>

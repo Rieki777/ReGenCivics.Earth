@@ -82,46 +82,78 @@ describe("suggested voyages + the rough chart", () => {
       bioregion: i < 2 ? "Rogue & Southern Cascadia" : "Willamette & the Columbia Gorge",
     }));
 
-  it("defines the four packages within the week cap", () => {
+  it("defines the four packages, each with a full route blueprint", () => {
     const byId = Object.fromEntries(SUGGESTED_VOYAGES.map((v) => [v.id, v.weeks]));
     expect(byId).toEqual({ standard: 1, half_honeymoon: 1, honeymoon: 2, lunar_cycle: 4 });
     for (const v of SUGGESTED_VOYAGES) {
       expect(v.weeks).toBeGreaterThanOrEqual(1);
       expect(v.weeks).toBeLessThanOrEqual(MAX_VOYAGE_WEEKS);
-      expect(v.weekThemes.length).toBeGreaterThanOrEqual(1);
+      expect(v.routeName.length).toBeGreaterThan(0);
+      // One 7-day blueprint per voyage week, no short weeks.
+      expect(v.routeWeeks).toHaveLength(v.weeks);
+      for (const week of v.routeWeeks) expect(week).toHaveLength(7);
     }
+    expect(suggestedVoyageById("standard")?.routeName).toBe("The Three Chakras");
     expect(suggestedVoyageById("lunar_cycle")?.name).toBe("The Full Lunar Cycle");
     expect(suggestedVoyageById("nope")).toBeNull();
   });
 
-  it("charts one entry per day with boarding, turnovers, and the return", () => {
-    const lunar = suggestedVoyageById("lunar_cycle")!;
-    const chart = buildRoughChart(lunar, weeksOf(4));
-    expect(chart.days).toHaveLength(28);
-    expect(chart.days[0].title).toContain("New moon");
-    expect(chart.days[0].notes).toContain("Board Monday at 3pm");
-    expect(chart.days[0].date).toBe("2026-07-27");
-    // Non-final Sundays are turnover days; the last day sails home.
-    expect(chart.days[6].title).toBe("Turnover rest");
-    expect(chart.days[13].title).toBe("Turnover rest");
-    expect(chart.days[27].title).toBe("Return");
-    expect(chart.days[27].notes).toContain("Sunday at 11am");
-    // Week-two day one carries the waxing theme and the fresh-week note.
-    expect(chart.days[7].title).toContain("Waxing moon");
-    expect(chart.summary).toContain("Rogue & Southern Cascadia");
-    expect(chart.summary).toContain("Willamette");
+  it("every route opens at the Sanctuary and hits the Tuesday market", () => {
+    for (const v of SUGGESTED_VOYAGES) {
+      const chart = buildRoughChart(v, weeksOf(v.weeks));
+      expect(chart.days[0].title).toContain("Sanctuary");
+      expect(chart.days[0].notes.toLowerCase()).toContain("orientation");
+      expect(chart.days[1].notes.toLowerCase()).toContain("market");
+    }
   });
 
-  it("keeps a single week simple: no turnover day, arc titles intact", () => {
+  it("charts the Three Chakras arc: heart, root, crown, waters", () => {
     const std = suggestedVoyageById("standard")!;
     const chart = buildRoughChart(std, weeksOf(1));
     expect(chart.days).toHaveLength(7);
-    expect(chart.days[0].title).toBe("Board and settle");
+    expect(chart.days[1].notes).toContain("Mount Ashland");
+    expect(chart.days[2].notes).toContain("Mount Shasta");
+    expect(chart.days[4].title).toBe("The crown");
+    expect(chart.days[4].notes).toContain("Lightning Spring");
+    expect(chart.days[5].notes).toContain("paddleboard");
     expect(chart.days[6].title).toBe("Return");
     expect(chart.days.some((d) => d.title === "Turnover rest")).toBe(false);
+    expect(chart.summary).toContain("The Three Chakras");
   });
 
-  it("seeds the First Mate with the voyage length", () => {
+  it("charts multi-week routes with turnovers between weeks and one return", () => {
+    const lunar = suggestedVoyageById("lunar_cycle")!;
+    const chart = buildRoughChart(lunar, weeksOf(4));
+    expect(chart.days).toHaveLength(28);
+    expect(chart.days[0].date).toBe("2026-07-27");
+    expect(chart.days[6].title).toBe("Turnover rest");
+    expect(chart.days[13].title).toBe("Turnover rest");
+    expect(chart.days[20].title).toBe("Turnover rest");
+    expect(chart.days[7].title).toContain("Waxing moon");
+    expect(chart.days[14].title).toContain("Full moon");
+    expect(chart.days[21].title).toContain("Waning moon");
+    expect(chart.days[27].title).toBe("Return");
+    expect(chart.days[27].notes).toContain("Sunday 11am");
+    expect(chart.summary).toContain("Rogue & Southern Cascadia");
+    expect(chart.summary).toContain("Willamette");
+
+    const honeymoon = suggestedVoyageById("honeymoon")!;
+    const hm = buildRoughChart(honeymoon, weeksOf(2));
+    expect(hm.days).toHaveLength(14);
+    expect(hm.days[6].title).toBe("Turnover rest");
+    expect(hm.days[8].notes).toContain("North Umpqua");
+    expect(hm.days[13].title).toBe("Return");
+  });
+
+  it("charts the Springs for Two through the baths and hot springs", () => {
+    const half = suggestedVoyageById("half_honeymoon")!;
+    const chart = buildRoughChart(half, weeksOf(1));
+    expect(chart.days[1].notes).toContain("thermal baths");
+    expect(chart.days[2].notes).toContain("hot springs");
+    expect(chart.days[4].notes).toContain("paddleboard");
+  });
+
+  it("seeds the First Mate with the voyage length and the route doctrine", () => {
     const honeymoon = suggestedVoyageById("honeymoon")!;
     const seeds = firstMateSeedAnswers(honeymoon, {
       startDate: "2026-07-27",
@@ -131,10 +163,14 @@ describe("suggested voyages + the rough chart", () => {
     expect(seeds.voyage_nights).toBe("14");
     expect(voyageNightsFromAnswers(seeds)).toBe(14);
     expect(seeds.group).toContain("couple");
+    expect(seeds.route).toContain("Sanctuary");
+    expect(seeds.route).toContain("farmers market");
   });
 
   it("obeys the writing rules: no em-dashes in any guest-facing copy", () => {
-    const copy = JSON.stringify(SUGGESTED_VOYAGES) + JSON.stringify(buildRoughChart(suggestedVoyageById("lunar_cycle")!, weeksOf(4)));
+    const copy =
+      JSON.stringify(SUGGESTED_VOYAGES) +
+      SUGGESTED_VOYAGES.map((v) => JSON.stringify(buildRoughChart(v, weeksOf(v.weeks)))).join("");
     expect(copy.includes("—")).toBe(false);
   });
 });
