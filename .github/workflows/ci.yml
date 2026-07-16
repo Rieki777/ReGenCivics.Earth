@@ -48,7 +48,10 @@ jobs:
           # No DATABASE_URL here on purpose: DB-backed suites key their
           # skipIfNoDb guard on it. A fake URL makes them run against a dead
           # socket and fail with connection errors (this kept main's CI red
-          # for weeks). They run for real in the integration job below.
+          # for weeks). The DB-backed suites run against the real dev DB in
+          # the local ship gate (`pnpm test:all`); wiring them into GitHub CI
+          # needs a fresh-schema build decision (see the note on the disabled
+          # integration job below).
           JWT_SECRET: ci-test-secret
 
       - name: Build
@@ -66,57 +69,26 @@ jobs:
           path: dist/public
           retention-days: 1
 
-  # ── Integration tests against a real MySQL (audit Phase 1, finding B1) ──
-  # The 13 DB-backed suites (evolution, ratification, forum, applications,
-  # contributions, ...) were previously excluded from `pnpm test` and ran
-  # nowhere. They now gate every push: fresh MySQL service container, all
-  # migrations applied by the runner, then pnpm test:integration.
-  integration:
-    name: Integration tests (real DB)
-    runs-on: ubuntu-latest
-    needs: ci
-    timeout-minutes: 25
-
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: regen_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Apply all migrations to the fresh DB
-        run: npx tsx scripts/run-migration.ts --all
-        env:
-          DATABASE_URL: mysql://root:root@127.0.0.1:3306/regen_test
-
-      - name: All tests against the real DB
-        # test:all (not just test:integration): suites outside the curated 13
-        # that guard on skipIfNoDb (church-donations, gratitude cycles, ...)
-        # also get a real database here, so nothing DB-backed goes untested.
-        run: pnpm test:all
-        env:
-          JWT_SECRET: ci-test-secret
-          DATABASE_URL: mysql://root:root@127.0.0.1:3306/regen_test
+  # ── Integration tests against a real MySQL — PENDING a schema-build decision ──
+  # The 13 DB-backed suites (evolution, ratification, forum, applications, ...)
+  # should gate every push against a real database. The blocker: a fresh MySQL
+  # can't be built from the numbered migrations alone — scripts/run-migration.ts
+  # only applies 0048+, and the base schema (tables created up to 0047) lives
+  # only in the drizzle-kit journal that drizzle/README.md freezes and forbids
+  # `drizzle-kit push` from materializing. So a clean CI DB is missing the early
+  # tables (game_variable_history, citizenship_tier_history, ...) and every
+  # DB-backed suite errors with ER_NO_SUCH_TABLE.
+  #
+  # Until Rye picks a fresh-schema source (options in FOUNDATION_AUDIT_PLAN),
+  # these suites run against the real dev DB in the LOCAL ship gate (test:all),
+  # not here. This job is intentionally left disabled rather than red: a gate
+  # that always fails is worse than one that is honestly absent.
+  #
+  #   integration:
+  #     services: { mysql: mysql:8 ... }
+  #     steps:
+  #       - <build fresh schema — DECISION NEEDED>
+  #       - run: pnpm test:all   # DATABASE_URL -> the service container
 
   # ── Evolution Engine machine gates (ASSEMBLY_PAGE_SPEC.md section 7.3) ──
   # Runs ONLY for PRs whose head branch is assembly/<proposalId>: the branches
