@@ -26,6 +26,8 @@
     "check:colors": "node scripts/check-hardcoded-colors.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
+    "check:foundations": "node scripts/check-migration-numbers.mjs && node scripts/check-env-example.mjs",
+    "preview": "vite preview",
     "check:palette": "tsx scripts/check-palette.ts",
     "check:palette:warn": "tsx scripts/check-palette.ts --warn-only",
     "lint": "eslint . --max-warnings=1000",

@@ -5,7 +5,7 @@ import type { TrpcContext } from "./_core/context";
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createAuthContext(userId = 1): TrpcContext {
-  const user: AuthenticatedUser = {
+  const user = {
     id: userId,
     openId: `test-user-${userId}`,
     email: `user${userId}@example.com`,
@@ -15,9 +15,10 @@ function createAuthContext(userId = 1): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
-  };
+  } as unknown as AuthenticatedUser;
   return {
     user,
+    authMethod: "legacy",
     req: {
       protocol: "https",
       headers: { "x-csrf-token": "test-token" },
@@ -25,20 +26,21 @@ function createAuthContext(userId = 1): TrpcContext {
     } as unknown as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 
 function createPublicContext(): TrpcContext {
   return {
     user: null,
+    authMethod: null,
     req: {
       protocol: "https",
       headers: {},
     } as unknown as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 
@@ -47,7 +49,7 @@ describe("forum.reactions.toggle", () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.forum.reactions.toggle({ postId: 1, emoji: "👍" })
+      caller.forum.reactions.toggle({ postId: 1, emoji: "❤️" })
     ).rejects.toThrow();
   });
 
@@ -63,7 +65,7 @@ describe("forum.reactions.toggle", () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.forum.reactions.toggle({ emoji: "👍" })
+      caller.forum.reactions.toggle({ emoji: "❤️" })
     ).rejects.toThrow();
   });
 });

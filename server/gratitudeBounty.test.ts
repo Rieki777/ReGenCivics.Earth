@@ -38,9 +38,10 @@ function ctxFor(userId: number): TrpcContext {
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
-    },
+    } as unknown as NonNullable<TrpcContext["user"]>,
+    authMethod: "legacy",
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: { clearCookie: () => {} } as TrpcContext["res"],
+    res: { clearCookie: () => {} } as unknown as TrpcContext["res"],
   };
 }
 

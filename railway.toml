@@ -1,6 +1,10 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm run build"
+# Pin pnpm to the packageManager version and freeze the lockfile so deploy
+# installs are reproducible: what was tested locally is what ships. If this
+# fails on Railway, the lockfile is out of sync; run `pnpm install` locally
+# and commit the lockfile rather than loosening this.
+buildCommand = "npm install -g pnpm@10.4.1 && pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
 startCommand = "node dist/index.js"

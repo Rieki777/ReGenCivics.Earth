@@ -130,7 +130,7 @@ describe("Campaign Image Upload Feature", () => {
     });
 
     it("should not auto-set subsequent images as cover", () => {
-      const existingCount = 3;
+      const existingCount: number = 3;
       const shouldBeCover = existingCount === 0;
       expect(shouldBeCover).toBe(false);
     });

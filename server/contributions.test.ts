@@ -33,7 +33,7 @@ vi.mock('./_core/email', () => ({
 type AuthenticatedUser = NonNullable<TrpcContext['user']>;
 
 function createAuthContext(): TrpcContext {
-  const user: AuthenticatedUser = {
+  const user = {
     id: 999999,
     openId: 'test-open-id-123',
     email: 'test@example.com',
@@ -43,17 +43,18 @@ function createAuthContext(): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
-  };
+  } as unknown as AuthenticatedUser;
 
   return {
     user,
+    authMethod: 'legacy',
     req: {
       protocol: 'https',
       headers: {},
     } as TrpcContext['req'],
     res: {
       clearCookie: () => {},
-    } as TrpcContext['res'],
+    } as unknown as TrpcContext['res'],
   };
 }
 

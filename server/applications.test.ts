@@ -27,14 +27,30 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createTestContext(user: AuthenticatedUser | null): TrpcContext {
   return {
     user,
+    authMethod: user ? "legacy" : null,
     req: {
       protocol: "https",
       headers: {},
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
+}
+
+/** Minimal user fixture; the cast tolerates schema columns tests don't use. */
+function makeTestUser(id: number, role: "user" | "admin" = "user", name = "Test User"): AuthenticatedUser {
+  return {
+    id,
+    openId: String(id),
+    name,
+    email: `${role}-${id}@example.com`,
+    role,
+    loginMethod: "google",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  } as unknown as AuthenticatedUser;
 }
 
 describe("Application System", () => {
@@ -44,33 +60,15 @@ describe("Application System", () => {
 
   describe("Application Creation and Management", () => {
     it.skipIf(skipIfNoDb)("should create a new application as authenticated user", async () => {
-      const user: AuthenticatedUser = {
-        id: testUserId,
-        openId: String(testUserId),
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(user);
+      const ctx = createTestContext(makeTestUser(testUserId));
       const caller = appRouter.createCaller(ctx);
 
+      // applications.create now takes only the seed trio; everything else
+      // arrives via applications.update as the draft grows.
       const result = await caller.applications.create({
         projectName: "Test Regenerative Farm",
         projectType: "early_stage",
         location: "Test Location",
-        vision: "A test vision for regenerative agriculture",
-        landStatus: "owned",
-        teamSize: 5,
-        teamDescription: "A dedicated team of regenerative practitioners",
-        regenerativePractices: "Permaculture, agroforestry, water harvesting",
-        governanceApproach: "Sociocracy",
-        communityEngagement: "Regular community meetings and workshops",
-        timeCommitment: "Full-time commitment from core team",
-        fundingNeeds: "$100,000 for infrastructure",
       });
 
       expect(result).toBeDefined();
@@ -89,32 +87,12 @@ describe("Application System", () => {
           projectName: "Test Project",
           projectType: "early_stage",
           location: "Test",
-          vision: "Test vision",
-          landStatus: "owned",
-          teamSize: 3,
-          teamDescription: "Test team",
-          regenerativePractices: "Test practices",
-          governanceApproach: "Test governance",
-          communityEngagement: "Test engagement",
-          timeCommitment: "Test commitment",
-          fundingNeeds: "Test funding",
         })
       ).rejects.toThrow();
     });
 
     it.skipIf(skipIfNoDb)("should list user's own applications", async () => {
-      const user: AuthenticatedUser = {
-        id: testUserId,
-        openId: String(testUserId),
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(user);
+      const ctx = createTestContext(makeTestUser(testUserId));
       const caller = appRouter.createCaller(ctx);
 
       // Create an application first
@@ -122,15 +100,6 @@ describe("Application System", () => {
         projectName: "My Project",
         projectType: "mature",
         location: "Test",
-        vision: "Test vision",
-        landStatus: "owned",
-        teamSize: 3,
-        teamDescription: "Test team",
-        regenerativePractices: "Test practices",
-        governanceApproach: "Test governance",
-        communityEngagement: "Test engagement",
-        timeCommitment: "Test commitment",
-        fundingNeeds: "Test funding",
       });
 
       const result = await caller.applications.myApplications();
@@ -148,18 +117,7 @@ describe("Application System", () => {
 
   describe("Admin Permissions", () => {
     it.skipIf(skipIfNoDb)("should allow admin to list all applications", async () => {
-      const adminUser: AuthenticatedUser = {
-        id: adminUserId,
-        openId: String(adminUserId),
-        name: "Admin User",
-        email: "admin@example.com",
-        role: "admin",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(adminUser);
+      const ctx = createTestContext(makeTestUser(adminUserId, "admin", "Admin User"));
       const caller = appRouter.createCaller(ctx);
 
       const result = await caller.applications.list();
@@ -169,36 +127,14 @@ describe("Application System", () => {
     });
 
     it("should not allow non-admin to list all applications", async () => {
-      const user: AuthenticatedUser = {
-        id: testUserId,
-        openId: String(testUserId),
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(user);
+      const ctx = createTestContext(makeTestUser(testUserId));
       const caller = appRouter.createCaller(ctx);
 
       await expect(caller.applications.list()).rejects.toThrow();
     });
 
     it("should not allow non-admin to create review", async () => {
-      const user: AuthenticatedUser = {
-        id: testUserId,
-        openId: String(testUserId),
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(user);
+      const ctx = createTestContext(makeTestUser(testUserId));
       const caller = appRouter.createCaller(ctx);
 
       await expect(
@@ -213,18 +149,7 @@ describe("Application System", () => {
 
   describe("Application Workflow", () => {
     it.skipIf(skipIfNoDb)("should create, update, and submit an application", async () => {
-      const user: AuthenticatedUser = {
-        id: 999997,
-        openId: "999997",
-        name: "Workflow Test User",
-        email: "workflow@example.com",
-        role: "user",
-        loginMethod: "google",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastSignedIn: new Date(),
-      };
-      const ctx = createTestContext(user);
+      const ctx = createTestContext(makeTestUser(999997, "user", "Workflow Test User"));
       const caller = appRouter.createCaller(ctx);
 
       // Create application
@@ -232,15 +157,6 @@ describe("Application System", () => {
         projectName: "Workflow Test Project",
         projectType: "early_stage",
         location: "Test Location",
-        vision: "Initial vision",
-        landStatus: "owned",
-        teamSize: 3,
-        teamDescription: "Test team",
-        regenerativePractices: "Test practices",
-        governanceApproach: "Test governance",
-        communityEngagement: "Test engagement",
-        timeCommitment: "Test commitment",
-        fundingNeeds: "Test funding",
       });
 
       expect(created.status).toBe("draft");

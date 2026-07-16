@@ -27,7 +27,8 @@ const createMockContext = async (user: { id: number; role: string } | null = nul
     clearCookie: vi.fn(),
   } as unknown as Response;
   
-  const ctx = await createContext({ req: mockReq, res: mockRes });
+  // info is unused by our createContext; the adapter type requires it.
+  const ctx = await createContext({ req: mockReq, res: mockRes } as unknown as Parameters<typeof createContext>[0]);
   if (user) {
     (ctx as any).user = user;
   }

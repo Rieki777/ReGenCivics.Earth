@@ -77,7 +77,7 @@ describe('Notification Preferences System', () => {
     it.skipIf(skipIfNoDb)('should update notification preferences', async () => {
       await expect(
         db.updateNotificationPreferences({
-          newsletterSignups: false,
+          newsletterSignups: 0,
         })
       ).resolves.not.toThrow();
     });
