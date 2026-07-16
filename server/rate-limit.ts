@@ -26,6 +26,15 @@ const ACTION_LIMITS: Record<string, number> = {
   elder_chat: 40,
   ship_concierge_chat: 40,
   ship_shipwright: 20,
+  // The Galley remixer is high-frequency: a market haul is many items logged in a
+  // row, and remixing, rolling, and asking the Cook are the whole point. The
+  // one-shot default of 7 would block a crew mid-haul. Caps stay tight enough to
+  // stop scripted abuse.
+  ship_galley_item: 60,   // logging a full market haul, one item at a time
+  ship_galley_remix: 60,  // remix + Roll the Tide, tapped repeatedly
+  ship_galley_cook: 30,   // LLM-backed, so a touch tighter
+  ship_galley_haul: 15,
+  ship_galley_publish: 15,
 };
 
 function maxForAction(action: string): number {

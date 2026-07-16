@@ -318,6 +318,7 @@ export function GalleyRemixer() {
       {/* Track choice */}
       <div>
         <GalleyTrackCards value={track} onChange={setTrack} compact />
+        {track === "reset" && <p className="text-xs text-muted-foreground mt-2">{HEALTH_NOTE}</p>}
       </div>
 
       {/* The pantry: add + chips */}

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { BasemapLayer } from "./shipMapLayers";
 import { CASCADIA_MAX_BOUNDS, MAP_MIN_ZOOM, MAP_MAX_ZOOM } from "./shipMapConfig";
 
-const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Datasets", "Position", "Pricing", "Shipwright"] as const;
+const TABS = ["Bookings", "Map", "Coverage", "Flags", "Quest", "Plantings", "Nominations", "Applications", "Datasets", "Position", "Pricing", "Shipwright", "Galley"] as const;
 type Tab = (typeof TABS)[number];
 
 // 50 miles in metres — the v1 proxy for a ~60-minute drive (isochrones later).
@@ -56,6 +56,7 @@ export default function ShipAdmin() {
       {tab === "Position" && <PositionTab err={err} ok={ok} />}
       {tab === "Pricing" && <PricingTab utils={utils} err={err} ok={ok} />}
       {tab === "Shipwright" && <ShipwrightTab utils={utils} err={err} ok={ok} />}
+      {tab === "Galley" && <GalleyTab utils={utils} err={err} ok={ok} />}
     </div>
   );
 }
@@ -468,5 +469,42 @@ function ShipwrightTab({ utils, err, ok }: Common) {
         </div>
       </Section>
     </>
+  );
+}
+
+// Galley cookbook moderation: crew submissions to the shared "From the Crews"
+// section. Approve to publish live; reject to hide. Nothing auto-publishes.
+function GalleyTab({ utils, err, ok }: Common) {
+  const subs = trpc.ship.admin.listCookbookSubmissions.useQuery();
+  const review = trpc.ship.admin.reviewCookbookSubmission.useMutation();
+  const refresh = () => utils.ship.admin.listCookbookSubmissions.invalidate();
+  if (subs.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
+  const rows = subs.data ?? [];
+  return (
+    <Section title={`Cookbook submissions (${rows.length})`}>
+      <p className="text-sm text-muted-foreground mb-2">Crews submit favorite remixes to the shared cookbook. Approve to publish into the public "From the Crews" section; reject to hide.</p>
+      <div className="space-y-2">
+        {rows.map((r: any) => {
+          const recipe = Array.isArray(r.recipe) ? r.recipe[0] : r.recipe;
+          const photos = Array.isArray(r.photoUrls) ? (r.photoUrls as string[]) : [];
+          return (
+            <div key={r.id} className="border rounded p-2 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{r.dishName} <span className="font-normal text-muted-foreground">· {r.engine} · by {r.crewName} · {r.cookbookStatus}</span></span>
+                <span className="flex gap-2">
+                  <Button size="sm" className="bg-[#2f5d3a] hover:bg-[#264a2f]" disabled={r.cookbookStatus === "approved" || review.isPending} onClick={() => review.mutateAsync({ id: r.id, status: "approved" }).then(() => ok("Published to the cookbook")(refresh)).catch(err)}>Approve</Button>
+                  <Button size="sm" variant="outline" disabled={r.cookbookStatus === "rejected" || review.isPending} onClick={() => review.mutateAsync({ id: r.id, status: "rejected" }).then(() => ok("Rejected")(refresh)).catch(err)}>Reject</Button>
+                </span>
+              </div>
+              {recipe?.method && <p className="text-muted-foreground mt-1 line-clamp-2">{recipe.method}</p>}
+              {photos.length > 0 && (
+                <div className="flex gap-1.5 mt-2">{photos.map((u) => <img key={u} src={u} alt="" className="w-12 h-12 rounded object-cover border" loading="lazy" />)}</div>
+              )}
+            </div>
+          );
+        })}
+        {rows.length === 0 && <p className="text-muted-foreground">No submissions yet.</p>}
+      </div>
+    </Section>
   );
 }
