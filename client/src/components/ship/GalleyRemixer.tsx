@@ -1,26 +1,29 @@
 /**
  * What's Aboard? Remix It (Galley spec section 6). The centerpiece of /ship/galley.
  *
- * Logged-in crew log what they gathered (type it or snap a photo), pick a track,
- * and remix it into dishes. Two engines: Remix (deterministic, instant, works with
- * no LLM) and Ask the Ship's Cook (AI, sees the photos). Hauls and remixes save to
- * the crew's account and link to the active voyage. A favorite can be sent to the
- * shared cookbook for review.
+ * Logged-in crew log what they gathered (type it or snap a photo), across named
+ * hauls, pick a track, and remix it into dishes. Two engines: Remix (deterministic,
+ * instant, works with no LLM) and Ask the Ship's Cook (AI, sees the photos). Hauls
+ * and remixes save to the crew's account and link to the active voyage; a favorite
+ * can go to the voyage log or be submitted to the shared cookbook. Logged-out
+ * visitors get a local "try it" remix (GalleyTryItLocal) instead of a wall.
  *
  * Photos upload through files.upload to the asset domain, the same path the
  * Shipwright uses; the server hands only our own asset URLs to the Cook's vision.
  */
 import { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { GalleyTrackCards, HEALTH_NOTE, type TrackId } from "./GalleyTracks";
+import { GalleyTryItLocal } from "./GalleyTryItLocal";
+import { GalleyDishCard, type Dish } from "./GalleyDishCard";
 import {
-  Sparkles, ChefHat, Camera, X, Loader2, Plus, Dice5, Globe, Lock, BookOpen,
+  Sparkles, ChefHat, Camera, X, Loader2, Plus, Dice5, Globe, Lock, Pencil, Check,
 } from "lucide-react";
 
 const ITEM_CATEGORIES = ["produce", "pantry", "protein", "sauce", "other"] as const;
@@ -28,18 +31,6 @@ const ITEM_SOURCES = ["market", "ship", "forage", "store"] as const;
 const MAX_PHOTOS = 4;
 const MAX_PHOTO_MB = 8;
 
-type Dish = {
-  cardSlug?: string;
-  name?: string;
-  dishName?: string;
-  base?: string[];
-  fillings?: string[];
-  toppings?: string[];
-  sauce?: string[];
-  method?: string;
-  why?: string;
-  matchedTokens?: string[];
-};
 type CookTurn = { role: "user" | "assistant"; content: string; photoUrls?: string[] };
 
 function fileToBase64(file: File): Promise<string> {
@@ -51,55 +42,17 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-/** A composed dish, shown the same whether it came from Remix or the Cook. */
-function DishCard({
-  dish,
-  onPublish,
-  publishing,
-  published,
-}: {
-  dish: Dish;
-  onPublish?: () => void;
-  publishing?: boolean;
-  published?: boolean;
-}) {
+function dishToLogContent(dish: Dish): string {
   const name = dish.name ?? dish.dishName ?? "A galley dish";
-  const rows: Array<[string, string[] | undefined]> = [
-    ["Base", dish.base],
-    ["Fill", dish.fillings],
-    ["Top", dish.toppings],
-    ["Sauce", dish.sauce],
-  ];
-  return (
-    <div className="rounded-2xl border bg-card p-4">
-      <h4 className="font-semibold text-lg mb-2 text-[#2f5d3a] dark:text-[#9de89d]">{name}</h4>
-      <div className="space-y-1 mb-3">
-        {rows.map(([label, vals]) =>
-          vals && vals.length ? (
-            <p key={label} className="text-sm">
-              <span className="uppercase tracking-wide text-[11px] font-semibold text-muted-foreground mr-2">{label}</span>
-              {vals.join(", ")}
-            </p>
-          ) : null,
-        )}
-      </div>
-      {dish.method && <p className="text-sm text-foreground/90 mb-2">{dish.method}</p>}
-      {dish.why && <p className="text-sm italic text-[#8a5a2b] dark:text-[#e0b483]">{dish.why}</p>}
-      {onPublish && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-3 min-h-11"
-          disabled={publishing || published}
-          onClick={onPublish}
-        >
-          <BookOpen className="w-4 h-4 mr-1.5" aria-hidden="true" />
-          {published ? "Sent for review" : publishing ? "Sending…" : "Add to the cookbook"}
-        </Button>
-      )}
-    </div>
-  );
+  return [
+    `From the galley: ${name}.`,
+    dish.base?.length ? `Base: ${dish.base.join(", ")}.` : "",
+    dish.fillings?.length ? `Fillings: ${dish.fillings.join(", ")}.` : "",
+    dish.toppings?.length ? `Toppings: ${dish.toppings.join(", ")}.` : "",
+    dish.sauce?.length ? `Sauce: ${dish.sauce.join(", ")}.` : "",
+    dish.method ?? "",
+    dish.why ?? "",
+  ].filter(Boolean).join(" ").slice(0, 5000);
 }
 
 export function GalleyRemixer() {
@@ -107,7 +60,9 @@ export function GalleyRemixer() {
   const utils = trpc.useUtils();
 
   const haulsQuery = trpc.ship.galley.myHauls.useQuery(undefined, { enabled: isAuthenticated, retry: false });
+  const voyage = trpc.ship.myVoyage.useQuery(undefined, { enabled: isAuthenticated, retry: false });
   const createHaul = trpc.ship.galley.createHaul.useMutation();
+  const renameHaul = trpc.ship.galley.renameHaul.useMutation();
   const addItem = trpc.ship.galley.addItem.useMutation();
   const removeItem = trpc.ship.galley.removeItem.useMutation();
   const setVisibility = trpc.ship.galley.setHaulVisibility.useMutation();
@@ -115,6 +70,7 @@ export function GalleyRemixer() {
   const rollMut = trpc.ship.galley.roll.useMutation();
   const cookMut = trpc.ship.galley.cook.useMutation();
   const publishMut = trpc.ship.galley.publishToCookbook.useMutation();
+  const logMut = trpc.ship.log.create.useMutation();
   const upload = trpc.files.upload.useMutation();
 
   const [activeHaulId, setActiveHaulId] = useState<number | null>(null);
@@ -124,11 +80,15 @@ export function GalleyRemixer() {
   const [source, setSource] = useState<(typeof ITEM_SOURCES)[number]>("market");
   const [itemPhoto, setItemPhoto] = useState<string | null>(null);
   const [uploadingItem, setUploadingItem] = useState(false);
+  const [pending, setPending] = useState<string[]>([]); // optimistic item echoes
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
 
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [lastRemixId, setLastRemixId] = useState<number | null>(null);
   const [publishedIds, setPublishedIds] = useState<Set<number>>(new Set());
+  const [loggedNames, setLoggedNames] = useState<Set<string>>(new Set());
 
   const [cookMsg, setCookMsg] = useState("");
   const [cookTurns, setCookTurns] = useState<CookTurn[]>([]);
@@ -147,6 +107,11 @@ export function GalleyRemixer() {
     [hauls, activeHaulId],
   );
   const items = activeHaul?.items ?? [];
+  const activeBooking = voyage.data?.booking ?? null;
+
+  function haulLabel(h: { id: number; title: string | null; createdAt: string | Date }): string {
+    return h.title || `Haul #${h.id}`;
+  }
 
   async function ensureHaul(): Promise<number> {
     if (activeHaul) return activeHaul.id;
@@ -157,12 +122,29 @@ export function GalleyRemixer() {
     return id;
   }
 
+  async function startNewHaul() {
+    setErr(null);
+    try {
+      const res = await createHaul.mutateAsync({ title: "New haul" });
+      await utils.ship.galley.myHauls.invalidate();
+      if (res.id) { setActiveHaulId(res.id); setDishes([]); setSuggestions([]); }
+    } catch {
+      setErr("Couldn't start a new haul. Try again.");
+    }
+  }
+
+  async function saveTitle() {
+    if (!activeHaul) return;
+    const t = titleDraft.trim();
+    setEditingTitle(false);
+    if (!t || t === activeHaul.title) return;
+    await renameHaul.mutateAsync({ haulId: activeHaul.id, title: t });
+    await utils.ship.galley.myHauls.invalidate();
+  }
+
   async function uploadOne(file: File): Promise<string | null> {
     if (!file.type.startsWith("image/")) return null;
-    if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
-      setErr(`Each photo needs to be under ${MAX_PHOTO_MB}MB.`);
-      return null;
-    }
+    if (file.size > MAX_PHOTO_MB * 1024 * 1024) { setErr(`Each photo needs to be under ${MAX_PHOTO_MB}MB.`); return null; }
     const base64 = await fileToBase64(file);
     const res = await upload.mutateAsync({ fileName: file.name, fileData: base64, contentType: file.type });
     return res.url;
@@ -187,15 +169,22 @@ export function GalleyRemixer() {
     e.preventDefault();
     const n = name.trim();
     if (!n) return;
+    // Dedupe against what's already in the haul (and any in flight).
+    const have = [...items.map((i) => i.name.toLowerCase()), ...pending.map((p) => p.toLowerCase())];
+    if (have.includes(n.toLowerCase())) { toast.info(`${n} is already in your haul.`); setName(""); return; }
     setErr(null);
+    setName("");
+    setPending((p) => [...p, n]); // optimistic echo
+    const photo = itemPhoto;
+    setItemPhoto(null);
     try {
       const haulId = await ensureHaul();
-      await addItem.mutateAsync({ haulId, name: n, category, source, ...(itemPhoto ? { photoUrl: itemPhoto } : {}) });
-      setName("");
-      setItemPhoto(null);
+      await addItem.mutateAsync({ haulId, name: n, category, source, ...(photo ? { photoUrl: photo } : {}) });
       await utils.ship.galley.myHauls.invalidate();
     } catch {
       setErr("Couldn't add that item. Try again.");
+    } finally {
+      setPending((p) => p.filter((x) => x !== n));
     }
   }
 
@@ -231,11 +220,7 @@ export function GalleyRemixer() {
     try {
       const seed = Math.floor(Math.random() * 1_000_000);
       const res = await rollMut.mutateAsync({ haulId: activeHaul.id, track, seed });
-      if (res.dish) {
-        setDishes([res.dish as Dish]);
-        setSuggestions([]);
-        setLastRemixId(null);
-      }
+      if (res.dish) { setDishes([res.dish as Dish]); setSuggestions([]); setLastRemixId(null); }
     } catch {
       setErr("The tide didn't turn. Try again.");
     }
@@ -291,27 +276,34 @@ export function GalleyRemixer() {
     if (!remixId) return;
     await publishMut.mutateAsync({ remixId, visibility: "public" });
     setPublishedIds((s) => new Set(s).add(remixId));
+    toast.success("Sent to the cookbook for review.");
+  }
+
+  async function addToLog(dish: Dish) {
+    if (!activeBooking) return;
+    const key = dish.name ?? dish.dishName ?? "dish";
+    try {
+      await logMut.mutateAsync({
+        bookingId: activeBooking.id,
+        title: (dish.name ?? dish.dishName ?? "A galley dish").slice(0, 200),
+        content: dishToLogContent(dish),
+        isPublic: false,
+      });
+      setLoggedNames((s) => new Set(s).add(key));
+      toast.success("Added to your voyage log.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't add to the log.");
+    }
   }
 
   if (loading) {
     return <div className="rounded-2xl border bg-card p-6 text-center text-muted-foreground">Loading the galley…</div>;
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-2xl border bg-card p-6 text-center">
-        <ChefHat className="w-8 h-8 mx-auto text-[#b5651d] mb-3" aria-hidden="true" />
-        <h3 className="text-lg font-semibold mb-2">Cook from your own haul</h3>
-        <p className="text-foreground/80 mb-4 max-w-md mx-auto">
-          Sign in with your ReGen Civics account to log what you gathered and remix it into dishes. Your hauls and
-          recipes save to your voyage.
-        </p>
-        <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11">
-          <a href={getLoginUrl()}>Sign in to cook</a>
-        </Button>
-      </div>
-    );
-  }
+  // Logged-out visitors get the local "try it" remixer instead of a wall.
+  if (!isAuthenticated) return <GalleyTryItLocal />;
+
+  const dishKey = (d: Dish) => d.name ?? d.dishName ?? "dish";
 
   return (
     <div className="space-y-6">
@@ -321,14 +313,46 @@ export function GalleyRemixer() {
         {track === "reset" && <p className="text-xs text-muted-foreground mt-2">{HEALTH_NOTE}</p>}
       </div>
 
+      {/* Haul selector */}
+      {hauls.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Label htmlFor="haul-select" className="text-xs text-muted-foreground">Haul</Label>
+          <select
+            id="haul-select"
+            value={activeHaul?.id ?? ""}
+            onChange={(e) => { setActiveHaulId(Number(e.target.value)); setDishes([]); setSuggestions([]); }}
+            className="h-11 sm:h-9 rounded-md border bg-background px-2 text-sm max-w-[60%]"
+          >
+            {hauls.map((h) => <option key={h.id} value={h.id}>{haulLabel(h)}</option>)}
+          </select>
+          <Button type="button" variant="outline" size="sm" className="min-h-11 sm:min-h-0" onClick={() => void startNewHaul()} disabled={createHaul.isPending}>
+            <Plus className="w-4 h-4 mr-1" aria-hidden="true" /> New haul
+          </Button>
+        </div>
+      )}
+
       {/* The pantry: add + chips */}
       <div className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <h3 className="text-lg font-semibold">Your pantry</h3>
+          {editingTitle && activeHaul ? (
+            <span className="flex items-center gap-1.5">
+              <Input value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)} maxLength={200} className="h-9 w-48" placeholder="Name this haul" />
+              <Button type="button" size="sm" variant="ghost" onClick={() => void saveTitle()} aria-label="Save name"><Check className="w-4 h-4" aria-hidden="true" /></Button>
+            </span>
+          ) : (
+            <h3 className="text-lg font-semibold flex items-center gap-1.5">
+              {activeHaul ? haulLabel(activeHaul) : "Your pantry"}
+              {activeHaul && (
+                <button type="button" onClick={() => { setTitleDraft(activeHaul.title ?? ""); setEditingTitle(true); }} className="text-muted-foreground hover:text-foreground" aria-label="Rename haul">
+                  <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              )}
+            </h3>
+          )}
           {activeHaul && (
             <button
               type="button"
-              onClick={toggleVisibility}
+              onClick={() => void toggleVisibility()}
               className="inline-flex items-center gap-1.5 text-xs rounded-full border px-3 py-1.5 min-h-11 sm:min-h-0"
               aria-label="Toggle who can see this haul"
             >
@@ -338,7 +362,7 @@ export function GalleyRemixer() {
           )}
         </div>
 
-        {items.length > 0 && (
+        {(items.length > 0 || pending.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {items.map((it) => (
               <span key={it.id} className="inline-flex items-center gap-1.5 rounded-full bg-[#4a7c59]/10 border border-[#4a7c59]/30 pl-1 pr-2 py-1 text-sm">
@@ -353,18 +377,17 @@ export function GalleyRemixer() {
                 </button>
               </span>
             ))}
+            {pending.map((p) => (
+              <span key={`pending-${p}`} className="inline-flex items-center gap-1.5 rounded-full bg-[#4a7c59]/5 border border-dashed border-[#4a7c59]/30 pl-2.5 pr-2 py-1 text-sm opacity-60">
+                {p} <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+              </span>
+            ))}
           </div>
         )}
 
         <form onSubmit={submitItem} className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={200}
-              placeholder="What did you gather? (watermelon, kale, avocado…)"
-              className="text-base"
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />
             <div className="flex gap-2">
               <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="h-11 rounded-md border bg-background px-2 text-sm" aria-label="Category">
                 {ITEM_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -383,7 +406,7 @@ export function GalleyRemixer() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Button type="submit" disabled={addItem.isPending || uploadingItem || !name.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">
+            <Button type="submit" disabled={uploadingItem || !name.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">
               <Plus className="w-4 h-4 mr-1" aria-hidden="true" /> Add
             </Button>
             <input ref={itemFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void onItemPhoto(e.target.files)} />
@@ -397,10 +420,10 @@ export function GalleyRemixer() {
 
       {/* The two engines */}
       <div className="flex flex-wrap gap-3">
-        <Button type="button" onClick={doRemix} disabled={remixMut.isPending || !items.length} className="min-h-11 bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]">
+        <Button type="button" onClick={() => void doRemix()} disabled={remixMut.isPending || !items.length} className="min-h-11 bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]">
           <Sparkles className="w-4 h-4 mr-1.5" aria-hidden="true" /> {remixMut.isPending ? "Remixing…" : "Remix it"}
         </Button>
-        <Button type="button" onClick={doRoll} disabled={rollMut.isPending || !items.length} variant="outline" className="min-h-11">
+        <Button type="button" onClick={() => void doRoll()} disabled={rollMut.isPending || !items.length} variant="outline" className="min-h-11">
           <Dice5 className="w-4 h-4 mr-1.5" aria-hidden="true" /> Roll the Tide
         </Button>
       </div>
@@ -412,12 +435,15 @@ export function GalleyRemixer() {
         <div className="space-y-3">
           <div className="grid sm:grid-cols-2 gap-3">
             {dishes.map((dish, i) => (
-              <DishCard
+              <GalleyDishCard
                 key={dish.cardSlug ?? i}
                 dish={dish}
                 onPublish={lastRemixId ? () => void publish(lastRemixId) : undefined}
                 publishing={publishMut.isPending}
                 published={lastRemixId ? publishedIds.has(lastRemixId) : false}
+                onAddToLog={activeBooking ? () => void addToLog(dish) : undefined}
+                addingToLog={logMut.isPending}
+                addedToLog={loggedNames.has(dishKey(dish))}
               />
             ))}
           </div>
@@ -458,11 +484,14 @@ export function GalleyRemixer() {
 
         {cookDish && (
           <div className="mb-4">
-            <DishCard
+            <GalleyDishCard
               dish={cookDish}
               onPublish={cookRemixId ? () => void publish(cookRemixId) : undefined}
               publishing={publishMut.isPending}
               published={cookRemixId ? publishedIds.has(cookRemixId) : false}
+              onAddToLog={activeBooking ? () => void addToLog(cookDish) : undefined}
+              addingToLog={logMut.isPending}
+              addedToLog={loggedNames.has(dishKey(cookDish))}
             />
           </div>
         )}

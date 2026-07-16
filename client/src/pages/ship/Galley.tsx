@@ -45,6 +45,12 @@ const RHYTHM = [
   { icon: Moon, title: "Evening", body: "Build-your-own tacos (corn or cabbage wraps) or make-your-own sushi (cauliflower rice). Mostly raw, warm where you want it." },
 ];
 
+// A few signature dishes to fill "From the Crews" until crews publish their own.
+const STARTER_SLUGS = ["signature-chia-bowl", "deep-sanctuary-salad", "nori-hand-rolls"];
+const STARTER_CARDS = STARTER_SLUGS
+  .map((s) => GALLEY_CARDS.find((c) => c.slug === s))
+  .filter((c): c is GalleyCard => Boolean(c));
+
 function cardMatches(card: GalleyCard, track: TrackId | "all", query: string): boolean {
   if (track !== "all" && !card.tracks.includes(track)) return false;
   const q = query.trim().toLowerCase();
@@ -289,27 +295,42 @@ export default function Galley() {
         </div>
       </ShipSection>
 
-      {/* From the Crews */}
-      {crews.data && crews.data.length > 0 && (
-        <ShipSection className="bg-[#4a7c59]/8 py-10">
-          <ShipEyebrow>From the crews</ShipEyebrow>
-          <h2 className="text-3xl font-bold mb-2">Dishes past crews cooked aboard</h2>
-          <p className="text-foreground/80 max-w-2xl mb-6">The cookbook grows voyage over voyage. These are remixes crews made from their own hauls and shared.</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {crews.data.map((r) => {
-              const recipe = (r.recipe as { method?: string; why?: string } | Array<{ method?: string }> | null);
-              const method = Array.isArray(recipe) ? recipe[0]?.method : recipe?.method;
-              return (
-                <div key={r.id} className="rounded-2xl border bg-card p-4">
-                  <h4 className="font-semibold text-[#2f5d3a] dark:text-[#9de89d] mb-1">{r.dishName}</h4>
-                  {method && <p className="text-sm text-foreground/80 line-clamp-3">{method}</p>}
-                  <p className="text-xs text-muted-foreground mt-2">by {r.crewName}</p>
+      {/* From the Crews (with a few galley starters until crews publish their own) */}
+      <ShipSection className="bg-[#4a7c59]/8 py-10">
+        <ShipEyebrow>From the crews</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-2">Dishes cooked aboard</h2>
+        {crews.data && crews.data.length > 0 ? (
+          <>
+            <p className="text-foreground/80 max-w-2xl mb-6">The cookbook grows voyage over voyage. These are remixes crews made from their own hauls and shared.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {crews.data.map((r) => {
+                const recipe = (r.recipe as { method?: string; why?: string } | Array<{ method?: string }> | null);
+                const method = Array.isArray(recipe) ? recipe[0]?.method : recipe?.method;
+                return (
+                  <div key={r.id} className="rounded-2xl border bg-card p-4">
+                    <h4 className="font-semibold text-[#2f5d3a] dark:text-[#9de89d] mb-1">{r.dishName}</h4>
+                    {method && <p className="text-sm text-foreground/80 line-clamp-3">{method}</p>}
+                    <p className="text-xs text-muted-foreground mt-2">by {r.crewName}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-foreground/80 max-w-2xl mb-6">A few from the galley to start you off. Cook your own from your haul and add it here, and the cookbook grows voyage over voyage.</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {STARTER_CARDS.map((c) => (
+                <div key={c.slug} className="rounded-2xl border bg-card p-4">
+                  <h4 className="font-semibold text-[#2f5d3a] dark:text-[#9de89d] mb-1">{c.name}</h4>
+                  <p className="text-sm text-foreground/80 line-clamp-3">{c.method}</p>
+                  <p className="text-xs text-muted-foreground mt-2">from the galley</p>
                 </div>
-              );
-            })}
-          </div>
-        </ShipSection>
-      )}
+              ))}
+            </div>
+          </>
+        )}
+      </ShipSection>
 
       {/* Health note footer */}
       <ShipSection className="py-8">

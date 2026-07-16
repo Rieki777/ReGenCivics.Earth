@@ -34,6 +34,39 @@ export type CookDish = {
   why: string;
 };
 
+// Plant-based safe compounds: the ship's own dishes lean on these, so they must
+// never trip the animal-product guard. Stripped before the ambiguous check.
+const SAFE_COMPOUNDS = [
+  "coconut milk", "almond milk", "oat milk", "soy milk", "rice milk", "hemp milk", "cashew milk", "plant milk", "nut milk", "seed milk",
+  "coconut cream", "cashew cream", "nut cream", "nice cream", "banana cream", "whipped coconut cream", "coconut whipped cream",
+  "cashew cheese", "nut cheese", "vegan cheese", "cultured cashew cheese", "almond cheese", "cashew crema", "cashew creme",
+  "coconut yogurt", "cashew yogurt", "almond yogurt",
+  "coconut butter", "nut butter", "almond butter", "cashew butter", "cacao butter", "cocoa butter", "seed butter", "sunflower butter", "peanut butter", "apple butter",
+];
+// Unambiguous animal products. \b boundaries keep "egg" out of "eggplant" and
+// "ham" out of "graham". The ship is vegan, so honey is animal too.
+const HARD_ANIMAL = /\b(meat|beef|pork|chicken|turkey|bacon|ham|sausage|fish|salmon|tuna|shrimp|prawns?|anchov(y|ies)|egg|eggs|gelatin|gelatine|lard|whey|casein|honey|ghee|fish sauce|oyster sauce)\b/i;
+// Ambiguous words checked only after plant compounds are stripped, so real dairy
+// (ice cream, milk, cheese) is caught while the ship's plant versions are not.
+const AMBIGUOUS_ANIMAL = /\b(milk|cheeses?|cream|crema|creme|butter|yogurt|yoghurt|custard)\b/i;
+// Cooking verbs, flagged only on the fully-raw Deeper Reset.
+const COOKED = /\b(cook|cooked|cooking|bake|baked|roast|roasted|saut(e|é)|saut(e|é)ed|fry|fried|frying|boil|boiled|grill|grilled|steam|steamed|simmer|simmered|braise|braised|sear|seared|blanch|blanched|deep-fry|stir-fry)\b/i;
+
+/**
+ * Deterministic rail on the Cook's output (STEERING deterministic-first). The
+ * model is prompt-instructed to stay plant-based and on-track, but on a health-
+ * adjacent surface we verify it too: a dish naming an animal product is off the
+ * ship and gets discarded; a cooked step on the Deeper Reset gets flagged.
+ */
+export function validateCookDish(dish: CookDish, track: GalleyTrack): { animal: boolean; cooked: boolean } {
+  const text = [dish.dishName, ...dish.base, ...dish.fillings, ...dish.toppings, ...dish.sauce, dish.method].join(" ").toLowerCase();
+  let residue = text;
+  for (const c of SAFE_COMPOUNDS) residue = residue.split(c).join(" ");
+  const animal = HARD_ANIMAL.test(text) || AMBIGUOUS_ANIMAL.test(residue);
+  const cooked = track === "reset" && COOKED.test(text);
+  return { animal, cooked };
+}
+
 const TRACK_GUIDANCE: Record<GalleyTrack, string> = {
   table:
     "They chose the Ship's Table: organic, plant-based, about 80% raw. Up to about 20% cooked is welcome (a warm tortilla, a pot of something at night). Lead raw and fresh.",
@@ -148,6 +181,25 @@ export async function askShipCook(params: {
           why: (parsed.why ?? "").slice(0, 500),
         }
       : null;
+
+    // Deterministic rail: never persist or serve an off-diet dish.
+    if (dish) {
+      const { animal, cooked } = validateCookDish(dish, params.track);
+      if (animal) {
+        return {
+          reply:
+            "Let me keep it plant-based aboard, that is the whole point of this galley. Tell me what produce you gathered and I'll cook you something alive from it. " +
+            GALLEY_HEALTH_NOTE,
+          dish: null,
+        };
+      }
+      if (cooked) {
+        return {
+          reply: `${reply}\n\nAnd since you are on the Deeper Reset this week, skip any cooking step and enjoy it fully raw.`,
+          dish,
+        };
+      }
+    }
     return { reply, dish };
   } catch (err) {
     console.error("[ship-cook] ask failed:", err);

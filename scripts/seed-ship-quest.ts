@@ -50,6 +50,10 @@ const ACTIONS: Action[] = [
   { slug: "plant-together", title: "Plant something with another person", description: "Two pairs of hands, one hole. Share a photo of both of you planting. A crew member verifies it.", points: 50, proofType: "photo", sortOrder: 11 },
   { slug: "give-a-day-to-the-land", title: "Give a day to a land project near you", description: "A full day of whatever they need doing at a land project near you. Share what you did and a photo. A crew member verifies it.", points: 50, proofType: "photo", sortOrder: 12 },
   { slug: "bring-a-couple-aboard", title: "Bring a couple onto the crew list", description: "Send the honeymoon story to a couple who needs their next honeymoon and get them onto the crew list. Paste the link or name them.", points: 50, proofType: "link", sortOrder: 13 },
+
+  // ── The Galley (auto-verified from Galley activity, /ship/galley) ──
+  { slug: "galley-log-haul", title: "Log a market haul in the Galley", description: "Log what you gathered in the Galley remixer. This verifies automatically the first time you log a haul.", points: 25, proofType: "link", sortOrder: 20 },
+  { slug: "galley-deeper-reset", title: "Try the Deeper Reset", description: "Remix or cook a Deeper Reset dish (fully raw) in the Galley. This verifies automatically the first time you try it.", points: 25, proofType: "link", sortOrder: 21 },
 ];
 
 async function main() {

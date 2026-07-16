@@ -259,6 +259,30 @@ async function assertHaulOwner(d: ShipDb, haulId: number, userId: number) {
   return haul;
 }
 
+// Auto-verify a Galley quest action (logging a haul, trying the Deeper Reset) and
+// credit the ReGen reward, once. No-ops when the action is not seeded yet, so it
+// is always safe to call. A nudge into the Maiden Voyage Quest, never a gate.
+async function awardGalleyQuest(userId: number, slug: string, note: string): Promise<void> {
+  const d = await db();
+  const [action] = await d.select().from(shipQuestActions).where(eq(shipQuestActions.slug, slug)).limit(1);
+  if (!action) return;
+  const [existing] = await d
+    .select()
+    .from(shipQuestCompletions)
+    .where(and(eq(shipQuestCompletions.userId, userId), eq(shipQuestCompletions.actionId, action.id)))
+    .limit(1);
+  if (existing?.status === "verified") return;
+  let cid: number | undefined;
+  if (existing) {
+    await d.update(shipQuestCompletions).set({ status: "verified", verifiedAt: new Date() }).where(eq(shipQuestCompletions.id, existing.id));
+    cid = existing.id;
+  } else {
+    const [res] = await d.insert(shipQuestCompletions).values({ userId, actionId: action.id, status: "verified", verifiedAt: new Date(), note });
+    cid = (res as { insertId?: number }).insertId;
+  }
+  if (cid) await rewardVerifiedCompletion(cid);
+}
+
 export const shipRouter = router({
   // What is live (concierge, offering/gift forms, platform listing, tracker).
   featureFlags: publicProcedure.query(() => shipFeatureFlags()),
@@ -1585,7 +1609,18 @@ export const shipRouter = router({
           title: input.title ? sanitizeInput(input.title) : null,
           visibility: input.visibility,
         });
+        // Logging a haul is a Maiden Voyage Quest nudge (never blocks the haul).
+        await awardGalleyQuest(ctx.user.id, "galley-log-haul", "Logged a market haul in the Galley").catch(() => {});
         return { id: (res as { insertId?: number }).insertId ?? null, bookingId };
+      }),
+
+    renameHaul: protectedProcedure
+      .input(z.object({ haulId: z.number().int(), title: z.string().max(200) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        await assertHaulOwner(d, input.haulId, ctx.user.id);
+        await d.update(galleyHauls).set({ title: sanitizeInput(input.title) }).where(eq(galleyHauls.id, input.haulId));
+        return { ok: true };
       }),
 
     addItem: protectedProcedure
@@ -1659,6 +1694,10 @@ export const shipRouter = router({
         }
 
         const result = remixHaul(haulItems, input.track as GalleyTrack, 3);
+        // Trying the Deeper Reset is a Maiden Voyage Quest nudge.
+        if (input.track === "reset") {
+          await awardGalleyQuest(ctx.user.id, "galley-deeper-reset", "Tried the Deeper Reset in the Galley").catch(() => {});
+        }
         let remixId: number | null = null;
         if (input.save && result.dishes.length) {
           const [res] = await d.insert(galleyRemixes).values({

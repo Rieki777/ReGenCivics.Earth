@@ -27,6 +27,41 @@ describe("tokenizeIngredient", () => {
     expect(tokenizeIngredient("cardboard box")).toEqual([]);
     expect(tokenizeIngredient("")).toEqual([]);
   });
+
+  it("does not read fresh 'corn tortillas' as fresh corn", () => {
+    const t = tokenizeIngredient("warm corn tortillas");
+    expect(t).toContain("corn tortillas");
+    expect(t).not.toContain("corn");
+  });
+
+  it("still reads fresh corn as corn", () => {
+    expect(tokenizeIngredient("sweet corn")).toContain("corn");
+    // A haul with both keeps both.
+    const both = tokenizeIngredient("corn and corn tortillas");
+    expect(both).toContain("corn");
+    expect(both).toContain("corn tortillas");
+  });
+
+  it("reads any nut as 'nuts' so it matches a card asking for soaked nuts", () => {
+    expect(tokenizeIngredient("hazelnuts")).toContain("nuts");
+    expect(tokenizeIngredient("Oregon filberts")).toContain("nuts");
+    const w = tokenizeIngredient("walnuts");
+    expect(w).toContain("walnut");
+    expect(w).toContain("nuts");
+  });
+
+  it("reads any berry as 'berry' so it matches a card asking for berries", () => {
+    expect(tokenizeIngredient("marionberries")).toContain("berry");
+    const b = tokenizeIngredient("blueberries");
+    expect(b).toContain("blueberry");
+    expect(b).toContain("berry");
+  });
+
+  it("knows Rogue Valley market items", () => {
+    expect(tokenizeIngredient("a bulb of fennel")).toContain("fennel");
+    expect(tokenizeIngredient("chanterelle mushrooms")).toContain("mushroom");
+    expect(tokenizeIngredient("ripe pluots")).toContain("pluot");
+  });
 });
 
 describe("haulTokens", () => {
