@@ -130,8 +130,8 @@ export const KEEPER_PAY_USD = 200;
 // verified points and you are in every future drawing. No single action is
 // mandatory. Draws are weighted-random: your points are your raffle tickets, so
 // every point above the threshold raises your odds. Approved nominations enter
-// at NOMINATION_TICKETS, the same footing as a threshold entrant. The maiden
-// voyage goes to the first crew to cross the threshold.
+// at NOMINATION_TICKETS, the same footing as a threshold entrant. Every free
+// voyage is drawn weighted-random, so there is no first-crew prize.
 /** Verified points that put a crew in every future drawing. */
 export const SHIP_ENTRY_THRESHOLD_POINTS = 150;
 /** Raffle tickets an approved nomination enters with (same as the threshold). */
@@ -144,18 +144,18 @@ export const CREW_SPONSOR_GOAL_CENTS = 210_000;
 export const CREW_SPONSOR_PROGRAM_TAG = "regen_ship_gift";
 
 // ── Free-voyage giveaway model (booking-volume driven) ───────────────────────
-// The maiden voyage is given away free. Then one more free voyage unlocks for
-// every FREE_VOYAGE_MILESTONE_PCT of the first year that gets booked, up to
-// MAX_FREE_VOYAGES total at 100% booked. Each free voyage is drawn weighted at
-// random from everyone in the draw (threshold entrants + approved nominees).
-// This aligns everyone around spreading the word: more bookings unlock more free
-// voyages, and everyone in the draw has a shot at each one.
-/** Free voyages given at launch (the maiden voyage). */
-export const MAIDEN_FREE_VOYAGES = 1;
-/** Each this-percent of the year booked unlocks one more free voyage. */
-export const FREE_VOYAGE_MILESTONE_PCT = 20;
-/** The most free voyages we give away in the first year (at 100% booked). */
-export const MAX_FREE_VOYAGES = 6;
+// One free voyage is drawn at launch (the first draw, on August 16). The rest
+// release as the first year books up, on the non-uniform, later-weighted
+// schedule in FREE_VOYAGE_RELEASE_MILESTONES (40/60/75/85/95% booked), up to
+// MAX_FREE_VOYAGES total at a fully booked year. Each free voyage is drawn
+// weighted at random from everyone in the draw (threshold entrants + approved
+// nominees), and winners pick their own dates. The schedule lives in
+// @shared/shipFreeVoyage so the server truth and the client preview never drift.
+export {
+  MAIDEN_FREE_VOYAGES,
+  MAX_FREE_VOYAGES,
+  FREE_VOYAGE_RELEASE_MILESTONES,
+} from "@shared/shipFreeVoyage";
 /** Voyages that count as 100% booked for the first year. Edit to pace giveaways. */
 export const MAIDEN_YEAR_VOYAGE_TARGET = 40;
 /** Suggested winter host income share (church council sets per agreement). */

@@ -111,7 +111,7 @@ export default function Programs() {
           </p>
           <div className="btn-row">
             <a className="btn btn-primary" href="https://regencivics.earth/ship">Board the ship</a>
-            <a className="btn btn-ghost" href="https://regencivics.earth/ship/quest">Win the maiden voyage</a>
+            <a className="btn btn-ghost" href="https://regencivics.earth/ship/quest">Win a free voyage</a>
           </div>
         </div>
       </section>

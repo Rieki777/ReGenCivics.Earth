@@ -78,6 +78,15 @@ export function ShipInventory() {
     });
   }, [items, query, activity]);
 
+  // Only show chips that actually match at least one loaded item, so no chip
+  // can land on the empty "Nothing in the bag for that" state and look broken.
+  const availableTags = useMemo(() => {
+    const s = new Set<string>();
+    for (const it of items) for (const t of tagsOf(it)) s.add(t.toLowerCase());
+    return s;
+  }, [items]);
+  const visibleActivities = ACTIVITIES.filter((a) => availableTags.has(a.key));
+
   if (!isLoading && items.length === 0) return null; // nothing to show yet
 
   return (
@@ -105,7 +114,7 @@ export function ShipInventory() {
         >
           Everything
         </button>
-        {ACTIVITIES.map((a) => (
+        {visibleActivities.map((a) => (
           <button
             key={a.key}
             type="button"

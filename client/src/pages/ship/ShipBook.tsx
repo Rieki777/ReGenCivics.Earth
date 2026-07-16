@@ -25,6 +25,7 @@ import {
 } from "@shared/shipVoyages";
 import { FirstMateQuickCustomize } from "./ShipFirstMate";
 import { CrewListJoin } from "@/components/ship/CrewListJoin";
+import { SHIP_TERMS_VERSION } from "@shared/shipTerms";
 
 /** Card icons for the suggested voyages. */
 const VOYAGE_ICONS: Record<SuggestedVoyageId, LucideIcon> = {
@@ -80,6 +81,7 @@ export default function ShipBook() {
   const crewOk = guests <= 4 || (guests === 5 && children >= 3);
   const [diet, setDiet] = useState(false);
   const [water, setWater] = useState(false);
+  const [terms, setTerms] = useState(false);
   const [notes, setNotes] = useState("");
   const submitRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
@@ -158,7 +160,7 @@ export default function ShipBook() {
     e.preventDefault();
     if (!startDate) return toast.error("Pick a voyage week.");
     if (!crewOk) return toast.error("Up to four aboard, or five when at least three are children.");
-    if (!diet || !water) return toast.error("Both commitments are required to sail.");
+    if (!diet || !water || !terms) return toast.error("All three commitments are required to sail.");
     try {
       // Carry the chosen suggested voyage to the crew in the notes, so the
       // confirmation and the First Mate both know the intent.
@@ -174,6 +176,8 @@ export default function ShipBook() {
         guests,
         dietCommitment: true,
         waterDoctrineCommitment: true,
+        agreementAccepted: true,
+        agreementVersion: SHIP_TERMS_VERSION,
         ref: ref || undefined,
         notes: noteParts.length ? noteParts.join("\n") : undefined,
       });
@@ -182,6 +186,7 @@ export default function ShipBook() {
       setCount(1);
       setDiet(false);
       setWater(false);
+      setTerms(false);
       setNotes("");
       setVoyageId(null);
       setCustomizeOpen(false);
@@ -196,8 +201,8 @@ export default function ShipBook() {
     ? "Pick a voyage week to continue."
     : !crewOk
       ? "Up to four aboard, or five when at least three are children."
-      : !diet || !water
-        ? "Confirm both commitments to sail."
+      : !diet || !water || !terms
+        ? "Confirm all three commitments to sail."
         : null;
 
   return (
@@ -302,7 +307,7 @@ export default function ShipBook() {
                 <ul
                   role="listbox"
                   aria-label="Voyage weeks"
-                  className={view === "cards" ? "grid sm:grid-cols-2 gap-3 max-h-[28rem] overflow-y-auto pr-1" : "space-y-2 max-h-[28rem] overflow-y-auto pr-1"}
+                  className={view === "cards" ? "grid sm:grid-cols-2 gap-3 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1" : "space-y-2 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1"}
                 >
                   {weeks.map((wk, i) => {
                     const meta = STATE_META[wk.state as WeekState];
@@ -371,7 +376,7 @@ export default function ShipBook() {
                   <p className="text-sm text-foreground/80 italic mt-2">{roughChart.summary}</p>
                 </div>
                 {!(customizeOpen && fmCharted) && (
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-2 sm:max-h-72 sm:overflow-y-auto sm:pr-1">
                     {roughChart.days.map((d) => (
                       <div key={d.day} className="rounded-xl border bg-background/60 p-3">
                         <p className="font-medium text-sm">Day {d.day} · {fmtDay(d.date)}: {d.title}</p>
@@ -451,7 +456,7 @@ export default function ShipBook() {
             <div className="flex items-start gap-3">
               <Checkbox id="diet" checked={diet} onCheckedChange={(v) => setDiet(Boolean(v))} />
               <p className="font-normal leading-snug text-sm">
-                <Label htmlFor="diet" className="font-normal">I will follow the ship's health and diet protocols aboard for the whole voyage.</Label>{" "}
+                <Label htmlFor="diet" className="font-normal">I will keep the Ship meat-free, alcohol-free, and smoke-free inside for the whole voyage, unless the core team gives me written permission otherwise.</Label>{" "}
                 <Link href="/ship#the-table" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the protocols and menu</Link>.
               </p>
             </div>
@@ -460,6 +465,13 @@ export default function ShipBook() {
               <p className="font-normal leading-snug text-sm">
                 <Label htmlFor="water" className="font-normal">I commit to the ship's water doctrine: only the soaps and cleaning materials aboard, no chemical body products.</Label>{" "}
                 <Link href="/ship/guide" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the doctrine</Link>.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <Checkbox id="terms" checked={terms} onCheckedChange={(v) => setTerms(Boolean(v))} />
+              <p className="font-normal leading-snug text-sm">
+                <Label htmlFor="terms" className="font-normal">I have read and agree to the Voyage Covenant and Rental Terms, including the 500-mile travel radius, the meat, alcohol, and smoke-free rule aboard, and my responsibility for loss that insurance does not cover.</Label>{" "}
+                <Link href="/ship/terms" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the terms</Link>.
               </p>
             </div>
             <div>

@@ -90,7 +90,7 @@ export default function ShipQuest() {
 
   return (
     <PageWrapper>
-      <SEO title="The Maiden Voyage Quest" description="Reach 150 points and you are in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
+      <SEO title="The Maiden Voyage Quest" description="Reach 150 points by August 16 and you are in the drawing for a free voyage. Every point above raises your odds. Winners pick their own dates, and more free voyages unlock as the year books up, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
       <ShipNavRow current="/ship/quest" />
 
       {/* Hero */}
@@ -100,7 +100,7 @@ export default function ShipQuest() {
         <div className="max-w-3xl mx-auto px-4 py-16 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The Maiden Voyage Quest</p>
           <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points to qualify for the drawing.</h1>
-          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Reach {threshold} points and you are in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
+          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Qualify by August 16 to enter the drawing for a free voyage. Winners pick their own dates. More unlock as the first year books up, up to six.</p>
           <p data-reveal data-reveal-delay="240" className="mt-4 inline-flex items-center gap-2 bg-[#ffd700]/20 border border-[#ffd700]/50 rounded-full px-4 py-2 font-semibold"><Trophy className="w-5 h-5 text-[#ffd700]" /> {unlocked} of {totalFree} free voyages unlocked</p>
         </div>
       </section>
@@ -130,7 +130,7 @@ export default function ShipQuest() {
 
       {/* Story */}
       <ShipSection>
-        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The ship sets sail on her maiden voyage this August, through Cascadia, anchored at The Sanctuary in Ashland. The quest is open to everyone, and every action in it grows the movement. It announces ReGen Civics, launches Season 2, and fills the treasure map. No single action is required. Reach {threshold} points any way you like.</p>
+        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The ship sets sail on her maiden voyage the last full week of July, through Cascadia, anchored at The Sanctuary in Ashland. The quest is open to everyone, and every action in it grows the movement. It announces ReGen Civics, launches Season 2, and fills the treasure map. No single action is required. Reach {threshold} points any way you like.</p>
         <div data-reveal data-reveal-delay="80" className="mt-4 flex flex-wrap gap-3">
           <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/blog/the-regen-ship">Read the full story</Link></Button>
           <Button asChild variant="outline"><Link href="/ship/quest/rules">Read the official rules</Link></Button>
@@ -143,7 +143,7 @@ export default function ShipQuest() {
         <div data-reveal>
           <ShipEyebrow>How the free voyages work</ShipEyebrow>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">The more we book, the more sail free</h2>
-          <p className="text-foreground/85 max-w-3xl mb-6">Reach {threshold} points and you are in the draw. The maiden voyage sails free right away, to the first crew across the line. Then, for every 20% of the first year that gets booked, we draw one more free voyage from everyone in the draw. Each draw is weighted by points: your points are your raffle tickets, so every point above {threshold} raises your odds. At a full year booked, six crews sail free. Want a better chance? Help get the word out and earn more points.</p>
+          <p className="text-foreground/85 max-w-3xl mb-6">Reach {threshold} points by August 16 and you are in the draw. On August 16 we hold the first drawing and pull a free voyage from everyone who has qualified. It is a weighted draw, so every point above {threshold} is another raffle ticket and the more you complete the better your odds. Winners pick their own dates from the open weeks. After that first draw, more free voyages unlock as the first year books up, at 40%, 60%, 75%, 85%, and 95% booked, up to six at a fully booked year.</p>
 
           <div className="max-w-3xl">
             <FreeVoyageLadder />
@@ -188,7 +188,6 @@ export default function ShipQuest() {
                   <span className="w-8 text-center font-bold text-muted-foreground">{i + 1}</span>
                   <div className="flex-1">
                     <span className="font-medium">{s.handle ? `@${s.handle}` : s.name}</span>
-                    {s.isMaidenVoyage && <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/60 rounded-full px-2 py-0.5"><Trophy className="w-3 h-3" /> Maiden voyage</span>}
                     {s.isEntered
                       ? <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/40 rounded-full px-2 py-0.5"><Anchor className="w-3 h-3" /> Aboard the draw</span>
                       : <span className="ml-2 text-xs bg-[#4a7c59]/15 rounded-full px-2 py-0.5 text-muted-foreground">On the way</span>}
@@ -198,7 +197,7 @@ export default function ShipQuest() {
               </div>
             ));
           })()}
-          {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No crews yet. Be the first across the line.</p>}
+          {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No crews yet. Be the first aboard the draw.</p>}
         </div>
       </ShipSection>
 

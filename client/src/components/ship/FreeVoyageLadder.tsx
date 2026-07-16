@@ -8,12 +8,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { Ship, Trophy } from "lucide-react";
-
-const FREE_TOTAL = 6;
-const MILESTONE = 20;
-function unlockedAt(percent: number): number {
-  return Math.min(FREE_TOTAL, 1 + Math.floor(Math.max(0, Math.min(100, percent)) / MILESTONE));
-}
+import { MAX_FREE_VOYAGES, FREE_VOYAGE_RELEASE_MILESTONES, freeVoyagesUnlocked } from "@shared/shipFreeVoyage";
 
 export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
   const { data } = trpc.ship.quest.freeVoyageStatus.useQuery(undefined, { staleTime: 30_000 });
@@ -22,12 +17,14 @@ export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
 
   const [preview, setPreview] = useState<number | null>(null);
   const shownPct = preview ?? livePct;
-  const shownUnlocked = unlockedAt(shownPct);
+  const shownUnlocked = freeVoyagesUnlocked(shownPct);
   const isPreviewing = preview !== null && preview !== livePct;
 
-  const tiles = Array.from({ length: FREE_TOTAL }, (_, i) => {
+  const tiles = Array.from({ length: MAX_FREE_VOYAGES }, (_, i) => {
     const voyage = i + 1;
-    return { voyage, unlocksAt: i * MILESTONE, lit: shownUnlocked >= voyage, newest: shownUnlocked === voyage };
+    // Voyage 1 is the launch draw; voyages 2..6 release on the milestone schedule.
+    const unlocksAt = i === 0 ? 0 : FREE_VOYAGE_RELEASE_MILESTONES[i - 1];
+    return { voyage, unlocksAt, lit: shownUnlocked >= voyage, newest: shownUnlocked === voyage };
   });
 
   // Theme classes: onDark forces light text (dark blog bg); default is
@@ -53,7 +50,7 @@ export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
         <Trophy className="h-5 w-5 text-[#ffd700]" />
         <h3 className={cn("text-lg font-bold", c.heading)}>The free-voyage ladder</h3>
       </div>
-      <p className={cn("text-sm mb-5", c.sub)}>The maiden voyage sails free. Every 20% of the year that books unlocks one more, up to six. Drag to see how it grows.</p>
+      <p className={cn("text-sm mb-5", c.sub)}>The first free voyage is drawn August 16. More unlock at 40%, 60%, 75%, 85%, and 95% booked, up to six. Drag to see how it grows.</p>
 
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 mb-5">
         {tiles.map((t) => (
@@ -67,7 +64,7 @@ export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
           >
             <Ship className={cn("h-6 w-6 mx-auto mb-1", t.lit ? "text-[#ffd700]" : c.iconUnlit)} />
             <div className="text-xs font-semibold">Voyage {t.voyage}</div>
-            <div className="text-[10px] opacity-70">{t.voyage === 1 ? "Launch" : `${t.unlocksAt}% booked`}</div>
+            <div className="text-[10px] opacity-70">{t.voyage === 1 ? "First draw" : `${t.unlocksAt}% booked`}</div>
           </div>
         ))}
       </div>
@@ -85,14 +82,14 @@ export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
       />
       <div className="flex flex-wrap items-center justify-between gap-2 mt-3 text-sm">
         <span className={c.readout}>
-          At <b className="text-[#ffd700]">{shownPct}%</b> booked, <b className="text-[#ffd700]">{shownUnlocked}</b> of {FREE_TOTAL} voyages sail free.
+          At <b className="text-[#ffd700]">{shownPct}%</b> booked, <b className="text-[#ffd700]">{shownUnlocked}</b> of {MAX_FREE_VOYAGES} voyages sail free.
         </span>
         {isPreviewing && (
           <button onClick={() => setPreview(null)} className={cn("text-xs underline", c.backLink)}>Back to live</button>
         )}
       </div>
       <p className={cn("mt-3 text-xs", c.live)}>
-        Live now: {unlockedAt(livePct)} of {FREE_TOTAL} unlocked at {livePct}% booked, {poolSize} {poolSize === 1 ? "crew" : "crews"} in the draw.
+        Live now: {freeVoyagesUnlocked(livePct)} of {MAX_FREE_VOYAGES} unlocked at {livePct}% booked, {poolSize} {poolSize === 1 ? "crew" : "crews"} in the draw.
       </p>
     </div>
   );

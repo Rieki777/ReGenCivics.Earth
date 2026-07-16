@@ -107,7 +107,7 @@ The ReGen Ship is a program of the Church of the Regenerative Earth, and this ar
 
 ## When is your next honeymoon?
 
-Her trial year is now: one-week voyages at $299 a night (the rate climbs as she gets even better, so early crews get the sweetest deal). And if you want to sail free, the Maiden Voyage Quest is open to everyone; the first to complete it takes her maiden voyage, and every 20% of the year that books up, another completed quester wins a free voyage by draw.
+Her trial year is now: one-week voyages at $299 a night (the rate climbs as she gets even better, so early crews get the sweetest deal). And if you want to sail free, the Maiden Voyage Quest is open to everyone; qualify by August 16 and you are in the drawing for a free voyage, and more free voyages are drawn as the year books up. Winners pick their own dates.
 
 Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, tenth one. You're allowed.
 
@@ -124,7 +124,7 @@ Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, te
     id: 'the-regen-ship',
     slug: 'the-regen-ship',
     title: 'The ReGen Ship: A Pirate Ship, a Chest of Seeds, and a Voyage You Can Win',
-    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points and you are in every draw. The maiden voyage sails free, and every 20% of the year that books unlocks another free voyage, up to six.',
+    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points by August 16 and you are in the drawing for a free voyage. Winners pick their own dates, and more free voyages unlock as the year books up, up to six.',
     content: `The ReGen Ship has raised her flag.
 
 She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
@@ -153,7 +153,7 @@ Ten percent of every voyage buys the ship herself into community ownership over 
 
 ![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
 
-## The maiden voyage sails this August. You can win it.
+## The first free voyage is drawn August 16. You can be in it.
 
 Her first crews are not chosen. They are earned. The Maiden Voyage Quest is open to everyone, and here is the part worth reading closely, because it is designed so that all of our interests point the same direction.
 
@@ -163,7 +163,7 @@ Here is how it works, and it is built so that all of our interests point the sam
 
 [SHIP_QUEST_STEPS]
 
-The maiden voyage sails free right away, to the first crew across the 150-point line. After that, the free voyages grow with the bookings: every 20% of the first year that books draws one more, up to six at a fully booked year. Drag the ladder to see how it grows.
+The first free voyage is drawn on August 16, from everyone who has qualified by then. After that, the free voyages grow with the bookings: more are drawn at 40%, 60%, 75%, 85%, and 95% of the first year booked, up to six at a fully booked year. Winners pick their own dates. Drag the ladder to see how it grows.
 
 [SHIP_FREE_VOYAGE_LADDER]
 
@@ -177,7 +177,7 @@ Every draw is weighted by points, and every crew in the draw has a shot at every
 
 This is the whole idea. Reach 150 points and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
 
-So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sails this August, and the more the fleet sails, the more of us sail free.
+So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sets sail this summer, the first free voyage is drawn August 16, and the more the fleet sails, the more of us sail free.
 
 [SHIP_CTA]`,
     author: 'CORE Team',

@@ -73,18 +73,18 @@ export default function ShipFleet() {
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div data-reveal="left" className="space-y-4 text-foreground/85">
             <p>
-              The ReGen Fleet is a caravan of ships that moves from land project to land project. Where it lands, it
-              builds natural homes, plants food forests, heals waterways, and turns pine plantations back into the
-              abundance they once were.
+              Picture where we want this to go. A caravan of ships that moves from land project to land project, and
+              where it lands, it builds natural homes, plants food forests, heals waterways, and turns pine plantations
+              back into the abundance they once were.
             </p>
             <p>
-              And we host music festivals, dances, and regular communal campfires, and so many other ways to bring
-              community and love together. Then it moves on and does it again.
+              Imagine the music festivals, the dances, the campfires, and all the other ways it brings community and
+              love together. Then it packs up, moves on, and does it again at the next project down the road.
             </p>
             <p>
-              The model is inspired by the large RV caravans that travel New Zealand together, a rolling community that
-              shows up, sets up, and shares a place for a while. We point that same spirit at regeneration and the
-              beauty we can bring while living our best lives.
+              The model draws from the large RV caravans that travel New Zealand together, a rolling community that
+              shows up, sets up, and shares a place for a while. We want to point that same spirit at regeneration and
+              at the beauty we can bring while living our best lives.
             </p>
           </div>
           <div data-reveal="right" className="aspect-[4/3]">

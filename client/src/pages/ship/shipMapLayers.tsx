@@ -9,9 +9,10 @@
  *                    rings, and a compass rose at the anchorage.
  *  - CascadiaBoundary the bioregion line (the fog mask now lives in
  *                    VoyageRangeLayer, so this is just the soft dashed edge).
- *  - ClusterLayer    supercluster-backed clustered markers; in-range pins are
- *                    interactive game tokens, beyond-horizon pins render dimmed
- *                    and unclickable. Verified solid, unverified dashed,
+ *  - ClusterLayer    supercluster-backed clustered markers. Only pins within
+ *                    the voyage range render; beyond the horizon the board is
+ *                    clean fog (unclickable ghost tokens were removed in the
+ *                    2026-07 overhaul). Verified solid, unverified dashed,
  *                    stale (18+ mo) faded.
  *  - VoyageRoute     the concierge itinerary / "my voyage" as an ordered dashed
  *                    route with day numbers.
@@ -235,42 +236,36 @@ export type MapPin = {
   lastVerifiedAt?: string | Date | null;
 };
 
-function pinIcon(pin: MapPin, beyondHorizon = false): L.DivIcon {
+function pinIcon(pin: MapPin): L.DivIcon {
   const meta = TYPE_META[pin.type] ?? { emoji: "📍", ring: "#2f5d3a" };
   const stale = pin.lastVerifiedAt ? Date.now() - new Date(pin.lastVerifiedAt).getTime() > STALE_MS : false;
-  const opacity = beyondHorizon ? 0.3 : pin.isVerified ? (stale ? 0.65 : 1) : 0.6;
+  const opacity = pin.isVerified ? (stale ? 0.65 : 1) : 0.6;
   const border = pin.isVerified ? `2.5px solid ${meta.ring}` : `2.5px dashed ${meta.ring}`;
   // Game-token treatment: ivory face with a soft top-light, the type ring as
   // the rim, and a heavier drop shadow so tokens sit above the satellite board.
   const bg = pin.isVerified
     ? "linear-gradient(145deg,#fffef7,#ece5cf)"
     : "linear-gradient(145deg,#f5f0e0,#e2d9bf)";
-  const fog = beyondHorizon ? "filter:grayscale(.8);" : "";
   return L.divIcon({
     className: "ship-pin",
     html:
-      `<div style="opacity:${opacity};${fog}font-size:18px;line-height:28px;width:28px;height:28px;text-align:center;background:${bg};border:${border};border-radius:50% 50% 50% 0;transform:rotate(45deg);box-shadow:0 3px 7px rgba(0,0,0,.5)">` +
+      `<div style="opacity:${opacity};font-size:18px;line-height:28px;width:28px;height:28px;text-align:center;background:${bg};border:${border};border-radius:50% 50% 50% 0;transform:rotate(45deg);box-shadow:0 3px 7px rgba(0,0,0,.5)">` +
       `<span style="display:inline-block;transform:rotate(-45deg)">${meta.emoji}</span></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 28],
   });
 }
 
-function clusterIcon(count: number, beyondHorizon = false): L.DivIcon {
+function clusterIcon(count: number): L.DivIcon {
   const size = count < 10 ? 34 : count < 100 ? 42 : 52;
   // Game-chip treatment: a dark green disc with a gold rim, lit from the
-  // upper left like a stacked token. Fogged chips are ghosts of themselves.
-  const face = beyondHorizon
-    ? "radial-gradient(circle at 30% 30%, rgba(63,122,78,.35), rgba(31,68,41,.35))"
-    : "radial-gradient(circle at 30% 30%, #3f7a4e, #1f4429)";
-  const rim = beyondHorizon ? "rgba(255,215,0,.3)" : "#ffd700";
-  const text = beyondHorizon ? "rgba(255,255,255,.55)" : "#fff";
+  // upper left like a stacked token.
   return L.divIcon({
     className: "ship-cluster",
     html:
-      `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${face};color:${text};` +
+      `<div style="width:${size}px;height:${size}px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #3f7a4e, #1f4429);color:#fff;` +
       `display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${count < 100 ? 13 : 12}px;` +
-      `border:2px solid ${rim};box-shadow:0 2px 6px rgba(0,0,0,.45)">${count}</div>`,
+      `border:2px solid #ffd700;box-shadow:0 2px 6px rgba(0,0,0,.45)">${count}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -297,13 +292,10 @@ export function ClusterLayer({ pins, onSelect, anchorage = ANCHORAGE }: {
   const map = useMap();
   const group = useRef<L.LayerGroup | null>(null);
 
-  // Two boards: pins within the voyage range play normally; pins beyond the
-  // horizon cluster separately and render as fog-dimmed, unclickable ghosts.
-  const { indexIn, indexOut } = useMemo(() => {
-    const within: MapPin[] = [];
-    const beyond: MapPin[] = [];
-    for (const p of pins) (withinVoyageRange(p.lat, p.lng, anchorage) ? within : beyond).push(p);
-    return { indexIn: buildIndex(within), indexOut: buildIndex(beyond) };
+  // Only pins within the voyage range render. Everything beyond the horizon
+  // stays in the fog: no dimmed, unclickable ghost tokens cluttering the board.
+  const indexIn = useMemo(() => {
+    return buildIndex(pins.filter((p) => withinVoyageRange(p.lat, p.lng, anchorage)));
   }, [pins, anchorage]);
 
   const byId = useMemo(() => new Map(pins.map((p) => [p.id, p])), [pins]);
@@ -317,19 +309,6 @@ export function ClusterLayer({ pins, onSelect, anchorage = ANCHORAGE }: {
       const b = map.getBounds();
       const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
       const zoom = Math.round(map.getZoom());
-
-      // Beyond the horizon first, so in-range tokens always sit on top.
-      for (const c of indexOut.getClusters(bbox, zoom)) {
-        const [lng, lat] = c.geometry.coordinates;
-        const props = c.properties as { cluster?: boolean; point_count?: number; id?: number };
-        if (props.cluster) {
-          L.marker([lat, lng], { icon: clusterIcon(props.point_count ?? 0, true), interactive: false, keyboard: false }).addTo(layer);
-        } else {
-          const pin = byId.get(props.id!);
-          if (!pin) continue;
-          L.marker([lat, lng], { icon: pinIcon(pin, true), interactive: false, keyboard: false }).addTo(layer);
-        }
-      }
 
       for (const c of indexIn.getClusters(bbox, zoom)) {
         const [lng, lat] = c.geometry.coordinates;
@@ -357,7 +336,7 @@ export function ClusterLayer({ pins, onSelect, anchorage = ANCHORAGE }: {
       map.off("moveend zoomend", render);
       layer.clearLayers();
     };
-  }, [map, indexIn, indexOut, byId, onSelect]);
+  }, [map, indexIn, byId, onSelect]);
 
   useEffect(() => () => { if (group.current) { map.removeLayer(group.current); group.current = null; } }, [map]);
   return null;

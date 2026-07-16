@@ -5,7 +5,7 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import {
   rangesOverlap, overlapsAny, isValidVoyageLength, nightsBetween,
-  computeVoyagePrice, computeQuestStandings, countEntered, maidenVoyageUserId,
+  computeVoyagePrice, computeQuestStandings, countEntered,
   freeVoyagesUnlocked, percentBooked, weightedDraw, sponsorshipProgress, applySponsorship,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
   addDaysYmd, enumerateVoyageWeeks, voyageNightsFromAnswers, type SeasonalBand,
@@ -349,16 +349,18 @@ describe("ship-logic: quest standings (points threshold)", () => {
     expect(standings[0].enteredAt).toBe(Date.parse("2026-08-01T09:30:00Z"));
   });
 
-  it("gives the maiden voyage to the first crew across the line", () => {
+  it("orders entered crews by points, not by who crossed the line first", () => {
     const rows: QuestCompletionRow[] = [
-      // user 10 crosses at 10:00
-      c(10, 1, "2026-08-01T09:00:00Z", 100), c(10, 2, "2026-08-01T10:00:00Z", 100),
-      // user 20 crosses earlier, at 08:00
+      // user 10 crosses later but ends with more points (250)
+      c(10, 1, "2026-08-01T09:00:00Z", 150), c(10, 2, "2026-08-01T10:00:00Z", 100),
+      // user 20 crosses earlier but ends with fewer points (200)
       c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, "2026-08-01T08:00:00Z", 100),
     ];
     const standings = computeQuestStandings(rows, 150);
-    expect(maidenVoyageUserId(standings)).toBe(20);
-    expect(standings[0].userId).toBe(20); // entered first, sorts first
+    // No first-crew prize: the higher-points crew sorts first even though it
+    // crossed the threshold later. The draws are weighted-random.
+    expect(standings[0].userId).toBe(10);
+    expect(standings[0].verifiedPoints).toBe(250);
   });
 });
 
@@ -425,14 +427,19 @@ describe("ship-logic: crew sponsorship (accumulation + goal flip)", () => {
 });
 
 describe("ship-logic: free-voyage giveaway (booking-volume driven)", () => {
-  it("gives the maiden voyage at 0% and one more per 20% booked, capped at six", () => {
-    expect(freeVoyagesUnlocked(0)).toBe(1);   // the maiden voyage
-    expect(freeVoyagesUnlocked(19)).toBe(1);
-    expect(freeVoyagesUnlocked(20)).toBe(2);
-    expect(freeVoyagesUnlocked(40)).toBe(3);
-    expect(freeVoyagesUnlocked(60)).toBe(4);
-    expect(freeVoyagesUnlocked(80)).toBe(5);
-    expect(freeVoyagesUnlocked(100)).toBe(MAX_FREE_VOYAGES); // 6 at 100%
+  it("draws one at launch and releases the rest at 40/60/75/85/95% booked, capped at six", () => {
+    expect(freeVoyagesUnlocked(0)).toBe(1);    // the first draw (launch)
+    expect(freeVoyagesUnlocked(39)).toBe(1);
+    expect(freeVoyagesUnlocked(40)).toBe(2);
+    expect(freeVoyagesUnlocked(59)).toBe(2);
+    expect(freeVoyagesUnlocked(60)).toBe(3);
+    expect(freeVoyagesUnlocked(74)).toBe(3);
+    expect(freeVoyagesUnlocked(75)).toBe(4);
+    expect(freeVoyagesUnlocked(84)).toBe(4);
+    expect(freeVoyagesUnlocked(85)).toBe(5);
+    expect(freeVoyagesUnlocked(94)).toBe(5);
+    expect(freeVoyagesUnlocked(95)).toBe(MAX_FREE_VOYAGES); // 6 at 95%
+    expect(freeVoyagesUnlocked(100)).toBe(MAX_FREE_VOYAGES);
     expect(freeVoyagesUnlocked(140)).toBe(MAX_FREE_VOYAGES);  // never exceeds the cap
   });
 
@@ -486,21 +493,28 @@ describe("ship router guards (reject before any DB call)", () => {
   it("requestBooking rejects five adults (only a family of five may sail)", async () => {
     const caller = appRouter.createCaller(makeCtx(user()));
     await expect(
-      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", adults: 5, children: 0, guests: 5, dietCommitment: true, waterDoctrineCommitment: true }),
+      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", adults: 5, children: 0, guests: 5, dietCommitment: true, waterDoctrineCommitment: true, agreementAccepted: true, agreementVersion: "1.0" }),
     ).rejects.toBeTruthy();
   });
 
   it("requestBooking rejects a non-7-night voyage", async () => {
     const caller = appRouter.createCaller(makeCtx(user()));
     await expect(
-      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-05", guests: 2, dietCommitment: true, waterDoctrineCommitment: true }),
+      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-05", guests: 2, dietCommitment: true, waterDoctrineCommitment: true, agreementAccepted: true, agreementVersion: "1.0" }),
     ).rejects.toBeTruthy();
   });
 
   it("requestBooking requires both commitments", async () => {
     const caller = appRouter.createCaller(makeCtx(user()));
     await expect(
-      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", guests: 2, dietCommitment: false as unknown as true, waterDoctrineCommitment: true }),
+      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", guests: 2, dietCommitment: false as unknown as true, waterDoctrineCommitment: true, agreementAccepted: true, agreementVersion: "1.0" }),
+    ).rejects.toBeTruthy();
+  });
+
+  it("requestBooking requires accepting the Voyage Covenant terms", async () => {
+    const caller = appRouter.createCaller(makeCtx(user()));
+    await expect(
+      caller.ship.requestBooking({ startDate: "2026-08-01", endDate: "2026-08-08", guests: 2, dietCommitment: true, waterDoctrineCommitment: true, agreementAccepted: false as unknown as true, agreementVersion: "1.0" }),
     ).rejects.toBeTruthy();
   });
 
@@ -538,7 +552,12 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
     "client/src/components/blog/ShipArticleBlocks.tsx",
     "client/src/data/blogPosts.ts",
   ];
-  const banned = [/complete the quest to enter/i, /complete all 7/i, /everyone who completes the quest/i, /Seven actions to earn/i];
+  const banned = [
+    /complete the quest to enter/i, /complete all 7/i, /everyone who completes the quest/i, /Seven actions to earn/i,
+    // Fix 5 (2026-07-16): the maiden voyage is a scheduled sailing, not the prize.
+    // Free voyages are drawn (first draw Aug 16); winners pick their own dates.
+    /win the maiden voyage/i, /maiden voyage sails free/i, /first crew across/i, /across the 150-point line/i,
+  ];
 
   it("has no leftover complete-the-quest entry strings in the ship surfaces", () => {
     for (const rel of files) {

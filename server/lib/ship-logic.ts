@@ -12,9 +12,6 @@ import {
   ANCHOR_NIGHTLY_USD,
   TRIAL_RENTAL_NIGHTLY_USD,
   TRIAL_OFFERING_NIGHTLY_USD,
-  MAIDEN_FREE_VOYAGES,
-  FREE_VOYAGE_MILESTONE_PCT,
-  MAX_FREE_VOYAGES,
   SHIP_PROGRAM_TAG,
   SHIP_GIFT_PROGRAM_TAG,
 } from "./ship-config";
@@ -303,9 +300,9 @@ function toMs(v: Date | string | null): number | null {
  * Compute per-user standings from verified completions. Entry is a points
  * threshold, not a checklist: a crew with at least `thresholdPoints` verified
  * points is in every future drawing, with tickets equal to its points (every
- * point above the line raises its odds). `enteredAt` is the moment cumulative
- * points first crossed the line, so the maiden voyage can go to the first crew
- * to cross it. No single action is mandatory.
+ * point above the line raises its odds). `enteredAt` records the moment
+ * cumulative points first crossed the line; it is informational only, since the
+ * draws are weighted-random rather than first-come. No single action is mandatory.
  */
 export function computeQuestStandings(
   completions: QuestCompletionRow[],
@@ -340,12 +337,10 @@ export function computeQuestStandings(
     });
   }
 
-  // Order: entered crews first by enteredAt asc (the maiden-voyage race, though
-  // each draw is weighted-random), then the rest by points descending.
+  // Order for display only: entered crews first, everyone by points descending.
+  // The draws are weighted-random, so this order carries no prize meaning.
   standings.sort((a, b) => {
-    if (a.isEntered && b.isEntered) return (a.enteredAt ?? 0) - (b.enteredAt ?? 0);
-    if (a.isEntered) return -1;
-    if (b.isEntered) return 1;
+    if (a.isEntered !== b.isEntered) return a.isEntered ? -1 : 1;
     return b.verifiedPoints - a.verifiedPoints;
   });
 
@@ -355,13 +350,6 @@ export function computeQuestStandings(
 /** How many crews are in the draw (verified points at or above the threshold). */
 export function countEntered(standings: QuestStanding[]): number {
   return standings.filter((s) => s.isEntered).length;
-}
-
-/** The crew that crossed the threshold first, for the maiden voyage. */
-export function maidenVoyageUserId(standings: QuestStanding[]): number | null {
-  const entered = standings.filter((s) => s.isEntered && s.enteredAt != null);
-  if (entered.length === 0) return null;
-  return entered.reduce((first, s) => (s.enteredAt! < first.enteredAt! ? s : first)).userId;
 }
 
 // ── Weighted draw (auditable) ────────────────────────────────────────────────
@@ -446,14 +434,12 @@ export function percentBooked(bookedVoyages: number, target: number): number {
 }
 
 /**
- * How many free voyages are unlocked at a given percent booked. The maiden
- * voyage is free from the start; each FREE_VOYAGE_MILESTONE_PCT booked unlocks
- * one more, capped at MAX_FREE_VOYAGES (six at 100% booked).
+ * How many free voyages are unlocked at a given percent booked. One is drawn at
+ * launch; the rest release on the FREE_VOYAGE_RELEASE_MILESTONES schedule
+ * (40/60/75/85/95% booked), capped at MAX_FREE_VOYAGES. Re-exported from
+ * @shared/shipFreeVoyage so the client ladder preview uses the same math.
  */
-export function freeVoyagesUnlocked(percent: number): number {
-  const milestones = Math.floor(Math.max(0, Math.min(100, percent)) / FREE_VOYAGE_MILESTONE_PCT);
-  return Math.min(MAX_FREE_VOYAGES, MAIDEN_FREE_VOYAGES + milestones);
-}
+export { freeVoyagesUnlocked } from "@shared/shipFreeVoyage";
 
 // ── Crew sponsorship (accumulation toward the voyage goal) ────────────────────
 export type SponsorshipProgress = {

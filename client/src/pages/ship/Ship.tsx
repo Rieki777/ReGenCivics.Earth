@@ -14,6 +14,7 @@ import {
 } from "./shipShared";
 import { ShipInventory } from "@/components/ship/ShipInventory";
 import { StateOfShip } from "@/components/ship/StateOfShip";
+import { trpc } from "@/lib/trpc";
 import AutoplayVideo from "@/components/AutoplayVideo";
 
 const PERKS = [
@@ -37,6 +38,10 @@ const GALLERY = [
 ];
 
 export default function Ship() {
+  // The entry threshold is admin-tunable server-side; read it live so the hero
+  // callout never drifts from the real points line.
+  const flags = trpc.ship.featureFlags.useQuery();
+  const threshold = flags.data?.entryThreshold ?? 150;
   return (
     <PageWrapper>
       <SEO
@@ -51,12 +56,12 @@ export default function Ship() {
         <ShipImage name="ship-zion-redrock-hero.jpg" alt="The ReGen Ship beneath red rock cliffs in crisp daylight." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-24 text-white">
-          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">A program of the Church of the Regenerative Earth</p>
+          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">A partnership of ReGen Civics and CORE (Church of the Regenerative Earth) presenting:</p>
           <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-6xl font-bold mb-5 drop-shadow-lg">The ReGen Ship has raised her flag</h1>
           <p data-reveal data-reveal-delay="160" className="text-lg md:text-2xl mb-8 text-white drop-shadow">{SHIP_TAGLINE}</p>
           <div data-reveal data-reveal-delay="240" className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] animate-glow transition-shadow">
-              <Link href="/ship/quest">Win the maiden voyage</Link>
+              <Link href="/ship/quest">Win a free voyage</Link>
             </Button>
             <Button asChild size="lg" className="bg-white text-[#1a472a] font-semibold text-base px-7 hover:bg-white/90 shadow-lg">
               <Link href="/ship/book">See open weeks</Link>
@@ -237,9 +242,9 @@ export default function Ship() {
           {/* The quest, as a glowing gold callout */}
           <div data-reveal className="quest-card-gold flex flex-col rounded-2xl p-6 bg-gradient-to-br from-[#ffd700]/20 to-[#d4a574]/10 border border-[#ffd700]/50">
             <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
-            <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The maiden voyage</p>
-            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">It sails this August. Win the week-long adventure.</h2>
-            <p className="text-white/90 mb-4 flex-1">Reach 150 points and you're in every draw. Every point above raises your odds. The maiden voyage sails free, and every 20% of the year that books unlocks one more free voyage, up to six.</p>
+            <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">Win a free voyage</p>
+            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">Qualify by August 16. Win a week-long voyage on your own dates.</h2>
+            <p className="text-white/90 mb-4 flex-1">Reach {threshold} points by August 16 and you are in the drawing. Every point above raises your odds. On August 16 we draw the first free voyage, and more unlock as she books up, up to six. Winners pick their own open week.</p>
             <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
           </div>
           <div data-reveal data-reveal-delay="120" className="flex flex-col">

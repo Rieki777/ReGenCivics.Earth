@@ -159,6 +159,19 @@ export function ShipNavRow({ current }: { current?: string }) {
           );
         })}
       </div>
+      {/* Secondary legal/utility links, kept off the image-card grid. */}
+      <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <Link
+          href="/ship/terms"
+          aria-current={current === "/ship/terms" ? "page" : undefined}
+          className={cn(
+            "underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] rounded",
+            current === "/ship/terms" ? "text-[#2f5d3a] dark:text-[#7dd87d] font-medium underline" : "hover:text-foreground",
+          )}
+        >
+          Voyage Covenant &amp; Rental Terms
+        </Link>
+      </div>
     </nav>
   );
 }

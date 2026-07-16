@@ -12,6 +12,7 @@ import { SEO } from "@/components/SEO";
 import { PageTransition } from "@/components/PageTransition";
 import { ShareButton } from "@/components/ShareButton";
 import { toSlug } from "@/utils/songSlug";
+import { isIos } from "@/lib/platform";
 
 export default function HymnBook() {
   const { isAuthenticated } = useAuth();
@@ -365,6 +366,9 @@ function NowPlayingPanel() {
   const dur = isFinite(audio.duration) ? audio.duration : 0;
   const pct = dur > 0 ? Math.min(100, (audio.currentTime / dur) * 100) : 0;
   const volPct = Math.round(audio.volume * 100);
+  // iOS makes HTMLMediaElement.volume read-only, so the slider would move but do
+  // nothing. Show a hint pointing at the hardware buttons instead of a dead control.
+  const iosVolume = isIos();
 
   return (
     <div className="flex flex-col gap-5">
@@ -461,17 +465,21 @@ function NowPlayingPanel() {
       {/* Volume */}
       <div className="flex items-center gap-3 justify-center">
         <Volume2 className="w-4 h-4 text-white/50 flex-shrink-0" />
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.01}
-          value={audio.volume}
-          onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
-          className="hymn-range w-32"
-          style={{ background: `linear-gradient(to right, #7dd87d ${volPct}%, rgba(255,255,255,0.15) ${volPct}%)` }}
-          aria-label="Volume"
-        />
+        {iosVolume ? (
+          <span className="text-xs text-white/60">Use your device buttons to change volume</span>
+        ) : (
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={audio.volume}
+            onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
+            className="hymn-range w-32"
+            style={{ background: `linear-gradient(to right, #7dd87d ${volPct}%, rgba(255,255,255,0.15) ${volPct}%)` }}
+            aria-label="Volume"
+          />
+        )}
       </div>
     </div>
   );

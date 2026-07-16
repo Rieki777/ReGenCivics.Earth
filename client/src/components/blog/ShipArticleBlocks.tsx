@@ -22,7 +22,7 @@ export function ShipQuestSteps() {
   const steps = [
     { icon: ClipboardCheck, title: "Reach 150 points", body: "Real regenerative actions, each worth points, each one verified. No single action is required." },
     { icon: Dice5, title: "You're in the draw", body: "Reach 150 points and you're in every draw. Your points are your raffle tickets, so every point above raises your odds." },
-    { icon: Share2, title: "Bookings unlock more", body: "Help fill the calendar. Every 20% booked draws another free voyage, and you're in every single draw." },
+    { icon: Share2, title: "Bookings unlock more", body: "Help fill the calendar. More free voyages release as she books up, and you're in every single draw." },
   ];
   return (
     <div className="my-8 grid gap-3 sm:grid-cols-3">
@@ -50,7 +50,7 @@ export function ShipArticleCTA() {
   return (
     <div className="my-10 quest-card-gold rounded-2xl border border-[#ffd700]/50 bg-gradient-to-br from-[#ffd700]/15 to-[#d4a574]/10 p-6 text-center">
       <Anchor className="h-8 w-8 mx-auto text-[#ffd700] mb-2" />
-      <h3 className="text-xl font-bold text-white mb-1">The maiden voyage sails this August</h3>
+      <h3 className="text-xl font-bold text-white mb-1">Free voyages, drawn as she books up</h3>
       <p className="text-white/80 mb-5">The more of us who help her fill the calendar, the more of us sail free.</p>
       <div className="flex flex-wrap justify-center gap-3">
         {links.map((l) => (

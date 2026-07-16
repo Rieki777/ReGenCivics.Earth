@@ -4290,6 +4290,10 @@ export const shipBookings = mysqlTable("ship_bookings", {
   platformBookingRef: varchar("platformBookingRef", { length: 255 }),
   dietCommitmentAt: timestamp("dietCommitmentAt"),
   waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),
+  /** Voyage Covenant acceptance, recorded at booking with the version accepted
+   *  (see shared/shipTerms.ts SHIP_TERMS_VERSION) so old acceptances stay auditable. */
+  agreementAcceptedAt: timestamp("agreementAcceptedAt"),
+  agreementVersion: varchar("agreementVersion", { length: 16 }),
   offeringDonationId: int("offeringDonationId"),
   referredByUserId: int("referredByUserId"),
   isWinnerVoyage: boolean("isWinnerVoyage").notNull().default(false),

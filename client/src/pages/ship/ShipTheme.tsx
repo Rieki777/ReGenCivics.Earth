@@ -228,7 +228,7 @@ export default function ShipTheme() {
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>Sail her free</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-3">The Sanctuary of Love actions</h2>
-        <p className="text-foreground/80 max-w-2xl mb-6">The Maiden Voyage Quest gives you a free week if you reach the points line. This docking adds its own ways to earn, and every one of them is an act of love you can do from where you already are, before you ever board.</p>
+        <p className="text-foreground/80 max-w-2xl mb-6">The Maiden Voyage Quest enters you in the drawing for a free week when you reach the points line. This docking adds its own ways to earn, and every one of them is an act of love you can do from where you already are, before you ever board.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {LOVE_ACTIONS.map((a, i) => (
             <div key={a.title} data-reveal data-reveal-delay={(i % 2) * 80} className="rounded-2xl border bg-card p-5">

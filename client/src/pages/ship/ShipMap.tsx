@@ -31,6 +31,8 @@ import {
   BasemapLayer, VoyageRangeLayer, CascadiaBoundary, ChakraLayer, ClusterLayer, VoyageRoute, CrosshairPicker, type MapPin,
 } from "./shipMapLayers";
 import { InnerCompassSection } from "./shipInnerCompass";
+import { ShipPermissionMap } from "./ShipPermissionMap";
+import { Link } from "wouter";
 import {
   loadVoyage, addToVoyage, removeFromVoyage, clearVoyage, saveVoyage,
   downloadVoyageGpx, voyageToGoogleMapsUrl, type VoyagePin,
@@ -99,6 +101,9 @@ export default function ShipMap() {
 
   // The Inner Compass: the intuition practice + printable map builder.
   const [innerCompassOpen, setInnerCompassOpen] = useState(false);
+
+  // The permission-radius map: the Voyage Covenant travel radius (Terms §6).
+  const [permissionOpen, setPermissionOpen] = useState(false);
 
   // Selection / drawer.
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -183,6 +188,13 @@ export default function ShipMap() {
     [filtered],
   );
 
+  // Hide filters that can never match the live data (a pill that always empties
+  // the board is a dead control, e.g. "Has water tests" before any results land).
+  const visibleBoolFilters = useMemo(
+    () => BOOL_FILTERS.filter((f) => f.key !== "hasWater" || allPins.some((p) => (p as any).hasWater)),
+    [allPins],
+  );
+
   const toggleType = (t: string) => setActiveTypes((prev) => { const n = new Set(prev); n.has(t) ? n.delete(t) : n.add(t); return n; });
   const toggleBool = (k: MapBoolFilter) => setBoolFilters((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
@@ -259,7 +271,7 @@ export default function ShipMap() {
 
         {/* Boolean filters + layer toggles */}
         <div className="flex flex-wrap gap-2 mb-4 items-center">
-          {BOOL_FILTERS.map((f) => (
+          {visibleBoolFilters.map((f) => (
             <button
               key={f.key}
               onClick={() => toggleBool(f.key)}
@@ -270,7 +282,9 @@ export default function ShipMap() {
           ))}
           <span className="mx-1 h-4 w-px bg-border" aria-hidden />
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showBoundary} onChange={(e) => setShowBoundary(e.target.checked)} /> Bioregion</label>
-          <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showPlantings} onChange={(e) => setShowPlantings(e.target.checked)} /> Seed plantings</label>
+          {(plantings.data?.length ?? 0) > 0 && (
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showPlantings} onChange={(e) => setShowPlantings(e.target.checked)} /> Seed plantings</label>
+          )}
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showChakras} onChange={(e) => setShowChakras(e.target.checked)} /> Chakra points</label>
           <button
             onClick={() => { setInnerCompassOpen((v) => !v); setVoyageOpen(false); }}
@@ -280,6 +294,9 @@ export default function ShipMap() {
           </button>
           <button onClick={() => setVoyageOpen((v) => !v)} className="px-3 py-1 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
             ⛵ My voyage{voyage.length ? ` (${voyage.length})` : ""}
+          </button>
+          <button onClick={() => { setPermissionOpen((v) => !v); setInnerCompassOpen(false); }} aria-pressed={permissionOpen} className="px-3 py-1 rounded-full border text-xs border-[#c0392b]/50 text-[#c0392b] dark:text-[#e77] hover:bg-[#c0392b]/10">
+            🔴 Permission radius
           </button>
         </div>
 
@@ -342,7 +359,7 @@ export default function ShipMap() {
           <p className="text-sm text-muted-foreground">
             {pinsQuery.isLoading && allPins.length === 0
               ? "Loading the board…"
-              : `${withinCount} places within a ${VOYAGE_DAYS}-day sail${filtered.length - withinCount > 0 ? ` · ${filtered.length - withinCount} in the fog beyond` : ""}`}
+              : `${withinCount} places within a ${VOYAGE_DAYS}-day sail${filtered.length - withinCount > 0 ? ` · ${filtered.length - withinCount} more wait past the horizon and join the board when the anchorage moves` : ""}`}
           </p>
           <button onClick={() => setLegendOpen((v) => !v)} className="text-sm underline text-[#2f5d3a] dark:text-[#9de89d]">{legendOpen ? "Hide legend" : "What do the pins mean?"}</button>
         </div>
@@ -354,7 +371,7 @@ export default function ShipMap() {
               <div key={t} className="flex items-start gap-2 text-sm"><span aria-hidden>{meta.emoji}</span><span className="text-foreground/80">{meta.blurb}</span></div>
             ))}
             <p className="sm:col-span-2 text-xs text-muted-foreground mt-1">Faded, dashed tokens are unverified: pulled from open data or dropped by crews, waiting for someone to confirm them in the field.</p>
-            <p className="sm:col-span-2 text-xs text-muted-foreground">The gold rings radiate from the anchorage, one per day of sail. Tokens past the {VOYAGE_DAYS}-day horizon sit in the fog, dimmed and out of play until she sails closer.</p>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">The gold rings radiate from the anchorage, one per day of sail. Places past the {VOYAGE_DAYS}-day horizon rest in the fog, off the board until she sails closer.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">Some pins come from partner datasets offered by other projects and networks. Those places carry a credit line to their source.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">Some places are shared with permission from iOverlander and visible to signed-in crew.</p>
             <p className="sm:col-span-2 text-xs text-muted-foreground">The glowing colored orbs are chakra points: symbolic energy centers of the region, joined into one line of light. Visit one and focus its center. Release, clear, heal. More nodes will be named as the research lands.</p>
@@ -365,6 +382,26 @@ export default function ShipMap() {
       {/* The Inner Compass: intuition practice + printable map builder */}
       {innerCompassOpen && (
         <InnerCompassSection pins={allPins} activeTypes={activeTypes} onClose={() => setInnerCompassOpen(false)} />
+      )}
+
+      {/* The permission radius: the Voyage Covenant travel radius (Terms §6) */}
+      {permissionOpen && (
+        <ShipSection className="bg-[#c0392b]/5">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <ShipEyebrow>Travel radius</ShipEyebrow>
+              <h2 className="text-2xl font-bold">Where she may sail without asking</h2>
+            </div>
+            <button onClick={() => setPermissionOpen(false)} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          </div>
+          <p className="text-foreground/80 max-w-2xl mb-4">
+            The <span className="font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">green zone</span> is the permitted range: within 500 miles of Ashland, a one-week voyage may sail anywhere inside it. Beyond that line lies the <span className="font-semibold text-[#c0392b] dark:text-[#e77]">red locked zone</span> — contact the core team for written permission before you cross it. Longer voyages can unlock a wider range (up to 1,250 miles for a four-week sail), but crossing 500 miles always needs permission in advance.
+          </p>
+          <ShipPermissionMap />
+          <p className="text-sm text-muted-foreground mt-3 max-w-2xl">
+            To request a wider range, read <Link href="/ship/terms#radius" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Voyage Covenant §6</Link> and email the core team at least 72 hours ahead with your destination, route, and dates.
+          </p>
+        </ShipSection>
       )}
 
       {/* Plan your voyage with the First Mate */}
@@ -530,6 +567,14 @@ function DetailDrawer({ detail, onClose, inVoyage, onToggleVoyage, isAuthenticat
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="sm" onClick={onToggleVoyage} className={inVoyage ? "bg-[#b5762f] hover:brightness-95" : "bg-[#2f5d3a] hover:bg-[#264a2f]"}>{inVoyage ? "In your voyage ✓" : "Add to my voyage"}</Button>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${detail.lat},${detail.lng}`}
+            target="_blank" rel="noreferrer"
+          ><Button size="sm" variant="outline">Google Maps</Button></a>
+          <a
+            href={`https://maps.apple.com/?daddr=${detail.lat},${detail.lng}&q=${encodeURIComponent(detail.name)}`}
+            target="_blank" rel="noreferrer"
+          ><Button size="sm" variant="outline">Apple Maps</Button></a>
           <Button size="sm" variant="outline" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("Link copied"); }}>Share</Button>
           {isAuthenticated && (
             <>

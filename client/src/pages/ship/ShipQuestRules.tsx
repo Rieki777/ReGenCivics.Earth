@@ -74,9 +74,9 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
       <>
         <p className="mb-2">
           The quest opens at announcement and stays open through the first sailing year. You stay in the draw once your
-          verified points reach 150. The maiden voyage goes to the first crew across the 150-point line. After that, one
-          more free voyage is drawn for every 20% of the first year that gets booked, up to six free voyages total at a
-          fully booked year.
+          verified points reach 150. The first free voyage is drawn on August 16, 2026 from everyone who has qualified by
+          then. After that, more free voyages are drawn as bookings grow, at 40%, 60%, 75%, 85%, and 95% of the first year
+          booked, up to six free voyages total at a fully booked year. Winners choose their own dates from the open weeks.
         </p>
         <p>
           Each draw is a weighted random draw among everyone in the draw who has not already won, with each entrant
@@ -101,8 +101,8 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     body: (
       <p>
         Each prize is one free voyage week on the ReGen Ship, boarding Monday and returning Sunday. Approximate retail
-        value, the anchor value, is about $4,200 per voyage. Up to six voyages are given away in the first year, starting with the maiden voyage and
-        adding one for every 20% of the year booked. A prize covers the voyage rental. Personal costs during the voyage,
+        value, the anchor value, is about $4,200 per voyage. Up to six voyages are given away in the first year, starting with the first draw on August 16, 2026 and
+        adding one more at 40%, 60%, 75%, 85%, and 95% of the year booked. A prize covers the voyage rental. Personal costs during the voyage,
         such as fuel, food, and travel to and from the ship, are the winner's own.
       </p>
     ),

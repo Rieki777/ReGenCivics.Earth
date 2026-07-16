@@ -42,7 +42,7 @@ import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice, voyageNightsFromAnswers,
-  computeQuestStandings, countEntered, maidenVoyageUserId, freeVoyagesUnlocked, percentBooked,
+  computeQuestStandings, countEntered, freeVoyagesUnlocked, percentBooked,
   weightedDraw, sponsorshipProgress, enumerateVoyageWeeks,
   type QuestCompletionRow, type DrawEntry,
 } from "../lib/ship-logic";
@@ -173,8 +173,9 @@ async function loadQuestStandings() {
 }
 
 // ── Free-voyage giveaway status (booking-volume driven) ───────────────────────
-// The maiden voyage is free. Each 20% of the first year booked unlocks one more
-// free voyage, up to six at 100%. Each is drawn at random from quest completers.
+// One free voyage is drawn at launch (the first draw). The rest release at
+// 40/60/75/85/95% of the first year booked, up to six. Each is drawn at random
+// from everyone in the draw.
 async function loadFreeVoyageStatus() {
   const d = await db();
   const booked = await d
@@ -388,6 +389,10 @@ export const shipRouter = router({
           guests: z.number().int().min(MIN_GUESTS).max(MAX_GUESTS_WITH_KIDS).optional(),
           dietCommitment: z.literal(true),
           waterDoctrineCommitment: z.literal(true),
+          // Voyage Covenant acceptance. Record the version the client actually
+          // displayed (not the server's current one) so the audit trail is honest.
+          agreementAccepted: z.literal(true),
+          agreementVersion: z.string().min(1).max(16),
           ref: z.string().max(40).optional(),
           notes: z.string().max(2000).optional(),
         })
@@ -438,6 +443,8 @@ export const shipRouter = router({
         status: "requested",
         dietCommitmentAt: now,
         waterDoctrineCommitmentAt: now,
+        agreementAcceptedAt: now,
+        agreementVersion: input.agreementVersion,
         referredByUserId,
         notes: input.notes ? sanitizeInput(input.notes) : null,
       });
@@ -786,15 +793,12 @@ export const shipRouter = router({
         ? await d.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, ids))
         : [];
       const byId = new Map(profiles.map((p) => [p.id, p]));
-      const maidenId = maidenVoyageUserId(standings);
       return {
         poolSize: countEntered(standings),
         entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
-        maidenVoyageUserId: maidenId,
         freeVoyage: await loadFreeVoyageStatus(),
         standings: standings.slice(0, 100).map((s) => ({
           ...s,
-          isMaidenVoyage: s.userId === maidenId,
           name: byId.get(s.userId)?.name ?? "A crew member",
           handle: byId.get(s.userId)?.handle ?? null,
         })),
