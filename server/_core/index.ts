@@ -41,6 +41,7 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import express from "express";
+import fsSync from "fs";
 import compression from "compression";
 import { createServer } from "http";
 import net from "net";
@@ -479,19 +480,33 @@ async function startServer() {
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(xml);
   });
-  app.get('/robots.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/robots.txt'));
-  });
-  app.get('/llms.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms.txt'));
-  });
-  app.get('/llms-full.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
-  });
-  app.get('/llms-full.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
-  });
-  
+  // AI accessibility files. IMPORTANT: in the production bundle __dirname is
+  // dist/, so the correct copy lives at dist/public/<name> (Vite copies
+  // client/public there at build, and prerender-blog.mjs appends the blog
+  // section to the dist copy). The old '../../client/public' path resolved
+  // outside the app root in production and served empty responses; keep the
+  // client/public path only as the dev fallback.
+  const publicFileCandidates = (name: string) => [
+    path.join(__dirname, 'public', name),               // production: dist/public
+    path.join(__dirname, '../../client/public', name),  // dev: repo source
+    path.join(__dirname, '../../dist/public', name),    // dev after a local build
+  ];
+  const servePublicFile = (name: string, contentType: string) =>
+    (_req: express.Request, res: express.Response) => {
+      const file = publicFileCandidates(name).find((f) => fsSync.existsSync(f));
+      if (!file) {
+        res.status(404).type('text/plain').send('Not found');
+        return;
+      }
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.sendFile(file);
+    };
+  app.get('/robots.txt', servePublicFile('robots.txt', 'text/plain; charset=utf-8'));
+  app.get('/llms.txt', servePublicFile('llms.txt', 'text/plain; charset=utf-8'));
+  app.get('/llms-full.txt', servePublicFile('llms-full.txt', 'text/plain; charset=utf-8'));
+  app.get('/feed.xml', servePublicFile('feed.xml', 'application/rss+xml; charset=utf-8'));
+
   // OAuth + email auth routes
   registerOAuthRoutes(app);
 
