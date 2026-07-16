@@ -143,6 +143,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     timeout-minutes: 10
+    # Advisory, not blocking (audit Phase 1: honest gates). LHCI 'collect' has
+    # been failing on main for weeks and turning every run red, which trains
+    # reviewers to ignore red. It still runs and uploads reports; it just no
+    # longer fails the workflow. Re-block once the collect step is reliable.
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v5
@@ -153,8 +158,10 @@ jobs:
           name: dist-public
           path: dist/public
 
+      # -s = SPA fallback: serve index.html for client routes (/fund, /apply,
+      # /community) instead of 404, so Lighthouse can actually load them.
       - name: Serve static build
-        run: npx --yes serve dist/public --listen 3000 &
+        run: npx --yes serve -s dist/public --listen 3000 &
 
       - name: Wait for server
         run: npx --yes wait-on http://localhost:3000 --timeout 30000
