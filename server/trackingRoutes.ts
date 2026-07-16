@@ -4,7 +4,7 @@
  */
 
 import { Express, Request, Response } from "express";
-import { recordEmailOpen, recordEmailClick } from "./emailTracking";
+import { recordEmailOpen, recordEmailClick, isInternalRedirectTarget, verifyTrackedUrl } from "./emailTracking";
 
 /**
  * Register tracking routes with Express app
@@ -56,34 +56,35 @@ export function registerTrackingRoutes(app: Express): void {
    * Records the click and redirects to the original URL
    */
   app.get("/api/track/click/:emailLogId", async (req: Request, res: Response) => {
+    const emailLogId = parseInt(req.params.emailLogId, 10);
+    const targetUrl = req.query.url as string;
+    const sig = req.query.sig as string | undefined;
+
+    if (isNaN(emailLogId)) {
+      return res.status(400).send("Invalid email log ID");
+    }
+
+    if (!targetUrl) {
+      return res.status(400).send("Missing target URL");
+    }
+
+    // Open-redirect guard: internal destinations pass as-is (a phisher gains
+    // nothing redirecting to our own domain); external destinations must carry
+    // the HMAC signature stamped on the link when the email was generated.
+    if (!isInternalRedirectTarget(targetUrl) && !verifyTrackedUrl(emailLogId, targetUrl, sig)) {
+      return res.status(400).send("Invalid redirect target");
+    }
+
     try {
-      const emailLogId = parseInt(req.params.emailLogId, 10);
-      const targetUrl = req.query.url as string;
-      
-      if (isNaN(emailLogId)) {
-        return res.status(400).send("Invalid email log ID");
-      }
-      
-      if (!targetUrl) {
-        return res.status(400).send("Missing target URL");
-      }
-      
       // Record the click event asynchronously
       recordEmailClick(emailLogId).catch((error) => {
         console.error("Failed to record email click:", error);
       });
-      
-      // Redirect to the original URL immediately
-      res.redirect(302, targetUrl);
     } catch (error) {
       console.error("Error in click tracking endpoint:", error);
-      // Try to redirect anyway if we have the URL
-      const targetUrl = req.query.url as string;
-      if (targetUrl) {
-        res.redirect(302, targetUrl);
-      } else {
-        res.status(500).send("Tracking error");
-      }
+      // Tracking failure never blocks the (already validated) redirect
     }
+
+    res.redirect(302, targetUrl);
   });
 }

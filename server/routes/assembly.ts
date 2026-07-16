@@ -23,6 +23,7 @@ import { invokeLLM } from "../_core/llm";
 import { requireCoCreatorPlus } from "./proposals";
 import { bridgeToHypha } from "../lib/hypha-bridge";
 import { notifyGovernanceSubscribers } from "../jobs/assemblyNotify";
+import { executionPayloadSchema } from "../lib/evolution-payload";
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
 
@@ -413,27 +414,9 @@ export const assemblyRouter = router({
         category: z
           .enum(["fund_allocation", "game_variable", "new_quest", "food_economy", "platform_feature", "community", "bff_initiative", "partnership", "community_agreement", "other"])
           .default("community"),
-        executionPayload: z
-          .union([
-            z.object({
-              kind: z.literal("variable_change"),
-              variableKey: z.string().min(3).max(120),
-              newValue: z.number(),
-            }),
-            z.object({
-              kind: z.literal("bounds_change"),
-              variableKey: z.string().min(3).max(120),
-              newMin: z.number(),
-              newMax: z.number(),
-            }),
-            z.object({
-              kind: z.literal("feature"),
-              specMarkdown: z.string().min(20).max(20000),
-              acceptanceCriteria: z.array(z.string().min(3).max(300)).min(1).max(20),
-              scopePaths: z.array(z.string().min(1).max(200)).min(1).max(40),
-            }),
-          ])
-          .optional(),
+        // Canonical shape schema, shared with dispatchExecution so raise-time
+        // and execution-time validation can never drift apart.
+        executionPayload: executionPayloadSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

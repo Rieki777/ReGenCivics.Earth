@@ -78,7 +78,7 @@ beforeAll(async () => {
     sql`INSERT INTO proposals (authorId, title, category, status, aim, executionPayload)
         VALUES (${testUserId}, 'Evolution suite test: feature', 'platform_feature', 'passed',
                 'Prove Rung 3 stays dark below tier 3',
-                ${JSON.stringify({ kind: "feature", specMarkdown: "toy spec", acceptanceCriteria: ["it parks"], scopePaths: ["client/src/pages/Assembly*"] })})`
+                ${JSON.stringify({ kind: "feature", specMarkdown: "toy spec for the evolution suite tier gate test", acceptanceCriteria: ["it parks below tier 3"], scopePaths: ["client/src/pages/Assembly*"] })})`
   );
   featureProposalId = Number((featIns as any).insertId);
 
@@ -213,6 +213,35 @@ describe("dispatchExecution (ratification dispatcher, Rung 1)", () => {
     const pid = Number((ins as any).insertId);
     const r = await dispatchExecution(pid);
     expect(r.status).toBe("skipped");
+    await database!.delete(proposals).where(eq(proposals.id, pid));
+  });
+
+  it.skipIf(skipIfNoDb)("refuses a stored payload that fails shape validation and touches nothing", async () => {
+    // Simulates a payload written to the DB by a path that skipped raise-time
+    // validation: wrong types, missing fields. The execution-time shape gate
+    // must refuse it before any execution row or variable write happens.
+    const database = await getDb();
+    const [ins] = await database!.execute(
+      sql`INSERT INTO proposals (authorId, title, category, status, aim, executionPayload)
+          VALUES (${testUserId}, 'Evolution suite test: malformed payload', 'game_variable', 'passed',
+                  'Prove the execution-time shape gate holds',
+                  ${JSON.stringify({ kind: "variable_change", variableKey: TEST_VAR_KEY, newValue: "not-a-number" })})`
+    );
+    const pid = Number((ins as any).insertId);
+    const valueBefore = Number((await fetchTestVar()).value);
+
+    const r = await dispatchExecution(pid);
+    expect(r.status).toBe("failed");
+    expect(r.detail).toMatch(/shape validation/);
+
+    // Nothing applied, nothing recorded
+    expect(Number((await fetchTestVar()).value)).toBe(valueBefore);
+    const execs = await database!
+      .select()
+      .from(governanceExecutions)
+      .where(eq(governanceExecutions.proposalId, pid));
+    expect(execs.length).toBe(0);
+
     await database!.delete(proposals).where(eq(proposals.id, pid));
   });
 });

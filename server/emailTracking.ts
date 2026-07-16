@@ -1,11 +1,73 @@
 /**
  * Email Tracking Utilities
  * Provides open tracking (pixel) and click tracking (URL wrapping) for emails
+ *
+ * Click-tracking links are HMAC-signed at generation time and verified at
+ * redirect time, so /api/track/click cannot be used as an open redirect.
+ * Same-origin destinations (regencivics.earth and subdomains, or a relative
+ * path) are allowed without a signature so links in already-sent emails keep
+ * working; external destinations require a valid signature.
  */
 
+import crypto from "crypto";
 import { getDb } from "./db";
 import { emailLogs } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+
+// ── Click-redirect safety ────────────────────────────────────────────────────
+
+/** Key for signing tracked URLs, derived from JWT_SECRET (fail-fast validated
+ * at startup by _core/env.ts). Kept lazy so test runs without a secret still
+ * import cleanly; signing/verification simply fail closed without a key. */
+function trackingSigningKey(): string | null {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+  return `${secret}:email-click-tracking-v1`;
+}
+
+/** HMAC signature binding a destination URL to a specific email log entry. */
+export function signTrackedUrl(emailLogId: number, url: string): string | null {
+  const key = trackingSigningKey();
+  if (!key) return null;
+  return crypto.createHmac("sha256", key).update(`${emailLogId}:${url}`).digest("hex").slice(0, 32);
+}
+
+/** Timing-safe verification of a tracked-URL signature. Fails closed. */
+export function verifyTrackedUrl(emailLogId: number, url: string, sig: string | undefined | null): boolean {
+  if (!sig) return false;
+  const expected = signTrackedUrl(emailLogId, url);
+  if (!expected) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(sig);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/** True when a redirect target stays on our own surfaces: a relative path
+ * (not protocol-relative) or an http(s) URL on regencivics.earth or one of
+ * its subdomains (gov., core., assets., ...). These are safe without a
+ * signature; anything else needs one. */
+export function isInternalRedirectTarget(targetUrl: string): boolean {
+  if (targetUrl.startsWith("/") && !targetUrl.startsWith("//")) return true;
+  let parsed: URL;
+  try {
+    parsed = new URL(targetUrl);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+  const allowedHosts = new Set<string>();
+  for (const base of [process.env.VITE_APP_URL, process.env.APP_URL, "https://regencivics.earth"]) {
+    if (!base) continue;
+    try {
+      allowedHosts.add(new URL(base).hostname.toLowerCase());
+    } catch {
+      // ignore malformed configured base URLs
+    }
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (allowedHosts.has(host)) return true;
+  return host === "regencivics.earth" || host.endsWith(".regencivics.earth");
+}
 
 /**
  * Generate a tracking pixel URL for email open tracking
@@ -36,7 +98,9 @@ export function generateTrackingPixelHtml(emailLogId: number): string {
 export function wrapUrlWithTracking(originalUrl: string, emailLogId: number): string {
   const baseUrl = process.env.VITE_APP_URL || "https://regencivics.earth";
   const encodedUrl = encodeURIComponent(originalUrl);
-  return `${baseUrl}/api/track/click/${emailLogId}?url=${encodedUrl}`;
+  const sig = signTrackedUrl(emailLogId, originalUrl);
+  const sigParam = sig ? `&sig=${sig}` : "";
+  return `${baseUrl}/api/track/click/${emailLogId}?url=${encodedUrl}${sigParam}`;
 }
 
 /**
