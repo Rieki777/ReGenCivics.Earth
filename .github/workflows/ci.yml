@@ -45,9 +45,11 @@ jobs:
       - name: Unit tests
         run: pnpm test
         env:
-          # Tests use in-memory mocks — no real DB needed
+          # No DATABASE_URL here on purpose: DB-backed suites key their
+          # skipIfNoDb guard on it. A fake URL makes them run against a dead
+          # socket and fail with connection errors (this kept main's CI red
+          # for weeks). They run for real in the integration job below.
           JWT_SECRET: ci-test-secret
-          DATABASE_URL: mysql://test:test@localhost:3306/test
 
       - name: Build
         run: pnpm build
@@ -107,8 +109,11 @@ jobs:
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/regen_test
 
-      - name: Integration tests
-        run: pnpm test:integration
+      - name: All tests against the real DB
+        # test:all (not just test:integration): suites outside the curated 13
+        # that guard on skipIfNoDb (church-donations, gratitude cycles, ...)
+        # also get a real database here, so nothing DB-backed goes untested.
+        run: pnpm test:all
         env:
           JWT_SECRET: ci-test-secret
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/regen_test
