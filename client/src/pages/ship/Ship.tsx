@@ -125,7 +125,7 @@ export default function Ship() {
       </ShipSection>
 
       {/* The table: how we eat aboard, and why it feeds the land */}
-      <ShipSection className="bg-[#2f5d3a]/[0.05]">
+      <ShipSection id="the-table" className="bg-[#2f5d3a]/[0.05]">
         <ShipEyebrow>The table</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">How we eat aboard, and why it feeds the land</h2>
         <div className="grid md:grid-cols-2 gap-8 items-start">

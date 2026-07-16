@@ -450,7 +450,10 @@ export default function ShipBook() {
             </div>
             <div className="flex items-start gap-3">
               <Checkbox id="diet" checked={diet} onCheckedChange={(v) => setDiet(Boolean(v))} />
-              <Label htmlFor="diet" className="font-normal leading-snug">I commit to a regenerative vegan diet aboard for the whole voyage.</Label>
+              <p className="font-normal leading-snug text-sm">
+                <Label htmlFor="diet" className="font-normal">I will follow the ship's health and diet protocols aboard for the whole voyage.</Label>{" "}
+                <Link href="/ship#the-table" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the protocols and menu</Link>.
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <Checkbox id="water" checked={water} onCheckedChange={(v) => setWater(Boolean(v))} />
