@@ -13,7 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
-## 2026-07-15 (latest): Suggested voyages, one-tap booking, and the four-week lunar cycle
+## 2026-07-15 (later): Named routes for every suggested voyage
+
+- **Every package sails a hand-written route** (`shared/shipVoyages.ts` route blueprints, deterministic): The Standard Sail runs **The Three Chakras** (heart on Mount Ashland with the thermal baths, root at Mount Shasta with the headwaters spring, crown at Crater Lake with Lightning Spring water carried home); The Half Honeymoon runs **The Springs for Two**; The Honeymoon runs **The Opening and the Deepening** (two-week arc); The Full Lunar Cycle runs **One Whole Moon** (chakras, waters, forests, waning gratitude).
+- **Standing doctrine in every chart and in the First Mate's rules**: first night anchors at the Sanctuary in Ashland (orientation films, learn her systems, the grounds), Tuesday morning is the Ashland farmers market. Paddle days steer to mapped calm lakes (Diamond, Lemolo, Lost Creek, Siskiyou) since paddling on Crater Lake is not permitted.
+- **11 verified route pins seeded** (`scripts/seed-ship-route-pins.ts`, run on prod: 11 inserted) + the Sanctuary and Umpqua Hot Springs flipped verified so the First Mate can chart them by id.
+- Route names render on the voyage cards and the chart chip. Verify: `pnpm check` exit 0, 51 ship tests green, truncation 0/0, live check confirmed the Three Chakras chart on production. Commit `436b9ff`.
+
+## 2026-07-15: Suggested voyages, one-tap booking, and the four-week lunar cycle
 
 - **Four one-tap voyage packages on /ship/book**: The Standard Sail (1 week), The Half Honeymoon (1 week), The Honeymoon (2 weeks), The Full Lunar Cycle (4 weeks, a whole 28-day moon). One tap claims the first open run on the calendar, writes a deterministic rough day-by-day chart (no LLM, `shared/shipVoyages.ts`, tested), and scrolls the guest straight to the booking form. The chosen package rides into the booking notes so the crew and the First Mate know the intent.
 - **First Mate quick customize before booking**: a "Chat with your First Mate to customize your itinerary" button charts a personalized itinerary from the real treasure map (`FirstMateQuickCustomize` in `ShipFirstMate.tsx`, session-capability tokens carried) and opens a refine chat. The full planner at /ship/concierge stays the longer post-booking pass. `ship.concierge.generate` now honors a `voyage_nights` intake seed (7 to 28, validated deterministically by `voyageNightsFromAnswers`), with a token budget that scales with the chart length.
