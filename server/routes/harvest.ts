@@ -80,9 +80,23 @@ export const harvestRouter = router({
           .select()
           .from(harvestRuns)
           .orderBy(desc(harvestRuns.ranAt))
-          .limit(20);
+          .limit(40);
         const lastGeneration = runs.find((r) => r.kind === "generation")?.ranAt ?? null;
         const lastBridge = runs.find((r) => r.kind === "bridge" || r.kind === "seed")?.ranAt ?? null;
+        const lastDigest = runs.find((r) => r.kind === "digest")?.ranAt ?? null;
+
+        let lastSend: Date | null = null;
+        try {
+          const { harvestEmailSends } = await import("../../drizzle/schema");
+          const [send] = await db.select({ createdAt: harvestEmailSends.createdAt })
+            .from(harvestEmailSends)
+            .where(and(eq(harvestEmailSends.ownerId, ctx.user.id), eq(harvestEmailSends.status, "sent")))
+            .orderBy(desc(harvestEmailSends.createdAt))
+            .limit(1);
+          lastSend = send?.createdAt ?? null;
+        } catch {
+          // Send table not migrated yet; the status line just omits it.
+        }
 
         return {
           ready: true,
@@ -92,13 +106,15 @@ export const harvestRouter = router({
           status: {
             lastGeneration,
             lastBridge,
+            lastDigest,
+            lastSend,
             generationStale: lastGeneration ? Date.now() - lastGeneration.getTime() > 2 * 60 * 60 * 1000 : true,
             lastStats: runs[0]?.stats ?? null,
           },
         };
       } catch (err) {
         if (isMissingTableError(err)) {
-          return { ready: false, threshold: RIPENESS_THRESHOLD, ideas: [], drafts: [], status: { lastGeneration: null, lastBridge: null, generationStale: true, lastStats: null } };
+          return { ready: false, threshold: RIPENESS_THRESHOLD, ideas: [], drafts: [], status: { lastGeneration: null, lastBridge: null, lastDigest: null, lastSend: null, generationStale: true, lastStats: null } };
         }
         throw err;
       }
@@ -336,5 +352,50 @@ export const harvestRouter = router({
     .mutation(async () => {
       const stats = await runGeneration();
       return { ok: true, stats };
+    }),
+
+  /**
+   * Email send, step 1 of 2: the preview. Returns the rendered email, the
+   * live recipient count, and a signed confirm token bound to the exact body
+   * hash. Refuses raw drafts (only status 'edited' qualifies).
+   */
+  sendPreview: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({ itemId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const { buildSendPreview } = await import("../lib/harvest-email");
+      try {
+        return await buildSendPreview({ id: item.id, channel: item.channel, status: item.status, body: item.body });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Preview failed" });
+      }
+    }),
+
+  /**
+   * Email send, step 2 of 2: the confirmed send. Requires the preview's
+   * token back; hash mismatch, caps, and idempotency are enforced in
+   * server/lib/harvest-email.ts against the durable audit table.
+   */
+  confirmSend: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
+    .input(z.object({
+      itemId: z.number().int().positive(),
+      confirmToken: z.string().min(20).max(2000),
+      idempotencyKey: z.string().min(8).max(64),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const { confirmAndSend } = await import("../lib/harvest-email");
+      try {
+        return await confirmAndSend({
+          ownerId: ctx.user.id,
+          item: { id: item.id, channel: item.channel, status: item.status, body: item.body, aiBody: item.aiBody },
+          confirmToken: input.confirmToken,
+          idempotencyKey: input.idempotencyKey,
+        });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Send refused" });
+      }
     }),
 });

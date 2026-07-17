@@ -4972,10 +4972,33 @@ export const voiceRules = mysqlTable("voice_rules", {
 }));
 export type VoiceRule = typeof voiceRules.$inferSelect;
 
+/**
+ * Audit trail for the hardened one-button email send. body_hash binds the
+ * confirm token to the exact previewed text; idempotency_key makes a
+ * double-click a no-op; ai_body/sent_body persist the ai-vs-shipped pair.
+ * No recipient PII, only the count.
+ */
+export const harvestEmailSends = mysqlTable("harvest_email_sends", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  itemId: int("item_id").notNull(),
+  bodyHash: char("body_hash", { length: 64 }).notNull(),
+  recipientCount: int("recipient_count").notNull().default(0),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }).notNull().unique(),
+  status: mysqlEnum("status", ["sent", "failed"]).default("sent").notNull(),
+  subject: varchar("subject", { length: 300 }),
+  aiBody: text("ai_body"),
+  sentBody: text("sent_body"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerCreatedIdx: index("harvest_email_sends_owner_created_idx").on(t.ownerId, t.createdAt),
+}));
+export type HarvestEmailSend = typeof harvestEmailSends.$inferSelect;
+
 /** Append-only run stats for the /admin-create status line. */
 export const harvestRuns = mysqlTable("harvest_runs", {
   id: int("id").autoincrement().primaryKey(),
-  kind: mysqlEnum("kind", ["bridge", "generation", "seed"]).notNull(),
+  kind: mysqlEnum("kind", ["bridge", "generation", "seed", "digest"]).notNull(),
   ranAt: timestamp("ran_at").defaultNow().notNull(),
   stats: json("stats"),
 }, (t) => ({

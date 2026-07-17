@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Sprout, RefreshCw, Loader2, ChevronDown, ChevronUp, Copy, Check,
-  Send, Moon, Ban, Compass, Sparkles, ExternalLink, ArrowLeft,
+  Send, Moon, Ban, Compass, Sparkles, ExternalLink, ArrowLeft, Mail, Share2,
 } from "lucide-react";
 
 const CHANNELS = [
@@ -103,6 +103,125 @@ function Provenance({ itemId, ideaId }: { itemId?: number; ideaId?: number }) {
       {sources.length === 0 && linkTree.length === 0 && noteRefs.length === 0 && (
         <p className="text-xs text-[#1a472a]/50">No sources on file yet; the bridge fills these in.</p>
       )}
+    </div>
+  );
+}
+
+/**
+ * The hardened email send flow (Phase 4): preview shows subject + live
+ * recipient count and carries a signed token bound to the exact text; Confirm
+ * returns that token with an idempotency key, so a double-click is a no-op
+ * and any text change since preview is rejected server-side.
+ */
+function EmailSendPanel({ itemId, onSent }: { itemId: number; onSent: () => void }) {
+  const [preview, setPreview] = useState<{ subject: string; recipientCount: number; confirmToken: string } | null>(null);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [result, setResult] = useState<string | null>(null);
+  const sendPreview = trpc.harvest.sendPreview.useMutation();
+  const confirmSend = trpc.harvest.confirmSend.useMutation();
+
+  if (result) return <p className="text-xs text-[#4a7c59] font-medium py-1">{result}</p>;
+
+  if (!preview) {
+    return (
+      <div className="flex items-center gap-2 py-1 flex-wrap">
+        <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#4a7c59]/40 text-[#1a472a]" disabled={sendPreview.isPending}
+          onClick={async () => {
+            try {
+              const p = await sendPreview.mutateAsync({ itemId });
+              setPreview({ subject: p.subject, recipientCount: p.recipientCount, confirmToken: p.confirmToken });
+            } catch {
+              // Message renders below via isError.
+            }
+          }}>
+          {sendPreview.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Mail className="w-3.5 h-3.5 mr-1" />}
+          Preview email send
+        </Button>
+        {sendPreview.isError && <p className="text-xs text-red-700">{sendPreview.error.message}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 space-y-2">
+      <p className="text-xs text-amber-900">
+        <span className="font-semibold">Subject:</span> {preview.subject}
+      </p>
+      <p className="text-xs text-amber-900">
+        This sends to <span className="font-semibold">{preview.recipientCount} subscriber{preview.recipientCount === 1 ? "" : "s"}</span> and cannot be unsent. The confirm is bound to this exact text; if you edit again, preview again.
+      </p>
+      <div className="flex items-center gap-2">
+        <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={confirmSend.isPending}
+          onClick={async () => {
+            try {
+              const r = await confirmSend.mutateAsync({ itemId, confirmToken: preview.confirmToken, idempotencyKey });
+              setResult(r.duplicate ? "Already sent (double-click caught, nothing re-sent)." : `Sent to ${r.recipientCount} subscribers.`);
+              onSent();
+            } catch {
+              // Message renders below via isError.
+            }
+          }}>
+          {confirmSend.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
+          Confirm send to {preview.recipientCount}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/60" onClick={() => setPreview(null)}>Cancel</Button>
+      </div>
+      {confirmSend.isError && <p className="text-xs text-red-700">{confirmSend.error.message}</p>}
+    </div>
+  );
+}
+
+/**
+ * Read-only idea graph (Phase 4): themes as hubs on a ring, ideas as dots
+ * linked to their themes. Deterministic layout, no graph library.
+ */
+function IdeaGraph({ ideas }: { ideas: Array<{ id: number; title: string; themes: unknown; ripeness: number }> }) {
+  const themed = ideas
+    .map((i) => ({ ...i, themeList: (Array.isArray(i.themes) ? (i.themes as unknown[]) : []).filter((t): t is string => typeof t === "string") }))
+    .filter((i) => i.themeList.length > 0)
+    .slice(0, 80);
+  const themes = Array.from(new Set(themed.flatMap((i) => i.themeList))).slice(0, 14);
+  if (themes.length === 0) return <p className="text-sm text-[#1a472a]/50">No themed ideas to graph yet.</p>;
+
+  const W = 640, H = 420, CX = W / 2, CY = H / 2;
+  const hubPos = new Map(themes.map((t, n) => {
+    const angle = (2 * Math.PI * n) / themes.length - Math.PI / 2;
+    return [t, { x: CX + Math.cos(angle) * 150, y: CY + Math.sin(angle) * 130 }] as const;
+  }));
+  // Each idea sits at the average of its theme hubs, fanned by golden angle
+  // so overlapping ideas spread instead of stacking.
+  const nodes = themed.map((idea, n) => {
+    const hubs = idea.themeList.filter((t) => hubPos.has(t)).map((t) => hubPos.get(t)!);
+    if (hubs.length === 0) return null;
+    const x = hubs.reduce((s, h) => s + h.x, 0) / hubs.length;
+    const y = hubs.reduce((s, h) => s + h.y, 0) / hubs.length;
+    const jitterAngle = (n * 2.399963) % (2 * Math.PI);
+    const r = 18 + (n % 5) * 9;
+    return { idea, x: x + Math.cos(jitterAngle) * r, y: y + Math.sin(jitterAngle) * r, hubs: idea.themeList.filter((t) => hubPos.has(t)) };
+  }).filter((n): n is NonNullable<typeof n> => n !== null);
+
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-[#4a7c59]/25 bg-white">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[560px]">
+        {nodes.map((node) => node.hubs.map((t) => {
+          const hub = hubPos.get(t)!;
+          return <line key={`${node.idea.id}-${t}`} x1={node.x} y1={node.y} x2={hub.x} y2={hub.y} stroke="#4a7c59" strokeOpacity="0.15" strokeWidth="1" />;
+        }))}
+        {nodes.map((node) => (
+          <circle key={node.idea.id} cx={node.x} cy={node.y} r={3 + node.idea.ripeness * 3} fill="#4a7c59" fillOpacity={0.4 + node.idea.ripeness * 0.5}>
+            <title>{node.idea.title} ({node.idea.ripeness.toFixed(2)})</title>
+          </circle>
+        ))}
+        {themes.map((t) => {
+          const hub = hubPos.get(t)!;
+          return (
+            <g key={t}>
+              <circle cx={hub.x} cy={hub.y} r="7" fill="#1a472a" />
+              <text x={hub.x} y={hub.y - 12} textAnchor="middle" fontSize="10" fill="#1a472a" fontWeight="600">{t}</text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
@@ -319,6 +438,10 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
         </div>
       )}
 
+      {item.channel === "newsletter" && item.status === "edited" && (
+        <EmailSendPanel itemId={item.id} onSent={onChanged} />
+      )}
+
       {showSources && <Provenance itemId={item.id} />}
     </div>
   );
@@ -366,7 +489,7 @@ export default function AdminCreate() {
             <Link href="/admin/voice-rules" className="text-xs text-[#4a7c59] hover:underline">Voice rules</Link>
             <p className="text-xs text-[#1a472a]/60 mt-1">
               {data.ready
-                ? <>Generation ran {timeAgo(data.status.lastGeneration)} · bridge {timeAgo(data.status.lastBridge)}</>
+                ? <>Generation ran {timeAgo(data.status.lastGeneration)} · bridge {timeAgo(data.status.lastBridge)} · digest {timeAgo(data.status.lastDigest)} · last send {timeAgo(data.status.lastSend)}</>
                 : "The feed tables are not migrated yet."}
               {staleWarning && data.ready && <span className="text-amber-700 font-medium"> · generation has not run in over two hours</span>}
             </p>
@@ -382,6 +505,15 @@ export default function AdminCreate() {
           {data.ideas.length === 0 && <p className="text-sm text-[#1a472a]/50">Nothing ripe right now. The bridge and the hourly worker keep this fresh.</p>}
           {data.ideas.map((idea) => <IdeaCard key={idea.id} idea={idea as IdeaRow} onChanged={onChanged} />)}
         </section>
+
+        <details className="group">
+          <summary className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide cursor-pointer flex items-center gap-1.5">
+            <Share2 className="w-3.5 h-3.5" /> Idea graph
+          </summary>
+          <div className="pt-3">
+            <IdeaGraph ideas={data.ideas as Array<{ id: number; title: string; themes: unknown; ripeness: number }>} />
+          </div>
+        </details>
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Drafts ({data.drafts.length})</h2>

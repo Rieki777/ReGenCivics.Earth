@@ -697,6 +697,30 @@ async function startServer() {
     }
   });
 
+  // ── Harvest weekly digest cron endpoint ─────────────────────────────────────
+  // Called weekly by Railway cron: POST /api/cron/harvest-digest (Bearer
+  // CRON_SECRET). Clusters the week's fresh ideas and proposes three articles
+  // into the feed, with a summary email to the owner (Phase 4).
+  app.post("/api/cron/harvest-digest", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runWeeklyDigest } = await import("../lib/harvest");
+      const result = await runWeeklyDigest();
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      log.error("cron harvest-digest failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Admin automations cron endpoint ─────────────────────────────────────────
   // Called by Railway cron: POST /api/cron/admin-automations (Bearer CRON_SECRET).
   // Runs every enabled admin automation whose cadence is due. Schedule it

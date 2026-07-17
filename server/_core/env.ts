@@ -100,6 +100,9 @@ export const ENV = {
   harvestBridgeToken: process.env.HARVEST_BRIDGE_TOKEN ?? "",
   harvestBridgeTokenNext: process.env.HARVEST_BRIDGE_TOKEN_NEXT ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
+  // CAN-SPAM postal address for the Harvest announcement footer (Phase 4).
+  // Set the real mailing address in Railway before the first send.
+  harvestPostalAddress: process.env.HARVEST_POSTAL_ADDRESS ?? "ReGen Civics Alliance, Ashland, Oregon, USA",
 
   // The Mycelium (M1): the Worldview Pack. WORLDVIEW_UPLOAD_TOKEN gates
   // POST /api/worldview/upload (NEXT is the rotation slot); the pack lands at
