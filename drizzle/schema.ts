@@ -4831,6 +4831,93 @@ export const quickNotes = mysqlTable("quick_notes", {
 export type QuickNote = typeof quickNotes.$inferSelect;
 export type InsertQuickNote = typeof quickNotes.$inferInsert;
 
+// ─── The Harvest: feed + provenance (Phase 2) ─────────────────────────────────
+/**
+ * The ripe-ideas tier. The vault computes ripeness components locally; the
+ * bridge pushes curated idea text + components; the generation worker composes
+ * the score and drafts on 0.6 transitions. idea_ref = vault note ref or
+ * capture UUID. All access owner-gated (ownerProcedure / bridge token).
+ */
+export const harvestIdeas = mysqlTable("harvest_ideas", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaRef: varchar("idea_ref", { length: 191 }).notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  summary: text("summary"),
+  themes: json("themes"),
+  ripeness: double("ripeness").notNull().default(0),
+  scoreComponents: json("score_components"),
+  whyNow: varchar("why_now", { length: 500 }),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["ripe", "snoozed", "suppressed", "developed"]).default("ripe").notNull(),
+  snoozedUntil: timestamp("snoozed_until"),
+  steer: text("steer"),
+  crossedAt: timestamp("crossed_at"),
+  draftedAt: timestamp("drafted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerRefUnique: uniqueIndex("harvest_ideas_owner_ref_unique").on(t.ownerId, t.ideaRef),
+  ownerStatusRipenessIdx: index("harvest_ideas_owner_status_ripeness_idx").on(t.ownerId, t.status, t.ripeness),
+}));
+export type HarvestIdea = typeof harvestIdeas.$inferSelect;
+export type InsertHarvestIdea = typeof harvestIdeas.$inferInsert;
+
+/**
+ * Drafted copy per (owner, idea, channel). ai_body keeps the untouched AI
+ * draft; body is the live text. Once status leaves 'ready' the worker never
+ * overwrites the row (write-once), so (ai_body, body) is Phase 3's edit pair.
+ */
+export const creationItems = mysqlTable("creation_items", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaId: int("idea_id"),
+  captureId: varchar("capture_id", { length: 191 }).notNull(),
+  channel: varchar("channel", { length: 32 }).notNull(),
+  ripeness: double("ripeness").notNull().default(0),
+  angle: varchar("angle", { length: 200 }),
+  aiBody: text("ai_body"),
+  body: text("body"),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["ready", "edited", "shipped"]).default("ready").notNull(),
+  postedText: text("posted_text"),
+  postedAt: timestamp("posted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerCaptureChannelUnique: uniqueIndex("creation_items_owner_capture_channel_unique").on(t.ownerId, t.captureId, t.channel),
+  ownerStatusIdx: index("creation_items_owner_status_idx").on(t.ownerId, t.status),
+}));
+export type CreationItem = typeof creationItems.$inferSelect;
+export type InsertCreationItem = typeof creationItems.$inferInsert;
+
+/** Addressable provenance store: the raw message/capture rows cards trace to. */
+export const sourceIndex = mysqlTable("source_index", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  refId: varchar("ref_id", { length: 64 }).notNull(),
+  date: timestamp("date"),
+  text: text("text"),
+  links: json("links"),
+  forwardedFrom: varchar("forwarded_from", { length: 300 }),
+  media: varchar("media", { length: 64 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerRefUnique: uniqueIndex("source_index_owner_ref_unique").on(t.ownerId, t.refId),
+}));
+export type SourceIndexRow = typeof sourceIndex.$inferSelect;
+
+/** Append-only run stats for the /admin-create status line. */
+export const harvestRuns = mysqlTable("harvest_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  kind: mysqlEnum("kind", ["bridge", "generation", "seed"]).notNull(),
+  ranAt: timestamp("ran_at").defaultNow().notNull(),
+  stats: json("stats"),
+}, (t) => ({
+  kindRanIdx: index("harvest_runs_kind_ran_idx").on(t.kind, t.ranAt),
+}));
+export type HarvestRun = typeof harvestRuns.$inferSelect;
+
 // ─── Multiplayer Mode: quest crews (Phase A, improvement 1) ──────────────────
 /**
  * Crews of 3 to 7 players form around a multiplayer quest in a bioregion.

@@ -22,9 +22,10 @@
 import type { Express, Request, Response } from "express";
 import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { getDb } from "../db";
-import { quickNotes } from "../../drizzle/schema";
+import { quickNotes, harvestIdeas, harvestRuns, sourceIndex } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { timingSafeEqualStr, recordWebhookFailure, isWebhookFailureBlocked } from "../_core/security";
+import { composeRipeness, RIPENESS_THRESHOLD } from "../lib/harvest";
 import { logger } from "../_core/logger";
 
 const log = logger("harvest-bridge");
@@ -110,6 +111,128 @@ export function registerHarvestBridgeRoutes(app: Express) {
         return;
       }
       log.error(`captures pull failed: ${err instanceof Error ? err.message : String(err)}`);
+      res.status(500).json({ error: "internal" });
+    }
+  });
+
+  /**
+   * Phase 2: the vault pushes curated ideas (with locally-computed ripeness
+   * components) and the raw source rows that back them. Idempotent upserts on
+   * (owner, idea_ref) and (owner, ref_id). Body:
+   *   { ideas: [{ idea_ref, title, summary, themes, components, why_now,
+   *               source_refs }],
+   *     sources: [{ ref_id, date, text, links, forwarded_from, media }],
+   *     seed?: boolean }
+   * Only curated idea text and the raw text needed for provenance display
+   * cross the boundary. The server composes the ripeness score and stamps
+   * crossed_at when an idea first clears the threshold.
+   */
+  app.post("/api/harvest/ideas", async (req: Request, res: Response) => {
+    if (!(await checkBridgeAuth(req, res))) return;
+
+    const body = req.body as {
+      ideas?: Array<{
+        idea_ref?: string; title?: string; summary?: string; themes?: unknown;
+        components?: { material?: number; recency?: number; cluster?: number; theme_focus?: number };
+        why_now?: string; source_refs?: unknown;
+      }>;
+      sources?: Array<{ ref_id?: string; date?: string; text?: string; links?: unknown; forwarded_from?: string; media?: string }>;
+      seed?: boolean;
+    };
+    const ideas = Array.isArray(body?.ideas) ? body.ideas : [];
+    const sources = Array.isArray(body?.sources) ? body.sources : [];
+    if (ideas.length === 0 && sources.length === 0) {
+      res.status(400).json({ error: "ideas or sources required" });
+      return;
+    }
+    if (ideas.length > 300 || sources.length > 1000) {
+      res.status(400).json({ error: "batch too large (max 300 ideas, 1000 sources)" });
+      return;
+    }
+
+    const db = await getDb();
+    if (!db) {
+      res.status(500).json({ error: "db_unavailable" });
+      return;
+    }
+
+    try {
+      let sourcesUpserted = 0;
+      for (const s of sources) {
+        if (typeof s.ref_id !== "string" || !s.ref_id || s.ref_id.length > 64) continue;
+        const values = {
+          ownerId: ENV.ownerUserId,
+          refId: s.ref_id,
+          date: s.date ? new Date(s.date) : null,
+          text: typeof s.text === "string" ? s.text.slice(0, 60000) : null,
+          links: s.links ?? null,
+          forwardedFrom: typeof s.forwarded_from === "string" ? s.forwarded_from.slice(0, 300) : null,
+          media: typeof s.media === "string" ? s.media.slice(0, 64) : null,
+        };
+        await db.insert(sourceIndex).values(values)
+          .onDuplicateKeyUpdate({ set: { text: values.text, links: values.links } });
+        sourcesUpserted++;
+      }
+
+      let ideasUpserted = 0;
+      let crossed = 0;
+      const now = new Date();
+      for (const i of ideas) {
+        if (typeof i.idea_ref !== "string" || !i.idea_ref || i.idea_ref.length > 191) continue;
+        if (typeof i.title !== "string" || !i.title) continue;
+        const ripeness = composeRipeness(i.components);
+        const existing = await db
+          .select({ id: harvestIdeas.id, ripeness: harvestIdeas.ripeness, crossedAt: harvestIdeas.crossedAt, status: harvestIdeas.status })
+          .from(harvestIdeas)
+          .where(and(eq(harvestIdeas.ownerId, ENV.ownerUserId), eq(harvestIdeas.ideaRef, i.idea_ref)))
+          .limit(1);
+        const crossingNow = ripeness >= RIPENESS_THRESHOLD &&
+          (existing.length === 0 ? true : existing[0].ripeness < RIPENESS_THRESHOLD && !existing[0].crossedAt);
+        if (crossingNow) crossed++;
+
+        if (existing.length > 0) {
+          // Never resurrect a suppressed idea, and keep snooze state; refresh
+          // the content and score only.
+          await db.update(harvestIdeas).set({
+            title: i.title.slice(0, 300),
+            summary: typeof i.summary === "string" ? i.summary.slice(0, 60000) : null,
+            themes: i.themes ?? null,
+            ripeness,
+            scoreComponents: i.components ?? null,
+            whyNow: typeof i.why_now === "string" ? i.why_now.slice(0, 500) : null,
+            sourceRefs: i.source_refs ?? null,
+            ...(crossingNow ? { crossedAt: now } : {}),
+          }).where(eq(harvestIdeas.id, existing[0].id));
+        } else {
+          await db.insert(harvestIdeas).values({
+            ownerId: ENV.ownerUserId,
+            ideaRef: i.idea_ref,
+            title: i.title.slice(0, 300),
+            summary: typeof i.summary === "string" ? i.summary.slice(0, 60000) : null,
+            themes: i.themes ?? null,
+            ripeness,
+            scoreComponents: i.components ?? null,
+            whyNow: typeof i.why_now === "string" ? i.why_now.slice(0, 500) : null,
+            sourceRefs: i.source_refs ?? null,
+            status: "ripe",
+            ...(crossingNow ? { crossedAt: now } : {}),
+          });
+        }
+        ideasUpserted++;
+      }
+
+      await db.insert(harvestRuns).values({
+        kind: body.seed ? "seed" : "bridge",
+        stats: { ideas: ideasUpserted, sources: sourcesUpserted, crossed },
+      });
+      log.info(`ideas push ip=${req.ip} ideas=${ideasUpserted} sources=${sourcesUpserted} crossed=${crossed} seed=${Boolean(body.seed)}`);
+      res.json({ ok: true, ideas: ideasUpserted, sources: sourcesUpserted, crossed });
+    } catch (err) {
+      if (isMissingTableError(err)) {
+        res.status(503).json({ error: "not_ready" });
+        return;
+      }
+      log.error(`ideas push failed: ${err instanceof Error ? err.message : String(err)}`);
       res.status(500).json({ error: "internal" });
     }
   });

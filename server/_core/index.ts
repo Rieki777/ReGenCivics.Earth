@@ -643,6 +643,30 @@ async function startServer() {
     }
   });
 
+  // ── Harvest generation cron endpoint ───────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/harvest-generation (Bearer
+  // CRON_SECRET). Scores transitions and drafts the eager channel for up to
+  // MAX_AUTO_DRAFTS_PER_RUN newly-ripe ideas (The Harvest Phase 2).
+  app.post("/api/cron/harvest-generation", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runGeneration } = await import("../lib/harvest");
+      const stats = await runGeneration();
+      return res.json({ ok: true, ...stats });
+    } catch (err: any) {
+      log.error("cron harvest-generation failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Admin automations cron endpoint ─────────────────────────────────────────
   // Called by Railway cron: POST /api/cron/admin-automations (Bearer CRON_SECRET).
   // Runs every enabled admin automation whose cadence is due. Schedule it

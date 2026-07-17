@@ -57,6 +57,7 @@ import { shipRouter } from "./routes/ship";
 import { companionRouter } from "./routes/companion";
 import { guideRouter } from "./routes/guide";
 import { quickNotesRouter } from "./routes/quick-notes";
+import { harvestRouter } from "./routes/harvest";
 import { videoTutorRouter } from "./routes/videoTutor";
 
 export const appRouter = router({
@@ -227,6 +228,8 @@ export const appRouter = router({
 
   // The Harvest (Phase 1): Rye's private capture inbox, owner-gated
   quickNotes: quickNotesRouter,
+  // The Harvest (Phase 2): the feed, Develop, provenance, owner-gated
+  harvest: harvestRouter,
 });
 
 export type AppRouter = typeof appRouter;
