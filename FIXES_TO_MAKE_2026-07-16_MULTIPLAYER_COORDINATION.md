@@ -44,13 +44,28 @@ Notes for you:
 
 Your one remaining C1 task: backfill impact data for the current cohort via the admin panel (only you know the projects).
 
+## Phase D: elders as quest-givers + player memory + peer attestation. Status
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| D1 | `offeredQuests` capability + `humanSteward` governance line in the elder registry | VERIFIED | `server/lib/elders.ts`; registry test "every elder carries the governance line" green |
+| D1 | Deterministic offer engine (human-ratified pool only, bioregion-aware, fit rule) wired into elder chat + forum replies, after the safety/PASS gates | VERIFIED | `server/lib/elderQuestOffers.ts`; 7 gate tests green; `ELDER_QUEST_OFFERS_ENABLED=false` default in `.env.example` |
+| D1 | **Anastasia's elder stays OFF until her blessing** | STANDING | `offeredQuests.enabled: false`, `humanSteward.blessedAt: null` in the registry; a test enforces it. The conversation with Anastasia is yours and cannot be delegated. Yeshua's elder is registry-enabled but the global flag keeps everything off until you set it. |
+| D2 | Migration 0200: `player_companion_memory` + `companionMemoryOptIn` (default 0) + attestations table | APPLIED on Railway | run-migration: 3 statements, 0 failed |
+| D2 | Transparency surface: opt-in toggle, full fact list, delete any/all, export | CODED | `client/src/components/profile/MemorySettings.tsx` in settings → notifications; `companionMemory` router |
+| D2 | Deterministic fact writer (quest completions, crews, gratitude milestones; opted-in players only; idempotent) + read-only untrusted-notes framing in Guide chat | VERIFIED | `server/jobs/companionMemoryJob.ts` (daily in-process); `framedMemoryContext` injection in `/api/chat/stream`; opt-in gating tests green |
+| D3 | ADR-42: four-rung ladder + your amendment as the core clause (ladder = internal credit only; Hypha votes gate public tokens) | ACCEPTED (delegated) | `.ai/docs/DECISIONS.md` ADR-42 |
+| D3 | Rung 2 implemented: crewmate attestation, one per member per quest, co-crew only, both logged, +25% internal credit via `quest_attested_bonus` | CODED | `questCrews.attestCompletion`; attest buttons on /multiplayer crew cards; unique key + idempotencyKey guard double-credits |
+
+Note: 4 failing tests in `server/harvest-email.test.ts` belong to the other session's in-progress uncommitted Harvest work, not this build (all Phase A-E tests green: 45 across five suites).
+
 ## Phase E (docs, buildable anytime): status
 
 | # | Item | Owner | Status | Evidence |
 |---|------|-------|--------|----------|
 | E1 | `SEASON_TEMPLATE.md` with the ritual spine (opening ceremony via Riverside, weekly campfire + featured quest + crew spotlight, mid-season ecological moment, closing harvest ceremony consecrating the map layer) | CLAUDE CODE | VERIFIED | `SEASON_TEMPLATE.md` in repo root, assembled from Season 1's record; truncation audit clean |
 | E1 | `regen-seasonal-roles` skill points at the template | CLAUDE CODE | VERIFIED | `skills/regen-seasonal-roles/SKILL.md` "Before You Start" step 0 |
-| E2 | Civilization pattern modules in blueprint + master plan | CLAUDE CODE | BLOCKED | `shared/customGameBlueprint.ts` and `CUSTOM_GAMES_MASTER_PLAN.md` have uncommitted changes from your active custom-games session. Editing them from this session would tangle the two change sets in one working tree (the 2026-07-03 cross-commit lesson in GOLDEN_RULE.md). E2 runs as soon as that session commits or you give the all-clear. |
+| E2 | Civilization pattern modules in blueprint + master plan | CLAUDE CODE | VERIFIED | Unblocked after the custom-games session committed; shipped in commit `4b56de5`. `blueprint.json` v0.3 gained the optional `civilization` key (eight modules, two z.literal invariants: elder human-steward review, memory opt-in + transparency-first); `CUSTOM_GAMES_MASTER_PLAN.md` gained the civilization pattern section. |
 
 ## Design decisions made while building (flag anything you want changed)
 

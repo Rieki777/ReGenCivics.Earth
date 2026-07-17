@@ -93,6 +93,7 @@ import { getCurrentSeason } from "@/lib/seasons";
 import { cdnImg } from "@/lib/utils";
 import { ProfileCallTasksTab } from "@/components/profile/ProfileCallTasksTab";
 import { YourCrewsTab } from "@/components/profile/YourCrewsTab";
+import { MemorySettings } from "@/components/profile/MemorySettings";
 import { GratitudeTab } from "@/components/profile/GratitudeTab";
 
 // Badge definitions
@@ -2937,6 +2938,11 @@ export default function PlayerProfile() {
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
+                        </AnimatedSection>
+                        {/* Consent-based player memory (improvement 13): the
+                            transparency surface gates all Guide memory. */}
+                        <AnimatedSection animation="slide-up">
+                          <MemorySettings />
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <div className="glass-panel p-5 rounded-xl">

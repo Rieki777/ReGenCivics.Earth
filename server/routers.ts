@@ -15,6 +15,7 @@ import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRou
 import { questCrewsRouter } from "./routes/questCrews";
 import { mapLayersRouter } from "./routes/mapLayers";
 import { needsOffersRouter } from "./routes/needsOffers";
+import { companionMemoryRouter } from "./routes/companionMemory";
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
@@ -119,6 +120,7 @@ export const appRouter = router({
   questCrews: questCrewsRouter,
   mapLayers: mapLayersRouter,
   needsOffers: needsOffersRouter,
+  companionMemory: companionMemoryRouter,
   siteTour: siteTourRouter,
 
   // Admin

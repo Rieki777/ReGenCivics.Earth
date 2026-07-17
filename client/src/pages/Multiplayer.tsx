@@ -77,6 +77,9 @@ export default function Multiplayer() {
   const completeMutation = trpc.quests.complete.useMutation({
     onSuccess: () => myCrewsQuery.refetch(),
   });
+  const attestMutation = trpc.questCrews.attestCompletion.useMutation({
+    onSuccess: () => myCrewsQuery.refetch(),
+  });
 
   const quests = questsQuery.data?.quests ?? [];
   const aggregates = questsQuery.data?.aggregates ?? [];
@@ -191,8 +194,33 @@ export default function Multiplayer() {
                         )}
                       </div>
                     </div>
-                    <div className="mt-3 text-white/50 text-sm">
-                      Crew: {crew.members.map((m) => m.name).join(", ")}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-white/50 text-sm">
+                      <span>Crew:</span>
+                      {crew.members.map((m) => (
+                        <span
+                          key={m.userId}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10"
+                        >
+                          {m.name}
+                          {m.status === "completed" && m.attested && (
+                            <span className="inline-flex items-center gap-0.5 text-[#7dd87d] text-xs">
+                              <CheckCircle2 className="w-3 h-3" /> attested
+                            </span>
+                          )}
+                          {/* Rung 2 of the verification ladder: a crewmate vouches
+                              that the completion really happened. */}
+                          {m.status === "completed" && !m.attested && m.userId !== user?.id && (
+                            <button
+                              onClick={() => attestMutation.mutate({ crewId: crew.id, memberUserId: m.userId })}
+                              disabled={attestMutation.isPending}
+                              className="text-[#d4a574] text-xs hover:text-[#e4b584] underline underline-offset-2"
+                              title="Vouch that this crewmate's completion really happened"
+                            >
+                              attest
+                            </button>
+                          )}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );

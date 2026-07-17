@@ -157,7 +157,23 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
         stats.skipped++;
         continue;
       }
-      const commentReplyId = await db.createForumReply({ postId: job.post.id, authorId: job.bot.userId, content: comment });
+      // Elder quest offers (improvement 12): deterministic, human-ratified
+      // pool only, appended where fitting. Crisis posts never reach here (the
+      // PASS gate above returns for them). Off until ELDER_QUEST_OFFERS_ENABLED
+      // and the elder's steward blesses it.
+      let commentWithOffer = comment;
+      try {
+        const { maybeQuestOffer } = await import("../lib/elderQuestOffers");
+        const offer = await maybeQuestOffer({
+          elder: job.elder,
+          playerText: `${job.post.title}\n${job.post.content}`,
+          bioregionId: job.post.bioregionId ?? null,
+        });
+        if (offer) commentWithOffer = `${comment}\n\n${offer}`;
+      } catch {
+        // Offers are decorative; never break a comment over one.
+      }
+      const commentReplyId = await db.createForumReply({ postId: job.post.id, authorId: job.bot.userId, content: commentWithOffer });
       stats.commented++;
       // Notify the post author: an elder responded (deep-links to the comment).
       import("../lib/forum-notify")

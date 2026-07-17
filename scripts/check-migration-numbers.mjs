@@ -21,6 +21,10 @@ const files = readdirSync(join(root, "drizzle")).filter((f) => /^\d{4}_.+\.sql$/
 const GRANDFATHERED = new Set([
   "0041", "0043", "0044", "0045", "0057", "0074", "0091", "0093",
   "0137", "0153", "0163", "0164", "0173", "0179",
+  // 0199: two concurrent sessions each took 0199 (impact_data, harvest_email_sends)
+  // and BOTH were applied to production on 2026-07-17 before the collision was
+  // caught. Applied files must never be renamed (the runner tracks by filename).
+  "0199",
 ]);
 
 const byPrefix = new Map();

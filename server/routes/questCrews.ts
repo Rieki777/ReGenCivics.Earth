@@ -17,7 +17,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { router, publicProcedure, protectedProcedure, rateLimited } from "../_core/trpc";
 import { getDb } from "../db";
 import { sanitizeInput } from "../_core/security";
-import { bioregions, questCrewMembers, questCrews, questCrewSignups, users } from "../../drizzle/schema";
+import { bioregions, questCompletionAttestations, questCrewMembers, questCrews, questCrewSignups, users } from "../../drizzle/schema";
 import { getLiveMultiplayerQuest, liveMultiplayerQuests } from "@shared/multiplayerQuests";
 
 const OPEN_CREW_STATUSES = ["forming", "ready", "active"] as const;
@@ -229,6 +229,7 @@ export const questCrewsRouter = router({
     const allMembers = await db
       .select({
         crewId: questCrewMembers.crewId,
+        userId: questCrewMembers.userId,
         status: questCrewMembers.status,
         name: users.name,
         handle: users.handle,
@@ -236,6 +237,15 @@ export const questCrewsRouter = router({
       .from(questCrewMembers)
       .innerJoin(users, eq(users.id, questCrewMembers.userId))
       .where(inArray(questCrewMembers.crewId, crewIds));
+    // Rung-2 attestation state per member (ADR-42): who is already attested.
+    const attestations = await db
+      .select({
+        questId: questCompletionAttestations.questId,
+        memberUserId: questCompletionAttestations.memberUserId,
+      })
+      .from(questCompletionAttestations)
+      .where(inArray(questCompletionAttestations.questId, [...new Set(crews.map((c) => c.questId))]));
+    const attestedKeys = new Set(attestations.map((a) => `${a.questId}:${a.memberUserId}`));
     const bioregionRows = await db
       .select({ id: bioregions.id, name: bioregions.name })
       .from(bioregions)
@@ -257,9 +267,78 @@ export const questCrewsRouter = router({
         myStatus: myMemberships.find((m) => m.crewId === crew.id)?.status ?? "joined",
         members: allMembers
           .filter((m) => m.crewId === crew.id && m.status !== "left")
-          .map((m) => ({ name: m.name || "A player", handle: m.handle, status: m.status })),
+          .map((m) => ({
+            userId: m.userId,
+            name: m.name || "A player",
+            handle: m.handle,
+            status: m.status,
+            attested: attestedKeys.has(`${crew.questId}:${m.userId}`),
+          })),
       }));
   }),
+
+  /**
+   * Peer attestation, rung 2 of the verification ladder (ADR-42). A crewmate
+   * attests a member's completed quest: one attestation per member per quest
+   * (unique key), the attester must be a co-crew member, both sides logged.
+   * The rung-2 bonus credits the member's PRIVATE ledger only (source
+   * quest_attested_bonus, STEERING §5); public tokens stay gated by Hypha.
+   */
+  attestCompletion: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({ crewId: z.number().int().positive(), memberUserId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.memberUserId === ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "A completion is attested by a crewmate, never by yourself." });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const attesterMembership = await requireMembership(db, input.crewId, ctx.user.id);
+      if (!attesterMembership) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only a member of this crew can attest its completions." });
+      }
+      const [crew] = await db.select().from(questCrews).where(eq(questCrews.id, input.crewId)).limit(1);
+      if (!crew) throw new TRPCError({ code: "NOT_FOUND", message: "Crew not found." });
+
+      const [memberRow] = await db
+        .select()
+        .from(questCrewMembers)
+        .where(and(eq(questCrewMembers.crewId, input.crewId), eq(questCrewMembers.userId, input.memberUserId)))
+        .limit(1);
+      if (!memberRow || memberRow.status !== "completed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "That crewmate hasn't logged this quest complete yet." });
+      }
+
+      try {
+        await db.insert(questCompletionAttestations).values({
+          questId: crew.questId,
+          crewId: crew.id,
+          memberUserId: input.memberUserId,
+          attesterUserId: ctx.user.id,
+        });
+      } catch {
+        throw new TRPCError({ code: "CONFLICT", message: "This completion is already attested." });
+      }
+
+      // Rung-2 multiplier is 1.25x (ADR-42): the +25% rides as internal credit.
+      const { getMultiplayerQuest } = await import("@shared/multiplayerQuests");
+      const quest = getMultiplayerQuest(crew.questId);
+      const bonus = Math.round((quest?.reward.regen ?? 0) * 0.25);
+      if (bonus > 0) {
+        const { creditPrivateTokens } = await import("../db");
+        await creditPrivateTokens({
+          userId: input.memberUserId,
+          tokenType: "regen",
+          amount: bonus,
+          source: "quest_attested_bonus",
+          sourceRef: crew.questId,
+          description: `Peer-attested completion of ${quest?.title ?? crew.questId} (verification ladder rung 2)`,
+          idempotencyKey: `quest_attested_bonus:${crew.questId}:${input.memberUserId}`,
+        });
+      }
+      return { ok: true, bonus };
+    }),
 
   /** Mark the crew active: "we've started the quest". Any member can call it. */
   activateCrew: protectedProcedure

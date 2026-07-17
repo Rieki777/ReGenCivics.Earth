@@ -552,6 +552,36 @@ async function startServer() {
         const prefs = await fetchGuidePreferences(authedUser.id);
         guidePersona = buildGuidePersona(prefs);
         guideContext = await buildGuideContext(authedUser);
+
+        // Consent-based player memory (improvement 13): read-only journey
+        // facts, ONLY for opted-in players (companionMemoryOptIn = 1), framed
+        // as untrusted prior notes. Fail-soft: chat is unchanged without it.
+        try {
+          const { getDb } = await import("../db");
+          const memDb = await getDb();
+          if (memDb) {
+            const { and, desc, eq, isNull } = await import("drizzle-orm");
+            const { playerCompanionMemory, playerProfiles } = await import("../../drizzle/schema");
+            const [profile] = await memDb
+              .select({ optIn: playerProfiles.companionMemoryOptIn })
+              .from(playerProfiles)
+              .where(eq(playerProfiles.userId, authedUser.id))
+              .limit(1);
+            if ((profile?.optIn ?? 0) === 1) {
+              const facts = await memDb
+                .select({ fact: playerCompanionMemory.fact, createdAt: playerCompanionMemory.createdAt })
+                .from(playerCompanionMemory)
+                .where(and(eq(playerCompanionMemory.userId, authedUser.id), isNull(playerCompanionMemory.supersededAt)))
+                .orderBy(desc(playerCompanionMemory.createdAt))
+                .limit(30);
+              const { framedMemoryContext } = await import("../lib/companionMemory");
+              const framed = framedMemoryContext(facts);
+              if (framed) guideContext = `${guideContext}\n\n${framed}`;
+            }
+          }
+        } catch {
+          // Memory must never break chat.
+        }
       }
     } catch {
       // Not signed in, or session invalid: fall back to the generic guide.
@@ -1317,6 +1347,18 @@ setTimeout(async () => {
     try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
   }, 30 * 60 * 1000);
 }, 5 * 60 * 1000); // first run after 5 minutes
+
+// ─── Consent-based player memory writer (daily) ──────────────────────────────
+// Derives game-journey facts from events for OPTED-IN players only
+// (companionMemoryOptIn = 1, default off). Deterministic, zero LLM, idempotent
+// via the (userId, sourceRef) unique key. The transparency surface in settings
+// is the gate and the mirror: full list, delete any or all, export.
+setTimeout(async () => {
+  try { const { runCompanionMemoryJob } = await import("../jobs/companionMemoryJob"); await runCompanionMemoryJob(); } catch (e) { log.error("CompanionMemoryJob error", e); }
+  setInterval(async () => {
+    try { const { runCompanionMemoryJob } = await import("../jobs/companionMemoryJob"); await runCompanionMemoryJob(); } catch (e) { log.error("CompanionMemoryJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 17 * 60 * 1000); // first run after 17 minutes
 
 // ─── Needs and Offers matcher (daily) ────────────────────────────────────────
 // Deterministic tag + bioregion matching over the board and application-form

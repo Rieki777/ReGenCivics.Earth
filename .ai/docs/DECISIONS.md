@@ -470,6 +470,22 @@ Format per entry:
 
 ---
 
+## ADR-42: The verification ladder, and the split between internal credit and public tokens
+
+- Date: 2026-07-17. Status: Accepted (Rye delegated acceptance in-session, 2026-07-16; supersede to veto). Text also recorded in `FIXES_TO_MAKE_2026-07-16_MULTIPLAYER_COORDINATION.md` per the build prompt.
+- Context: improvement 14 (proof of regeneration). The game's integrity rests on one link: tokens and glory flow from things that actually happened on real land. We already hold verified provenance tiers on the ship map (ADR-35), a source-tagged token ledger (STEERING §5), and quest completion records.
+- Decision, part 1 (the ladder): four rungs of verification, each earning more internal credit than the last.
+  1. **Self-report** (multiplier 1.0): the player logs the completion. Today's baseline.
+  2. **Peer attestation** (1.25): a co-crew member attests the completion. One attestation per member per quest; the attester must be on the same crew; both sides logged (`quest_completion_attestations`). The +25% rides as private credit with source tag `quest_attested_bonus`.
+  3. **Steward verification** (1.5): a recognized steward verifies. Not yet implemented; the source-tag pattern extends (`quest_steward_bonus`).
+  4. **Evidence-backed** (2.0): geotagged photo, before/after, harvest weight. Not yet implemented; waits for the media upload primitive. Only rungs 3 and 4 feed impact data, QF weight, and the public map when those wirings land.
+- Decision, part 2 (**Rye's amendment, the core clause**): the ladder governs the INTERNAL economy only, i.e. private token credits through `creditPrivateTokens`. Issuance and claims of REAL PUBLIC tokens are verified by humans through **Hypha voting**; that is what Hypha governance is for. The ladder feeds reputation and internal credit; Hypha votes gate the chain. No rung, at any multiplier, mints or moves a public token.
+- Why: without verification, growth corrodes trust; with too much bureaucracy, verification kills play. Rung 2 is pure social mechanics (no media infrastructure) and makes verification itself a social act between crewmates. Keeping public tokens behind human Hypha votes means the automated ladder can never become an attack surface on the chain economy.
+- Trade-offs: peer attestation is collusion-prone at small scale; acceptable because it only moves bounded internal credit, is one-per-member-per-quest, is fully logged, and the multiplier gap to steward/evidence rungs keeps incentives pointed up the ladder.
+- Code refs: `drizzle/0200_memory_attestation.sql`, `server/routes/questCrews.ts` (`attestCompletion`), `server/db/tokens.ts` (`creditPrivateTokens`), STEERING §5.
+
+---
+
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
 
 If a decision gets reversed, write a NEW entry that explains the reversal and mark the OLD entry `Superseded by ADR-N`. Don't delete history.

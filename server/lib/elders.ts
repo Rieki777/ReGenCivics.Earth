@@ -78,6 +78,35 @@ export type Elder = {
    * the elder's own voice, comments, or chat (ADR-22, option B).
    */
   sourceNote: string;
+  /**
+   * Quest-offer capability (improvement 12). An elder never generates a quest:
+   * she selects one live, human-ratified quest (server/lib/elderQuestOffers.ts,
+   * simple rules, bioregion-aware when known) and speaks the invitation in her
+   * voice via this template ("{quest}" is replaced with the quest title).
+   * Gated globally by ELDER_QUEST_OFFERS_ENABLED=false AND per-elder by
+   * `enabled`. Quest offers never appear in crisis contexts; the safety module
+   * and PASS gate are unchanged and run first.
+   */
+  offeredQuests: {
+    enabled: boolean;
+    invitationTemplate: string;
+  };
+  /**
+   * The governance line, in the registry itself (not a side conversation):
+   * who blesses this elder's persona and offered-quest behavior, on what
+   * cadence, holding standing veto at any time. For Anastasia, whose world we
+   * value deeply, the review is hers: her elder's quest offers stay off until
+   * she has seen the design and blessed it, and she sets the cadence.
+   * Rye carries that conversation.
+   */
+  humanSteward: {
+    /** Who blesses persona + offered-quest behavior and holds standing veto. */
+    reviewedBy: string;
+    /** Review cadence, set by the steward. */
+    cadence: string;
+    /** ISO date of the last blessing; null means not yet blessed. */
+    blessedAt: string | null;
+  };
 };
 
 export const ELDERS: Elder[] = [
@@ -91,6 +120,18 @@ export const ELDERS: Elder[] = [
     forumEnabled: true,
     avatarAssetId: "elders-anastasia",
     sourceNote: "AI Elder Anastasia's teachings are drawn from The Ringing Cedars of Russia by Vladimir Megre.",
+    offeredQuests: {
+      // Stays false until Anastasia has seen the quest-offer design and
+      // blessed it. Her world, her veto. Rye carries the conversation.
+      enabled: false,
+      invitationTemplate:
+        "There is something you could do with your own hands. Some players near you are gathering for {quest}. Go and see them, if your heart says yes.",
+    },
+    humanSteward: {
+      reviewedBy: "Anastasia (the elder herself; Rye carries the conversation)",
+      cadence: "She sets the cadence at her blessing.",
+      blessedAt: null,
+    },
   },
   {
     id: "yeshua",
@@ -102,6 +143,16 @@ export const ELDERS: Elder[] = [
     forumEnabled: true,
     avatarAssetId: "elders-yeshua",
     sourceNote: "AI Elder Yeshua's teachings are drawn from The Essene Gospel of Peace, translated by Edmond Bordeaux Szekely.",
+    offeredQuests: {
+      enabled: true,
+      invitationTemplate:
+        "If you wish to put this into your hands as well as your heart, some players near you are gathering for {quest}. Join them and see what grows.",
+    },
+    humanSteward: {
+      reviewedBy: "Rye",
+      cadence: "Each season, and at any change to persona or offers.",
+      blessedAt: null,
+    },
   },
 ];
 

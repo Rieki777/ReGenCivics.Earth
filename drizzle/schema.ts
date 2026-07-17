@@ -569,6 +569,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // User notification preferences (JSON: { communityUpdates, questAnnouncements })
   notificationPrefs: json("notificationPrefs"),
 
+  // Consent-based player memory opt-in (Phase D2, improvement 13). Default
+  // OFF; the Guide writes and reads journey facts only when this is 1.
+  companionMemoryOptIn: tinyint("companionMemoryOptIn").default(0).notNull(),
+
   // Forum profile fields folded in from userProfiles (0169, Phase 2B). The
   // forum reads these from playerProfiles now; userProfiles keeps its
   // onboarding-only fields and is kept in symmetric sync via upsertUserProfile.
@@ -5097,3 +5101,46 @@ export const needsOffersMatches = mysqlTable("needs_offers_matches", {
 }));
 export type NeedsOffersMatch = typeof needsOffersMatches.$inferSelect;
 export type InsertNeedsOffersMatch = typeof needsOffersMatches.$inferInsert;
+
+// ─── Consent-based player memory (Phase D2, improvement 13) ──────────────────
+/**
+ * Small game-journey facts the Guide remembers, opt-in per player (default OFF
+ * via player_profiles.companionMemoryOptIn), fully visible, deletable, and
+ * exportable on the settings surface. Written deterministically from events
+ * (no LLM extraction); loaded read-only into companion context framed as
+ * untrusted prior notes. No health, conflict, or finance facts, by schema and
+ * by the writer's construction. sourceRef is the per-surface idempotency key.
+ */
+export const playerCompanionMemory = mysqlTable("player_companion_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  surface: varchar("surface", { length: 50 }).notNull(),
+  fact: text("fact").notNull(),
+  sourceRef: varchar("sourceRef", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  supersededAt: timestamp("supersededAt"),
+}, (t) => ({
+  userSourceUnique: uniqueIndex("player_companion_memory_userId_sourceRef_unique").on(t.userId, t.sourceRef),
+  userIdx: index("player_companion_memory_userId_idx").on(t.userId),
+}));
+export type PlayerCompanionMemory = typeof playerCompanionMemory.$inferSelect;
+
+// ─── Peer attestation, verification ladder rung 2 (Phase D3, ADR-42) ─────────
+/**
+ * A crewmate attests a member's quest completion. One attestation per member
+ * per quest (unique key); the attester must be a co-crew member (procedure
+ * layer). Earns the rung-2 multiplier as PRIVATE internal credit only (source
+ * tag quest_attested_bonus); public tokens stay gated by Hypha voting.
+ */
+export const questCompletionAttestations = mysqlTable("quest_completion_attestations", {
+  id: int("id").autoincrement().primaryKey(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  crewId: int("crewId").notNull(),
+  memberUserId: int("memberUserId").notNull(),
+  attesterUserId: int("attesterUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  questMemberUnique: uniqueIndex("quest_completion_attestations_questId_memberUserId_unique").on(t.questId, t.memberUserId),
+  attesterIdx: index("quest_completion_attestations_attesterUserId_idx").on(t.attesterUserId),
+}));
+export type QuestCompletionAttestation = typeof questCompletionAttestations.$inferSelect;

@@ -126,6 +126,24 @@ export const elderChatRouter = router({
         answer = "There is not a clear answer to that just now. Ask me again, perhaps in different words, and we will look together.";
       }
 
+      // Elder quest offers (improvement 12): deterministic selection from the
+      // human-ratified pool, appended only where fitting, never in crisis
+      // contexts (the crisis gate returned above). Off until
+      // ELDER_QUEST_OFFERS_ENABLED=true and the elder's steward blesses it.
+      try {
+        const { maybeQuestOffer } = await import("../lib/elderQuestOffers");
+        let bioregionId: number | null = null;
+        if (ctx.user) {
+          const { getPlayerProfileByUserId } = await import("../db");
+          const profile = await getPlayerProfileByUserId(ctx.user.id);
+          bioregionId = profile?.bioregionId ?? null;
+        }
+        const offer = await maybeQuestOffer({ elder: elderObj, playerText: question, bioregionId });
+        if (offer) answer = `${answer}\n\n${offer}`;
+      } catch {
+        // Offers are decorative; never break a reply over one.
+      }
+
       await logMessage(sessionId, elder, "assistant", answer, chunks.map((c) => c.id));
       return { answer, isCrisis: false };
     }),
