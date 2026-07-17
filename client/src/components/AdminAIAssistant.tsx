@@ -17,8 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bot, X, Send, Sparkles, Loader2,
-  Navigation, Mail, Search, User, Minimize2, Maximize2
+  Navigation, Mail, Search, User, Minimize2, Maximize2, StickyNote
 } from "lucide-react";
+import { HarvestNoteComposer } from "./HarvestNoteComposer";
 
 export interface AdminAIContext {
   activeTab?: string;
@@ -93,6 +94,16 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const chatMutation = trpc.adminAI.chat.useMutation();
   const executeMutation = trpc.adminActions.execute.useMutation();
   const undoMutation = trpc.adminActions.undo.useMutation();
+
+  // Harvest capture (Phase 1). The status query succeeds only for the owner
+  // (ownerProcedure), so the Add note tab quietly never renders for anyone else.
+  const [mode, setMode] = useState<"assistant" | "note">("assistant");
+  const harvestStatus = trpc.quickNotes.status.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const harvestReady = Boolean(harvestStatus.data?.ready);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -226,7 +237,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     );
   }
 
-  const panelHeight = minimized ? "auto" : "min(520px, calc(100vh - 120px))";
+  const panelHeight = minimized || mode === "note" ? "auto" : "min(520px, calc(100vh - 120px))";
 
   return (
     <div
@@ -240,11 +251,25 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#7dd87d] rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm leading-none">ReGen AI Assistant</p>
+          <p className="text-white font-semibold text-sm leading-none">
+            {mode === "note" ? "Add note" : "ReGen AI Assistant"}
+          </p>
           <p className="text-[#7dd87d]/70 text-xs mt-0.5 truncate">
-            {context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
+            {mode === "note"
+              ? "Voice or text, straight to your inbox"
+              : context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
           </p>
         </div>
+        {harvestReady && (
+          <button
+            onClick={() => { setMode(m => (m === "note" ? "assistant" : "note")); setMinimized(false); }}
+            aria-label={mode === "note" ? "Switch to assistant" : "Add a note"}
+            title={mode === "note" ? "Switch to assistant" : "Add a note"}
+            className={`p-1 rounded transition-colors ${mode === "note" ? "text-[#7dd87d]" : "text-white/60 hover:text-white"}`}
+          >
+            {mode === "note" ? <Bot className="w-4 h-4" /> : <StickyNote className="w-4 h-4" />}
+          </button>
+        )}
         <button
           onClick={() => setMinimized(m => !m)}
           className="text-white/60 hover:text-white p-1 rounded transition-colors"
@@ -260,7 +285,11 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
         </button>
       </div>
 
-      {!minimized && (
+      {!minimized && mode === "note" && (
+        <HarvestNoteComposer voiceEnabled={Boolean(harvestStatus.data?.voice)} />
+      )}
+
+      {!minimized && mode === "assistant" && (
         <>
           {/* Messages area */}
           <ScrollArea className="flex-1 overflow-auto">

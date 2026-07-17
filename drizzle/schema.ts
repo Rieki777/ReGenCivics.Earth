@@ -1,4 +1,4 @@
-import { bigint, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, char, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -4805,3 +4805,28 @@ export const userGuidePreferences = mysqlTable("user_guide_preferences", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type UserGuidePreferences = typeof userGuidePreferences.$inferSelect;
+
+// ─── The Harvest: quick_notes capture inbox (Phase 1) ─────────────────────────
+/**
+ * Rye's private idea captures from the admin FAB (voice or text). `id` is the
+ * bridge sync cursor; `captureId` is the stable UUID the local second brain
+ * dedupes by. `audioKey` points at the private R2 prefix (harvest/voice/...),
+ * never a public URL. Owner-gated everywhere via ownerProcedure; owner_id is
+ * always derived from ctx.user.id, never from input.
+ */
+export const quickNotes = mysqlTable("quick_notes", {
+  id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
+  captureId: char("capture_id", { length: 36 }).notNull().unique(),
+  ownerId: int("owner_id").notNull(),
+  body: text("body").notNull(),
+  source: mysqlEnum("source", ["text", "voice"]).default("text").notNull(),
+  audioKey: varchar("audio_key", { length: 512 }),
+  themes: json("themes"),
+  status: mysqlEnum("status", ["inbox", "processed"]).default("inbox").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+}, (t) => ({
+  ownerStatusIdIdx: index("quick_notes_owner_status_id_idx").on(t.ownerId, t.status, t.id),
+}));
+export type QuickNote = typeof quickNotes.$inferSelect;
+export type InsertQuickNote = typeof quickNotes.$inferInsert;

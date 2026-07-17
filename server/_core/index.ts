@@ -68,6 +68,7 @@ import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver
 import { registerGithubWebhookRoutes } from "../webhooks/github";
 import { registerStripeWebhookRoutes } from "../webhooks/stripe";
 import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
+import { registerHarvestBridgeRoutes } from "../webhooks/harvest-bridge";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { createRequire } from "module";
@@ -591,6 +592,8 @@ async function startServer() {
   registerStripeWebhookRoutes(app);
   // Zeffy webhook: CORE church donations (preferred, zero-fee processor)
   registerZeffyWebhookRoutes(app);
+  // Harvest bridge: the local second brain pulls Rye's captures (token auth)
+  registerHarvestBridgeRoutes(app);
   // OIDC provider for shared auth with the ReGen Gov app at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count

@@ -55,6 +55,7 @@ import { elderChatRouter } from "./routes/elderChat";
 import { shipRouter } from "./routes/ship";
 import { companionRouter } from "./routes/companion";
 import { guideRouter } from "./routes/guide";
+import { quickNotesRouter } from "./routes/quick-notes";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -218,6 +219,9 @@ export const appRouter = router({
   ship: shipRouter,
   companion: companionRouter,
   guide: guideRouter,
+
+  // The Harvest (Phase 1): Rye's private capture inbox, owner-gated
+  quickNotes: quickNotesRouter,
 });
 
 export type AppRouter = typeof appRouter;

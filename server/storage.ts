@@ -42,6 +42,8 @@ const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml",
   "application/pdf", "audio/mpeg", "video/mp4",
+  // Harvest voice captures (every container MediaRecorder emits across browsers)
+  "audio/webm", "audio/mp4", "audio/wav", "audio/ogg", "audio/x-m4a",
   "application/octet-stream", // fallback for unknown
 ]);
 

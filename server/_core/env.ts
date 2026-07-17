@@ -91,6 +91,16 @@ export const ENV = {
   transcriptionWorkerUrl: process.env.TRANSCRIPTION_WORKER_URL ?? "",
   transcriptionApiKey: process.env.TRANSCRIPTION_API_KEY ?? "",
 
+  // The Harvest (capture + bridge, Phase 1). OWNER_USER_ID is Rye's users.id;
+  // every quick-note procedure gates on it (ownerProcedure fails closed when
+  // unset). HARVEST_BRIDGE_TOKEN authenticates the local second brain's pull
+  // over HTTPS; the NEXT slot allows zero-downtime rotation. GEMINI_API_KEY is
+  // the capture-transcription fallback when no Whisper STT_API_KEY is set.
+  ownerUserId: Number(process.env.OWNER_USER_ID ?? 0) || 0,
+  harvestBridgeToken: process.env.HARVEST_BRIDGE_TOKEN ?? "",
+  harvestBridgeTokenNext: process.env.HARVEST_BRIDGE_TOKEN_NEXT ?? "",
+  geminiApiKey: process.env.GEMINI_API_KEY ?? "",
+
   // Church of the Regenerative Earth (CORE) - core.regencivics.earth
   // Stripe (server-side only for the secret + webhook signing secret). The
   // hosted Checkout redirect flow does not need the publishable key on the
