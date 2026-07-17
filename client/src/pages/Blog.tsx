@@ -207,8 +207,30 @@ export default function Blog() {
   const featuredPost = getFeaturedPost();
   const howToPosts = blogPosts.filter(post => post.tags.includes('How-To') || post.tags.includes('Tutorial') || post.tags.includes('Foundation'));
   const howToSlugs = new Set(howToPosts.map(p => p.slug));
+
+  // Composed articles published through The Harvest (Phase 5): merged ahead
+  // of the static recents, newest first. Empty until something publishes.
+  const published = trpc.blog.listPublished.useQuery(undefined, { staleTime: 5 * 60 * 1000, retry: false });
+  const harvestPosts = (published.data ?? []).map((a) => ({
+    id: a.slug,
+    slug: a.slug,
+    title: a.title,
+    excerpt: a.excerpt ?? '',
+    content: '',
+    author: a.author,
+    date: a.publishedAt ? new Date(a.publishedAt).toISOString().slice(0, 10) : '',
+    readTime: '',
+    image: a.heroImageUrl ?? '',
+    tags: Array.isArray(a.tags) ? (a.tags as string[]) : [],
+    featured: false,
+    isVideo: false,
+  }));
+
   // Exclude featured post AND any posts already shown in How-To section
-  const recentPosts = blogPosts.filter(post => !post.featured && !howToSlugs.has(post.slug));
+  const recentPosts = [
+    ...harvestPosts,
+    ...blogPosts.filter(post => !post.featured && !howToSlugs.has(post.slug)),
+  ];
   
   const [howToExpanded, setHowToExpanded] = useState(true);
   const [votingExpanded, setVotingExpanded] = useState(true);

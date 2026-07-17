@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { ComposeBox, PublicationReview } from "@/components/HarvestCompose";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -450,6 +451,8 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
 export default function AdminCreate() {
   const feed = trpc.harvest.listFeed.useQuery({ tier: "all" }, { retry: false, refetchOnWindowFocus: false });
   const refresh = trpc.harvest.refresh.useMutation();
+  const publicationsList = trpc.harvest.listPublications.useQuery(undefined, { retry: false, refetchOnWindowFocus: false });
+  const [openPublicationId, setOpenPublicationId] = useState<number | null>(null);
   const utils = trpc.useUtils();
   const onChanged = () => void utils.harvest.listFeed.invalidate();
 
@@ -499,6 +502,28 @@ export default function AdminCreate() {
             {refresh.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />} Refresh
           </Button>
         </div>
+
+        <ComposeBox onComposed={(id) => {
+          setOpenPublicationId(id);
+          void publicationsList.refetch();
+          onChanged();
+        }} />
+
+        {(openPublicationId !== null || (publicationsList.data?.length ?? 0) > 0) && (
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Publications</h2>
+              {(publicationsList.data ?? []).slice(0, 6).map((pub) => (
+                <button key={pub.id}
+                  onClick={() => setOpenPublicationId((current) => current === pub.id ? null : pub.id)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${openPublicationId === pub.id ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a]/70 border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                  {pub.title.slice(0, 40)} · {pub.status}
+                </button>
+              ))}
+            </div>
+            {openPublicationId !== null && <PublicationReview publicationId={openPublicationId} />}
+          </section>
+        )}
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Ripe ideas ({data.ideas.length})</h2>

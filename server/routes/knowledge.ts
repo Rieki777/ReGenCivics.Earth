@@ -4,7 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { glossaryTerms, knowledgeMapEntries, customGameInquiries, blogEdits, entityRssFeeds, orgClaims } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
@@ -378,6 +378,61 @@ export const blogRouter = router({
         .values({ slug: input.slug, content: input.content })
         .onDuplicateKeyUpdate({ set: { content: input.content } });
       return { success: true };
+    }),
+
+  // Public: composed articles published through The Harvest (Phase 5).
+  // The static blogPosts.ts stays canonical for pre-existing posts; the blog
+  // pages merge both. Only status=public rows ever leave this endpoint.
+  listPublished: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    try {
+      const { publishedArticles } = await import("../../drizzle/schema");
+      const rows = await db.select({
+        slug: publishedArticles.slug,
+        title: publishedArticles.title,
+        excerpt: publishedArticles.excerpt,
+        author: publishedArticles.author,
+        heroImageUrl: publishedArticles.heroImageUrl,
+        heroImageAlt: publishedArticles.heroImageAlt,
+        tags: publishedArticles.tags,
+        publishedAt: publishedArticles.publishedAt,
+      }).from(publishedArticles)
+        .where(eq(publishedArticles.status, "public"))
+        .orderBy(desc(publishedArticles.publishedAt))
+        .limit(50);
+      return rows;
+    } catch {
+      return []; // table not migrated yet
+    }
+  }),
+
+  // Public: one composed article by slug. A preview token unlocks the hidden
+  // preview (the private URL the owner reviews before going public).
+  getPublished: publicProcedure
+    .input(z.object({ slug: z.string().max(200), previewToken: z.string().max(64).optional() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      try {
+        const { publishedArticles } = await import("../../drizzle/schema");
+        const rows = await db.select().from(publishedArticles)
+          .where(eq(publishedArticles.slug, input.slug))
+          .limit(1);
+        const article = rows[0];
+        if (!article) return null;
+        if (article.status === "public") {
+          const { previewToken: _hidden, ...safe } = article;
+          return safe;
+        }
+        if (article.status === "preview" && input.previewToken && input.previewToken === article.previewToken) {
+          const { previewToken: _hidden, ...safe } = article;
+          return { ...safe, isPreview: true };
+        }
+        return null;
+      } catch {
+        return null;
+      }
     }),
 });
 

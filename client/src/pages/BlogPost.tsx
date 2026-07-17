@@ -30,7 +30,31 @@ import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
   const [, setLocation] = useLocation();
-  const post = getBlogPost(params.slug || '');
+  const staticPost = getBlogPost(params.slug || '');
+
+  // Composed articles published through The Harvest (Phase 5) live in the DB.
+  // The static list stays canonical for pre-existing posts; when the slug is
+  // not in it, this query serves the published article (or the hidden preview
+  // when the private ?preview=<token> URL is used).
+  const previewToken = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("preview") ?? undefined
+    : undefined;
+  const dbArticle = trpc.blog.getPublished.useQuery(
+    { slug: params.slug || '', ...(previewToken ? { previewToken } : {}) },
+    { enabled: !!params.slug && !staticPost, staleTime: 60_000, retry: false }
+  );
+  const post = staticPost ?? (dbArticle.data ? {
+    id: dbArticle.data.slug,
+    slug: dbArticle.data.slug,
+    title: dbArticle.data.title,
+    excerpt: dbArticle.data.excerpt ?? '',
+    content: (dbArticle.data.heroImageUrl ? `![${dbArticle.data.heroImageAlt ?? dbArticle.data.title}](${dbArticle.data.heroImageUrl})\n\n` : '') + dbArticle.data.content,
+    author: dbArticle.data.author,
+    date: dbArticle.data.publishedAt ? new Date(dbArticle.data.publishedAt).toISOString().slice(0, 10) : new Date(dbArticle.data.createdAt).toISOString().slice(0, 10),
+    readTime: `${Math.max(1, Math.round(dbArticle.data.content.split(/\s+/).length / 220))} min read`,
+    image: dbArticle.data.heroImageUrl ?? '',
+    tags: Array.isArray(dbArticle.data.tags) ? (dbArticle.data.tags as string[]) : [],
+  } : undefined);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -89,6 +113,14 @@ export default function BlogPost() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!post && dbArticle.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center">
+        <p className="text-white/70">Loading...</p>
+      </div>
+    );
+  }
 
   if (!post) {
     return (

@@ -237,6 +237,18 @@ export async function confirmAndSend(params: {
     .set({ status: "shipped", postedAt: new Date(), postedText: item.body })
     .where(eq(creationItems.id, item.id));
 
+  // Compose-to-Publish seam: if this newsletter item belongs to a
+  // Publication, its email target flips to published now. The hardened send
+  // here stays the ONLY path email ever goes out on.
+  try {
+    const { publicationTargets } = await import("../../drizzle/schema");
+    await db.update(publicationTargets)
+      .set({ status: "published", publishedAt: new Date() })
+      .where(and(eq(publicationTargets.itemId, item.id), eq(publicationTargets.surface, "email")));
+  } catch {
+    // Pre-Phase-5 schema: nothing to flip.
+  }
+
   log.info(`announcement sent item=${item.id} recipients=${sent} hash=${payload.hash.slice(0, 12)}...`);
   return { ok: true, recipientCount: sent };
 }

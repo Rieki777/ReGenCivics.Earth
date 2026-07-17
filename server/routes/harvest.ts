@@ -355,6 +355,134 @@ export const harvestRouter = router({
     }),
 
   /**
+   * Compose to Publish (Phase 5): one idea in, a Publication out. Drafts
+   * every surface grounded in retrieved sources; nothing publishes here.
+   */
+  compose: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 3 }))
+    .input(z.object({
+      text: z.string().min(10).max(20000),
+      extraSourceRefs: z.array(z.string().max(191)).max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { composePublication } = await import("../lib/publications");
+      return composePublication(ctx.user.id, input);
+    }),
+
+  /** Preview what a compose would draw from, before committing to the drafts. */
+  composePreview: ownerProcedure
+    .input(z.object({ text: z.string().min(10).max(20000) }))
+    .mutation(async ({ ctx, input }) => {
+      const { findRelatedMaterial } = await import("../lib/publications");
+      return findRelatedMaterial(ctx.user.id, input.text);
+    }),
+
+  listPublications: ownerProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    const { publications } = await import("../../drizzle/schema");
+    try {
+      return await db.select().from(publications)
+        .where(eq(publications.ownerId, ctx.user.id))
+        .orderBy(desc(publications.createdAt))
+        .limit(20);
+    } catch (err) {
+      if (isMissingTableError(err)) return [];
+      throw err;
+    }
+  }),
+
+  publicationReview: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const { getPublicationReview } = await import("../lib/publications");
+      const review = await getPublicationReview(ctx.user.id, input.publicationId);
+      if (!review) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      return review;
+    }),
+
+  /** Approve one surface. Publishing still needs the explicit publish call. */
+  approveTarget: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      await db.update(publicationTargets)
+        .set({ status: "approved" })
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+          inArray(publicationTargets.status, ["draft", "failed", "approved"]),
+        ));
+      return { ok: true };
+    }),
+
+  /** Publish one approved surface (idempotent; each surface gates itself). */
+  publishTarget: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({
+      publicationId: z.number().int().positive(),
+      surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]),
+      makePublic: z.boolean().optional(),
+      profileId: z.string().max(64).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { publishTarget } = await import("../lib/publications");
+      try {
+        return await publishTarget(ctx.user.id, input.publicationId, input.surface, { makePublic: input.makePublic, profileId: input.profileId });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Publish refused" });
+      }
+    }),
+
+  /** Generate 2 image options for a slot, each with alt text. */
+  generateImages: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 4 }))
+    .input(z.object({ publicationId: z.number().int().positive(), slot: z.enum(["hero", "inline"]), angleHint: z.string().max(200).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications } = await import("../../drizzle/schema");
+      const [pub] = await db.select().from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      const { generateImageOptions } = await import("../lib/publications");
+      const created = await generateImageOptions(ctx.user.id, input.publicationId, input.slot, pub.title, input.angleHint);
+      return { created };
+    }),
+
+  /** Pick one image per slot; the choice trains the visual profile later. */
+  chooseImage: ownerProcedure
+    .input(z.object({ imageId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publicationImages } = await import("../../drizzle/schema");
+      const [image] = await db.select().from(publicationImages)
+        .where(and(eq(publicationImages.ownerId, ctx.user.id), eq(publicationImages.id, input.imageId))).limit(1);
+      if (!image) throw new TRPCError({ code: "NOT_FOUND", message: "Image not found" });
+      await db.update(publicationImages).set({ chosen: 0 })
+        .where(and(eq(publicationImages.publicationId, image.publicationId), eq(publicationImages.slot, image.slot)));
+      await db.update(publicationImages).set({ chosen: 1 }).where(eq(publicationImages.id, image.id));
+      return { ok: true };
+    }),
+
+  /** The unpublish window: pull a published article back to preview. */
+  unpublishArticle: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publishedArticles, publicationTargets } = await import("../../drizzle/schema");
+      const [article] = await db.select().from(publishedArticles)
+        .where(and(eq(publishedArticles.ownerId, ctx.user.id), eq(publishedArticles.publicationId, input.publicationId))).limit(1);
+      if (!article) throw new TRPCError({ code: "NOT_FOUND", message: "No article for this publication" });
+      await db.update(publishedArticles).set({ status: "unpublished" }).where(eq(publishedArticles.id, article.id));
+      await db.update(publicationTargets).set({ status: "approved" })
+        .where(and(eq(publicationTargets.publicationId, input.publicationId), eq(publicationTargets.surface, "site")));
+      return { ok: true };
+    }),
+
+  /**
    * Email send, step 1 of 2: the preview. Returns the rendered email, the
    * live recipient count, and a signed confirm token bound to the exact body
    * hash. Refuses raw drafts (only status 'edited' qualifies).

@@ -4995,6 +4995,81 @@ export const harvestEmailSends = mysqlTable("harvest_email_sends", {
 }));
 export type HarvestEmailSend = typeof harvestEmailSends.$inferSelect;
 
+// ─── The Harvest: Compose to Publish (Phase 5) ────────────────────────────────
+/** One composed idea; groups the article, per-channel posts, images, email. */
+export const publications = mysqlTable("publications", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaId: int("idea_id"),
+  title: varchar("title", { length: 300 }).notNull(),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["draft", "partially_published", "published"]).default("draft").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdx: index("publications_owner_idx").on(t.ownerId, t.createdAt),
+}));
+export type Publication = typeof publications.$inferSelect;
+
+/** Per-surface state so publishing is staged and idempotent. */
+export const publicationTargets = mysqlTable("publication_targets", {
+  id: int("id").autoincrement().primaryKey(),
+  publicationId: int("publication_id").notNull(),
+  surface: mysqlEnum("surface", ["site", "linkedin", "facebook", "instagram", "threads_x", "email"]).notNull(),
+  itemId: int("item_id"),
+  status: mysqlEnum("status", ["draft", "approved", "scheduled", "published", "failed"]).default("draft").notNull(),
+  scheduledFor: timestamp("scheduled_for"),
+  externalUrl: varchar("external_url", { length: 600 }),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  pubSurfaceUnique: uniqueIndex("publication_targets_pub_surface_unique").on(t.publicationId, t.surface),
+}));
+export type PublicationTarget = typeof publicationTargets.$inferSelect;
+
+/** Generated image options per slot. alt_text is required (accessibility rule). */
+export const publicationImages = mysqlTable("images", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  publicationId: int("publication_id").notNull(),
+  slot: mysqlEnum("slot", ["hero", "inline"]).notNull(),
+  r2Key: varchar("r2_key", { length: 512 }).notNull(),
+  url: varchar("url", { length: 600 }).notNull(),
+  altText: varchar("alt_text", { length: 500 }).notNull(),
+  prompt: text("prompt"),
+  chosen: tinyint("chosen").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  publicationSlotIdx: index("images_publication_slot_idx").on(t.publicationId, t.slot),
+}));
+export type PublicationImage = typeof publicationImages.$inferSelect;
+
+/**
+ * Runtime blog surface for composed articles: hidden preview first (private
+ * URL via preview_token), then public. Static blogPosts.ts stays canonical
+ * for pre-existing posts; the blog pages merge both.
+ */
+export const publishedArticles = mysqlTable("published_articles", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  publicationId: int("publication_id"),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  excerpt: varchar("excerpt", { length: 600 }),
+  content: text("content").notNull(),
+  author: varchar("author", { length: 120 }).default("Rieki Cordon").notNull(),
+  heroImageUrl: varchar("hero_image_url", { length: 600 }),
+  heroImageAlt: varchar("hero_image_alt", { length: 500 }),
+  tags: json("tags"),
+  previewToken: char("preview_token", { length: 36 }).notNull(),
+  status: mysqlEnum("status", ["preview", "public", "unpublished"]).default("preview").notNull(),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type PublishedArticle = typeof publishedArticles.$inferSelect;
+
 /** Append-only run stats for the /admin-create status line. */
 export const harvestRuns = mysqlTable("harvest_runs", {
   id: int("id").autoincrement().primaryKey(),
