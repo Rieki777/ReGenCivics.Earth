@@ -209,9 +209,9 @@ describe("multiplayer quest definitions", () => {
     for (const id of ids) expect(id).toMatch(/^crew-quest-\d+$/);
   });
 
-  it("launch quests stay draft until Rye ratifies (none live yet)", () => {
-    // Delete this test the day the first quest goes live; until then it guards
-    // against drafts leaking to players.
-    expect(liveMultiplayerQuests()).toHaveLength(0);
+  it("the five ratified launch quests are live", () => {
+    // Rye ratified the launch five on 2026-07-16. Drafts added later still
+    // hide until ratified; this guards the launch set stays intact.
+    expect(liveMultiplayerQuests()).toHaveLength(5);
   });
 });

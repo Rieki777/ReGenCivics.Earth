@@ -82,7 +82,7 @@ export const MULTIPLAYER_QUESTS: MultiplayerQuest[] = [
     definitionOfDone:
       "Before and after photos and the haul totals are posted in the crew thread, and every crew member has logged their completion.",
     icon: "Droplets",
-    status: "draft",
+    status: "live",
     sdt: {
       autonomy: 4,
       competence: 4,
@@ -120,7 +120,7 @@ export const MULTIPLAYER_QUESTS: MultiplayerQuest[] = [
     definitionOfDone:
       "The swap happened, the swap list and a table photo are posted in the crew thread, and every crew member has logged their completion.",
     icon: "Sprout",
-    status: "draft",
+    status: "live",
     sdt: {
       autonomy: 5,
       competence: 3,
@@ -159,7 +159,7 @@ export const MULTIPLAYER_QUESTS: MultiplayerQuest[] = [
     definitionOfDone:
       "The meal was shared, the table photo and the source account are posted in the crew thread, and every crew member has logged their completion.",
     icon: "Apple",
-    status: "draft",
+    status: "live",
     sdt: {
       autonomy: 4,
       competence: 4,
@@ -198,7 +198,7 @@ export const MULTIPLAYER_QUESTS: MultiplayerQuest[] = [
     definitionOfDone:
       "The work day happened, the stewards confirmed the tasks were done, the report with photos is posted in the crew thread, and every crew member has logged their completion.",
     icon: "TreeDeciduous",
-    status: "draft",
+    status: "live",
     sdt: {
       autonomy: 3,
       competence: 5,
@@ -237,7 +237,7 @@ export const MULTIPLAYER_QUESTS: MultiplayerQuest[] = [
     definitionOfDone:
       "An elder-approved story is posted to the forum with written consent on record, and every crew member has logged their completion.",
     icon: "MessageSquare",
-    status: "draft",
+    status: "live",
     sdt: {
       autonomy: 4,
       competence: 4,
