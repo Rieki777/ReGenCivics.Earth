@@ -58,6 +58,11 @@ pnpm typecheck                                       # gate 3: exit 0
 
 Plus, for any FIXES_TO_MAKE row marked DONE / VERIFIED, the Evidence column must contain file:line, grep result, screenshot path, or script output line. No evidence = stays `CODED`.
 
+Two traps when the gate involves tests:
+
+- **The DB-backed suites need a real `DATABASE_URL`**, or `skipIfNoDb` skips them and vitest still reports green. "4 passed" can mean "4 skipped the part you changed". Check the skip count, not just the exit code. Also unset `NODE_ENV` first (`NODE_ENV= pnpm vitest ...`).
+- **They run against the shared dev database, so they flake when two sessions run at once.** They create and delete real rows. On 2026-07-16 two contribution tests failed mid-session and passed on a clean re-run with no code change in between. Before believing a DB-suite failure, re-run it alone; before believing a pass, make sure it wasn't skipped.
+
 This exists because on 2026-04-18 an audit of commit `b06b7aa` found 5 of 13 fixes marked "resolved" were false (className added, CSS missing) and 15 source files on disk were truncated mid-statement. Don't ship that pattern again.
 
 ---
@@ -122,6 +127,8 @@ From working-style memory:
 ## 9. Commit + push protocol
 
 - Commit per logical batch with descriptive messages. Don't pile every fix into one commit.
+- **Commit by pathspec, not by index: `git commit -m "..." -- path/one path/two`.** "Targeted `git add`" is NOT enough protection when a concurrent session is running. The index is shared: another session can stage its own files at any moment, and `git commit` then sweeps them into your commit no matter how careful your own `git add` was. This is not hypothetical, it happened on 2026-07-16: a db.ts refactor commit silently swallowed 12 unrelated files (webp assets, CustomGames.tsx, a docs manifest) that the other session had staged. Caught before the push; the fix was `git reset --soft HEAD~1` then re-commit with a pathspec, which also leaves the other session's staged files exactly as they were.
+- Always print `git show --stat --oneline HEAD` after committing and confirm the file list is only yours. Do it before pushing, while `reset --soft` is still cheap.
 - Cowork VM cannot push. Always end with the unpushed commit list (sha + subject) and the Windows push command for Rye.
 - After commit, run `git fetch origin && git log origin/main..main --oneline` to verify what's actually unpushed (Rye pushes between turns; local view goes stale).
 - Per `~/.claude/memories/rye-working-style.md`: unpushed list goes in chronological order, oldest first, in the Claude Code handoff prompt.
