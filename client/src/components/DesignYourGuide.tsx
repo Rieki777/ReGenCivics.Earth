@@ -18,10 +18,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX, Check } from "lucide-react";
 import {
-  GUIDE_ARCHETYPES, GUIDE_TONES, guidePortraitUrl,
+  GUIDE_ARCHETYPES, GUIDE_TONES, guidePortraitUrl, guideArchetype,
   DEFAULT_GUIDE_PORTRAIT_KEY, DEFAULT_GUIDE_TONE,
   type GuideTone,
 } from "@shared/guide";
+import { VoicePicker } from "@/components/companion/VoicePicker";
 
 export function DesignYourGuide({
   open,
@@ -134,6 +135,16 @@ export function DesignYourGuide({
             {voiceEnabled ? <Volume2 className="w-4 h-4 text-[#2f5d3a] dark:text-[#7dd87d]" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
             <span className="flex-1 text-left">{voiceEnabled ? "Voice on: your Guide speaks aloud" : "Voice off: reading only"}</span>
           </button>
+
+          {/* Which voice, from the ones this device has. Only voices matching the
+              face you picked are offered, so swapping the face re-matches it. */}
+          {voiceEnabled && (
+            <VoicePicker
+              personaKey="guide"
+              gender={guideArchetype(portraitKey).gender}
+              sampleText={`Hi, I'm ${name.trim() || "your Guide"}. I'll be walking with you.`}
+            />
+          )}
         </div>
 
         <Button onClick={submit} disabled={save.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f] mt-1">

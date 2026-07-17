@@ -13,6 +13,7 @@
  * required to follow along.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { filterVoicesForGender, sortVoices, voiceMatchesGender, type VoiceGender } from "@shared/voices";
 
 type AnyWindow = Window & {
   SpeechRecognition?: any;
@@ -33,30 +34,104 @@ export function mediaRecorderSupported(): boolean {
   return typeof window !== "undefined" && typeof (window as any).MediaRecorder !== "undefined";
 }
 
-/** Pick a warm, natural local voice for the persona. Prefers en, non-robotic. */
-function pickVoice(): SpeechSynthesisVoice | null {
-  if (!speechSynthesisSupported()) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  const en = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
-  const pool = en.length ? en : voices;
-  // Prefer named natural voices where present.
-  const preferred = pool.find((v) => /samantha|karen|moira|serena|allison|ava|natural|female/i.test(v.name));
-  return preferred ?? pool[0] ?? null;
+/** Every voice this device offers. Empty when speech synthesis is unavailable. */
+export function listVoices(): SpeechSynthesisVoice[] {
+  if (!speechSynthesisSupported()) return [];
+  try { return window.speechSynthesis.getVoices() ?? []; } catch { return []; }
 }
 
+/**
+ * The voices this device offers, kept fresh. Browsers populate the list
+ * asynchronously and fire `voiceschanged` when it lands, so a component that
+ * reads it once on mount often sees an empty array. This re-renders when they
+ * arrive.
+ */
+export function useAvailableVoices(): SpeechSynthesisVoice[] {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(() => listVoices());
+  useEffect(() => {
+    if (!speechSynthesisSupported()) return;
+    const load = () => setVoices(listVoices());
+    load();
+    window.speechSynthesis.addEventListener?.("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
+  }, []);
+  return voices;
+}
+
+/** The voices a member may pick for a persona of this gender, best ones first. */
+export function useVoiceChoices(gender: VoiceGender): SpeechSynthesisVoice[] {
+  const voices = useAvailableVoices();
+  return useMemo(() => sortVoices(filterVoicesForGender(voices, gender)), [voices, gender]);
+}
+
+const VOICE_KEY_PREFIX = "companion-voice:";
+
+/**
+ * The member's chosen voice for one persona, remembered on this device.
+ *
+ * Voices belong to the device, not the account: a macOS voiceURI means nothing
+ * on Windows. So this lives in localStorage rather than the database, and a
+ * choice that is unavailable here is simply ignored (see resolveVoice).
+ */
+export function useVoicePreference(personaKey: string): [string | null, (uri: string | null) => void] {
+  const key = VOICE_KEY_PREFIX + personaKey;
+  const [uri, setUri] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try { return window.localStorage.getItem(key); } catch { return null; }
+  });
+  const set = useCallback((v: string | null) => {
+    setUri(v);
+    try {
+      if (v) window.localStorage.setItem(key, v);
+      else window.localStorage.removeItem(key);
+    } catch { /* private mode: keep it in memory for this session */ }
+  }, [key]);
+  return [uri, set];
+}
+
+/**
+ * Decide which voice actually speaks.
+ *
+ * The saved choice is a hint, never a guarantee: it only wins if the voice still
+ * exists on this device AND still matches the persona's gender. That second
+ * check is what makes changing your Guide's face from the Grandmother to the
+ * Wanderer quietly drop a woman's voice instead of leaving a mismatch. Otherwise
+ * fall back to the first gender-matched voice, then to anything at all.
+ */
+export function resolveVoice(
+  voices: SpeechSynthesisVoice[],
+  gender: VoiceGender,
+  preferredUri: string | null,
+): SpeechSynthesisVoice | null {
+  if (!voices.length) return null;
+  if (preferredUri) {
+    const saved = voices.find((v) => v.voiceURI === preferredUri);
+    if (saved && voiceMatchesGender(saved.name, gender)) return saved;
+  }
+  const matching = sortVoices(filterVoicesForGender(voices, gender));
+  return matching[0] ?? sortVoices(voices)[0] ?? null;
+}
+
+export type SpeechOptions = {
+  /** The persona's gender, so we never speak a man's line in a woman's voice. */
+  gender?: VoiceGender;
+  /** The member's chosen voiceURI for this persona, if any. */
+  voiceURI?: string | null;
+};
+
 /** Speak text aloud unless silent. Returns a stop() to cancel in-flight speech. */
-export function useSpeech(silent: boolean) {
+export function useSpeech(silent: boolean, opts: SpeechOptions = {}) {
+  const { gender = "neutral", voiceURI = null } = opts;
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => {
     if (!speechSynthesisSupported()) return;
-    const load = () => { voiceRef.current = pickVoice(); };
+    const load = () => { voiceRef.current = resolveVoice(listVoices(), gender, voiceURI); };
     load();
-    window.speechSynthesis.onvoiceschanged = load;
-    return () => { try { window.speechSynthesis.onvoiceschanged = null; } catch {} };
-  }, []);
+    window.speechSynthesis.addEventListener?.("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
+  }, [gender, voiceURI]);
 
   const stop = useCallback(() => {
     if (!speechSynthesisSupported()) return;

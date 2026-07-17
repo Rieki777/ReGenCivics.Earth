@@ -24,9 +24,10 @@ import {
   type CompanionFormId,
 } from "@shared/companions";
 import {
-  useListening, useSpeech, useSilentPreference,
+  useListening, useSpeech, useSilentPreference, useVoicePreference,
   speechRecognitionSupported, mediaRecorderSupported,
 } from "./useVoice";
+import { VoicePicker } from "./VoicePicker";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -71,7 +72,11 @@ export default function FormCompanion(props: FormCompanionProps) {
   const [portraitErr, setPortraitErr] = useState(false);
   const [silent, setSilent] = useSilentPreference();
 
-  const { speak, stop: stopSpeaking, speaking } = useSpeech(silent);
+  // The voice is chosen per persona and matched to the character: the First Mate
+  // only ever speaks in a woman's voice, the Harbormaster in a man's.
+  const personaGender = persona?.gender ?? "neutral";
+  const [voiceURI] = useVoicePreference(form?.personaId ?? "companion");
+  const { speak, stop: stopSpeaking, speaking } = useSpeech(silent, { gender: personaGender, voiceURI });
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const recorderRef = useRef<{ rec: any; chunks: Blob[] } | null>(null);
   const [recording, setRecording] = useState(false);
@@ -289,6 +294,18 @@ export default function FormCompanion(props: FormCompanionProps) {
           <X className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
+
+      {/* Choose her voice. Only the voices that match this character are offered,
+          and it is pointless while in reading mode, so it hides when muted. */}
+      {!silent && (
+        <div className="px-4 py-2 border-b bg-muted/20">
+          <VoicePicker
+            personaKey={form.personaId}
+            gender={personaGender}
+            sampleText={persona.greeting}
+          />
+        </div>
+      )}
 
       {/* Captions transcript (always rendered, so voice is never required) */}
       <div ref={scrollRef} className="max-h-72 overflow-y-auto px-4 py-3 space-y-2" aria-live="polite">

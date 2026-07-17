@@ -10,8 +10,8 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useReGenGuide } from "@/contexts/ReGenGuideContext";
 import { DesignYourGuide } from "@/components/DesignYourGuide";
-import { guidePortraitUrl } from "@shared/guide";
-import { useSpeech, useSilentPreference } from "@/components/companion/useVoice";
+import { guidePortraitUrl, guideArchetype } from "@shared/guide";
+import { useSpeech, useSilentPreference, useVoicePreference } from "@/components/companion/useVoice";
 
 const PATH_WELCOMES: Record<string, string> = {
   investor: "Welcome back! I'm your personal ReGen Guide, here to walk you through the Fund: the investment thesis, the seasonal accelerator, or your next step. What's on your mind?",
@@ -39,7 +39,14 @@ export default function ReGenGuide() {
   const guideName = prefs?.guideName || "Your ReGen Guide";
   const voiceEnabled = Boolean(prefs?.voiceEnabled);
   const [silent, setSilent] = useSilentPreference();
-  const { speak, stop: stopSpeaking } = useSpeech(silent || !voiceEnabled);
+  // The Guide speaks in the voice the member chose for it, matched to the face
+  // they picked (the Grandmother never speaks in a man's voice).
+  const guideGender = guideArchetype(prefs?.portraitKey).gender;
+  const [guideVoiceURI] = useVoicePreference("guide");
+  const { speak, stop: stopSpeaking } = useSpeech(silent || !voiceEnabled, {
+    gender: guideGender,
+    voiceURI: guideVoiceURI,
+  });
   const [designOpen, setDesignOpen] = useState(false);
 
   const userPath = profile?.path ?? undefined;

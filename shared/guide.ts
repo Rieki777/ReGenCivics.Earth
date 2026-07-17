@@ -9,6 +9,7 @@
  * loaded server-side by the authenticated user id, so the Guide only ever knows
  * the person asking.
  */
+import type { VoiceGender } from "./voices";
 
 export type GuideTone = "gentle" | "playful" | "direct";
 
@@ -31,13 +32,19 @@ export type GuideArchetype = {
   label: string;
   /** Served from /images/guide/. */
   portrait: string;
+  /**
+   * The face's gender, so the voice picker only offers matching voices. The
+   * Lantern-Bearer is androgynous and the Fox is an animal, so both take any
+   * voice. Changing the face re-matches the voice (see resolveVoice).
+   */
+  gender: VoiceGender;
 };
 
 export const GUIDE_ARCHETYPES: GuideArchetype[] = [
-  { key: "guide-archetype-1", label: "The Lantern-Bearer", portrait: "guide-archetype-1.webp" },
-  { key: "guide-archetype-2", label: "The Grandmother", portrait: "guide-archetype-2.webp" },
-  { key: "guide-archetype-3", label: "The Fox", portrait: "guide-archetype-3.webp" },
-  { key: "guide-archetype-4", label: "The Wanderer", portrait: "guide-archetype-4.webp" },
+  { key: "guide-archetype-1", label: "The Lantern-Bearer", portrait: "guide-archetype-1.webp", gender: "neutral" },
+  { key: "guide-archetype-2", label: "The Grandmother", portrait: "guide-archetype-2.webp", gender: "female" },
+  { key: "guide-archetype-3", label: "The Fox", portrait: "guide-archetype-3.webp", gender: "neutral" },
+  { key: "guide-archetype-4", label: "The Wanderer", portrait: "guide-archetype-4.webp", gender: "male" },
 ];
 
 export const DEFAULT_GUIDE_PORTRAIT_KEY = "guide-archetype-1";

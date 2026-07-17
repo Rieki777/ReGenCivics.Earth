@@ -20,6 +20,8 @@
  * submits on its own.
  */
 
+import type { VoiceGender } from "./voices";
+
 // ── Persona display metadata (client-safe) ───────────────────────────────────
 
 export type CompanionPersonaId = "first-mate" | "harbormaster" | "gardener" | "weaver" | "sylva";
@@ -29,6 +31,11 @@ export type CompanionPersona = {
   /** The bioregion this persona belongs to. The First Mate shifts per bioregion. */
   bioregionSlug: string;
   name: string;
+  /**
+   * Who this character is, so the voice picker only offers matching voices: a
+   * woman persona gets woman voices, a man gets man voices. "neutral" takes any.
+   */
+  gender: VoiceGender;
   /** Local image name served from /images/ship/ (see shipImg). */
   portrait: string;
   /** One-line role, shown under the name on the invitation card. */
@@ -46,6 +53,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     id: "first-mate",
     bioregionSlug: "cascadia",
     name: "the First Mate",
+    gender: "female",
     portrait: "persona-first-mate.webp",
     role: "Cascadian local, charts your voyage",
     greeting:
@@ -61,6 +69,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     id: "harbormaster",
     bioregionSlug: "cascadia",
     name: "the Harbormaster",
+    gender: "male",
     portrait: "persona-harbormaster.webp",
     role: "keeps the fleet seaworthy",
     greeting:
@@ -75,6 +84,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     id: "gardener",
     bioregionSlug: "cascadia",
     name: "the Gardener",
+    gender: "male",
     portrait: "persona-gardener.webp",
     role: "gentle land steward",
     greeting:
@@ -89,6 +99,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     id: "weaver",
     bioregionSlug: "cascadia",
     name: "the Weaver",
+    gender: "female",
     portrait: "persona-weaver.webp",
     role: "weaves the village network",
     greeting:
@@ -104,6 +115,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     // ReGen's own Game Guide; she belongs to no single bioregion.
     bioregionSlug: "global",
     name: "Sylva",
+    gender: "female",
     portrait: "persona-sylva.webp",
     role: "ReGen's Game Guide, of the forest",
     greeting:
@@ -126,6 +138,8 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
 export type ChatPersona = {
   id: "ships-cook";
   name: string;
+  /** Drives the voice picker, same as the form companions. */
+  gender: VoiceGender;
   portrait: string;
   role: string;
   greeting: string;
@@ -136,6 +150,7 @@ export type ChatPersona = {
 export const SHIPS_COOK: ChatPersona = {
   id: "ships-cook",
   name: "the Ship's Cook",
+  gender: "female",
   portrait: "persona-ships-cook.webp",
   role: "natural hygienist, cooks the valley into a feast",
   greeting:
