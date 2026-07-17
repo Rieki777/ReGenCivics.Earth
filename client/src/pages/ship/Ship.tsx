@@ -162,7 +162,7 @@ export default function Ship() {
             <p className="text-foreground/90 mb-4">The ship eats organic, plant-based, and mostly raw, because that keeps the water clean enough to nourish the land. The Galley shows you how, with a cookbook of build-your-own formulas and a remixer that turns your market haul into dishes. Log what you gathered, pick your track, and cook.</p>
             <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/galley">Enter the Galley</Link></Button>
           </div>
-          <div data-reveal="right" className="aspect-[4/3]"><ShipImage name="ship-galley-table.jpg" alt="A galley table laid with ripe fruit, greens, and shared plates." className="h-full" /></div>
+          <div data-reveal="right" className="aspect-[4/3]"><ShipImage name="ship-galley-table.webp" alt="A galley table laid with ripe fruit, greens, and shared plates." className="h-full" /></div>
         </div>
       </ShipSection>
 

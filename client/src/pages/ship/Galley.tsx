@@ -128,13 +128,13 @@ export default function Galley() {
       <SEO
         title="The Galley"
         description="Cook what you gather. The ReGen Ship's cookbook, two dietary tracks, and a remixer that turns your market haul into living food."
-        image="/images/ship/ship-galley-table.jpg"
+        image="/images/ship/ship-galley-table.webp"
         url="/ship/galley"
       />
 
       {/* Hero */}
       <section className="relative min-h-[52vh] flex items-center justify-center text-center overflow-hidden">
-        <ShipImage name="ship-galley-table.jpg" alt="A galley table laid with ripe fruit, greens, and shared plates." rounded={false} className="absolute inset-0 -z-10" />
+        <ShipImage name="ship-galley-table.webp" alt="A galley table laid with ripe fruit, greens, and shared plates." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/50" />
         <div className="max-w-3xl mx-auto px-4 py-20 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">The Galley</p>
