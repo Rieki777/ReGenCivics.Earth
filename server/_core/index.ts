@@ -26,6 +26,7 @@ import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 import { runShipCrewListJob } from "../jobs/shipCrewList";
+import { runQuestCrewAssemblyJob } from "../jobs/questCrewAssembly";
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -1202,6 +1203,18 @@ setTimeout(async () => {
     try { await runShipCrewListJob(); } catch (e) { log.error("ShipCrewListJob error", e); }
   }, 24 * 60 * 60 * 1000);
 }, 9 * 60 * 1000); // first run after 9 minutes
+
+// ─── Multiplayer crew assembly (every 30 minutes) ────────────────────────────
+// Forms quest crews when (quest, bioregion) signups reach crewSizeMin, creates
+// crew chat threads, sends formation emails (idempotent per member per crew),
+// and sweeps completions. Deterministic, zero LLM, safe to re-run; also
+// triggerable via POST /api/cron/quest-crew-assembly for a manual kick.
+setTimeout(async () => {
+  try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
+  setInterval(async () => {
+    try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
+  }, 30 * 60 * 1000);
+}, 5 * 60 * 1000); // first run after 5 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or
