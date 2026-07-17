@@ -156,6 +156,11 @@ export const applications = mysqlTable("applications", {
   needsText: text("needsText"),
   offersText: text("offersText"),
 
+  // The ReGen impact schema (Phase C1): validated against shared/impact.ts
+  // impactDataSchema on every write; admin-edited, publicly summarized only
+  // through publicImpactSummary().
+  impactData: json("impact_data"),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

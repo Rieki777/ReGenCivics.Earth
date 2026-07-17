@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { BulkActionBar } from "./BulkActionBar";
 import { ApplicationTimeline } from "./ApplicationTimeline";
+import { ImpactDataPanel } from "./ImpactDataPanel";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -417,6 +418,7 @@ export function AdminApplicationsTab({
                         />
                       </Suspense>
                       <ApplicationTimeline applicationId={app.id} />
+                      <ImpactDataPanel applicationId={app.id} />
                       <EmailHistoryPanelComp email={app.contactEmail || ""} />
                       <ContactNotesPanel contactType="project_application" contactId={app.id} />
                       <ContactTagsPanel contactType="project_application" contactId={app.id} />

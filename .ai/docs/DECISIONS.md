@@ -459,6 +459,17 @@ Format per entry:
 
 ## Adding new ADRs
 
+## ADR-41: The Federation Bridge — typed intents for partner-network handoffs
+
+- Date: 2026-07-17. Status: Accepted (Rye delegated acceptance of this ADR in-session, 2026-07-16; supersede to veto). Text also recorded in `FIXES_TO_MAKE_2026-07-16_MULTIPLAYER_COORDINATION.md` per the build prompt.
+- Context: improvement 11 makes ReGen legible to the wider movement (GEN, OpenCivics, BioFi, Ethereum localism). Read surfaces shipped first: `GET /api/federation/projects.json` (public project directory with the shared/impact.ts summary) and the Federation section of `llms.txt`. The open question was how partner handoffs with side effects (a partner network enrolling a project, syncing a quest format, referencing our seasons calendar) should work.
+- Decision: partner-network handoffs follow the Hypha Bridge pattern (`server/lib/hypha-bridge/`, STEERING §6): a dedicated `server/lib/federation-bridge/` module owning every cross-network handoff as a TYPED INTENT (named intent kind, zod-validated payload at both ends, signed short-lived token when the handoff carries identity), never hand-rolled links or ad-hoc webhooks. Read-only surfaces (projects.json, llms.txt) stay plain public endpoints outside the bridge. The module is NOT built yet: implementation waits for the first concrete partner integration; this ADR locks the pattern so that integration extends a bridge instead of inventing a link.
+- Why: the Hypha Bridge already proved the shape (11 intents, validation at raise and execution, no hand-rolled redirects). Repeating it means every partner integration inherits validation, auditability, and a single place to reason about trust. Locking the pattern before the first partner arrives prevents the first integration from setting a worse precedent under deadline pressure.
+- Trade-offs: slightly more ceremony for the first partner integration than a quick webhook; acceptable because cross-network writes are exactly where ad-hoc trust goes wrong.
+- Code refs: `server/lib/hypha-bridge/` (the pattern), `server/_core/index.ts` (`/api/federation/projects.json`), `client/public/llms.txt` (Federation section), `shared/impact.ts` (what is public).
+
+---
+
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
 
 If a decision gets reversed, write a NEW entry that explains the reversal and mark the OLD entry `Superseded by ADR-N`. Don't delete history.

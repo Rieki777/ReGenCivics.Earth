@@ -20,6 +20,30 @@ Build prompt: `CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md`. Sourc
 
 **Phase A went live 2026-07-16 ~23:41 ET.** Rye delegated the human steps in-session: the five quests were ratified and flipped live, migration 0194 was applied on Railway (`run-migration.ts`, 3 statements, 0 failed), the assembly job now runs in-process every 30 minutes (no Railway cron service needed; the /api/cron endpoint stays for manual kicks), the deploy reached SUCCESS, and https://regencivics.earth/multiplayer was verified live in the browser: all five quests render with rewards and crew sizes, signup form gated behind sign-in. Every CODED row above is now VERIFIED.
 
+## Phase B: living map layer + Needs and Offers. Status
+
+Shipped and deployed 2026-07-17 ~00:05 ET (commit `a723ca9`, deploy SUCCESS). Map layer: `mapLayers.seasonActivity` (cached aggregates, ADR-28 posture) + `shared/bioregionCentroids.ts` + the Season Activity toggle on the Civics globe (ship map untouched). Board: migration 0196 applied on Railway; `/board` page; needs/offers fields on all seven application families; deterministic matcher daily in-process + `/api/cron/needs-offers-matcher`, one intro email per pair ever, per-party daily cap of 3. 601 tests green at ship time.
+
+Notes for you:
+- Form-sourced needs/offers rows join matching but are NOT listed publicly (they were written inside private applications). Say the word to change that.
+- Form-sourced rows carry no tags, so they match nothing until tagged. Tagging surface (admin or self-serve) is a follow-up when volume shows up.
+- The intro email names both parties' emails to each other (that is what an introduction is); suppression respected via emailDigestFrequency, bans, and the daily cap. A `do-not-contact` contactTag check is a follow-up.
+- Bioregion centroids are hand-placed approximations for the globe glow; refine anytime in `shared/bioregionCentroids.ts`.
+- The other session's unapplied `0196_voice_learning.sql` collided with the applied 0196 and was renamed to `0198_voice_learning.sql` (safe: unapplied files renumber freely).
+
+## Phase C: impact schema + federation. Status
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| C1 | `shared/impact.ts` zod schema, CIDS mapping in header | VERIFIED | 6 tests green (`server/impact.test.ts`); `pnpm check` exit 0 |
+| C1 | Migration 0199 `impact_data` JSON on `applications` | APPLIED on Railway | run-migration: 1 applied, 0 failed |
+| C1 | Admin edit panel in the application detail sheet | CODED | `client/src/components/admin/ImpactDataPanel.tsx`; procedures `applications.adminGetImpact` / `adminSetImpact` (zod-validated writes) |
+| C2 | `GET /api/federation/projects.json` | CODED | `server/_core/index.ts`; publicDetail's visibility statuses, whitelisted fields, `publicImpactSummary()` only, cached 10 min |
+| C2 | `llms.txt` Federation section | VERIFIED | `client/public/llms.txt`; every URL resolves (no per-project page yet, so profileUrl points at /map) |
+| C2 | Federation Bridge ADR | ACCEPTED (delegated) | ADR-41 in `.ai/docs/DECISIONS.md`; module implementation waits for the first concrete partner |
+
+Your one remaining C1 task: backfill impact data for the current cohort via the admin panel (only you know the projects).
+
 ## Phase E (docs, buildable anytime): status
 
 | # | Item | Owner | Status | Evidence |

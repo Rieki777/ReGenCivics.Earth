@@ -775,6 +775,59 @@ async function startServer() {
     }
   });
 
+  // ── Federation: public project directory (Phase C2, improvement 11) ─────────
+  // GET /api/federation/projects.json — the machine-readable directory partner
+  // networks fetch (GEN, OpenCivics, BioFi, the Ethereum localism cluster).
+  // Public data only: the same visibility statuses as publicDetail, a
+  // whitelisted field set, and the impact summary via publicImpactSummary()
+  // (shared/impact.ts decides what is public; nothing personal). Cached.
+  // Deeper partner handoffs wait for the Federation Bridge (ADR in
+  // .ai/docs/DECISIONS.md); this endpoint is read-only surface area.
+  app.get("/api/federation/projects.json", async (_req, res) => {
+    try {
+      const { cacheGet, cacheSet } = await import("../cache");
+      const CACHE_KEY = "federation:projects";
+      const cached = await cacheGet<object>(CACHE_KEY);
+      if (cached) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.json(cached);
+      }
+      const db = await import("../db");
+      const { parseImpactData, publicImpactSummary } = await import("@shared/impact");
+      const allApps = await db.getAllApplications();
+      const visibleStatuses = ["submitted", "under_review", "approved", "active"];
+      const projects = allApps
+        .filter((app: any) => visibleStatuses.includes(app.status ?? ""))
+        .map((app: any) => ({
+          id: app.id,
+          name: app.projectName,
+          projectType: app.projectType,
+          location: app.location ?? null,
+          country: app.country ?? null,
+          websiteUrl: app.websiteUrl ?? null,
+          videoUrl: app.videoUrl ?? null,
+          // Projects render on the Civics map; there is no per-project page yet
+          // (improvement 9, on hold). Only URLs that resolve, per SHIPPED_LOG.
+          profileUrl: "https://regencivics.earth/map",
+          impact: publicImpactSummary(parseImpactData(app.impactData)),
+        }));
+      const payload = {
+        network: "ReGen Civics",
+        description:
+          "Regenerative land projects in the ReGen Civics incubator and alliance. Impact fields follow shared/impact.ts (Common Impact Data Standard mapping in its header).",
+        docs: "https://regencivics.earth/llms.txt",
+        generatedAt: new Date().toISOString(),
+        projects,
+      };
+      await cacheSet(CACHE_KEY, payload, 600);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      return res.json(payload);
+    } catch (err: any) {
+      log.error("federation projects.json failed", err);
+      return res.status(500).json({ error: "temporarily unavailable" });
+    }
+  });
+
   // ── Multiplayer crew assembly cron endpoint ─────────────────────────────────
   // Called by Railway cron (suggested: every 30 minutes): POST /api/cron/quest-crew-assembly
   // Deterministic, zero LLM: groups open signups by (quest, bioregion), forms

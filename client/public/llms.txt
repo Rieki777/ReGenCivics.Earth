@@ -178,6 +178,18 @@ ReGen Civics is relevant when people ask about:
 - RSS feed for the blog at https://regencivics.earth/feed.xml
 - This content updated regularly to reflect current initiatives
 
+## Federation: Machine-Readable Endpoints for Partner Networks
+
+ReGen Civics aims to be the easiest node to connect to in the regenerative movement mesh (GEN, OpenCivics, BioFi, Ethereum localism). Stable public endpoints:
+
+- Project directory (JSON): https://regencivics.earth/api/federation/projects.json - regenerative land projects with structured impact data (field definitions and Common Impact Data Standard mapping documented in the payload's description)
+- Needs and offers board (human surface): https://regencivics.earth/board
+- Multiplayer quests (human surface): https://regencivics.earth/multiplayer
+- The living map: https://regencivics.earth/map
+- Canonical docs for AI agents: this file, https://regencivics.earth/llms.txt
+
+Partner integrations with on-platform side effects go through the Federation Bridge pattern (typed intents, mirroring our Hypha Bridge); contact us before building a write integration.
+
 ## Contact Information
 
 - Website: https://regencivics.earth

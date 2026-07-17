@@ -260,6 +260,42 @@ export const applicationsRouter = router({
     }),
 
   // Admin: Get all non-draft applications (submitted, under_review, approved, active, etc.)
+  // ── ReGen impact schema (Phase C1, improvement 7) ──────────────────────────
+  // Admin-edited structured impact record, validated against shared/impact.ts
+  // on every write. Public display goes through publicImpactSummary() only.
+  adminGetImpact: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const app = await db.getApplicationById(input.id);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      const { parseImpactData } = await import("@shared/impact");
+      return { id: app.id, projectName: app.projectName, impact: parseImpactData(app.impactData) };
+    }),
+
+  adminSetImpact: adminProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        impact: z.record(z.string(), z.unknown()),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const app = await db.getApplicationById(input.id);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      const { impactDataSchema } = await import("@shared/impact");
+      const parsed = impactDataSchema.omit({ updatedAt: true }).safeParse(input.impact);
+      if (!parsed.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Impact data failed validation: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+        });
+      }
+      await db.updateApplication(input.id, {
+        impactData: { ...parsed.data, updatedAt: new Date().toISOString() },
+      });
+      return { ok: true };
+    }),
+
   list: adminProcedure.query(async () => {
     return db.getAllApplications();
   }),
