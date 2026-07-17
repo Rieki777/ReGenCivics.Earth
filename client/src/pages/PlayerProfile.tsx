@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link, useSearch } from 'wouter';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import {
   User,
@@ -48,6 +48,7 @@ import {
   Compass,
   Flame,
   Scroll,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -2434,10 +2435,10 @@ type ProfileTab = "overview" | "submissions" | "quests" | "crews" | "tasks" | "g
 
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
-  { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
+  { id: "submissions",    label: "Submissions",    icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
   { id: "crews",          label: "Crews",          icon: UsersIcon },
-  { id: "tasks",          label: "Tasks",          icon: Scroll },
+  { id: "tasks",          label: "Tasks",          icon: ClipboardList },
   { id: "gratitude",      label: "Gratitude",      icon: Heart },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
@@ -2454,6 +2455,16 @@ export default function PlayerProfile() {
   const [activeTab, setActiveTab] = useState<ProfileTab>(
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
   );
+  // Keep the active tab in sync with the URL after mount. Notification
+  // deep links (e.g. /profile?tab=gratitude) navigate client-side, so the
+  // component never remounts; without this the tab param is read once and
+  // then ignored.
+  const searchString = useSearch();
+  useEffect(() => {
+    const t = new URLSearchParams(searchString).get("tab") as ProfileTab | null;
+    if (t && _validTabs.includes(t)) setActiveTab(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchString]);
   const [questFilter, setQuestFilter] = useState<"completed" | "in-progress" | "proposed">("completed");
   const [settingsSection, setSettingsSection] = useState<"profile" | "game" | "notifications">("profile");
 
@@ -2596,29 +2607,34 @@ export default function PlayerProfile() {
                 url.searchParams.set("tab", "quests");
                 window.history.replaceState({}, "", url.toString());
               }} />
-              {/* Tab nav */}
+              {/* Tab nav: 4x2 grid of icon+label buttons. Two rows at every
+                  width so each target stays 56px+ tall on phones; the old
+                  single scroll row hid labels below sm and overflowed on
+                  desktop. */}
               <AnimatedSection animation="slide-up">
-                <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 mb-6 overflow-x-auto scrollbar-none">
+                <div className="grid grid-cols-4 gap-1 bg-white/5 border border-white/10 rounded-2xl p-1.5 mb-6" role="tablist" aria-label="Profile sections">
                   {PROFILE_TABS.map(tab => {
                     const Icon = tab.icon;
                     const active = activeTab === tab.id;
                     return (
                       <button
                         key={tab.id}
+                        role="tab"
+                        aria-selected={active}
                         onClick={() => {
                           setActiveTab(tab.id);
                           const url = new URL(window.location.href);
                           url.searchParams.set("tab", tab.id);
                           window.history.replaceState({}, "", url.toString());
                         }}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-1 justify-center ${
+                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2.5 min-h-[56px] rounded-xl text-[11px] sm:text-xs font-medium leading-tight transition-all ${
                           active
                             ? "bg-[#1a472a] text-white shadow-sm border border-[#7dd87d]/20"
-                            : "text-white/70 hover:text-white/80"
+                            : "text-white/70 hover:text-white/80 hover:bg-white/5"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${active ? "text-[#7dd87d]" : ""}`} />
-                        <span className="hidden sm:inline">{tab.label}</span>
+                        <Icon className={`w-5 h-5 shrink-0 ${active ? "text-[#7dd87d]" : ""}`} />
+                        <span className="text-center">{tab.label}</span>
                       </button>
                     );
                   })}

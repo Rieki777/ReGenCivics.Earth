@@ -26,9 +26,22 @@ function legacyLink(type: string): string | null {
       return '/crowdpooling';
     case 'quest_complete':
       return '/quest';
+    case 'gratitude':
+      return '/profile?tab=gratitude';
     default:
       return null;
   }
+}
+
+/** Destination for a notification. Older rows (and legacy back-fills) stored
+ * a bare "/profile" link, which lands on the Overview tab instead of the
+ * section the notification is about  -  upgrade those to the right tab. */
+export function resolveNotificationLink(item: { type: string; link: string | null }): string | null {
+  const target = item.link || legacyLink(item.type);
+  if (item.type === 'gratitude' && (!target || target === '/profile')) {
+    return '/profile?tab=gratitude';
+  }
+  return target;
 }
 
 export function typeGlyph(type: string): string {
@@ -136,7 +149,7 @@ export function NotificationBell() {
       }
     }
     setIsOpen(false);
-    const target = item.link || legacyLink(item.type);
+    const target = resolveNotificationLink(item);
     if (target) navigate(target);
   };
 

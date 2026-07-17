@@ -14,7 +14,7 @@ import { TaoSpinner } from '@/components/TaoSpinner';
 import { PageTransition } from '@/components/PageTransition';
 import { FlowerOfLifeIcon } from '@/components/FlowerOfLifeIcon';
 import { formatDistanceToNow } from 'date-fns';
-import { typeGlyph } from '@/components/NotificationBell';
+import { typeGlyph, resolveNotificationLink } from '@/components/NotificationBell';
 
 const FILTERS: { key: string; label: string; types?: string[] }[] = [
   { key: 'all', label: 'All' },
@@ -110,7 +110,8 @@ export default function Notifications() {
                   key={item.id}
                   onClick={() => {
                     if (!item.isRead) markRead.mutate({ id: item.id });
-                    if (item.link) navigate(item.link);
+                    const target = resolveNotificationLink(item);
+                    if (target) navigate(target);
                   }}
                   className={`w-full text-left p-4 border-b border-[#7dd87d]/10 hover:bg-[#f0f7f0] transition-colors ${
                     !item.isRead ? 'bg-[#f0f7f0]/50' : ''
