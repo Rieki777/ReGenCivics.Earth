@@ -95,8 +95,8 @@ export function CampaignImageGallery({ images, campaignName, mode = 'card' }: Ca
           )}
           
           {/* Hover overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-            <Camera className="w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
+          <div className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+            <Camera className="pointer-events-none w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export function CampaignImageGallery({ images, campaignName, mode = 'card' }: Ca
               </div>
             )}
             {image.caption && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <p className="text-white text-xs truncate">{image.caption}</p>
               </div>
             )}

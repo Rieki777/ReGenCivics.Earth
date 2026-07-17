@@ -190,7 +190,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
                 <div key={img.id} className="aspect-square rounded-lg overflow-hidden relative group">
                   <img src={resolveAssetUrl(img.imageUrl)} alt={img.caption || ''} className="w-full h-full object-cover" width={400} height={400} loading="lazy" />
                   {img.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                       {img.caption}
                     </div>
                   )}

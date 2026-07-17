@@ -84,6 +84,24 @@ Hamburger menu links were text-height (~25px) with no padding: now 44px rows. Re
 
 ---
 
+## Fix 9 — The iPhone dead-tap zone: invisible FAB menu swallowed right-side taps (Critical)
+
+**Status:** CODED
+
+**Symptom (reported by Rye on iPhone Safari):** Quests, Crews, Contributions, and Settings profile tabs plus the gratitude wall's Sent toggle did nothing when tapped. Left-side buttons worked. Desktop was unaffected.
+
+**Root cause:** WizardRadialMenu (the floating seed-of-life button, phones only via md:hidden) keeps its 9 menu rows mounted at opacity-0 when closed so the open animation can run. The rows correctly had pointer-events-none, but the outer `fixed` container did not — so the container itself, an invisible ~190x600px box anchored bottom-right, hit-tested and swallowed every tap that fell through the rows. Everything under that rectangle was dead on phones. Invisible in every screenshot, absent at desktop widths: exactly the shape of bug static review keeps missing.
+
+**Fix:** `pointer-events-none` on the container, `pointer-events-auto` on the trigger (the menu column already toggled its own). Closed = only the 56px flower is tappable; open = rows + trigger; everything else falls through to the page.
+
+**Same-pattern sweep (new scanner, whole codebase):** ExitIntentCapture and CookieConsent blocked taps during fade-outs (full-screen and full-width strips respectively) — hidden states now pointer-events-none. BlogPost's floating share column had a dead gap strip — container none, button auto. SmartImagePicker's remove-image button was invisible-but-tappable on phones — now always visible on mobile like the other image tools. Decorative hover overlays (campaign galleries, Connect cards, MobileTabBar indicator) hardened with pointer-events-none.
+
+**Audit upgrade (why the last audit missed it, and what changed):** the sweep checked touch-target sizes, viewport units, and safe-areas — all things visible in code or screenshots — but never asked "what does hit-testing see." New `scripts/audit-tap-blockers.py` closes that hole: it flags mounted-but-invisible elements (opacity-0 without pointer-events-none) as failures and transparent positioned wrappers as warnings, with an img/tiny-icon/clipped-accordion filter to stay quiet on the benign patterns, and a `tap-audit-ok` comment to suppress a human-reviewed finding. It now runs inside `pnpm gate` as gate 1b, so this class of bug fails the ship gate before it can reach a phone.
+
+**Files changed:** `client/src/components/mobile/WizardRadialMenu.tsx`, `ExitIntentCapture.tsx`, `CookieConsent.tsx`, `SmartImagePicker.tsx`, `CampaignImageGallery.tsx`, `AdminCampaignApproval.tsx`, `mobile/MobileTabBar.tsx`, `pages/BlogPost.tsx`, `pages/CampaignDetail.tsx`, `pages/Connect.tsx`, plus review markers in FileUpload, CampaignImageUpload, PageWrapper, HeroPageLoader, PageBackground, PathPortalsSelector; new `scripts/audit-tap-blockers.py`; `scripts/gate.mjs`.
+
+---
+
 ## Documented, deliberately NOT changed (design decisions or larger refactors)
 
 | Item | Where | Why deferred |
@@ -128,6 +146,8 @@ Forum notification links (`/community/post/{id}#reply-{id}`) scroll to the exact
 | 8 | Ship pills/close buttons/photo chips → 44px targets | CODED |
 | 9 | CORE nav/footer/input/CSS fixes | CODED |
 | 10 | Migrate 5 custom modals to base DialogContent | Can do on request (deferred, see table above) |
+| 11 | Dead-tap zone: WizardRadialMenu container + 9 same-pattern hardenings | CODED |
+| 12 | scripts/audit-tap-blockers.py wired into pnpm gate as gate 1b | CODED |
 
 ### WAITING ON YOU before Claude Code can proceed
 

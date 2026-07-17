@@ -69,7 +69,7 @@ export default function MobileTabBar() {
             >
               {/* Active indicator bar */}
               <span
-                className={`absolute top-0 h-0.5 w-8 rounded-full transition-opacity duration-300 ${active ? "opacity-100" : "opacity-0"}`}
+                className={`pointer-events-none absolute top-0 h-0.5 w-8 rounded-full transition-opacity duration-300 ${active ? "opacity-100" : "opacity-0"}`}
                 style={{ backgroundColor: tint.primary }}
               />
               <div

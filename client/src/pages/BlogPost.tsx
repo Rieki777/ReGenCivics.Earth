@@ -183,7 +183,7 @@ export default function BlogPost() {
           sits directly below it. The flower-of-life command menu is a separate
           global element (bottom-right) and is intentionally left untouched. */}
       <div
-        className="fixed right-4 z-40 flex flex-col items-end gap-3"
+        className="fixed right-4 z-40 flex flex-col items-end gap-3 pointer-events-none"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 73px)" }}
       >
         <ShareButton
@@ -193,7 +193,7 @@ export default function BlogPost() {
           url={pageUrl}
           variant="solid"
           label="Share"
-          className="shadow-lg"
+          className="shadow-lg pointer-events-auto"
         />
         {/* Reading-progress ring — mobile only (desktop uses the TOC panel). */}
         <ReadingProgressRing progress={scrollProgress} className="md:hidden" />

@@ -72,6 +72,19 @@ if (!python) {
 }
 run("gate 1: truncation audit", python, [AUDIT]);
 
+// Gate 1b: no invisible tap blockers. Added 2026-07-17 after the
+// WizardRadialMenu dead zone shipped: a mounted opacity-0 menu made the
+// bottom-right ~600px of every phone screen swallow taps (profile tabs,
+// gratitude toggles), invisible in every screenshot and absent on desktop
+// where the element is md:hidden. Static review missed it three times.
+// STRONG findings fail the gate; WARN findings are informational.
+// Suppress a reviewed finding with a `tap-audit-ok` comment on the line
+// above the className — only after checking the element's real hit-box.
+const TAP_AUDIT = "scripts/audit-tap-blockers.py";
+if (existsSync(TAP_AUDIT)) {
+  run("gate 1b: tap-blocker audit", python, [TAP_AUDIT]);
+}
+
 // Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
@@ -84,7 +97,7 @@ if (!existsSync(TSC)) {
 run("gate 3: typecheck", process.execPath, [TSC, "--noEmit"]);
 
 process.stdout.write(
-  "\n✓ Gates 1 and 3 pass.\n" +
+  "\n✓ Gates 1, 1b and 3 pass.\n" +
     "  Gate 2 is manual — for each className or @keyframes you added:\n" +
     "    rg -g '*.css' '<the-name>' client/src/\n",
 );

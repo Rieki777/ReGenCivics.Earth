@@ -252,7 +252,7 @@ export function ExitIntentCapture() {
   return (
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 ${
-        visible ? "opacity-100" : "opacity-0"
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       role="presentation"
       onClick={handleDismiss}
@@ -261,6 +261,7 @@ export function ExitIntentCapture() {
 
       <div
         ref={trapRef}
+        // tap-audit-ok: parent overlay gates pointer-events-none while hidden
         className={`relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl transition-all duration-300 ${
           visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-5"
         }`}

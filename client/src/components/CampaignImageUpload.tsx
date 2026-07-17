@@ -227,6 +227,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           multiple
           accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={(e) => handleFiles(e.target.files)}
+          // tap-audit-ok: invisible file input over its own dropzone, taps are the point
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isUploading || imageCount >= maxImages}
         />

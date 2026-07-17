@@ -154,6 +154,7 @@ export function FileUpload({
           multiple
           accept={accept}
           onChange={(e) => handleFiles(e.target.files)}
+          // tap-audit-ok: invisible file input over its own dropzone, taps are the point
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isUploading || value.length >= maxFiles}
         />

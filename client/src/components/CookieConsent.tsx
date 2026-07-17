@@ -113,7 +113,7 @@ export default function CookieConsent() {
       className={`fixed bottom-20 left-0 right-0 z-[9999] p-3 md:p-4 transition-all duration-300 ease-out ${
         animating
           ? "translate-y-0 opacity-100"
-          : "translate-y-full opacity-0"
+          : "translate-y-full opacity-0 pointer-events-none"
       }`}
       role="dialog"
       aria-label="Cookie consent"

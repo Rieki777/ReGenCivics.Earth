@@ -854,6 +854,7 @@ export default function PageBackground({
       {/* scrollWithPage=false + parallax=true (default): JS translateY creates smooth depth parallax */}
       <div
         ref={bgRef}
+        // tap-audit-ok: decorative background layer behind all content (z-2)
         className={`absolute z-[2] transition-opacity duration-1000 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
