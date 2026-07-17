@@ -14,6 +14,14 @@
  *  version accepted so old acceptances stay auditable. */
 export const SHIP_TERMS_VERSION = "1.0";
 
+/** The legal entity behind the Ship (Terms §1). */
+export const SHIP_LEGAL_ENTITY = "Church of the Regenerative Earth";
+
+/** The refundable security deposit held on the Platform, in USD (Terms §11).
+ *  The terms page and the booking flow both read this, so the number a guest is
+ *  quoted at checkout always matches the number in the agreement they accept. */
+export const SHIP_DEPOSIT_USD = 1500;
+
 /** Travel radius policy (STEERING deterministic-first; the map + copy read these). */
 export const RADIUS_BASE_MILES = 500; // one-week voyage
 export const RADIUS_PER_EXTRA_WEEK_MILES = 250; // each added week

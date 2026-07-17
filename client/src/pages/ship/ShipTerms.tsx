@@ -3,10 +3,13 @@
  * Source of truth for the copy: ReGen_Ship_Voyage_Covenant_and_Rental_Terms.md.
  * Bump SHIP_TERMS_VERSION in shared/shipTerms.ts when the wording changes.
  *
- * Bracketed values ([LEGAL ENTITY NAME], [$DEPOSIT], [core@regencivics.earth],
- * etc.) mirror the v1.0 master doc and are Rye's to fill in there; keep the two
- * in sync. §6 (radius), §7 (clean vessel), and §12 (uncovered loss) are the
- * three terms unique to the Ship and are called out on the page.
+ * The legal entity and the deposit are answered and live in shared/shipTerms.ts
+ * (SHIP_LEGAL_ENTITY, SHIP_DEPOSIT_USD) so the page and the booking flow quote
+ * the same number. The still-open brackets ([DATE], [YEAR / MAKE / MODEL],
+ * [$LATE_FEE], [NUMBER], [core@regencivics.earth], pet policy, mediation) mirror
+ * the v1.0 master doc and are Rye's to fill in there; keep the two in sync.
+ * §6 (radius), §7 (clean vessel), and §12 (uncovered loss) are the three terms
+ * unique to the Ship and are called out on the page.
  */
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
@@ -14,6 +17,8 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import {
   SHIP_TERMS_VERSION,
+  SHIP_LEGAL_ENTITY,
+  SHIP_DEPOSIT_USD,
   RADIUS_BASE_MILES,
   RADIUS_PER_EXTRA_WEEK_MILES,
   RADIUS_MAX_WEEKS,
@@ -46,7 +51,7 @@ export default function ShipTerms() {
           <h2>1. Who this agreement is between</h2>
           <p>
             This Voyage Covenant and Rental Terms ("Agreement") is between{" "}
-            <strong>[LEGAL ENTITY NAME], doing business as the Church of the Regenerative Earth / ReGen Civics</strong>{" "}
+            <strong>the {SHIP_LEGAL_ENTITY}, also doing business as ReGen Civics</strong>{" "}
             ("the Church," "we," "us," "our"), owner and steward of the recreational vehicle described below; and{" "}
             <strong>the person who books the voyage and every approved driver and guest aboard</strong> ("you," "the
             Renter," "the Crew").
@@ -262,7 +267,8 @@ export default function ShipTerms() {
           <ul>
             <li>
               Rental payment and the refundable <strong>security deposit</strong> are handled on the Platform. The current
-              deposit is <strong>[$DEPOSIT]</strong>.
+              deposit is <strong>${SHIP_DEPOSIT_USD.toLocaleString()}</strong>, refundable after the return inspection,
+              less any charges you are responsible for under this Agreement.
             </li>
             <li>
               The voyage page may also invite a separate <strong>offering or donation</strong> to the Church. That

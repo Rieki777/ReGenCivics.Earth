@@ -10,7 +10,7 @@
 
 This Voyage Covenant and Rental Terms ("Agreement") is between:
 
-- **[LEGAL ENTITY NAME], doing business as the Church of the Regenerative Earth / ReGen Civics** ("the Church," "we," "us," "our"), owner and steward of the recreational vehicle described below; and
+- **the Church of the Regenerative Earth, also doing business as ReGen Civics** ("the Church," "we," "us," "our"), owner and steward of the recreational vehicle described below; and
 - **the person who books the voyage and every approved driver and guest aboard** ("you," "the Renter," "the Crew").
 
 The vehicle is a **[YEAR / MAKE / MODEL] recreational vehicle** with **[solar and battery power systems, water systems, and propane]**, known as **the ReGen Ship** ("the Ship," "the Vessel"). Her home anchorage is **Ashland, Oregon**.
@@ -111,7 +111,7 @@ You agree to treat the Ship with care and, unless you have our written permissio
 
 ## 11. Payment, deposit, and charges for loss or damage
 
-- Rental payment and the refundable **security deposit** are handled on the Platform. The current deposit is **[$DEPOSIT]**.
+- Rental payment and the refundable **security deposit** are handled on the Platform. The current deposit is **$1,500**, refundable after the return inspection, less any charges you are responsible for under this Agreement.
 - The voyage page may also invite a separate **offering or donation** to the Church. That offering is voluntary and is not the rental payment.
 - You authorize the Church and the Platform to charge you, through the deposit and beyond it if the deposit is not enough, for: mileage overage; late return; fuel and tank shortfalls; cleaning, odor, and smoke remediation; loss of or damage to the Ship, her systems, and her contents; recovery and towing; and any lost rental income while the Ship is out of service because of something you are responsible for.
 - Charges for physical damage are net of any insurance or Platform protection actually paid. What insurance does not cover is governed by Section 12.
