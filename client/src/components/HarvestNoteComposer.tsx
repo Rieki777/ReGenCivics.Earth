@@ -13,12 +13,25 @@
  * Rendered only when quickNotes.status succeeds, i.e. only for the owner.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TRPCClientError } from "@trpc/client";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, CloudOff, Loader2, Mic, Square, X } from "lucide-react";
 
 const QUEUE_KEY = "harvest-offline-notes";
+
+/**
+ * A save the server actively refused, as opposed to one that never reached it.
+ * The two must not be confused: queueing a refusal would show "waiting to sync"
+ * over a note that can never sync. quickNotes.create is ownerProcedure, so a
+ * non-owner admin lands here every time.
+ */
+function isRefusal(err: unknown): boolean {
+  if (!(err instanceof TRPCClientError)) return false;
+  const code = (err.data as { code?: string } | null | undefined)?.code;
+  return code === "FORBIDDEN" || code === "UNAUTHORIZED" || code === "BAD_REQUEST";
+}
 
 type QueuedNote = { body: string; ts: number };
 
@@ -62,6 +75,9 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [chips, setChips] = useState<SavedChip[]>([]);
   const [queuedCount, setQueuedCount] = useState(() => readQueue().length);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -102,6 +118,16 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
     setChips((prev) => prev.map((c) => (c.key === key ? { ...c, state } : c)));
   }
 
+  function flashSaved() {
+    setSavedFlash(true);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+  }
+
+  useEffect(() => () => {
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+  }, []);
+
   async function saveNote() {
     const text = body.trim();
     if (!text) return;
@@ -110,11 +136,25 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
     setBody("");
     setAudioKey(null);
     setVoiceError(null);
+    setSaveError(null);
     const chip = pushChip(text, "saving");
     try {
       await createMutation.mutateAsync({ body: text, ...(keyForVoice ? { audioKey: keyForVoice } : {}) });
       setChipState(chip, "saved");
-    } catch {
+      flashSaved();
+    } catch (err) {
+      if (isRefusal(err)) {
+        // The server said no and will keep saying no. Never queue this: give the
+        // text back so it is not lost, and say what actually happened.
+        setChips((prev) => prev.filter((c) => c.key !== chip));
+        setBody(text);
+        setAudioKey(keyForVoice);
+        setSaveError(
+          (err as TRPCClientError<never>).message ||
+            "This capture inbox belongs to its owner, so the note was not saved.",
+        );
+        return;
+      }
       // Offline or server hiccup: queue it (text only; the voice audio is
       // already stored server-side, so the transcript text is what matters).
       const queue = readQueue();
@@ -212,6 +252,17 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
       )}
 
       {voiceError && <p className="text-xs text-red-700">{voiceError}</p>}
+      {saveError && (
+        <p className="text-xs text-red-700" data-testid="harvest-save-error">
+          {saveError}
+        </p>
+      )}
+      {savedFlash && (
+        <p className="text-xs text-[#4a7c59] flex items-center gap-1.5" data-testid="harvest-saved-flash">
+          <Check className="w-3 h-3" />
+          Saved to your brain
+        </p>
+      )}
 
       <div className="flex items-center gap-2">
         {voiceEnabled && (
@@ -238,7 +289,8 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
         <Button
           onClick={() => void saveNote()}
           disabled={!body.trim() || transcribing}
-          className="h-10 rounded-xl bg-[#1a472a] hover:bg-[#2d5a3d] px-5"
+          data-testid="harvest-save"
+          className="h-10 rounded-xl bg-[#1a472a] hover:bg-[#2d5a3d] px-5 font-semibold shadow-sm"
         >
           Save note
         </Button>

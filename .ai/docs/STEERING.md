@@ -51,10 +51,21 @@ Times TO ask (use `AskUserQuestion`, max 4 questions, mark recommended option `(
 Three gates from `/CLAUDE.md`:
 
 ```bash
-python3 scripts/audit-truncation.py    # gate 1: zero truncated source files
+pnpm gate                                           # gates 1 + 3, on any platform
 rg -g '*.css' '<className-you-added>' client/src/   # gate 2: any new className must have CSS
-pnpm typecheck                                       # gate 3: exit 0
 ```
+
+`pnpm gate` (scripts/gate.mjs) runs the truncation audit and the typecheck, and
+locates a working Python itself. By hand it is `py scripts/audit-truncation.py`
+on Windows / `python3 …` on the cowork VM, plus `pnpm check`.
+
+Until 2026-07-16 this block read `python3 …` + `pnpm typecheck`. `typecheck` was
+a script that had never existed (the real one is `check`), and on Windows
+`python3` is a Store stub that exits 0 *without running the audit*. Both were
+copied into 30+ prompt docs from here, and both failed silently for three months
+because each session quietly substituted a working command instead of fixing the
+source. Third trap for the list below: **a gate you must translate before running
+is a gate that eventually gets skipped.**
 
 Plus, for any FIXES_TO_MAKE row marked DONE / VERIFIED, the Evidence column must contain file:line, grep result, screenshot path, or script output line. No evidence = stays `CODED`.
 

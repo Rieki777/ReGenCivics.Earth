@@ -1,0 +1,90 @@
+/**
+ * The ship gate, runnable on any machine this repo is worked from.
+ *
+ * Why this exists: the gate used to live only as prose in CLAUDE.md, and the
+ * prose was wrong in two ways that no one noticed for three months.
+ *
+ *   - `pnpm typecheck` named a script that has never existed in package.json
+ *     (the real one is `check`). It was copied into 30+ docs from there.
+ *   - `python3` is correct on the Linux cowork VM the gate was authored for,
+ *     but on Windows it resolves to a Microsoft Store stub that prints an ad
+ *     and exits 0 WITHOUT running the audit — a green gate that checked nothing.
+ *
+ * Both failed silently: whoever hit them substituted a working command by hand
+ * and moved on, so the docs never got corrected. A gate you have to translate
+ * before running is a gate that eventually gets skipped. This runs it instead.
+ *
+ * Usage: pnpm gate
+ */
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+
+/**
+ * Find a Python that actually runs. On Windows, `py` (the official launcher) is
+ * tried first: bare `python3`/`python` there are usually App Execution Alias
+ * stubs that redirect to the Store rather than execute anything.
+ */
+function findPython() {
+  const candidates = process.platform === "win32"
+    ? ["py", "python3", "python"]
+    : ["python3", "python"];
+  for (const bin of candidates) {
+    // -c is the probe: a Store stub fails this, a real interpreter prints ok.
+    const probe = spawnSync(bin, ["-c", "print('ok')"], { encoding: "utf8" });
+    if (probe.status === 0 && probe.stdout.trim() === "ok") return bin;
+  }
+  return null;
+}
+
+function run(label, cmd, args) {
+  process.stdout.write(`\n── ${label}\n   $ ${cmd} ${args.join(" ")}\n`);
+  // No shell: it is unnecessary once every binary is addressed directly, and it
+  // would mean concatenating args into a command line rather than escaping them.
+  const res = spawnSync(cmd, args, { stdio: "inherit" });
+  if (res.error) {
+    process.stdout.write(`\n✗ ${label} could not start: ${res.error.message}\n`);
+    process.exit(1);
+  }
+  if (res.status !== 0) {
+    process.stdout.write(`\n✗ ${label} FAILED (exit ${res.status})\n`);
+    process.exit(res.status ?? 1);
+  }
+}
+
+const AUDIT = "scripts/audit-truncation.py";
+
+// Gate 1: no truncated source files.
+if (!existsSync(AUDIT)) {
+  console.error(`✗ ${AUDIT} is missing. The truncation gate cannot run.`);
+  process.exit(1);
+}
+const python = findPython();
+if (!python) {
+  console.error(
+    "✗ No working Python interpreter found (tried: " +
+      (process.platform === "win32" ? "py, python3, python" : "python3, python") +
+      ").\n" +
+      "  The truncation gate cannot run. Install Python — on Windows, from python.org\n" +
+      "  rather than the Store, so the `py` launcher is registered.\n" +
+      "  Do NOT skip this gate: FUSE truncation is silent and typecheck will not catch it.",
+  );
+  process.exit(1);
+}
+run("gate 1: truncation audit", python, [AUDIT]);
+
+// Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
+// the class you added, so it stays a manual step; see CLAUDE.md.)
+// Address tsc's entry script through node rather than the .bin shim, so this
+// needs no shell and behaves the same on Windows and Linux.
+const TSC = "node_modules/typescript/bin/tsc";
+if (!existsSync(TSC)) {
+  console.error(`✗ ${TSC} is missing. Run \`pnpm install\` first.`);
+  process.exit(1);
+}
+run("gate 3: typecheck", process.execPath, [TSC, "--noEmit"]);
+
+process.stdout.write(
+  "\n✓ Gates 1 and 3 pass.\n" +
+    "  Gate 2 is manual — for each className or @keyframes you added:\n" +
+    "    rg -g '*.css' '<the-name>' client/src/\n",
+);

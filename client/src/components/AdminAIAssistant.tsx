@@ -11,6 +11,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,13 @@ function ActionIcon({ type }: { type: string }) {
   return <Sparkles className="w-3 h-3" />;
 }
 
+/**
+ * How long a first click waits to see whether a second one is coming. Long
+ * enough for a real double-click, short enough that the assistant does not
+ * feel laggy. Only admins pay this delay; everyone else opens instantly.
+ */
+const DOUBLE_CLICK_MS = 250;
+
 const STARTERS = [
   "Who needs follow-up today?",
   "Summarize the investor pipeline",
@@ -95,15 +103,58 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const executeMutation = trpc.adminActions.execute.useMutation();
   const undoMutation = trpc.adminActions.undo.useMutation();
 
-  // Harvest capture (Phase 1). The status query succeeds only for the owner
-  // (ownerProcedure), so the Add note tab quietly never renders for anyone else.
+  // Harvest capture (Phase 1). The double-click-to-capture gesture is a client
+  // display gate on admin roles; the save path stays owner-only on the server
+  // (quickNotes.create is ownerProcedure), and the composer says so out loud
+  // rather than pretending a non-owner's note was saved.
   const [mode, setMode] = useState<"assistant" | "note">("assistant");
+  const { user } = useAuth();
+  const canCapture = user?.role === "admin" || user?.role === "superadmin";
+
   const harvestStatus = trpc.quickNotes.status.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
+    enabled: canCapture,
   });
-  const harvestReady = Boolean(harvestStatus.data?.ready);
+
+  // Distinguish a single click from a double without letting either swallow the
+  // other: the single action is deferred by DOUBLE_CLICK_MS, and a second click
+  // inside that window cancels it and opens the composer instead.
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+  }, []);
+
+  const openAssistant = useCallback(() => {
+    setMode("assistant");
+    setMinimized(false);
+    setOpen(true);
+  }, []);
+
+  const openComposer = useCallback(() => {
+    setMode("note");
+    setMinimized(false);
+    setOpen(true);
+  }, []);
+
+  const handleFabClick = useCallback(() => {
+    // Non-admins get today's behavior exactly: open immediately, no delay.
+    if (!canCapture) {
+      openAssistant();
+      return;
+    }
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      openComposer();
+      return;
+    }
+    clickTimer.current = setTimeout(() => {
+      clickTimer.current = null;
+      openAssistant();
+    }, DOUBLE_CLICK_MS);
+  }, [canCapture, openAssistant, openComposer]);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -227,12 +278,26 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={handleFabClick}
+        data-testid="admin-fab"
+        // touch-action: manipulation is what stops a double-tap from zooming the
+        // page on mobile Safari/Chrome. Doing it here rather than
+        // preventDefault-ing touchend keeps the synthesized click intact, which
+        // is what the double-click detection above counts.
+        style={canCapture ? { touchAction: "manipulation" } : undefined}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-        title="Open AI Assistant"
+        title={canCapture ? "Open AI Assistant — double-click to add a note" : "Open AI Assistant"}
       >
         <Bot className="w-6 h-6 text-[#7dd87d] group-hover:scale-110 transition-transform" />
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#7dd87d] rounded-full animate-pulse" />
+        {canCapture && (
+          <span
+            data-testid="admin-fab-hint"
+            className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-[#1a472a] px-2 py-1 text-xs text-[#7dd87d]/90 opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+          >
+            Double-click to add a note
+          </span>
+        )}
       </button>
     );
   }
@@ -260,7 +325,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
               : context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
           </p>
         </div>
-        {harvestReady && (
+        {canCapture && (
           <button
             onClick={() => { setMode(m => (m === "note" ? "assistant" : "note")); setMinimized(false); }}
             aria-label={mode === "note" ? "Switch to assistant" : "Add a note"}
