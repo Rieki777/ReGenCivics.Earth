@@ -93,11 +93,14 @@ function AmoraShot({
   return (
     <figure className={className}>
       <img
-        src={`${SHOT_BASE}/${name}.png`}
+        src={`${SHOT_BASE}/${name}.webp`}
         alt={alt ?? caption}
         loading="lazy"
         onError={() => setFailed(true)}
-        className="w-full rounded-2xl border border-[#7dd87d]/20 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+        // Full-page captures run tall (the quest board is 1200x4038); pin every
+        // shot to the placeholder's 16:10 so one long screenshot cannot stretch
+        // its grid cell. object-top keeps the meaningful header in frame.
+        className="w-full aspect-[16/10] object-cover object-top rounded-2xl border border-[#7dd87d]/20 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
       />
       <figcaption className="mt-2 text-white/60 text-sm">{caption}</figcaption>
     </figure>

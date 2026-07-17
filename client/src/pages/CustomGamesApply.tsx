@@ -146,6 +146,17 @@ function loadDraft(): Partial<FormData> | null {
   } catch { return null; }
 }
 
+/**
+ * True once the applicant has actually put something in. Every field in
+ * INITIAL_FORM_DATA is "", null, or false, so an untouched form is all-empty.
+ * Without this the autosave persists a blank draft on mount and every later
+ * visit greets a first-time applicant with "Draft restored from your last
+ * session."
+ */
+function hasAnyContent(data: Partial<FormData>): boolean {
+  return Object.values(data).some((v) => v !== "" && v !== null && v !== false && v !== undefined);
+}
+
 type CompanionTurn = { role: "user" | "assistant"; content: string };
 
 // ── Declarative section layout (mirrors the 12 intake sections) ──────────────
@@ -478,7 +489,10 @@ export default function CustomGamesApply() {
     const draft = loadDraft();
     return draft ? { ...INITIAL_FORM_DATA, ...draft } : INITIAL_FORM_DATA;
   });
-  const [draftRestored, setDraftRestored] = useState(() => loadDraft() !== null);
+  const [draftRestored, setDraftRestored] = useState(() => {
+    const draft = loadDraft();
+    return draft !== null && hasAnyContent(draft);
+  });
   const [mode, setMode] = useState<"talk" | "review">("talk");
   const [fromSylva, setFromSylva] = useState(false);
   const [transcript, setTranscript] = useState<CompanionTurn[]>([]);
@@ -502,7 +516,12 @@ export default function CustomGamesApply() {
   useEffect(() => {
     if (lsTimerRef.current) clearTimeout(lsTimerRef.current);
     lsTimerRef.current = setTimeout(() => {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(formData)); } catch { /* quota; ignore */ }
+      try {
+        // Only persist a draft that holds something. Clearing every field also
+        // clears the draft, so a wiped form does not come back on the next visit.
+        if (hasAnyContent(formData)) localStorage.setItem(LS_KEY, JSON.stringify(formData));
+        else localStorage.removeItem(LS_KEY);
+      } catch { /* quota; ignore */ }
     }, 800);
     return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
   }, [formData]);
