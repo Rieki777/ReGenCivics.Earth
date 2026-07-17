@@ -213,7 +213,7 @@ The master copy lives at `ReGen_Ship_Voyage_Covenant_and_Rental_Terms.md`. When 
 | B | **Fill the bracketed values** in the master doc: legal entity name, vehicle year/make/model, deposit amount, late fee, roadside number, core-team email, pet policy, mediation choice. | Business facts only you hold. | Edit the master doc, then Claude Code mirrors them into the page. |
 | C | **Confirm the radius policy numbers** (default 500 base + 250/week → 500/750/1000/1250). | Your call on the economics. | Tell Claude Code; it sets them in `shared/shipTerms.ts`. |
 | D | ~~**Apply migration 0191 to Railway DB.**~~ **DONE 2026-07-16 by Claude Code** — this session ran on Rye's Windows machine (not the sandboxed VM), so `DATABASE_URL` resolved and Railway MySQL was reachable. Applied + verified; `Pending: 0`. | (no longer blocked) | `npx tsx scripts/run-migration.ts --status` |
-| E | **Trigger the production deploy.** The push did NOT auto-deploy (no Railway GitHub integration, no deploy workflow) — deploys here are manual. Either run `pnpm railway:deploy` (`railway up`, deploys the local dir) or reconnect Railway->GitHub so commit `a553d7b` deploys itself. | Production deploy decision + Railway dashboard. | `pnpm railway:deploy` / `pnpm railway:deploys` |
+| E | ~~**Confirm the Railway deploy is green.**~~ **DONE** — `ReGenCivics.Earth` auto-deployed from GitHub; commit `a553d7b` is an ancestor of the ACTIVE, successful deployment (`ccab693`). All four fixes verified live on regencivics.earth. | (no longer blocked) | Railway -> ReGenCivics.Earth -> Deployments |
 
 ```powershell
 # Apply migration 0191 (run from repo root on Windows)
@@ -233,14 +233,23 @@ npx tsx scripts/run-migration.ts --status
 | 3 | Add the required acceptance checkbox + payload in `ShipBook.tsx`; update diet copy | VERIFIED (gate green, not deployed) |
 | 4 | Green permitted zone + red locked zone — as a **separate permission-radius map**, not on the game board (see Fix 4 evidence) | VERIFIED (gate green, not deployed) |
 | 5 | Run the ship gate, `pnpm check`, `pnpm test`; commit + push | DONE — gate green; committed `a553d7b`, pushed to `main` |
-| 6 | Poll the deploy to green | **BLOCKED** — the push did NOT trigger a Railway build (no GitHub integration, no deploy workflow). Deploy is manual (`railway up`). Awaiting Rye's call; prod untouched. |
+| 6 | Poll the deploy to green | **DONE — deployed and verified live on regencivics.earth.** |
 
 ### WAITING ON YOU before Claude Code can proceed
 
 - **Task D is DONE — migration 0191 was applied to the Railway DB on 2026-07-16** and verified (`Pending: 0`; both columns present). It was applied *before* the code goes live, so there is no window where `requestBooking` inserts into a missing column. The columns are nullable, so the currently-deployed old build is unaffected.
-- **THE DEPLOY IS THE OPEN ITEM.** Commit `a553d7b` is on `main`, but pushing did **not** trigger a Railway build — the last deployment is from 2026-07-04, there is no Railway GitHub integration firing, and no deploy job in `.github/workflows/` (only ci / assembly-builder / contrast-audit). This project deploys manually (`pnpm railway:deploy` = `railway up`). Rye to either run it, or reconnect Railway->GitHub so `a553d7b` deploys itself (git-traceable). Nothing in this batch is live until then.
+- **The deploy is DONE and verified live.** Correcting an earlier wrong call in this doc: I first reported that the push had not triggered a build. That was wrong. `railway status` / `railway deployment list` were scoped to the CLI-linked service **`multiplayer-earth`**, which genuinely has not deployed since 2026-07-04 — but the site is served by a *different* service, **`ReGenCivics.Earth`**, which auto-deploys from GitHub and had been deploying the whole time. (Another session independently hit the same trap and pushed `34926ce fix(railway): point the deploy commands at the site, not multiplayer-earth`.) Lesson: verify which service the CLI is linked to before concluding "no deploy". The `railway up` / Cloudflare-413 detour that followed was chasing the wrong service and is moot — this project deploys from GitHub, not by uploading a bundle.
 - Bracketed values (Task B) and radius numbers (Task C) should be confirmed before you publish the page, though the flow works with the defaults.
 - Legal review (Task A) is still required before go-live.
+
+### Live verification (2026-07-16, production)
+
+Checked in the browser against regencivics.earth on the deployed build (`ccab693`, which contains `a553d7b`):
+
+- **Fix 1** — `/ship/terms` renders: "Voyage Covenant and Rental Terms", "Version 1.0. Effective [DATE].", §1/§2 onward, title tag "Voyage Covenant and Rental Terms | ReGen Civics", breadcrumb Ship > Terms, and the secondary nav link "Voyage Covenant & Rental Terms" present + active. Bracketed placeholders render as expected (Task B).
+- **Fix 3** — `/ship/book` shows all three commitment checkboxes, including the new one ("...including the 500-mile travel radius, the meat, alcohol, and smoke-free rule aboard, and my responsibility for loss that insurance does not cover" + "Read the terms" -> /ship/terms). The diet box reads the meat/alcohol/smoke rule directly. Submit is gated: "Pick a voyage week to continue."
+- **Fix 4** — `/ship/map` -> "🔴 Permission radius" opens "TRAVEL RADIUS / Where she may sail without asking". The map renders the green permitted zone + anchor at Ashland, the red locked fill beyond it, and labelled rings: "500 mi · permitted (1 week)", "750 mi · 2-week max", "1000 mi · 3-week max", outer 1250 ring. The §6 request line links to /ship/terms#radius. **This is the screenshot evidence Fix 4 was missing.** The treasure-map game board is untouched (still "1902 places within a 3-day sail").
+- **Fix 2** — columns verified present in prod and the guard is deployed. The end-to-end *write* was deliberately NOT exercised: submitting a booking would create real data and send a real email. First real booking will populate `agreementAcceptedAt` / `agreementVersion`.
 
 ### Scope note (2026-07-16)
 
