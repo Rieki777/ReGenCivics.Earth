@@ -334,11 +334,15 @@ export function registerOgRoutes(app: Express) {
           break;
         }
         case "campaign": {
+          const c = await db.getCampaignById(Number(id));
+          if (!c) break;
+          const backers = await db.getCampaignContributorsCount(Number(id));
           element = campaignTemplate({
-            title: "Regenerative Land Project",
-            raised: 0,
-            goal: 100000,
-            backers: 0,
+            title: c.title,
+            location: c.location ?? undefined,
+            raised: c.pledgedTotal ?? 0,
+            goal: c.totalValue || c.financialTarget || 0,
+            backers,
           });
           break;
         }

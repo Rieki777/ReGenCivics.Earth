@@ -379,8 +379,86 @@ export async function getForumPostContent(id: number): Promise<CrawlerContent | 
   return value;
 }
 
+// ── Campaigns: DB-driven, cached ─────────────────────────────────────────────
+const CAMPAIGN_CACHE_TTL_MS = 10 * 60 * 1000;
+const CAMPAIGN_CACHE_MAX = 200;
+const campaignCache = new Map<number, { at: number; value: CrawlerContent | null }>();
+
+export async function getCampaignContent(id: number): Promise<CrawlerContent | null> {
+  const cached = campaignCache.get(id);
+  if (cached && Date.now() - cached.at < CAMPAIGN_CACHE_TTL_MS) return cached.value;
+
+  let value: CrawlerContent | null = null;
+  try {
+    const campaign = await db.getCampaignById(id);
+    // Only surface live campaigns to crawlers. Drafts, funded, and closed
+    // campaigns stay out of the injected content and the index.
+    if (campaign && campaign.status === "active") {
+      const items = await db.getCampaignItems(id);
+      const url = `${SITE}/campaign/${id}`;
+
+      // One short label per need, from whichever field the item carries.
+      const needLabels = items
+        .map((it) =>
+          (it.roleTitle || it.equipmentName || it.resourceName || it.landDescription || "").trim(),
+        )
+        .filter(Boolean)
+        .slice(0, 12);
+      const needsHtml = needLabels.length
+        ? `<h2>What this project needs</h2>\n<ul>${needLabels
+            .map((n) => `<li>${escapeHtml(n)}</li>`)
+            .join("")}</ul>`
+        : "";
+
+      const where = campaign.location ? ` in ${escapeHtml(campaign.location)}` : "";
+      const inner = `
+        <article>
+          <h1>${escapeHtml(campaign.title)}</h1>
+          <p>${escapeHtml(campaign.projectName)}${where}, crowd pooling on ReGen Civics.</p>
+          ${textToHtml(campaign.description)}
+          ${needsHtml}
+        </article>
+      `;
+
+      const descText = campaign.description.replace(/\s+/g, " ").trim();
+      const jsonld = {
+        "@context": "https://schema.org",
+        "@type": "Project",
+        name: campaign.title,
+        description: descText.slice(0, 2000),
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        ...(campaign.location
+          ? { location: { "@type": "Place", name: campaign.location } }
+          : {}),
+        publisher: { "@type": "Organization", name: "ReGen Civics", url: SITE },
+      };
+
+      value = {
+        title: `${campaign.title} | ReGen Civics Crowd Pooling`,
+        description: descText.slice(0, 160),
+        bodyHtml: wrapForInjection(inner),
+        jsonld,
+      };
+    }
+  } catch (err) {
+    console.warn(`[crawler-content] campaign ${id} render failed:`, (err as Error)?.message);
+    value = null;
+  }
+
+  // Simple bounded cache: evict oldest entry when full.
+  if (campaignCache.size >= CAMPAIGN_CACHE_MAX) {
+    const oldest = campaignCache.keys().next().value;
+    if (oldest !== undefined) campaignCache.delete(oldest);
+  }
+  campaignCache.set(id, { at: Date.now(), value });
+  return value;
+}
+
 // ── Route resolution ─────────────────────────────────────────────────────────
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
+  const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
+  if (campaignMatch) return getCampaignContent(Number(campaignMatch[1]));
   const forumMatch = reqPath.match(/^\/community\/post\/(\d+)$/);
   if (forumMatch) return getForumPostContent(Number(forumMatch[1]));
   return getStaticPageContent(reqPath);

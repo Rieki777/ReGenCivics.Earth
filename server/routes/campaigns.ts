@@ -15,6 +15,7 @@ import {
 } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { sanitizeInput, sanitizeRichText } from "../_core/security";
+import { designCompanionTurn } from "../lib/crowdpool-coach";
 import { getGameVariable, recordScoreEvent, logActivityEvent } from "../game";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { generateImage } from "../_core/imageGeneration";
@@ -172,6 +173,54 @@ export const campaignsRouter = router({
     .input(z.object({ campaignId: z.number() }))
     .query(async ({ input }) => {
       return await db.getCampaignItems(input.campaignId);
+    }),
+
+  // Read-only recommended-funder links (Ma Earth / GoSteward / grants) for a
+  // campaign. Money never touches us: these are display CTAs with nightly-cached
+  // numbers, contributors finish on the funder's own site. No PII.
+  getPartnerLinks: publicProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .query(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const { campaignPartnerLinks } = await import("../../drizzle/schema");
+      return await db2
+        .select()
+        .from(campaignPartnerLinks)
+        .where(eq(campaignPartnerLinks.campaignId, input.campaignId));
+    }),
+
+  // The Design Companion: a warm AI coach for campaign design, grounded in the
+  // deterministic Crowdpool Capital Coach (shared/crowdpoolCoach.ts). Stateless
+  // like companion.turn: the client holds the transcript + draft and passes them
+  // each turn. publicProcedure (it writes nothing) with a rate limit. Builder
+  // text is untrusted: designCompanionTurn sanitizes every string on the way in,
+  // treats it as data in the system prompt, and validates the model output
+  // before returning it. An LLM failure degrades to the deterministic coach, so
+  // this never throws to the client for an AI problem.
+  designCompanion: publicProcedure
+    .input(z.object({
+      history: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().min(1).max(4000),
+      })).max(40).default([]),
+      draft: z.object({
+        projectName: z.string().max(255).optional(),
+        location: z.string().max(255).optional(),
+        region: z.string().max(120).optional(),
+        vision: z.string().max(5000).optional(),
+        needs: z.array(z.object({
+          title: z.string().max(255),
+          capitalType: z.string().max(40).optional(),
+          kind: z.string().max(40).optional(),
+          estimatedValue: z.number().min(0).max(1_000_000_000).optional(),
+        })).max(100).default([]),
+      }),
+      message: z.string().max(4000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "design_companion");
+      return designCompanionTurn(input);
     }),
 
   // Create a new campaign

@@ -23,6 +23,8 @@ const MAX_SUBMISSIONS_PER_WINDOW = 7;
 const ACTION_LIMITS: Record<string, number> = {
   companion_turn: 60,        // one full application conversation, with room to wander
   companion_transcribe: 60,  // one STT call per spoken answer tracks turn volume
+  design_companion: 60,      // crowdpool campaign design coaching is many small turns
+
   elder_chat: 40,
   ship_concierge_chat: 40,
   ship_shipwright: 20,

@@ -362,7 +362,7 @@ export function ContributionModal({
             )}
 
             {/* Contributor Info */}
-            <div className="space-y-4 pb-4 border-b">
+            <div className="space-y-4 pb-4 border-b border-gray-200">
               <h3 className="font-semibold text-[#1a472a]">Your Information</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -611,8 +611,8 @@ export function ContributionModal({
                     }}
                     placeholder="e.g., 10000"
                   />
-                  <p className="text-xs text-gray-500">
-                    {CRYPTO_PAYMENT_CONTEXT.helperText} {CRYPTO_PAYMENT_CONTEXT.fiatNote}
+                  <p className="text-xs text-gray-600">
+                    {CRYPTO_PAYMENT_CONTEXT.helperText} National currency goes through recommended funders: Ma Earth for donations, GoSteward for loans.
                   </p>
                 </div>
               )}

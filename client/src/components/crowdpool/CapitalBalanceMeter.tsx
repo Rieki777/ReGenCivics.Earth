@@ -1,0 +1,60 @@
+/**
+ * CapitalBalanceMeter: a compact, always-visible read of how many of the nine
+ * forms of capital a campaign draft covers. Nine small segments, one per
+ * capital in CAPITAL_TYPES order:
+ *   solid  -> filled (two or more needs on that capital)
+ *   thin   -> half / outline (one need)
+ *   none   -> muted (no needs yet)
+ *
+ * It lives in the sticky total tracker, so it updates live as needs are added
+ * across every step. Coverage is computed by the shared deterministic coach,
+ * so this number always matches the design companion and the server.
+ */
+
+import { analyzeCoverage, type CoachNeedInput } from '@shared/crowdpoolCoach';
+
+export function CapitalBalanceMeter({ needs }: { needs: CoachNeedInput[] }) {
+  const coverage = analyzeCoverage(needs);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-[#1a472a]/80">Capital balance</span>
+        <span
+          className="text-xs font-semibold text-[#4a7c59]"
+          title={`Roundedness ${coverage.roundednessScore} of 100`}
+        >
+          {coverage.coveredCount} of 9 forms covered
+        </span>
+      </div>
+      <div
+        className="flex items-stretch gap-1"
+        role="group"
+        aria-label={`Capital coverage: ${coverage.coveredCount} of 9 forms covered`}
+      >
+        {coverage.entries.map((entry) => {
+          const tone =
+            entry.strength === 'solid'
+              ? 'bg-[#4a7c59] border-[#4a7c59]'
+              : entry.strength === 'thin'
+                ? 'bg-[#7dd87d]/40 border-[#7dd87d]'
+                : 'bg-[#1a472a]/5 border-[#1a472a]/15';
+          const stateWord =
+            entry.strength === 'solid'
+              ? `solid, ${entry.needCount} needs`
+              : entry.strength === 'thin'
+                ? 'thin, one need'
+                : 'not covered yet';
+          return (
+            <div
+              key={entry.capital}
+              className={`h-6 flex-1 rounded-sm border ${tone} transition-colors`}
+              title={`${entry.label} capital. ${entry.blurb} (${stateWord})`}
+              aria-label={`${entry.label} capital, ${stateWord}`}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}

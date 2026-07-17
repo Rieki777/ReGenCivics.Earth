@@ -37,7 +37,9 @@ import {
   Mail,
   Pin,
   Coins,
-  Loader2
+  Loader2,
+  Layers,
+  Landmark
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -116,6 +118,14 @@ export default function CampaignDetail() {
   // Fulfilled contributions: the "delivered so far" line under the thermometer
   const { data: fulfilledContributions } = trpc.campaigns.getContributions.useQuery(
     { campaignId: parseInt(id!), status: 'fulfilled' },
+    { enabled: !!id }
+  );
+
+  // Recommended-funder links (Ma Earth / GoSteward / grants). Read-only display
+  // numbers, nightly-cached. We collect zero fiat; contributors finish on the
+  // funder's own site.
+  const { data: partnerLinksData } = trpc.campaigns.getPartnerLinks.useQuery(
+    { campaignId: parseInt(id!) },
     { enabled: !!id }
   );
 
@@ -219,6 +229,36 @@ export default function CampaignDetail() {
   
   // Value delivered so far: fulfilled contributions, summed
   const deliveredValue = (fulfilledContributions || []).reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+
+  // Recommended funders, looked up by kind. A missing row just renders the
+  // default link with no numbers.
+  const partnerLinks = partnerLinksData || [];
+  const maEarthLink = partnerLinks.find((p) => p.partner === 'maearth');
+  const goStewardLink = partnerLinks.find((p) => p.partner === 'gosteward');
+
+  // Capital stack: the whole project's funding across layers. In-kind and
+  // crypto come from delivered contributions on-platform; gift, debt, and
+  // grants come from the funders' cached numbers. Zero-value layers drop out.
+  const fulfilledList = fulfilledContributions || [];
+  const inKindDelivered = fulfilledList
+    .filter((c) => c.contributionType !== 'financial')
+    .reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  const cryptoDelivered = fulfilledList
+    .filter((c) => c.contributionType === 'financial')
+    .reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  const giftRaised = maEarthLink?.cachedRaised || 0;
+  const debtRaised = goStewardLink?.cachedRaised || 0;
+  const grantsRaised = partnerLinks
+    .filter((p) => p.partner === 'grant')
+    .reduce((sum, p) => sum + (p.cachedRaised || 0), 0);
+  const capitalStack = [
+    { key: 'inkind', label: 'In-kind delivered', value: inKindDelivered, color: '#4a7c59' },
+    { key: 'crypto', label: 'Crypto pledged', value: cryptoDelivered, color: '#10b981' },
+    { key: 'gift', label: 'Gift (Ma Earth)', value: giftRaised, color: '#d4a574' },
+    { key: 'debt', label: 'Debt (GoSteward)', value: debtRaised, color: '#3b82f6' },
+    { key: 'grants', label: 'Grants', value: grantsRaised, color: '#8b5cf6' },
+  ].filter((seg) => seg.value > 0);
+  const capitalStackTotal = capitalStack.reduce((sum, seg) => sum + seg.value, 0);
 
   // Count unique contributors
   const contributorCount = contributions ? new Set(contributions.map(c => c.contributorName)).size : 0;
@@ -422,7 +462,40 @@ export default function CampaignDetail() {
             </p>
           )}
         </div>
-        
+
+        {/* The whole capital stack: in-kind + crypto pooled here, gift + debt +
+            grants through the funders we recommend. Zero-value layers drop out. */}
+        {capitalStack.length > 0 && (
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
+            <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <Layers className="w-5 h-5 text-[#4a7c59]" />
+              The whole capital stack
+            </h2>
+            <p className="text-sm text-[#1a472a]/70 mb-4">
+              What money can't buy, pooled here. What it can, through the funders we recommend.
+            </p>
+            <div className="w-full flex rounded-full overflow-hidden h-4 bg-[#1a472a]/10">
+              {capitalStack.map((seg) => (
+                <div
+                  key={seg.key}
+                  className="h-full"
+                  style={{ width: `${(seg.value / capitalStackTotal) * 100}%`, backgroundColor: seg.color }}
+                  title={`${seg.label}: ${formatCurrency(seg.value)}`}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 mt-4">
+              {capitalStack.map((seg) => (
+                <div key={seg.key} className="flex items-center gap-2 text-sm">
+                  <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
+                  <span className="text-[#1a472a]/80">{seg.label}</span>
+                  <span className="ml-auto font-medium text-[#1a472a]">{formatCurrency(seg.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Campaign Photo Gallery */}
         {campaign.images && campaign.images.length > 0 && (
           <CampaignPhotoGallery images={campaign.images} />
@@ -684,6 +757,92 @@ export default function CampaignDetail() {
           }}
         />
 
+        {/* Recommended funders: ways to fund this project we point people to.
+            We collect zero fiat; you finish on the funder's own site. */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <Heart className="w-5 h-5 text-[#4a7c59]" />
+            Recommended ways to fund this project
+          </h2>
+          <p className="text-sm text-[#1a472a]/70 mb-6">
+            Some needs take money we don't hold. These are the funders we point projects to. You give on their site and they get it to the project.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Ma Earth: gift funding with matching */}
+            <div className="flex flex-col bg-[#f0f7f0] rounded-2xl p-5 border border-[#1a472a]/10">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="w-5 h-5 text-[#4a7c59]" />
+                <h3 className="font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+                  Give and get matched
+                </h3>
+              </div>
+              <p className="text-sm text-[#1a472a]/80 mb-3">
+                Ma Earth pools small donations and matches them with grant money, so a little gift grows. Good for spreading wide and rewarding a lot of people who each give a bit.
+              </p>
+              {maEarthLink && maEarthLink.cachedRaised != null && (
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3 text-sm">
+                  <span className="font-bold text-[#4a7c59] text-lg">{formatCurrency(maEarthLink.cachedRaised)}</span>
+                  <span className="text-[#1a472a]/70">raised</span>
+                  {maEarthLink.cachedPercent != null && (
+                    <span className="text-[#1a472a]/70">· {maEarthLink.cachedPercent}% funded</span>
+                  )}
+                  {maEarthLink.cachedContributorCount != null && (
+                    <span className="text-[#1a472a]/70">· {maEarthLink.cachedContributorCount} givers</span>
+                  )}
+                </div>
+              )}
+              <p className="text-xs text-[#1a472a]/70 mb-4">
+                Donations run through Ma Earth. We recommend them and don't take a cut.
+              </p>
+              <div className="mt-auto">
+                <a href={maEarthLink?.url || 'https://maearth.com'} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Give on Ma Earth
+                  </Button>
+                </a>
+                <p className="text-xs text-[#1a472a]/60 mt-2 text-center">You'll finish this on their site.</p>
+              </div>
+            </div>
+            {/* GoSteward: regenerative loans */}
+            <div className="flex flex-col bg-[#f0f7f0] rounded-2xl p-5 border border-[#1a472a]/10">
+              <div className="flex items-center gap-2 mb-2">
+                <Landmark className="w-5 h-5 text-[#4a7c59]" />
+                <h3 className="font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+                  Back a regenerative loan
+                </h3>
+              </div>
+              <p className="text-sm text-[#1a472a]/80 mb-3">
+                Steward arranges loans that regenerative projects pay back with a return to the people who lend. Good for projects with revenue that need larger capital.
+              </p>
+              {goStewardLink && goStewardLink.cachedRaised != null && (
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3 text-sm">
+                  <span className="font-bold text-[#4a7c59] text-lg">{formatCurrency(goStewardLink.cachedRaised)}</span>
+                  <span className="text-[#1a472a]/70">committed</span>
+                  {goStewardLink.cachedPercent != null && (
+                    <span className="text-[#1a472a]/70">· {goStewardLink.cachedPercent}% funded</span>
+                  )}
+                  {goStewardLink.cachedContributorCount != null && (
+                    <span className="text-[#1a472a]/70">· {goStewardLink.cachedContributorCount} lenders</span>
+                  )}
+                </div>
+              )}
+              <p className="text-xs text-[#1a472a]/70 mb-4">
+                Loans run through Steward, who also help projects design their whole capital stack.
+              </p>
+              <div className="mt-auto">
+                <a href={goStewardLink?.url || 'https://gosteward.com/borrow'} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Lend through Steward
+                  </Button>
+                </a>
+                <p className="text-xs text-[#1a472a]/60 mt-2 text-center">You'll finish this on their site.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Pool Ledger: the public record of pledges, deliveries, and thanks */}
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
           <h2 className="text-xl font-bold text-[#1a472a] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
@@ -862,7 +1021,7 @@ const KIND_LABELS: Record<string, string> = {
   loan: 'Loan',
   knowledge: 'Knowledge',
   crypto: 'Crypto',
-  financial_link: 'Partner',
+  financial_link: 'Recommended funder',
 };
 
 const KIND_CHIP_CLASSES: Record<string, string> = {
@@ -913,8 +1072,41 @@ function formatDay(d: string | Date): string {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatDayTime(d: string | Date): string {
-  return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+/**
+ * Reads a shift value into a Date without flipping between UTC and local. A
+ * Date passes straight through; a bare "YYYY-MM-DD HH:mm:ss" (no zone) is read
+ * as local time the same way the Date path is, so start and end can never end
+ * up on different clocks.
+ */
+function toLocalDate(d: string | Date): Date {
+  if (d instanceof Date) return d;
+  const s = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(d) ? d.replace(' ', 'T') : d;
+  return new Date(s);
+}
+
+function sameLocalDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+/**
+ * A shift window in the viewer's own timezone and locale. Start and end run
+ * through one formatter, so an evening shift reads as an evening shift. The
+ * date only repeats when the shift crosses midnight, so a two-day shift shows
+ * both dates instead of looking like one long night.
+ */
+function formatShiftWindow(start: string | Date, end: string | Date): string {
+  const s = toLocalDate(start);
+  const e = toLocalDate(end);
+  if (isNaN(s.getTime()) || isNaN(e.getTime())) return '';
+  const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const timeOpts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
+  const startLabel = `${s.toLocaleDateString(undefined, dateOpts)}, ${s.toLocaleTimeString(undefined, timeOpts)}`;
+  const endLabel = sameLocalDay(s, e)
+    ? e.toLocaleTimeString(undefined, timeOpts)
+    : `${e.toLocaleDateString(undefined, dateOpts)}, ${e.toLocaleTimeString(undefined, timeOpts)}`;
+  return `${startLabel} to ${endLabel}`;
 }
 
 function NeedsRegistry({
@@ -1007,7 +1199,7 @@ function NeedCard({
   const deliveredPct = Math.min((delivered / wanted) * 100, 100);
   const filled = claimed >= wanted;
 
-  // Fiat asks render as partner CTA cards. Money never touches us.
+  // Fiat asks render as recommended-funder CTA cards. Money never touches us.
   if (kind === 'financial_link') {
     const linkUrl = item.videoUrl
       || (String(item.resourceDescription || item.landDescription || '').match(/https?:\/\/\S+/) || [])[0];
@@ -1019,14 +1211,14 @@ function NeedCard({
               <ExternalLink className="w-6 h-6 text-[#4a7c59] flex-shrink-0" />
               <div>
                 <CardTitle className="text-[#1a472a] text-base md:text-lg">{title}</CardTitle>
-                <CardDescription>You'll complete this on our partner's site.</CardDescription>
+                <CardDescription>You'll finish this on the recommended funder's site.</CardDescription>
               </div>
             </div>
             {linkUrl && (
               <a href={linkUrl} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="border-[#4a7c59] text-[#4a7c59]">
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Open partner site
+                  Open funder site
                 </Button>
               </a>
             )}
@@ -1119,7 +1311,7 @@ function NeedCard({
             {item.shiftStartsAt && item.shiftEndsAt && (
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 text-[#4a7c59]" />
-                Shift: {formatDayTime(item.shiftStartsAt)} to {formatDayTime(item.shiftEndsAt)}
+                Shift: {formatShiftWindow(item.shiftStartsAt, item.shiftEndsAt)}
               </span>
             )}
             {item.loanWindowStart && item.loanWindowEnd && (

@@ -290,6 +290,10 @@ export function serveStatic(app: Express) {
     if (forumMatch) {
       ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
     }
+    const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
+    if (campaignMatch) {
+      ogImage = `${BASE_URL}/api/og?type=campaign&id=${campaignMatch[1]}`;
+    }
 
     // Crawler-visible content: real HTML body + JSON-LD for key routes and
     // community posts. AI crawlers (GPTBot, ClaudeBot, PerplexityBot) fetch

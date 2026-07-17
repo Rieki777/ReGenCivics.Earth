@@ -406,7 +406,7 @@ export const CAPITAL_LABELS: Record<CapitalType, { label: string; blurb: string 
   },
   financial: {
     label: "Financial",
-    blurb: "Money and financial instruments. On this platform that means crypto; national currency goes through partners.",
+    blurb: "Money and financial instruments. On this platform that means crypto; national currency goes through the funders we recommend.",
   },
   living: {
     label: "Living",
@@ -432,8 +432,9 @@ export const CAPITAL_LABELS: Record<CapitalType, { label: string; blurb: string 
 
 /**
  * Context for crypto contributions. Crypto is the one form of money the
- * platform tracks directly; national currency routes to partner platforms
- * (Ma Earth for donations, GoSteward for loans).
+ * platform tracks directly; national currency routes to the funders we
+ * recommend (Ma Earth for donations, GoSteward for loans). We take no cut
+ * and hold no money; those funders complete the transaction on their sites.
  */
 export const CRYPTO_PAYMENT_CONTEXT = {
   /** Chain the platform reads balances from. */
@@ -443,10 +444,10 @@ export const CRYPTO_PAYMENT_CONTEXT = {
   helperText:
     "Crypto pledges are tracked here like any other contribution and delivered wallet to wallet.",
   fiatNote:
-    "National currency goes through our partners: Ma Earth for donations, GoSteward for loans.",
-  partners: [
+    "National currency goes through the funders we recommend: Ma Earth for donations, GoSteward for loans.",
+  recommendedFunders: [
     { key: "maearth", name: "Ma Earth", handles: "donations", url: "https://maearth.com" },
-    { key: "gosteward", name: "GoSteward", handles: "loans", url: "https://gosteward.com" },
+    { key: "gosteward", name: "GoSteward", handles: "loans", url: "https://gosteward.com/borrow" },
   ],
 } as const;
 

@@ -61,7 +61,8 @@ import {
   Laptop,
   Compass,
   Palette,
-  HeartPulse
+  HeartPulse,
+  MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
@@ -70,11 +71,20 @@ import {
   CAPITAL_LABELS,
   CONTRIBUTION_CATEGORIES,
   ROLE_TEMPLATES_BY_CAPITAL,
+  NEED_KINDS,
   categoryForKey,
   type CapitalType,
   type NeedKind,
   type RoleTemplate,
 } from '@shared/crowdpoolingTaxonomy';
+import {
+  STEP_TIPS,
+  valuationForRole,
+  valuationForLand,
+  valuationBandForValue,
+  type ValuationBand,
+  type CoachNeedInput,
+} from '@shared/crowdpoolCoach';
 // Navigation is rendered globally in App.tsx
 import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
@@ -86,6 +96,9 @@ import { BackButton } from "@/components/BackButton";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cdnImg } from "@/lib/utils";
+import { CapitalBalanceMeter } from '@/components/crowdpool/CapitalBalanceMeter';
+import { TeachingTip } from '@/components/crowdpool/TeachingTip';
+import { DesignCompanion, type CompanionSuggestion } from '@/components/crowdpool/DesignCompanion';
 
 // Types
 interface LandRequirement {
@@ -260,6 +273,27 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
 const WIZARD_NEED_CATEGORIES = CONTRIBUTION_CATEGORIES.filter(
   (c) => c.key !== 'land' && c.key !== 'crypto'
 );
+
+// Which teaching tip belongs at the top of each wizard step (Photos has none).
+const STEP_TIP_KEYS: (string | null)[] = [
+  'land',       // 0 Land
+  'equipment',  // 1 Equipment
+  'roles',      // 2 Roles
+  'otherNeeds', // 3 Other Needs
+  null,         // 4 Photos
+  'financial',  // 5 Financial Target
+];
+
+const isCapitalType = (value: unknown): value is CapitalType =>
+  typeof value === 'string' && (CAPITAL_TYPES as readonly string[]).includes(value);
+
+const isNeedKind = (value: unknown): value is NeedKind =>
+  typeof value === 'string' && (NEED_KINDS as readonly string[]).includes(value);
+
+// Picks a sensible Other Needs category key for a capital, so a coach-added
+// need shows a matching icon. Falls back to "other".
+const otherNeedCategoryForCapital = (capital: CapitalType): string =>
+  WIZARD_NEED_CATEGORIES.find((c) => c.capital === capital)?.key ?? 'other';
 
 // Currency options
 const currencies = [
@@ -488,6 +522,7 @@ export default function CreateCampaign() {
   const [videoUrl, setVideoUrl] = useState('');
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [companionOpen, setCompanionOpen] = useState(false);
   const currencySymbol = currencies.find(c => c.code === currency)?.symbol || '$';
   
   // Step tracking
@@ -556,7 +591,91 @@ export default function CreateCampaign() {
   
   const grandTotal = landTotal + equipmentTotal + rolesTotal + otherTotal;
   const recommendedFinancial = Math.round(grandTotal * 0.2);
-  
+
+  // The live needs array the capital coach reads: every item mapped to its
+  // capital, kind, title, and current value. Powers the balance meter and the
+  // design companion, and updates as needs are added across every step.
+  const draftNeeds = useMemo<Array<CoachNeedInput & { title: string }>>(() => [
+    ...landRequirements.map((l) => ({
+      title: `${l.hectares} hectares${l.regions[0] ? ` in ${l.regions[0]}` : ''}`.trim(),
+      capitalType: 'living' as CapitalType,
+      kind: 'item',
+      estimatedValue: l.customValue ?? l.estimatedValue,
+    })),
+    ...equipment.map((e) => ({
+      title: e.name || 'Equipment',
+      capitalType: 'material' as CapitalType,
+      kind: 'item',
+      estimatedValue: (e.customValue ?? e.estimatedValue) * e.quantity,
+    })),
+    ...roles.map((r) => ({
+      title: r.title || 'Role',
+      capitalType: (r.capitalType ?? 'experiential') as CapitalType,
+      kind: 'role',
+      estimatedValue: r.customValue ?? r.estimatedValue,
+    })),
+    ...otherNeeds.map((o) => {
+      const cat = categoryForKey(o.category);
+      return {
+        title: o.title || cat?.label || 'Need',
+        capitalType: (o.capitalType ?? cat?.capital ?? 'material') as CapitalType,
+        kind: (o.kind ?? cat?.kind ?? 'item') as string,
+        estimatedValue: o.customValue ?? o.estimatedValue,
+      };
+    }),
+  ], [landRequirements, equipment, roles, otherNeeds]);
+
+  // Region hint for fair-value bands: prefer the first land region, else the
+  // project location. The coach matches loosely, so either form is fine.
+  const coachRegion = landRequirements[0]?.regions?.[0] || projectLocation || '';
+
+  // Adds a coach suggestion to the right wizard list. A role/shift becomes a
+  // role; everything else becomes an other-need. Never auto-called; it only
+  // fires when the builder taps "Add" in the panel.
+  const handleAddSuggestion = useCallback((s: CompanionSuggestion) => {
+    if (s.kind === 'role' || s.kind === 'shift') {
+      const hoursPerWeek = Math.max(1, Math.round(s.hoursPerWeek ?? 5));
+      const weeksNeeded = Math.max(1, Math.round(s.weeks ?? 52));
+      const hourlyRate =
+        s.estimatedValue > 0
+          ? Math.max(1, Math.round(s.estimatedValue / (hoursPerWeek * weeksNeeded)))
+          : 30;
+      const capital = isCapitalType(s.capitalType) ? s.capitalType : 'experiential';
+      setRoles((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          title: s.title,
+          category: CAPITAL_LABELS[capital].label,
+          capitalType: capital,
+          description: s.rationale || '',
+          hoursPerWeek,
+          weeksNeeded,
+          hourlyRate,
+          estimatedValue: hoursPerWeek * weeksNeeded * hourlyRate,
+          customValue: null,
+        },
+      ]);
+    } else {
+      const capital = isCapitalType(s.capitalType) ? s.capitalType : 'material';
+      const kind = isNeedKind(s.kind) ? s.kind : 'item';
+      setOtherNeeds((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          category: otherNeedCategoryForCapital(capital),
+          capitalType: capital,
+          kind,
+          title: s.title,
+          description: s.rationale || '',
+          estimatedValue: Math.max(0, Math.round(s.estimatedValue || 0)),
+          customValue: null,
+        },
+      ]);
+    }
+    toast.success(`Added "${s.title}" to your campaign`);
+  }, []);
+
   // Handle campaign submission
   const handleSubmitCampaign = async () => {
     if (!campaignName || !campaignDescription) {
@@ -875,8 +994,13 @@ export default function CreateCampaign() {
               </span>
             </div>
           </div>
+          {/* Capital balance meter: live read of how many of the nine forms are covered */}
+          <div className="mt-3 pt-3 border-t border-[#7dd87d]/20">
+            <CapitalBalanceMeter needs={draftNeeds} />
+            <TeachingTip text={STEP_TIPS.capitals} className="mt-2" />
+          </div>
         </div>
-        
+
         {/* Campaign Info */}
         <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -1251,6 +1375,10 @@ export default function CreateCampaign() {
         
         {/* Step Content */}
         <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30 min-h-[500px]">
+          {/* Per-step teaching tip, drawn from the shared coach */}
+          {STEP_TIP_KEYS[currentStep] && (
+            <TeachingTip text={STEP_TIPS[STEP_TIP_KEYS[currentStep] as string]} className="mb-5" />
+          )}
           {/* Step 1: Land */}
           {currentStep === 0 && (
             <LandSection
@@ -1278,6 +1406,7 @@ export default function CreateCampaign() {
               setRoles={setRoles}
               currencySymbol={currencySymbol}
               total={rolesTotal}
+              region={coachRegion}
             />
           )}
           
@@ -1393,6 +1522,31 @@ export default function CreateCampaign() {
           </p>
         )}
       </div>
+
+      {/* Design coach: opens at any step, suggests, never blocks a launch */}
+      <button
+        type="button"
+        onClick={() => setCompanionOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#4a7c59] hover:bg-[#1a472a] text-white pl-4 pr-5 py-3 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d] focus:ring-offset-2"
+        aria-label="Open the design coach"
+      >
+        <MessageCircle className="w-5 h-5" />
+        <span className="hidden sm:inline text-sm font-semibold">Design coach</span>
+      </button>
+
+      <DesignCompanion
+        open={companionOpen}
+        onOpenChange={setCompanionOpen}
+        draft={{
+          projectName: campaignName,
+          location: projectLocation,
+          region: coachRegion,
+          vision: projectVision,
+          needs: draftNeeds,
+        }}
+        onAddSuggestion={handleAddSuggestion}
+        currencySymbol={currencySymbol}
+      />
     </div>
   );
 }
@@ -1417,7 +1571,9 @@ function LandSection({
     description: '',
     videoUrl: '',
   });
-  
+  // Fair-value band from area and a regional per-hectare price, when asked.
+  const [landBand, setLandBand] = useState<ValuationBand | null>(null);
+
   const estimatedValue = estimateLandPrice(formData.hectares || 0, formData.regions || []);
   
   const handleAddLand = () => {
@@ -1433,6 +1589,7 @@ function LandSection({
     };
     setRequirements([...requirements, newLand]);
     setFormData({ hectares: 0, regions: [], features: [], description: '', videoUrl: '' });
+    setLandBand(null);
     setShowForm(false);
     toast.success('Land requirement added');
   };
@@ -1632,6 +1789,41 @@ function LandSection({
               <p className="text-xs text-[#1a472a]/80 mb-3">
                 Based on average land prices in selected regions. You can edit this value if you have better figures.
               </p>
+              {/* Fair-value helper: a band from area and a regional per-hectare price */}
+              <div className="mb-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setLandBand(
+                      valuationForLand({
+                        hectares: formData.hectares || 0,
+                        region: (formData.regions || [])[0] || '',
+                      })
+                    )
+                  }
+                  className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+                >
+                  <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                  Suggest a fair value
+                </Button>
+                {landBand && (
+                  <div className="mt-2 rounded-lg bg-[#f8f5f0] border border-[#7dd87d]/30 p-3">
+                    <p className="text-xs text-[#1a472a]/80 leading-relaxed">{landBand.note}</p>
+                    {landBand.mid > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, customValue: landBand.mid })}
+                        className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                      >
+                        Use {formatCurrency(landBand.mid, currencySymbol)}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
                 <Input
@@ -1937,19 +2129,23 @@ function EquipmentSection({
 }
 
 // Roles Section Component
-function RolesSection({ 
-  roles, 
-  setRoles, 
-  currencySymbol, 
-  total 
+function RolesSection({
+  roles,
+  setRoles,
+  currencySymbol,
+  total,
+  region,
 }: {
   roles: RoleRequirement[];
   setRoles: React.Dispatch<React.SetStateAction<RoleRequirement[]>>;
   currencySymbol: string;
   total: number;
+  region: string;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+  // Fair-value band for the custom role, filled when the coach is asked.
+  const [roleBand, setRoleBand] = useState<ValuationBand | null>(null);
   const [formData, setFormData] = useState<Partial<RoleRequirement>>({
     title: '',
     category: '',
@@ -1993,6 +2189,7 @@ function RolesSection({
     };
     setRoles([...roles, newRole]);
     setFormData({ title: '', category: '', description: '', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 30 });
+    setRoleBand(null);
     setShowForm(false);
     toast.success('Role added');
   };
@@ -2213,6 +2410,44 @@ function RolesSection({
                 <p className="text-xs text-[#1a472a]/80">Calculated Value:</p>
                 <p className="text-lg font-bold text-[#4a7c59]">{formatCurrency(calculatedValue, currencySymbol)}</p>
               </div>
+              {/* Fair-value helper: a defensible band from hours, weeks, rate, and region */}
+              <div className="mb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setRoleBand(
+                      valuationForRole({
+                        capital: 'experiential',
+                        hoursPerWeek: formData.hoursPerWeek || 0,
+                        weeks: formData.weeksNeeded || 0,
+                        region,
+                        hourlyRate: formData.hourlyRate || undefined,
+                      })
+                    )
+                  }
+                  className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+                >
+                  <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                  Suggest a fair value
+                </Button>
+                {roleBand && (
+                  <div className="mt-2 rounded-lg bg-white border border-[#7dd87d]/30 p-3">
+                    <p className="text-xs text-[#1a472a]/80 leading-relaxed">{roleBand.note}</p>
+                    {roleBand.mid > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, customValue: roleBand.mid })}
+                        className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                      >
+                        Use {formatCurrency(roleBand.mid, currencySymbol)}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
                 <Input
@@ -2283,7 +2518,9 @@ function OtherNeedsSection({
   });
   const formRef = React.useRef<HTMLDivElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
-  
+  // Fair-value band around the figure entered, filled when the coach is asked.
+  const [otherBand, setOtherBand] = useState<ValuationBand | null>(null);
+
   const openFormWithCategory = (categoryKey: string) => {
     const cat = categoryForKey(categoryKey);
     setFormData({ ...formData, category: categoryKey, title: cat?.label || '' });
@@ -2308,6 +2545,7 @@ function OtherNeedsSection({
     };
     setNeeds([...needs, newNeed]);
     setFormData({ category: 'other', title: '', description: '', estimatedValue: 0 });
+    setOtherBand(null);
     setShowForm(false);
     toast.success('Item added');
     // Scroll back to the category list so user can keep adding
@@ -2445,6 +2683,34 @@ function OtherNeedsSection({
                 placeholder="0"
                 className="bg-white border-[#7dd87d]/30"
               />
+            </div>
+            {/* Fair-value helper: a plus-or-minus band around the figure entered */}
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOtherBand(valuationBandForValue(formData.estimatedValue || 0))}
+                className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+              >
+                <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                Suggest a fair range
+              </Button>
+              {otherBand && (
+                <div className="mt-2 rounded-lg bg-white border border-[#7dd87d]/30 p-3">
+                  <p className="text-xs text-[#1a472a]/80 leading-relaxed">{otherBand.note}</p>
+                  {otherBand.mid > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setFormData({ ...formData, estimatedValue: otherBand.mid })}
+                      className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                    >
+                      Use {formatCurrency(otherBand.mid, currencySymbol)}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1 rounded-xl border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59]/10">
