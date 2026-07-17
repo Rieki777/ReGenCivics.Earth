@@ -95,6 +95,15 @@ Also delete the test `"launch quests stay draft until Rye ratifies (none live ye
 
 ---
 
+## FINAL STATE (2026-07-17, all five phases shipped)
+
+All five phases are built, migrated (0194, 0196, 0199, 0200 applied on Railway), deployed to SUCCESS, and live-verified: /multiplayer (five quests), /board, /map (Season Activity layer), /api/federation/projects.json (16 projects with impact key), llms.txt federation section. ADR-41 and ADR-42 are in DECISIONS.md. The three cron behaviors (crew assembly 30min, needs/offers matcher daily, memory writer daily) run in-process; no Railway cron services needed.
+
+**Everything still waiting on you, in full:**
+1. **Anastasia.** Bring her the quest-offer design; only after her blessing set `ELDER_QUEST_OFFERS_ENABLED=true` on Railway and record her blessing + cadence in `server/lib/elders.ts` (`humanSteward.blessedAt`). Nothing offers quests until that env var is set, and her elder additionally stays off until `offeredQuests.enabled` flips for her.
+2. **Impact backfill.** Admin → Applications → open a project → the Impact data panel (small N, only you know the projects).
+3. Optional polish when you feel like it: refine `shared/bioregionCentroids.ts` placements; hero images + PDFs for the five multiplayer quests (quest-builder skill phases 3-4); a tagging surface for form-sourced needs/offers rows.
+
 ## Handoff Breakdown — Who Does What
 
 ### YOU (Rye) — things only you can do
