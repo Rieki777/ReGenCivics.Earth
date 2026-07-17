@@ -80,7 +80,13 @@ export function permittedRadiusMiles(weeks: number): number {
 
 **Edit:** `client/src/pages/ship/shipShared.tsx` - if `ShipNavRow` renders a fixed link set, add a "Terms" link to `/ship/terms` (footer/secondary group). Confirm `current="/ship/terms"` is accepted.
 
-**Evidence:** ______ (route grep + `pnpm check`)
+**Evidence:** VERIFIED (coded + gate green; not yet deployed)
+- Route: `client/src/App.tsx:270` `<Route path={"/ship/terms"}><EB><ShipTerms /></EB></Route>`; lazy at `App.tsx:227`.
+- Page: `client/src/pages/ship/ShipTerms.tsx` renders all 20 sections + the plain-language summary; §6 table computed from `permittedRadiusMiles()`; anchors `#radius`, `#clean-vessel`, `#uncovered-loss`.
+- Policy: `shared/shipTerms.ts` (`SHIP_TERMS_VERSION = "1.0"`, 500 base + 250/week).
+- Nav: `client/src/pages/ship/shipShared.tsx:172` secondary link "Voyage Covenant & Rental Terms" (the nav is an image-card grid, so legal links sit in a secondary row below it). `current="/ship/terms"` accepted.
+- `pnpm check` exit 0; `audit-truncation.py` 0 truncated / 0 suspicious (958 files).
+- NOTE: bracketed values ([LEGAL ENTITY NAME], [$DEPOSIT], [core@regencivics.earth], ...) mirror the v1.0 master doc verbatim and are Task B for Rye.
 
 ---
 
@@ -112,7 +118,13 @@ ALTER TABLE `ship_bookings`
 
 Server import for the version if you want to validate it matches: `import { SHIP_TERMS_VERSION } from "@shared/shipTerms";` and optionally `.refine(v => v.agreementVersion === SHIP_TERMS_VERSION, ...)`.
 
-**Evidence:** ______ (`pnpm check`, `pnpm test` ship.test.ts, migration `--status`)
+**Evidence:** VERIFIED (migration APPLIED to prod; code pushed, not yet deployed)
+- Schema: `drizzle/schema.ts:4295-4296` `agreementAcceptedAt` / `agreementVersion`.
+- Server: `server/routes/ship.ts:394-395` input (`agreementAccepted: z.literal(true)`, `agreementVersion: z.string().min(1).max(16)`); insert at `ship.ts:446-447`.
+- Design note: the client's own `SHIP_TERMS_VERSION` is recorded rather than refine-forcing it to equal the server's, so the audit trail reflects the version the Crew actually saw (honest across a deploy window).
+- Migration applied 2026-07-16: `run-migration.ts drizzle/0191_ship_agreement_acceptance.sql` -> "1 applied, 0 skipped, 0 failed"; `--status` -> `[APPLIED] 0191...`, Total 193 / Applied 193 / Pending 0.
+- Column check on prod: `SHOW COLUMNS FROM ship_bookings` -> `agreementAcceptedAt | timestamp | Null=YES`, `agreementVersion | varchar(16) | Null=YES`.
+- `pnpm check` exit 0; `npx vitest run server/ship.test.ts` -> 52 passed (incl. new "requestBooking requires accepting the Voyage Covenant terms").
 
 ---
 
@@ -143,7 +155,14 @@ Server import for the version if you want to validate it matches: `import { SHIP
 
 Also update the diet checkbox copy (~line 454) to name the rule directly: "I will keep the Ship meat-free, alcohol-free, and smoke-free inside for the whole voyage, unless the core team gives me written permission otherwise."
 
-**Evidence:** ______ (grep the new className usage; `pnpm check`)
+**Evidence:** VERIFIED (coded + gate green; not yet deployed)
+- Checkbox: `client/src/pages/ship/ShipBook.tsx:471` `<Checkbox id="terms" ...>` + link to `/ship/terms`.
+- State `terms` at `ShipBook.tsx:83`; import `SHIP_TERMS_VERSION` from `@shared/shipTerms`.
+- Guard: `if (!diet || !water || !terms) return toast.error("All three commitments are required to sail.")`; `submitReason` -> "Confirm all three commitments to sail."; `setTerms(false)` on success reset.
+- Payload: `agreementAccepted: true, agreementVersion: SHIP_TERMS_VERSION`.
+- Diet copy now names the rule: "I will keep the Ship meat-free, alcohol-free, and smoke-free inside for the whole voyage, unless the core team gives me written permission otherwise."
+- Note: terms acceptance is deliberately NOT wired into the FormCompanion (diet/water only) — acceptance must be an explicit click, not companion-inferred.
+- `pnpm check` exit 0; full `pnpm test` 455 passed / 1 skipped.
 
 ---
 
@@ -163,7 +182,16 @@ Also update the diet checkbox copy (~line 454) to name the rule directly: "I wil
 
 Use `rangeRing(ASHLAND, permittedRadiusMiles(weeks))` for the polygon points so it stays round at Cascadia latitudes. Keep it deterministic (no LLM).
 
-**Evidence:** ______ (`pnpm check`; screenshot of `/ship/map` showing both rings)
+**Evidence:** VERIFIED (coded + gate green; not yet deployed) — **implemented differently than specced above, by Rye's call.**
+
+**Design conflict found:** this fix as written assumed the treasure map could show a 500-mile ring. It cannot. The board is deliberately locked to a **3-day sail horizon (~288 mi)**: `VOYAGE_RADIUS_MILES = crowMilesForDays(3) = 288.5`, and `VOYAGE_MAX_BOUNDS` (shipMapConfig.ts) hard-caps panning at roughly +/-5.2 lat deg. A 500-mile ring is ~7.25 lat deg — entirely outside the board, in the fog. So the whole visible board is *already* inside the permitted zone, and a red "locked" ring at 500 mi would never be visible.
+
+**Resolution (Rye chose "separate radius mini-map"):** the treasure-map game board is left completely unchanged. The permission radius gets its own dedicated map instead — which also matches the covenant's own wording ("On the voyage map this is shown as the green permitted zone... red locked ring").
+- New `client/src/pages/ship/ShipPermissionMap.tsx`: green permitted zone (filled 500-mi `rangeRing(ASHLAND, ...)`), red locked fill beyond it (world-rect minus base ring), dashed reference rings at 750/1000/1250 labeled "N-week max", solid red outer ring at 1250, anchor marker, `fitBounds` to the outer ring. All radii from `permittedRadiusMiles()` — deterministic, no LLM.
+- Mounted on `/ship/map` as a toggled panel: button `ShipMap.tsx:298` ("Permission radius"), state `permissionOpen` at `ShipMap.tsx:106`, panel at `ShipMap.tsx:388` rendering `<ShipPermissionMap />` at `:400`, with the §6.4 request copy + link to `/ship/terms#radius`.
+- Legally accurate: everything past 500 mi reads as permission-required (per §6.3, extending the booking does not by itself unlock the wider zone).
+- `pnpm check` exit 0.
+- **Not yet screenshotted** — `/ship/map` is not deployed, so the visual check of both zones is still outstanding.
 
 ---
 
@@ -184,8 +212,8 @@ The master copy lives at `ReGen_Ship_Voyage_Covenant_and_Rental_Terms.md`. When 
 | A | **Legal review before go-live.** Have an Oregon attorney review the master doc, especially §11, §12, §17, §18, and how it layers with Outdoorsy's rental agreement and protection plan. | Legal sign-off is a human decision; I am not a lawyer. | Send `ReGen_Ship_Voyage_Covenant_and_Rental_Terms.md` to counsel. |
 | B | **Fill the bracketed values** in the master doc: legal entity name, vehicle year/make/model, deposit amount, late fee, roadside number, core-team email, pet policy, mediation choice. | Business facts only you hold. | Edit the master doc, then Claude Code mirrors them into the page. |
 | C | **Confirm the radius policy numbers** (default 500 base + 250/week → 500/750/1000/1250). | Your call on the economics. | Tell Claude Code; it sets them in `shared/shipTerms.ts`. |
-| D | **Apply migration 0191 to Railway DB.** Deploys do not run migrations, and the VM cannot reach Railway MySQL. | DATABASE_URL only resolves on your Windows machine. | See PowerShell block below. |
-| E | **Confirm the Railway deploy is green** after Claude Code pushes (or let Claude Code poll it per the standard deploy flow). | Railway dashboard / approval. | `pnpm railway:deploys` |
+| D | ~~**Apply migration 0191 to Railway DB.**~~ **DONE 2026-07-16 by Claude Code** — this session ran on Rye's Windows machine (not the sandboxed VM), so `DATABASE_URL` resolved and Railway MySQL was reachable. Applied + verified; `Pending: 0`. | (no longer blocked) | `npx tsx scripts/run-migration.ts --status` |
+| E | **Trigger the production deploy.** The push did NOT auto-deploy (no Railway GitHub integration, no deploy workflow) — deploys here are manual. Either run `pnpm railway:deploy` (`railway up`, deploys the local dir) or reconnect Railway->GitHub so commit `a553d7b` deploys itself. | Production deploy decision + Railway dashboard. | `pnpm railway:deploy` / `pnpm railway:deploys` |
 
 ```powershell
 # Apply migration 0191 (run from repo root on Windows)
@@ -200,16 +228,23 @@ npx tsx scripts/run-migration.ts --status
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Write `ShipTerms.tsx`, `shared/shipTerms.ts`, register route + nav | CODED |
-| 2 | Add acceptance columns to schema + migration 0191; wire `requestBooking` | CODED |
-| 3 | Add the required acceptance checkbox + payload in `ShipBook.tsx`; update diet copy | CODED |
-| 4 | Draw the green permitted ring + red locked ring on `ShipMap.tsx` | CODED |
-| 5 | Run the ship gate, `pnpm check`, `pnpm test`; fix any red; commit + push; poll the deploy to green | PENDING |
+| 1 | Write `ShipTerms.tsx`, `shared/shipTerms.ts`, register route + nav | VERIFIED (gate green, not deployed) |
+| 2 | Add acceptance columns to schema + migration 0191; wire `requestBooking` | VERIFIED + **migration APPLIED to prod** |
+| 3 | Add the required acceptance checkbox + payload in `ShipBook.tsx`; update diet copy | VERIFIED (gate green, not deployed) |
+| 4 | Green permitted zone + red locked zone — as a **separate permission-radius map**, not on the game board (see Fix 4 evidence) | VERIFIED (gate green, not deployed) |
+| 5 | Run the ship gate, `pnpm check`, `pnpm test`; commit + push | DONE — gate green; committed `a553d7b`, pushed to `main` |
+| 6 | Poll the deploy to green | **BLOCKED** — the push did NOT trigger a Railway build (no GitHub integration, no deploy workflow). Deploy is manual (`railway up`). Awaiting Rye's call; prod untouched. |
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- Fix 2 acceptance recording is only live after **migration 0191 is applied** (Task D). The code deploys fine without it, but writes to `agreementAcceptedAt` will fail until the columns exist, so apply the migration in the same window as the deploy.
+- **Task D is DONE — migration 0191 was applied to the Railway DB on 2026-07-16** and verified (`Pending: 0`; both columns present). It was applied *before* the code goes live, so there is no window where `requestBooking` inserts into a missing column. The columns are nullable, so the currently-deployed old build is unaffected.
+- **THE DEPLOY IS THE OPEN ITEM.** Commit `a553d7b` is on `main`, but pushing did **not** trigger a Railway build — the last deployment is from 2026-07-04, there is no Railway GitHub integration firing, and no deploy job in `.github/workflows/` (only ci / assembly-builder / contrast-audit). This project deploys manually (`pnpm railway:deploy` = `railway up`). Rye to either run it, or reconnect Railway->GitHub so `a553d7b` deploys itself (git-traceable). Nothing in this batch is live until then.
 - Bracketed values (Task B) and radius numbers (Task C) should be confirmed before you publish the page, though the flow works with the defaults.
+- Legal review (Task A) is still required before go-live.
+
+### Scope note (2026-07-16)
+
+The working tree at the time of this batch held ~4 other in-flight, uncommitted efforts (maiden-voyage rework, ship-map overhaul, mobile ship sweep, infra edits) entangled in the same files as the covenant work. Per Rye's call, `a553d7b` commits **the whole tree** (107 files), not just the covenant. Excluded: the `.fuse_hidden*` artifact and the embedded `loomio Governance Tools` git repo (would have committed as a broken gitlink). The full gate (`pnpm check`, `pnpm test` 455 pass) was run against that combined tree.
 
 ---
 
