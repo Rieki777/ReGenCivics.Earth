@@ -1,27 +1,14 @@
-import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, not, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-/**
- * mysql2 INSERT/UPDATE/DELETE result shape. drizzle wraps it but the
- * runtime object is the same. Centralizing the type lets us drop most
- * `(result as any).insertId` / `.affectedRows` casts.
- */
-type MysqlMutationResult = {
-  insertId: number;
-  affectedRows: number;
-  warningStatus?: number;
-};
-function asMutationResult(r: unknown): MysqlMutationResult {
-  // drizzle returns [ResultSetHeader, FieldPacket[]] for some shapes and
-  // a single ResultSetHeader for others. Normalise.
-  if (Array.isArray(r)) return r[0] as MysqlMutationResult;
-  return r as MysqlMutationResult;
-}
+// Moved to server/db/_shared.ts so the extracted domain modules can use it
+// too. Imported (not re-exported) because it stays internal to server/db/.
+import { asMutationResult } from "./db/_shared";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -273,92 +260,18 @@ export async function updateUserHandle(userId: number, handle: string): Promise<
 // ============================================
 // Application Queries
 // ============================================
-
-export async function createApplication(data: InsertApplication) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(applications).values(data);
-  return result[0].insertId;
-}
-
-export async function updateApplication(id: number, data: Partial<InsertApplication>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(applications).set(data).where(eq(applications.id, id));
-}
-
-export async function getApplicationById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select()
-    .from(applications)
-    .where(eq(applications.id, id))
-    .limit(1);
-  
-  if (result.length === 0) return undefined;
-  
-  // Get user email separately
-  const app = result[0];
-  const userResult = await db.select({ email: users.email })
-    .from(users)
-    .where(eq(users.id, app.userId))
-    .limit(1);
-  
-  return {
-    ...app,
-    contactEmail: userResult.length > 0 ? userResult[0].email : null,
-  };
-}
-
-export async function getApplicationsByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db.select().from(applications)
-    .where(and(eq(applications.userId, userId), eq(applications.adminSeeded, 0)))
-    .orderBy(desc(applications.createdAt));
-}
-
-export async function getAllApplications() {
-  const db = await getDb();
-  if (!db) return [];
-
-  // Exclude drafts from the admin review queue
-  return db.select().from(applications)
-    .where(ne(applications.status, "draft"))
-    .orderBy(desc(applications.submittedAt));
-}
-
-export async function getDraftApplications() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db.select().from(applications)
-    .where(eq(applications.status, "draft"))
-    .orderBy(desc(applications.updatedAt));
-}
-
-export async function deleteStaleApplicationDrafts(olderThanDays = 30): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
-
-  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-  const result = await db.delete(applications)
-    .where(and(eq(applications.status, "draft"), lt(applications.updatedAt, cutoff)));
-  return asMutationResult(result).affectedRows ?? 0;
-}
-
-export async function getApplicationsByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(applications)
-    .where(eq(applications.status, status as any))
-    .orderBy(desc(applications.submittedAt));
-}
+// Extracted to server/db/applications.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createApplication,
+  updateApplication,
+  getApplicationById,
+  getApplicationsByUserId,
+  getAllApplications,
+  getDraftApplications,
+  deleteStaleApplicationDrafts,
+  getApplicationsByStatus,
+} from "./db/applications";
 
 // ============================================
 // Review Queries
