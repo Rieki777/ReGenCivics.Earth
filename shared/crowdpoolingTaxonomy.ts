@@ -431,6 +431,25 @@ export const CAPITAL_LABELS: Record<CapitalType, { label: string; blurb: string 
 };
 
 /**
+ * One accent color per capital, so the nine forms read at a glance across the
+ * needs registry, the balance meter, and anywhere else capital shows up. Earthy
+ * and distinct, tuned to sit on cream cards and the dark forest alike. Use the
+ * hex directly for borders and text; append an alpha suffix for tinted fills
+ * (for example `${CAPITAL_COLORS[c]}1a` for a soft background).
+ */
+export const CAPITAL_COLORS: Record<CapitalType, string> = {
+  intellectual: "#5a6acf", // indigo, knowledge
+  social: "#d9776a", // terracotta, connection
+  material: "#6b7c8c", // slate, tools and structures
+  financial: "#c99a3b", // gold, money
+  living: "#5a9e5a", // green, land and soil
+  cultural: "#c060a1", // mauve, art and story
+  spiritual: "#8a6fc4", // amethyst, ceremony
+  experiential: "#d98b3a", // amber, hands-on skill
+  health: "#3fa89b", // teal, wellbeing
+};
+
+/**
  * Context for crypto contributions. Crypto is the one form of money the
  * platform tracks directly; national currency routes to the funders we
  * recommend (Ma Earth for donations, GoSteward for loans). We take no cut

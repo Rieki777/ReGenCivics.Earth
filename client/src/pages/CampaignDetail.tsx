@@ -44,7 +44,7 @@ import {
 import { toast } from "sonner";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { ContributionModal, type ContributionNeed } from "@/components/ContributionModal";
-import { CAPITAL_TYPES, CAPITAL_LABELS, CRYPTO_PAYMENT_CONTEXT, type CapitalType } from "@shared/crowdpoolingTaxonomy";
+import { CAPITAL_TYPES, CAPITAL_LABELS, CAPITAL_COLORS, CRYPTO_PAYMENT_CONTEXT, type CapitalType } from "@shared/crowdpoolingTaxonomy";
 import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
 import { BackButton } from "@/components/BackButton";
@@ -421,7 +421,7 @@ export default function CampaignDetail() {
                   value={subscribeEmail}
                   onChange={(e) => setSubscribeEmail(e.target.value)}
                   placeholder="Your email for campaign updates"
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white border-[#4a7c59]/40 text-[#1a472a] placeholder:text-[#1a472a]/50"
                 />
               </div>
               <Button
@@ -1142,37 +1142,52 @@ function NeedsRegistry({
     }))
     .filter((g) => g.items.length > 0);
 
+  const coveredCount = groups.length;
+
   return (
     <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
-      <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-        <Target className="w-5 h-5 text-[#4a7c59]" />
-        Needs Registry
-      </h2>
+      <div className="flex flex-wrap items-end justify-between gap-2 mb-1">
+        <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <Target className="w-5 h-5 text-[#4a7c59]" />
+          Needs Registry
+        </h2>
+        <span className="text-xs font-semibold text-[#4a7c59] bg-[#4a7c59]/10 rounded-full px-3 py-1">
+          {coveredCount} of 9 forms of capital
+        </span>
+      </div>
       <p className="text-sm text-[#1a472a]/70 mb-6">
         What this project needs, organized by the capital it feeds. Claim a slot and the steward takes it from there.
       </p>
       <div className="space-y-8">
-        {groups.map(({ capital, items: groupItems }) => (
-          <div key={capital}>
-            <div className="mb-3">
-              <h3 className="text-sm font-bold text-[#4a7c59] uppercase tracking-wide">
-                {CAPITAL_LABELS[capital].label} Capital
-              </h3>
-              <p className="text-xs text-[#1a472a]/70">{CAPITAL_LABELS[capital].blurb}</p>
+        {groups.map(({ capital, items: groupItems }) => {
+          const color = CAPITAL_COLORS[capital];
+          return (
+            <div key={capital}>
+              <div
+                className="mb-3 pl-3 border-l-4 rounded-sm"
+                style={{ borderColor: color }}
+              >
+                <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color }}>
+                  {CAPITAL_LABELS[capital].label} Capital
+                </h3>
+                <p className="text-xs text-[#1a472a]/70">{CAPITAL_LABELS[capital].blurb}</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                {groupItems.map((item: any) => (
+                  <NeedCard
+                    key={item.id}
+                    item={item}
+                    capital={capital}
+                    accent={color}
+                    campaignActive={campaignActive}
+                    formatCurrency={formatCurrency}
+                    onClaim={onClaim}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="space-y-4">
-              {groupItems.map((item: any) => (
-                <NeedCard
-                  key={item.id}
-                  item={item}
-                  campaignActive={campaignActive}
-                  formatCurrency={formatCurrency}
-                  onClaim={onClaim}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1180,11 +1195,15 @@ function NeedsRegistry({
 
 function NeedCard({
   item,
+  capital,
+  accent,
   campaignActive,
   formatCurrency,
   onClaim,
 }: {
   item: any;
+  capital: CapitalType;
+  accent: string;
   campaignActive: boolean;
   formatCurrency: (amount: number) => string;
   onClaim: (need: ContributionNeed) => void;
@@ -1204,13 +1223,13 @@ function NeedCard({
     const linkUrl = item.videoUrl
       || (String(item.resourceDescription || item.landDescription || '').match(/https?:\/\/\S+/) || [])[0];
     return (
-      <Card className="bg-white/95 backdrop-blur border-dashed">
-        <CardHeader className="p-4 md:p-6">
+      <Card className="bg-white/95 backdrop-blur border-dashed" style={{ borderColor: `${accent}80` }}>
+        <CardHeader className="p-4 md:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <ExternalLink className="w-6 h-6 text-[#4a7c59] flex-shrink-0" />
+              <ExternalLink className="w-6 h-6 flex-shrink-0" style={{ color: accent }} />
               <div>
-                <CardTitle className="text-[#1a472a] text-base md:text-lg">{title}</CardTitle>
+                <CardTitle className="text-[#1a472a] text-base">{title}</CardTitle>
                 <CardDescription>You'll finish this on the recommended funder's site.</CardDescription>
               </div>
             </div>
@@ -1229,105 +1248,112 @@ function NeedCard({
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur">
-      <CardHeader className="p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            {item.imageUrl && (
-              <img
-                src={item.imageUrl}
-                alt={title}
-                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                loading="lazy"
-              />
-            )}
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${KIND_CHIP_CLASSES[kind] || 'bg-gray-100 text-gray-700'}`}>
-                  {KIND_LABELS[kind] || kind}
+    <Card
+      className="bg-white backdrop-blur border-l-4 flex flex-col h-full transition-shadow hover:shadow-md"
+      style={{ borderLeftColor: accent }}
+    >
+      <CardHeader className="p-4 md:p-5 pb-3">
+        <div className="flex items-start gap-3">
+          {item.imageUrl && (
+            <img
+              src={item.imageUrl}
+              alt={title}
+              className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
+              loading="lazy"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${accent}1a`, color: accent }}
+              >
+                {KIND_LABELS[kind] || kind}
+              </span>
+              {!!item.priorityPinned && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#d4a017]/15 text-[#d4a017] flex items-center gap-1">
+                  <Pin className="w-3 h-3" />
+                  Priority
                 </span>
-                {!!item.priorityPinned && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#d4a017]/15 text-[#d4a017] flex items-center gap-1">
-                    <Pin className="w-3 h-3" />
-                    Priority
-                  </span>
-                )}
-              </div>
-              <CardTitle className="text-[#1a472a] text-base md:text-lg">{title}</CardTitle>
-              {description && (
-                <CardDescription className="mt-1 line-clamp-2">{description}</CardDescription>
               )}
             </div>
-          </div>
-          <div className="text-left sm:text-right flex-shrink-0">
-            <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-              {formatCurrency(item.estimatedValue || 0)}
-            </div>
-            <Button
-              size="sm"
-              className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white"
-              disabled={!campaignActive || filled}
-              onClick={() =>
-                onClaim({
-                  id: item.id,
-                  kind,
-                  capitalType: capitalForItem(item),
-                  title,
-                  quantityWanted: wanted,
-                  quantityClaimed: claimed,
-                  quantityDelivered: delivered,
-                  estimatedValue: item.estimatedValue || 0,
-                  shiftStartsAt: item.shiftStartsAt,
-                  shiftEndsAt: item.shiftEndsAt,
-                  loanWindowStart: item.loanWindowStart,
-                  loanWindowEnd: item.loanWindowEnd,
-                })
-              }
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              {filled ? 'Filled' : 'Claim'}
-            </Button>
+            <CardTitle className="text-[#1a472a] text-base leading-snug">{title}</CardTitle>
+            {description && (
+              <CardDescription className="mt-1 line-clamp-2 text-sm">{description}</CardDescription>
+            )}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 md:p-6 pt-0 space-y-2">
-        {/* Slot meter: delivered solid, claimed lighter */}
-        <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden">
-          <div className="absolute inset-y-0 left-0 bg-[#7dd87d]/40 rounded-full" style={{ width: `${claimedPct}%` }} />
-          <div className="absolute inset-y-0 left-0 bg-[#4a7c59] rounded-full" style={{ width: `${deliveredPct}%` }} />
+      <CardContent className="p-4 md:p-5 pt-0 mt-auto space-y-3">
+        {/* Slot meter: delivered solid in the capital color, claimed lighter */}
+        <div>
+          <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${claimedPct}%`, backgroundColor: `${accent}59` }} />
+            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${deliveredPct}%`, backgroundColor: accent }} />
+          </div>
+          <p className="text-xs text-[#1a472a]/70 mt-1.5">
+            {delivered} of {wanted} delivered
+            {claimed > delivered ? `, ${claimed - delivered} more claimed` : ''}
+          </p>
         </div>
-        <p className="text-xs text-[#1a472a]/80">
-          {delivered} of {wanted} delivered
-          {claimed > delivered ? `, ${claimed - delivered} more claimed` : ''}
-        </p>
         {(item.needDeadline || item.shiftStartsAt || item.loanWindowStart) && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/80">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/70">
             {item.needDeadline && (
               <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-[#4a7c59]" />
+                <Clock className="w-3 h-3" style={{ color: accent }} />
                 Needed by {formatDay(item.needDeadline)}
               </span>
             )}
             {item.shiftStartsAt && item.shiftEndsAt && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-[#4a7c59]" />
-                Shift: {formatShiftWindow(item.shiftStartsAt, item.shiftEndsAt)}
+                <Calendar className="w-3 h-3" style={{ color: accent }} />
+                {formatShiftWindow(item.shiftStartsAt, item.shiftEndsAt)}
               </span>
             )}
             {item.loanWindowStart && item.loanWindowEnd && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-[#4a7c59]" />
+                <Calendar className="w-3 h-3" style={{ color: accent }} />
                 On loan {formatDay(item.loanWindowStart)} to {formatDay(item.loanWindowEnd)}
               </span>
             )}
           </div>
         )}
         {kind === 'crypto' && (
-          <p className="text-xs text-[#1a472a]/70 flex items-center gap-1">
-            <Coins className="w-3 h-3 text-[#4a7c59]" />
+          <p className="text-xs text-[#1a472a]/60 flex items-start gap-1">
+            <Coins className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: accent }} />
             {CRYPTO_PAYMENT_CONTEXT.helperText}
           </p>
         )}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="text-lg font-bold" style={{ color: accent }}>
+            {formatCurrency(item.estimatedValue || 0)}
+          </div>
+          <Button
+            size="sm"
+            className="text-white"
+            style={{ backgroundColor: filled ? '#9ca3af' : accent }}
+            disabled={!campaignActive || filled}
+            onClick={() =>
+              onClaim({
+                id: item.id,
+                kind,
+                capitalType: capital,
+                title,
+                quantityWanted: wanted,
+                quantityClaimed: claimed,
+                quantityDelivered: delivered,
+                estimatedValue: item.estimatedValue || 0,
+                shiftStartsAt: item.shiftStartsAt,
+                shiftEndsAt: item.shiftEndsAt,
+                loanWindowStart: item.loanWindowStart,
+                loanWindowEnd: item.loanWindowEnd,
+              })
+            }
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            {filled ? 'Filled' : 'Claim'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

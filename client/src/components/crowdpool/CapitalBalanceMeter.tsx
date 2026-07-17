@@ -12,6 +12,7 @@
  */
 
 import { analyzeCoverage, type CoachNeedInput } from '@shared/crowdpoolCoach';
+import { CAPITAL_COLORS } from '@shared/crowdpoolingTaxonomy';
 
 export function CapitalBalanceMeter({ needs }: { needs: CoachNeedInput[] }) {
   const coverage = analyzeCoverage(needs);
@@ -33,12 +34,15 @@ export function CapitalBalanceMeter({ needs }: { needs: CoachNeedInput[] }) {
         aria-label={`Capital coverage: ${coverage.coveredCount} of 9 forms covered`}
       >
         {coverage.entries.map((entry) => {
-          const tone =
+          const color = CAPITAL_COLORS[entry.capital];
+          // Each capital keeps its own color; strength sets the fill weight so
+          // solid reads bold, thin reads soft, and empty reads as a faint outline.
+          const style =
             entry.strength === 'solid'
-              ? 'bg-[#4a7c59] border-[#4a7c59]'
+              ? { backgroundColor: color, borderColor: color }
               : entry.strength === 'thin'
-                ? 'bg-[#7dd87d]/40 border-[#7dd87d]'
-                : 'bg-[#1a472a]/5 border-[#1a472a]/15';
+                ? { backgroundColor: `${color}40`, borderColor: `${color}80` }
+                : { backgroundColor: '#1a472a0d', borderColor: '#1a472a26' };
           const stateWord =
             entry.strength === 'solid'
               ? `solid, ${entry.needCount} needs`
@@ -48,7 +52,8 @@ export function CapitalBalanceMeter({ needs }: { needs: CoachNeedInput[] }) {
           return (
             <div
               key={entry.capital}
-              className={`h-6 flex-1 rounded-sm border ${tone} transition-colors`}
+              className="h-6 flex-1 rounded-sm border transition-colors"
+              style={style}
               title={`${entry.label} capital. ${entry.blurb} (${stateWord})`}
               aria-label={`${entry.label} capital, ${stateWord}`}
             />
