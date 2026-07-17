@@ -69,26 +69,64 @@ jobs:
           path: dist/public
           retention-days: 1
 
-  # ── Integration tests against a real MySQL — PENDING a schema-build decision ──
-  # The 13 DB-backed suites (evolution, ratification, forum, applications, ...)
-  # should gate every push against a real database. The blocker: a fresh MySQL
-  # can't be built from the numbered migrations alone — scripts/run-migration.ts
-  # only applies 0048+, and the base schema (tables created up to 0047) lives
-  # only in the drizzle-kit journal that drizzle/README.md freezes and forbids
-  # `drizzle-kit push` from materializing. So a clean CI DB is missing the early
-  # tables (game_variable_history, citizenship_tier_history, ...) and every
-  # DB-backed suite errors with ER_NO_SUCH_TABLE.
+  # ── Integration tests against a real MySQL ──
+  # The DB-backed suites (evolution, ratification, forum, applications, ...) gate
+  # every push against a real database built from scratch.
   #
-  # Until Rye picks a fresh-schema source (options in FOUNDATION_AUDIT_PLAN),
-  # these suites run against the real dev DB in the LOCAL ship gate (test:all),
-  # not here. This job is intentionally left disabled rather than red: a gate
-  # that always fails is worse than one that is honestly absent.
+  # The fresh schema comes from drizzle/ci-baseline.sql, not from the numbered
+  # migrations: 36 of those fail on an empty MySQL across five root causes and
+  # are frozen as history rather than repaired (ADR-37). run-migration.ts still
+  # runs afterward, so migrations added since the baseline are exercised here.
   #
-  #   integration:
-  #     services: { mysql: mysql:8 ... }
-  #     steps:
-  #       - <build fresh schema — DECISION NEEDED>
-  #       - run: pnpm test:all   # DATABASE_URL -> the service container
+  # mysql:9.4 matches the production server version. Do not drift to mysql:8
+  # without checking the baseline still loads.
+  integration:
+    name: Integration (real MySQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:9.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci
+          MYSQL_DATABASE: regen_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql://root:ci@127.0.0.1:3306/regen_ci
+      JWT_SECRET: ci-test-secret
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build fresh schema from the CI baseline
+        run: npx tsx scripts/load-ci-baseline.ts
+
+      - name: Apply migrations added since the baseline
+        run: npx tsx scripts/run-migration.ts --all
+
+      - name: Fail if the baseline has drifted from the live schema
+        run: npx tsx scripts/check-schema-drift.ts
+
+      - name: Integration tests
+        run: pnpm test:all
 
   # ── Evolution Engine machine gates (ASSEMBLY_PAGE_SPEC.md section 7.3) ──
   # Runs ONLY for PRs whose head branch is assembly/<proposalId>: the branches

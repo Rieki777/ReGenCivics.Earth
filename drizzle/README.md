@@ -5,9 +5,11 @@
 Migrations are plain hand-written MySQL files named `drizzle/NNNN_description.sql`,
 applied by `scripts/run-migration.ts` and tracked in the `_migrations_applied`
 table. This is the ONE source of truth for the live schema. It runs against
-`DATABASE_URL`, is idempotent (skips already-applied files), and can build a
-fresh database from scratch because it discovers and runs every numbered file
-`0000`–current in order.
+`DATABASE_URL` and is idempotent (skips already-applied files): it discovers
+every numbered file `0000`–current and applies whatever the tracking table does
+not already list.
+
+It cannot build a fresh database from scratch. See "Fresh databases" below.
 
 ```bash
 pnpm db:migrate:status                                   # what's applied vs pending
@@ -43,9 +45,39 @@ why it broke the Python transcription-worker when inherited.)
 drizzle-kit is fine for read-only inspection (`drizzle-kit studio`); just never
 let it write migrations.
 
+## Fresh databases: `drizzle/ci-baseline.sql`
+
+A fresh database is built from `drizzle/ci-baseline.sql` (a generated
+structure-only snapshot), then brought current with `run-migration.ts --all`.
+This is what CI does. See ADR-37.
+
+```bash
+npx tsx scripts/load-ci-baseline.ts      # structure + reference rows + migration history
+npx tsx scripts/run-migration.ts --all   # anything added since the snapshot
+npx tsx scripts/check-schema-drift.ts    # schema.ts vs information_schema (finding C5)
+npx tsx scripts/dump-ci-baseline.ts      # regenerate the snapshot when it drifts
+```
+
+The baseline exists because the numbered migrations **cannot** replay onto an
+empty database. Measured 2026-07-16 against MySQL 9.4: of 194 files, 157 apply
+and **36 fail**, across five independent root causes:
+
+| Cause | Example | Note |
+| --- | --- | --- |
+| Reserved word unquoted | `0096_game_system.sql` | `maxValue` is bare; `MAXVALUE` is reserved in MySQL, so the file is a syntax error and has never run. It cascades into 20 more failures. |
+| MariaDB-only syntax | `0074`, `0098` | `CREATE INDEX / ADD COLUMN IF NOT EXISTS`, which this file already warns against |
+| Stored procedures | `0037`, `0041` | the runner uses `conn.execute()`; the prepared-statement protocol rejects `DROP PROCEDURE` |
+| Duplicate `CREATE TABLE` | `0036`, `0040` | table already created by an earlier file |
+| Data-dependent seeds | `0105`, `0107` | assume rows that only exist on a populated database |
+
+These files are already applied in production and must never re-run there, so
+they stay frozen as history rather than being repaired. The baseline carries the
+`_migrations_applied` rows they would have written, so the runner skips them and
+only genuinely new migrations apply on top.
+
 ## Historical note
 
 The early files (`0000`–`0047`, random two-word names like
-`0000_yellow_tombstone.sql`) were originally drizzle-kit-generated and remain in
-this folder so the custom runner can rebuild from scratch. Files from `0048` on
-use descriptive names and are the custom-runner convention.
+`0000_yellow_tombstone.sql`) were originally drizzle-kit-generated. They remain
+in this folder as history. Files from `0048` on use descriptive names and are the
+custom-runner convention.
