@@ -12,6 +12,7 @@ import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRoute
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
 import { forumFeedRouter } from "./routes/forumFeed";
 import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRouter, siteTourRouter } from "./routes/players";
+import { questCrewsRouter } from "./routes/questCrews";
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
@@ -56,6 +57,7 @@ import { shipRouter } from "./routes/ship";
 import { companionRouter } from "./routes/companion";
 import { guideRouter } from "./routes/guide";
 import { quickNotesRouter } from "./routes/quick-notes";
+import { videoTutorRouter } from "./routes/videoTutor";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -111,6 +113,7 @@ export const appRouter = router({
   playerPaths: playerPathsRouter,
   quests: questsRouter,
   quest: questRouter,
+  questCrews: questCrewsRouter,
   siteTour: siteTourRouter,
 
   // Admin
@@ -219,6 +222,8 @@ export const appRouter = router({
   ship: shipRouter,
   companion: companionRouter,
   guide: guideRouter,
+  // Video Tutor: context-aware Q&A over any YouTube video on the site
+  videoTutor: videoTutorRouter,
 
   // The Harvest (Phase 1): Rye's private capture inbox, owner-gated
   quickNotes: quickNotesRouter,

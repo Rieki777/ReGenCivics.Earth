@@ -4830,3 +4830,58 @@ export const quickNotes = mysqlTable("quick_notes", {
 }));
 export type QuickNote = typeof quickNotes.$inferSelect;
 export type InsertQuickNote = typeof quickNotes.$inferInsert;
+
+// ─── Multiplayer Mode: quest crews (Phase A, improvement 1) ──────────────────
+/**
+ * Crews of 3 to 7 players form around a multiplayer quest in a bioregion.
+ * Quest definitions are file-based (shared/multiplayerQuests.ts), so questId is
+ * the same varchar quest key quest_completions uses, with no SQL FK. bioregionId
+ * references bioregions(id); integrity is enforced in the procedure layer.
+ * Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
+ */
+export const questCrews = mysqlTable("quest_crews", {
+  id: int("id").autoincrement().primaryKey(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  bioregionId: int("bioregionId").notNull(),
+  crewSize: tinyint("crewSize").notNull(),
+  status: mysqlEnum("status", ["forming", "ready", "active", "complete", "disbanded"]).default("forming").notNull(),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  activatedAt: timestamp("activatedAt"),
+}, (t) => ({
+  questBioregionStatusIdx: index("quest_crews_questId_bioregionId_status_idx").on(t.questId, t.bioregionId, t.status),
+}));
+export type QuestCrew = typeof questCrews.$inferSelect;
+export type InsertQuestCrew = typeof questCrews.$inferInsert;
+
+export const questCrewMembers = mysqlTable("quest_crew_members", {
+  id: int("id").autoincrement().primaryKey(),
+  crewId: int("crewId").notNull(),
+  userId: int("userId").notNull(),
+  role: varchar("role", { length: 100 }),
+  status: mysqlEnum("status", ["joined", "left", "completed"]).default("joined").notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  // Formation-email idempotency key: one email per member per crew, ever.
+  formationEmailSentAt: timestamp("formationEmailSentAt"),
+}, (t) => ({
+  crewUserUnique: uniqueIndex("quest_crew_members_crewId_userId_unique").on(t.crewId, t.userId),
+  userIdx: index("quest_crew_members_userId_idx").on(t.userId),
+}));
+export type QuestCrewMember = typeof questCrewMembers.$inferSelect;
+export type InsertQuestCrewMember = typeof questCrewMembers.$inferInsert;
+
+export const questCrewSignups = mysqlTable("quest_crew_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  bioregionId: int("bioregionId").notNull(),
+  note: varchar("note", { length: 500 }),
+  status: mysqlEnum("status", ["open", "crewed", "cancelled"]).default("open").notNull(),
+  crewId: int("crewId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  questBioregionStatusIdx: index("quest_crew_signups_questId_bioregionId_status_idx").on(t.questId, t.bioregionId, t.status),
+  userIdx: index("quest_crew_signups_userId_idx").on(t.userId),
+}));
+export type QuestCrewSignup = typeof questCrewSignups.$inferSelect;
+export type InsertQuestCrewSignup = typeof questCrewSignups.$inferInsert;

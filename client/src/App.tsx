@@ -83,6 +83,8 @@ const CoreApp = lazyWithRetry(() => import("./pages/core/CoreApp"));
 // Lazy load pages for better initial load performance
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
+const Multiplayer = lazy(() => import("./pages/Multiplayer"));
+const Watch = lazy(() => import("./pages/Watch"));
 const Opportunity = lazyWithRetry(() => import("./pages/Opportunity"));
 // Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
@@ -250,7 +252,9 @@ function Router() {
       {/* CORE lives on its own subdomain; on the main domain, /church sends users there. */}
       <Route path={"/church"}>{() => { window.location.replace('https://core.regencivics.earth'); return null; }}</Route>
       <Route path={"/quest/:slug"}><EB><Quest /></EB></Route>
+      <Route path={"/watch/:videoId"}><EB><Watch /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
+      <Route path={"/multiplayer"}><EB><Multiplayer /></EB></Route>
 
       {/* ReGen Ship (CORE program) */}
       <Route path={"/ship"}><EB><Ship /></EB></Route>

@@ -50,6 +50,7 @@ import { PathPortalsSelector } from "@/components/PathPortalsSelector";
 import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
 import { useActivePathHash } from "@/hooks/useActivePathHash";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
+import { MultiplayerQuestsBanner } from "@/components/MultiplayerQuestsBanner";
 import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
   SEASON_ORDER as SEASON_ORDER_ALL, SEASON_EMOJI as SHARED_SEASON_EMOJI,
@@ -1344,6 +1345,9 @@ export default function Quest() {
 
       {/* Continue Your Journey Banner - progress + next-quest prompt */}
       <ContinueYourJourneyBanner />
+
+      {/* Multiplayer Mode banner - renders only when crew quests are live */}
+      <MultiplayerQuestsBanner />
 
       {/* All Quests by Season - Header */}
       <section id="rites-of-passage" className="py-12 bg-[#f0ebe3]">

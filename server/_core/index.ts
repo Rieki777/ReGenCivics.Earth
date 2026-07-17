@@ -750,6 +750,34 @@ async function startServer() {
     }
   });
 
+  // ── Multiplayer crew assembly cron endpoint ─────────────────────────────────
+  // Called by Railway cron (suggested: every 30 minutes): POST /api/cron/quest-crew-assembly
+  // Deterministic, zero LLM: groups open signups by (quest, bioregion), forms
+  // crews at crewSizeMin, creates crew chat threads, sends formation emails
+  // (idempotent per member per crew via formationEmailSentAt), and sweeps
+  // quest completions to close finished crews. Safe to re-run at any time.
+  // Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md, Phase A.
+  // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
+  app.post("/api/cron/quest-crew-assembly", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runQuestCrewAssemblyJob } = await import("../jobs/questCrewAssembly");
+      const report = await runQuestCrewAssemblyJob();
+      return res.json(report);
+    } catch (err: any) {
+      log.error("cron quest-crew-assembly failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Event reminder cron endpoint ────────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/event-reminders
   // Finds events starting in 20–28 hours, sends reminder to all event_signups.

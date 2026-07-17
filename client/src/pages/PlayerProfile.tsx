@@ -91,6 +91,7 @@ import ContributionTimeline from "@/components/ContributionTimeline";
 import { getCurrentSeason } from "@/lib/seasons";
 import { cdnImg } from "@/lib/utils";
 import { ProfileCallTasksTab } from "@/components/profile/ProfileCallTasksTab";
+import { YourCrewsTab } from "@/components/profile/YourCrewsTab";
 import { GratitudeTab } from "@/components/profile/GratitudeTab";
 
 // Badge definitions
@@ -2429,12 +2430,13 @@ function QuestJournal({ userId }: { userId: number }) {
   );
 }
 
-type ProfileTab = "overview" | "submissions" | "quests" | "tasks" | "gratitude" | "contributions" | "settings";
+type ProfileTab = "overview" | "submissions" | "quests" | "crews" | "tasks" | "gratitude" | "contributions" | "settings";
 
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
+  { id: "crews",          label: "Crews",          icon: UsersIcon },
   { id: "tasks",          label: "Tasks",          icon: Scroll },
   { id: "gratitude",      label: "Gratitude",      icon: Heart },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
@@ -2447,7 +2449,7 @@ export default function PlayerProfile() {
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "tasks", "gratitude", "contributions", "settings"];
+  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "crews", "tasks", "gratitude", "contributions", "settings"];
   const _tabParam = new URLSearchParams(window.location.search).get("tab") as ProfileTab | null;
   const [activeTab, setActiveTab] = useState<ProfileTab>(
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
@@ -2760,6 +2762,15 @@ export default function PlayerProfile() {
                       </div>
                     );
                   })()}
+                </AnimatedSection>
+                </ErrorBoundary>
+              )}
+
+              {/* Crews tab (Multiplayer Mode, Phase A) */}
+              {activeTab === "crews" && (
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <AnimatedSection animation="slide-up">
+                  <YourCrewsTab />
                 </AnimatedSection>
                 </ErrorBoundary>
               )}
