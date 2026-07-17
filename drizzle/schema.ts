@@ -151,6 +151,11 @@ export const applications = mysqlTable("applications", {
   seasonsCompleted: int("seasonsCompleted").default(0).notNull(),
   gameLaunchedAt: timestamp("gameLaunchedAt"),
 
+  // Optional needs/offers capture (Phase B2): mirrored to project_needs /
+  // player_offers on submit, tagged source "incubator_application".
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -280,7 +285,9 @@ export const investorInquiries = mysqlTable("investor_inquiries", {
     "video_call"
   ]).default("email").notNull(),
   newsletterOptIn: int("newsletterOptIn").default(0).notNull(),
-  
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -2155,6 +2162,8 @@ export const customGameApplications = mysqlTable("custom_game_applications", {
   transcript: text("transcript"),
   score: int("score").default(0).notNull(),
   internalNotes: text("internal_notes"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -3158,6 +3167,8 @@ export const localFoodApplications = mysqlTable("local_food_applications", {
   regenerativePractices: text("regenerativePractices"),
   websiteUrl: varchar("websiteUrl", { length: 500 }),
   localScaleProfileUrl: varchar("localScaleProfileUrl", { length: 500 }),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
   status: mysqlEnum("status", ["submitted", "under_review", "approved", "active", "declined"]).default("submitted"),
   communityRatingsCount: int("communityRatingsCount").default(0),
   regenerativeScore: double("regenerativeScore"),
@@ -4470,6 +4481,8 @@ export const shipKeeperApplications = mysqlTable("ship_keeper_applications", {
   location: varchar("location", { length: 255 }),
   experience: text("experience"),
   availability: text("availability"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
   status: mysqlEnum("status", ["submitted", "interviewing", "accepted", "declined"]).notNull().default("submitted"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
@@ -4485,6 +4498,13 @@ export const shipFleetApplications = mysqlTable("ship_fleet_applications", {
   rvYearMakeModel: varchar("rvYearMakeModel", { length: 255 }),
   location: varchar("location", { length: 255 }),
   message: text("message"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+  // The Flagkeeper's qualification story (0197): why regeneration matters to
+  // them, their vision for the fleet, and the full conversation record.
+  whyRegeneration: text("whyRegeneration"),
+  fleetVision: text("fleetVision"),
+  companionTranscript: text("companionTranscript"),
   status: mysqlEnum("status", ["submitted", "in_conversation", "joined"]).notNull().default("submitted"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
@@ -4503,6 +4523,8 @@ export const shipWinterHostApplications = mysqlTable("ship_winter_host_applicati
   freezeProtectionPlan: text("freezeProtectionPlan"),
   siteDescription: text("siteDescription"),
   proposedShare: varchar("proposedShare", { length: 120 }),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
   status: mysqlEnum("status", ["submitted", "in_conversation", "accepted", "declined"]).notNull().default("submitted"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
@@ -4972,3 +4994,67 @@ export const questCrewSignups = mysqlTable("quest_crew_signups", {
 }));
 export type QuestCrewSignup = typeof questCrewSignups.$inferSelect;
 export type InsertQuestCrewSignup = typeof questCrewSignups.$inferInsert;
+
+// ─── Needs and Offers board (Phase B2, improvement 10) ───────────────────────
+/**
+ * Two boards fed by /board and by optional needs/offers fields on every
+ * application form (source tags the form family). Posters are signed-in
+ * players (ownerId) or form applicants (contactEmail); the procedure layer
+ * requires one of the two. needs_offers_matches is the deterministic
+ * matcher's ledger: one row per (need, offer) pair, so the introduction
+ * email can never send twice. Spec:
+ * CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
+ */
+export const projectNeeds = mysqlTable("project_needs", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId"),
+  contactName: varchar("contactName", { length: 200 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: text("body"),
+  tags: json("tags"),
+  bioregionId: int("bioregionId"),
+  timeWindow: varchar("timeWindow", { length: 200 }),
+  status: mysqlEnum("status", ["open", "matched", "closed"]).default("open").notNull(),
+  source: varchar("source", { length: 50 }).default("board").notNull(),
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  statusBioregionIdx: index("project_needs_status_bioregionId_idx").on(t.status, t.bioregionId),
+  ownerIdx: index("project_needs_ownerId_idx").on(t.ownerId),
+}));
+export type ProjectNeed = typeof projectNeeds.$inferSelect;
+export type InsertProjectNeed = typeof projectNeeds.$inferInsert;
+
+export const playerOffers = mysqlTable("player_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId"),
+  contactName: varchar("contactName", { length: 200 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: text("body"),
+  tags: json("tags"),
+  bioregionId: int("bioregionId"),
+  timeWindow: varchar("timeWindow", { length: 200 }),
+  status: mysqlEnum("status", ["open", "matched", "closed"]).default("open").notNull(),
+  source: varchar("source", { length: 50 }).default("board").notNull(),
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  statusBioregionIdx: index("player_offers_status_bioregionId_idx").on(t.status, t.bioregionId),
+  ownerIdx: index("player_offers_ownerId_idx").on(t.ownerId),
+}));
+export type PlayerOffer = typeof playerOffers.$inferSelect;
+export type InsertPlayerOffer = typeof playerOffers.$inferInsert;
+
+export const needsOffersMatches = mysqlTable("needs_offers_matches", {
+  id: int("id").autoincrement().primaryKey(),
+  needId: int("needId").notNull(),
+  offerId: int("offerId").notNull(),
+  matchedAt: timestamp("matchedAt").defaultNow().notNull(),
+  emailSentAt: timestamp("emailSentAt"),
+}, (t) => ({
+  pairUnique: uniqueIndex("needs_offers_matches_needId_offerId_unique").on(t.needId, t.offerId),
+}));
+export type NeedsOffersMatch = typeof needsOffersMatches.$inferSelect;
+export type InsertNeedsOffersMatch = typeof needsOffersMatches.$inferInsert;

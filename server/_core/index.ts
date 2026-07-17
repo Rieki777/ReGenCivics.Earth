@@ -803,6 +803,31 @@ async function startServer() {
     }
   });
 
+  // ── Needs and Offers matcher cron endpoint ──────────────────────────────────
+  // POST /api/cron/needs-offers-matcher (Bearer CRON_SECRET). Deterministic
+  // tag + bioregion matching with one introduction email per pair ever and a
+  // per-party daily cap; also runs daily in-process. Safe to re-run any time.
+  // Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md, Phase B.
+  app.post("/api/cron/needs-offers-matcher", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher");
+      const report = await runNeedsOffersMatcherJob();
+      return res.json(report);
+    } catch (err: any) {
+      log.error("cron needs-offers-matcher failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Event reminder cron endpoint ────────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/event-reminders
   // Finds events starting in 20–28 hours, sends reminder to all event_signups.
@@ -1239,6 +1264,17 @@ setTimeout(async () => {
     try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
   }, 30 * 60 * 1000);
 }, 5 * 60 * 1000); // first run after 5 minutes
+
+// ─── Needs and Offers matcher (daily) ────────────────────────────────────────
+// Deterministic tag + bioregion matching over the board and application-form
+// captures. One introduction email per (need, offer) pair ever (ledgered),
+// per-party daily cap. Also triggerable via POST /api/cron/needs-offers-matcher.
+setTimeout(async () => {
+  try { const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher"); await runNeedsOffersMatcherJob(); } catch (e) { log.error("NeedsOffersMatcherJob error", e); }
+  setInterval(async () => {
+    try { const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher"); await runNeedsOffersMatcherJob(); } catch (e) { log.error("NeedsOffersMatcherJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 11 * 60 * 1000); // first run after 11 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

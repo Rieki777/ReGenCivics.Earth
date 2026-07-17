@@ -18,6 +18,7 @@ import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { PageWrapper } from "@/components/PageWrapper";
 import { analytics } from "@/lib/analytics";
 
@@ -58,6 +59,8 @@ type FormData = {
   websiteUrl: string;
   videoUrl: string;
   additionalNotes: string;
+  needsText: string;
+  offersText: string;
   documents: UploadedFile[];
 };
 
@@ -103,6 +106,8 @@ const INITIAL_FORM_DATA: FormData = {
   websiteUrl: "",
   videoUrl: "",
   additionalNotes: "",
+  needsText: "",
+  offersText: "",
   documents: [],
 };
 
@@ -1292,6 +1297,14 @@ export default function Apply() {
                   className="mt-1"
                 />
               </div>
+
+              <NeedsOffersFields
+                needsText={formData.needsText}
+                offersText={formData.offersText}
+                onNeedsChange={(v) => updateField("needsText", v)}
+                onOffersChange={(v) => updateField("offersText", v)}
+                variant="light"
+              />
 
               <div className="bg-[#f0f7f0] border-2 border-[#7dd87d]/50 rounded-lg p-4">
                 <p className="text-[#1a472a] font-medium mb-2">

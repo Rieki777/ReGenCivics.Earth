@@ -87,6 +87,9 @@ export const customGameApplicationsRouter = router({
       blueprintDraft: blueprintDraftSchema,
       /** The Sylva conversation, saved so the generation session writes in their voice. Empty when they typed the form. */
       transcript: z.array(transcriptTurn).max(80).default([]),
+      /** Optional needs/offers capture (Phase B2), mirrored to the board tables. */
+      needsText: z.string().max(2000).optional(),
+      offersText: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "custom_game_waitlist");
@@ -108,7 +111,22 @@ export const customGameApplicationsRouter = router({
         blueprintDraft: draft,
         transcript: transcript.length > 0 ? JSON.stringify(transcript).slice(0, 2_000_000) : null,
         score,
+        needsText: input.needsText ? sanitizeInput(input.needsText) : null,
+        offersText: input.offersText ? sanitizeInput(input.offersText) : null,
       });
+
+      // Mirror the optional needs/offers capture to the board tables (Phase B2, non-fatal).
+      {
+        const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+        await captureFormNeedsOffers({
+          source: "custom_game_application",
+          sourceId: null,
+          contactName: input.applicantName,
+          contactEmail: input.applicantEmail,
+          needsText: input.needsText,
+          offersText: input.offersText,
+        });
+      }
 
       await notifyOwner({
         title: "New Custom Game Application",

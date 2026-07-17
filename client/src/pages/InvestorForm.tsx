@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
 
@@ -73,6 +74,8 @@ interface InvestorFormData {
   // Step 5: Final Details
   referralSource: string;
   additionalNotes: string;
+  needsText: string;
+  offersText: string;
   preferredContact: string;
   newsletterOptIn: boolean;
   
@@ -101,6 +104,8 @@ const initialFormData: InvestorFormData = {
   questionsForTeam: "",
   referralSource: "",
   additionalNotes: "",
+  needsText: "",
+  offersText: "",
   preferredContact: "email",
   newsletterOptIn: true,
   isAccreditedInvestor: false,
@@ -309,6 +314,8 @@ export default function InvestorForm() {
       questionsForTeam: formData.questionsForTeam || undefined,
       referralSource: formData.referralSource || undefined,
       additionalNotes: formData.additionalNotes || undefined,
+      needsText: formData.needsText.trim() || undefined,
+      offersText: formData.offersText.trim() || undefined,
       preferredContact: formData.preferredContact as any,
       newsletterOptIn: formData.newsletterOptIn,
     });
@@ -1059,7 +1066,15 @@ export default function InvestorForm() {
                         className="border-2 border-[#1a472a]/20 focus:border-[#7dd87d] min-h-[80px]"
                       />
                     </div>
-                    
+
+                    <NeedsOffersFields
+                      needsText={formData.needsText}
+                      offersText={formData.offersText}
+                      onNeedsChange={(v) => updateField("needsText", v)}
+                      onOffersChange={(v) => updateField("offersText", v)}
+                      variant="light"
+                    />
+
                     <div className="flex items-center space-x-3 p-4 rounded-lg bg-[#f0ebe3]">
                       <Checkbox
                         id="newsletterOptIn"

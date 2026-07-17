@@ -84,6 +84,7 @@ const CoreApp = lazyWithRetry(() => import("./pages/core/CoreApp"));
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
 const Multiplayer = lazy(() => import("./pages/Multiplayer"));
+const Board = lazy(() => import("./pages/Board"));
 const Watch = lazy(() => import("./pages/Watch"));
 const Opportunity = lazyWithRetry(() => import("./pages/Opportunity"));
 // Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
@@ -256,6 +257,7 @@ function Router() {
       <Route path={"/watch/:videoId"}><EB><Watch /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
       <Route path={"/multiplayer"}><EB><Multiplayer /></EB></Route>
+      <Route path={"/board"}><EB><Board /></EB></Route>
 
       {/* ReGen Ship (CORE program) */}
       <Route path={"/ship"}><EB><Ship /></EB></Route>

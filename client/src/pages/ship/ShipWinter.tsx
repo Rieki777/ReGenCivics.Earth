@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageWrapper } from "@/components/PageWrapper";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Snowflake, Home, HandCoins, AlertTriangle } from "lucide-react";
@@ -27,6 +28,8 @@ export default function ShipWinter() {
   const [freezeProtectionPlan, setFreezeProtectionPlan] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
   const [proposedShare, setProposedShare] = useState("");
+  const [needsText, setNeedsText] = useState("");
+  const [offersText, setOffersText] = useState("");
 
   function resetForm() {
     setProjectName("");
@@ -37,6 +40,8 @@ export default function ShipWinter() {
     setFreezeProtectionPlan("");
     setSiteDescription("");
     setProposedShare("");
+    setNeedsText("");
+    setOffersText("");
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -63,6 +68,8 @@ export default function ShipWinter() {
         freezeProtectionPlan: freezeProtectionPlan.trim() || undefined,
         siteDescription: siteDescription.trim() || undefined,
         proposedShare: proposedShare.trim() || undefined,
+        needsText: needsText.trim() || undefined,
+        offersText: offersText.trim() || undefined,
       });
       toast.success("Application received. We'll talk through your site with you.");
       resetForm();
@@ -244,6 +251,14 @@ export default function ShipWinter() {
               placeholder="e.g. 25%"
             />
           </div>
+
+          <NeedsOffersFields
+            needsText={needsText}
+            offersText={offersText}
+            onNeedsChange={setNeedsText}
+            onOffersChange={setOffersText}
+            variant="dark"
+          />
 
           <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
             {m.isPending ? "Sending..." : "Apply to host"}

@@ -998,6 +998,8 @@ export const shipRouter = router({
         location: z.string().max(255).optional(),
         experience: z.string().max(3000).optional(),
         availability: z.string().max(2000).optional(),
+        needsText: z.string().max(2000).optional(),
+        offersText: z.string().max(2000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1009,6 +1011,17 @@ export const shipRouter = router({
         location: input.location ? sanitizeInput(input.location) : null,
         experience: input.experience ? sanitizeInput(input.experience) : null,
         availability: input.availability ? sanitizeInput(input.availability) : null,
+        needsText: input.needsText ? sanitizeInput(input.needsText) : null,
+        offersText: input.offersText ? sanitizeInput(input.offersText) : null,
+      });
+      const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+      await captureFormNeedsOffers({
+        source: "ship_keeper",
+        sourceId: null,
+        contactName: input.name,
+        contactEmail: input.email,
+        needsText: input.needsText,
+        offersText: input.offersText,
       });
       await emailApplicationReceived(input.email, "Ship Keeper");
       return { ok: true };
@@ -1022,6 +1035,16 @@ export const shipRouter = router({
         rvYearMakeModel: z.string().max(255).optional(),
         location: z.string().max(255).optional(),
         message: z.string().max(3000).optional(),
+        needsText: z.string().max(2000).optional(),
+        offersText: z.string().max(2000).optional(),
+        // The Flagkeeper's qualification story (0197). All optional so the
+        // plain typed form keeps working without the companion.
+        whyRegeneration: z.string().max(4000).optional(),
+        fleetVision: z.string().max(4000).optional(),
+        // JSON array of turns from the Flagkeeper conversation. Capped to fit
+        // the TEXT column; stored raw like applications.companionTranscript
+        // (React escapes on render, and only admins ever see it).
+        companionTranscript: z.string().max(60_000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1033,6 +1056,20 @@ export const shipRouter = router({
         rvYearMakeModel: input.rvYearMakeModel ? sanitizeInput(input.rvYearMakeModel) : null,
         location: input.location ? sanitizeInput(input.location) : null,
         message: input.message ? sanitizeInput(input.message) : null,
+        needsText: input.needsText ? sanitizeInput(input.needsText) : null,
+        offersText: input.offersText ? sanitizeInput(input.offersText) : null,
+        whyRegeneration: input.whyRegeneration ? sanitizeInput(input.whyRegeneration) : null,
+        fleetVision: input.fleetVision ? sanitizeInput(input.fleetVision) : null,
+        companionTranscript: input.companionTranscript || null,
+      });
+      const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+      await captureFormNeedsOffers({
+        source: "ship_fleet",
+        sourceId: null,
+        contactName: input.ownerName,
+        contactEmail: input.email,
+        needsText: input.needsText,
+        offersText: input.offersText,
       });
       await emailApplicationReceived(input.email, "ReGen Fleet");
       return { ok: true };
@@ -1049,6 +1086,8 @@ export const shipRouter = router({
         freezeProtectionPlan: z.string().max(3000).optional(),
         siteDescription: z.string().max(3000).optional(),
         proposedShare: z.string().max(120).optional(),
+        needsText: z.string().max(2000).optional(),
+        offersText: z.string().max(2000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1063,6 +1102,17 @@ export const shipRouter = router({
         freezeProtectionPlan: input.freezeProtectionPlan ? sanitizeInput(input.freezeProtectionPlan) : null,
         siteDescription: input.siteDescription ? sanitizeInput(input.siteDescription) : null,
         proposedShare: input.proposedShare ? sanitizeInput(input.proposedShare) : null,
+        needsText: input.needsText ? sanitizeInput(input.needsText) : null,
+        offersText: input.offersText ? sanitizeInput(input.offersText) : null,
+      });
+      const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+      await captureFormNeedsOffers({
+        source: "ship_winter_host",
+        sourceId: null,
+        contactName: input.contactName,
+        contactEmail: input.email,
+        needsText: input.needsText,
+        offersText: input.offersText,
       });
       await emailApplicationReceived(input.email, "Winter Anchorage");
       return { ok: true };

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PageWrapper } from "@/components/PageWrapper";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Sparkles, ClipboardCheck, Wrench, Coins } from "lucide-react";
@@ -29,6 +30,8 @@ export default function ShipKeeper() {
   const [location, setLocation] = useState("");
   const [experience, setExperience] = useState("");
   const [availability, setAvailability] = useState("");
+  const [needsText, setNeedsText] = useState("");
+  const [offersText, setOffersText] = useState("");
 
   function resetForm() {
     setName("");
@@ -36,6 +39,8 @@ export default function ShipKeeper() {
     setLocation("");
     setExperience("");
     setAvailability("");
+    setNeedsText("");
+    setOffersText("");
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -55,6 +60,8 @@ export default function ShipKeeper() {
         location: location.trim() || undefined,
         experience: experience.trim() || undefined,
         availability: availability.trim() || undefined,
+        needsText: needsText.trim() || undefined,
+        offersText: offersText.trim() || undefined,
       });
       toast.success("Application received. We'll be in touch.");
       resetForm();
@@ -165,6 +172,14 @@ export default function ShipKeeper() {
               rows={4}
             />
           </div>
+
+          <NeedsOffersFields
+            needsText={needsText}
+            offersText={offersText}
+            onNeedsChange={setNeedsText}
+            onOffersChange={setOffersText}
+            variant="dark"
+          />
 
           <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
             {m.isPending ? "Sending..." : "Apply to keep the ship"}

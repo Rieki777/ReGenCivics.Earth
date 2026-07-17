@@ -13,6 +13,8 @@ import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequests
 import { forumFeedRouter } from "./routes/forumFeed";
 import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRouter, siteTourRouter } from "./routes/players";
 import { questCrewsRouter } from "./routes/questCrews";
+import { mapLayersRouter } from "./routes/mapLayers";
+import { needsOffersRouter } from "./routes/needsOffers";
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
@@ -115,6 +117,8 @@ export const appRouter = router({
   quests: questsRouter,
   quest: questRouter,
   questCrews: questCrewsRouter,
+  mapLayers: mapLayersRouter,
+  needsOffers: needsOffersRouter,
   siteTour: siteTourRouter,
 
   // Admin

@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormCompanion } from "@/components/companion";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { trpc } from "@/lib/trpc";
 import { analytics } from "@/lib/analytics";
 import { companionBool } from "@shared/companions";
@@ -89,6 +90,9 @@ type FormData = {
   // 12. Integrations (provider names only, never keys)
   llmProvider: string;
   emailProvider: string;
+  // Needs and offers board (classic form only; not part of Sylva's SECTIONS)
+  needsText: string;
+  offersText: string;
 };
 
 const INITIAL_FORM_DATA: FormData = {
@@ -135,6 +139,8 @@ const INITIAL_FORM_DATA: FormData = {
   referralSource: "",
   llmProvider: "",
   emailProvider: "",
+  needsText: "",
+  offersText: "",
 };
 
 const LS_KEY = "regen_custom_game_draft";
@@ -618,6 +624,8 @@ export default function CustomGamesApply() {
         applicantRole: formData.applicantRole as "founder" | "investor" | "core-team",
         projectName: formData.projectName.trim(),
         budgetConfirmed: formData.budgetConfirmed,
+        needsText: formData.needsText.trim() || undefined,
+        offersText: formData.offersText.trim() || undefined,
         blueprintDraft: buildBlueprintDraft(formData),
         transcript: transcript.slice(-80).map((t) => ({ ...t, content: t.content.slice(0, 4000) })),
       });
@@ -916,6 +924,16 @@ export default function CustomGamesApply() {
                     </div>
                   </section>
                 ))}
+              </div>
+
+              <div className="mt-10">
+                <NeedsOffersFields
+                  needsText={formData.needsText}
+                  offersText={formData.offersText}
+                  onNeedsChange={(v) => updateField("needsText", v)}
+                  onOffersChange={(v) => updateField("offersText", v)}
+                  variant="light"
+                />
               </div>
 
               <div className="mt-10 pt-6 border-t border-[#1a472a]/10">

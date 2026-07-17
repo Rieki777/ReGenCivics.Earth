@@ -911,9 +911,13 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   const orbitAngleRef = useRef(0);
   const orbitAnimRef = useRef<number | null>(null);
 
+  // Season activity layer (Phase B1): per-bioregion aggregate glow, toggleable
+  const [showSeasonActivity, setShowSeasonActivity] = useState(true);
+
   // Fetch applicant data from the database
   const { data: applicantData } = trpc.applications.mapData.useQuery();
   const { data: activeProjectThreads } = trpc.forum.activeProjectThreads.useQuery(undefined, { staleTime: 300_000 });
+  const { data: seasonActivity } = trpc.mapLayers.seasonActivity.useQuery(undefined, { staleTime: 300_000 });
 
   // Build a lowercase-name → post-id lookup for forum thread links
   const threadByName = useMemo(() => {
@@ -1291,8 +1295,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         return el;
       });
 
-    // Remove the old points layer since we now use HTML elements for everything
-    globe.pointsData([]);
+    // The points layer belongs to the season-activity effect below; HTML
+    // elements carry the entity pins. Don't clear pointsData here.
 
     // Add pulsing rings under ALL pinned entities (land projects + organizations)
     globe
@@ -1308,6 +1312,45 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     globe.arcsData([]);
 
   }, [filteredEntities, pinnedEntities, globalEntities, globeReady]);
+
+  // Season activity layer: per-bioregion aggregate glow (quest completions this
+  // season, green) plus active multiplayer crews (amber), on the otherwise
+  // unused points layer. Aggregate-only per ADR-28: counts, never identities.
+  useEffect(() => {
+    if (!globeInstanceRef.current || !globeReady) return;
+    const globe = globeInstanceRef.current;
+
+    type SeasonPoint = {
+      lat: number; lng: number; kind: "completions" | "crews";
+      count: number; name: string;
+    };
+    const points: SeasonPoint[] = [];
+    if (showSeasonActivity && seasonActivity?.rows) {
+      for (const row of seasonActivity.rows) {
+        if (row.lat === null || row.lng === null) continue;
+        if (row.completions > 0) {
+          points.push({ lat: row.lat, lng: row.lng, kind: "completions", count: row.completions, name: row.name });
+        }
+        if (row.activeCrews > 0) {
+          // Nudge the crew marker so both stay visible at one centroid.
+          points.push({ lat: row.lat + 1.2, lng: row.lng + 1.2, kind: "crews", count: row.activeCrews, name: row.name });
+        }
+      }
+    }
+
+    globe
+      .pointsData(points)
+      .pointLat((d: any) => d.lat)
+      .pointLng((d: any) => d.lng)
+      .pointColor((d: any) => (d.kind === "crews" ? "#d4a574" : "#7dd87d"))
+      .pointAltitude((d: any) => Math.min(0.012 + Math.sqrt(d.count) * 0.01, 0.08))
+      .pointRadius((d: any) => Math.min(0.5 + Math.sqrt(d.count) * 0.3, 2.4))
+      .pointLabel((d: any) =>
+        d.kind === "crews"
+          ? `<div style="background:#0d2818;color:#f0f7f0;padding:6px 10px;border-radius:8px;font-size:12px;">${d.count} active crew${d.count === 1 ? "" : "s"} in ${d.name}</div>`
+          : `<div style="background:#0d2818;color:#f0f7f0;padding:6px 10px;border-radius:8px;font-size:12px;">${d.count} quest${d.count === 1 ? "" : "s"} completed this season in ${d.name}</div>`,
+      );
+  }, [seasonActivity, showSeasonActivity, globeReady]);
 
   // Handle resize
   useEffect(() => {
@@ -1520,6 +1563,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             title={showInactive ? 'Showing all projects' : 'Hiding inactive projects'}
           >
             {showInactive ? 'Show All' : 'Active Only'}
+          </button>
+          <button
+            onClick={() => setShowSeasonActivity(s => !s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              showSeasonActivity ? 'bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30' : 'bg-white/10 text-white/60'
+            }`}
+            title="Quest completions and active crews this season, per bioregion"
+          >
+            Season Activity
           </button>
         </div>
 

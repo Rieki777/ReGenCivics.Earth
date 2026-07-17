@@ -48,6 +48,10 @@ export const investorInquiriesRouter = router({
       // Preferences
       preferredContact: z.enum(["email", "phone", "video_call"]).optional(),
       newsletterOptIn: z.boolean().optional(),
+
+      // Optional needs/offers capture (Phase B2), mirrored to the board tables
+      needsText: z.string().max(2000).optional(),
+      offersText: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "investor_inquiry");
@@ -75,7 +79,23 @@ export const investorInquiriesRouter = router({
         additionalNotes: input.additionalNotes || null,
         preferredContact: input.preferredContact || "email",
         newsletterOptIn: input.newsletterOptIn ? 1 : 0,
+        needsText: input.needsText || null,
+        offersText: input.offersText || null,
       });
+
+      // Mirror the optional needs/offers capture to the board tables (Phase B2, non-fatal).
+      {
+        const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+        await captureFormNeedsOffers({
+          source: "investor_inquiry",
+          sourceId: inquiryId,
+          ownerId: ctx.user?.id || null,
+          contactName: input.fullName,
+          contactEmail: input.email,
+          needsText: input.needsText,
+          offersText: input.offersText,
+        });
+      }
 
       // Auto-send investor welcome email with deck + /opportunity link
       try {

@@ -110,6 +110,10 @@ export const applicationsRouter = router({
         // Conversation record from the Gardener companion on /apply. JSON array
         // of turns; capped well above the client's 60-turn ceiling.
         companionTranscript: z.string().max(400_000).optional(),
+        // Optional needs/offers capture (Phase B2): stored here through the
+        // draft flow, mirrored to the board tables on submit.
+        needsText: z.string().max(2000).optional(),
+        offersText: z.string().max(2000).optional(),
       }),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -166,6 +170,18 @@ export const applicationsRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
       await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date(), stewardUserId: ctx.user.id });
+
+      // Mirror the optional needs/offers capture to the board tables (Phase B2).
+      // Non-fatal by design: a board hiccup never blocks a submission.
+      const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+      await captureFormNeedsOffers({
+        source: "incubator_application",
+        sourceId: input.id,
+        ownerId: ctx.user.id,
+        contactName: application.projectName,
+        needsText: application.needsText,
+        offersText: application.offersText,
+      });
 
       // Notify owner of new application submission (respects notification preferences)
       // Also send confirmation email directly to the applicant

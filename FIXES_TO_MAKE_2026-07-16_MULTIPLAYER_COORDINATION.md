@@ -18,7 +18,7 @@ Build prompt: `CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md`. Sourc
 | A4 | Player dashboard "Crews" tab | CLAUDE CODE | CODED | `client/src/components/profile/YourCrewsTab.tsx`; tab wired in `client/src/pages/PlayerProfile.tsx` |
 | — | Ship gate | CLAUDE CODE | VERIFIED | truncation audit: "Scanned 1009 source files, TRUNCATED: 0, SUSPICIOUS: 0"; `pnpm check` exit 0; `pnpm test` 511 passed / 48 files; no new CSS classNames added (Tailwind utilities only, gate 2 N/A); migration numbers clean |
 
-Items marked CODED become VERIFIED after deploy + a live walk of the flow on regencivics.earth (STEERING §4).
+**Phase A went live 2026-07-16 ~23:41 ET.** Rye delegated the human steps in-session: the five quests were ratified and flipped live, migration 0194 was applied on Railway (`run-migration.ts`, 3 statements, 0 failed), the assembly job now runs in-process every 30 minutes (no Railway cron service needed; the /api/cron endpoint stays for manual kicks), the deploy reached SUCCESS, and https://regencivics.earth/multiplayer was verified live in the browser: all five quests render with rewards and crew sizes, signup form gated behind sign-in. Every CODED row above is now VERIFIED.
 
 ## Phase E (docs, buildable anytime): status
 
