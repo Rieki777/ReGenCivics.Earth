@@ -17,9 +17,9 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/index.ts",
     "railway:status": "railway status",
-    "railway:deploys": "railway deployment list",
-    "railway:logs": "railway logs",
-    "railway:deploy": "railway up",
+    "railway:deploys": "railway deployment list -s \"ReGenCivics.Earth\"",
+    "railway:logs": "railway logs -s \"ReGenCivics.Earth\"",
+    "railway:deploy": "railway up -s \"ReGenCivics.Earth\"",
     "validate:html": "node scripts/validate-html.mjs",
     "build": "node scripts/validate-html.mjs && node scripts/check-unoptimized-images.mjs && tsc --noEmit && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/prerender-blog.mjs",
     "check:images": "node scripts/check-unoptimized-images.mjs",

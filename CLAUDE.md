@@ -118,16 +118,20 @@ The runner connects via DATABASE_URL, tracks applied migrations in `_migrations_
 
 The production site is the Railway **`ReGenCivics.Earth`** service (regencivics.earth) in the **`ReGen Civics` / production** project+environment. The governance app is a separate service, `ReGen Governance App` (gov.regencivics.earth). Deploys are **triggered by pushing to `main`** on GitHub — Railway watches the branch and auto-builds using `railway.toml` (nixpacks builder, `pnpm run build`, start `node dist/index.js`). Follow `docs/GOLDEN_RULE.md`: run `/ship` before pushing.
 
-The Railway CLI is installed and logged in, and this repo is linked to the `ReGenCivics.Earth` service, so deploy status can be checked directly (commands default to the linked service):
+The Railway CLI is installed and logged in. The `pnpm railway:*` scripts each pin `-s "ReGenCivics.Earth"` explicitly, so they always report the production site:
 
 ```bash
-pnpm railway:deploys   # railway deployment list — each deploy's status (SUCCESS / FAILED / BUILDING / CRASHED)
-pnpm railway:logs      # railway logs — live build + deploy logs for the linked service
-pnpm railway:status    # linked project / environment / service + all resources
-pnpm railway:deploy    # railway up — manual deploy of the working tree (bypasses the GitHub trigger)
+pnpm railway:deploys   # each deploy's status (SUCCESS / FAILED / BUILDING / CRASHED)
+pnpm railway:logs      # live build + deploy logs
+pnpm railway:status    # project / environment / service + all resources
+pnpm railway:deploy    # railway up: manual deploy of the working tree (bypasses the GitHub trigger)
 ```
 
-To check the governance app instead, append `-s "ReGen Governance App"` to any command (e.g. `railway logs -s "ReGen Governance App"`), or re-link with `railway link -s "ReGen Governance App"`.
+**Keep the `-s` pins.** Until 2026-07-16 this repo's CLI was linked to `multiplayer-earth`, which is NOT the site, so a bare `railway deployment list` reported that service's deploys, newest 2026-07-04. It answered, it just answered about the wrong thing, and a months-stale SUCCESS reads exactly like a fresh green deploy. The link now points at `ReGenCivics.Earth`, and the scripts pin `-s` on top so a future re-link cannot quietly break the deploy check again.
+
+`railway status` is the exception: it takes no `-s` and always reports the linked service. That makes it the thing to run if deploy output ever looks wrong. If it prints anything other than `Service: ReGenCivics.Earth`, re-link with `railway service "ReGenCivics.Earth"`.
+
+To check the governance app instead, use `-s "ReGen Governance App"` (e.g. `railway logs -s "ReGen Governance App"`).
 
 ### Standard deploy flow — Claude owns this end to end
 

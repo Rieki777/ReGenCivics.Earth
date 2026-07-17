@@ -37,7 +37,7 @@ New script `scripts/seed-ship-ioverlander.ts`, same shape as `seed-ship-commerci
 - Unit tests green (`npx cross-env NODE_ENV=test vitest run server/ship-map.test.ts`); note the machine's global `NODE_ENV=production` breaks vitest without cross-env.
 - Signed-out `map.list` response contains zero `ioverlander` rows (integration-style guard test alongside the existing router guards).
 - Live map: signed in shows the new pins; a private window does not.
-- Standard flow after that: ship gate, commit `feat(ship-map): ...`, push to main, poll `railway deployment list -s "ReGenCivics.Earth"` to SUCCESS (the repo's linked service is `multiplayer-earth`, wrong one). SHIPPED_LOG entry.
+- Standard flow after that: ship gate, commit `feat(ship-map): ...`, push to main, poll `pnpm railway:deploys` to SUCCESS. SHIPPED_LOG entry. (The `-s "ReGenCivics.Earth"` workaround this line used to spell out is now baked into the `railway:*` scripts in package.json.)
 
 ## 4. Also waiting in this area (do not block on them)
 
