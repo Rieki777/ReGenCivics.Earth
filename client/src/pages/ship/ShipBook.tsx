@@ -360,7 +360,7 @@ export default function ShipBook() {
                   {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}. Suggested total ask ${total.toLocaleString()} across the rental and the offering.
                 </p>
                 {selected.length > 1 && (
-                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks on each Sunday-to-Monday turnover.</p>
+                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks each Sunday, your way: dump and refill on route, or swing through Ashland and the Keeper does it.</p>
                 )}
               </div>
             )}

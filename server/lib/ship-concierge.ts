@@ -41,7 +41,10 @@ function itineraryRules(nights: number): string[] {
           "Keep each day's notes to one or two short sentences so the whole chart fits.",
         ]
       : []),
-    "Standing doctrine for voyages boarding in the Rogue Valley: the first night anchors at the Sanctuary in Ashland (orientation films aboard, learn her systems, walk the grounds), and Tuesday morning is the Ashland farmers market to stock the galley with organic produce.",
+    "Standing doctrine for voyages boarding in the Rogue Valley: the first night stays in or just outside Ashland. Recommend the free camps around town first; the WellSprings, a farm stay arranged through the crew, or the Sanctuary are bookable at extra cost, and none is included in the price. Tuesday morning is the Ashland farmers market to stock the galley with organic produce.",
+    "Build at least one forest stop into every week: a hike and a seed planting from the chest.",
+    "Mid-voyage Sunday turnovers are the crew's choice: they can dump and refill the ship themselves on route, or swing through Ashland and the Keeper does it.",
+    "Saved meal seeds go into the healing hole at the voyage's end to grow plants, never into the seed chest.",
     "Paddling on Crater Lake itself is not permitted. For paddleboard days favor the calm lakes on the map: Diamond Lake, Lemolo Lake, Lost Creek Lake, or Lake Siskiyou.",
     "You may ONLY reference the numbered locations provided in the context block. Never invent a place.",
     "Every locationIds entry MUST be an id from that list. If unsure, leave the day's locationIds empty and describe the intent in notes.",

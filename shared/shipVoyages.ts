@@ -10,12 +10,18 @@
  * (ship.concierge) then customizes it conversationally, a brief pass before
  * booking and the full pass after.
  *
- * Standing doctrine baked into every route: the first night anchors at the
- * Sanctuary in Ashland (board Monday 3pm, orientation films, learn her
- * systems, walk the grounds), and Tuesday morning is the Ashland farmers
- * market to fill the galley. Paddling on Crater Lake itself is not permitted,
- * so paddle days point at the calm lakes nearby: Diamond Lake, Lemolo Lake,
- * Lost Creek Lake, and Lake Siskiyou.
+ * Standing doctrine baked into every route: the first night stays in or just
+ * outside Ashland (board Monday 3pm, orientation films, learn her systems).
+ * Free camps are the default recommendation; the WellSprings, a farm stay
+ * arranged through the crew, or the Sanctuary are bookable, each at its own
+ * cost, and none is built into the price. Tuesday morning is the Ashland
+ * farmers market to fill the galley. Every week carries at least one forest
+ * stop with a hike and a seed planting. Mid-voyage Sunday turnovers are the
+ * crew's choice: dump and refill on route, or swing through Ashland for the
+ * Keeper. Paddling on Crater Lake itself is not permitted, so paddle days
+ * point at the calm lakes nearby: Diamond Lake, Lemolo Lake, Lost Creek Lake,
+ * and Lake Siskiyou. Saved meal seeds go into the healing hole at the
+ * voyage's end, never into the chest.
  *
  * Copy in this file is user-facing. Writing rules apply (STEERING section 1):
  * no em-dashes, no contrast framing, no AI word patterns.
@@ -50,13 +56,16 @@ export type SuggestedVoyage = {
 // ── Route weeks (each exactly 7 days, Monday board to Sunday) ─────────────────
 // Day 7 of any non-final week is replaced by the turnover day at chart time.
 
+/** The shared first night: board in Ashland, free camps recommended. */
+const DAY_ONE_ASHLAND: RouteDay = {
+  title: "Board and settle in Ashland",
+  notes:
+    "Board at 3pm and take the first night easy in or just outside Ashland. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Watch the orientation films, learn her systems, and begin rested.",
+};
+
 /** The Three Chakras: heart on Mount Ashland, root at Mount Shasta, crown at Crater Lake. */
 const WEEK_THREE_CHAKRAS: RouteDay[] = [
-  {
-    title: "The Sanctuary, first anchorage",
-    notes:
-      "Board at 3pm and stay the night at the Sanctuary in Ashland. Watch the orientation films, learn her systems, walk the grounds, and take in that view. The voyage begins rested.",
-  },
+  DAY_ONE_ASHLAND,
   {
     title: "Market morning, then the heart",
     notes:
@@ -70,7 +79,7 @@ const WEEK_THREE_CHAKRAS: RouteDay[] = [
   {
     title: "Root waters, then north",
     notes:
-      "A slow Shasta morning, with an optional paddleboard on Lake Siskiyou under the mountain. Then sail north into the Rogue headwaters forest: Natural Bridge, the Rogue Gorge, and a night under old trees.",
+      "A slow Shasta morning, with an optional paddleboard on Lake Siskiyou under the mountain. Then sail north into the Rogue headwaters forest: Natural Bridge, the Rogue Gorge, a hike under old trees, and a seed planting from the chest where the forest asks.",
   },
   {
     title: "The crown",
@@ -84,16 +93,17 @@ const WEEK_THREE_CHAKRAS: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy and have her back by Sunday 11am. The crown water travels with you.",
+    notes:
+      "Sail home easy and have her back by Sunday 11am. The crown water travels with you, and your saved meal seeds go into the healing hole to grow on.",
   },
 ];
 
 /** The Springs for Two: baths, hot springs, falls, and a quiet lake for a couple. */
 const WEEK_SPRINGS_FOR_TWO: RouteDay[] = [
   {
-    title: "The Sanctuary, first anchorage",
+    title: "Board and settle in Ashland",
     notes:
-      "Board at 3pm and stay the night at the Sanctuary in Ashland. Orientation films, her systems, the grounds, the view, and a slow first evening for the two of you.",
+      "Board at 3pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
   },
   {
     title: "Market morning, then the baths",
@@ -126,38 +136,77 @@ const WEEK_SPRINGS_FOR_TWO: RouteDay[] = [
   },
 ];
 
-/** The deepening week: the second honeymoon week, deeper into the waters. */
-const WEEK_DEEPENING: RouteDay[] = [
+/** Honeymoon week one: the opening, a whole week in and around Shasta. */
+const WEEK_HONEYMOON_ROOT: RouteDay[] = [
   {
-    title: "A fresh week, deeper in",
+    title: "Board and settle in Ashland",
     notes:
-      "She is topped up off the Sunday turnover. Ease out slow and point her toward the waters that asked for more of you.",
+      "Board at 3pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
   },
   {
-    title: "Market, then the North Umpqua",
+    title: "Market morning, then the heart",
     notes:
-      "Restock at the Tuesday market, then sail for the North Umpqua: waterfalls, old growth, and the hot springs above the river.",
+      "Fill the galley at the Ashland Tuesday farmers market. Then the heart center: hike the Mount Ashland meadows and close the day with a sauna and a soak at the thermal baths.",
   },
   {
-    title: "The waters for two",
-    notes: "Soak, walk, and stay warm. Toketee and Watson Falls are short walks apart.",
+    title: "South to the root",
+    notes:
+      "Sail south to Mount Shasta, the root. Sit in ceremony with the mountain, drink from the headwaters spring, and fill your bottles with its water for the voyage.",
+  },
+  {
+    title: "In and around Shasta",
+    notes:
+      "A paddleboard morning on Lake Siskiyou, a forest hike in the afternoon, and a seed planting from the chest where the trees ask. The mountain holds you both.",
+  },
+  {
+    title: "Root rest",
+    notes: "A no-plans Shasta day. Springs, meadows, slow food, and the mountain doing its quiet work.",
+  },
+  {
+    title: "North again, through the forest",
+    notes:
+      "Sail back toward Ashland with a forest stop on the way: a hike, a seed planting, a last look south at the mountain.",
+  },
+  {
+    title: "Return",
+    notes: "Sail home easy, back by Sunday 11am.",
+  },
+];
+
+/** Honeymoon week two: the deepening, the crown and its waters. */
+const WEEK_HONEYMOON_CROWN: RouteDay[] = [
+  {
+    title: "A fresh week, toward the crown",
+    notes:
+      "Topped up and pointed north. Sail into the Rogue headwaters forest: Natural Bridge, the gorge, and a night under old trees.",
+  },
+  {
+    title: "Market, then the crown country",
+    notes:
+      "Restock at the Tuesday market, then climb to Crater Lake. Sit at the rim together and gather Lightning Spring water: some to drink, some for home. Filter to your comfort.",
+  },
+  {
+    title: "Falls and hot springs",
+    notes:
+      "Toketee and Watson Falls on foot, then a long soak in the hot springs above the North Umpqua. Dinner by the fire.",
   },
   {
     title: "Paddle day",
-    notes: "Diamond Lake, Lemolo Lake, or Lost Creek Lake on the Rogue. Calm water, two boards, no hurry.",
+    notes: "Diamond Lake or Lemolo Lake under the crown. Calm water, two boards, no hurry.",
   },
   {
-    title: "Rest and slow food",
-    notes: "A no-plans day. Cook something slow from the market haul and let the voyage settle into you.",
+    title: "The forest's day",
+    notes: "Old growth on foot: a long hike, a seed planting, hammocks after.",
   },
   {
     title: "Give back, close the circle",
     notes:
-      "Give a morning to a land project or plant seeds from the chest together. In the evening return to the place you loved most and close with both waters.",
+      "Give a morning to a land project. In the evening return to the place you loved most and close with both waters.",
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am. Married to the land now too.",
+    notes:
+      "Sail home easy, back by Sunday 11am. Your saved meal seeds go into the healing hole, growing plants that hold your love. Married to the land now too.",
   },
 ];
 
@@ -181,7 +230,8 @@ const WEEK_WATERS: RouteDay[] = [
   },
   {
     title: "The Rogue",
-    notes: "Follow the Rogue down through the gorge and Natural Bridge, with an optional paddle on Lost Creek Lake.",
+    notes:
+      "Follow the Rogue down through the gorge and Natural Bridge, with an optional paddle on Lost Creek Lake. Stop in the forest for a hike and a seed planting.",
   },
   {
     title: "Rest by water",
@@ -244,13 +294,13 @@ const WEEK_WANING: RouteDay[] = [
     notes: "Same for the land: the meadow, the grove, the rim. Say thank you out loud.",
   },
   {
-    title: "The Sanctuary again",
-    notes: "Anchor near the Sanctuary. Walk the grounds where the voyage began and feel the difference a moon makes.",
+    title: "Ashland again",
+    notes: "Anchor in or near Ashland where the voyage began. Walk the town slow and feel the difference a moon makes.",
   },
   {
     title: "Close the circle",
     notes:
-      "A closing ceremony with the waters you carried: the root water from Shasta and the crown water from Lightning Spring. Keep some for home.",
+      "A closing ceremony with the waters you carried: the root water from Shasta and the crown water from Lightning Spring. Keep some for home, and plant your saved meal seeds in the healing hole so what fed you grows on.",
   },
   {
     title: "Return",
@@ -293,10 +343,11 @@ export const SUGGESTED_VOYAGES: SuggestedVoyage[] = [
     weeks: 2,
     tagline: "Fourteen days for the two of you.",
     description:
-      "Two voyage weeks for two. Week one opens the three chakras; week two deepens into the waters: hot springs, waterfalls, paddle days, and a closing ceremony. She resets her tanks at the Sunday turnover and you keep sailing.",
+      "Two voyage weeks for two. Week one opens the heart in Ashland and roots deep in and around Shasta; week two crowns at Crater Lake and its waters: hot springs, waterfalls, paddle days, and a closing ceremony. The Sunday turnover is your choice: do it yourselves on route, or swing through Ashland and the Keeper does it.",
     routeName: "The Opening and the Deepening",
-    routeWeeks: [WEEK_THREE_CHAKRAS, WEEK_DEEPENING],
-    summaryLine: "The three chakras first, then two weeks deep in the waters together.",
+    routeWeeks: [WEEK_HONEYMOON_ROOT, WEEK_HONEYMOON_CROWN],
+    summaryLine:
+      "A week in and around Shasta first, back through Ashland for the optional turnover, then the crown and its waters.",
     crewHint: "a couple on their honeymoon",
     paceHint: "restful and romantic, unhurried",
   },
@@ -344,8 +395,9 @@ function addDays(ymd: string, days: number): string {
 }
 
 const TURNOVER_DAY: RouteDay = {
-  title: "Turnover rest",
-  notes: "Sunday she resets. The Keeper tops up propane and water while you rest, and a fresh week opens Monday morning.",
+  title: "Turnover, your way",
+  notes:
+    "Sunday she resets for the next week, and how is your choice: dump and refill her yourselves on route, or swing through Ashland and the Keeper tops up propane and water while you rest. A fresh week opens Monday morning.",
 };
 
 /**
@@ -385,7 +437,7 @@ export function firstMateSeedAnswers(
 ): Record<string, string> {
   return {
     voyage: voyage.name,
-    route: `${voyage.routeName}. First night anchors at the Sanctuary in Ashland for orientation; Tuesday morning is the Ashland farmers market.`,
+    route: `${voyage.routeName}. First night stays in or near Ashland: free camps encouraged, with the WellSprings, a farm stay, or the Sanctuary bookable at extra cost. Tuesday morning is the Ashland farmers market. Every week wants a forest hike and a seed planting. Mid-voyage turnovers are optional: self-serve on route or the Keeper in Ashland.`,
     voyage_nights: String(voyage.weeks * 7),
     dates: `${opts.startDate} to ${opts.endDate}, ${voyage.weeks * 7} nights through ${opts.bioregions.join(" and ")}`,
     group: voyage.crewHint,

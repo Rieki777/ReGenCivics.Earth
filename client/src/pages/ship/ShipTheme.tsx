@@ -74,7 +74,7 @@ const RITES = [
     icon: Utensils,
     title: "The Rite of the Table",
     subtitle: "Cook the land for each other",
-    body: "Harvest, glean, or buy from the closest grower you can find. Cook one meal on her cast iron, no phones at the table. Eat honey. Save the seeds from everything you eat, because they go in the chest.",
+    body: "Harvest, glean, or buy from the closest grower you can find. Cook one meal on her cast iron, no phones at the table. Eat honey. Save the seeds from everything you eat: at the voyage's end they go into the healing hole, growing plants that hold your love.",
   },
   {
     day: "Thursday",

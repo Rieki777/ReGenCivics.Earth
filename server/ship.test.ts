@@ -101,12 +101,26 @@ describe("suggested voyages + the rough chart", () => {
     expect(suggestedVoyageById("nope")).toBeNull();
   });
 
-  it("every route opens at the Sanctuary and hits the Tuesday market", () => {
+  it("every route opens in Ashland with free stays first and the Tuesday market", () => {
     for (const v of SUGGESTED_VOYAGES) {
       const chart = buildRoughChart(v, weeksOf(v.weeks));
-      expect(chart.days[0].title).toContain("Sanctuary");
+      expect(chart.days[0].title).toContain("Ashland");
+      expect(chart.days[0].notes).toContain("Free camps");
+      // The paid stays are options, never built in.
+      expect(chart.days[0].notes).toContain("each at its own cost");
       expect(chart.days[0].notes.toLowerCase()).toContain("orientation");
       expect(chart.days[1].notes.toLowerCase()).toContain("market");
+    }
+  });
+
+  it("every week of every route carries a forest stop: a hike and a planting", () => {
+    for (const v of SUGGESTED_VOYAGES) {
+      const chart = buildRoughChart(v, weeksOf(v.weeks));
+      for (let w = 0; w < v.weeks; w++) {
+        const week = chart.days.slice(w * 7, w * 7 + 7).map((d) => `${d.title} ${d.notes}`.toLowerCase()).join(" ");
+        expect(week, `${v.id} week ${w + 1} needs a hike or walk`).toMatch(/hike|walk/);
+        expect(week, `${v.id} week ${w + 1} needs a seed planting`).toMatch(/plant/);
+      }
     }
   });
 
@@ -120,18 +134,19 @@ describe("suggested voyages + the rough chart", () => {
     expect(chart.days[4].notes).toContain("Lightning Spring");
     expect(chart.days[5].notes).toContain("paddleboard");
     expect(chart.days[6].title).toBe("Return");
-    expect(chart.days.some((d) => d.title === "Turnover rest")).toBe(false);
+    expect(chart.days.some((d) => d.title === "Turnover, your way")).toBe(false);
     expect(chart.summary).toContain("The Three Chakras");
   });
 
-  it("charts multi-week routes with turnovers between weeks and one return", () => {
+  it("charts multi-week routes with optional turnovers between weeks and one return", () => {
     const lunar = suggestedVoyageById("lunar_cycle")!;
     const chart = buildRoughChart(lunar, weeksOf(4));
     expect(chart.days).toHaveLength(28);
     expect(chart.days[0].date).toBe("2026-07-27");
-    expect(chart.days[6].title).toBe("Turnover rest");
-    expect(chart.days[13].title).toBe("Turnover rest");
-    expect(chart.days[20].title).toBe("Turnover rest");
+    expect(chart.days[6].title).toBe("Turnover, your way");
+    expect(chart.days[6].notes).toContain("yourselves");
+    expect(chart.days[13].title).toBe("Turnover, your way");
+    expect(chart.days[20].title).toBe("Turnover, your way");
     expect(chart.days[7].title).toContain("Waxing moon");
     expect(chart.days[14].title).toContain("Full moon");
     expect(chart.days[21].title).toContain("Waning moon");
@@ -139,13 +154,22 @@ describe("suggested voyages + the rough chart", () => {
     expect(chart.days[27].notes).toContain("Sunday 11am");
     expect(chart.summary).toContain("Rogue & Southern Cascadia");
     expect(chart.summary).toContain("Willamette");
+  });
 
+  it("charts the honeymoon: week one around Shasta, week two at the crown", () => {
     const honeymoon = suggestedVoyageById("honeymoon")!;
     const hm = buildRoughChart(honeymoon, weeksOf(2));
     expect(hm.days).toHaveLength(14);
-    expect(hm.days[6].title).toBe("Turnover rest");
-    expect(hm.days[8].notes).toContain("North Umpqua");
+    // Week one roots in and around Shasta, then sails back toward Ashland.
+    expect(hm.days[2].notes).toContain("Mount Shasta");
+    expect(hm.days[3].title).toContain("Shasta");
+    expect(hm.days[5].notes).toContain("Ashland");
+    expect(hm.days[6].title).toBe("Turnover, your way");
+    // Week two climbs to the crown and its waters.
+    expect(hm.days[8].notes).toContain("Crater Lake");
+    expect(hm.days[9].notes).toContain("hot springs");
     expect(hm.days[13].title).toBe("Return");
+    expect(hm.days[13].notes).toContain("healing hole");
   });
 
   it("charts the Springs for Two through the baths and hot springs", () => {
@@ -166,8 +190,9 @@ describe("suggested voyages + the rough chart", () => {
     expect(seeds.voyage_nights).toBe("14");
     expect(voyageNightsFromAnswers(seeds)).toBe(14);
     expect(seeds.group).toContain("couple");
-    expect(seeds.route).toContain("Sanctuary");
+    expect(seeds.route).toContain("free camps");
     expect(seeds.route).toContain("farmers market");
+    expect(seeds.route).toContain("turnovers are optional");
   });
 
   it("obeys the writing rules: no em-dashes in any guest-facing copy", () => {
