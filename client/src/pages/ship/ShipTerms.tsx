@@ -3,13 +3,14 @@
  * Source of truth for the copy: ReGen_Ship_Voyage_Covenant_and_Rental_Terms.md.
  * Bump SHIP_TERMS_VERSION in shared/shipTerms.ts when the wording changes.
  *
- * The legal entity and the deposit are answered and live in shared/shipTerms.ts
- * (SHIP_LEGAL_ENTITY, SHIP_DEPOSIT_USD) so the page and the booking flow quote
- * the same number. The still-open brackets ([DATE], [YEAR / MAKE / MODEL],
- * [$LATE_FEE], [NUMBER], [core@regencivics.earth], pet policy, mediation) mirror
- * the v1.0 master doc and are Rye's to fill in there; keep the two in sync.
+ * Every value a guest is quoted lives in shared/shipTerms.ts (entity, vehicle,
+ * deposit, late fees, radius, core-team number) so this page, the booking flow,
+ * and the map can never drift from the agreement someone actually accepted.
+ * All of Rye's v1.0 blanks are now answered; no brackets remain.
+ *
  * §6 (radius), §7 (clean vessel), and §12 (uncovered loss) are the three terms
- * unique to the Ship and are called out on the page.
+ * unique to the Ship and are called out on the page. §1.1 discloses her known
+ * quirks up front — an honest as-is disclosure is worth more than a clean page.
  */
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
@@ -17,8 +18,15 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import {
   SHIP_TERMS_VERSION,
+  SHIP_TERMS_EFFECTIVE,
   SHIP_LEGAL_ENTITY,
+  SHIP_VEHICLE,
   SHIP_DEPOSIT_USD,
+  SHIP_CORE_TEAM_PHONE,
+  SHIP_CORE_TEAM_TEL,
+  SHIP_LATE_FEE_PER_HOUR_USD,
+  SHIP_LATE_FEE_HOURLY_WINDOW_HOURS,
+  SHIP_LATE_FEE_PER_DAY_USD,
   RADIUS_BASE_MILES,
   RADIUS_PER_EXTRA_WEEK_MILES,
   RADIUS_MAX_WEEKS,
@@ -44,7 +52,7 @@ export default function ShipTerms() {
         <ShipEyebrow>Voyage covenant</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-2">Voyage Covenant and Rental Terms</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Version {SHIP_TERMS_VERSION}. Effective [DATE]. These terms apply to every voyage aboard the ReGen Ship.
+          Version {SHIP_TERMS_VERSION}. Effective {SHIP_TERMS_EFFECTIVE}. These terms apply to every voyage aboard the ReGen Ship.
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-2xl">
@@ -57,13 +65,27 @@ export default function ShipTerms() {
             Renter," "the Crew").
           </p>
           <p>
-            The vehicle is a <strong>[YEAR / MAKE / MODEL] recreational vehicle</strong> with{" "}
-            <strong>[solar and battery power systems, water systems, and propane]</strong>, known as the ReGen Ship
+            The vehicle is a <strong>{SHIP_VEHICLE} recreational vehicle</strong> with{" "}
+            <strong>solar and battery power systems, water systems, and propane</strong>, known as the ReGen Ship
             ("the Ship," "the Vessel"). Her home anchorage is <strong>Ashland, Oregon</strong>.
           </p>
           <p>
             By checking the acceptance box at booking and by taking possession of the Ship, you agree to everything in
             this Agreement.
+          </p>
+          <p id="quirks">
+            <strong>1.1 Her age and her quirks.</strong> She is a 2006, and she carries her years honestly. You are
+            renting her <strong>as she is</strong>, with the quirks any twenty-year-old vehicle has. Some are known
+            today, and we would rather you hear them from us than find them at dusk: the{" "}
+            <strong>leveling jacks are not fully working, and one has to be lowered by hand</strong>. You do not need the
+            jacks to drive her, sleep in her, or love the voyage; they are a comfort, not a requirement. Nothing we know
+            of stands between you and an epic trip.
+          </p>
+          <p>
+            This is part of why the trial year sails at a discount. What the trial year earns goes back into her, into
+            the upgrades and repairs that make the later years a more polished experience at a higher price. If a fault
+            appears while she is in your care, Section 8 (report it) and Section 13 (breakdowns and recovery) govern what
+            happens next; a known quirk we disclosed is not a fault you are responsible for.
           </p>
 
           <h2>2. How this fits with the Outdoorsy rental</h2>
@@ -111,8 +133,10 @@ export default function ShipTerms() {
             <li>Voyages run in whole seven-night cycles and may be chained up to <strong>four weeks</strong>.</li>
             <li>The Ship is reset by the Keeper between voyages. Propane, water, and systems are topped up on each turnover.</li>
             <li>
-              Late return without written approval is billed at <strong>[$LATE_FEE per hour / per day]</strong> and may
-              make you responsible for costs owed to the next Crew whose voyage you delay.
+              Late return without written approval is billed at{" "}
+              <strong>${SHIP_LATE_FEE_PER_HOUR_USD} per hour for the first {SHIP_LATE_FEE_HOURLY_WINDOW_HOURS} hours,
+              and ${SHIP_LATE_FEE_PER_DAY_USD.toLocaleString()} per day after that</strong>, and may make you
+              responsible for costs owed to the next Crew whose voyage you delay.
             </li>
           </ul>
 
@@ -169,10 +193,12 @@ export default function ShipTerms() {
             larger deposit, or a mileage limit.
           </p>
           <p>
-            <strong>6.4 How to request it.</strong> Email <strong>[core@regencivics.earth]</strong> or use the request
-            link on the <Link href="/ship/map">voyage map</Link> at least <strong>[72 hours]</strong> before you need to
-            cross the line. Tell us where you want to go, why, and for how long. Permission is only valid when we confirm
-            it in writing.
+            <strong>6.4 How to request it.</strong> Text or call the core team at{" "}
+            <a href={`tel:${SHIP_CORE_TEAM_TEL}`}>{SHIP_CORE_TEAM_PHONE}</a> at least <strong>72 hours</strong> before
+            you need to cross the line. You can see the zones on the{" "}
+            <Link href="/ship/map">voyage map</Link>. Tell us where you want to go, why, and for how long. Permission is
+            only valid when we confirm it <strong>in writing</strong>, so a text is the reliable channel: if you ask by
+            phone, get our yes in writing before you cross.
           </p>
           <p>
             <strong>6.5 Why this matters.</strong> Taking the Ship outside the permitted radius, or to a destination we
@@ -241,7 +267,12 @@ export default function ShipTerms() {
             <li>take the Ship onto roads, terrain, or water crossings she is not built for, or off maintained roads beyond her clearance and drivetrain;</li>
             <li>exceed her rated occupancy, weight, or towing limits;</li>
             <li>use the Ship to commit any illegal act, carry illegal substances, or transport hazardous materials;</li>
-            <li>keep pets aboard except as approved in writing [pet policy: [ALLOWED / NOT ALLOWED / on approval]];</li>
+            <li>
+              keep pets aboard. Pets are <strong>not allowed</strong> as a rule. We can make an exception, but only with
+              our <strong>written permission in advance</strong> and a <strong>pet fee</strong> we set for your voyage.
+              Bringing an animal aboard without that written permission is a breach, and any resulting cleaning, odor
+              remediation, or damage is billed to you under Section 11;
+            </li>
             <li>attach, drill, paint, wrap, or permanently alter the Ship or her fittings; or</li>
             <li>remove, disable, or tamper with the GPS tracker, safety equipment, or any monitoring system (see Section 15).</li>
           </ul>
@@ -338,8 +369,10 @@ export default function ShipTerms() {
           <h2>13. Breakdowns, roadside, and recovery</h2>
           <ul>
             <li>
-              If the Ship breaks down or is in an accident, first make sure everyone is safe, then contact{" "}
-              <strong>[roadside / Platform assistance: [NUMBER]]</strong> and the core team.
+              If the Ship breaks down or is in an accident, first make sure everyone is safe. Then call{" "}
+              <strong>Outdoorsy's roadside assistance through the Platform</strong> — the Church does not run a separate
+              roadside line, and roadside comes with the Platform's protection plan. Tell the core team as well, at{" "}
+              <a href={`tel:${SHIP_CORE_TEAM_TEL}`}>{SHIP_CORE_TEAM_PHONE}</a>.
             </li>
             <li>
               Do not attempt major repairs or authorize a shop yourself without our approval, except where it is needed
@@ -391,8 +424,9 @@ export default function ShipTerms() {
           <p>
             This Agreement is governed by the laws of the <strong>State of Oregon</strong>. The parties agree that any
             dispute will be brought in the state or federal courts located in <strong>Jackson County, Oregon</strong>,
-            and the parties consent to that venue. [Optional: the parties will first attempt to resolve any dispute
-            through good-faith mediation in Jackson County before filing suit.]
+            and the parties consent to that venue. The parties will{" "}
+            <strong>first attempt to resolve any dispute through good-faith mediation in Jackson County before filing
+            suit</strong>.
           </p>
 
           <h2>19. General terms</h2>

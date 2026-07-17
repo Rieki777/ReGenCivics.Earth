@@ -17,6 +17,24 @@ export const SHIP_TERMS_VERSION = "1.0";
 /** The legal entity behind the Ship (Terms §1). */
 export const SHIP_LEGAL_ENTITY = "Church of the Regenerative Earth";
 
+/** The Vessel herself (Terms §1). */
+export const SHIP_VEHICLE = "2006 Fleetwood Revolution";
+
+/** The date v1.0 takes effect. */
+export const SHIP_TERMS_EFFECTIVE = "July 16, 2026";
+
+/** The core team's line for radius permission requests (§6.4) and breakdowns
+ *  (§13). Permission still only counts once confirmed in writing, so a text is
+ *  the reliable channel. `TEL` is the href form. */
+export const SHIP_CORE_TEAM_PHONE = "(707) 267-7660";
+export const SHIP_CORE_TEAM_TEL = "+17072677660";
+
+/** Late return (§4): $50/hour for the first 12 hours, then $600/day. The hourly
+ *  window tops out exactly at the daily rate (12 x 50 = 600), so the two meet. */
+export const SHIP_LATE_FEE_PER_HOUR_USD = 50;
+export const SHIP_LATE_FEE_HOURLY_WINDOW_HOURS = 12;
+export const SHIP_LATE_FEE_PER_DAY_USD = 600;
+
 /** The refundable security deposit held on the Platform, in USD (Terms §11).
  *  The terms page and the booking flow both read this, so the number a guest is
  *  quoted at checkout always matches the number in the agreement they accept. */

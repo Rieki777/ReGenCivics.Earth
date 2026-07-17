@@ -16,7 +16,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { MapPin, Compass, LayoutGrid, List as ListIcon, Moon, Heart, Sailboat, type LucideIcon } from "lucide-react";
-import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag, useShipFlags } from "./shipShared";
+import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag, useShipFlags, ANCHOR_VOYAGE, TRIAL_VOYAGE } from "./shipShared";
 import { FormCompanion } from "@/components/companion";
 import { companionBool } from "@shared/companions";
 import {
@@ -496,6 +496,16 @@ export default function ShipBook() {
                 <li>The insured rental is arranged on the platform through a custom offer for your dates. That charge activates the coverage the ship sails under. A <strong>refundable ${SHIP_DEPOSIT_USD.toLocaleString()} security deposit</strong> is held on the platform for your voyage and returned after her homecoming inspection, less anything you owe under the <Link href="/ship/terms#uncovered-loss" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Voyage Covenant</Link>.</li>
                 <li>After the platform booking, a suggested voyage offering to the church covers the seed chest, the treasure map, the First Mate, the fleet building, and the real costs of keeping her sailing: maintenance, cleaning, and everything it takes to run this program. We strongly encourage giving at least the suggested offering so the program can keep running. Every gift is received with deep appreciation and used with utmost care, as with all funds, to serve the Regenerative Renaissance and CORE's spiritual mission. It is a gift, always voluntary, and your booking never depends on it.</li>
               </ol>
+            </div>
+            <div className="rounded-2xl border bg-card p-6">
+              <h3 className="font-semibold text-lg mb-2">Why the trial year is a discount</h3>
+              <p className="text-sm text-foreground/80">
+                She is a <strong>2006 Fleetwood Revolution</strong>, and she carries her years honestly. You are sailing her as she is, with the quirks any twenty-year-old vehicle has. We would rather you hear them from us than find them at dusk: right now the <strong>leveling jacks are not fully working, and one has to be lowered by hand</strong>. You do not need them to drive her, sleep in her, or love the voyage. Nothing we know of stands between you and an epic trip.
+              </p>
+              <p className="text-sm text-foreground/80 mt-2">
+                That is part of why this year sails at ${TRIAL_VOYAGE.toLocaleString()} instead of ${ANCHOR_VOYAGE.toLocaleString()}. What this year earns goes back into her, into the upgrades and repairs that make the later years a more polished sail at a higher price. Want the comforts more than the discount? Book a year-two week. Want the voyage and the story? This is your year.{" "}
+                <Link href="/ship/terms#quirks" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read her quirks in the covenant</Link>.
+              </p>
             </div>
             <div className="rounded-2xl border bg-card p-6">
               <h3 className="font-semibold text-lg mb-2">Reading the calendar</h3>
