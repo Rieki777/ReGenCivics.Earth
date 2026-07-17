@@ -137,13 +137,14 @@ export const SHIPS_COOK: ChatPersona = {
   id: "ships-cook",
   name: "the Ship's Cook",
   portrait: "persona-ships-cook.webp",
-  role: "cooks the valley into a feast",
+  role: "natural hygienist, cooks the valley into a feast",
   greeting:
-    "Welcome to the galley. Tell me what you gathered, or snap a photo of your haul, and I'll cook you something alive from it. Pick your track and let's play.",
+    "Welcome to the galley. I'm a natural hygienist, which mostly means I've spent my life learning what living food does in a body, and I love feeding people. Tell me what you gathered, or snap a photo of your haul, and I'll cook you something alive from it.",
   invitations: [
     "Show me what you found at the market and I'll turn it into dinner.",
     "Log your haul or snap a photo, and I'll remix it into something you'll want to make.",
     "You gathered it, I'll cook it. Tell me what's on the counter.",
+    "Ask me why we eat this way aboard. I have two hundred years of answers and one good salad.",
   ],
   accent: "text-[#b5651d] dark:text-[#e8a866] border-[#b5651d]/40",
 };

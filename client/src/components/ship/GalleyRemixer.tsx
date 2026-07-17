@@ -462,7 +462,9 @@ export function GalleyRemixer() {
           <h3 className="text-lg font-semibold">Ask the Ship's Cook</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Want something wilder? Tell the Cook what you're after, or snap your haul, and she'll dream up a dish that fits your track.
+          Want something wilder? Tell the Cook what you're after, or snap your haul, and she'll dream up a dish that
+          fits your track. She's a natural hygienist, so ask her why we eat this way aboard and she'll tell you.
+          She's a cook, not a doctor, so anything to do with your health goes to a professional.
         </p>
 
         {cookTurns.length > 0 && (

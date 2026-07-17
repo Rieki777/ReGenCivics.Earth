@@ -13,7 +13,7 @@ vi.mock("./_core/llm", () => ({
   isLLMConfigured: () => true,
 }));
 
-import { askShipCook, validateCookDish, type CookDish } from "./lib/ship-cook";
+import { askShipCook, validateCookDish, detectHealthConcern, type CookDish } from "./lib/ship-cook";
 
 function cookReturns(dish: Partial<CookDish> & { message?: string; dishName: string; hasDish?: boolean }) {
   invokeLLM.mockResolvedValueOnce({
@@ -96,5 +96,55 @@ describe("askShipCook", () => {
     const res = await askShipCook({ message: "hi", track: "table", haulItems: [] });
     expect(res.dish).toBeNull();
     expect(res.reply.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The Cook is a food guide, never a medical one. The tradition's own failure mode
+ * is reading a symptom as detox, and the crew is often hours from a hospital, so
+ * these rails are enforced in code rather than left to the model.
+ */
+describe("health triage", () => {
+  beforeEach(() => invokeLLM.mockReset());
+
+  it("triages urgent symptoms", () => {
+    expect(detectHealthConcern("I have severe pain in my side")).toBe("urgent");
+    expect(detectHealthConcern("my chest pain is getting worse")).toBe("urgent");
+    expect(detectHealthConcern("I fainted this morning")).toBe("urgent");
+    expect(detectHealthConcern("I can't keep water down")).toBe("urgent");
+  });
+
+  it("triages body talk as a concern", () => {
+    expect(detectHealthConcern("I'm pregnant, is this ok?")).toBe("concern");
+    expect(detectHealthConcern("I have a headache on day two")).toBe("concern");
+    expect(detectHealthConcern("is this detox?")).toBe("concern");
+    expect(detectHealthConcern("should I stop my B12?")).toBe("concern");
+    expect(detectHealthConcern("should I try a water fast?")).toBe("concern");
+  });
+
+  it("leaves ordinary food talk alone", () => {
+    expect(detectHealthConcern("what can I make with melon and cucumber?")).toBe("none");
+    expect(detectHealthConcern("something cool for a hot afternoon")).toBe("none");
+  });
+
+  it("short-circuits an urgent symptom to real care, with no model call", async () => {
+    const res = await askShipCook({ message: "I have severe pain in my abdomen", track: "table", haulItems: [{ name: "greens" }] });
+    expect(invokeLLM).not.toHaveBeenCalled();
+    expect(res.dish).toBeNull();
+    expect(res.reply.toLowerCase()).toContain("emergency services");
+  });
+
+  it("rides the care note along on any body talk, even while still cooking", async () => {
+    cookReturns({ message: "Here's a bright bowl.", dishName: "Green Bowl", base: ["greens"] });
+    const res = await askShipCook({ message: "I've had a headache since I started, what should I eat?", track: "table", haulItems: [{ name: "greens" }] });
+    expect(res.dish).toBeTruthy(); // she still cooks
+    expect(res.reply.toLowerCase()).toContain("not a clinician");
+    expect(res.reply.toLowerCase()).toContain("get it looked at");
+  });
+
+  it("keeps the care note when the model is unavailable", async () => {
+    invokeLLM.mockRejectedValueOnce(new Error("boom"));
+    const res = await askShipCook({ message: "is this dizziness normal?", track: "table", haulItems: [] });
+    expect(res.reply.toLowerCase()).toContain("not a clinician");
   });
 });

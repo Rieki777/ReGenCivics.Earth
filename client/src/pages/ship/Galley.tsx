@@ -183,6 +183,56 @@ export default function Galley() {
         </div>
       </ShipSection>
 
+      {/* The Cook + her tradition */}
+      <ShipSection className="py-10">
+        <ShipEyebrow>The Ship's Cook</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-4">She cooks from a tradition, not a trend</h2>
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div data-reveal="left" className="prose prose-lg max-w-none text-foreground/90 space-y-4">
+            <p>
+              The Ship's Cook is a natural hygienist. That is a real lineage, not a label. It was gathered into a
+              system in the 1830s by Sylvester Graham and carried forward by Herbert Shelton, Arnold Ehret, and
+              T.C. Fry through the Life Science course, and its roots run back much further, through the Essenes and
+              Hippocrates. Close to two hundred years of people paying careful attention to what living food does in
+              a body, and what happens when you get out of the body's way.
+            </p>
+            <p>
+              She knows why we eat fruit in the morning and melons on their own, why simple meals of a few
+              ingredients sit easier than complicated ones, and why heat much above 118F turns living food into
+              something else. She also knows food was never the whole of it. Sunlight, deep rest, clean air, moving
+              your body, and eating with people you love are as much a part of this tradition as the plate is.
+            </p>
+            <p>
+              Ask her why, and she will tell you. She is not here to convert you or to judge what you arrived
+              eating. She is here to feed you well for a week and let your body have the last word.
+            </p>
+          </div>
+          <div data-reveal="right" className="space-y-4">
+            <div className="rounded-2xl border bg-card p-5">
+              <h3 className="font-semibold text-lg mb-2">The first few days, honestly</h3>
+              <p className="text-sm text-foreground/85 mb-2">
+                Plenty of people report a headache, tiredness, or a short temper in the first days off coffee, sugar,
+                and processed food. It commonly passes. It helps to drink water, sleep more than you think you need,
+                and eat to real fullness on fruit rather than toughing it out.
+              </p>
+              <p className="text-sm text-foreground/85">
+                That is what people report, and it is not a diagnosis. If something in your body worries you, that is
+                a reason to have it looked at, not a sign to push through.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[#b5651d]/40 bg-[#b5651d]/5 p-5">
+              <h3 className="font-semibold text-lg mb-2">What she is, and what she isn't</h3>
+              <p className="text-sm text-foreground/85">
+                She is a cook and a guide to a food tradition. She is not a doctor, and she will tell you so herself.
+                She does not diagnose, she does not read symptoms, and she does not coach fasting. For anything to do
+                with your health, especially if you are pregnant, nursing, on medication, or managing a condition,
+                talk to a professional who can actually look after you.
+              </p>
+            </div>
+          </div>
+        </div>
+      </ShipSection>
+
       {/* The interactive */}
       <ShipSection className="py-10">
         <ShipEyebrow>What's aboard?</ShipEyebrow>
