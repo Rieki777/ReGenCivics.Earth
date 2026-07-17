@@ -343,11 +343,62 @@ so the commit/push is in the Claude Code column, not here.
 | 5 | Reframe the prize sweep: maiden voyage = scheduled sailing (Mon Jul 27), free voyages drawn Aug 16, winners pick dates; retire `maidenVoyageUserId`/`isMaidenVoyage`; update copy + rules + tests | VERIFIED | 12 files swept; grep clean; `pnpm check` exit 0; `ship.test.ts` 52/52; `audit-links.mjs` clean; 4 regression guards added |
 | 4 | Wire per-action CTA buttons + share block in `ActionRow`; add `ctaUrl`/`ctaLabel`/`shareText` migration | CODED (needs content from Rye to seed) | spec only; awaiting share message, URL, thread id |
 
+---
+
+## Fix 8 - Threshold wiring, new release schedule, and launch social proof (2026-07-16)
+
+**Status:** VERIFIED (applied 2026-07-16 by Claude Code on Rye's go-ahead). Code shipped in
+`a553d7b`; seed data live in Railway.
+
+**8a. Ship.tsx reads the live entry threshold.** `Ship.tsx` hardcoded "150 points". It now
+reads `trpc.ship.featureFlags` -> `entryThreshold` (publicProcedure), falling back to 150.
+Note: the points -> tickets mechanic Rye described (reach 150, get 150 tickets, more points =
+more tickets) was ALREADY live server-side in `computeQuestStandings` (`tickets =
+verifiedPoints` once entered) and `weightedDraw`. Only the display was hardcoded.
+
+**8b. Free-voyage release schedule is now 40/60/75/85/95 (was every 20%).** Voyage 1 is the
+Aug 16 launch draw; voyages 2-6 release at 40%, 60%, 75%, 85%, 95% booked. The schedule moved
+to `shared/shipFreeVoyage.ts` (`FREE_VOYAGE_RELEASE_MILESTONES`, `freeVoyagesUnlocked`) so the
+server truth and the client ladder preview can never drift; `ship-config.ts` re-exports it and
+`ship-logic.ts` re-exports `freeVoyagesUnlocked`. `FREE_VOYAGE_MILESTONE_PCT` is retired. All
+"every 20%" copy re-swept (binding rules name the exact percents). Tests updated.
+To retune the pace later, edit the array in `shared/shipFreeVoyage.ts` only.
+
+**8c. Social proof seeded (two reversible scripts).**
+- `scripts/seed-ship-social-proof.ts` - 10 confirmed bookings on the real Monday grid,
+  Sep 2026 -> Mar 2027, ~1/month weighted to the later months, Thanksgiving / Christmas /
+  New Year weeks left open. Owned by labeled demo accounts (`demo-ship-seed:`) with no quest
+  points, so they never touch the draw. 10/40 = **25% booked**, deliberately under the 40%
+  first release, so **no free voyage is auto-awarded** from seed data.
+- `scripts/seed-ship-example-crews.ts` - 5 example crews with verified completions at
+  300/250/200/175/150 points, so the draw board and crew cards are not empty. Cards are
+  seeded **fully sponsored** so they never solicit a real donation toward a crew that is not
+  a real person (flip `FULLY_SPONSORED = false` to make them sponsorable).
+
+**Known and accepted:** a public crew card is by design a live draw entry
+(`crew.listPublished` only shows crews actually in the draw), so **these example crews CAN be
+drawn**. Rye's call 2026-07-16: acceptable, the draw is simply re-run if an example crew wins.
+Before the Aug 16 draw, either re-run the draw on a win or remove the example crews first.
+
+**Undo (both are fully reversible):**
+```powershell
+npx tsx scripts/seed-ship-example-crews.ts --undo
+npx tsx scripts/seed-ship-social-proof.ts --undo
+```
+
+**Heads-up for Rye:** production was missing `agreementAcceptedAt` when this was seeded, i.e.
+migration `drizzle/0191_ship_agreement_acceptance.sql` had not been applied. The Voyage
+Covenant work in `a553d7b` inserts that column on every booking, so **0191 must be applied to
+the Railway DB or real bookings will fail** with `ER_BAD_FIELD_ERROR`. Worth confirming the
+deploy ran it.
+
+---
+
 ### WAITING ON YOU before Claude Code can proceed
 
 - **Fix 4** can be built now, but the share message, announcement URL, and origin-story
   thread are needed to seed the CTAs and finish it.
-- **Fix 5** is now applied and gate-green in code (see its VERIFIED entry). The only open
-  item is your optional sanity-check of the draw model before it deploys, plus the shared
-  commit/push. If you want any wording adjusted (e.g. the Aug 16 phrasing in the binding
-  rules), say so and Claude Code will re-sweep.
+- **Fix 5** is applied, gate-green, and shipped in `a553d7b`. If you want any wording
+  adjusted (e.g. the Aug 16 phrasing in the binding rules), say so and Claude Code re-sweeps.
+- **Fix 8** migration check: confirm `0191_ship_agreement_acceptance.sql` is applied to the
+  Railway DB, or real bookings will break (see the heads-up above).
