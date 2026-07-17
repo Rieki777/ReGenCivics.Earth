@@ -112,10 +112,11 @@ export function ShipEyebrow({ children }: { children: ReactNode }) {
  * picture, like the ReGen Civics landing cards. Three across on mobile, a
  * single row of eight on desktop. Cards zoom on hover and reveal on scroll.
  */
-const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string }> = [
+const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string; primary?: boolean }> = [
   { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
   { href: "/ship/theme", label: "The Theme", image: "ship-double-rainbow.jpg", alt: "A double rainbow over the ship." },
-  { href: "/ship/book", label: "Book", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista." },
+  // The main event: the booking card wears the gold everywhere.
+  { href: "/ship/book", label: "Book a Voyage", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista.", primary: true },
   { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
   { href: "/ship/galley", label: "The Galley", image: "ship-galley-table.webp", alt: "A galley table of ripe fruit and greens." },
   { href: "/ship/quest", label: "The Quest", image: "ship-quest-banner.jpg", alt: "A trail under a rainbow." },
@@ -138,7 +139,11 @@ export function ShipNavRow({ current }: { current?: string }) {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "group relative block overflow-hidden rounded-xl aspect-[4/3] transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]",
-                active ? "ring-2 ring-[#ffd700] shadow-lg" : "ring-1 ring-black/10",
+                c.primary
+                  ? "ring-2 ring-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.5)] hover:shadow-[0_0_32px_rgba(255,215,0,0.8)]"
+                  : active
+                    ? "ring-2 ring-[#ffd700] shadow-lg"
+                    : "ring-1 ring-black/10",
               )}
             >
               <img
@@ -149,9 +154,15 @@ export function ShipNavRow({ current }: { current?: string }) {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
               <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+              {c.primary && (
+                <span className="absolute top-1 right-1 rounded-full bg-[#ffd700] text-[#1a472a] text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                  Start here
+                </span>
+              )}
               <span className={cn(
                 "absolute inset-x-0 bottom-0 p-1.5 sm:p-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-sm",
-                active && "text-[#ffd700]",
+                (active || c.primary) && "text-[#ffd700]",
+                c.primary && "font-bold",
               )}>
                 {c.label}
               </span>
