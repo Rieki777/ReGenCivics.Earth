@@ -28,6 +28,17 @@ jobs:
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
 
+      # Vault tripwire (Mycelium review R3): the second-brain vault is Rye's
+      # private memory and lives gitignored inside the repo folder. This fails
+      # the build the day a careless .gitignore edit lets it into a commit.
+      - name: Vault tripwire (second-brain/ must never be committed)
+        run: |
+          if git ls-files -- 'second-brain/*' | grep -q .; then
+            echo "::error::second-brain/ paths are committed. The vault is private; revert the commit and fix .gitignore."
+            git ls-files -- 'second-brain/*' | head -20
+            exit 1
+          fi
+
       # Foundation guards (audit Phase 1): unique migration numbers and a
       # complete .env.example. Cheap, fail fast.
       - name: Migration number guard

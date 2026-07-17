@@ -69,6 +69,8 @@ import { registerGithubWebhookRoutes } from "../webhooks/github";
 import { registerStripeWebhookRoutes } from "../webhooks/stripe";
 import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
 import { registerHarvestBridgeRoutes } from "../webhooks/harvest-bridge";
+import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
+import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { createRequire } from "module";
@@ -554,8 +556,17 @@ async function startServer() {
       // Not signed in, or session invalid: fall back to the generic guide.
     }
 
+    // Worldview Pack (the Mycelium): ground the Guide in Rye's voice when a
+    // pack is present. Fail-soft: "" when absent, and behavior is unchanged.
+    let worldviewPreamble = "";
     try {
-      const systemPrompt = [guidePersona, CHAT_SYSTEM_PROMPT + pathContext + guideContext]
+      worldviewPreamble = await getGuideWorldviewPreamble();
+    } catch {
+      // Pack loading must never break chat.
+    }
+
+    try {
+      const systemPrompt = [guidePersona, CHAT_SYSTEM_PROMPT + pathContext + guideContext + worldviewPreamble]
         .filter(Boolean)
         .join("\n\n");
       const llmMessages = [
@@ -594,6 +605,8 @@ async function startServer() {
   registerZeffyWebhookRoutes(app);
   // Harvest bridge: the local second brain pulls Rye's captures (token auth)
   registerHarvestBridgeRoutes(app);
+  // Worldview Pack upload: the Mycelium's distribution endpoint (token auth)
+  registerWorldviewUploadRoutes(app);
   // OIDC provider for shared auth with the ReGen Gov app at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count

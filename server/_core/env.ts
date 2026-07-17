@@ -101,6 +101,15 @@ export const ENV = {
   harvestBridgeTokenNext: process.env.HARVEST_BRIDGE_TOKEN_NEXT ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
 
+  // The Mycelium (M1): the Worldview Pack. WORLDVIEW_UPLOAD_TOKEN gates
+  // POST /api/worldview/upload (NEXT is the rotation slot); the pack lands at
+  // WORLDVIEW_R2_KEY_PREFIX in the PRIVATE R2 area (never the public assets
+  // prefix, never served by /api/img). Loader and endpoint fail soft when
+  // unset: every getter returns null and agents keep their current behavior.
+  worldviewUploadToken: process.env.WORLDVIEW_UPLOAD_TOKEN ?? "",
+  worldviewUploadTokenNext: process.env.WORLDVIEW_UPLOAD_TOKEN_NEXT ?? "",
+  worldviewR2KeyPrefix: process.env.WORLDVIEW_R2_KEY_PREFIX ?? "worldview",
+
   // Church of the Regenerative Earth (CORE) - core.regencivics.earth
   // Stripe (server-side only for the secret + webhook signing secret). The
   // hosted Checkout redirect flow does not need the publishable key on the

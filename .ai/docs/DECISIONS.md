@@ -428,6 +428,35 @@ Format per entry:
 
 ---
 
+## ADR-38: The Worldview Pack is the distribution unit for Rye's voice, concepts, and positions
+
+- Date: 2026-07-16. Status: Accepted (per Rye's standing "do everything" instruction on the master build sequence; flag to Rye if this needs amending).
+- Context: server-side agents (elders, companions, Guide, admin assistant) each hardcode fragments of voice and worldview; the vault holds the real thing and is unreachable from production; hard writing rules exist in four places and will drift.
+- Decision: a versioned, curated, redaction-gated bundle (`manifest.json` with semver + revision + updated-on, `voice.md`, `concepts.json`, `positions.json`, `style_rules.json`, `themes.json`) built deterministically from the vault, uploaded to a private R2 path via a token-gated endpoint, loaded server-side through `server/lib/worldview.ts` (cached, fail-soft, never client-exposed). Raw sources never enter the pack; provenance travels as ids resolvable only locally.
+- Why: one source of truth, versioned like code, loadable by any agent, honest about the privacy boundary.
+- Trade-offs: a build-and-upload step Rye runs or schedules; a stale pack is possible, so the manifest carries `updated-on` and consumers may surface staleness.
+- Code refs: `second-brain/_pipeline/build_worldview_pack.py`, `server/lib/worldview.ts`, `server/webhooks/worldview-upload.ts`.
+
+## ADR-39: Vault retrieval uses local embeddings only
+
+- Date: 2026-07-16. Status: Accepted (same basis as ADR-38).
+- Context: semantic retrieval requires embedding note and message text; hosted embedding APIs receive that text in the clear, crossing the private-first boundary for exactly the content the boundary protects.
+- Decision: vault embeddings are computed by a local model on Rye's machine (fastembed ONNX `BAAI/bge-small-en-v1.5`, pinned in the script); the index lives in the vault (gitignored); no vault text is sent to any hosted model for indexing. Hosted models remain fine for generation over curated excerpts an agent already loaded.
+- Why: the boundary holds; local retrieval quality is sufficient for a personal corpus this size.
+- Trade-offs: a one-time local model download; slightly weaker embeddings than frontier hosted; index rebuild is local CPU time.
+- Code refs: `_pipeline/build_embeddings.py`, `_pipeline/ask.py`.
+
+## ADR-40: One write path into the vault, supersession over deletion
+
+- Date: 2026-07-16. Status: Accepted (same basis as ADR-38).
+- Context: multiple agents will read and write memory; unconstrained writes produce silent contradiction and lost history.
+- Decision: all new material enters through `00 Inbox` + append-only ingest; agents edit directly only in folders the contract assigns them; derived views (MOCs, dashboards, pack) are always regenerated; superseded ideas are marked (`superseded_by`) and retained, never deleted by an agent; every structural change appends to the AGENT GUIDE change log with the agent's name. `second-brain/contract.json` states this machine-readably.
+- Why: preserves provenance and history, makes conflicts visible, gives every agent one protocol.
+- Trade-offs: slightly more ceremony per write; a misbehaving agent can still violate convention, so `consolidate.py` audits for it.
+- Code refs: `second-brain/contract.json`, `_pipeline/harvest_bridge_pull.py`, `_pipeline/consolidate.py`.
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.

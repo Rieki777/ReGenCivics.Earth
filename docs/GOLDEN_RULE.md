@@ -24,6 +24,13 @@ Run `/security-review` on any code touching:
 ## Step 5: Ship
 Run `/ship` before every Railway deploy. Never push directly without it.
 
+## The Vault Is Never Committed
+
+`second-brain/` is Rye's private memory vault. It lives inside the repo folder
+but is gitignored, and CI carries a tripwire that fails the build if any
+`second-brain/` path ever lands in a commit. If the tripwire fires: revert the
+commit, fix `.gitignore`, and check nothing private reached the remote.
+
 ## Parallel Worktree Workflow
 
 **Never run two sessions in `~/regen-civics` at once.** They share one working tree and git index, so they cross-commit each other's files, half-apply changes, and diverge from `origin/main` in ways that need a manual rebase to untangle (this happened 2026-07-03). One session per directory, always.

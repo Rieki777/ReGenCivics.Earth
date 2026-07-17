@@ -12,6 +12,7 @@ import { nanoid } from "nanoid";
 import { storagePut, storageStream, storageStreamRange } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
+import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
 import type { Express } from "express";
 import sharp from "sharp";
@@ -125,8 +126,11 @@ export const chatRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "chat_ask");
+      // Worldview Pack (the Mycelium): same fail-soft grounding as the
+      // streaming Guide endpoint; "" when no pack has been uploaded.
+      const worldviewPreamble = await getGuideWorldviewPreamble().catch(() => "");
       const llmMessages = [
-        { role: "system" as const, content: CHAT_SYSTEM_PROMPT },
+        { role: "system" as const, content: CHAT_SYSTEM_PROMPT + worldviewPreamble },
         ...input.messages.map(m => ({
           role: m.role as "user" | "assistant",
           content: m.content,
