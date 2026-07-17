@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import {
+  DEMO_ACCOUNT_OPENID_PREFIX, DEMO_CREW_OPENID_PREFIX, DEMO_BOOKING_OPENID_PREFIX, isDemoOpenId,
+} from "@shared/shipDemo";
+import {
   rangesOverlap, overlapsAny, isValidVoyageLength, nightsBetween,
   computeVoyagePrice, computeQuestStandings, countEntered,
   freeVoyagesUnlocked, percentBooked, weightedDraw, sponsorshipProgress, applySponsorship,
@@ -403,6 +406,44 @@ describe("ship-logic: weighted draw (auditable)", () => {
   it("returns null when no one is eligible", () => {
     expect(weightedDraw([{ userId: 1, tickets: 0, kind: "threshold" }], 1)).toBeNull();
     expect(weightedDraw(entries, 1, new Set([1, 2, 3]))).toBeNull();
+  });
+
+  // Fix 8 (2026-07-16): example crews seeded for launch social proof sit on the
+  // draw board but must never win. drawFreeVoyageWinner puts every demo account
+  // into excludeUserIds, so the draw lands on a real crew with no manual redraw.
+  it("never draws a seeded demo crew, however the roll falls", () => {
+    const demoUserId = 99;
+    const withDemo: DrawEntry[] = [
+      ...entries,
+      // A demo crew with overwhelming tickets: it would win nearly every seed.
+      { userId: demoUserId, tickets: 100_000, kind: "threshold", label: "demo" },
+    ];
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = weightedDraw(withDemo, seed, new Set([demoUserId]));
+      expect(r).not.toBeNull();
+      expect(r!.winner.userId).not.toBe(demoUserId);
+    }
+    // The demo entry is still recorded in the audit, marked excluded.
+    const audit = weightedDraw(withDemo, 1, new Set([demoUserId]))!.audit;
+    expect(audit.entries.find((e) => e.userId === demoUserId)?.excluded).toBe(true);
+    expect(audit.totalTickets).toBe(550); // demo tickets carry no weight
+  });
+});
+
+describe("ship demo accounts: seeded crews are marked and never eligible", () => {
+  it("recognises seeded openIds and leaves real accounts alone", () => {
+    expect(isDemoOpenId(`${DEMO_CREW_OPENID_PREFIX}1`)).toBe(true);
+    expect(isDemoOpenId(`${DEMO_BOOKING_OPENID_PREFIX}3`)).toBe(true);
+    expect(isDemoOpenId("google-oauth2|10937")).toBe(false);
+    expect(isDemoOpenId(null)).toBe(false);
+    expect(isDemoOpenId(undefined)).toBe(false);
+  });
+
+  it("keeps both seed prefixes under the one prefix the drawing excludes", () => {
+    // drawFreeVoyageWinner excludes `LIKE 'demo-ship-%'`, so both seed scripts
+    // must stay under it or a demo crew could slip into the draw.
+    expect(DEMO_CREW_OPENID_PREFIX.startsWith(DEMO_ACCOUNT_OPENID_PREFIX)).toBe(true);
+    expect(DEMO_BOOKING_OPENID_PREFIX.startsWith(DEMO_ACCOUNT_OPENID_PREFIX)).toBe(true);
   });
 });
 

@@ -29,13 +29,15 @@
  */
 import mysql from "mysql2/promise";
 import * as dotenv from "dotenv";
+import { DEMO_BOOKING_OPENID_PREFIX } from "../shared/shipDemo";
 
 dotenv.config();
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const UNDO = process.argv.includes("--undo");
 
-const SEED_OPENID_PREFIX = "demo-ship-seed:";
+// One shared prefix, so the drawing's exclusion can never drift from the seed.
+const SEED_OPENID_PREFIX = DEMO_BOOKING_OPENID_PREFIX;
 const SEED_NOTES_TAG = "seed:social-proof";
 
 // A one-week voyage boards Monday and returns the following Sunday; the next

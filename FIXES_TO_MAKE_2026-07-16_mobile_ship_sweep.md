@@ -375,10 +375,24 @@ To retune the pace later, edit the array in `shared/shipFreeVoyage.ts` only.
   seeded **fully sponsored** so they never solicit a real donation toward a crew that is not
   a real person (flip `FULLY_SPONSORED = false` to make them sponsorable).
 
-**Known and accepted:** a public crew card is by design a live draw entry
-(`crew.listPublished` only shows crews actually in the draw), so **these example crews CAN be
-drawn**. Rye's call 2026-07-16: acceptable, the draw is simply re-run if an example crew wins.
-Before the Aug 16 draw, either re-run the draw on a win or remove the example crews first.
+**8d. Example crews can never win the draw (Rye, 2026-07-16: "if an example crew is drawn have
+it automatically undo and redraw").** Handled better than a redraw: the drawing never selects
+them in the first place, so there is nothing to undo. `shared/shipDemo.ts` marks every seeded
+account by openId prefix (`demo-ship-`), and `admin.drawFreeVoyageWinner` now adds them to
+`weightedDraw`'s existing `excludeUserIds` (the same mechanism that blocks prior winners). The
+draw therefore lands on a real crew automatically, and the audit log records the demo entries
+as `excluded: true`, so the drawing stays reproducible and honest.
+
+Both seed scripts import the prefixes from `shared/shipDemo.ts`, so the seed and the exclusion
+cannot drift. Verified against Railway: all 13 demo accounts (8 booking owners + 5 example
+crews) are caught, and every entered example crew resolves to EXCLUDED.
+
+Side effect, in the real crews' favour: example crews still count toward the displayed pool,
+so a real entrant's true odds are slightly better than the board suggests.
+
+Tests: `ship.test.ts` 55/55, including "never draws a seeded demo crew, however the roll
+falls" (200 seeds against a demo crew holding 100,000 tickets) and the prefix-containment
+guard.
 
 **Undo (both are fully reversible):**
 ```powershell
@@ -400,5 +414,5 @@ deploy ran it.
   thread are needed to seed the CTAs and finish it.
 - **Fix 5** is applied, gate-green, and shipped in `a553d7b`. If you want any wording
   adjusted (e.g. the Aug 16 phrasing in the binding rules), say so and Claude Code re-sweeps.
-- **Fix 8** migration check: confirm `0191_ship_agreement_acceptance.sql` is applied to the
-  Railway DB, or real bookings will break (see the heads-up above).
+- **Fix 8** migration check: CONFIRMED applied 2026-07-16 (`agreementAcceptedAt` + `agreementVersion`
+  present in the Railway `ship_bookings` table). Real bookings are safe. No action needed.

@@ -31,13 +31,15 @@
  */
 import mysql from "mysql2/promise";
 import * as dotenv from "dotenv";
+import { DEMO_CREW_OPENID_PREFIX } from "../shared/shipDemo";
 
 dotenv.config();
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const UNDO = process.argv.includes("--undo");
 
-const CREW_OPENID_PREFIX = "demo-ship-crew:";
+// One shared prefix, so the drawing's exclusion can never drift from the seed.
+const CREW_OPENID_PREFIX = DEMO_CREW_OPENID_PREFIX;
 const FULLY_SPONSORED = true;
 
 type Crew = {

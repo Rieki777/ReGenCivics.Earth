@@ -17,8 +17,9 @@
  *    revenue is segmentable. This router never moves money.
  */
 import { z } from "zod";
-import { and, or, eq, desc, asc, inArray, notInArray, sql, gte, isNull, isNotNull } from "drizzle-orm";
+import { and, or, eq, desc, asc, inArray, notInArray, sql, gte, isNull, isNotNull, like } from "drizzle-orm";
 import { CREW_ONLY_SOURCES, isLocationVisible } from "@shared/shipVisibility";
+import { DEMO_ACCOUNT_OPENID_PREFIX } from "@shared/shipDemo";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -2057,9 +2058,17 @@ export const shipRouter = router({
       // Prior winners: anyone holding a winner voyage, plus prior draw winners.
       const priorBookings = await d.select({ userId: shipBookings.userId }).from(shipBookings).where(eq(shipBookings.isWinnerVoyage, true));
       const priorDraws = await d.select({ winnerUserId: shipGiveawayDrawings.winnerUserId, winnerNominationId: shipGiveawayDrawings.winnerNominationId }).from(shipGiveawayDrawings);
+      // Demo accounts seeded for launch social proof (@shared/shipDemo) stay on the
+      // draw board but can never win: excluding them here means the draw simply
+      // lands on a real crew, and the audit records them as excluded. No redraw.
+      const demoAccounts = await d
+        .select({ userId: users.id })
+        .from(users)
+        .where(like(users.openId, `${DEMO_ACCOUNT_OPENID_PREFIX}%`));
       const excludeUserIds = new Set<number>([
         ...priorBookings.map((b) => b.userId),
         ...priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null),
+        ...demoAccounts.map((u) => u.userId),
       ]);
       const wonNominationIds = new Set<number>(priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null));
 
