@@ -302,106 +302,24 @@ export async function updateReview(id: number, data: Partial<InsertReview>) {
 }
 
 // ============================================
-// Investor Inquiry Queries
+// Inquiry Queries (investor + general catch-all routing form)
 // ============================================
-
-import { InsertInvestorInquiry, investorInquiries } from "../drizzle/schema";
-
-export async function createInvestorInquiry(data: InsertInvestorInquiry) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(investorInquiries).values(data);
-  return result[0].insertId;
-}
-
-export async function getInvestorInquiryById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(investorInquiries).where(eq(investorInquiries.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllInvestorInquiries() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(investorInquiries)
-    .orderBy(desc(investorInquiries.createdAt));
-}
-
-export async function getInvestorInquiriesByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(investorInquiries)
-    .where(eq(investorInquiries.status, status as any))
-    .orderBy(desc(investorInquiries.createdAt));
-}
-
-export async function updateInvestorInquiry(id: number, data: Partial<InsertInvestorInquiry>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(investorInquiries).set(data).where(eq(investorInquiries.id, id));
-}
-
-
-// ============================================
-// General Inquiry Queries (Catch-all Routing Form)
-// ============================================
-
-import { InsertGeneralInquiry, generalInquiries } from "../drizzle/schema";
-
-export async function createGeneralInquiry(data: InsertGeneralInquiry) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(generalInquiries).values(data);
-  return result[0].insertId;
-}
-
-export async function getGeneralInquiryById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(generalInquiries).where(eq(generalInquiries.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllGeneralInquiries() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function getGeneralInquiriesByPath(pathType: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .where(eq(generalInquiries.pathType, pathType as any))
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function getGeneralInquiriesByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .where(eq(generalInquiries.status, status as any))
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function updateGeneralInquiry(id: number, data: Partial<InsertGeneralInquiry>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(generalInquiries).set(data).where(eq(generalInquiries.id, id));
-}
+// Extracted to server/db/inquiries.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createInvestorInquiry,
+  getInvestorInquiryById,
+  getAllInvestorInquiries,
+  getInvestorInquiriesByStatus,
+  updateInvestorInquiry,
+  getInvestorInquiryByUserId,
+  createGeneralInquiry,
+  getGeneralInquiryById,
+  getAllGeneralInquiries,
+  getGeneralInquiriesByPath,
+  getGeneralInquiriesByStatus,
+  updateGeneralInquiry,
+} from "./db/inquiries";
 
 
 // ============================================
@@ -2998,12 +2916,8 @@ export async function ensureEntityForumThread(
   return asMutationResult(result).insertId ?? null;
 }
 
-export async function getInvestorInquiryByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select().from(investorInquiries).where(eq(investorInquiries.userId, userId)).orderBy(desc(investorInquiries.createdAt)).limit(1);
-  return rows[0] ?? null;
-}
+// getInvestorInquiryByUserId lives in server/db/inquiries.ts with the rest of
+// the domain; it is re-exported above.
 
 export async function searchApplications(query: string) {
   const db = await getDb();
