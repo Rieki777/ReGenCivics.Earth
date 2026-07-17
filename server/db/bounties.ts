@@ -213,7 +213,9 @@ export async function payRole(
     type: "mention",
     title: `Bounty paid: ${bounty.title.slice(0, 180)}`,
     body: `${role.amount} ${tokenLabel} credited for work you ${roleLabel}. Claimable to Base after ${claimableAt.toLocaleDateString()}.`,
-    link: `/profile?tab=contributions#bounty-${bounty.id}`,
+    // BountyDetail is the one place this bounty is guaranteed to render;
+    // the old #bounty-{id} anchor had no matching element anywhere.
+    link: `/bounties/${bounty.id}`,
   });
 
   return { ok: true };
@@ -290,7 +292,7 @@ export async function reverseRole(
     type: "mention",
     title: `Bounty reversed: ${bounty.title.slice(0, 180)}`,
     body: `${role.amount} ${tokenLabel} has been reversed from your balance. Reason: ${reason}`,
-    link: `/profile?tab=contributions#bounty-${bounty.id}`,
+    link: `/bounties/${bounty.id}`,
   });
 
   return { ok: true };

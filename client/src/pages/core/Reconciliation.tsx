@@ -105,12 +105,12 @@ export default function Reconciliation() {
               <input
                 type="text" placeholder="Purpose (required)" aria-label="Purpose" value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                style={{ width: "100%", padding: "12px 16px", borderRadius: "var(--core-radius)", border: "2px solid var(--parchment-soft)", marginBottom: 12, fontFamily: "var(--font-body)" }}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: "var(--core-radius)", border: "2px solid var(--parchment-soft)", marginBottom: 12, fontFamily: "var(--font-body)", fontSize: 16 }}
               />
               <input
                 type="text" placeholder="Destination reference (optional)" aria-label="Destination reference" value={dest}
                 onChange={(e) => setDest(e.target.value)}
-                style={{ width: "100%", padding: "12px 16px", borderRadius: "var(--core-radius)", border: "2px solid var(--parchment-soft)", marginBottom: 16, fontFamily: "var(--font-body)" }}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: "var(--core-radius)", border: "2px solid var(--parchment-soft)", marginBottom: 16, fontFamily: "var(--font-body)", fontSize: 16 }}
               />
               <button className="btn btn-primary" type="submit" disabled={recordPayout.isPending}>
                 {recordPayout.isPending ? "Recording..." : "Record payout"}

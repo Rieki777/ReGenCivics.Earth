@@ -23,24 +23,40 @@ function legacyLink(type: string): string | null {
     case 'new_contribution':
       return '/profile?tab=contributions';
     case 'campaign_milestone':
-      return '/crowdpooling';
+      return '/crowd-pooling';
     case 'quest_complete':
       return '/quest';
     case 'gratitude':
       return '/profile?tab=gratitude';
+    case 'claim_complete':
+    case 'claim_failed':
+      return '/profile?tab=contributions';
     default:
       return null;
   }
 }
 
-/** Destination for a notification. Older rows (and legacy back-fills) stored
- * a bare "/profile" link, which lands on the Overview tab instead of the
- * section the notification is about  -  upgrade those to the right tab. */
+/** Destination for a notification. Older rows keep whatever link they were
+ * created with, and several historical formats are wrong or dead:
+ * bare "/profile" (lands on Overview instead of the relevant section),
+ * "#bounty-N" anchors (no matching element ever rendered),
+ * "/campaigns/N" and "/crowdpooling" (routes are /campaign/:id and
+ * /crowd-pooling). Normalize them all here, at click time, so history
+ * stays useful without a data migration. */
 export function resolveNotificationLink(item: { type: string; link: string | null }): string | null {
   const target = item.link || legacyLink(item.type);
-  if (item.type === 'gratitude' && (!target || target === '/profile')) {
+  if (!target) return null;
+  if (item.type === 'gratitude' && target === '/profile') {
     return '/profile?tab=gratitude';
   }
+  if ((item.type === 'claim_complete' || item.type === 'claim_failed') && target === '/profile') {
+    return '/profile?tab=contributions';
+  }
+  const bounty = target.match(/#bounty-(\d+)$/);
+  if (bounty) return `/bounties/${bounty[1]}`;
+  const campaign = target.match(/^\/campaigns\/(\d+)/);
+  if (campaign) return `/campaign/${campaign[1]}`;
+  if (target === '/crowdpooling') return '/crowd-pooling';
   return target;
 }
 

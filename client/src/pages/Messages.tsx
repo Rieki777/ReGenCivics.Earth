@@ -757,8 +757,10 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area */}
-      <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3">
+      {/* Input area. text-base on mobile: fonts under 16px make iOS Safari
+          zoom the whole page on focus. Bottom padding respects the iPhone
+          home indicator. */}
+      <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {showCharCount && (
           <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/80"}`}>
             {charCount} / 5000
@@ -772,16 +774,16 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
             onKeyDown={handleKeyDown}
             placeholder="Write a message… (Shift+Enter for new line)"
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-[#1a472a]/20 bg-white px-3 py-2 text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
-            style={{ minHeight: "40px", maxHeight: "120px" }}
+            className="flex-1 resize-none rounded-xl border border-[#1a472a]/20 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
+            style={{ minHeight: "44px", maxHeight: "120px" }}
           />
           <Button
             onClick={handleSend}
             disabled={!inputText.trim() || sendMessage.isPending || charOver}
-            className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-10 w-10 flex-shrink-0"
+            className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-11 w-11 flex-shrink-0"
             aria-label="Send"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </Button>
         </div>
       </div>

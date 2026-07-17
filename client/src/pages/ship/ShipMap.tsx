@@ -259,13 +259,13 @@ export default function ShipMap() {
             <button
               key={t}
               onClick={() => toggleType(t)}
-              className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${activeTypes.has(t) ? "bg-[#2f5d3a] text-white border-[#2f5d3a]" : "border-[#4a7c59]/30 hover:bg-[#4a7c59]/10"}`}
+              className={`px-3 py-2 min-h-11 rounded-full border text-sm transition-colors ${activeTypes.has(t) ? "bg-[#2f5d3a] text-white border-[#2f5d3a]" : "border-[#4a7c59]/30 hover:bg-[#4a7c59]/10"}`}
             >
               {meta.emoji} {meta.label}
             </button>
           ))}
           {activeTypes.size > 0 && (
-            <button onClick={() => setActiveTypes(new Set())} className="px-3 py-1.5 rounded-full border border-transparent text-sm underline">Clear</button>
+            <button onClick={() => setActiveTypes(new Set())} className="px-3 py-2 min-h-11 rounded-full border border-transparent text-sm underline">Clear</button>
           )}
         </div>
 
@@ -275,7 +275,7 @@ export default function ShipMap() {
             <button
               key={f.key}
               onClick={() => toggleBool(f.key)}
-              className={`px-3 py-1 rounded-full border text-xs transition-colors ${boolFilters.has(f.key) ? "bg-[#b5762f] text-white border-[#b5762f]" : "border-[#b5762f]/40 hover:bg-[#b5762f]/10"}`}
+              className={`px-3 py-2 min-h-11 rounded-full border text-xs transition-colors ${boolFilters.has(f.key) ? "bg-[#b5762f] text-white border-[#b5762f]" : "border-[#b5762f]/40 hover:bg-[#b5762f]/10"}`}
             >
               {f.label}
             </button>
@@ -292,10 +292,10 @@ export default function ShipMap() {
           >
             🧭 Inner Compass
           </button>
-          <button onClick={() => setVoyageOpen((v) => !v)} className="px-3 py-1 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
+          <button onClick={() => setVoyageOpen((v) => !v)} className="px-3 py-2 min-h-11 rounded-full border text-xs border-[#2f5d3a]/40 hover:bg-[#2f5d3a]/10">
             ⛵ My voyage{voyage.length ? ` (${voyage.length})` : ""}
           </button>
-          <button onClick={() => { setPermissionOpen((v) => !v); setInnerCompassOpen(false); }} aria-pressed={permissionOpen} className="px-3 py-1 rounded-full border text-xs border-[#c0392b]/50 text-[#c0392b] dark:text-[#e77] hover:bg-[#c0392b]/10">
+          <button onClick={() => { setPermissionOpen((v) => !v); setInnerCompassOpen(false); }} aria-pressed={permissionOpen} className="px-3 py-2 min-h-11 rounded-full border text-xs border-[#c0392b]/50 text-[#c0392b] dark:text-[#e77] hover:bg-[#c0392b]/10">
             🔴 Permission radius
           </button>
         </div>
@@ -392,7 +392,7 @@ export default function ShipMap() {
               <ShipEyebrow>Travel radius</ShipEyebrow>
               <h2 className="text-2xl font-bold">Where she may sail without asking</h2>
             </div>
-            <button onClick={() => setPermissionOpen(false)} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+            <button onClick={() => setPermissionOpen(false)} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
           </div>
           <p className="text-foreground/80 max-w-2xl mb-4">
             The <span className="font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">green zone</span> is the permitted range: within 500 miles of Ashland, a one-week voyage may sail anywhere inside it. Beyond that line lies the <span className="font-semibold text-[#c0392b] dark:text-[#e77]">red locked zone</span> — contact the core team for written permission before you cross it. Longer voyages can unlock a wider range (up to 1,250 miles for a four-week sail), but crossing 500 miles always needs permission in advance.
@@ -551,7 +551,7 @@ function DetailDrawer({ detail, onClose, inVoyage, onToggleVoyage, isAuthenticat
             <ShipEyebrow>{meta.emoji} {meta.label}{!detail.isVerified && " · unverified"}</ShipEyebrow>
             <h2 className="text-2xl font-bold">{detail.name}</h2>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
         </div>
         {detail.imageUrl && <img src={detail.imageUrl} alt={detail.name} loading="lazy" className="mt-3 rounded-xl max-h-64 w-full object-cover" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")} />}
         {detail.description && <p className="mt-3 text-foreground/85">{detail.description}</p>}
@@ -601,7 +601,7 @@ function VoyagePanel({ voyage, onRemove, onClear, onClose }: { voyage: VoyagePin
       <div className="max-w-2xl">
         <div className="flex items-center justify-between">
           <ShipEyebrow>⛵ My voyage</ShipEyebrow>
-          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
         </div>
         <h2 className="text-2xl font-bold mb-3">{voyage.length ? `${voyage.length} stop${voyage.length > 1 ? "s" : ""}` : "No stops yet"}</h2>
         {voyage.length === 0 ? (
@@ -638,13 +638,13 @@ function FirstMateDrawer({ conciergeAboard, onItinerary, onClose }: {
   return (
     <div className="fixed inset-0 z-[1200]" role="dialog" aria-modal="true" aria-label="Plan your voyage with the First Mate">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute inset-y-0 right-0 w-full sm:w-[440px] max-w-full bg-background shadow-2xl overflow-y-auto">
+      <div className="absolute inset-y-0 right-0 w-full sm:w-[440px] max-w-full bg-background shadow-2xl overflow-y-auto pb-[env(safe-area-inset-bottom)]">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background px-5 py-4">
           <div>
             <ShipEyebrow>The First Mate</ShipEyebrow>
             <p className="text-sm text-foreground/80">{FIRST_MATE_GREETING}</p>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
         </div>
         <div className="p-5">
           {!conciergeAboard && (
@@ -694,7 +694,7 @@ function DatasetOfferDialog({ onClose }: { onClose: () => void }) {
             <ShipEyebrow>Grow the map</ShipEyebrow>
             <h2 className="text-xl font-bold">Add your database to the map</h2>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
         </div>
         <form onSubmit={onSubmit} className="space-y-3">
           <div>

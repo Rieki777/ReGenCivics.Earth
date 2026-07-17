@@ -244,7 +244,7 @@ export function InnerCompassSection({ pins, activeTypes, onClose }: {
       <div className="max-w-3xl">
         <div className="flex items-center justify-between">
           <ShipEyebrow>🧭 Inner Compass</ShipEyebrow>
-          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-2xl leading-none text-muted-foreground hover:text-foreground min-h-11 min-w-11 -m-2 inline-flex items-center justify-center">×</button>
         </div>
         <h2 className="text-2xl font-bold mb-3">Chart by Inner Compass</h2>
         <p className="text-foreground/85 mb-3">
@@ -265,7 +265,7 @@ export function InnerCompassSection({ pins, activeTypes, onClose }: {
             <button
               key={t}
               onClick={() => toggle(t)}
-              className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${types.has(t) ? "bg-[#2f5d3a] text-white border-[#2f5d3a]" : "border-[#4a7c59]/30 hover:bg-[#4a7c59]/10"}`}
+              className={`px-3 py-2 min-h-11 rounded-full border text-sm transition-colors ${types.has(t) ? "bg-[#2f5d3a] text-white border-[#2f5d3a]" : "border-[#4a7c59]/30 hover:bg-[#4a7c59]/10"}`}
             >
               {TYPE_META[t].emoji} {TYPE_META[t].label}
             </button>
@@ -275,7 +275,7 @@ export function InnerCompassSection({ pins, activeTypes, onClose }: {
           <label className="flex items-center gap-1.5 text-sm cursor-pointer">
             <input type="checkbox" checked={includeChakras} onChange={(e) => setIncludeChakras(e.target.checked)} /> Chakra points
           </label>
-          <select value={sizeKey} onChange={(e) => setSizeKey(e.target.value)} className="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Poster size">
+          <select value={sizeKey} onChange={(e) => setSizeKey(e.target.value)} className="h-11 md:h-9 rounded-md border bg-background px-2 text-base md:text-sm" aria-label="Poster size">
             {POSTER_SIZES.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
           <span className="text-sm text-muted-foreground">{inRangeCount} tokens on your board</span>

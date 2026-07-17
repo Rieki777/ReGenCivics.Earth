@@ -1409,12 +1409,16 @@ function legacyNotificationLink(type: string, campaignId?: number | null): strin
     case 'new_contribution':
       return '/profile?tab=contributions';
     case 'campaign_milestone':
-      return campaignId ? `/campaigns/${campaignId}` : '/crowdpooling';
+      // Router paths are /campaign/:id (singular) and /crowd-pooling
+      // (hyphenated); the old plural/unhyphenated forms 404ed.
+      return campaignId ? `/campaign/${campaignId}` : '/crowd-pooling';
     case 'quest_complete':
       return '/quest';
     case 'claim_complete':
     case 'claim_failed':
-      return '/profile';
+      // These are about tokens moving to the user's wallet; the
+      // Contributions tab is where balances and claim state live.
+      return '/profile?tab=contributions';
     default:
       return null;
   }

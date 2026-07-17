@@ -549,7 +549,7 @@ export const bountiesRouter = router({
           type: "mention",
           title: `Bounty accepted: ${bounty.title.slice(0, 180)}`,
           body: "Your bounty proposal was accepted and is now open for contributors.",
-          link: `/bounties#bounty-${input.bountyId}`,
+          link: `/bounties/${input.bountyId}`,
         });
       }
       return { ok: true };

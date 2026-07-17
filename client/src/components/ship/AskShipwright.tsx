@@ -180,7 +180,7 @@ export function AskShipwright() {
                   type="button"
                   aria-label="Remove photo"
                   onClick={() => setPhotos((p) => p.filter((x) => x !== u))}
-                  className="absolute -top-1.5 -right-1.5 bg-background border rounded-full p-0.5"
+                  className="absolute -top-2.5 -right-2.5 bg-background border rounded-full p-2"
                 >
                   <X className="w-3 h-3" aria-hidden="true" />
                 </button>

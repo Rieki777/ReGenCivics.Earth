@@ -50,7 +50,7 @@ export function GearManifest() {
 
       <div className="inline-flex rounded-lg border overflow-hidden mb-4" role="group" aria-label="Check phase">
         {(["boarding", "return"] as const).map((p) => (
-          <button key={p} type="button" onClick={() => setPhase(p)} aria-pressed={phase === p} className={`px-4 py-1.5 text-sm capitalize min-h-9 ${phase === p ? "bg-[#2f5d3a] text-white" : "bg-background text-foreground/70"}`}>{p}</button>
+          <button key={p} type="button" onClick={() => setPhase(p)} aria-pressed={phase === p} className={`px-4 py-2 text-sm capitalize min-h-11 ${phase === p ? "bg-[#2f5d3a] text-white" : "bg-background text-foreground/70"}`}>{p}</button>
         ))}
       </div>
 
@@ -64,7 +64,7 @@ export function GearManifest() {
             <select
               value={row(g.id).condition}
               onChange={(e) => setRows((s) => ({ ...s, [g.id]: { present: row(g.id).present, condition: e.target.value as Condition } }))}
-              className="h-9 rounded-md border bg-background px-2 text-sm shrink-0"
+              className="h-11 md:h-9 rounded-md border bg-background px-2 text-base md:text-sm shrink-0"
               aria-label={`Condition of ${g.name}`}
             >
               {CONDITIONS.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}

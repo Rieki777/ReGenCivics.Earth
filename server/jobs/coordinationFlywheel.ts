@@ -108,7 +108,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
         type: "mention",
         title: `Released: ${title.slice(0, 180)}`,
         body: `${NUDGE_MARKER} Your claim sat for over ${expireDays} days, so the role is back in the open pool for someone else. You can still re-claim it any time.`,
-        link: `/bounties#bounty-${r.bountyId}`,
+        link: `/bounties/${r.bountyId}`,
       });
       await db
         .update(bountyRoles)
@@ -118,7 +118,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
       continue;
     }
 
-    const linkPath = `/bounties#bounty-${r.bountyId}`;
+    const linkPath = `/bounties/${r.bountyId}`;
     const existing = await db
       .select({ id: notifications.id })
       .from(notifications)

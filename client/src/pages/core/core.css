@@ -76,6 +76,7 @@
   height: var(--core-nav-h);
   display: flex; align-items: center;
   background: rgba(248, 245, 240, 0.88);
+  -webkit-backdrop-filter: blur(10px); /* older iOS Safari */
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--parchment-soft);
 }
@@ -205,7 +206,7 @@
 .core-root .chat-input input:focus { outline: 2px solid var(--spring-base); }
 .core-root .coming { display: inline-block; background: var(--amber-tan); color: var(--forest-deep); font-family: var(--font-display); font-weight: 700; font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; margin-bottom: 12px; }
 .core-root .chat-log { display: grid; gap: 14px; margin: 4px 0 8px; max-height: 420px; overflow-y: auto; }
-.core-root .chat-msg { border-radius: var(--core-radius); padding: 14px 18px; max-width: 92%; }
+.core-root .chat-msg { border-radius: var(--core-radius); padding: 14px 18px; max-width: 92%; overflow-wrap: anywhere; }
 .core-root .chat-msg.user { background: var(--spring-soft); color: var(--forest-deep); justify-self: end; }
 .core-root .chat-msg.assistant { background: var(--parchment-whisper); color: var(--forest-base); border: 1px solid var(--parchment-soft); justify-self: start; }
 .core-root .chat-msg p:last-child { margin-bottom: 0; }
@@ -224,7 +225,7 @@
 .core-root .facts .row { display: flex; justify-content: space-between; gap: 20px; padding: 16px 22px; border-bottom: 1px solid var(--parchment-soft); }
 .core-root .facts .row:last-child { border-bottom: 0; }
 .core-root .facts .k { font-family: var(--font-display); font-weight: 700; color: var(--forest-deep); }
-.core-root .facts .v { color: var(--forest-moss); text-align: right; }
+.core-root .facts .v { color: var(--forest-moss); text-align: right; overflow-wrap: anywhere; }
 
 /* Donate amount picker */
 .core-root .amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -254,6 +255,7 @@
 .core-root .core-footer a:hover { color: var(--spring-hover); }
 .core-root .core-footer .cols { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 30px; }
 .core-root .core-footer .cols nav { display: grid; gap: 8px; }
+.core-root .core-footer .cols nav a { padding: 8px 0; }
 /* #8fb896 (not --forest-sage) so the legal line reads at >=4.5:1 on the
    deepest-forest footer background (WCAG AA for small text). */
 .core-root .core-footer .fine { margin-top: 34px; padding-top: 20px; border-top: 1px solid rgba(168,230,168,.2); font-size: .85rem; color: #8fb896; }
@@ -271,8 +273,10 @@
   .core-root .canon-list { columns: 1; }
   .core-root .core-footer .cols { grid-template-columns: 1fr; }
   .core-root .amount-grid { grid-template-columns: repeat(3, 1fr); }
-  .core-root .nav-links { position: fixed; inset: var(--core-nav-h) 0 auto 0; background: var(--parchment-warm); flex-direction: column; padding: 18px 22px; gap: 16px; border-bottom: 1px solid var(--parchment-soft); display: none; z-index: 49; }
+  .core-root .nav-links { position: fixed; inset: var(--core-nav-h) 0 auto 0; background: var(--parchment-warm); flex-direction: column; padding: 18px 22px; gap: 4px; border-bottom: 1px solid var(--parchment-soft); display: none; z-index: 49; }
   .core-root .nav-links.open { display: flex; }
+  /* 44px-tall tap rows in the phone menu; text-height links invite mis-taps. */
+  .core-root .nav-links a { display: flex; align-items: center; min-height: 44px; width: 100%; }
   .core-root .nav-toggle { display: flex; }
 }
 

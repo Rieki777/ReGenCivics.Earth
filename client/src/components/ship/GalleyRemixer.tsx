@@ -343,7 +343,7 @@ export function GalleyRemixer() {
             <h3 className="text-lg font-semibold flex items-center gap-1.5">
               {activeHaul ? haulLabel(activeHaul) : "Your pantry"}
               {activeHaul && (
-                <button type="button" onClick={() => { setTitleDraft(activeHaul.title ?? ""); setEditingTitle(true); }} className="text-muted-foreground hover:text-foreground" aria-label="Rename haul">
+                <button type="button" onClick={() => { setTitleDraft(activeHaul.title ?? ""); setEditingTitle(true); }} className="text-muted-foreground hover:text-foreground p-2.5 -m-2 inline-flex items-center justify-center" aria-label="Rename haul">
                   <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
@@ -372,7 +372,7 @@ export function GalleyRemixer() {
                   <span className="w-6 h-6 rounded-full bg-[#4a7c59]/20 flex items-center justify-center text-[11px]" aria-hidden="true">🥬</span>
                 )}
                 {it.name}
-                <button type="button" aria-label={`Remove ${it.name}`} onClick={() => void drop(it.id)} className="ml-0.5 text-muted-foreground hover:text-foreground">
+                <button type="button" aria-label={`Remove ${it.name}`} onClick={() => void drop(it.id)} className="ml-0.5 text-muted-foreground hover:text-foreground p-2.5 -m-2 inline-flex items-center justify-center">
                   <X className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </span>
@@ -389,10 +389,10 @@ export function GalleyRemixer() {
           <div className="flex flex-col sm:flex-row gap-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />
             <div className="flex gap-2">
-              <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="h-11 rounded-md border bg-background px-2 text-sm" aria-label="Category">
+              <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="h-11 rounded-md border bg-background px-2 text-base md:text-sm" aria-label="Category">
                 {ITEM_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={source} onChange={(e) => setSource(e.target.value as typeof source)} className="h-11 rounded-md border bg-background px-2 text-sm" aria-label="Where from">
+              <select value={source} onChange={(e) => setSource(e.target.value as typeof source)} className="h-11 rounded-md border bg-background px-2 text-base md:text-sm" aria-label="Where from">
                 {ITEM_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -400,7 +400,7 @@ export function GalleyRemixer() {
           {itemPhoto && (
             <div className="relative inline-block">
               <img src={itemPhoto} alt="item" className="w-16 h-16 rounded-lg object-cover border" />
-              <button type="button" aria-label="Remove photo" onClick={() => setItemPhoto(null)} className="absolute -top-1.5 -right-1.5 bg-background border rounded-full p-0.5">
+              <button type="button" aria-label="Remove photo" onClick={() => setItemPhoto(null)} className="absolute -top-2.5 -right-2.5 bg-background border rounded-full p-2">
                 <X className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
@@ -508,7 +508,7 @@ export function GalleyRemixer() {
               {cookPhotos.map((u) => (
                 <div key={u} className="relative">
                   <img src={u} alt="to send" className="w-16 h-16 rounded-lg object-cover border" />
-                  <button type="button" aria-label="Remove photo" onClick={() => setCookPhotos((p) => p.filter((x) => x !== u))} className="absolute -top-1.5 -right-1.5 bg-background border rounded-full p-0.5">
+                  <button type="button" aria-label="Remove photo" onClick={() => setCookPhotos((p) => p.filter((x) => x !== u))} className="absolute -top-2.5 -right-2.5 bg-background border rounded-full p-2">
                     <X className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </div>

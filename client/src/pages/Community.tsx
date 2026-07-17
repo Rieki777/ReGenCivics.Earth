@@ -641,13 +641,13 @@ export default function Community() {
                     {editingCategoryId === category.id ? (
                       <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/50">
                         <input
-                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]"
+                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]"
                           value={editCategoryName}
                           onChange={e => setEditCategoryName(e.target.value)}
                           placeholder="Category name"
                         />
                         <input
-                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]"
+                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]"
                           value={editCategoryDesc}
                           onChange={e => setEditCategoryDesc(e.target.value)}
                           placeholder="Description (optional)" aria-label="Category description (optional)"
@@ -733,9 +733,9 @@ export default function Community() {
                 {showCreateCategory === 'general' ? (
                   <div className="bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
                     <p className="text-[#1a472a] text-sm font-semibold mb-3">New Category</p>
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -898,9 +898,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'earth' && (
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -1009,9 +1009,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'water' && (
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -1124,9 +1124,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'fire' && (
                   <div className="mt-3 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-amber-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-amber-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -1250,9 +1250,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'air' && (
                   <div className="mt-3 bg-slate-50 rounded-xl p-4 border border-slate-200/60">
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-slate-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-base md:text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-slate-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-600 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
