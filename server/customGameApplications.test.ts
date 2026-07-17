@@ -125,3 +125,51 @@ describe("computeQualificationScore", () => {
     ).toBe(30);
   });
 });
+
+/**
+ * Currency release model (no-peg surface tokens), mirroring the levers spec
+ * §1.1. Recognition currencies carry no peg: they never buy voice and never
+ * touch fiat. Value reaches people only by releasing a governed per-cycle
+ * budget of a compensation currency, pro-rata, so it floats cycle to cycle.
+ * These are the invariants an intake must not be able to talk its way past.
+ */
+describe("currency invariants", () => {
+  const currency = (over: Record<string, unknown>) => ({
+    economy: { currencies: [{ id: "gratitude", name: "Gratitude", kind: "recognition", ...over }] },
+  });
+
+  it("rejects a recognition currency that grants voice", () => {
+    const res = blueprintDraftSchema.safeParse(currency({ grantsVoice: true }));
+    expect(res.success).toBe(false);
+  });
+
+  it("rejects a recognition currency that is fiat exchangeable", () => {
+    const res = blueprintDraftSchema.safeParse(currency({ fiatExchangeable: true }));
+    expect(res.success).toBe(false);
+  });
+
+  it("rejects a currency that releases into itself", () => {
+    const res = blueprintDraftSchema.safeParse(
+      currency({ releases: { targetCurrencyId: "gratitude", budgetPerCycleVar: "regen_release_budget", method: "pro-rata" } }),
+    );
+    expect(res.success).toBe(false);
+  });
+
+  it("accepts recognition releasing pro-rata into a compensation currency", () => {
+    const res = blueprintDraftSchema.safeParse({
+      economy: {
+        currencies: [
+          {
+            id: "gratitude",
+            name: "Gratitude",
+            kind: "recognition",
+            peerGivenOnly: true,
+            releases: { targetCurrencyId: "regen", budgetPerCycleVar: "regen_release_budget", method: "pro-rata" },
+          },
+          { id: "regen", name: "$ReGen", kind: "compensation", fiatExchangeable: true },
+        ],
+      },
+    });
+    expect(res.success).toBe(true);
+  });
+});

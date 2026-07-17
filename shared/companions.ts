@@ -389,7 +389,7 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
         guidance: "Capture their ranking or priority order in their words. If they only name one or two, that is a real answer.",
       },
       // 7. Economy + exchange (economy.*, language.currencyName)
-      { key: "currencyName", label: "Your game gets its own recognition currency. Amora calls theirs Gratitude. What would yours be called?", type: "text", guidance: "If they have no name yet, invite a feeling word and note it as a starting idea." },
+      { key: "currencyName", label: "Your game gets its own recognition currency. Amora calls theirs Gratitude. What would yours be called?", type: "text", guidance: "If they have no name yet, invite a feeling word and note it as a starting idea. If asked how it works: a recognition currency carries no price and no peg. It can release a financial token from a budget the community sets each cycle, so its value floats. That is how ReGen Civics runs Gratitude and $ReGen, and their game mirrors it." },
       { key: "dues", label: "Are there dues, rents, or regular contributions members make?", type: "longtext" },
       { key: "rewardInstincts", label: "When someone shows up and contributes, what feels right as the reward? Recognition, currency, standing, access?", type: "longtext" },
       { key: "exchangeTypes", label: "What kinds of exchange does your community already use or want? Cash, tokens, work trade, joint ventures, agreements, your own kinds?", type: "longtext" },

@@ -113,6 +113,12 @@ Their queued next steps: submit acknowledgment emails + a status pipeline (New โ
   ],
 
   "economy": {
+    "currencies": [],                      // 1..N; recognition currencies carry NO peg. A recognition
+                                           // currency may declare releases: { targetCurrencyId,
+                                           // budgetPerCycleVar, method: "pro-rata" }: at cycle close it
+                                           // releases a financial token from a per-cycle governed budget,
+                                           // so its value floats (mirrors ReGen Civics Gratitude -> $ReGen;
+                                           // canonical model in game-amora FOUNDATION_LEVERS spec ยง1.1)
     "currencyMonthlyBudget": 0, "stageMultipliers": {},
     "dues": {}, "investor": { "enabled": false, "summary": {} },
     "exchangeTypes": []                    // white-labeled reciprocity types (cash, tokens, JV, MOU, their own)

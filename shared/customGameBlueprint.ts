@@ -130,7 +130,46 @@ const personaSchema = z.strictObject({
   })).max(60).default([]),
 });
 
+/**
+ * Currency model mirrors the Custom-Game-Foundation levers spec
+ * (FIXES_TO_MAKE_2026-07-17_FOUNDATION_LEVERS.md in game-amora): a project
+ * defines 1..N currencies. Recognition currencies carry NO peg and no posted
+ * price. A recognition currency may declare a surface-token release: at cycle
+ * close, each holder's share of that cycle's issuance releases a pro-rata share
+ * of a governed per-cycle budget of a compensation currency, so the effective
+ * value floats cycle to cycle. Reference deployment: ReGen Civics, where
+ * received Gratitude releases $ReGen. Custom games mirror that deployment.
+ */
+const currencySchema = z.strictObject({
+  id: z.string().min(1).max(60),
+  name: z.string().min(1).max(120),
+  kind: z.enum(["recognition", "compensation", "voice"]),
+  fiatExchangeable: z.boolean().default(false),
+  peerGivenOnly: z.boolean().default(false),
+  grantsVoice: z.boolean().default(false),
+  monthlyBudget: z.number().min(0).max(100_000_000).optional(),
+  releases: z.strictObject({
+    targetCurrencyId: z.string().min(1).max(60),
+    budgetPerCycleVar: z.string().min(1).max(120),
+    method: z.literal("pro-rata"),
+  }).optional(),
+}).superRefine((c, ctx) => {
+  // Invariants from the levers spec (F4 + release guards):
+  if (c.kind === "recognition" && c.grantsVoice) {
+    ctx.addIssue({ code: "custom", message: "A recognition currency can never grant voice." });
+  }
+  if (c.kind === "recognition" && c.fiatExchangeable) {
+    ctx.addIssue({ code: "custom", message: "A recognition currency carries no peg and no fiat exchange." });
+  }
+  if (c.releases && c.releases.targetCurrencyId === c.id) {
+    ctx.addIssue({ code: "custom", message: "A currency cannot release into itself." });
+  }
+});
+
 const economySchema = z.strictObject({
+  /** 1..N currencies, the project's call. Cross-currency release targets are
+   *  validated at generation time (must exist and be kind "compensation"). */
+  currencies: z.array(currencySchema).max(12).default([]),
   currencyMonthlyBudget: z.number().min(0).max(100_000_000).default(0),
   stageMultipliers: z.record(z.string().max(60), z.number()).default({}),
   dues: z.record(z.string().max(60), z.union([z.string().max(500), z.number()])).default({}),
@@ -243,6 +282,7 @@ export const blueprintDraftSchema = z.strictObject({
   }).optional(),
   personas: z.array(personaSchema.partial()).max(8).optional(),
   economy: z.strictObject({
+    currencies: z.array(currencySchema).max(12).optional(),
     currencyMonthlyBudget: z.number().min(0).max(100_000_000).optional(),
     stageMultipliers: z.record(z.string().max(60), z.number()).optional(),
     dues: z.record(z.string().max(60), z.union([z.string().max(500), z.number()])).optional(),
