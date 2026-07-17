@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-17 (later): Routes get real: free first nights, optional turnovers, the honeymoon reshape
+
+- **The Sanctuary is no longer the built-in first night** (no per-voyage cost to CORE): every route's Day 1 boards at 3pm and recommends the free camps in and around Ashland first, with the WellSprings, a farm stay through the crew, or the Sanctuary bookable, each at its own cost. Baked into all four rough charts and the First Mate doctrine.
+- **Mid-voyage turnovers are the crew's choice now**: dump and refill on route, or swing through Ashland for the Keeper. Turnover chart day, multi-week booking note, honeymoon copy, and concierge rules all say so. (Between-crew turnovers stay Keeper-run.)
+- **The Honeymoon reshaped per Rye**: week one opens the heart in Ashland then roots a full week in and around Shasta (Lake Siskiyou paddle, forest hike, root rest), back through Ashland for the optional turnover; week two crowns at Crater Lake and its waters. New `WEEK_HONEYMOON_ROOT` / `WEEK_HONEYMOON_CROWN` blueprints.
+- **Every week of every route now carries a forest stop** (a hike and a seed planting), enforced by a new test. **Rite of the Table corrected** on /ship/theme: saved meal seeds go into the healing hole at the voyage's end to grow plants holding your love, never into the chest; same doctrine in charts and First Mate rules.
+- **The Book nav card wears the gold** (Rye: make it obvious): permanent gold ring + glow, a Start here chip, bold gold "Book a Voyage" label (`shipShared.tsx`).
+- **Build unbroken along the way**: origin's App.tsx/routers.ts referenced `./pages/Watch` and `./routes/videoTutor` while the seven video-tutor files sat untracked, so every Railway build failed TS2307 with local tsc green. Committed the files (`0312253`, video-tutor tests 10/10). Verify: pnpm check exit 0, 57 ship tests, truncation 0/0, and all of it reproduced live on production (honeymoon chart day-by-day, free-stay day 1, optional-turnover copy, gold Book card). Commits `8c0ddf6`, `0312253`, `42b4196`.
+
 ## 2026-07-17: Custom Games gets its face and its currency model
 
 - **Sylva has a portrait** (`fdd2609`). She was described as a mythic forest guide and rendered with the ship's default **anchor** emoji, because `companions.ts:107` pointed at a `persona-sylva.webp` that did not exist. She now matches the persona set's painterly bust framing, warm golden light, and direct gaze, holding the thing she actually does: a sketchbook, because she sketches your game while you talk. Deep brown skin and locs fill a gap in a roster that was three white characters and one Black gardener, and she reads ageless rather than elderly so she does not double the first mate, who already holds "elder woman in a forest." Live at 640x640, 61KB, inside the set's 42-102KB range.
