@@ -33,6 +33,11 @@ For each new season, you generate:
 
 Read these files to understand the current state:
 
+0. **`SEASON_TEMPLATE.md`** (in repo root) -- the season assembly template: pre-season
+   checklist, the ritual spine (opening ceremony, weekly campfire thread + featured
+   quest + crew spotlight, mid-season ecological calendar moment, closing harvest
+   ceremony), and the season's definition of done. This skill produces the role and
+   art artifacts; the template holds the season's shape. Assemble season N+1 from it.
 1. **`SEASONS_HISTORY.md`** (in repo root) -- the master record. Read the most recent season entry to understand what exists now.
 2. **`CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`** -- the current art prompt. Read the Style Guide section for the visual direction. The solarpunk aesthetic carries forward unless Rye says otherwise.
 3. **`CLAUDE_CODE_PROMPT_2026-04-02_TEAM_ROLES.md`** -- the current Team page execution prompt. Read Part A (gameRoles array) and Part B (seasons array) for the current data structure.

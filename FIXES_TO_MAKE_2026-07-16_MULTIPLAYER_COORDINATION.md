@@ -20,6 +20,14 @@ Build prompt: `CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md`. Sourc
 
 Items marked CODED become VERIFIED after deploy + a live walk of the flow on regencivics.earth (STEERING §4).
 
+## Phase E (docs, buildable anytime): status
+
+| # | Item | Owner | Status | Evidence |
+|---|------|-------|--------|----------|
+| E1 | `SEASON_TEMPLATE.md` with the ritual spine (opening ceremony via Riverside, weekly campfire + featured quest + crew spotlight, mid-season ecological moment, closing harvest ceremony consecrating the map layer) | CLAUDE CODE | VERIFIED | `SEASON_TEMPLATE.md` in repo root, assembled from Season 1's record; truncation audit clean |
+| E1 | `regen-seasonal-roles` skill points at the template | CLAUDE CODE | VERIFIED | `skills/regen-seasonal-roles/SKILL.md` "Before You Start" step 0 |
+| E2 | Civilization pattern modules in blueprint + master plan | CLAUDE CODE | BLOCKED | `shared/customGameBlueprint.ts` and `CUSTOM_GAMES_MASTER_PLAN.md` have uncommitted changes from your active custom-games session. Editing them from this session would tangle the two change sets in one working tree (the 2026-07-03 cross-commit lesson in GOLDEN_RULE.md). E2 runs as soon as that session commits or you give the all-clear. |
+
 ## Design decisions made while building (flag anything you want changed)
 
 1. **There is no quest table.** Verified in `drizzle/schema.ts`: quest definitions are file-based (`client/src/data/questData.ts`) and `quest_completions.questId` is a varchar key. So the prompt's third migration (crewSizeMin/Max on the quest table) became `shared/multiplayerQuests.ts`, the single source both server and client read. Nothing about existing solo quests changes.
