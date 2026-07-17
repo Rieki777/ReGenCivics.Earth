@@ -237,6 +237,28 @@ export function registerHarvestBridgeRoutes(app: Express) {
     }
   });
 
+  /**
+   * Phase 3: the pack builder pulls the learned voice rules so
+   * build_worldview_pack.py folds the top rules by weight into
+   * style_rules.json. Rules are derived form-rules, never edit bodies.
+   */
+  app.get("/api/harvest/voice-rules", async (req: Request, res: Response) => {
+    if (!(await checkBridgeAuth(req, res))) return;
+    try {
+      const { loadTopRules } = await import("../lib/voice-learning");
+      const rules = await loadTopRules(ENV.ownerUserId, 50);
+      log.info(`voice-rules pull ip=${req.ip} count=${rules.length}`);
+      res.json({ rules });
+    } catch (err) {
+      if (isMissingTableError(err)) {
+        res.json({ rules: [] });
+        return;
+      }
+      log.error(`voice-rules pull failed: ${err instanceof Error ? err.message : String(err)}`);
+      res.status(500).json({ error: "internal" });
+    }
+  });
+
   app.post("/api/harvest/mark-processed", async (req: Request, res: Response) => {
     if (!(await checkBridgeAuth(req, res))) return;
 

@@ -4929,6 +4929,40 @@ export const sourceIndex = mysqlTable("source_index", {
 }));
 export type SourceIndexRow = typeof sourceIndex.$inferSelect;
 
+/**
+ * One row per saved draft edit: the (ai_version, edited_version) pair plus
+ * Rye's style/content call. Bodies are nulled after rule extraction (plan s6
+ * storage rule); the row survives as extraction bookkeeping only.
+ */
+export const voiceEdits = mysqlTable("voice_edits", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  itemId: int("item_id").notNull(),
+  channel: varchar("channel", { length: 32 }).notNull(),
+  editKind: mysqlEnum("edit_kind", ["style", "content"]).default("content").notNull(),
+  aiVersion: text("ai_version"),
+  editedVersion: text("edited_version"),
+  extractedAt: timestamp("extracted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerKindIdx: index("voice_edits_owner_kind_idx").on(t.ownerId, t.editKind, t.extractedAt),
+}));
+export type VoiceEdit = typeof voiceEdits.$inferSelect;
+
+/** Derived, taxonomy-constrained style rules with weight + recurrence. */
+export const voiceRules = mysqlTable("voice_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  category: mysqlEnum("category", ["word_swap", "sentence_length", "opener", "closer", "punctuation", "formatting", "aside"]).notNull(),
+  rule: varchar("rule", { length: 500 }).notNull(),
+  weight: double("weight").notNull().default(1),
+  firstSeen: timestamp("first_seen").defaultNow().notNull(),
+  lastSeen: timestamp("last_seen").defaultNow().notNull(),
+}, (t) => ({
+  ownerWeightIdx: index("voice_rules_owner_weight_idx").on(t.ownerId, t.weight),
+}));
+export type VoiceRule = typeof voiceRules.$inferSelect;
+
 /** Append-only run stats for the /admin-create status line. */
 export const harvestRuns = mysqlTable("harvest_runs", {
   id: int("id").autoincrement().primaryKey(),

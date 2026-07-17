@@ -224,16 +224,21 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
   const [showSources, setShowSources] = useState(false);
   const [postedOpen, setPostedOpen] = useState(false);
   const [postedText, setPostedText] = useState("");
+  const [kindOpen, setKindOpen] = useState(false);
   const edit = trpc.harvest.editItem.useMutation();
   const regenerate = trpc.harvest.regenerate.useMutation();
   const markPosted = trpc.harvest.markPosted.useMutation();
 
-  useEffect(() => { setBody(item.body ?? ""); setDirty(false); }, [item.id, item.body]);
+  useEffect(() => { setBody(item.body ?? ""); setDirty(false); setKindOpen(false); }, [item.id, item.body]);
 
-  async function save() {
+  // The one-tap classifier (plan s6): saving asks "mostly style or mostly
+  // content?" so only style edits teach the voice loop. Content is the safer
+  // default and gets the plain button.
+  async function save(editKind: "style" | "content") {
     if (!dirty || !body.trim()) return;
-    await edit.mutateAsync({ itemId: item.id, body });
+    await edit.mutateAsync({ itemId: item.id, body, editKind });
     setDirty(false);
+    setKindOpen(false);
     onChanged();
   }
 
@@ -262,9 +267,21 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
         className="min-h-[140px] text-sm rounded-xl border-[#4a7c59]/30 focus-visible:ring-[#7dd87d] font-normal whitespace-pre-wrap" />
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={!dirty || edit.isPending} onClick={save}>
-          {edit.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save edit"}
-        </Button>
+        {!kindOpen ? (
+          <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={!dirty || edit.isPending} onClick={() => setKindOpen(true)}>
+            {edit.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save edit"}
+          </Button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs text-[#1a472a]/70">
+            That edit was
+            <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#4a7c59]/40 text-[#1a472a]" disabled={edit.isPending} onClick={() => void save("style")}>
+              mostly style
+            </Button>
+            <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={edit.isPending} onClick={() => void save("content")}>
+              mostly content
+            </Button>
+          </span>
+        )}
         <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/70" onClick={copyBody}>
           {copied ? <Check className="w-3.5 h-3.5 mr-1 text-[#4a7c59]" /> : <Copy className="w-3.5 h-3.5 mr-1" />}{copied ? "Copied" : "Copy"}
         </Button>
@@ -346,6 +363,7 @@ export default function AdminCreate() {
           <div>
             <Link href="/admin" className="text-xs text-[#4a7c59] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> Admin</Link>
             <h1 className="text-2xl font-bold text-[#1a472a] flex items-center gap-2"><Sprout className="w-6 h-6 text-[#4a7c59]" /> The Harvest</h1>
+            <Link href="/admin/voice-rules" className="text-xs text-[#4a7c59] hover:underline">Voice rules</Link>
             <p className="text-xs text-[#1a472a]/60 mt-1">
               {data.ready
                 ? <>Generation ran {timeAgo(data.status.lastGeneration)} · bridge {timeAgo(data.status.lastBridge)}</>

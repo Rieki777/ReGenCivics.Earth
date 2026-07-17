@@ -129,6 +129,7 @@ const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminCreate = lazy(() => import("./pages/AdminCreate"));
+const AdminVoiceRules = lazy(() => import("./pages/AdminVoiceRules"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 const CrowdPooling = lazy(() => import("./pages/CrowdPooling"));
 const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
@@ -319,6 +320,7 @@ function Router() {
       <Route path={"/connect"}><EB><Connect /></EB></Route>
       <Route path={"/admin"}><EB><Admin /></EB></Route>
       <Route path={"/admin-create"}><EB><AdminCreate /></EB></Route>
+      <Route path={"/admin/voice-rules"}><EB><AdminVoiceRules /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}><EB><CrowdPoolingProjects /></EB></Route>

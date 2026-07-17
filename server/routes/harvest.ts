@@ -153,16 +153,92 @@ export const harvestRouter = router({
       return { ...item, aiBody: body, body, status: "ready" as const };
     }),
 
-  /** Save an in-place edit. ai_body stays untouched for Phase 3. */
+  /**
+   * Save an in-place edit. ai_body stays untouched, and the (ai_body, body)
+   * pair feeds the learning loop with Rye's one-tap style/content call
+   * (default content, the safer choice). Learning runs fire-and-forget; a
+   * save never waits on a model.
+   */
   editItem: ownerProcedure
     .use(rateLimited({ windowMs: 60_000, max: 60 }))
-    .input(z.object({ itemId: z.number().int().positive(), body: z.string().min(1).max(60000) }))
+    .input(z.object({
+      itemId: z.number().int().positive(),
+      body: z.string().min(1).max(60000),
+      editKind: z.enum(["style", "content"]).default("content"),
+    }))
     .mutation(async ({ ctx, input }) => {
       const item = await getOwnedItem(ctx.user.id, input.itemId);
       const db = await requireDb();
       await db.update(creationItems)
         .set({ body: input.body, status: item.status === "shipped" ? "shipped" : "edited" })
         .where(eq(creationItems.id, item.id));
+
+      if (item.aiBody && item.aiBody !== input.body) {
+        const { processEdit } = await import("../lib/voice-learning");
+        void processEdit({
+          ownerId: ctx.user.id,
+          itemId: item.id,
+          channel: item.channel,
+          aiVersion: item.aiBody,
+          editedVersion: input.body,
+          editKind: input.editKind,
+        }).catch(() => undefined);
+      }
+      return { ok: true };
+    }),
+
+  /** The learned rules, weightiest first (the Voice rules screen's read). */
+  listRules: ownerProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    const { voiceRules } = await import("../../drizzle/schema");
+    try {
+      const rows = await db.select().from(voiceRules)
+        .where(eq(voiceRules.ownerId, ctx.user.id))
+        .orderBy(desc(voiceRules.weight))
+        .limit(200);
+      return { rules: rows };
+    } catch (err) {
+      if (isMissingTableError(err)) return { rules: [] };
+      throw err;
+    }
+  }),
+
+  /** Edit or demote one learned rule. Hard rules are not rows; they cannot be touched here. */
+  updateRule: ownerProcedure
+    .input(z.object({
+      ruleId: z.number().int().positive(),
+      rule: z.string().min(8).max(400).optional(),
+      weight: z.number().min(0.1).max(100).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { voiceRules } = await import("../../drizzle/schema");
+      const set: Record<string, unknown> = {};
+      if (input.rule !== undefined) {
+        const { validateCandidateRule } = await import("../lib/voice-learning");
+        // Category unchanged; validate the new text against the same screens.
+        const [row] = await db.select().from(voiceRules)
+          .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Rule not found" });
+        const problem = validateCandidateRule(row.category, input.rule);
+        if (problem) throw new TRPCError({ code: "BAD_REQUEST", message: `That edit would break the guardrails: ${problem}` });
+        set.rule = input.rule;
+      }
+      if (input.weight !== undefined) set.weight = input.weight;
+      if (Object.keys(set).length === 0) return { ok: true };
+      await db.update(voiceRules)
+        .set(set)
+        .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId)));
+      return { ok: true };
+    }),
+
+  deleteRule: ownerProcedure
+    .input(z.object({ ruleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { voiceRules } = await import("../../drizzle/schema");
+      await db.delete(voiceRules)
+        .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId)));
       return { ok: true };
     }),
 
