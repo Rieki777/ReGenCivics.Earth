@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-17 (hymns): Music player rebuilt, silent vote failures surfaced
+
+- **Player rebuilt around the Media Session API** (`AudioContext.tsx`): the current hymn shows on the lock screen with artwork, and hardware/headset play, pause, next, prev, and seek drive the playlist. Play state syncs from the audio element itself, so lock-screen taps update every on-screen player.
+- **Seek bar respects the drag**: while the thumb is held it shows the drag position and commits on release ('timeupdate' used to yank it back 4x a second mid-drag). Buffering shows a spinner on the play button in both the Hymn Book panel and the SoundPlayer.
+- **Volume matches what each platform allows**: iOS ignores programmatic volume, so it gets a working mute toggle plus the hardware-buttons hint; other platforms get mute toggle + slider. Position, volume, and mute persist; exact position saves on tab close and localStorage writes are throttled.
+- **Vote button failures are visible now** (`HymnBook.tsx`, per Rye's report of a dead Vote button): voting is optimistic with rollback, errors render inline (an expired session used to fail with zero feedback), the tapped row shows a pending spinner, and signed-out visitors see "Sign in to vote".
+- **`songs.list` filters archived submissions** and honors the previously ignored `includeWinners` flag, so closed-season entries stop appearing under "This season's submissions".
+- Verify: pnpm check exit 0, truncation audit 0/0 on 1035 files, vitest 532 passed (58 pre-existing React.act harness failures, all in files this work never touched).
+
 ## 2026-07-17 (later): Routes get real: free first nights, optional turnovers, the honeymoon reshape
 
 - **The Sanctuary is no longer the built-in first night** (no per-voyage cost to CORE): every route's Day 1 boards at 3pm and recommends the free camps in and around Ashland first, with the WellSprings, a farm stay through the crew, or the Sanctuary bookable, each at its own cost. Baked into all four rough charts and the First Mate doctrine.

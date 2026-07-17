@@ -3,11 +3,11 @@
  * Players submit one song per season, vote on submissions, and the
  * highest-voted song is added to the Hymn Book.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useAudio, PLAYLIST } from "@/contexts/AudioContext";
-import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageTransition } from "@/components/PageTransition";
 import { ShareButton } from "@/components/ShareButton";
@@ -31,8 +31,35 @@ export default function HymnBook() {
       setSubmitted(true);
     },
   });
+  // Voting is optimistic: the tap moves the vote in the UI instantly, and we
+  // roll back if the server disagrees. Before this, a failed vote (expired
+  // session, network drop) did NOTHING visible, which read as "the Vote
+  // button doesn't work".
   const vote = trpc.songs.vote.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ submissionId }) => {
+      await Promise.all([utils.songs.list.cancel(), utils.songs.myVote.cancel()]);
+      const prevList = utils.songs.list.getData(undefined);
+      const prevVote = utils.songs.myVote.getData();
+      const prevId = prevVote?.submissionId ?? null;
+      utils.songs.myVote.setData(undefined, { submissionId });
+      utils.songs.list.setData(undefined, (old) =>
+        old?.map((r) =>
+          r.id === submissionId
+            ? { ...r, voteCount: r.voteCount + 1 }
+            : r.id === prevId
+              ? { ...r, voteCount: Math.max(0, r.voteCount - 1) }
+              : r,
+        ),
+      );
+      return { prevList, prevVote };
+    },
+    onError: (_err, _vars, rollback) => {
+      if (rollback) {
+        utils.songs.list.setData(undefined, rollback.prevList);
+        utils.songs.myVote.setData(undefined, rollback.prevVote);
+      }
+    },
+    onSettled: () => {
       utils.songs.list.invalidate();
       utils.songs.myVote.invalidate();
     },
@@ -263,6 +290,21 @@ export default function HymnBook() {
               <ListMusic className="w-5 h-5 text-[#7dd87d]" /> This season's submissions
             </h2>
 
+            {/* Voting errors surface here instead of failing silently. */}
+            {vote.error && (
+              <div className="bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3 mb-4 text-sm text-red-200">
+                {vote.error.data?.code === "UNAUTHORIZED" ? (
+                  <>
+                    Your session expired.{" "}
+                    <a href="/api/auth/login" className="text-[#7dd87d] underline">Sign in again</a>{" "}
+                    to vote.
+                  </>
+                ) : (
+                  <>Your vote did not go through. {vote.error.message}</>
+                )}
+              </div>
+            )}
+
             {list.isLoading ? (
               <p className="text-white/60">Loading…</p>
             ) : (list.data?.length ?? 0) === 0 ? (
@@ -271,6 +313,7 @@ export default function HymnBook() {
               <ul className="space-y-3">
                 {list.data!.map((row) => {
                   const isMyVote = myVote.data?.submissionId === row.id;
+                  const isVoting = vote.isPending && vote.variables?.submissionId === row.id;
                   return (
                     <li
                       key={row.id}
@@ -303,19 +346,28 @@ export default function HymnBook() {
                         >
                           <Music className="w-3.5 h-3.5" /> Listen
                         </a>
-                        {isAuthenticated && (
+                        {isAuthenticated ? (
                           <button
                             onClick={() => vote.mutate({ submissionId: row.id })}
                             disabled={vote.isPending || isMyVote}
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                            aria-label={isMyVote ? `Your vote is on ${row.title}` : `Vote for ${row.title}`}
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 min-h-[36px] rounded-full transition-colors ${
                               isMyVote
                                 ? "bg-[#7dd87d] text-[#0d2818] cursor-default"
-                                : "bg-white/10 text-white hover:bg-[#7dd87d]/30"
+                                : "bg-white/10 text-white hover:bg-[#7dd87d]/30 active:bg-[#7dd87d]/40"
                             }`}
                           >
-                            <Vote className="w-3.5 h-3.5" />
+                            {isVoting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Vote className="w-3.5 h-3.5" />}
                             {isMyVote ? "Your vote" : "Vote"}
                           </button>
+                        ) : (
+                          <a
+                            href="/api/auth/login"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 min-h-[36px] rounded-full bg-white/10 text-white hover:bg-[#7dd87d]/30 transition-colors"
+                          >
+                            <Vote className="w-3.5 h-3.5" />
+                            Sign in to vote
+                          </a>
                         )}
                       </div>
                     </li>
@@ -355,20 +407,39 @@ function EqualizerBars() {
 
 /**
  * NowPlayingPanel: the Spotify-style transport at the top of the Hymn Book.
- * Album art, current track + artist, a draggable seek bar with elapsed /
- * total time, prev / play-pause / next controls, and a volume slider. All
- * state comes from the shared AudioContext so playback continues seamlessly
- * across pages.
+ * Album art, current track + artist, a drag-friendly seek bar with elapsed /
+ * total time, prev / play-pause / next controls (with a buffering spinner),
+ * and volume. All state comes from the shared AudioContext so playback
+ * continues seamlessly across pages, and the context mirrors everything to
+ * the Media Session API so the lock screen shows the same hymn.
+ *
+ * iOS specifics: Apple makes HTMLMediaElement.volume read-only, so a volume
+ * slider is a dead control there. `muted` IS settable, so iOS gets a working
+ * mute button plus a pointer at the hardware buttons.
  */
 function NowPlayingPanel() {
   const audio = useAudio();
   const song = audio.currentSong;
   const dur = isFinite(audio.duration) ? audio.duration : 0;
-  const pct = dur > 0 ? Math.min(100, (audio.currentTime / dur) * 100) : 0;
-  const volPct = Math.round(audio.volume * 100);
-  // iOS makes HTMLMediaElement.volume read-only, so the slider would move but do
-  // nothing. Show a hint pointing at the hardware buttons instead of a dead control.
   const iosVolume = isIos();
+
+  // Seek-bar dragging: while the thumb is held, show the drag position
+  // instead of live playback time, and only commit the seek on release.
+  // Without this, 'timeupdate' (4x/s) yanks the thumb out from under the
+  // finger mid-drag, which is the single biggest "cheap player" tell.
+  const [dragTime, setDragTime] = useState<number | null>(null);
+  const draggingRef = useRef(false);
+  const shownTime = dragTime ?? Math.min(audio.currentTime, dur || 0);
+  const pct = dur > 0 ? Math.min(100, (shownTime / dur) * 100) : 0;
+  const volPct = audio.muted ? 0 : Math.round(audio.volume * 100);
+  const endDrag = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    if (dragTime !== null) audio.seek(dragTime);
+    setDragTime(null);
+  };
+
+  const showSpinner = audio.isBuffering && audio.isPlaying;
 
   return (
     <div className="flex flex-col gap-5">
@@ -385,18 +456,33 @@ function NowPlayingPanel() {
         @media (prefers-reduced-motion: reduce) {
           .hymn-eq-bar { animation: none; height: 60%; }
         }
+        /* Range styling: a slim 6px track inside a 28px-tall input, so the
+           touch target is finger-sized without the bar looking chunky. The
+           filled portion comes from the --fill custom property. */
         .hymn-range {
           -webkit-appearance: none; appearance: none;
-          height: 6px; border-radius: 9999px; cursor: pointer; outline: none;
+          height: 28px; background: transparent; cursor: pointer; outline: none;
+          touch-action: none;
+        }
+        .hymn-range:focus-visible { outline: 2px solid #7dd87d; outline-offset: 4px; border-radius: 9999px; }
+        .hymn-range::-webkit-slider-runnable-track {
+          height: 6px; border-radius: 9999px;
+          background: linear-gradient(to right, #7dd87d var(--fill, 0%), rgba(255,255,255,0.15) var(--fill, 0%));
         }
         .hymn-range::-webkit-slider-thumb {
           -webkit-appearance: none; appearance: none;
-          width: 14px; height: 14px; border-radius: 50%;
+          width: 16px; height: 16px; margin-top: -5px; border-radius: 50%;
           background: #fff; border: 2px solid #7dd87d;
           box-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
+        .hymn-range::-moz-range-track {
+          height: 6px; border-radius: 9999px; background: rgba(255,255,255,0.15);
+        }
+        .hymn-range::-moz-range-progress {
+          height: 6px; border-radius: 9999px; background: #7dd87d;
+        }
         .hymn-range::-moz-range-thumb {
-          width: 14px; height: 14px; border-radius: 50%;
+          width: 16px; height: 16px; border-radius: 50%;
           background: #fff; border: 2px solid #7dd87d; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
       `}</style>
@@ -415,21 +501,33 @@ function NowPlayingPanel() {
           </p>
           <p className="text-white/60 text-sm truncate">{song?.artist ?? "Hymns of the ReGeneration"}</p>
         </div>
+        <span className="hidden md:block text-white/40 text-xs tabular-nums flex-shrink-0 self-start pt-1">
+          {audio.currentIndex + 1} / {audio.playlist.length}
+        </span>
       </div>
 
       {/* Seek bar */}
       <div className="flex items-center gap-3">
-        <span className="text-[11px] tabular-nums text-white/60 w-10 text-right">{fmtTime(audio.currentTime)}</span>
+        <span className="text-[11px] tabular-nums text-white/60 w-10 text-right">{fmtTime(shownTime)}</span>
         <input
           type="range"
           min={0}
           max={dur || 0}
           step={0.1}
-          value={Math.min(audio.currentTime, dur || 0)}
-          onChange={(e) => audio.seek(parseFloat(e.target.value))}
+          value={shownTime}
+          onPointerDown={() => { draggingRef.current = true; }}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onChange={(e) => {
+            const t = parseFloat(e.target.value);
+            if (draggingRef.current) setDragTime(t);
+            else audio.seek(t); // keyboard arrows seek directly
+          }}
           className="hymn-range flex-1"
-          style={{ background: `linear-gradient(to right, #7dd87d ${pct}%, rgba(255,255,255,0.15) ${pct}%)` }}
+          style={{ "--fill": `${pct}%` } as CSSProperties}
           aria-label="Seek"
+          aria-valuetext={`${fmtTime(shownTime)} of ${fmtTime(dur)}`}
+          disabled={dur <= 0}
         />
         <span className="text-[11px] tabular-nums text-white/60 w-10">{fmtTime(dur)}</span>
       </div>
@@ -440,7 +538,7 @@ function NowPlayingPanel() {
           type="button"
           onClick={audio.prevSong}
           aria-label="Previous track"
-          className="text-white/80 hover:text-[#7dd87d] transition-colors"
+          className="text-white/80 hover:text-[#7dd87d] transition-colors p-2 -m-2"
         >
           <SkipBack className="w-6 h-6" fill="currentColor" />
         </button>
@@ -450,21 +548,36 @@ function NowPlayingPanel() {
           aria-label={audio.isPlaying ? "Pause" : "Play"}
           className="w-14 h-14 rounded-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] flex items-center justify-center shadow-lg transition-colors"
         >
-          {audio.isPlaying ? <Pause className="w-6 h-6" fill="currentColor" /> : <Play className="w-6 h-6 translate-x-0.5" fill="currentColor" />}
+          {showSpinner ? (
+            <Loader2 className="w-6 h-6 animate-spin" />
+          ) : audio.isPlaying ? (
+            <Pause className="w-6 h-6" fill="currentColor" />
+          ) : (
+            <Play className="w-6 h-6 translate-x-0.5" fill="currentColor" />
+          )}
         </button>
         <button
           type="button"
           onClick={audio.nextSong}
           aria-label="Next track"
-          className="text-white/80 hover:text-[#7dd87d] transition-colors"
+          className="text-white/80 hover:text-[#7dd87d] transition-colors p-2 -m-2"
         >
           <SkipForward className="w-6 h-6" fill="currentColor" />
         </button>
       </div>
 
-      {/* Volume */}
+      {/* Volume. Mute works everywhere, including iOS; the level slider only
+          renders where the browser actually honors it. */}
       <div className="flex items-center gap-3 justify-center">
-        <Volume2 className="w-4 h-4 text-white/50 flex-shrink-0" />
+        <button
+          type="button"
+          onClick={audio.toggleMute}
+          aria-label={audio.muted ? "Unmute" : "Mute"}
+          aria-pressed={audio.muted}
+          className="text-white/50 hover:text-white transition-colors p-2 -m-2 flex-shrink-0"
+        >
+          {audio.muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
         {iosVolume ? (
           <span className="text-xs text-white/60">Use your device buttons to change volume</span>
         ) : (
@@ -473,10 +586,10 @@ function NowPlayingPanel() {
             min={0}
             max={1}
             step={0.01}
-            value={audio.volume}
+            value={audio.muted ? 0 : audio.volume}
             onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
             className="hymn-range w-32"
-            style={{ background: `linear-gradient(to right, #7dd87d ${volPct}%, rgba(255,255,255,0.15) ${volPct}%)` }}
+            style={{ "--fill": `${volPct}%` } as CSSProperties}
             aria-label="Volume"
           />
         )}

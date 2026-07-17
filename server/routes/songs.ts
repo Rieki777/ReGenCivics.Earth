@@ -108,6 +108,14 @@ export const songsRouter = router({
       if (!db) return [] as Array<any>;
       const seasonId = input?.seasonId ?? await getActiveSeasonId();
 
+      // Only live submissions belong on the voting page. After a season is
+      // tallied, losers are archived and the winner moves into the Hymn Book,
+      // so neither should keep showing as "this season's submissions".
+      // `includeWinners` opts winners back in for archive/hall-of-fame views.
+      const statusCond = input?.includeWinners
+        ? sql`${songSubmissions.status} IN ('pending', 'winner')`
+        : eq(songSubmissions.status, "pending");
+
       const rows = await db.select({
         id: songSubmissions.id,
         userId: songSubmissions.userId,
@@ -125,8 +133,8 @@ export const songsRouter = router({
       .leftJoin(users, eq(users.id, songSubmissions.userId))
       .where(
         seasonId === null || seasonId === undefined
-          ? sql`1 = 1`
-          : eq(songSubmissions.seasonId, seasonId)
+          ? statusCond
+          : and(eq(songSubmissions.seasonId, seasonId), statusCond)
       )
       .orderBy(desc(songSubmissions.voteCount), desc(songSubmissions.submittedAt))
       .limit(200);
