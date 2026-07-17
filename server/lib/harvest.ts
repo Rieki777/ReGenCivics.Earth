@@ -351,8 +351,11 @@ export async function runWeeklyDigest(): Promise<{ proposals: number }> {
     return { proposals: 0 };
   }
 
+  // Numeric handles instead of raw idea_ref paths: models copy [7] reliably
+  // and mangle long file paths (the first live run validated 0 of 3 proposals
+  // because every path ref came back paraphrased).
   const material = freshIdeas
-    .map((i) => `[${i.ideaRef}] ${i.title}: ${(i.summary ?? "").slice(0, 240)}`)
+    .map((i, n) => `[${n}] ${i.title}: ${(i.summary ?? "").slice(0, 240)}`)
     .join("\n");
   const res = await invokeLLM({
     messages: [
@@ -362,7 +365,7 @@ export async function runWeeklyDigest(): Promise<{ proposals: number }> {
       },
       {
         role: "user",
-        content: `Propose exactly 3 article concepts from this week's material. For each: a working title in Rye's register, a one-sentence angle, and the idea refs it draws from.\n\n<material>\n${material.slice(0, 16000)}\n</material>`,
+        content: `Propose exactly 3 article concepts from this week's material. For each: a working title in Rye's register, a one-sentence angle, and the bracketed numbers of the ideas it draws from (copy the numbers exactly, e.g. "3").\n\n<material>\n${material.slice(0, 16000)}\n</material>`,
       },
     ],
     maxTokens: 900,
@@ -400,16 +403,20 @@ export async function runWeeklyDigest(): Promise<{ proposals: number }> {
     proposals = [];
   }
 
-  const refSet = new Set(freshIdeas.map((i) => i.ideaRef));
   const week = new Date().toISOString().slice(0, 10);
   let inserted = 0;
   for (const [n, proposal] of proposals.entries()) {
-    const validRefs = (proposal.refs ?? []).filter((r) => refSet.has(r)).slice(0, 8);
-    if (!proposal.title || validRefs.length === 0) continue;
-    const sourceRefs = Array.from(new Set(validRefs.flatMap((ref) => {
-      const idea = freshIdeas.find((i) => i.ideaRef === ref);
-      return Array.isArray(idea?.sourceRefs) ? (idea.sourceRefs as unknown[]).filter((s): s is string => typeof s === "string") : [];
-    })));
+    // Resolve numeric handles (with or without brackets) back to ideas.
+    const drawnIdeas = Array.from(new Set((proposal.refs ?? [])
+      .map((r) => Number.parseInt(String(r).replace(/[^\d]/g, ""), 10))
+      .filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < freshIdeas.length)))
+      .slice(0, 8)
+      .map((idx) => freshIdeas[idx]);
+    if (!proposal.title || drawnIdeas.length === 0) continue;
+    const validRefs = drawnIdeas.map((i) => i.ideaRef);
+    const sourceRefs = Array.from(new Set(drawnIdeas.flatMap((idea) =>
+      Array.isArray(idea.sourceRefs) ? (idea.sourceRefs as unknown[]).filter((s): s is string => typeof s === "string") : [],
+    )));
     await db.insert(harvestIdeas).values({
       ownerId: ENV.ownerUserId,
       ideaRef: `digest:${week}:${n + 1}`,
