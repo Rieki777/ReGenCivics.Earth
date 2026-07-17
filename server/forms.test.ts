@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
 import { createContext } from "./_core/context";
+import { NOT_ADMIN_ERR_MSG } from "../shared/const";
 import type { Request, Response } from "express";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
@@ -259,14 +260,14 @@ describe("Admin Inquiry Procedures", () => {
     const ctx = await createMockContext({ id: 1, role: "user" });
     const caller = appRouter.createCaller(ctx);
     
-    await expect(caller.investorInquiries.list()).rejects.toThrow("Admin access required");
+    await expect(caller.investorInquiries.list()).rejects.toThrow(NOT_ADMIN_ERR_MSG);
   });
 
   it("should reject non-admin access to general inquiry list", async () => {
     const ctx = await createMockContext({ id: 1, role: "user" });
     const caller = appRouter.createCaller(ctx);
     
-    await expect(caller.generalInquiries.list()).rejects.toThrow("Admin access required");
+    await expect(caller.generalInquiries.list()).rejects.toThrow(NOT_ADMIN_ERR_MSG);
   });
 
   it.skipIf(skipIfNoDb)("should allow admin access to investor inquiry list", async () => {
