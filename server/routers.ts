@@ -15,6 +15,7 @@ import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRou
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
+import { customGameApplicationsRouter } from "./routes/customGameApplications";
 import { bioregionsRouter, userBioregionsRouter, bloomsRouter } from "./routes/geo";
 import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
@@ -137,6 +138,7 @@ export const appRouter = router({
   knowledgeMap: knowledgeMapRouter,
   translate: translateRouter,
   customGameInquiries: customGameInquiriesRouter,
+  customGameApplications: customGameApplicationsRouter,
   blog: blogRouter,
   rssFeed: rssFeedRouter,
 

@@ -2139,6 +2139,28 @@ export const customGameInquiries = mysqlTable("custom_game_inquiries", {
 export type CustomGameInquiry = typeof customGameInquiries.$inferSelect;
 export type InsertCustomGameInquiry = typeof customGameInquiries.$inferInsert;
 
+// ─── Custom Game Applications (Sylva intake on /custom-games/apply) ───────────
+// One row per Custom Games application. blueprintDraft is the progressive
+// blueprint.json v0.3 (shared/customGameBlueprint.ts); transcript is the full
+// Sylva conversation (MEDIUMTEXT in SQL; a 60-turn talk can pass 64KB). score
+// is the auto-qualification score computed at submit.
+export const customGameApplications = mysqlTable("custom_game_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  applicantName: varchar("applicant_name", { length: 255 }).notNull(),
+  applicantEmail: varchar("applicant_email", { length: 255 }).notNull(),
+  applicantRole: varchar("applicant_role", { length: 50 }).notNull(),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["draft", "submitted", "reviewing", "in_conversation", "accepted", "declined"]).default("submitted").notNull(),
+  blueprintDraft: json("blueprint_draft"),
+  transcript: text("transcript"),
+  score: int("score").default(0).notNull(),
+  internalNotes: text("internal_notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CustomGameApplication = typeof customGameApplications.$inferSelect;
+export type InsertCustomGameApplication = typeof customGameApplications.$inferInsert;
+
 // ─── Alliance Organisations ────────────────────────────────────────────────────
 // Registry of alliance partner organisations. Mirrors the hardcoded list in
 // Connect.tsx but stored in DB so they can have forum threads, status, etc.

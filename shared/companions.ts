@@ -22,7 +22,7 @@
 
 // ── Persona display metadata (client-safe) ───────────────────────────────────
 
-export type CompanionPersonaId = "first-mate" | "harbormaster" | "gardener" | "weaver";
+export type CompanionPersonaId = "first-mate" | "harbormaster" | "gardener" | "weaver" | "sylva";
 
 export type CompanionPersona = {
   id: CompanionPersonaId;
@@ -99,6 +99,22 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     ],
     accent: "text-[#7a4fb0] dark:text-[#c9a9f0] border-[#7a4fb0]/40",
   },
+  sylva: {
+    id: "sylva",
+    // ReGen's own Game Guide; she belongs to no single bioregion.
+    bioregionSlug: "global",
+    name: "Sylva",
+    portrait: "persona-sylva.webp",
+    role: "ReGen's Game Guide, of the forest",
+    greeting:
+      "Welcome. I'm Sylva, ReGen's Game Guide. Every community that builds a game with us names a guide of its own, and this talk is how yours begins. Tell me about your land and your people, and I'll start sketching your game.",
+    invitations: [
+      "Come walk with me. Tell me about your land and I'll sketch your game as we go.",
+      "Every custom game gets a guide like me. Talk it through and feel what your community will get.",
+      "Skip the typing. Tell me the story of your place and I'll write the blueprint with you.",
+    ],
+    accent: "text-[#2f5d3a] dark:text-[#9de89d] border-[#2f5d3a]/40",
+  },
 };
 
 /**
@@ -155,7 +171,8 @@ export type CompanionFormId =
   | "crew-profile"
   | "map-add"
   | "alliance-application"
-  | "land-application";
+  | "land-application"
+  | "custom-game-application";
 
 export type CompanionFormConfig = {
   id: CompanionFormId;
@@ -302,6 +319,148 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
       { key: "currentFunding", label: "What funding or resources does the project have right now, if any?", type: "longtext" },
       { key: "fundingNeeds", label: "What funding or resources do you need to move forward?", type: "longtext", required: true },
       { key: "additionalNotes", label: "Anything else you want the reviewers to know?", type: "longtext" },
+    ],
+  },
+  "custom-game-application": {
+    id: "custom-game-application",
+    personaId: "sylva",
+    title: "Design your game",
+    entryLabel: "Design your game with Sylva",
+    completion:
+      "You are ready to review once you have a real picture across the whole design: who they are and their role, the project's name, place, and land situation, the vision in their own words, which personas apply, how coordination works today and what hurts most, what the game must accomplish, their currency name, their guide's name and voice, who will admin and how many hours a week the team has, their hosting choice, and their explicit yes to the $20,000 investment. Take your time, react to their stories, and let the conversation breathe. Gaps are fine; say plainly what you never heard so the review screen shows it honestly. When you set readyForReview true, remind them the review screen below holds everything you wrote down, and nothing sends until they send it.",
+    fields: [
+      // 1. Who are you (applicant.*)
+      {
+        key: "applicantRole",
+        label: "Are you a founder, an investor, or part of the core team?",
+        type: "enum",
+        required: true,
+        enumValues: ["founder", "investor", "core-team"],
+        guidance: "Map their words. Starting or leading the project is founder, putting capital in is investor, working inside it is core-team. If they are two of these, pick the one they lead with and note the rest in their answers.",
+      },
+      { key: "applicantName", label: "What's your name?", type: "text", required: true },
+      { key: "applicantEmail", label: "What's the best email to reach you at?", type: "text", required: true, guidance: "Capture a real email address. Read it back if it sounded unclear." },
+      {
+        key: "investorGoals",
+        label: "As an investor, what does success for your capital look like?",
+        type: "longtext",
+        guidance: "Only ask this if they said investor. Capture what their capital needs to produce and what reporting or visibility they want.",
+      },
+      // 2. Project identity (identity.*)
+      { key: "projectName", label: "What's your project called?", type: "text", required: true },
+      { key: "location", label: "Where is the land? Region and country.", type: "text", required: true },
+      {
+        key: "landStatus",
+        label: "What's your relationship to the land right now?",
+        type: "enum",
+        required: true,
+        enumValues: ["owned", "leased", "committed", "seeking"],
+        guidance: "owned means they hold title, leased means a lease, committed means land is promised or under contract, seeking means still looking. Map their words to one of these.",
+      },
+      { key: "acreage", label: "How big is the land, in acres?", type: "number", guidance: "A number in acres. If they answer in hectares, convert it: one hectare is 2.471 acres. Say the converted number back so they can correct you." },
+      { key: "stage", label: "Where is the project in its life? Just forming, building, people living there?", type: "text" },
+      { key: "website", label: "Is there a website or a page where we can see the project?", type: "text", guidance: "Only fill this if they give an actual URL." },
+      // 3. Vision + story (content.*)
+      { key: "vision", label: "What's the big vision? What does this place become?", type: "longtext", required: true, guidance: "Let them talk. Capture it in their own words; this text seeds their game's copy." },
+      { key: "originStory", label: "How did this project begin? Tell me the origin story.", type: "longtext", guidance: "Stories are fuel for the generation session. Encourage detail and keep their phrasing." },
+      { key: "values", label: "What values does the community hold at its center?", type: "longtext" },
+      // 4. People + personas (personas[], language.*)
+      {
+        key: "personasApply",
+        label: "Games usually guide four kinds of people: residents, business builders, core team, and investors. Which of those live in your project, and are there others?",
+        type: "longtext",
+        required: true,
+        guidance: "Capture which personas apply, any custom ones they name, and rough counts if they offer them.",
+      },
+      { key: "memberName", label: "What do you call your members? Some communities have their own word for their people.", type: "text" },
+      { key: "communityNoun", label: "What word fits your place best? Village, sanctuary, farm, something else?", type: "text" },
+      // 5. Coordination today (content.problems fuel)
+      { key: "decisionsToday", label: "How do decisions get made today?", type: "longtext", required: true },
+      { key: "moneyFlowsToday", label: "How does money flow through the project right now? Who pays for what, and how?", type: "longtext" },
+      { key: "recognitionToday", label: "How does contribution get seen and recognized today, if at all?", type: "longtext" },
+      { key: "biggestPain", label: "What hurts most about coordination right now?", type: "longtext", required: true, guidance: "This feeds quest design directly. Get the real pain in their words." },
+      // 6. What the game must accomplish (content.goals)
+      {
+        key: "gameGoals",
+        label: "Your game can cover governance, economics and tokenomics, legal structure, onboarding, contribution and recognition, and resource transparency. Which matter most to you, in order?",
+        type: "longtext",
+        required: true,
+        guidance: "Capture their ranking or priority order in their words. If they only name one or two, that is a real answer.",
+      },
+      // 7. Economy + exchange (economy.*, language.currencyName)
+      { key: "currencyName", label: "Your game gets its own recognition currency. Amora calls theirs Gratitude. What would yours be called?", type: "text", guidance: "If they have no name yet, invite a feeling word and note it as a starting idea." },
+      { key: "dues", label: "Are there dues, rents, or regular contributions members make?", type: "longtext" },
+      { key: "rewardInstincts", label: "When someone shows up and contributes, what feels right as the reward? Recognition, currency, standing, access?", type: "longtext" },
+      { key: "exchangeTypes", label: "What kinds of exchange does your community already use or want? Cash, tokens, work trade, joint ventures, agreements, your own kinds?", type: "longtext" },
+      // 8. Name your guide (language.guideName, language.guideVoice)
+      {
+        key: "guideName",
+        label: "Your game gets a guide like me, with its own name and voice. What would you call your community's guide?",
+        type: "text",
+        required: true,
+        guidance: "This is the moment the game becomes theirs. If they hesitate, offer to come back to it, and do come back before review.",
+      },
+      { key: "guideVoice", label: "And how should your guide sound? Warm, playful, elder, practical?", type: "longtext" },
+      // 9. Team capacity (team.*)
+      { key: "adminName", label: "Who will run the game day to day? Your admin to be.", type: "text" },
+      { key: "teamSize", label: "How many people are on the core team?", type: "number", guidance: "A whole number." },
+      {
+        key: "hoursPerWeek",
+        label: "How many hours a week can the team give this during the build?",
+        type: "number",
+        required: true,
+        guidance: "A number of hours per week. This drives the honest 3 to 6 month delivery estimate, so never write a commitment they did not say.",
+      },
+      { key: "communityExperience", label: "What experience does the team have running a community?", type: "longtext" },
+      {
+        key: "technicalComfort",
+        label: "How comfortable is the team with technology?",
+        type: "enum",
+        enumValues: ["low", "medium", "high"],
+        guidance: "Map their description. Needs everything handled is low, can run web tools is medium, has builders on the team is high.",
+      },
+      // 10. Brand + materials (theme.*, generationInputs)
+      { key: "brandColors", label: "Does the project have colors? Name them or describe the palette.", type: "text" },
+      { key: "brandFonts", label: "Any fonts or a visual style you already use?", type: "text" },
+      { key: "toneWords", label: "Give me three or four words for how the game should feel.", type: "text" },
+      {
+        key: "materialLinks",
+        label: "Do you have existing materials? Vision docs, master plans, photos, a logo. Share links and I'll draw from them instead of asking you to retype your life's work.",
+        type: "longtext",
+        guidance: "Only capture actual URLs, one or more. If they describe documents with no link, encourage them to send links and note what exists.",
+      },
+      // 11. Operations (deployment.*)
+      { key: "domain", label: "Do you have a domain the game should live on?", type: "text" },
+      {
+        key: "hosting",
+        label: "Do you want to host the game yourselves and own the ops, or have ReGen Civics run it for you full service?",
+        type: "enum",
+        required: true,
+        enumValues: ["self-hosted", "regen-full-service"],
+        guidance: "Either way they own the game completely. Self hosting means their accounts and their servers. Full service means ReGen Civics carries hosting and AI credits for one fixed monthly price scoped at contract.",
+      },
+      { key: "timelineHopes", label: "When are you hoping to have your game live?", type: "text" },
+      {
+        key: "budgetConfirmed",
+        label: "A custom game is a $20,000 investment, paid in milestones. Is that within reach for your project?",
+        type: "boolean",
+        required: true,
+        guidance: "Only set to yes when they clearly confirm the $20,000 investment works for them. If they hesitate or ask about it, explain the milestones (half at kickoff, a quarter at first draft, a quarter at handoff) and ask again. Never infer a yes.",
+      },
+      { key: "referralSource", label: "How did you find us?", type: "text" },
+      // 12. Integrations (integrations.*, provider names only, never keys)
+      {
+        key: "llmProvider",
+        label: "Your game's guide runs on an AI provider you choose, on your own account. Do you have a preferred one, like Anthropic or OpenAI?",
+        type: "text",
+        guidance: "Capture the provider NAME only. If they offer an API key or any credential, do not record it; tell them keys get entered into their own game after handoff and never touch our systems.",
+      },
+      {
+        key: "emailProvider",
+        label: "And for sending email from your game, any preferred provider, like Resend or Postmark?",
+        type: "text",
+        guidance: "Provider NAME only, same rule: never record keys or credentials.",
+      },
     ],
   },
   "map-add": {
