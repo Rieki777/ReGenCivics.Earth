@@ -23,7 +23,7 @@ vi.mock("./_core/llm", () => ({
   isLLMConfigured: () => true,
 }));
 
-import { composeRipeness } from "./lib/harvest";
+import { composeRipeness, isRefusalDraft } from "./lib/harvest";
 import { gradeVoice } from "./lib/voice-grader";
 
 const createMockContext = async (user: { id: number; role: string } | null = null) => {
@@ -66,6 +66,18 @@ describe("gradeVoice", () => {
   });
   it("flags passive inspiration", () => {
     expect(gradeVoice("Join us on this journey to the farm.").some((f) => f.rule === "no-passive-inspiration")).toBe(true);
+  });
+});
+
+describe("isRefusalDraft", () => {
+  it("catches refusal-shaped outputs (seen live on the first production run)", () => {
+    expect(isRefusalDraft("I can't write this post. The source material is a technical prompt.")).toBe(true);
+    expect(isRefusalDraft("I need to stop here and be direct with you.")).toBe(true);
+    expect(isRefusalDraft("The source material you've provided isn't about ReGen Civics at all.")).toBe(true);
+  });
+  it("passes real drafts, including ones that mention sources", () => {
+    expect(isRefusalDraft("Food is our foundation. We plant seeds and the forest feeds the village.")).toBe(false);
+    expect(isRefusalDraft("Our source material for this piece is the land itself, and it is about ReGen.")).toBe(false);
   });
 });
 

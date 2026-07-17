@@ -100,6 +100,21 @@ async function buildSystemPrompt(): Promise<string> {
 export type DraftResult = { body: string; flags: ReturnType<typeof gradeVoice> };
 
 /**
+ * A refusal-shaped output means the model judged the sources unusable for the
+ * channel (junk seed, private material, off-mission content). Storing it as a
+ * draft would put refusal text in Rye's feed; the worker skips it instead.
+ * Found live on the first production run: two of the three top-ripeness seeds
+ * were a prompt template and a private conversation.
+ */
+export function isRefusalDraft(body: string): boolean {
+  const head = body.trim().slice(0, 200).toLowerCase();
+  if (/^(i can'?t|i cannot|i won'?t|i'?m not able|i need to stop|i must decline|i'?m unable)/.test(head)) return true;
+  const lower = body.toLowerCase();
+  return lower.includes("source material") &&
+    (lower.includes("isn't about") || lower.includes("is not about") || lower.includes("no connection to") || lower.includes("wrong request"));
+}
+
+/**
  * Draft one channel for one idea. One generation call; if the deterministic
  * grader flags the draft, exactly one repair call runs. Never more.
  */
@@ -220,6 +235,16 @@ export async function runGeneration(): Promise<{ scanned: number; drafted: numbe
   for (const idea of transitions) {
     try {
       const { body, flags } = await draftChannel(idea, EAGER_CHANNEL);
+      if (isRefusalDraft(body)) {
+        // Unusable seed: stamp drafted_at so it never retries hourly, store
+        // nothing. Rye can still Develop it manually with a steer.
+        await db.update(harvestIdeas)
+          .set({ draftedAt: now })
+          .where(eq(harvestIdeas.id, idea.id));
+        skipped++;
+        log.warn(`refusal-shaped draft skipped for idea ${idea.id} (${idea.ideaRef})`);
+        continue;
+      }
       if (flags.length > 0) {
         log.warn(`draft for idea ${idea.id} still flagged after repair: ${flags.map((f) => f.rule).join(",")}`);
       }
