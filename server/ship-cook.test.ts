@@ -15,7 +15,7 @@ vi.mock("./_core/llm", () => ({
 
 import { askShipCook, validateCookDish, type CookDish } from "./lib/ship-cook";
 
-function cookReturns(dish: Partial<CookDish> & { message?: string; dishName: string }) {
+function cookReturns(dish: Partial<CookDish> & { message?: string; dishName: string; hasDish?: boolean }) {
   invokeLLM.mockResolvedValueOnce({
     choices: [{ message: { role: "assistant", content: JSON.stringify({ base: [], fillings: [], toppings: [], sauce: [], method: "", why: "", ...dish }) } }],
   });
@@ -68,6 +68,27 @@ describe("askShipCook", () => {
     const res = await askShipCook({ message: "reset dinner", track: "reset", haulItems: [{ name: "greens" }] });
     expect(res.dish).toBeTruthy();
     expect(res.reply.toLowerCase()).toContain("fully raw");
+  });
+
+  it("returns no dish when the Cook is asking rather than proposing", async () => {
+    cookReturns({ message: "What else did you gather?", hasDish: false, dishName: "" });
+    const res = await askShipCook({ message: "cook something", track: "table", haulItems: [] });
+    expect(res.dish).toBeNull();
+    expect(res.reply).toContain("What else");
+  });
+
+  it("never serves placeholder text as a dish", async () => {
+    // A forced schema makes the model fill every field, so it reaches for these.
+    cookReturns({ message: "I need more to work with.", dishName: "<UNKNOWN>", method: "<UNKNOWN>", why: "N/A" });
+    const res = await askShipCook({ message: "cook something", track: "table", haulItems: [] });
+    expect(res.dish).toBeNull();
+  });
+
+  it("strips placeholder entries out of a real dish's ingredient lists", async () => {
+    cookReturns({ message: "Here you go.", dishName: "Green Bowl", base: ["greens", "N/A"], toppings: ["<UNKNOWN>"] });
+    const res = await askShipCook({ message: "lunch", track: "table", haulItems: [{ name: "greens" }] });
+    expect(res.dish!.base).toEqual(["greens"]);
+    expect(res.dish!.toppings).toEqual([]);
   });
 
   it("falls back gracefully when the model is unavailable", async () => {
