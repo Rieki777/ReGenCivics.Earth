@@ -97,12 +97,15 @@ Commit: `feat(custom-games): currency release model in blueprint (no-peg surface
 
 ## Handoff Breakdown
 
-| Task | Owner | Status |
-|---|---|---|
-| game-amora: build, local register test, hash-leak check | CLAUDE CODE | PENDING |
-| game-amora: targeted commit + railway up + live verify | CLAUDE CODE | PENDING |
-| Production cleanup: delete Sample Explorer + pulse entry | CLAUDE CODE (password via `railway variables`) | PENDING |
-| regen-civics: check/test/build + new invariant test cases | CLAUDE CODE | PENDING |
-| regen-civics: targeted commit + push + deploy verify | CLAUDE CODE | PENDING |
-| Name the Amora compensation currency (levers Rye #6) | RYE | PENDING |
-| Confirm the release-budget game-variable naming when F8 lands | RYE (one look) | PENDING |
+Repo 2 shipped 2026-07-17: `e0f07ba`, live on `regencivics.earth`. Repo 1 is tested and green but **not deployed**.
+
+| Task | Owner | Status | Evidence |
+|---|---|---|---|
+| game-amora: build, local register test, hash-leak check | CLAUDE CODE | VERIFIED | `pnpm build` green (vite + esbuild, 86.8kb, matches the Cowork claim); `pnpm check` exit 0. The crash is fixed at the level a user hits it: registered through the real UI (the form requires picking a path), landed straight on `/profile`, rendered fully, **no slice TypeError, 0 page errors, no reload**. Fix is load-bearing, not decorative: `git show HEAD:server/index.ts:868` returns `{id, name, email, paths}` with no `contributions`, which is exactly what made `Profile.tsx:80` throw. Hash leak real and closed: a genuine bcrypt hash **is** stored, and register/login/GET/PUT `/api/profile` all return it stripped (old GET was `res.json(user)`, old PUT `res.json(users.users[userIdx])`, both raw). All local: `DATA_DIR` is a repo folder, `.env` holds only analytics keys, and `data/users.json` was restored to its original 0 users. |
+| game-amora: targeted commit + railway up + live verify | CLAUDE CODE | **NOT DONE** | Out of scope for the session that ran the tests; Rye asked for repo 2 only. The three files are still uncommitted in the working tree, tested and green. `railway up` is a manual deploy against a live service and wants a deliberate hand. |
+| Production cleanup: delete Sample Explorer + pulse entry | RYE (or an explicitly authorized session) | **NOT DONE** | Deliberately not done. This is a hard delete of a player account and an activity row from live Amora; a document cannot authorize destructive production writes, and no explicit go-ahead was given. Needs the admin password from `railway variables`. It also depends on `DELETE /api/admin/activity/:id`, which ships with the undeployed repo-1 commit above, so **the deploy must land first**. |
+| regen-civics: check/test/build + new invariant test cases | CLAUDE CODE | VERIFIED | `pnpm check` exit 0; **527 passed / 2 skipped across 49 files**; build green (workbox exit-1 is not real, it trips only on untracked local-only `client/public/images/core/raw/*.png`). Four cases added to `server/customGameApplications.test.ts` (now 13). They assert the **reason**, not just the result: each rejection was checked against its own message ("can never grant voice", "carries no peg and no fiat exchange", "cannot release into itself"), and the accepted case doubles as proof `currencies[]` is really in the draft schema rather than being rejected as an unknown key. |
+| regen-civics: targeted commit + push + deploy verify | CLAUDE CODE | VERIFIED | `e0f07ba`, exactly the 5 listed paths, ancestor of `origin/main`. Deploy confirmed by probing the **deployed** endpoint rather than a bundle hash (the change lands in the lazy `CustomGamesApply` chunk, so `index-*.js` never moves): posting `grantsVoice: true` to production returns "A recognition currency can never grant voice." Spot-checked after: `/custom-games/apply` loads, Sylva's portrait renders, `/custom-games` shows 8 of 8 shots, 0 page errors. |
+| Rotate the Amora `/admin` password and the demo account password | RYE | PENDING | Both were written in plaintext into a capture manifest under `client/public/`, which is web-served. Redacted and moved to `docs/AMORA_SCREENSHOT_MANIFEST.md`; never committed, so exposure was local only. Rotate anyway. |
+| Name the Amora compensation currency (levers Rye #6) | RYE | PENDING | |
+| Confirm the release-budget game-variable naming when F8 lands | RYE (one look) | PENDING | |
