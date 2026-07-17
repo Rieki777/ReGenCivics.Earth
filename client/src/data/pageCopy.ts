@@ -2,10 +2,10 @@ export const pageCopy = {
   calculator: {
     seo: {
       title: "Contribution Calculator | ReGen Civics",
-      description: "Calculate the value of your contributions across the 8 Forms of Capital. An experimental tool for quantifying impact in the ReGen Game.",
+      description: "Calculate the value of your contributions across the 9 Forms of Capital. An experimental tool for quantifying impact in the ReGen Game.",
     },
     heading: "Contribution Calculator",
-    subtext: "Estimate the value of your contributions across the 8 Forms of Capital",
+    subtext: "Estimate the value of your contributions across the 9 Forms of Capital",
     experimental: {
       title: "Experimental Tool",
       body: "This calculator is experimental and figures provided here aren't guaranteed rewards, just a helpful tool we're playing with. The values are estimates to help you think through your contributions holistically.",
@@ -78,7 +78,7 @@ export const pageCopy = {
     related: [
       {
         heading: "Contribution Calculator",
-        body: "Calculate a contribution value across the 8 forms of capital",
+        body: "Calculate a contribution value across the 9 forms of capital",
       },
       {
         heading: "Learn About Games & Quests",
@@ -99,7 +99,7 @@ export const pageCopy = {
       CTAs: {
         createProposal: "Create Your Proposal",
         compareProjects: "Compare Projects",
-        listProject: "List Your Project (Coming Soon)",
+        listProject: "List Your Project",
       },
     },
     callout: {
@@ -121,7 +121,7 @@ export const pageCopy = {
     },
     CTA: {
       heading: "Want Your Project Listed Here?",
-      body: "If you are a land project looking to crowd pool contributions from your community, apply to join the ReGen Civics alliance and get access to our Crowd Pooling platform.",
+      body: "If you are a land project looking to crowd pool contributions from your community, create a campaign and show people what you actually need.",
       applyLabel: "Apply for Season 2",
       joinSessionLabel: "Join Open Session",
     },
@@ -163,7 +163,7 @@ export const pageCopy = {
       ],
       highlighted: "💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.",
       buttons: {
-        calculator: "📊 Use the 8 Forms of Capital calculator",
+        calculator: "📊 Use the 9 Forms of Capital calculator",
         discussion: "💬 Join the discussion and start crafting your proposal",
       },
     },

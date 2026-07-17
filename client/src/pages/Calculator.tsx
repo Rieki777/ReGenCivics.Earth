@@ -1,6 +1,6 @@
 /**
  * Contribution Calculator Page
- * A standalone page for the 8 Forms of Capital contribution calculator
+ * A standalone page for the 9 Forms of Capital contribution calculator
  */
 
 import { Button } from "@/components/ui/button";

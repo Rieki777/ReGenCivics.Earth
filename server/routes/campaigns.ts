@@ -4,15 +4,52 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
-import { campaigns as campaignsTable, CrowdPoolingProject } from "../../drizzle/schema";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  campaigns as campaignsTable,
+  campaignItems as campaignItemsTable,
+  campaignContributions as campaignContributionsTable,
+  userFollows,
+  applications as applicationsTable,
+  CrowdPoolingProject,
+} from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
-import { sanitizeInput } from "../_core/security";
+import { sanitizeInput, sanitizeRichText } from "../_core/security";
+import { getGameVariable, recordScoreEvent, logActivityEvent } from "../game";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { generateImage } from "../_core/imageGeneration";
 import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
+
+/** Game variable with a fallback: crowdpool config may not be seeded yet. */
+async function getGameVariableOr(key: string, fallback: number): Promise<number> {
+  try {
+    return await getGameVariable(key);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Claim expiry window in days by need kind (crowdpool.claim_expiry_days_*). */
+async function claimExpiryDaysForKind(kind: string): Promise<number> {
+  if (kind === 'shift') return getGameVariableOr('crowdpool.claim_expiry_days_shift', 7);
+  if (kind === 'loan') return getGameVariableOr('crowdpool.claim_expiry_days_loan', 14);
+  return getGameVariableOr('crowdpool.claim_expiry_days_item', 14);
+}
+
+/**
+ * Fallback capital mapping for freeform contributions (no need attached).
+ * When the contribution fills a need, the need's capitalType wins.
+ */
+const CONTRIBUTION_TYPE_TO_CAPITAL = {
+  land: 'living',
+  equipment: 'material',
+  role: 'experiential',
+  resource: 'material',
+  financial: 'financial',
+  knowledge: 'intellectual',
+} as const;
 
 export const campaignsRouter = router({
   // Verify campaign creator access password (server-side)
@@ -23,27 +60,75 @@ export const campaignsRouter = router({
       return { valid: input.password === expected };
     }),
 
-  // List all campaigns (with optional filtering)
+  // List all campaigns (with optional filtering + server-side sort)
   list: publicProcedure
     .input(z.object({
       status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected']).optional(),
       search: z.string().optional(),
+      sort: z.enum(['most-funded', 'ending-soon', 'newest', 'most-contributors']).optional(),
     }).optional())
     .query(async ({ input }) => {
       const campaignList = await db.listCampaigns(input?.status, input?.search);
       // Batch-fetch all images in one query (eliminates N+1)
       const imagesMap = await db.getCampaignImagesForMany(campaignList.map(c => c.id));
-      return campaignList.map((c) => {
+      const rows = campaignList.map((c) => {
         const images = imagesMap[c.id] ?? [];
         const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
         return { ...c, coverImage, imageCount: images.length };
       });
+
+      // isDemo rides along via select-all; sorting happens here so every
+      // client sees the same order for the same sort key.
+      switch (input?.sort) {
+        case 'most-funded':
+          // Funded ratio, not raw dollars, so small campaigns compete fairly.
+          rows.sort((a, b) => {
+            const ratio = (c: typeof a) => (c.totalValue > 0 ? c.pledgedTotal / c.totalValue : 0);
+            return ratio(b) - ratio(a);
+          });
+          break;
+        case 'ending-soon': {
+          // Active campaigns by end date ascending; everything else after.
+          const endsAt = (c: (typeof rows)[number]) =>
+            c.status === 'active' && c.startedAt
+              ? c.startedAt.getTime() + c.durationDays * 24 * 60 * 60 * 1000
+              : Number.POSITIVE_INFINITY;
+          rows.sort((a, b) => endsAt(a) - endsAt(b));
+          break;
+        }
+        case 'most-contributors': {
+          const db2 = await getDb();
+          if (db2 && rows.length > 0) {
+            const counts = await db2
+              .select({
+                campaignId: campaignContributionsTable.campaignId,
+                contributors: sql<number>`COUNT(DISTINCT ${campaignContributionsTable.contributorEmail})`,
+              })
+              .from(campaignContributionsTable)
+              .where(and(
+                inArray(campaignContributionsTable.campaignId, rows.map(r => r.id)),
+                inArray(campaignContributionsTable.status, ['accepted', 'fulfilled', 'thanked']),
+              ))
+              .groupBy(campaignContributionsTable.campaignId);
+            const countMap = new Map(counts.map(c => [c.campaignId, Number(c.contributors)]));
+            rows.sort((a, b) => (countMap.get(b.id) ?? 0) - (countMap.get(a.id) ?? 0));
+          }
+          break;
+        }
+        case 'newest':
+          rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          break;
+        default:
+          break; // listCampaigns already orders by createdAt desc
+      }
+
+      return rows;
     }),
 
   // Get a single campaign by ID
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const campaign = await db.getCampaignById(input.id);
       if (!campaign) return null;
 
@@ -52,12 +137,33 @@ export const campaignsRouter = router({
       const images = await db.getCampaignImages(input.id);
       const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
 
+      // Distinct contributor emails across accepted/fulfilled/thanked.
+      const contributorsCount = await db.getCampaignContributorsCount(input.id);
+
+      // Whether the signed-in viewer follows this campaign (false for guests).
+      let isFollowing = false;
+      if (ctx.user) {
+        const db2 = await getDb();
+        if (db2) {
+          const follow = await db2.select({ id: userFollows.id })
+            .from(userFollows)
+            .where(and(
+              eq(userFollows.userId, ctx.user.id),
+              eq(userFollows.targetType, 'campaign'),
+              eq(userFollows.targetId, String(input.id)),
+            ))
+            .limit(1);
+          isFollowing = follow.length > 0;
+        }
+      }
+
       return {
         ...campaign,
         items,
         images,
         coverImage,
-        contributorsCount: 0, // TODO: Implement contributors tracking
+        contributorsCount,
+        isFollowing,
       };
     }),
 
@@ -106,6 +212,11 @@ export const campaignsRouter = router({
       durationDays: z.number().min(1).max(365).default(90),
       items: z.array(z.object({
         category: z.enum(['land', 'equipment', 'role', 'resource']),
+        // Needs registry taxonomy (shared/crowdpoolingTaxonomy.ts). Enum literals
+        // mirror drizzle campaign_items.kind / capitalType exactly.
+        kind: z.enum(['item', 'role', 'shift', 'loan', 'knowledge', 'crypto', 'financial_link']).optional(),
+        capitalType: z.enum(['intellectual', 'social', 'material', 'financial', 'living', 'cultural', 'spiritual', 'experiential', 'health']).optional(),
+        quantityWanted: z.number().int().min(1).optional(),
         // Land fields
         hectares: z.number().optional(),
         region: z.string().optional(),
@@ -148,14 +259,26 @@ export const campaignsRouter = router({
   getContributions: publicProcedure
     .input(z.object({
       campaignId: z.number(),
-      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled']).optional(),
+      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled', 'thanked']).optional(),
     }))
     .query(async ({ input }) => {
-      const rows = input.status
-        ? await db.getContributionsByCampaignAndStatus(input.campaignId, input.status)
-        : await db.getContributionsByCampaign(input.campaignId);
-      // Strip PII before returning to anonymous callers.
-      return rows.map(({ contributorEmail: _e, contributorPhone: _p, contributorBio: _b, contributorNotes: _n, ...safe }) => safe);
+      // 'fulfilled' means delivered, and thanked rows are still delivered,
+      // so the delivered view includes both. Everything else filters exactly.
+      let rows;
+      if (input.status === 'fulfilled') {
+        const all = await db.getContributionsByCampaign(input.campaignId);
+        rows = all.filter(r => r.status === 'fulfilled' || r.status === 'thanked');
+      } else if (input.status) {
+        rows = await db.getContributionsByCampaignAndStatus(input.campaignId, input.status);
+      } else {
+        rows = await db.getContributionsByCampaign(input.campaignId);
+      }
+      // Strip PII before returning to anonymous callers, and mask names on
+      // contributions marked anonymous (steward still sees them via the owner view).
+      return rows.map(({ contributorEmail: _e, contributorPhone: _p, contributorBio: _b, contributorNotes: _n, ...safe }) => ({
+        ...safe,
+        contributorName: safe.isAnonymous ? 'A contributor' : safe.contributorName,
+      }));
     }),
 
   // Get contributions with full PII — campaign owner or admin only.
@@ -185,9 +308,13 @@ export const campaignsRouter = router({
       contributorEmail: z.string().email(),
       contributorPhone: z.string().optional(),
       contributorBio: z.string().optional(),
-      contributionType: z.enum(['land', 'equipment', 'role', 'resource', 'financial']),
+      contributionType: z.enum(['land', 'equipment', 'role', 'resource', 'financial', 'knowledge']),
       title: z.string().min(1).max(255),
       description: z.string().optional(),
+      // Claims against a specific need
+      quantityPledged: z.number().int().min(1).default(1),
+      isAnonymous: z.boolean().optional(),
+      referredBy: z.string().max(16).optional(),
       // Land-specific
       landHectares: z.number().optional(),
       landRegion: z.string().optional(),
@@ -224,35 +351,54 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Campaign is not accepting contributions' });
       }
 
+      // Claim against a specific need: guard the slot count and stamp the
+      // claim expiry window from the crowdpool.claim_expiry_days_* variables.
+      let claimExpiresAt: Date | null = null;
+      if (input.campaignItemId) {
+        const item = await db.getCampaignItemById(input.campaignItemId);
+        if (!item || item.campaignId !== input.campaignId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'That need does not belong to this campaign' });
+        }
+        if (item.quantityClaimed + input.quantityPledged > item.quantityWanted) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This need is already fully claimed' });
+        }
+        const expiryDays = await claimExpiryDaysForKind(item.kind);
+        claimExpiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+      }
+
       const contributionId = await db.createContribution({
         campaignId: input.campaignId,
         campaignItemId: input.campaignItemId,
         userId: ctx.user?.id,
-        contributorName: input.contributorName,
+        contributorName: sanitizeInput(input.contributorName),
         contributorEmail: input.contributorEmail,
         contributorPhone: input.contributorPhone,
-        contributorBio: input.contributorBio,
+        contributorBio: input.contributorBio ? sanitizeInput(input.contributorBio) : null,
         contributionType: input.contributionType,
         title: sanitizeInput(input.title),
         description: input.description ? sanitizeInput(input.description) : null,
         landHectares: input.landHectares,
-        landRegion: input.landRegion,
+        landRegion: input.landRegion ? sanitizeInput(input.landRegion) : null,
         landFeatures: input.landFeatures ? JSON.stringify(input.landFeatures) : null,
-        equipmentName: input.equipmentName,
+        equipmentName: input.equipmentName ? sanitizeInput(input.equipmentName) : null,
         equipmentQuantity: input.equipmentQuantity,
         equipmentCondition: input.equipmentCondition,
-        roleTitle: input.roleTitle,
+        roleTitle: input.roleTitle ? sanitizeInput(input.roleTitle) : null,
         hoursPerWeek: input.hoursPerWeek,
         durationMonths: input.durationMonths,
         skills: input.skills ? JSON.stringify(input.skills) : null,
-        resourceName: input.resourceName,
+        resourceName: input.resourceName ? sanitizeInput(input.resourceName) : null,
         resourceQuantity: input.resourceQuantity,
         resourceUnit: input.resourceUnit,
         financialAmount: input.financialAmount,
         financialCurrency: input.financialCurrency || 'USD',
         paymentMethod: input.paymentMethod,
         estimatedValue: input.estimatedValue,
-        contributorNotes: input.contributorNotes,
+        contributorNotes: input.contributorNotes ? sanitizeInput(input.contributorNotes) : null,
+        quantityPledged: input.quantityPledged,
+        claimExpiresAt,
+        isAnonymous: input.isAnonymous ? 1 : 0,
+        referredBy: input.referredBy,
         status: 'pending',
       });
 
@@ -273,8 +419,10 @@ export const campaignsRouter = router({
   updateContributionStatus: protectedProcedure
     .input(z.object({
       contributionId: z.number(),
-      status: z.enum(['accepted', 'rejected', 'fulfilled']),
+      status: z.enum(['accepted', 'rejected', 'fulfilled', 'thanked']),
       ownerNotes: z.string().optional(),
+      acknowledgedNote: z.string().optional(),
+      acknowledgedImageUrl: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const contribution = await db.getContributionById(input.contributionId);
@@ -291,80 +439,195 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to manage this campaign' });
       }
 
-      await db.updateContributionStatus(input.contributionId, input.status, input.ownerNotes);
+      const prevStatus = contribution.status;
 
-      // Update campaign pledged totals if accepting/rejecting
       if (input.status === 'accepted' || input.status === 'rejected') {
+        await db.updateContributionStatus(input.contributionId, input.status, input.ownerNotes);
+
+        // Accepting a claim reserves its slots on the need (ghost progress).
+        // Guarded on the transition so a repeated call cannot double-reserve.
+        if (input.status === 'accepted' && contribution.campaignItemId && prevStatus !== 'accepted') {
+          const db2 = await getDb();
+          if (db2) {
+            await db2.update(campaignItemsTable)
+              .set({ quantityClaimed: sql`${campaignItemsTable.quantityClaimed} + ${contribution.quantityPledged}` })
+              .where(eq(campaignItemsTable.id, contribution.campaignItemId));
+          }
+        }
+
+        // Update campaign pledged totals
         await db.updateCampaignPledgedTotals(contribution.campaignId);
       }
 
-      // Send email notification to contributor
-      try {
-        const { sendEmail, emailTemplates } = await import("../_core/email");
-        let emailContent: { subject: string; html: string };
-
-        switch (input.status) {
-          case 'accepted':
-            emailContent = emailTemplates.contributionAccepted(
-              contribution.contributorName,
-              contribution.title,
-              campaign.title,
-              input.ownerNotes
-            );
-            break;
-          case 'rejected':
-            emailContent = emailTemplates.contributionRejected(
-              contribution.contributorName,
-              contribution.title,
-              campaign.title,
-              input.ownerNotes
-            );
-            break;
-          case 'fulfilled':
-            emailContent = emailTemplates.contributionFulfilled(
-              contribution.contributorName,
-              contribution.title,
-              campaign.title,
-              input.ownerNotes
-            );
-            break;
+      // Fulfilled is the payoff moment. Idempotent: the whole payoff block is
+      // skipped when fulfilledAt is already set, so a repeated call is a no-op.
+      let firstFulfillment = false;
+      if (input.status === 'fulfilled') {
+        // Claims must be accepted first; legacy freeform contributions (no
+        // need attached) may go straight from pending.
+        const allowedFrom: string[] = contribution.campaignItemId
+          ? ['accepted', 'fulfilled']
+          : ['pending', 'accepted', 'fulfilled'];
+        if (!allowedFrom.includes(prevStatus)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only accepted contributions can be marked fulfilled' });
         }
 
-        // Email sending disabled per user request
-        // await sendEmail({
-        //   to: contribution.contributorEmail,
-        //   subject: emailContent.subject,
-        //   html: emailContent.html,
-        //   template: `contribution_${input.status}`,
-        //   recipientName: contribution.contributorName,
-        // });
+        firstFulfillment = !contribution.fulfilledAt;
+        if (firstFulfillment) {
+          await db.updateContribution(input.contributionId, {
+            status: 'fulfilled',
+            fulfilledAt: new Date(),
+            ...(input.ownerNotes !== undefined ? { ownerNotes: input.ownerNotes } : {}),
+          });
 
-        console.log(`[Contribution] Email sending disabled - would have sent to ${contribution.contributorEmail} for status: ${input.status}`);
-      } catch (emailError) {
-        console.warn('[Contribution] Failed to send status notification email:', emailError);
-        // Don't fail the mutation if email fails
+          // Delivery confirms the slots (solid progress on the need).
+          if (contribution.campaignItemId) {
+            const db2 = await getDb();
+            if (db2) {
+              await db2.update(campaignItemsTable)
+                .set({ quantityDelivered: sql`${campaignItemsTable.quantityDelivered} + ${contribution.quantityPledged}` })
+                .where(eq(campaignItemsTable.id, contribution.campaignItemId));
+            }
+          }
+
+          // Payoff for account holders: score event + Living Tree row.
+          // NEVER a token credit here (locked decision: no platform tokens
+          // for crowdpooling).
+          if (contribution.userId) {
+            try {
+              await recordScoreEvent(
+                contribution.userId,
+                'crowdpool_contribution',
+                'scoring.weights.crowdpool_contribution',
+                'crowdpool',
+                contribution.id,
+              );
+            } catch (err) {
+              console.warn('[Contribution] Score event failed (non-fatal):', err);
+            }
+
+            try {
+              const profile = await db.getPlayerProfileByUserId(contribution.userId);
+              if (profile) {
+                const need = contribution.campaignItemId
+                  ? await db.getCampaignItemById(contribution.campaignItemId)
+                  : null;
+                const capitalType = need?.capitalType ?? CONTRIBUTION_TYPE_TO_CAPITAL[contribution.contributionType];
+                const playerContributionId = await db.createPlayerContribution({
+                  profileId: profile.id,
+                  userId: contribution.userId,
+                  capitalType,
+                  title: contribution.title,
+                  estimatedValue: contribution.estimatedValue,
+                  projectName: campaign.projectName,
+                  status: 'verified',
+                  verifiedAt: new Date(),
+                });
+                await db.updateContribution(input.contributionId, { playerContributionId });
+                // Recompute the cached Living Tree total, the same way
+                // playerContributions.create does.
+                const all = await db.getPlayerContributionsByProfileId(profile.id);
+                const total = all.reduce((sum, c) => sum + (c.estimatedValue ?? 0), 0);
+                await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
+              }
+            } catch (err) {
+              console.warn('[Contribution] Living Tree row creation failed (non-fatal):', err);
+            }
+          }
+
+          // Pool Ledger event
+          try {
+            await logActivityEvent(
+              'crowdpool_delivered',
+              'player',
+              contribution.userId || 0,
+              'campaign',
+              contribution.campaignId,
+              { contributionId: contribution.id },
+            );
+          } catch (err) {
+            console.warn('[Contribution] Activity event failed (non-fatal):', err);
+          }
+        }
+      }
+
+      // Thanked closes the loop: a note is required, a photo is optional.
+      if (input.status === 'thanked') {
+        if (prevStatus !== 'fulfilled') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only fulfilled contributions can be thanked' });
+        }
+        const note = input.acknowledgedNote ? sanitizeInput(input.acknowledgedNote).trim() : '';
+        if (!note) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'A thank-you note is required' });
+        }
+        await db.updateContribution(input.contributionId, {
+          status: 'thanked',
+          acknowledgedAt: new Date(),
+          acknowledgedNote: note,
+          acknowledgedImageUrl: input.acknowledgedImageUrl,
+        });
+      }
+
+      // Send email notification to contributor (accepted / rejected /
+      // fulfilled; thanks stays in-app). A repeated fulfilled call sends
+      // nothing.
+      const sendsEmail = input.status === 'accepted' || input.status === 'rejected'
+        || (input.status === 'fulfilled' && firstFulfillment);
+      if (sendsEmail) {
+        try {
+          const { sendEmail, emailTemplates } = await import("../_core/email");
+          const template = input.status === 'accepted'
+            ? emailTemplates.contributionAccepted
+            : input.status === 'rejected'
+              ? emailTemplates.contributionRejected
+              : emailTemplates.contributionFulfilled;
+          const emailContent = template(
+            contribution.contributorName,
+            contribution.title,
+            campaign.title,
+            input.ownerNotes
+          );
+
+          await sendEmail({
+            to: contribution.contributorEmail,
+            subject: emailContent.subject,
+            html: emailContent.html,
+            template: `contribution_${input.status}`,
+            recipientName: contribution.contributorName,
+          });
+        } catch (emailError) {
+          console.warn('[Contribution] Failed to send status notification email:', emailError);
+          // Don't fail the mutation if email fails
+        }
       }
 
       // Create in-app notification for the contributor if they have an account
-      if (contribution.userId) {
+      const sendsNotification = input.status !== 'fulfilled' || firstFulfillment;
+      if (contribution.userId && sendsNotification) {
         try {
           const notificationType = input.status === 'accepted'
             ? 'contribution_accepted'
             : input.status === 'rejected'
               ? 'contribution_rejected'
-              : 'system';
+              : input.status === 'thanked'
+                ? 'gratitude'
+                : 'system';
 
           const notificationTitle = input.status === 'accepted'
             ? `Contribution Accepted!`
             : input.status === 'rejected'
               ? `Contribution Update`
-              : `Contribution Fulfilled`;
+              : input.status === 'thanked'
+                ? `A Thank You From ${campaign.projectName}`
+                : `Contribution Fulfilled`;
 
           const notificationMessage = input.status === 'accepted'
             ? `Your contribution "${contribution.title}" to ${campaign.title} has been accepted! ${input.ownerNotes ? `Note: ${input.ownerNotes}` : ''}`
             : input.status === 'rejected'
               ? `Your contribution "${contribution.title}" to ${campaign.title} was not accepted. ${input.ownerNotes ? `Reason: ${input.ownerNotes}` : 'Please contact the campaign owner for more details.'}`
-              : `Your contribution "${contribution.title}" to ${campaign.title} has been marked as fulfilled. Thank you for your support!`;
+              : input.status === 'thanked'
+                ? `The stewards of ${campaign.title} sent you thanks for "${contribution.title}".`
+                : `Your contribution "${contribution.title}" to ${campaign.title} has been marked as fulfilled. Thank you for your support!`;
 
           await db.createUserNotification({
             userId: contribution.userId,
@@ -434,7 +697,181 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to update this campaign' });
       }
       await db.updateCampaignStatus(input.id, input.status);
+
+      const db2 = await getDb();
+
+      // Going live stamps the clocks the progress tracker counts from.
+      if (input.status === 'active' && !campaign.startedAt && db2) {
+        const now = new Date();
+        await db2.update(campaignsTable)
+          .set({ startedAt: now, publishedAt: now })
+          .where(eq(campaignsTable.id, input.id));
+      }
+
+      // A funded or completed campaign counts toward the land project's
+      // status progression. Guarded on the transition so flipping between
+      // funded and completed cannot double-count.
+      const fundedStatuses = ['funded', 'completed'];
+      if (
+        fundedStatuses.includes(input.status)
+        && !fundedStatuses.includes(campaign.status)
+        && campaign.applicationId
+        && db2
+      ) {
+        await db2.update(applicationsTable)
+          .set({ fundedCampaignCount: sql`COALESCE(${applicationsTable.fundedCampaignCount}, 0) + 1` })
+          .where(eq(applicationsTable.id, campaign.applicationId));
+      }
+
       return { success: true };
+    }),
+
+  // ---- Followers, updates, and the Pool Ledger ----
+
+  // Email-only follow, no account required. Never reveals whether an email
+  // is already subscribed.
+  subscribeByEmail: publicProcedure
+    .input(z.object({
+      campaignId: z.number(),
+      email: z.string().email(),
+      name: z.string().max(255).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "campaign_follow_email");
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+      await db.upsertCampaignFollower({
+        campaignId: input.campaignId,
+        email: input.email.toLowerCase().trim(),
+        name: input.name ? sanitizeInput(input.name) : null,
+        unsubscribeToken: nanoid(32),
+      });
+      return { success: true };
+    }),
+
+  // Follow a campaign with an account. Idempotent.
+  follow: protectedProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db2.insert(userFollows)
+        .values({ userId: ctx.user.id, targetType: 'campaign', targetId: String(input.campaignId) })
+        .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+      return { success: true };
+    }),
+
+  unfollow: protectedProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db2.delete(userFollows)
+        .where(and(
+          eq(userFollows.userId, ctx.user.id),
+          eq(userFollows.targetType, 'campaign'),
+          eq(userFollows.targetId, String(input.campaignId)),
+        ));
+      return { success: true };
+    }),
+
+  // Publish a numbered journal entry and fan out to followers.
+  createUpdate: protectedProcedure
+    .input(z.object({
+      campaignId: z.number(),
+      title: z.string().min(1).max(255),
+      body: z.string().min(1),
+      imageUrls: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to post updates for this campaign' });
+      }
+
+      const title = sanitizeInput(input.title);
+      const { id, updateNumber } = await db.createCampaignUpdate({
+        campaignId: input.campaignId,
+        authorId: ctx.user.id,
+        title,
+        body: sanitizeRichText(input.body),
+        imageUrls: input.imageUrls,
+      });
+
+      // Fan out to account-holder followers. Best-effort: a notification
+      // failure never blocks publishing.
+      try {
+        const followerIds = await db.getCampaignFollowerUserIds(input.campaignId);
+        for (const userId of followerIds) {
+          if (userId === ctx.user.id) continue;
+          await db.createUserNotification({
+            userId,
+            type: 'campaign_update',
+            title: `Update #${updateNumber} from ${campaign.title}`,
+            message: title,
+            campaignId: input.campaignId,
+            link: `/campaign/${input.campaignId}`,
+          });
+        }
+      } catch (notifError) {
+        console.warn('[Campaign] Update fan-out failed:', notifError);
+      }
+
+      return { id, updateNumber };
+    }),
+
+  // Public updates journal, newest first.
+  listUpdates: publicProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .query(async ({ input }) => {
+      return await db.listCampaignUpdates(input.campaignId);
+    }),
+
+  // The Pool Ledger: what has moved through this campaign, PII stripped.
+  getActivity: publicProcedure
+    .input(z.object({
+      campaignId: z.number(),
+      limit: z.number().int().min(1).max(100).default(30),
+    }))
+    .query(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+
+      const rows = await db2.select().from(campaignContributionsTable)
+        .where(and(
+          eq(campaignContributionsTable.campaignId, input.campaignId),
+          inArray(campaignContributionsTable.status, ['accepted', 'fulfilled', 'thanked']),
+        ))
+        .orderBy(desc(campaignContributionsTable.submittedAt));
+
+      const kindFor = { accepted: 'pledged', fulfilled: 'delivered', thanked: 'thanked' } as const;
+      const atFor = (c: (typeof rows)[number]) => {
+        if (c.status === 'fulfilled') return c.fulfilledAt ?? c.submittedAt;
+        if (c.status === 'thanked') return c.acknowledgedAt ?? c.fulfilledAt ?? c.submittedAt;
+        return c.reviewedAt ?? c.submittedAt;
+      };
+
+      return rows
+        .map((c) => ({
+          id: c.id,
+          kind: kindFor[c.status as keyof typeof kindFor],
+          contributorName: c.isAnonymous ? 'A contributor' : c.contributorName,
+          title: c.title,
+          contributionType: c.contributionType,
+          estimatedValue: c.estimatedValue,
+          at: atFor(c),
+        }))
+        .sort((a, b) => b.at.getTime() - a.at.getTime())
+        .slice(0, input.limit);
     }),
 
   // Track campaign page view

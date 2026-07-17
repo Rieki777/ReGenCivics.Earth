@@ -1138,6 +1138,13 @@ async function startServer() {
         await sweepEventStatuses();
       } catch (e: any) { errors.push(`eventSweep: ${e.message}`); }
 
+      // Crowdpool claim expiry sweep + reminders: releases reserved slots on
+      // needs whose claims blew their delivery window.
+      try {
+        const { expireCrowdpoolClaims } = await import("../routes/batchJobs");
+        await expireCrowdpoolClaims(database);
+      } catch (e: any) { errors.push(`crowdpoolClaims: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`

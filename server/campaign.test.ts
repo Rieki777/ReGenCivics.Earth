@@ -7,16 +7,17 @@ import { describe, expect, it } from "vitest";
 
 describe("CreateCampaign Page", () => {
   describe("Password Protection", () => {
-    it("should require password 111 to access the campaign creator", () => {
-      // Test that the correct password is "111"
-      const correctPassword = "111";
-      expect(correctPassword).toBe("111");
+    it("should require password 222 to access the campaign creator", () => {
+      // Server default in campaigns.verifyCampaignAccess is "222"
+      // (CAMPAIGN_ACCESS_PASSWORD overrides it in production).
+      const correctPassword = "222";
+      expect(correctPassword).toBe("222");
     });
 
     it("should reject incorrect passwords", () => {
-      const incorrectPasswords = ["000", "123", "password", ""];
+      const incorrectPasswords = ["000", "111", "123", "password", ""];
       incorrectPasswords.forEach((pwd) => {
-        expect(pwd).not.toBe("111");
+        expect(pwd).not.toBe("222");
       });
     });
   });

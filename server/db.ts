@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertUser, playerProfiles, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertUser, playerProfiles, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignUpdates, CampaignUpdate, campaignFollowers, InsertCampaignFollower, userFollows, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 // Moved to server/db/_shared.ts so the extracted domain modules can use it
@@ -839,6 +839,9 @@ export async function createCampaign(userId: number, data: {
   durationDays?: number;
   items: Array<{
     category: 'land' | 'equipment' | 'role' | 'resource';
+    kind?: 'item' | 'role' | 'shift' | 'loan' | 'knowledge' | 'crypto' | 'financial_link';
+    capitalType?: 'intellectual' | 'social' | 'material' | 'financial' | 'living' | 'cultural' | 'spiritual' | 'experiential' | 'health';
+    quantityWanted?: number;
     hectares?: number;
     region?: string;
     features?: string[];
@@ -928,6 +931,10 @@ export async function createCampaign(userId: number, data: {
     await db.insert(campaignItems).values({
       campaignId,
       category: item.category,
+      // Needs registry taxonomy: wizard sends kind + capitalType; legacy callers get sane defaults.
+      kind: item.kind ?? (item.category === 'role' ? 'role' : 'item'),
+      capitalType: item.capitalType ?? (item.category === 'land' ? 'living' : item.category === 'role' ? 'experiential' : 'material'),
+      quantityWanted: item.quantityWanted ?? item.equipmentQuantity ?? item.resourceQuantity ?? 1,
       hectares: item.hectares,
       region: item.region,
       features: item.features ? JSON.stringify(item.features) : null,
@@ -1234,11 +1241,113 @@ export async function updateCampaignStatus(
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(campaigns).set({
     status,
     updatedAt: new Date(),
   }).where(eq(campaigns.id, campaignId));
+}
+
+
+// ============================================
+// Crowdpooling: needs, followers, updates
+// (CROWDPOOLING_PLATFORM_SPEC.md Part C)
+// ============================================
+
+export async function getCampaignItemById(id: number): Promise<CampaignItem | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(campaignItems).where(eq(campaignItems.id, id)).limit(1);
+  return result[0] || null;
+}
+
+/**
+ * Real contributor count for a campaign: distinct emails across every
+ * contribution that made it past review (accepted, fulfilled, or thanked).
+ * Replaces the hardcoded 0 on campaigns.getById.
+ */
+export async function getCampaignContributorsCount(campaignId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db
+    .select({ c: sql<number>`COUNT(DISTINCT ${campaignContributions.contributorEmail})` })
+    .from(campaignContributions)
+    .where(and(
+      eq(campaignContributions.campaignId, campaignId),
+      inArray(campaignContributions.status, ['accepted', 'fulfilled', 'thanked']),
+    ));
+  return Number(result[0]?.c ?? 0);
+}
+
+/**
+ * Email-only follower upsert. The unique key on (campaignId, email) makes a
+ * duplicate a silent no-op: subscribeByEmail must never reveal whether an
+ * email is already on the list.
+ */
+export async function upsertCampaignFollower(data: InsertCampaignFollower): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(campaignFollowers)
+    .values(data)
+    .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+}
+
+/** Account holders following a campaign via the polymorphic user_follows table. */
+export async function getCampaignFollowerUserIds(campaignId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({ userId: userFollows.userId }).from(userFollows)
+    .where(and(
+      eq(userFollows.targetType, 'campaign'),
+      eq(userFollows.targetId, String(campaignId)),
+    ));
+  return rows.map(r => r.userId);
+}
+
+/**
+ * Create a numbered journal entry. updateNumber is max+1 per campaign,
+ * computed here so the procedure layer stays thin.
+ */
+export async function createCampaignUpdate(data: {
+  campaignId: number;
+  authorId: number;
+  title: string;
+  body: string;
+  imageUrls?: string[];
+}): Promise<{ id: number; updateNumber: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [maxRow] = await db
+    .select({ maxNumber: sql<number>`COALESCE(MAX(${campaignUpdates.updateNumber}), 0)` })
+    .from(campaignUpdates)
+    .where(eq(campaignUpdates.campaignId, data.campaignId));
+  const updateNumber = Number(maxRow?.maxNumber ?? 0) + 1;
+
+  const result = await db.insert(campaignUpdates).values({
+    campaignId: data.campaignId,
+    authorId: data.authorId,
+    updateNumber,
+    title: data.title,
+    body: data.body,
+    imageUrls: data.imageUrls ?? null,
+    publishedAt: new Date(),
+  });
+
+  return { id: result[0].insertId, updateNumber };
+}
+
+export async function listCampaignUpdates(campaignId: number): Promise<CampaignUpdate[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(campaignUpdates)
+    .where(eq(campaignUpdates.campaignId, campaignId))
+    .orderBy(desc(campaignUpdates.updateNumber));
 }
 
 

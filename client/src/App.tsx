@@ -323,7 +323,7 @@ function Router() {
       <Route path={"/admin/voice-rules"}><EB><AdminVoiceRules /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
-      <Route path={"/crowd-pooling-projects"}><EB><CrowdPoolingProjects /></EB></Route>
+      <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
       <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
@@ -334,7 +334,7 @@ function Router() {
       <Route path={"/gov/:slug/backfield"}><EB><GovBackField /></EB></Route>
       <Route path={"/gov/:slug"}><EB><GovTenant /></EB></Route>
       <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
-      <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
+      <Route path={"/campaigns"}><EB><CrowdPoolingProjects /></EB></Route>
       <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>
       <Route path={"/campaign/:id/manage"}><EB><CampaignManage /></EB></Route>
       <Route path={"/campaign/:id/analytics"}><EB><CampaignAnalytics /></EB></Route>

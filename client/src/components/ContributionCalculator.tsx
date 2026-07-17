@@ -1,7 +1,7 @@
 /**
  * Contribution Calculator Component
  * An interactive tool to help users estimate the value of their contributions
- * across the 8 Forms of Capital framework
+ * across the 9 Forms of Capital framework
  */
 
 import React, { useState, useMemo } from 'react';
@@ -26,7 +26,8 @@ import {
   FileText,
   Send,
   Copy,
-  ClipboardCheck
+  ClipboardCheck,
+  HeartPulse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -62,7 +63,9 @@ interface CapitalForm {
   questions: CapitalQuestion[];
 }
 
-// 8 Forms of Capital definitions
+// 9 Forms of Capital definitions.
+// Canonical capital coverage and shared labels live in
+// shared/crowdpoolingTaxonomy.ts; this list must cover the same nine capitals.
 const capitalForms: CapitalForm[] = [
   {
     id: 'financial',
@@ -232,6 +235,27 @@ const capitalForms: CapitalForm[] = [
       { label: 'Art/creative works produced', type: 'number', key: 'art', multiplier: 150, example: 'e.g., 3 illustrations for the website' },
       { label: 'Total content views/reach', type: 'number', key: 'reach', multiplier: 0.02, example: 'e.g., 10,000 views on YouTube video' },
       { label: 'Engagement rate on content (%)', type: 'slider', key: 'engagement', multiplier: 25, example: 'e.g., 8% engagement on social posts' }
+    ]
+  },
+  {
+    id: 'health',
+    name: 'Health Capital',
+    icon: HeartPulse,
+    color: '#ff9800',
+    bgColor: 'bg-orange-500/20',
+    borderColor: 'border-orange-500/40',
+    description: 'Physical and emotional wellbeing, movement, rest, and care',
+    examples: [
+      'Wellness and movement classes taught',
+      'Bodywork and massage sessions given',
+      'Herbal, nutrition, or recovery support provided',
+      'Community fitness events led'
+    ],
+    questions: [
+      { label: 'Wellness classes taught', type: 'number', key: 'classes', multiplier: 60, example: 'e.g., 10 community yoga classes' },
+      { label: 'Bodywork sessions given', type: 'number', key: 'bodywork', multiplier: 80, example: 'e.g., 5 massage sessions during a build week' },
+      { label: 'People supported with care plans', type: 'number', key: 'care', multiplier: 50, example: 'e.g., 8 people on herbal support plans' },
+      { label: 'Community fitness events led', type: 'number', key: 'events', multiplier: 75, example: 'e.g., 4 morning movement sessions' }
     ]
   }
 ];
@@ -442,7 +466,7 @@ export function ContributionCalculator() {
     
     summary += `---\n`;
     summary += `*Generated using the ReGen Civics Contribution Calculator*\n`;
-    summary += `*Based on the 8 Forms of Capital framework*\n`;
+    summary += `*Based on the 9 Forms of Capital framework*\n`;
     
     try {
       await navigator.clipboard.writeText(summary);
@@ -671,7 +695,7 @@ export function ContributionCalculator() {
           <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             Contribution Calculator
           </h3>
-          <p className="text-sm text-[#1a472a]/80">Estimate your value across 8 forms of capital</p>
+          <p className="text-sm text-[#1a472a]/80">Estimate your value across 9 forms of capital</p>
         </div>
       </div>
 

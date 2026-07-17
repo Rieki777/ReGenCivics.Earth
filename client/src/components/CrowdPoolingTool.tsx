@@ -40,7 +40,13 @@ import {
   Save,
   FolderOpen,
   Star,
-  LogIn
+  LogIn,
+  Sprout,
+  BookOpen,
+  Compass,
+  Palette,
+  Sparkles,
+  HeartPulse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +60,15 @@ import {
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import SuggestUpgradesSheet, { suggestedRoles } from '@/components/SuggestUpgradesSheet';
+import { CAPITAL_TYPES, zeroCapitalScores, type CapitalType } from '@shared/capitals';
+import {
+  CONTRIBUTION_CATEGORIES,
+  ROLE_TEMPLATES_BY_CAPITAL,
+  CAPITAL_LABELS,
+  CRYPTO_PAYMENT_CONTEXT,
+  categoryForKey,
+  type RoleTemplate,
+} from '@shared/crowdpoolingTaxonomy';
 
 // Currency definitions
 const currencies = [
@@ -71,18 +86,36 @@ const currencies = [
   { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
 ];
 
-// Immediate contribution categories
-const immediateCategories = [
-  { id: 'land', name: 'Land', icon: TreePine, description: 'Land parcels, property rights' },
-  { id: 'money', name: 'Money', icon: Coins, description: 'Cash, savings, investments' },
-  { id: 'vehicles', name: 'Vehicles', icon: Car, description: 'Cars, trucks, motorcycles' },
-  { id: 'farming', name: 'Farming Equipment', icon: Tractor, description: 'Tractors, tillers, harvesters' },
-  { id: 'tools', name: 'Tools', icon: Wrench, description: 'Hand tools, power tools' },
-  { id: 'building', name: 'Building Supplies', icon: Hammer, description: 'Lumber, cement, materials' },
-  { id: 'technology', name: 'Technology', icon: Laptop, description: 'Computers, solar panels, equipment' },
-  { id: 'housing', name: 'Housing/Structures', icon: Home, description: 'Tiny homes, yurts, containers' },
-  { id: 'other', name: 'Other', icon: Package, description: 'Any other immediate value' },
-];
+// Icon components for the shared taxonomy's icon names
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  TreePine,
+  Coins,
+  Car,
+  Tractor,
+  Wrench,
+  Hammer,
+  Laptop,
+  Home,
+  Sprout,
+  BookOpen,
+  Compass,
+  Users,
+  Palette,
+  Sparkles,
+  HeartPulse,
+  Package,
+};
+
+// Immediate contribution categories, derived from the shared taxonomy
+// (shared/crowdpoolingTaxonomy.ts) so the Tool speaks the same language
+// as campaigns and the Contribution Calculator
+const immediateCategories = CONTRIBUTION_CATEGORIES.map((cat) => ({
+  id: cat.key,
+  name: cat.label,
+  icon: (cat.icon && categoryIcons[cat.icon]) || Package,
+  description: cat.examples.join(', '),
+  capital: cat.capital,
+}));
 
 // Contribution interfaces
 interface ImmediateContribution {
@@ -90,6 +123,7 @@ interface ImmediateContribution {
   category: string;
   description: string;
   value: number;
+  capital: CapitalType;
 }
 
 interface FutureContribution {
@@ -98,6 +132,7 @@ interface FutureContribution {
   weeks: number;
   hoursPerWeek: number;
   hourlyRate: number;
+  capital: CapitalType;
 }
 
 interface ContributorData {
@@ -122,6 +157,69 @@ const formatCurrency = (value: number, symbol: string): string => {
 
 // LocalStorage key for saving form data
 const STORAGE_KEY = 'crowdPoolingFormData';
+
+// Type guard for the nine-capital enum
+const isCapital = (v: unknown): v is CapitalType =>
+  typeof v === 'string' && (CAPITAL_TYPES as readonly string[]).includes(v);
+
+// Older saved data (localStorage, saved profiles, shared JSON) predates the
+// capital field and may use the old "money" category. These normalizers fill
+// in capitals via the shared taxonomy so old forms keep loading.
+const normalizeImmediate = (items: unknown): ImmediateContribution[] => {
+  if (!Array.isArray(items)) return [];
+  return items.map((c: any) => {
+    const category = categoryForKey(String(c?.category ?? ''))?.key ?? 'other';
+    return {
+      id: typeof c?.id === 'string' ? c.id : generateId(),
+      category,
+      description: typeof c?.description === 'string' ? c.description : '',
+      value: typeof c?.value === 'number' ? c.value : 0,
+      capital: isCapital(c?.capital)
+        ? c.capital
+        : categoryForKey(category)?.capital ?? 'material',
+    };
+  });
+};
+
+const normalizeFuture = (items: unknown): FutureContribution[] => {
+  if (!Array.isArray(items)) return [];
+  return items.map((f: any) => ({
+    id: typeof f?.id === 'string' ? f.id : generateId(),
+    roleName: typeof f?.roleName === 'string' ? f.roleName : '',
+    weeks: typeof f?.weeks === 'number' ? f.weeks : 12,
+    hoursPerWeek: typeof f?.hoursPerWeek === 'number' ? f.hoursPerWeek : 8,
+    hourlyRate: typeof f?.hourlyRate === 'number' ? f.hourlyRate : 25,
+    capital: isCapital(f?.capital) ? f.capital : 'experiential',
+  }));
+};
+
+// Compact list of pooled value across the nine forms of capital
+function CapitalSummaryList({
+  totals,
+  symbol,
+}: {
+  totals: Record<CapitalType, number>;
+  symbol: string;
+}) {
+  const active = CAPITAL_TYPES.filter((c) => totals[c] > 0);
+  if (active.length === 0) return null;
+  return (
+    <div className="bg-white/80 rounded-xl p-4 border border-[#7dd87d]/20">
+      <div className="flex items-center gap-2 mb-3">
+        <Coins className="w-5 h-5 text-[#4a7c59]" />
+        <span className="font-bold text-[#1a472a]">Your Contribution by Capital</span>
+      </div>
+      <div className="space-y-1.5">
+        {active.map((c) => (
+          <div key={c} className="flex items-center justify-between text-sm">
+            <span className="text-[#1a472a]/80">{CAPITAL_LABELS[c].label}</span>
+            <span className="font-medium text-[#1a472a]">{formatCurrency(totals[c], symbol)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function CrowdPoolingTool() {
   // Get URL search params
@@ -209,8 +307,8 @@ export default function CrowdPoolingTool() {
         const data = JSON.parse(saved);
         if (data.contributorName) setContributorName(data.contributorName);
         if (data.contributorEmail) setContributorEmail(data.contributorEmail);
-        if (data.immediateContributions) setImmediateContributions(data.immediateContributions);
-        if (data.futureContributions) setFutureContributions(data.futureContributions);
+        if (data.immediateContributions) setImmediateContributions(normalizeImmediate(data.immediateContributions));
+        if (data.futureContributions) setFutureContributions(normalizeFuture(data.futureContributions));
         // Only load project-specific data if not coming from a project link
         if (!urlParams.get('project')) {
           if (data.projectName) setProjectName(data.projectName);
@@ -312,10 +410,10 @@ export default function CrowdPoolingTool() {
     
     try {
       if (savedContribution.immediateContributions) {
-        setImmediateContributions(JSON.parse(savedContribution.immediateContributions));
+        setImmediateContributions(normalizeImmediate(JSON.parse(savedContribution.immediateContributions)));
       }
       if (savedContribution.futureContributions) {
-        setFutureContributions(JSON.parse(savedContribution.futureContributions));
+        setFutureContributions(normalizeFuture(JSON.parse(savedContribution.futureContributions)));
       }
     } catch (e) {
       console.error('Failed to parse saved contributions:', e);
@@ -344,24 +442,44 @@ export default function CrowdPoolingTool() {
   
   const grandTotal = immediateTotal + futureTotal;
   const progressPercentage = targetAmount > 0 ? Math.min((grandTotal / targetAmount) * 100, 100) : 0;
-  
+
+  // Pooled value across the nine forms of capital
+  const capitalTotals = useMemo(() => {
+    const totals = zeroCapitalScores();
+    immediateContributions.forEach((c) => {
+      totals[isCapital(c.capital) ? c.capital : 'material'] += c.value;
+    });
+    futureContributions.forEach((f) => {
+      totals[isCapital(f.capital) ? f.capital : 'experiential'] += f.weeks * f.hoursPerWeek * f.hourlyRate;
+    });
+    return totals;
+  }, [immediateContributions, futureContributions]);
+
   // Add immediate contribution
   const addImmediateContribution = () => {
     setImmediateContributions([
       ...immediateContributions,
       {
         id: generateId(),
-        category: 'money',
+        category: 'crypto',
         description: '',
         value: 0,
+        capital: 'financial',
       }
     ]);
   };
-  
-  // Update immediate contribution
+
+  // Update immediate contribution; a category change also updates the capital
   const updateImmediateContribution = (id: string, field: keyof ImmediateContribution, value: string | number) => {
     setImmediateContributions(contributions =>
-      contributions.map(c => c.id === id ? { ...c, [field]: value } : c)
+      contributions.map(c => {
+        if (c.id !== id) return c;
+        const next = { ...c, [field]: value } as ImmediateContribution;
+        if (field === 'category') {
+          next.capital = categoryForKey(String(value))?.capital ?? 'material';
+        }
+        return next;
+      })
     );
   };
   
@@ -380,8 +498,32 @@ export default function CrowdPoolingTool() {
         weeks: 12,
         hoursPerWeek: 8,
         hourlyRate: 25,
+        capital: 'experiential',
       }
     ]);
+  };
+
+  // Add a role commitment from a shared taxonomy template
+  const addRoleFromTemplate = (capital: CapitalType, role: RoleTemplate) => {
+    setFutureContributions(prev => [
+      ...prev,
+      {
+        id: generateId(),
+        roleName: role.title,
+        weeks: 12,
+        hoursPerWeek: role.defaultHoursPerWeek,
+        hourlyRate: role.defaultHourlyRate,
+        capital,
+      },
+    ]);
+    toast.success(`${role.title} added`);
+  };
+
+  // Update which capital a role commitment counts toward
+  const updateFutureCapital = (id: string, capital: CapitalType) => {
+    setFutureContributions(contributions =>
+      contributions.map(c => (c.id === id ? { ...c, capital } : c))
+    );
   };
   
   // Update future contribution
@@ -479,9 +621,10 @@ export default function CrowdPoolingTool() {
       
       immediateContributions.forEach((contribution) => {
         const category = immediateCategories.find(c => c.id === contribution.category);
+        const capitalLabel = CAPITAL_LABELS[contribution.capital]?.label || 'Material';
         doc.setFontSize(10);
         doc.setTextColor(60, 60, 60);
-        doc.text(`${category?.name || 'Other'}: ${contribution.description || 'No description'}`, margin + 5, yPos);
+        doc.text(`${category?.name || 'Other'} [${capitalLabel}]: ${contribution.description || 'No description'}`, margin + 5, yPos);
         doc.text(formatCurrency(contribution.value, currencySymbol), pageWidth - margin, yPos, { align: 'right' });
         yPos += 6;
       });
@@ -504,9 +647,10 @@ export default function CrowdPoolingTool() {
       
       futureContributions.forEach((contribution) => {
         const totalValue = contribution.weeks * contribution.hoursPerWeek * contribution.hourlyRate;
+        const capitalLabel = CAPITAL_LABELS[contribution.capital]?.label || 'Experiential';
         doc.setFontSize(10);
         doc.setTextColor(60, 60, 60);
-        doc.text(`${contribution.roleName || 'Role'}: ${contribution.weeks}wks x ${contribution.hoursPerWeek}hrs/wk x ${currencySymbol}${contribution.hourlyRate}/hr`, margin + 5, yPos);
+        doc.text(`${contribution.roleName || 'Role'} [${capitalLabel}]: ${contribution.weeks}wks x ${contribution.hoursPerWeek}hrs/wk x ${currencySymbol}${contribution.hourlyRate}/hr`, margin + 5, yPos);
         doc.text(formatCurrency(totalValue, currencySymbol), pageWidth - margin, yPos, { align: 'right' });
         yPos += 6;
       });
@@ -957,8 +1101,11 @@ export default function CrowdPoolingTool() {
               <p className="text-sm text-[#1a472a]/80 text-center py-2">No future commitments added</p>
             )}
           </div>
+
+          {/* Contribution by capital */}
+          <CapitalSummaryList totals={capitalTotals} symbol={currencySymbol} />
         </div>
-        
+
         {/* Actions */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -991,13 +1138,16 @@ export default function CrowdPoolingTool() {
                 contributorEmail,
                 totalValue: grandTotal,
                 financialValue: immediateTotal,
-                        immediateContributions: immediateContributions.map((c: ImmediateContribution) => ({
+                byCapital: capitalTotals,
+                immediateContributions: immediateContributions.map((c: ImmediateContribution) => ({
                   category: c.category,
+                  capital: c.capital,
                   value: c.value,
                   description: c.description
                 })),
                 futureContributions: futureContributions.map(f => ({
                   roleName: f.roleName,
+                  capital: f.capital,
                   hourlyRate: f.hourlyRate,
                   hoursPerWeek: f.hoursPerWeek,
                   weeks: f.weeks,
@@ -1123,7 +1273,7 @@ export default function CrowdPoolingTool() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-bold text-[#1a472a]">Immediate Contributions</h4>
-              <p className="text-xs text-[#1a472a]/80">Land, money, equipment, materials, etc.</p>
+              <p className="text-xs text-[#1a472a]/80">Land, crypto, equipment, plants, and more</p>
             </div>
             <Button
               onClick={addImmediateContribution}
@@ -1193,9 +1343,14 @@ export default function CrowdPoolingTool() {
                         <Input
                           value={contribution.description}
                           onChange={(e) => updateImmediateContribution(contribution.id, 'description', e.target.value)}
-                          placeholder={contribution.category === 'money' ? 'Cash, Crypto, Stocks, etc.' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
+                          placeholder={contribution.category === 'crypto' ? 'USDC, ETH, or other tokens' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
                           className="bg-white border-[#7dd87d]/30 w-full"
                         />
+                        {contribution.category === 'crypto' && (
+                          <p className="text-xs text-[#1a472a]/70">
+                            {CRYPTO_PAYMENT_CONTEXT.fiatNote}
+                          </p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
@@ -1232,7 +1387,45 @@ export default function CrowdPoolingTool() {
               Add Role
             </Button>
           </div>
-          
+
+          {/* Role templates across the nine capitals */}
+          <div className="bg-white/70 rounded-xl border border-[#7dd87d]/30">
+            <button
+              type="button"
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="w-full flex items-center justify-between p-3"
+            >
+              <span className="text-sm font-medium text-[#1a472a] flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#4a7c59]" />
+                Pick a role from the nine capitals
+              </span>
+              <ChevronDown className={`w-4 h-4 text-[#4a7c59] transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
+            </button>
+            {showTemplates && (
+              <div className="px-3 pb-3 space-y-3">
+                {CAPITAL_TYPES.map((capital) => (
+                  <div key={capital}>
+                    <p className="text-xs font-bold text-[#1a472a]">{CAPITAL_LABELS[capital].label} Capital</p>
+                    <p className="text-[11px] text-[#1a472a]/70 mb-1.5">{CAPITAL_LABELS[capital].blurb}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROLE_TEMPLATES_BY_CAPITAL[capital].map((role) => (
+                        <button
+                          key={role.title}
+                          type="button"
+                          title={role.description}
+                          onClick={() => addRoleFromTemplate(capital, role)}
+                          className="text-xs px-2.5 py-1.5 rounded-lg bg-[#f0f7f0] border border-[#7dd87d]/30 text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors"
+                        >
+                          {role.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Smart Suggestions Box */}
           {(() => {
             const remaining = targetAmount - grandTotal;
@@ -1312,6 +1505,7 @@ export default function CrowdPoolingTool() {
                               weeks: suggestion.weeks,
                               hoursPerWeek: suggestion.hoursPerWeek,
                               hourlyRate: suggestion.hourlyRate,
+                              capital: 'experiential',
                             }
                           ]);
                         }}
@@ -1409,9 +1603,26 @@ export default function CrowdPoolingTool() {
                             />
                           </div>
                         </div>
-                        <div className="text-right text-sm">
-                          <span className="text-[#1a472a]/80">Total: </span>
-                          <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <Select
+                            value={contribution.capital}
+                            onValueChange={(value) => updateFutureCapital(contribution.id, value as CapitalType)}
+                          >
+                            <SelectTrigger className="w-40 h-8 text-xs bg-white border-[#7dd87d]/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CAPITAL_TYPES.map((capital) => (
+                                <SelectItem key={capital} value={capital}>
+                                  {CAPITAL_LABELS[capital].label} Capital
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-right text-sm">
+                            <span className="text-[#1a472a]/80">Total: </span>
+                            <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
+                          </div>
                         </div>
                       </div>
                       <Button
@@ -1432,6 +1643,13 @@ export default function CrowdPoolingTool() {
         </div>
       )}
       
+      {/* Pooled value across the nine capitals */}
+      {grandTotal > 0 && (
+        <div className="mt-6">
+          <CapitalSummaryList totals={capitalTotals} symbol={currencySymbol} />
+        </div>
+      )}
+
       {/* View Results button */}
       <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
         <Button
@@ -1456,6 +1674,7 @@ export default function CrowdPoolingTool() {
                 weeks: role.typicalWeeks,
                 hoursPerWeek: role.typicalHours,
                 hourlyRate: role.suggestedRate,
+                capital: 'experiential',
               }
             ]);
             setActiveSection('future');

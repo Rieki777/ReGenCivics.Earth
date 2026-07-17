@@ -29,7 +29,7 @@ export const gratitudeRouter = router({
     .input(z.object({
       recipientHandle: z.string().min(3).max(40),
       message: z.string().min(3).max(500),
-      sourceType: z.enum(["forum_post", "forum_reply", "profile", "command_center", "bounty"]).optional(),
+      sourceType: z.enum(["forum_post", "forum_reply", "profile", "command_center", "bounty", "contribution"]).optional(),
       sourceId: z.number().int().optional(),
     }))
     .mutation(async ({ ctx, input }) => {

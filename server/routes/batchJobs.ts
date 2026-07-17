@@ -452,6 +452,147 @@ async function cancelStaleClaimBridges(
   return { cancelled, refunded };
 }
 
+// ─── Step 9: Crowdpool claim expiry sweep + reminders ──────────────────────
+//
+// Two passes over accepted claims (CROWDPOOLING_PLATFORM_SPEC.md Part C):
+//
+// 1. Expiry: accepted contributions past claimExpiresAt flip to 'expired'
+//    and release their reserved slots on the need (quantityClaimed floors
+//    at 0). Contributor and steward both get an in-app note.
+// 2. Reminders: claims expiring within crowdpool.reminder_days_before_expiry
+//    days, plus shift claims starting within 7 days and within 1 day. Deduped
+//    via notifications.dedupeKey (claimrem:{contributionId}:{bucket}) so
+//    reruns are no-ops.
+//
+// No token credits anywhere in this job: crowdpooling never mints platform
+// tokens (locked decision).
+
+/** Game variable with a fallback: crowdpool config may not be seeded yet. */
+async function getGameVariableOr(key: string, fallback: number): Promise<number> {
+  try {
+    return await getGameVariable(key);
+  } catch {
+    return fallback;
+  }
+}
+
+export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number; reminders: number }> {
+  const { createUserNotification } = await import("../db");
+  const { insertNotification } = await import("../lib/forum-notify");
+
+  let expired = 0;
+  let reminders = 0;
+
+  // Pass 1: expire overdue claims and release their slots.
+  const [overdueRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.campaignItemId, cc.userId, cc.quantityPledged,
+           cc.title, c.userId AS ownerId, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.claimExpiresAt IS NOT NULL
+      AND cc.claimExpiresAt < NOW()
+  `);
+
+  for (const claim of ((overdueRows as any[]) ?? [])) {
+    // Status guard in the WHERE keeps a concurrent sweep from double-releasing.
+    const [result] = await db.execute(sql`
+      UPDATE campaign_contributions SET status = 'expired', updatedAt = NOW()
+      WHERE id = ${claim.id} AND status = 'accepted'
+    `);
+    if (((result as any)?.affectedRows ?? 0) === 0) continue;
+
+    if (claim.campaignItemId) {
+      await db.execute(sql`
+        UPDATE campaign_items
+        SET quantityClaimed = GREATEST(quantityClaimed - ${claim.quantityPledged}, 0)
+        WHERE id = ${claim.campaignItemId}
+      `);
+    }
+    expired++;
+
+    // Tell both sides. Best-effort: a notification failure never stops the sweep.
+    try {
+      if (claim.userId) {
+        await createUserNotification({
+          userId: claim.userId,
+          type: 'system',
+          title: 'Your claim expired',
+          message: `Your claim "${claim.title}" on ${claim.campaignTitle} passed its delivery window, so the need is open again. You can claim it again any time.`,
+          campaignId: claim.campaignId,
+          contributionId: claim.id,
+          link: `/campaign/${claim.campaignId}`,
+        });
+      }
+      await createUserNotification({
+        userId: claim.ownerId,
+        type: 'system',
+        title: 'A claim expired',
+        message: `The claim "${claim.title}" on ${claim.campaignTitle} expired, so its slots are open again.`,
+        campaignId: claim.campaignId,
+        contributionId: claim.id,
+        link: `/campaign/${claim.campaignId}`,
+      });
+    } catch (err) {
+      console.warn('[crowdpool-sweep] expiry notification failed:', err);
+    }
+  }
+
+  // Pass 2a: claims approaching their expiry window.
+  const reminderDays = await getGameVariableOr('crowdpool.reminder_days_before_expiry', 2);
+  const [expiringRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.userId IS NOT NULL
+      AND cc.claimExpiresAt IS NOT NULL
+      AND cc.claimExpiresAt > NOW()
+      AND cc.claimExpiresAt < DATE_ADD(NOW(), INTERVAL ${reminderDays} DAY)
+  `);
+  for (const claim of ((expiringRows as any[]) ?? [])) {
+    const wrote = await insertNotification({
+      userId: claim.userId,
+      type: 'system',
+      title: 'Your claim window is closing',
+      body: `"${claim.title}" on ${claim.campaignTitle} needs to be delivered soon, or the claim will expire and the need opens back up.`,
+      link: `/campaign/${claim.campaignId}`,
+      dedupeKey: `claimrem:${claim.id}:expiry`,
+    });
+    if (wrote) reminders++;
+  }
+
+  // Pass 2b: shifts starting within 7 days and within 1 day.
+  const [shiftRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, ci.shiftStartsAt, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaign_items ci ON ci.id = cc.campaignItemId
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.userId IS NOT NULL
+      AND ci.kind = 'shift'
+      AND ci.shiftStartsAt IS NOT NULL
+      AND ci.shiftStartsAt > NOW()
+      AND ci.shiftStartsAt < DATE_ADD(NOW(), INTERVAL 7 DAY)
+  `);
+  for (const claim of ((shiftRows as any[]) ?? [])) {
+    const startsAt = new Date(claim.shiftStartsAt);
+    const withinOneDay = startsAt.getTime() - Date.now() <= 24 * 60 * 60 * 1000;
+    const bucket = withinOneDay ? 'shift1' : 'shift7';
+    const wrote = await insertNotification({
+      userId: claim.userId,
+      type: 'system',
+      title: withinOneDay ? 'Your shift is tomorrow' : 'Your shift is coming up',
+      body: `"${claim.title}" at ${claim.campaignTitle} starts ${startsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`,
+      link: `/campaign/${claim.campaignId}`,
+      dedupeKey: `claimrem:${claim.id}:${bucket}`,
+    });
+    if (wrote) reminders++;
+  }
+
+  return { expired, reminders };
+}
+
 // ─── Main Router ───────────────────────────────────────────────────────────
 
 export const batchJobsRouter = router({
@@ -536,6 +677,16 @@ export const batchJobsRouter = router({
       gratitudeCredited = result.credited;
     } catch (e: any) { errors.push(`Step 8 (gratitude cycles): ${e.message}`); }
 
+    let crowdpoolClaimsExpired = 0;
+    let crowdpoolReminders = 0;
+    try {
+      // Step 9: Crowdpool claim expiry sweep + reminders. Releases reserved
+      // slots on needs whose claims blew their delivery window.
+      const result = await expireCrowdpoolClaims(db);
+      crowdpoolClaimsExpired = result.expired;
+      crowdpoolReminders = result.reminders;
+    } catch (e: any) { errors.push(`Step 9 (crowdpool claims): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -549,7 +700,7 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders };
   }),
 
   // Manual trigger for the stale-claim cleanup (admin-only). Useful for

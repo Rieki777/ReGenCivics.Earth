@@ -52,7 +52,8 @@ import {
   Plus,
   Lightbulb,
   X,
-  ChevronUp
+  ChevronUp,
+  HeartPulse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,7 +159,10 @@ interface CapitalType {
   weights: WeightItem[];
 }
 
-// Capital type definitions with their weights and examples
+// Capital type definitions with their weights and examples.
+// Canonical capital coverage (all nine) and shared labels live in
+// shared/crowdpoolingTaxonomy.ts; this list keeps its own weight entries
+// and rich examples, and it must cover the same nine capitals.
 const defaultCapitalWeights: CapitalType[] = [
   {
     id: 'financial',
@@ -312,6 +316,25 @@ const defaultCapitalWeights: CapitalType[] = [
       { input: 'Art/creative works', multiplier: '$150', unit: 'per work', rationale: 'Average value of creative and artistic contributions', key: 'cultural_art' },
       { input: 'Content views/reach', multiplier: '$0.02', unit: 'per view', rationale: 'CPM-based value of content reach and distribution', key: 'cultural_reach' },
       { input: 'Engagement rate', multiplier: '$25', unit: 'per % engagement', rationale: 'Value of audience engagement quality', key: 'cultural_engagement' },
+    ]
+  },
+  {
+    id: 'health',
+    name: 'Health Capital',
+    icon: HeartPulse,
+    color: '#ff9800',
+    description: 'Physical and emotional wellbeing, movement, rest, and care',
+    example: {
+      scenario: 'You teach 10 yoga classes and give 5 bodywork sessions',
+      input: '10 classes + 5 sessions',
+      calculation: '(10 x $60) + (5 x $80)',
+      result: '$600 + $400 = $1,000 contribution value'
+    },
+    weights: [
+      { input: 'Wellness classes taught', multiplier: '$60', unit: 'per class', rationale: 'Going rate for a group yoga, movement, or fitness class', key: 'health_classes' },
+      { input: 'Bodywork sessions given', multiplier: '$80', unit: 'per session', rationale: 'Typical rate for massage and one-on-one bodywork', key: 'health_bodywork' },
+      { input: 'People supported with care plans', multiplier: '$50', unit: 'per person', rationale: 'Value of herbal, nutrition, or recovery support per person', key: 'health_care' },
+      { input: 'Community fitness events led', multiplier: '$75', unit: 'per event', rationale: 'Value of organizing and leading group movement events', key: 'health_events' },
     ]
   }
 ];

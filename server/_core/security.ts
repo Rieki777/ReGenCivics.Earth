@@ -40,7 +40,14 @@ export function cspNonceMiddleware(_req: Request, res: Response, next: NextFunct
  */
 export function cspMiddleware(_req: Request, res: Response, next: NextFunction) {
   const nonce = res.locals.nonce as string | undefined;
-  const nonceToken = nonce ? `'nonce-${nonce}'` : "";
+  // Dev only: drop the nonce from script-src so 'unsafe-inline' takes effect.
+  // Vite dev mode injects the @vitejs/plugin-react refresh preamble as an
+  // inline module WITHOUT our per-request nonce, and per CSP3 a present nonce
+  // makes browsers ignore 'unsafe-inline', so the preamble is blocked and every
+  // dev page throws "can't detect preamble" and renders blank. The preamble
+  // only exists in dev; production keeps strict nonce mode unchanged.
+  const isDev = process.env.NODE_ENV === "development";
+  const nonceToken = !isDev && nonce ? `'nonce-${nonce}'` : "";
 
   // Note on the script-src strategy:
   //

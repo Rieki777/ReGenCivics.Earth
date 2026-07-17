@@ -1099,6 +1099,12 @@ export const campaigns = mysqlTable("campaigns", {
   reviewedBy: int("reviewedBy"), // Admin who reviewed
   reviewedAt: timestamp("reviewedAt"),
   generatedImageUrl: varchar("generatedImageUrl", { length: 512 }), // AI-generated card image
+
+  // Crowdpooling flags (0205). isDemo labels seeded example campaigns: they
+  // render with the Example badge and never count in the gallery impact strip.
+  isDemo: tinyint("isDemo").default(0).notNull(),
+  forumPostId: int("forumPostId"), // Campaign discussion thread
+  seasonId: int("seasonId"), // Which season this campaign belongs to
 });
 
 export type Campaign = typeof campaigns.$inferSelect;
@@ -1147,7 +1153,48 @@ export const campaignItems = mysqlTable("campaign_items", {
   // Common fields
   estimatedValue: int("estimatedValue").default(0).notNull(),
   pledgedValue: int("pledgedValue").default(0).notNull(), // How much has been pledged for this item
-  
+
+  // Needs registry (0202, CROWDPOOLING_PLATFORM_SPEC.md Part B Migration A).
+  // kind is what shape the need takes. 'crypto' is trackable money on-platform
+  // (decision 7); fiat renders only as 'financial_link' partner CTAs.
+  kind: mysqlEnum("kind", [
+    "item",
+    "role",
+    "shift",
+    "loan",
+    "knowledge",
+    "crypto",
+    "financial_link",
+  ]).default("item").notNull(),
+  // Which of the 9 capitals this need feeds (decision 8). NULL for legacy roles
+  // until a steward sets it.
+  capitalType: mysqlEnum("capitalType", [
+    "intellectual",
+    "social",
+    "material",
+    "financial",
+    "living",
+    "cultural",
+    "spiritual",
+    "experiential",
+    "health",
+  ]),
+  // Slot tracking: accepted claims reserve quantityClaimed (ghost progress),
+  // delivery confirms quantityDelivered (solid progress, decision 4).
+  quantityWanted: int("quantityWanted").default(1).notNull(),
+  quantityClaimed: int("quantityClaimed").default(0).notNull(),
+  quantityDelivered: int("quantityDelivered").default(0).notNull(),
+  needDeadline: timestamp("needDeadline"),
+  // Shift needs: the dated work-party window
+  shiftStartsAt: timestamp("shiftStartsAt"),
+  shiftEndsAt: timestamp("shiftEndsAt"),
+  // Loan needs: the custody window (project is custodian, never P2P)
+  loanWindowStart: timestamp("loanWindowStart"),
+  loanWindowEnd: timestamp("loanWindowEnd"),
+  groupClaimable: tinyint("groupClaimable").default(0).notNull(), // Partial claims allowed
+  priorityPinned: tinyint("priorityPinned").default(0).notNull(), // Sorts first in the registry
+  imageUrl: varchar("imageUrl", { length: 512 }),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1173,13 +1220,15 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   contributorPhone: varchar("contributorPhone", { length: 50 }),
   contributorBio: text("contributorBio"), // Short bio about the contributor
   
-  // Contribution Type
+  // Contribution Type (0203). 'financial' means crypto pledges only, decision 7:
+  // fiat routes to partner links and never touches us.
   contributionType: mysqlEnum("contributionType", [
     "land",
     "equipment",
     "role",
     "resource",
-    "financial"
+    "financial",
+    "knowledge"
   ]).notNull(),
   
   // Contribution Details (varies by type)
@@ -1215,19 +1264,34 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   // Value
   estimatedValue: int("estimatedValue").default(0).notNull(), // Estimated value in campaign currency
   
-  // Status
+  // Status (0203). accepted reserves quantity (ghost progress), fulfilled is
+  // the payoff moment (decision 4), thanked closes the loop, expired is
+  // terminal and set by the nightly sweep.
   status: mysqlEnum("status", [
     "pending",      // Submitted, awaiting campaign owner review
     "accepted",     // Accepted by campaign owner
     "rejected",     // Rejected by campaign owner
     "withdrawn",    // Withdrawn by contributor
-    "fulfilled"     // Contribution has been delivered/completed
+    "fulfilled",    // Contribution has been delivered/completed
+    "expired",      // Claim window passed, quantity released (nightly sweep)
+    "thanked"       // Steward attached an impact note/photo after fulfillment
   ]).default("pending").notNull(),
-  
+
   // Communication
   contributorNotes: text("contributorNotes"), // Notes from contributor
   ownerNotes: text("ownerNotes"), // Notes from campaign owner
-  
+
+  // Claims upgrade (0203, CROWDPOOLING_PLATFORM_SPEC.md Part B Migration B)
+  quantityPledged: int("quantityPledged").default(1).notNull(), // Slots claimed on the need
+  claimExpiresAt: timestamp("claimExpiresAt"), // From crowdpool.claim_expiry_days_* by need kind
+  acknowledgedAt: timestamp("acknowledgedAt"), // When the steward sent thanks
+  acknowledgedNote: text("acknowledgedNote"), // Required for the thanked status
+  acknowledgedImageUrl: varchar("acknowledgedImageUrl", { length: 512 }),
+  referredBy: varchar("referredBy", { length: 16 }), // Share token from ?ref=
+  isAnonymous: tinyint("isAnonymous").default(0).notNull(), // Renders as "A contributor" publicly
+  hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 16 }), // Set by formalizeOnHypha
+  playerContributionId: int("playerContributionId"), // Living Tree row created on fulfilled
+
   // Metadata
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
   reviewedAt: timestamp("reviewedAt"),
@@ -1238,6 +1302,68 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
 
 export type CampaignContribution = typeof campaignContributions.$inferSelect;
 export type InsertCampaignContribution = typeof campaignContributions.$inferInsert;
+
+/**
+ * Campaign Updates (0204). The numbered public journal: short letters from the
+ * land. updateNumber auto-increments per campaign in the procedure layer.
+ * Publishing fans out campaign_update notifications to followers.
+ */
+export const campaignUpdates = mysqlTable("campaign_updates", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  authorId: int("authorId").notNull(),
+  updateNumber: int("updateNumber").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  imageUrls: json("imageUrls"),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("campaign_updates_campaign_idx").on(t.campaignId),
+]));
+export type CampaignUpdate = typeof campaignUpdates.$inferSelect;
+export type InsertCampaignUpdate = typeof campaignUpdates.$inferInsert;
+
+/**
+ * Campaign Partner Links (0204). Ma Earth / GoSteward / grant CTAs with
+ * nightly-hydrated cached numbers. Money never touches us (decisions 2 + 7):
+ * these are read-only display links, contributors complete on the partner site.
+ */
+export const campaignPartnerLinks = mysqlTable("campaign_partner_links", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  partner: mysqlEnum("partner", ["maearth", "gosteward", "grant", "other"]).notNull(),
+  label: varchar("label", { length: 255 }),
+  url: varchar("url", { length: 512 }).notNull(),
+  cachedRaised: int("cachedRaised"),
+  cachedContributorCount: int("cachedContributorCount"),
+  cachedPercent: int("cachedPercent"),
+  lastFetchedAt: timestamp("lastFetchedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("campaign_partner_links_campaign_idx").on(t.campaignId),
+]));
+export type CampaignPartnerLink = typeof campaignPartnerLinks.$inferSelect;
+export type InsertCampaignPartnerLink = typeof campaignPartnerLinks.$inferInsert;
+
+/**
+ * Campaign Followers (0205). Email-only followers from the GetNotified form,
+ * no account required. Account holders follow via user_follows with
+ * targetType 'campaign'. unsubscribeToken goes into every email.
+ * The unique key doubles as the campaignId lookup index (leftmost prefix).
+ */
+export const campaignFollowers = mysqlTable("campaign_followers", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  unsubscribeToken: varchar("unsubscribeToken", { length: 32 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("campaign_followers_campaign_email_uq").on(t.campaignId, t.email),
+]));
+export type CampaignFollower = typeof campaignFollowers.$inferSelect;
+export type InsertCampaignFollower = typeof campaignFollowers.$inferInsert;
 
 /**
  * Campaign Images table
@@ -2781,6 +2907,7 @@ export const notifications = mysqlTable("notifications", {
     "new_contribution",
     "claim_complete",
     "claim_failed",
+    "campaign_update",
   ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
@@ -2852,12 +2979,13 @@ export const forumPostReads = mysqlTable("forum_post_reads", {
 ]));
 export type ForumPostRead = typeof forumPostReads.$inferSelect;
 
-// One polymorphic follow table (0168): users, categories, bioregions, tags.
-// targetId is VARCHAR so tag slugs and numeric ids share one column.
+// One polymorphic follow table (0168): users, categories, bioregions, tags,
+// and campaigns (0205). targetId is VARCHAR so tag slugs and numeric ids
+// share one column.
 export const userFollows = mysqlTable("user_follows", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag"]).notNull(),
+  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag", "campaign"]).notNull(),
   targetId: varchar("targetId", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ([

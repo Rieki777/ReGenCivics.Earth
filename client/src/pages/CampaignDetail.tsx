@@ -7,16 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { CampaignProgressTracker } from "@/components/CampaignProgressTracker";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  MapPin, 
-  Target, 
-  Calendar, 
-  TrendingUp, 
-  Users, 
-  Leaf, 
-  Wrench, 
-  UserCheck, 
+import { Input } from "@/components/ui/input";
+import {
+  MapPin,
+  Target,
+  Calendar,
+  TrendingUp,
+  Users,
+  Leaf,
+  Wrench,
+  UserCheck,
   Package,
   ExternalLink,
   Heart,
@@ -28,11 +28,21 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Bell,
+  BellRing,
+  Gift,
+  Activity,
+  BookOpen,
+  Mail,
+  Pin,
+  Coins,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaoSpinner } from "@/components/TaoSpinner";
-import { ContributionModal } from "@/components/ContributionModal";
+import { ContributionModal, type ContributionNeed } from "@/components/ContributionModal";
+import { CAPITAL_TYPES, CAPITAL_LABELS, CRYPTO_PAYMENT_CONTEXT, type CapitalType } from "@shared/crowdpoolingTaxonomy";
 import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
 import { BackButton } from "@/components/BackButton";
@@ -63,6 +73,10 @@ function getVisitorId(): string {
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedNeed, setSelectedNeed] = useState<ContributionNeed | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const [viewTracked, setViewTracked] = useState(false);
   
@@ -98,6 +112,66 @@ export default function CampaignDetail() {
     { campaignId: parseInt(id!), status: 'accepted' },
     { enabled: !!id }
   );
+
+  // Fulfilled contributions: the "delivered so far" line under the thermometer
+  const { data: fulfilledContributions } = trpc.campaigns.getContributions.useQuery(
+    { campaignId: parseInt(id!), status: 'fulfilled' },
+    { enabled: !!id }
+  );
+
+  // Pool Ledger activity feed
+  const { data: activity } = trpc.campaigns.getActivity.useQuery(
+    { campaignId: parseInt(id!), limit: 50 },
+    { enabled: !!id }
+  );
+
+  // Updates journal
+  const { data: updates } = trpc.campaigns.listUpdates.useQuery(
+    { campaignId: parseInt(id!) },
+    { enabled: !!id }
+  );
+
+  // Follow / unfollow with optimistic toggle
+  const followMutation = trpc.campaigns.follow.useMutation({
+    onError: () => {
+      setIsFollowing(false);
+      toast.error('Could not follow this campaign. Try again.');
+    },
+  });
+  const unfollowMutation = trpc.campaigns.unfollow.useMutation({
+    onError: () => {
+      setIsFollowing(true);
+      toast.error('Could not unfollow this campaign. Try again.');
+    },
+  });
+  const handleFollowToggle = () => {
+    const next = !isFollowing;
+    setIsFollowing(next);
+    if (next) {
+      followMutation.mutate({ campaignId: parseInt(id!) });
+    } else {
+      unfollowMutation.mutate({ campaignId: parseInt(id!) });
+    }
+  };
+
+  // Email subscribe for visitors without an account
+  const subscribeMutation = trpc.campaigns.subscribeByEmail.useMutation({
+    onSuccess: () => {
+      toast.success("You're on the list. Updates from this campaign will land in your inbox.");
+      setSubscribeEmail('');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Could not subscribe. Try again.');
+    },
+  });
+  const handleSubscribe = () => {
+    const email = subscribeEmail.trim();
+    if (!email || !email.includes('@')) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+    subscribeMutation.mutate({ campaignId: parseInt(id!), email });
+  };
 
   // Fetch related campaigns (active campaigns to show at the bottom)
   const { data: allActiveCampaigns } = trpc.campaigns.list.useQuery(
@@ -143,12 +217,9 @@ export default function CampaignDetail() {
   const financialRaised = campaign.pledgedFinancial || 0;
   const financialProgress = financialTarget > 0 ? Math.min((financialRaised / financialTarget) * 100, 100) : 0;
   
-  // Group items by category
-  const landItems = campaign.items.filter(item => item.category === 'land');
-  const equipmentItems = campaign.items.filter(item => item.category === 'equipment');
-  const roleItems = campaign.items.filter(item => item.category === 'role');
-  const resourceItems = campaign.items.filter(item => item.category === 'resource');
-  
+  // Value delivered so far: fulfilled contributions, summed
+  const deliveredValue = (fulfilledContributions || []).reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+
   // Count unique contributors
   const contributorCount = contributions ? new Set(contributions.map(c => c.contributorName)).size : 0;
   
@@ -252,6 +323,30 @@ export default function CampaignDetail() {
                   </Button>
                 </Link>
               )}
+              {isAuthenticated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFollowToggle}
+                  className={`flex-1 md:flex-none ${
+                    isFollowing
+                      ? 'bg-[#4a7c59] text-white border-[#4a7c59] hover:bg-[#1a472a]'
+                      : 'border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59] hover:text-white'
+                  }`}
+                >
+                  {isFollowing ? (
+                    <>
+                      <BellRing className="w-4 h-4 mr-2" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="w-4 h-4 mr-2" />
+                      Follow
+                    </>
+                  )}
+                </Button>
+              )}
               <ShareButtons
                 url={`/campaign/${id}`}
                 title={campaign.title}
@@ -275,7 +370,35 @@ export default function CampaignDetail() {
           <p className="text-[#1a472a]/80 leading-relaxed mb-6">
             {campaign.description}
           </p>
-          
+
+          {/* Email subscribe for visitors without an account */}
+          {!isAuthenticated && (
+            <div className="flex flex-col sm:flex-row gap-2 mb-6 bg-[#f0f7f0] rounded-xl p-4">
+              <div className="flex items-center gap-2 flex-1">
+                <Mail className="w-4 h-4 text-[#4a7c59] flex-shrink-0" />
+                <Input
+                  type="email"
+                  value={subscribeEmail}
+                  onChange={(e) => setSubscribeEmail(e.target.value)}
+                  placeholder="Your email for campaign updates"
+                  className="bg-white border-[#7dd87d]/30"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleSubscribe}
+                disabled={subscribeMutation.isPending}
+                className="bg-[#4a7c59] hover:bg-[#1a472a] text-white sm:self-center"
+              >
+                {subscribeMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Get updates'
+                )}
+              </Button>
+            </div>
+          )}
+
           {/* Campaign Progress Tracker */}
           <CampaignProgressTracker
             totalValue={totalValue}
@@ -288,6 +411,16 @@ export default function CampaignDetail() {
             status={campaign.status}
             currency={campaign.currency || 'USD'}
           />
+
+          {/* Delivered so far: pledges count when they land (decision 4) */}
+          {deliveredValue > 0 && (
+            <p className="flex items-center gap-2 text-sm text-[#1a472a]/80 mt-3">
+              <CheckCircle2 className="w-4 h-4 text-[#4a7c59]" />
+              <span>
+                <strong className="text-[#4a7c59]">{formatCurrency(deliveredValue)}</strong> delivered so far
+              </span>
+            </p>
+          )}
         </div>
         
         {/* Campaign Photo Gallery */}
@@ -335,7 +468,7 @@ export default function CampaignDetail() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-[#1a472a] truncate">
-                      {contribution.contributorName}
+                      {contribution.isAnonymous ? 'A contributor' : contribution.contributorName}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-[#1a472a]/80">
                       {getContributionIcon(contribution.contributionType)}
@@ -540,229 +673,112 @@ export default function CampaignDetail() {
           </div>
         )}
         
-        {/* Campaign Needs Tabs */}
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="bg-white/95 backdrop-blur mb-6 flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="all" className="text-xs md:text-sm">All ({campaign.items.length})</TabsTrigger>
-            {landItems.length > 0 && <TabsTrigger value="land" className="text-xs md:text-sm">Land ({landItems.length})</TabsTrigger>}
-            {equipmentItems.length > 0 && <TabsTrigger value="equipment" className="text-xs md:text-sm">Equipment ({equipmentItems.length})</TabsTrigger>}
-            {roleItems.length > 0 && <TabsTrigger value="roles" className="text-xs md:text-sm">Roles ({roleItems.length})</TabsTrigger>}
-            {resourceItems.length > 0 && <TabsTrigger value="resources" className="text-xs md:text-sm">Resources ({resourceItems.length})</TabsTrigger>}
-          </TabsList>
-          
-          {/* All Needs */}
-          <TabsContent value="all" className="space-y-4">
-            {campaign.items.map((item: any) => (
-              <Card key={item.id} className="bg-white/95 backdrop-blur">
-                <CardHeader className="p-4 md:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      {item.category === 'land' && <Leaf className="w-6 h-6 text-green-600 flex-shrink-0" />}
-                      {item.category === 'equipment' && <Wrench className="w-6 h-6 text-orange-600 flex-shrink-0" />}
-                      {item.category === 'role' && <UserCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />}
-                      {item.category === 'resource' && <Package className="w-6 h-6 text-purple-600 flex-shrink-0" />}
-                      <div>
-                        <CardTitle className="text-[#1a472a] text-base md:text-lg">
-                          {item.category === 'land' && `${item.hectares} hectares in ${item.region}`}
-                          {item.category === 'equipment' && `${item.equipmentName} (x${item.equipmentQuantity})`}
-                          {item.category === 'role' && item.roleTitle}
-                          {item.category === 'resource' && item.resourceName}
-                        </CardTitle>
-                        <CardDescription className="capitalize">{item.category}</CardDescription>
-                      </div>
-                    </div>
-                    <div className="text-left sm:text-right">
-                      <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-                        {formatCurrency(item.estimatedValue)}
-                      </div>
-                      {item.pledgedValue > 0 && (
-                        <div className="text-xs text-[#1a472a]/80 mt-1">
-                          {formatCurrency(item.pledgedValue)} pledged
-                        </div>
+        {/* Needs Registry: needs grouped by the capital they feed */}
+        <NeedsRegistry
+          items={campaign.items}
+          campaignActive={campaign.status === 'active'}
+          formatCurrency={formatCurrency}
+          onClaim={(need) => {
+            setSelectedNeed(need);
+            setShowContributionModal(true);
+          }}
+        />
+
+        {/* Pool Ledger: the public record of pledges, deliveries, and thanks */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-[#1a472a] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <Activity className="w-5 h-5 text-[#4a7c59]" />
+            Pool Ledger
+          </h2>
+          {!activity || activity.length === 0 ? (
+            <p className="text-sm text-[#1a472a]/70">
+              Every pledge, delivery, and thank-you lands here. Nothing yet, this pool is just getting started.
+            </p>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {(showAllActivity ? activity : activity.slice(0, 6)).map((event) => (
+                  <div key={event.id} className="flex items-start gap-3 p-3 bg-[#f0f7f0] rounded-xl">
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                      {event.kind === 'delivered' ? (
+                        <CheckCircle2 className="w-4 h-4 text-[#4a7c59]" />
+                      ) : event.kind === 'thanked' ? (
+                        <Gift className="w-4 h-4 text-purple-600" />
+                      ) : (
+                        <Heart className="w-4 h-4 text-pink-600" />
                       )}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#1a472a]">
+                        <span className="font-medium">{event.contributorName}</span>
+                        {event.kind === 'delivered' && ' delivered '}
+                        {event.kind === 'thanked' && ' was thanked for '}
+                        {event.kind === 'pledged' && ' pledged '}
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-[#1a472a]/70 capitalize">
+                        {event.contributionType} · {formatCurrency(event.estimatedValue || 0)} · {new Date(event.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6 pt-0">
-                  {item.landDescription && <p className="text-[#1a472a]/80 text-sm">{item.landDescription}</p>}
-                  {item.roleDescription && <p className="text-[#1a472a]/80 text-sm">{item.roleDescription}</p>}
-                  {item.resourceDescription && <p className="text-[#1a472a]/80 text-sm">{item.resourceDescription}</p>}
-                  {item.features && (() => {
-                    try {
-                      const features = typeof item.features === 'string' ? JSON.parse(item.features) : item.features;
-                      return features.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {features.map((feature: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="border-[#7dd87d]/30 text-xs">
-                              {feature}
-                            </Badge>
-                          ))}
-                        </div>
-                      );
-                    } catch {
-                      return null;
-                    }
-                  })()}
-                  {item.videoUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => window.open(item.videoUrl, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Watch Video
-                    </Button>
+                ))}
+              </div>
+              {activity.length > 6 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAllActivity(!showAllActivity)}
+                  className="mt-3 text-[#4a7c59] hover:text-[#1a472a]"
+                >
+                  {showAllActivity ? 'See less' : `See all (${activity.length})`}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Updates journal */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-[#1a472a] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <BookOpen className="w-5 h-5 text-[#4a7c59]" />
+            Updates ({updates?.length ?? 0})
+          </h2>
+          {!updates || updates.length === 0 ? (
+            <p className="text-sm text-[#1a472a]/70">
+              No updates yet. Follow the campaign to hear when the first one lands.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {updates.map((update) => (
+                <div key={update.id} className="border-l-3 border-[#7dd87d] pl-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-6 h-6 rounded-full bg-[#4a7c59] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {update.updateNumber}
+                    </span>
+                    <h3 className="font-bold text-[#1a472a]">{update.title}</h3>
+                  </div>
+                  <p className="text-xs text-[#1a472a]/70 mb-2">
+                    {update.publishedAt ? new Date(update.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                  </p>
+                  <p className="text-sm text-[#1a472a]/80 whitespace-pre-line">{update.body}</p>
+                  {Array.isArray(update.imageUrls) && update.imageUrls.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {update.imageUrls.map((url: string, idx: number) => (
+                        <img
+                          key={idx}
+                          src={url}
+                          alt={`${update.title} photo ${idx + 1}`}
+                          className="w-24 h-24 object-cover rounded-lg"
+                          loading="lazy"
+                        />
+                      ))}
+                    </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
-          
-          {/* Land Tab */}
-          {landItems.length > 0 && (
-            <TabsContent value="land" className="space-y-4">
-              {landItems.map((item: any) => (
-                <Card key={item.id} className="bg-white/95 backdrop-blur">
-                  <CardHeader className="p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Leaf className="w-6 h-6 text-green-600 flex-shrink-0" />
-                        <div>
-                          <CardTitle className="text-[#1a472a] text-base md:text-lg">
-                            {item.hectares} hectares in {item.region}
-                          </CardTitle>
-                          <CardDescription>Land Requirement</CardDescription>
-                        </div>
-                      </div>
-                      <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-                        {formatCurrency(item.estimatedValue)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6 pt-0">
-                    {item.landDescription && <p className="text-[#1a472a]/80 mb-3 text-sm">{item.landDescription}</p>}
-                    {item.features && (() => {
-                      try {
-                        const features = typeof item.features === 'string' ? JSON.parse(item.features) : item.features;
-                        return features.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {features.map((feature: string, idx: number) => (
-                              <Badge key={idx} variant="outline" className="border-[#7dd87d]/30 text-xs">
-                                {feature}
-                              </Badge>
-                            ))}
-                          </div>
-                        );
-                      } catch {
-                        return null;
-                      }
-                    })()}
-                    {item.videoUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => window.open(item.videoUrl, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Watch Video
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                </div>
               ))}
-            </TabsContent>
+            </div>
           )}
-          
-          {/* Equipment Tab */}
-          {equipmentItems.length > 0 && (
-            <TabsContent value="equipment" className="space-y-4">
-              {equipmentItems.map((item: any) => (
-                <Card key={item.id} className="bg-white/95 backdrop-blur">
-                  <CardHeader className="p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Wrench className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                        <div>
-                          <CardTitle className="text-[#1a472a] text-base md:text-lg">
-                            {item.equipmentName} (x{item.equipmentQuantity})
-                          </CardTitle>
-                          <CardDescription className="capitalize">{item.equipmentCategory}</CardDescription>
-                        </div>
-                      </div>
-                      <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-                        {formatCurrency(item.estimatedValue)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
-            </TabsContent>
-          )}
-          
-          {/* Roles Tab */}
-          {roleItems.length > 0 && (
-            <TabsContent value="roles" className="space-y-4">
-              {roleItems.map((item: any) => (
-                <Card key={item.id} className="bg-white/95 backdrop-blur">
-                  <CardHeader className="p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <UserCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                        <div>
-                          <CardTitle className="text-[#1a472a] text-base md:text-lg">{item.roleTitle}</CardTitle>
-                          <CardDescription>
-                            {item.hoursPerWeek}hrs/week for {item.durationMonths} months
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-                        {formatCurrency(item.estimatedValue)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  {item.roleDescription && (
-                    <CardContent className="p-4 md:p-6 pt-0">
-                      <p className="text-[#1a472a]/80 text-sm">{item.roleDescription}</p>
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </TabsContent>
-          )}
-          
-          {/* Resources Tab */}
-          {resourceItems.length > 0 && (
-            <TabsContent value="resources" className="space-y-4">
-              {resourceItems.map((item: any) => (
-                <Card key={item.id} className="bg-white/95 backdrop-blur">
-                  <CardHeader className="p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Package className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                        <div>
-                          <CardTitle className="text-[#1a472a] text-base md:text-lg">{item.resourceName}</CardTitle>
-                          <CardDescription>
-                            {item.resourceQuantity} {item.resourceUnit}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
-                        {formatCurrency(item.estimatedValue)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  {item.resourceDescription && (
-                    <CardContent className="p-4 md:p-6 pt-0">
-                      <p className="text-[#1a472a]/80 text-sm">{item.resourceDescription}</p>
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </TabsContent>
-          )}
-        </Tabs>
+        </div>
       </div>
       
       {/* Related Campaigns */}
@@ -819,10 +835,14 @@ export default function CampaignDetail() {
       {/* Contribution Modal */}
       <ContributionModal
         isOpen={showContributionModal}
-        onClose={() => setShowContributionModal(false)}
+        onClose={() => {
+          setShowContributionModal(false);
+          setSelectedNeed(null);
+        }}
         campaignId={parseInt(id!)}
         campaignTitle={campaign.title}
         currency={campaign.currency || 'USD'}
+        need={selectedNeed ?? undefined}
         onSuccess={() => {
           refetch();
           toast.success('Your contribution has been submitted!');
@@ -830,6 +850,294 @@ export default function CampaignDetail() {
       />
     </div>
     </>
+  );
+}
+
+// ---- Needs Registry ----
+
+const KIND_LABELS: Record<string, string> = {
+  item: 'Item',
+  role: 'Role',
+  shift: 'Shift',
+  loan: 'Loan',
+  knowledge: 'Knowledge',
+  crypto: 'Crypto',
+  financial_link: 'Partner',
+};
+
+const KIND_CHIP_CLASSES: Record<string, string> = {
+  item: 'bg-purple-100 text-purple-700',
+  role: 'bg-blue-100 text-blue-700',
+  shift: 'bg-orange-100 text-orange-700',
+  loan: 'bg-amber-100 text-amber-700',
+  knowledge: 'bg-indigo-100 text-indigo-700',
+  crypto: 'bg-emerald-100 text-emerald-700',
+  financial_link: 'bg-gray-100 text-gray-700',
+};
+
+/** Legacy items without a capitalType map from their old category. */
+function capitalForItem(item: any): CapitalType {
+  if (item.capitalType) return item.capitalType;
+  switch (item.category) {
+    case 'land': return 'living';
+    case 'role': return 'experiential';
+    default: return 'material'; // equipment, resource
+  }
+}
+
+function kindForItem(item: any): string {
+  if (item.kind) return item.kind;
+  return item.category === 'role' ? 'role' : 'item';
+}
+
+function titleForItem(item: any): string {
+  if (item.roleTitle) return item.roleTitle;
+  if (item.equipmentName) return item.equipmentName;
+  if (item.resourceName) return item.resourceName;
+  if (item.hectares && item.region) return `${item.hectares} hectares in ${item.region}`;
+  if (item.landDescription) {
+    const firstLine = String(item.landDescription).split('\n')[0];
+    return firstLine.length > 80 ? `${firstLine.slice(0, 77)}...` : firstLine;
+  }
+  return 'Campaign need';
+}
+
+function descriptionForItem(item: any): string | null {
+  if (item.roleDescription) return item.roleDescription;
+  if (item.resourceDescription) return item.resourceDescription;
+  if (item.landDescription && (item.hectares || item.region)) return item.landDescription;
+  return null;
+}
+
+function formatDay(d: string | Date): string {
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatDayTime(d: string | Date): string {
+  return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function NeedsRegistry({
+  items,
+  campaignActive,
+  formatCurrency,
+  onClaim,
+}: {
+  items: any[];
+  campaignActive: boolean;
+  formatCurrency: (amount: number) => string;
+  onClaim: (need: ContributionNeed) => void;
+}) {
+  if (!items || items.length === 0) return null;
+
+  // Pinned needs first, then unfilled needs nearest to complete.
+  const sortNeeds = (a: any, b: any) => {
+    const pinA = a.priorityPinned ? 1 : 0;
+    const pinB = b.priorityPinned ? 1 : 0;
+    if (pinA !== pinB) return pinB - pinA;
+    const ra = (a.quantityClaimed || 0) / (a.quantityWanted || 1);
+    const rb = (b.quantityClaimed || 0) / (b.quantityWanted || 1);
+    const fullA = ra >= 1 ? 1 : 0;
+    const fullB = rb >= 1 ? 1 : 0;
+    if (fullA !== fullB) return fullA - fullB;
+    return rb - ra;
+  };
+
+  const groups = CAPITAL_TYPES
+    .map((capital) => ({
+      capital,
+      items: items.filter((item) => capitalForItem(item) === capital).sort(sortNeeds),
+    }))
+    .filter((g) => g.items.length > 0);
+
+  return (
+    <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
+      <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+        <Target className="w-5 h-5 text-[#4a7c59]" />
+        Needs Registry
+      </h2>
+      <p className="text-sm text-[#1a472a]/70 mb-6">
+        What this project needs, organized by the capital it feeds. Claim a slot and the steward takes it from there.
+      </p>
+      <div className="space-y-8">
+        {groups.map(({ capital, items: groupItems }) => (
+          <div key={capital}>
+            <div className="mb-3">
+              <h3 className="text-sm font-bold text-[#4a7c59] uppercase tracking-wide">
+                {CAPITAL_LABELS[capital].label} Capital
+              </h3>
+              <p className="text-xs text-[#1a472a]/70">{CAPITAL_LABELS[capital].blurb}</p>
+            </div>
+            <div className="space-y-4">
+              {groupItems.map((item: any) => (
+                <NeedCard
+                  key={item.id}
+                  item={item}
+                  campaignActive={campaignActive}
+                  formatCurrency={formatCurrency}
+                  onClaim={onClaim}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NeedCard({
+  item,
+  campaignActive,
+  formatCurrency,
+  onClaim,
+}: {
+  item: any;
+  campaignActive: boolean;
+  formatCurrency: (amount: number) => string;
+  onClaim: (need: ContributionNeed) => void;
+}) {
+  const kind = kindForItem(item);
+  const title = titleForItem(item);
+  const description = descriptionForItem(item);
+  const wanted = item.quantityWanted || 1;
+  const claimed = item.quantityClaimed || 0;
+  const delivered = item.quantityDelivered || 0;
+  const claimedPct = Math.min((claimed / wanted) * 100, 100);
+  const deliveredPct = Math.min((delivered / wanted) * 100, 100);
+  const filled = claimed >= wanted;
+
+  // Fiat asks render as partner CTA cards. Money never touches us.
+  if (kind === 'financial_link') {
+    const linkUrl = item.videoUrl
+      || (String(item.resourceDescription || item.landDescription || '').match(/https?:\/\/\S+/) || [])[0];
+    return (
+      <Card className="bg-white/95 backdrop-blur border-dashed">
+        <CardHeader className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <ExternalLink className="w-6 h-6 text-[#4a7c59] flex-shrink-0" />
+              <div>
+                <CardTitle className="text-[#1a472a] text-base md:text-lg">{title}</CardTitle>
+                <CardDescription>You'll complete this on our partner's site.</CardDescription>
+              </div>
+            </div>
+            {linkUrl && (
+              <a href={linkUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="border-[#4a7c59] text-[#4a7c59]">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open partner site
+                </Button>
+              </a>
+            )}
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-white/95 backdrop-blur">
+      <CardHeader className="p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {item.imageUrl && (
+              <img
+                src={item.imageUrl}
+                alt={title}
+                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                loading="lazy"
+              />
+            )}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${KIND_CHIP_CLASSES[kind] || 'bg-gray-100 text-gray-700'}`}>
+                  {KIND_LABELS[kind] || kind}
+                </span>
+                {!!item.priorityPinned && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#d4a017]/15 text-[#d4a017] flex items-center gap-1">
+                    <Pin className="w-3 h-3" />
+                    Priority
+                  </span>
+                )}
+              </div>
+              <CardTitle className="text-[#1a472a] text-base md:text-lg">{title}</CardTitle>
+              {description && (
+                <CardDescription className="mt-1 line-clamp-2">{description}</CardDescription>
+              )}
+            </div>
+          </div>
+          <div className="text-left sm:text-right flex-shrink-0">
+            <div className="text-xl md:text-2xl font-bold text-[#4a7c59]">
+              {formatCurrency(item.estimatedValue || 0)}
+            </div>
+            <Button
+              size="sm"
+              className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+              disabled={!campaignActive || filled}
+              onClick={() =>
+                onClaim({
+                  id: item.id,
+                  kind,
+                  capitalType: capitalForItem(item),
+                  title,
+                  quantityWanted: wanted,
+                  quantityClaimed: claimed,
+                  quantityDelivered: delivered,
+                  estimatedValue: item.estimatedValue || 0,
+                  shiftStartsAt: item.shiftStartsAt,
+                  shiftEndsAt: item.shiftEndsAt,
+                  loanWindowStart: item.loanWindowStart,
+                  loanWindowEnd: item.loanWindowEnd,
+                })
+              }
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {filled ? 'Filled' : 'Claim'}
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 md:p-6 pt-0 space-y-2">
+        {/* Slot meter: delivered solid, claimed lighter */}
+        <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden">
+          <div className="absolute inset-y-0 left-0 bg-[#7dd87d]/40 rounded-full" style={{ width: `${claimedPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-[#4a7c59] rounded-full" style={{ width: `${deliveredPct}%` }} />
+        </div>
+        <p className="text-xs text-[#1a472a]/80">
+          {delivered} of {wanted} delivered
+          {claimed > delivered ? `, ${claimed - delivered} more claimed` : ''}
+        </p>
+        {(item.needDeadline || item.shiftStartsAt || item.loanWindowStart) && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/80">
+            {item.needDeadline && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-[#4a7c59]" />
+                Needed by {formatDay(item.needDeadline)}
+              </span>
+            )}
+            {item.shiftStartsAt && item.shiftEndsAt && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#4a7c59]" />
+                Shift: {formatDayTime(item.shiftStartsAt)} to {formatDayTime(item.shiftEndsAt)}
+              </span>
+            )}
+            {item.loanWindowStart && item.loanWindowEnd && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#4a7c59]" />
+                On loan {formatDay(item.loanWindowStart)} to {formatDay(item.loanWindowEnd)}
+              </span>
+            )}
+          </div>
+        )}
+        {kind === 'crypto' && (
+          <p className="text-xs text-[#1a472a]/70 flex items-center gap-1">
+            <Coins className="w-3 h-3 text-[#4a7c59]" />
+            {CRYPTO_PAYMENT_CONTEXT.helperText}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

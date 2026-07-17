@@ -1,7 +1,7 @@
 /**
  * PDF Generator for Contribution Calculator
  * Creates a Doughnut Economics style visualization with concentric rings
- * Each segment represents one of the 8 Forms of Capital, sized by contribution value
+ * Each segment represents one of the 9 Forms of Capital, sized by contribution value
  * Labels positioned outside the ring for better readability
  */
 
@@ -348,7 +348,7 @@ export const generateContributionPDF = (data: ContributionData): void => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(...darkGreen);
-  doc.text('The 8 Forms of Capital', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('The 9 Forms of Capital', pageWidth / 2, yPos, { align: 'center' });
   
   yPos += 8;
   
@@ -541,7 +541,7 @@ export const generateContributionPDF = (data: ContributionData): void => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(...darkGreen);
-  doc.text('About the 8 Forms of Capital', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('About the 9 Forms of Capital', pageWidth / 2, yPos, { align: 'center' });
   
   yPos += 12;
   
@@ -551,7 +551,7 @@ export const generateContributionPDF = (data: ContributionData): void => {
   doc.setTextColor(80, 80, 80);
   
   const aboutText = [
-    'The 8 Forms of Capital framework recognizes that true wealth extends far beyond',
+    'The 9 Forms of Capital framework recognizes that true wealth extends far beyond',
     'money. By valuing diverse contributions, we create regenerative economies where',
     'all forms of giving are honored and rewarded.'
   ];
@@ -572,7 +572,8 @@ export const generateContributionPDF = (data: ContributionData): void => {
     experiential: 'Skills, expertise, and embodied knowledge',
     social: 'Relationships, networks, and community',
     cultural: 'Traditions, art, and shared practices',
-    spiritual: 'Purpose, meaning, and inner development'
+    spiritual: 'Purpose, meaning, and inner development',
+    health: 'Movement, rest, care, and wellbeing'
   };
   
   const colWidth = (pageWidth - margin * 2) / 2;
