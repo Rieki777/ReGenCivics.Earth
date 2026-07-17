@@ -17,6 +17,10 @@
  * text. Integrations hold provider NAMES only; API keys are entered by the
  * client into their own instance post-acceptance and never touch ReGen Civics
  * systems (master plan, Decisions locked #1).
+ *
+ * Additive change 2026-07-17 (still v0.3, optional key only): `civilization`,
+ * the civilization pattern modules from improvement 15. Stored 0.3 drafts and
+ * blueprints stay valid; absent means defaults.
  */
 import { z } from "zod";
 
@@ -218,6 +222,84 @@ const seasonSchema = z.strictObject({
   end: z.string().max(30).default(""),
 });
 
+// ── The civilization pattern (improvement 15) ─────────────────────────────────
+/**
+ * The parts we believe every regenerative game needs, each one a configurable
+ * module, so a fork inherits the wisdom while expressing its own culture.
+ * Selling a custom game is planting a civilization. Every approved improvement
+ * from MISSION_FOUNDATIONS_15_IMPROVEMENTS_2026-07-16.md is a module here;
+ * reference implementations live in this repo (Phases A through E of
+ * CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md).
+ *
+ * Two rules are invariants, not knobs, encoded as z.literal:
+ *  - an elder persona always carries human-steward review with standing veto
+ *  - player memory is opt-in with the transparency surface shipped first
+ */
+const civilizationSchema = z.strictObject({
+  /** Seasons + the ritual spine (SEASON_TEMPLATE.md). */
+  ritualSpine: z.strictObject({
+    enabled: z.boolean().default(true),
+    openingCeremony: z.boolean().default(true),
+    weeklyCampfireThread: z.boolean().default(true),
+    weeklyFeaturedQuest: z.boolean().default(true),
+    crewSpotlight: z.boolean().default(true),
+    /** The ecological calendar moment this game marks mid-season (first rains, solstice, harvest peak). */
+    midSeasonEcologicalMoment: z.string().max(255).default(""),
+    closingHarvestCeremony: z.boolean().default(true),
+  }).optional(),
+  /** Multiplayer Mode: crews form around quests in a bioregion (Phase A). */
+  multiplayerMode: z.strictObject({
+    enabled: z.boolean().default(false),
+    crewSizeMin: z.number().int().min(2).max(12).default(3),
+    crewSizeMax: z.number().int().min(2).max(12).default(7),
+    launchQuestCount: z.number().int().min(0).max(20).default(5),
+  }).optional(),
+  /** Needs and offers board with deterministic matching (Phase B2). */
+  needsOffersBoard: z.strictObject({
+    enabled: z.boolean().default(false),
+    applicationFormCapture: z.boolean().default(true),
+    matcherIntroEmails: z.boolean().default(true),
+    introDailyCapPerParty: z.number().int().min(1).max(20).default(3),
+  }).optional(),
+  /** Structured impact record per land project (Phase C1, shared/impact.ts). */
+  impactSchema: z.strictObject({
+    enabled: z.boolean().default(false),
+    /** Extra field names beyond the ReGen set, for this game's own measures. */
+    extraFields: z.array(z.string().max(60)).max(24).default([]),
+  }).optional(),
+  /** Verification ladder + the economy split (Phase D3, ADR-42). */
+  verificationLadder: z.strictObject({
+    enabled: z.boolean().default(false),
+    /** Multipliers per rung: self_report, peer_attested, steward_verified, evidence_backed. */
+    rungMultipliers: z.record(z.string().max(30), z.number().min(0).max(10)).optional(),
+    /** The ladder governs internal credits only; real public tokens are gated by human governance. */
+    publicTokenGovernance: z.enum(["hypha-voting", "none"]).default("hypha-voting"),
+  }).optional(),
+  /** AI elders as presences and quest-givers (Phase D1). */
+  elders: z.strictObject({
+    enabled: z.boolean().default(false),
+    /** INVARIANT: every elder persona is blessed by a named human steward with standing veto. */
+    humanStewardReview: z.literal(true).default(true),
+    questOffers: z.boolean().default(false),
+  }).optional(),
+  /** Machine-readable surfaces for sibling networks (Phase C2, ADR-41). */
+  federation: z.strictObject({
+    enabled: z.boolean().default(false),
+    publishProjectsJson: z.boolean().default(true),
+    publishLlmsTxt: z.boolean().default(true),
+  }).optional(),
+  /** Consent-based player memory (Phase D2). */
+  consentMemory: z.strictObject({
+    enabled: z.boolean().default(false),
+    /** INVARIANT: memory is opt-in, default off, per player. */
+    optInDefault: z.literal(false).default(false),
+    /** INVARIANT: the "what the game remembers about you" surface ships before any write. */
+    transparencySurfaceFirst: z.literal(true).default(true),
+  }).optional(),
+});
+
+export type CivilizationModules = z.infer<typeof civilizationSchema>;
+
 /** Provider NAMES only, never keys (Decisions locked #1). */
 const integrationsSchema = z.strictObject({
   llmProvider: providerName.default(""),
@@ -255,6 +337,8 @@ export const blueprintSchema = z.strictObject({
   formOutcomes: z.array(formOutcomeSchema).max(24).default([]),
   content: contentSchema,
   season: seasonSchema,
+  /** Civilization pattern modules (improvement 15). Absent = all defaults (only the ritual spine on). */
+  civilization: civilizationSchema.optional(),
   integrations: integrationsSchema,
   deployment: deploymentSchema,
   generationInputs: generationInputsSchema,
@@ -299,6 +383,7 @@ export const blueprintDraftSchema = z.strictObject({
   formOutcomes: z.array(formOutcomeSchema.partial()).max(24).optional(),
   content: contentSchema.partial().optional(),
   season: seasonSchema.partial().optional(),
+  civilization: civilizationSchema.partial().optional(),
   integrations: integrationsSchema.partial().optional(),
   deployment: z.strictObject({
     domain: z.string().max(255).optional(),

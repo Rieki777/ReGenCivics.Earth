@@ -291,6 +291,25 @@ Funnel unchanged: page CTA → Sylva (~20 min, framed as "talk to the kind of gu
 
 (Rounds 1 and 2 improvements remain baked into the workstreams above.)
 
+## The civilization pattern (improvement 15, 2026-07-17)
+
+Selling a custom game is planting a civilization. The mission says a growing DIVERSITY of regenerative civilizations, and this product is the reproduction mechanism: every bioregion, church, school, or village that wants its own game gets one, with its own tokens, elders, seasons, and quests, federated back through the federation surfaces. The blueprint therefore encodes the civilization pattern: the parts we believe every regenerative game needs, each one an optional, configurable module in `blueprint.json` (`civilization` key, `shared/customGameBlueprint.ts`), so a fork inherits the wisdom while expressing its own culture.
+
+The modules and their config knobs (reference implementations in this repo, per `CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md`):
+
+| Module | Knobs | Reference implementation |
+|---|---|---|
+| `ritualSpine` (default on) | opening ceremony, weekly campfire thread, featured quest, crew spotlight, mid-season ecological moment (their calendar), closing harvest ceremony | `SEASON_TEMPLATE.md` |
+| `multiplayerMode` | crewSizeMin/Max, launch quest count | Phase A: `shared/multiplayerQuests.ts`, `server/jobs/questCrewAssembly.ts`, `/multiplayer` |
+| `needsOffersBoard` | form capture on/off, matcher intro emails, per-party daily cap | Phase B2: `server/lib/needsOffers.ts`, `/board` |
+| `impactSchema` | extra fields beyond the ReGen set | Phase C1: `shared/impact.ts`, admin `ImpactDataPanel` |
+| `verificationLadder` | rung multipliers; public-token governance (`hypha-voting` default) | Phase D3 + ADR-42: the ladder feeds internal credit only; humans gate real tokens |
+| `elders` | quest offers on/off. **Invariant, not a knob: human-steward review with standing veto** | Phase D1: `server/lib/elders.ts` registry, `humanSteward` field |
+| `federation` | projects.json, llms.txt | Phase C2 + ADR-41: `/api/federation/projects.json` |
+| `consentMemory` | on/off. **Invariants: opt-in default off; transparency surface ships before any write** | Phase D2: `player_companion_memory`, settings surface |
+
+Two rules ride along as `z.literal` invariants so no configuration can turn them off: elder personas always carry a named human steward with veto, and player memory is always opt-in with the transparency surface first. Those are the pattern's ethics, and a fork inherits them with the code.
+
 ## Risks and guards
 
 | Risk | Guard |
