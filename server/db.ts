@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertUser, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 // Moved to server/db/_shared.ts so the extracted domain modules can use it
@@ -274,32 +274,21 @@ export {
 } from "./db/applications";
 
 // ============================================
-// Review Queries
+// Review Queries (reviews + reviewer roster)
 // ============================================
-
-export async function createReview(data: InsertReview) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(reviews).values(data);
-  return result[0].insertId;
-}
-
-export async function getReviewsByApplicationId(applicationId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviews)
-    .where(eq(reviews.applicationId, applicationId))
-    .orderBy(desc(reviews.createdAt));
-}
-
-export async function updateReview(id: number, data: Partial<InsertReview>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(reviews).set(data).where(eq(reviews.id, id));
-}
+// Extracted to server/db/reviews.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createReview,
+  getReviewsByApplicationId,
+  updateReview,
+  createReviewerEmail,
+  getReviewerEmailById,
+  getAllReviewerEmails,
+  getActiveReviewerEmails,
+  updateReviewerEmail,
+  deleteReviewerEmail,
+} from "./db/reviews";
 
 // ============================================
 // Inquiry Queries (investor + general catch-all routing form)
@@ -320,60 +309,6 @@ export {
   getGeneralInquiriesByStatus,
   updateGeneralInquiry,
 } from "./db/inquiries";
-
-
-// ============================================
-// Reviewer Email Queries
-// ============================================
-
-import { InsertReviewerEmail, reviewerEmails } from "../drizzle/schema";
-
-export async function createReviewerEmail(data: InsertReviewerEmail) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(reviewerEmails).values(data);
-  return result[0].insertId;
-}
-
-export async function getReviewerEmailById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(reviewerEmails).where(eq(reviewerEmails.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllReviewerEmails() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviewerEmails)
-    .orderBy(desc(reviewerEmails.createdAt));
-}
-
-export async function getActiveReviewerEmails() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviewerEmails)
-    .where(eq(reviewerEmails.isActive, 1))
-    .orderBy(desc(reviewerEmails.createdAt));
-}
-
-export async function updateReviewerEmail(id: number, data: Partial<InsertReviewerEmail>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(reviewerEmails).set(data).where(eq(reviewerEmails.id, id));
-}
-
-export async function deleteReviewerEmail(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.delete(reviewerEmails).where(eq(reviewerEmails.id, id));
-}
 
 
 // ============================================
