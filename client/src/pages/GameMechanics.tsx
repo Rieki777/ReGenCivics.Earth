@@ -795,7 +795,7 @@ function GameSimulator() {
         <button
           onClick={() => setCompareMode((s) => !s)}
           title="Toggle side-by-side display of baseline vs your proposed value on every slider"
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs border transition-colors ${
             compareMode
               ? "bg-[#7dd87d]/20 border-[#7dd87d]/50 text-[#7dd87d]"
               : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
@@ -807,7 +807,7 @@ function GameSimulator() {
           onClick={undo}
           disabled={history.length === 0}
           title="Step back one slider move"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Undo2 className="w-3.5 h-3.5" /> Undo
         </button>
@@ -815,14 +815,14 @@ function GameSimulator() {
           onClick={reset}
           disabled={changeCount === 0}
           title="Reset every slider back to its current live value"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" /> Reset
         </button>
         <button
           onClick={copyPermalink}
           title="Copy a shareable URL that loads this exact simulator state"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
         >
           <Link2 className="w-3.5 h-3.5" /> Copy link
         </button>
@@ -830,14 +830,14 @@ function GameSimulator() {
           onClick={copyAsForumPost}
           disabled={changeCount === 0}
           title="Copy a markdown block ready to paste into a forum thread or Hypha proposal"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Copy className="w-3.5 h-3.5" /> Copy as forum post
         </button>
         <button
           onClick={() => setShowHistory((s) => !s)}
           title="Review or revert any earlier slider move this session"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
         >
           History ({history.length})
         </button>

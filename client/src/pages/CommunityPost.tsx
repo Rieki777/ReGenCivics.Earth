@@ -650,7 +650,7 @@ export default function CommunityPost() {
                 {canDeletePost && !editingPost && (
                   <button
                     onClick={() => { setEditTitle(decodeEntities(post.title)); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
-                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
+                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
                     title="Edit post"
                     aria-label="Edit post"
                   >
@@ -660,7 +660,7 @@ export default function CommunityPost() {
                 {canDeletePost && (
                   <button
                     onClick={() => setDeleteTarget({ type: 'post', id: post.id })}
-                    className="text-red-400 hover:text-red-600 p-1 transition-colors"
+                    className="text-red-400 hover:text-red-600 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
                     title="Delete post"
                     aria-label="Delete post"
                   >

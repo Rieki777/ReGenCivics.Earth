@@ -69,7 +69,7 @@ export default function AMABanner() {
           <button
             onClick={handleDismiss}
             aria-label="Dismiss AMA banner"
-            className="text-white/60 hover:text-white/80 transition-colors p-1"
+            className="text-white/60 hover:text-white/80 transition-colors p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>

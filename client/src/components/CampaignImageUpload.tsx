@@ -297,6 +297,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                       <Star className="w-3 h-3 fill-current" /> Cover
                     </span>
                   ) : (
+                    /* touch-ok: thumbnail overlay control, small by design, expander gives the 44px hit area */
                     <button
                       onClick={() => handleSetCover(img.id)}
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/80 text-[#1a472a] p-1.5 rounded-full hover:bg-white"
@@ -307,7 +308,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                     </button>
                   )}
 
-                  {/* Delete button */}
+                  {/* Delete button. touch-ok: thumbnail overlay control, expander gives the 44px hit area */}
                   <button
                     onClick={() => handleDelete(img.id)}
                     className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-red-500/80 text-white p-1.5 rounded-full hover:bg-red-600"

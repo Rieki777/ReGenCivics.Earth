@@ -869,7 +869,7 @@ export function CalculatorWeightsSheet() {
                                     {isChanged && (
                                       <button
                                         onClick={() => resetIndividualWeight(weight.key)}
-                                        className="p-1 text-[#1a472a]/80 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
+                                        className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-[#1a472a]/80 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
                                         title="Reset to original"
                                       >
                                         <RotateCcw className="w-3 h-3" />
@@ -1137,7 +1137,7 @@ export function CalculatorWeightsSheet() {
                     </h4>
                     <button
                       onClick={() => setShowAddIdea(false)}
-                      className="p-1 text-[#1a472a]/80 hover:text-[#1a472a] rounded"
+                      className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-[#1a472a]/80 hover:text-[#1a472a] rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>

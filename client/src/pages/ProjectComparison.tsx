@@ -246,7 +246,7 @@ export default function ProjectComparison() {
                           <h3 className="font-bold text-[#1a472a] text-sm line-clamp-1">{project.name}</h3>
                           <button
                             onClick={() => removeProject(project.id)}
-                            className="p-1 hover:bg-red-100 rounded text-red-500"
+                            className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-red-100 rounded text-red-500"
                           >
                             <X className="w-4 h-4" />
                           </button>

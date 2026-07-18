@@ -488,7 +488,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     </h4>
                     <button
                       onClick={() => setShowAddIdea(false)}
-                      className="p-1 text-[#1a472a]/80 hover:text-[#1a472a] rounded"
+                      className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-[#1a472a]/80 hover:text-[#1a472a] rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>

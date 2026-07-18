@@ -115,7 +115,7 @@ export default function VouchSection({ playerId, isOwnProfile }: VouchSectionPro
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white p-1"
+                className="text-white/70 hover:text-white p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

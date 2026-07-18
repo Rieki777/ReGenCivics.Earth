@@ -59,7 +59,7 @@ export function StorytellerToggle() {
           onClick={toggle}
           disabled={mutation.isPending}
           aria-pressed={current}
-          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d] ${
+          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d] pointer-coarse:after:content-[''] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 ${
             current ? "bg-[#7dd87d]" : "bg-white/15"
           }`}
         >

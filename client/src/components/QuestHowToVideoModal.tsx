@@ -83,7 +83,7 @@ export function QuestHowToVideoModal() {
           </h2>
           <button
             onClick={() => setOpen(false)}
-            className="p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Close video"
           >
             <X className="w-5 h-5" />

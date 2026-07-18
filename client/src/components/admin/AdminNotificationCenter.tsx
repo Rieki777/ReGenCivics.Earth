@@ -118,7 +118,7 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
+            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
             aria-label="Close"
           >
             <X className="w-4 h-4" />

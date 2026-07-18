@@ -1579,7 +1579,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         <div className={`absolute top-0 right-0 h-full transition-all duration-300 z-10 ${sidebarOpen ? "w-72 lg:w-80" : "w-10"}`}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="absolute top-4 -left-10 w-8 h-8 bg-[#1a472a]/90 backdrop-blur-md border border-[#4a7c59]/30 rounded-l-lg flex items-center justify-center text-white/70 hover:text-white z-20"
+            className="absolute top-4 -left-10 w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 pointer-coarse:-left-11 bg-[#1a472a]/90 backdrop-blur-md border border-[#4a7c59]/30 rounded-l-lg flex items-center justify-center text-white/70 hover:text-white z-20"
           >
             {sidebarOpen ? <ChevronDown className="w-4 h-4 rotate-90" /> : <ChevronUp className="w-4 h-4 rotate-90" />}
           </button>

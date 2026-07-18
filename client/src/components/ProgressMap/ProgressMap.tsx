@@ -142,7 +142,7 @@ export default function ProgressMap({ onClose }: Props) {
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
-                  className="p-1 hover:bg-white/10 rounded-lg text-white/60"
+                  className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-white/10 rounded-lg text-white/60"
                   aria-label="Close detail"
                 >
                   <X className="w-4 h-4" />

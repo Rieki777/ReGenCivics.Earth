@@ -1986,14 +1986,14 @@ function EquipmentSection({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
+                    className="w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 inline-flex items-center justify-center rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     -
                   </button>
                   <span className="w-8 text-center text-sm">{item.quantity}</span>
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
+                    className="w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 inline-flex items-center justify-center rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     +
                   </button>

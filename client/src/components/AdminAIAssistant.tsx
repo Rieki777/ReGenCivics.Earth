@@ -277,6 +277,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
           </p>
         </div>
         {canCapture && (
+          /* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */
           <button
             onClick={() => { setMode(m => (m === "note" ? "assistant" : "note")); setMinimized(false); }}
             aria-label={mode === "note" ? "Switch to assistant" : "Add a note"}
@@ -286,12 +287,14 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
             {mode === "note" ? <Bot className="w-4 h-4" /> : <StickyNote className="w-4 h-4" />}
           </button>
         )}
+        {/* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */}
         <button
           onClick={() => setMinimized(m => !m)}
           className="text-white/60 hover:text-white p-1 rounded transition-colors"
         >
           {minimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
         </button>
+        {/* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */}
         <button
           onClick={() => setOpen(false)}
           aria-label="Close AI assistant"

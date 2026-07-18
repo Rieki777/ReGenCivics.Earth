@@ -1761,7 +1761,7 @@ function ReferralStatsCard() {
           <button
             type="button"
             onClick={handleCopy}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] text-xs font-bold transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 pointer-coarse:min-h-11 rounded-md bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] text-xs font-bold transition-colors"
             aria-label="Copy referral link"
           >
             {copied ? <CheckCircle2 className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />}
@@ -1770,7 +1770,7 @@ function ReferralStatsCard() {
           <button
             type="button"
             onClick={handleNativeShare}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 pointer-coarse:min-h-11 rounded-md bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
             aria-label="Share referral link"
           >
             <Share2 className="w-3 h-3" />

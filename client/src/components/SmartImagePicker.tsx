@@ -184,7 +184,7 @@ export function SmartImagePicker({
           />
           <button
             onClick={clear}
-            className={`absolute -top-2 -right-2 w-6 h-6 ${shape === "circle" ? "rounded-full" : "rounded-md"} bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100`}
+            className={`absolute -top-2 -right-2 w-6 h-6 ${shape === "circle" ? "rounded-full" : "rounded-md"} bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 pointer-coarse:after:content-[''] pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5`}
             aria-label="Remove image"
             type="button"
           >

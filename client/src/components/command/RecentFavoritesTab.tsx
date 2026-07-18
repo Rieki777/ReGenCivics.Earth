@@ -22,7 +22,7 @@ export function RecentFavoritesTab() {
               <li key={fav.path} className="flex items-center gap-1.5">
                 <button
                   onClick={() => toggle(fav.path, fav.title)}
-                  className="text-yellow-400 hover:text-yellow-300 p-1 flex-shrink-0"
+                  className="text-yellow-400 hover:text-yellow-300 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center flex-shrink-0"
                   aria-label={`Remove ${fav.title} from favorites`}
                 >
                   <Star className="w-3 h-3 fill-current" />
@@ -52,7 +52,7 @@ export function RecentFavoritesTab() {
               <li key={page.path} className="flex items-center gap-1.5">
                 <button
                   onClick={() => toggle(page.path, page.title)}
-                  className={`p-1 flex-shrink-0 transition-colors ${
+                  className={`p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center flex-shrink-0 transition-colors ${
                     isFavorite(page.path)
                       ? 'text-yellow-400 hover:text-yellow-300'
                       : 'text-white/20 hover:text-yellow-400'

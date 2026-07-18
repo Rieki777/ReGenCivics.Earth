@@ -139,7 +139,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#f0f7f0] px-2 py-1 rounded-md transition-colors text-[#1a472a]/70 hover:text-[#1a472a] w-full text-left"
+      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#f0f7f0] px-2 py-1 pointer-coarse:min-h-11 rounded-md transition-colors text-[#1a472a]/70 hover:text-[#1a472a] w-full text-left"
       title={`Copy: ${text}`}
     >
       {copied ? <Check className="w-3 h-3 text-[#7dd87d] flex-shrink-0" /> : <Copy className="w-3 h-3 flex-shrink-0" />}

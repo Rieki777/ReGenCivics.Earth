@@ -196,7 +196,7 @@ export default function ReGenGuide() {
             <button
               onClick={() => { setSilent(!silent); if (!silent) stopSpeaking(); }}
               aria-pressed={silent}
-              className="text-white/60 hover:text-white transition-colors p-1"
+              className="text-white/60 hover:text-white transition-colors p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
               aria-label={silent ? "Turn the Guide's voice on" : "Mute the Guide's voice"}
               title={silent ? "Voice off (reading mode)" : "Voice on"}
             >
@@ -206,7 +206,7 @@ export default function ReGenGuide() {
           {user && (
             <button
               onClick={() => setDesignOpen(true)}
-              className="text-white/60 hover:text-white transition-colors p-1"
+              className="text-white/60 hover:text-white transition-colors p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
               aria-label="Design your Guide"
               title="Design your Guide"
             >
@@ -215,7 +215,7 @@ export default function ReGenGuide() {
           )}
           <button
             onClick={close}
-            className="text-white/60 hover:text-white transition-colors p-1"
+            className="text-white/60 hover:text-white transition-colors p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
             aria-label="Close chat"
           >
             <X className="w-5 h-5" />
