@@ -720,6 +720,88 @@ export const campaignsRouter = router({
       return { success: true };
     }),
 
+  // Formalize a delivered contribution as a Hypha contribution proposal on the
+  // project's DHO. Delivery is the moment that counts, so only fulfilled or
+  // thanked contributions formalize. Project tokens are issued on-chain by the
+  // DHO through Hypha, never by us. We only build the bridge and hand off.
+  formalizeOnHypha: protectedProcedure
+    .input(z.object({ contributionId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const contribution = await db.getContributionById(input.contributionId);
+      if (!contribution) throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
+      const campaign = await db.getCampaignById(contribution.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+
+      // Steward, the contributor themselves, or an admin may formalize.
+      const isSteward = campaign.userId === ctx.user.id;
+      const isContributor = contribution.userId != null && contribution.userId === ctx.user.id;
+      if (!isSteward && !isContributor && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to formalize this contribution' });
+      }
+
+      // Only delivered contributions formalize.
+      if (contribution.status !== 'fulfilled' && contribution.status !== 'thanked') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only delivered contributions can be formalized on Hypha' });
+      }
+      if (contribution.hyphaBridgeKey) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This contribution is already on its way to Hypha' });
+      }
+
+      // The DHO slug lives inside the campaign's daoLink (.../dho/{slug}/...). It
+      // is user-entered, so guard for a missing or non-Hypha value.
+      const slugMatch = String(campaign.daoLink || '').match(/\/dho\/([^/]+)/);
+      const targetDhoSlug = slugMatch ? decodeURIComponent(slugMatch[1]) : '';
+      if (!targetDhoSlug) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This campaign has no Hypha DHO link yet, so it cannot be formalized. Add the project DHO link first.' });
+      }
+
+      const value = contribution.estimatedValue || 0;
+      const projectName = campaign.projectName || campaign.title;
+      const title = `${contribution.title} for ${projectName}`.slice(0, 200);
+      const contributorLabel = contribution.isAnonymous
+        ? 'a community member'
+        : sanitizeInput(contribution.contributorName || 'a contributor');
+      const description = [
+        contribution.description ? sanitizeInput(contribution.description) : '',
+        `Contributed by ${contributorLabel} and delivered to ${sanitizeInput(projectName)}.`,
+        value > 0 ? `Estimated value: ${campaign.currency || 'USD'} ${value.toLocaleString()}.` : '',
+      ].filter(Boolean).join('\n\n').slice(0, 1500);
+
+      const { bridgeToHypha } = await import('../lib/hypha-bridge');
+      const { bridgeKey, bridgeUrl } = await bridgeToHypha('crowdpool-to-contribution', {
+        sourceId: String(contribution.id),
+        targetDhoSlug,
+        title,
+        description,
+        initiatorUserId: ctx.user.id,
+        metadata: { campaignId: campaign.id, contributionId: contribution.id },
+      });
+
+      const dbx = await getDb();
+      if (dbx) {
+        await dbx.update(campaignContributionsTable)
+          .set({ hyphaBridgeKey: bridgeKey })
+          .where(eq(campaignContributionsTable.id, contribution.id));
+      }
+      return { ok: true, bridgeUrl };
+    }),
+
+  // How far a formalized contribution's Hypha proposal has traveled, so the
+  // steward can see created -> handoff -> on chain -> passed at a glance.
+  hyphaBridgeStatus: publicProcedure
+    .input(z.object({ bridgeKey: z.string().min(1).max(16) }))
+    .query(async ({ input }) => {
+      const dbx = await getDb();
+      if (!dbx) return null;
+      const { hyphaBridges } = await import('../../drizzle/schema');
+      const rows = await dbx
+        .select({ status: hyphaBridges.status, hyphaPassedAt: hyphaBridges.hyphaPassedAt, basescanUrl: hyphaBridges.basescanUrl })
+        .from(hyphaBridges)
+        .where(eq(hyphaBridges.bridgeKey, input.bridgeKey))
+        .limit(1);
+      return rows[0] ?? null;
+    }),
+
   // Get user's contributions
   myContributions: protectedProcedure.query(async ({ ctx }) => {
     return await db.getContributionsByUser(ctx.user.id);

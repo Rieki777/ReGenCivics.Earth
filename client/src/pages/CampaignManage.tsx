@@ -35,6 +35,7 @@ import {
   Gift,
   BookOpen,
   Target,
+  ExternalLink,
   Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
@@ -139,7 +140,20 @@ export default function CampaignManage() {
       toast.error(error.message || 'Failed to update contribution status');
     }
   });
-  
+
+  // Formalize a delivered contribution on the project's Hypha DHO. Returns an
+  // internal bridge URL; the bridge page hands off to Hypha to finish.
+  const formalizeMutation = trpc.campaigns.formalizeOnHypha.useMutation({
+    onSuccess: (res: any) => {
+      toast.success('Bridge ready. Hypha opens to finish formalizing.');
+      if (res?.bridgeUrl) window.location.href = res.bridgeUrl;
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Could not formalize on Hypha');
+    }
+  });
+  const [formalizingId, setFormalizingId] = useState<number | null>(null);
+
   // Handle auth loading
   if (authLoading) {
     return <TaoSpinner fullPage size={72} />;
@@ -493,6 +507,39 @@ export default function CampaignManage() {
               <Gift className="w-4 h-4 mr-2" />
               Send thanks
             </Button>
+          </div>
+        )}
+
+        {/* Formalize on Hypha: after delivery, bring it to the project DHO so the
+            DHO can issue project tokens on chain. One way, one time per contribution. */}
+        {(contribution.status === 'fulfilled' || contribution.status === 'thanked') && !contribution.hyphaBridgeKey && (
+          <div className="pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59] hover:text-white"
+              disabled={formalizeMutation.isPending && formalizingId === contribution.id}
+              onClick={() => {
+                setFormalizingId(contribution.id);
+                formalizeMutation.mutate({ contributionId: contribution.id });
+              }}
+            >
+              {formalizeMutation.isPending && formalizingId === contribution.id ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <ExternalLink className="w-4 h-4 mr-2" />
+              )}
+              Formalize on Hypha
+            </Button>
+            <p className="text-[11px] text-gray-500 mt-1 text-center">
+              Brings this to the project DHO so it can issue project tokens on chain.
+            </p>
+          </div>
+        )}
+        {contribution.hyphaBridgeKey && (
+          <div className="pt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-[#4a7c59]">
+            <CheckCircle2 className="w-4 h-4" />
+            On its way to Hypha
           </div>
         )}
       </CardContent>

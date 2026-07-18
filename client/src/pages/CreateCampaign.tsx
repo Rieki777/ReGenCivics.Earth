@@ -1527,7 +1527,7 @@ export default function CreateCampaign() {
       <button
         type="button"
         onClick={() => setCompanionOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#4a7c59] hover:bg-[#1a472a] text-white pl-4 pr-5 py-3 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d] focus:ring-offset-2"
+        className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex items-center gap-2 rounded-full bg-[#4a7c59] hover:bg-[#1a472a] text-white pl-4 pr-5 py-3 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d] focus:ring-offset-2"
         aria-label="Open the design coach"
       >
         <MessageCircle className="w-5 h-5" />
