@@ -181,6 +181,20 @@ Full reasoning and the decision checklist: the `regen-deterministic-first` skill
 
 ---
 
+## 12. Mobile touch standard
+
+iPhone Safari is the primary platform. Every user-facing surface (main site, Ship, CORE, and every Custom Games spinoff cloned from the template) meets one bar. Adopted 2026-07-18 after the ecosystem migration; full rationale and phase history in `MOBILE_FIRST_MASTER_PLAN.md`.
+
+- **44px minimum touch targets on touch devices.** Anything tappable (buttons, links, menu rows, list options, chips, close controls, map pins) is at least 44x44 for a coarse pointer. This is Apple HIG 44pt / WCAG 2.5.5.
+- **Size by input capability, not viewport width.** Use Tailwind `pointer-coarse:` min-h/min-w floors on the element (`pointer-coarse:min-h-11`, plus `pointer-coarse:min-w-11` on icon-only controls). This catches iPads and touch laptops at desktop widths, which a `max-width` media query never will. Never widen or heighten with plain `h-`/`w-` when a caller might override it; floors are `min-*` so overrides and multi-line content stay safe. Desktop pointer density is left exactly as designed.
+- **Small visual, big tap zone when needed.** Where a control must stay visually small (toggle, tiny remove X), keep the visual and grow only the hit area: a `pointer-coarse:after` inset overlay or `pointer-coarse:-m-*` negative margins. The base components already do this.
+- **16px input font on mobile.** Text-entry controls render 16px under 767px so iOS never zooms on focus. Base Input/Textarea/Select handle this; raw fields must carry `text-base md:text-sm`.
+- **Modals are the base Dialog.** `DialogContent` is the only modal shell. It provides the bottom sheet, visualViewport keyboard lift, safe-area padding, portal, focus trap, and Esc. Do not hand-roll a `fixed inset-0` overlay; gate 1c and code review reject new ones.
+- **Zoom is never blocked.** `maximum-scale=1` is banned in every viewport tag in every codebase we own.
+- **Enforced by gate 1c.** `scripts/audit-touch-targets.py` runs inside `pnpm gate` and fails interactive elements that cap below 44px without a floor or a reviewed `touch-ok` comment. It complements gate 1b (`audit-tap-blockers.py`, invisible tap occlusion). Neither replaces a real iPhone pass on load-bearing UI changes (section 4): hit-testing on device is the only thing that catches what static analysis cannot.
+
+---
+
 ## What is NOT a hard constraint
 
 The following are preferences, not steering rules. They live in `.ai/docs/DECISIONS.md` (architectural choices) or in skills (process):

@@ -449,6 +449,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     } ${org.id === "all" ? "md:col-span-2" : ""}`}
                     onClick={() => toggleArrayItem(selectedOrganizations, setSelectedOrganizations, org.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedOrganizations, setSelectedOrganizations, org.id); } }}
                   >
                     <div className="flex items-start gap-3">
                       <Checkbox
@@ -509,6 +512,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedRoles, setSelectedRoles, role.id); } }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{role.icon}</span>
@@ -532,12 +538,15 @@ export default function Connect() {
                 {organizationalCapitalTypes.map((capital) => (
                   <div
                     key={capital.id}
-                    className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    className={`flex items-center gap-2 p-3 pointer-coarse:min-h-11 rounded-lg border-2 cursor-pointer transition-all ${
                       organizationalCapital.includes(capital.id)
                         ? "border-[#7dd87d] bg-[#7dd87d]/20"
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(organizationalCapital, setOrganizationalCapital, capital.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(organizationalCapital, setOrganizationalCapital, capital.id); } }}
                   >
                     <span className="text-lg">{capital.icon}</span>
                     <span className="font-medium text-white text-xs">{capital.name}</span>
@@ -621,6 +630,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedOrgRoles, setSelectedOrgRoles, option.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedOrgRoles, setSelectedOrgRoles, option.id); } }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{option.icon}</span>
@@ -804,6 +816,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedProjects, setSelectedProjects, project.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedProjects, setSelectedProjects, project.id); } }}
                   >
                     <div className="flex items-start gap-3">
                       <Checkbox
@@ -869,6 +884,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedRoles, setSelectedRoles, role.id); } }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{role.icon}</span>
@@ -898,6 +916,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedCapitalTypes, setSelectedCapitalTypes, capital.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedCapitalTypes, setSelectedCapitalTypes, capital.id); } }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{capital.icon}</span>
@@ -978,6 +999,9 @@ export default function Connect() {
                         : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleArrayItem(selectedRoles, setSelectedRoles, role.id); } }}
                   >
                     <span className="text-2xl">{role.icon}</span>
                     <span className="font-medium text-white">{role.name}</span>
