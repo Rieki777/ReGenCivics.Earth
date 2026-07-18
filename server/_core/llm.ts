@@ -236,6 +236,59 @@ function anthropicModel(): string {
   return ENV.aiModel.startsWith("claude-") ? ENV.aiModel : DEFAULT_ANTHROPIC_MODEL;
 }
 
+// ── Reasoning-aware plumbing (ADR-45 part 3) ─────────────────────────────────
+// Reasoning/thinking models break the classic call shapes: they reject forced
+// tool_choice ("tool_choice 'specified' is incompatible with thinking
+// enabled"), and their reasoning tokens consume small max_tokens budgets
+// before any visible text emerges. For models matching the pattern in env.ts
+// we: (1) request structured output as schema-in-prompt JSON instead of a
+// forced tool, (2) floor max_tokens so the answer survives the thinking,
+// (3) ask OpenRouter to exclude reasoning from the returned content, and
+// (4) join every text block rather than reading only the first.
+
+/** Floor for reasoning-model calls; thinking can eat thousands of tokens. */
+const REASONING_MIN_TOKENS = 4096;
+
+/** True when this model needs the reasoning-aware call shapes. Exported for tests. */
+export function isReasoningModel(model: string): boolean {
+  try {
+    return new RegExp(ENV.llmReasoningModelPattern, "i").test(model);
+  } catch {
+    return false;
+  }
+}
+
+/** OpenRouter-only extra body: reason internally, return clean text blocks. */
+const REASONING_BODY = { reasoning: { exclude: true } };
+
+function joinTextBlocks(content: Array<{ type: string; text?: string }>): string {
+  return content
+    .filter((b): b is { type: "text"; text: string } => b.type === "text" && typeof (b as any).text === "string")
+    .map((b) => b.text)
+    .join("");
+}
+
+/**
+ * Pull the first JSON object out of model text (reasoning models answer
+ * schema-in-prompt requests as text, sometimes fenced). Returns null when
+ * nothing parseable is found. Exported for tests.
+ */
+export function extractJsonObject(text: string): Record<string, unknown> | null {
+  const cleaned = text.replace(/```(?:json)?/gi, "").trim();
+  const start = cleaned.indexOf("{");
+  if (start === -1) return null;
+  // Try progressively shorter suffixes from the last closing brace inward.
+  for (let end = cleaned.lastIndexOf("}"); end > start; end = cleaned.lastIndexOf("}", end - 1)) {
+    try {
+      const parsed = JSON.parse(cleaned.slice(start, end + 1));
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+    } catch {
+      // keep shrinking
+    }
+  }
+  return null;
+}
+
 /**
  * Cheapest OpenRouter model that handles the tier well (ADR-43). Defaults live
  * in env.ts and are overridable per tier with LLM_MODEL_LIGHT / _STANDARD /
@@ -362,14 +415,16 @@ export async function streamLLM(
   let lastErr: unknown;
   for (let i = 0; i < chain.length; i++) {
     const { provider, client, model } = chain[i];
+    const reasoning = provider === "openrouter" && isReasoningModel(model);
     let emitted = false;
     try {
       const stream = client.messages.stream({
         model,
-        max_tokens: maxTokens,
+        max_tokens: reasoning ? Math.max(maxTokens, REASONING_MIN_TOKENS) : maxTokens,
         ...(systemMessage ? { system: systemMessage } : {}),
         messages: conversationMessages,
-      });
+        ...(reasoning ? REASONING_BODY : {}),
+      } as Anthropic.MessageStreamParams);
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
           emitted = true;
@@ -419,9 +474,32 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     schema ??
     (format?.type === "json_schema" ? format.json_schema : undefined);
 
-  const { responseText, usedModel } = await withProviderFailover(params.task ?? "standard", async ({ client, model }) => {
+  const { responseText, usedModel } = await withProviderFailover(params.task ?? "standard", async ({ provider, client, model }) => {
+    const reasoning = provider === "openrouter" && isReasoningModel(model);
+    const effectiveMax = reasoning ? Math.max(maxTokens, REASONING_MIN_TOKENS) : maxTokens;
+    const extraBody = reasoning ? REASONING_BODY : {};
+
     if (jsonSchema) {
-      // Use tool forcing to get structured JSON output
+      if (reasoning) {
+        // Reasoning endpoints reject forced tool_choice, so ask for the JSON
+        // in the prompt and parse it out of the text answer.
+        const schemaInstruction =
+          `Respond with ONLY a single JSON object that matches this JSON Schema (no prose, no code fences):\n` +
+          JSON.stringify(jsonSchema.schema);
+        const system = systemMessage ? `${systemMessage}\n\n${schemaInstruction}` : schemaInstruction;
+        const response = await client.messages.create({
+          model,
+          max_tokens: effectiveMax,
+          system,
+          messages: conversationMessages,
+          ...extraBody,
+        } as Anthropic.MessageCreateParamsNonStreaming);
+        const parsed = extractJsonObject(joinTextBlocks(response.content));
+        if (!parsed) throw new Error("Expected a JSON object in reasoning-model structured response");
+        return { responseText: JSON.stringify(parsed), usedModel: model };
+      }
+
+      // Non-reasoning models: tool forcing stays the most reliable shape.
       const tool: Anthropic.Tool = {
         name: jsonSchema.name,
         description: "Return the structured response as specified",
@@ -430,7 +508,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
       const response = await client.messages.create({
         model,
-        max_tokens: maxTokens,
+        max_tokens: effectiveMax,
         ...(systemMessage ? { system: systemMessage } : {}),
         messages: conversationMessages,
         tools: [tool],
@@ -446,12 +524,13 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
     const response = await client.messages.create({
       model,
-      max_tokens: maxTokens,
+      max_tokens: effectiveMax,
       ...(systemMessage ? { system: systemMessage } : {}),
       messages: conversationMessages,
-    });
-    const textBlock = response.content.find((b) => b.type === "text");
-    return { responseText: textBlock?.type === "text" ? textBlock.text : "", usedModel: model };
+      ...extraBody,
+    } as Anthropic.MessageCreateParamsNonStreaming);
+    const text = joinTextBlocks(response.content);
+    return { responseText: text, usedModel: model };
   });
 
   recordLLMUsage(inputChars, responseText.length);

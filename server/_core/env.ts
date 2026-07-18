@@ -75,6 +75,14 @@ export const ENV = {
   // to exclude providers that train on inputs; light-tier traffic includes
   // Rye's private quick-notes. See ADR-45 + the monthly model review.
   llmModelLightFree: process.env.LLM_MODEL_LIGHT_FREE ?? "",
+  // Models matching this pattern get reasoning-aware plumbing (ADR-45 part 3):
+  // schema-in-prompt JSON instead of forced tool_choice (reasoning endpoints
+  // reject tool_choice forcing), a max_tokens floor so reasoning tokens cannot
+  // starve the answer, and reasoning excluded from the returned content.
+  // Override when a new reasoning family appears before a deploy can.
+  llmReasoningModelPattern:
+    process.env.LLM_REASONING_MODEL_PATTERN ??
+    "kimi-k[3-9]|kimi-k2\\.[5-9]|thinking|reasoning|gemini-2\\.5-pro|gemini-[3-9]|gpt-[5-9]|(^|/)o[0-9]+",
   llmModelLight:
     process.env.LLM_MODEL_LIGHT ?? "google/gemini-2.5-flash-lite",
   llmModelStandard:

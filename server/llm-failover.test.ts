@@ -9,7 +9,7 @@
  * surfaced instead of silently retried on a second provider).
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { isFailoverError, pickOpenRouterModel, _providerChainForTests } from "./_core/llm";
+import { isFailoverError, pickOpenRouterModel, _providerChainForTests, isReasoningModel, extractJsonObject } from "./_core/llm";
 import { ENV } from "./_core/env";
 
 describe("isFailoverError", () => {
@@ -60,6 +60,48 @@ describe("pickOpenRouterModel", () => {
       expect(pickOpenRouterModel(task).startsWith("anthropic/")).toBe(false);
       expect(pickOpenRouterModel(task).startsWith("claude-")).toBe(false);
     }
+  });
+});
+
+describe("reasoning-model detection (ADR-45 part 3)", () => {
+  it("flags reasoning families", () => {
+    for (const m of [
+      "moonshotai/kimi-k3",
+      "moonshotai/kimi-k2.5",
+      "moonshotai/kimi-k2-thinking",
+      "google/gemini-2.5-pro",
+      "google/gemini-3.5-flash",
+      "openai/gpt-5.6-sol",
+      "openai/o3",
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    ]) {
+      expect(isReasoningModel(m), m).toBe(true);
+    }
+  });
+
+  it("leaves the classic workhorses on tool forcing", () => {
+    for (const m of ["openai/gpt-4o-mini", "google/gemini-2.5-flash-lite", "claude-haiku-4-5-20251001", "meta-llama/llama-3.3-70b-instruct:free"]) {
+      expect(isReasoningModel(m), m).toBe(false);
+    }
+  });
+});
+
+describe("extractJsonObject", () => {
+  it("parses a bare JSON object", () => {
+    expect(extractJsonObject('{"a":1}')).toEqual({ a: 1 });
+  });
+
+  it("parses fenced and prose-wrapped JSON", () => {
+    expect(extractJsonObject('Here you go:\n```json\n{"content":"hola"}\n```\nDone.')).toEqual({ content: "hola" });
+  });
+
+  it("handles nested braces and trailing text", () => {
+    expect(extractJsonObject('{"pros":[{"point":"x","voiceCount":2}]} trailing')).toEqual({ pros: [{ point: "x", voiceCount: 2 }] });
+  });
+
+  it("returns null when there is no object", () => {
+    expect(extractJsonObject("no json here")).toBeNull();
+    expect(extractJsonObject("[1,2,3]")).toBeNull();
   });
 });
 

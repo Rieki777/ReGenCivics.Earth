@@ -20,6 +20,11 @@
  */
 import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
+// Mirror production plumbing (ADR-45 part 3): reasoning models get
+// schema-in-prompt + token floors + excluded reasoning, exactly like llm.ts.
+import { isReasoningModel, extractJsonObject } from "../server/_core/llm";
+
+const REASONING_MIN_TOKENS = 4096;
 
 type Tier = "light" | "standard" | "complex";
 
@@ -218,10 +223,34 @@ async function main() {
     let preview = "";
     try {
       let text = "";
-      if (p.schema) {
+      const reasoning = isReasoningModel(model);
+      const effectiveMax = reasoning ? Math.max(p.maxTokens, REASONING_MIN_TOKENS) : p.maxTokens;
+      const extraBody = reasoning ? { reasoning: { exclude: true } } : {};
+      const joinText = (content: Array<{ type: string; text?: string }>) =>
+        content.filter((b) => b.type === "text").map((b) => b.text ?? "").join("");
+
+      if (p.schema && reasoning) {
         const res = await client.messages.create({
           model,
-          max_tokens: p.maxTokens,
+          max_tokens: effectiveMax,
+          system: `${p.system}\n\nRespond with ONLY a single JSON object that matches this JSON Schema (no prose, no code fences):\n${JSON.stringify(p.schema.schema)}`,
+          messages: [{ role: "user", content: p.user }],
+          ...extraBody,
+        } as Anthropic.MessageCreateParamsNonStreaming);
+        servedModel = res.model;
+        const parsed = extractJsonObject(joinText(res.content));
+        if (!parsed) {
+          problems.push("no parseable JSON object (schema-in-prompt failed)");
+        } else {
+          text = JSON.stringify(parsed);
+          for (const key of p.schema.required) {
+            if (parsed?.[key] === undefined) problems.push(`missing required key: ${key}`);
+          }
+        }
+      } else if (p.schema) {
+        const res = await client.messages.create({
+          model,
+          max_tokens: effectiveMax,
           system: p.system,
           messages: [{ role: "user", content: p.user }],
           tools: [{ name: p.schema.name, description: "Return the structured response as specified", input_schema: p.schema.schema as Anthropic.Tool["input_schema"] }],
@@ -241,18 +270,23 @@ async function main() {
       } else {
         const res = await client.messages.create({
           model,
-          max_tokens: p.maxTokens,
+          max_tokens: effectiveMax,
           system: p.system,
           messages: [{ role: "user", content: p.user }],
-        });
+          ...extraBody,
+        } as Anthropic.MessageCreateParamsNonStreaming);
         servedModel = res.model;
-        const block = res.content.find((b) => b.type === "text");
-        text = block?.type === "text" ? block.text : "";
+        text = joinText(res.content);
       }
 
       if (!text.trim()) problems.push("empty response");
-      if (p.expectOneOf && !p.expectOneOf.includes(text.trim().toLowerCase())) {
-        problems.push(`expected one of [${p.expectOneOf.join(", ")}], got: "${text.trim().slice(0, 60)}"`);
+      if (p.expectOneOf) {
+        // Same tolerance production parsers have: trim, lowercase, drop
+        // trailing punctuation, accept a bare one-word answer.
+        const normalized = text.trim().toLowerCase().replace(/[.!?"']+$/g, "");
+        if (!p.expectOneOf.includes(normalized)) {
+          problems.push(`expected one of [${p.expectOneOf.join(", ")}], got: "${text.trim().slice(0, 60)}"`);
+        }
       }
       if (p.voiceChecked) {
         for (const v of voiceViolations(text)) problems.push(`voice: ${v}`);
