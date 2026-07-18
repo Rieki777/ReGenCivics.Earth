@@ -31,6 +31,7 @@ import Navigation from "./components/Navigation";
 const MycelialBackground = lazy(() => import("./components/MycelialBackground").then(m => ({ default: m.MycelialBackground })));
 const AnimationLayer = lazy(() => import("./components/AnimationLayer").then(m => ({ default: m.AnimationLayer })));
 import { WizardRadialMenu } from "./components/mobile/WizardRadialMenu";
+import { HarvestCaptureModal } from "./components/HarvestCaptureModal";
 import { MobileMoreMenu } from "./components/mobile/MobileMoreMenu";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
@@ -542,6 +543,7 @@ function MainApp() {
           {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
           {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
           {!adminMode && <WizardRadialMenu />}
+          {!adminMode && <HarvestCaptureModal />}
           {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}

@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles, Heart,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles, Heart, StickyNote,
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -61,7 +61,10 @@ export function WizardRadialMenu() {
   const [location] = useLocation();
   const tint = useSeasonTint();
   const { isPlaying, togglePlay } = useAudio();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  // Admin-only capture shortcut. This is the surviving path after every FAB
+  // gesture failed on iOS Safari: a plain menu row is a plain tap target.
+  const canCapture = user?.role === "admin" || user?.role === "superadmin";
   const pageTools = usePageTools();
 
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -186,6 +189,16 @@ export function WizardRadialMenu() {
     Icon: Heart,
   };
 
+  // Add note: opens the Harvest capture composer (HarvestCaptureModal listens
+  // for this event site-wide). Admin-only, and placed LAST so it lands closest
+  // to the trigger — the first thing under Rye's thumb.
+  const captureAction: Action = {
+    key: "capture",
+    label: "Add note",
+    event: "open-harvest-capture",
+    Icon: StickyNote,
+  };
+
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the
   // thumb. Gratitude lands nearest the trigger — the game's easiest action.
@@ -199,6 +212,8 @@ export function WizardRadialMenu() {
     questsAction,
     bountiesAction,
     gratitudeAction,
+    // Closest to the thumb for admins; absent for everyone else.
+    ...(canCapture ? [captureAction] : []),
   ];
 
   // Springy easing so the rows feel like they pop up from the Flower.
