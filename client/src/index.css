@@ -322,11 +322,17 @@
   /* Touch targets: iPhone/Safari is the primary platform. Give every standalone
      control at least a 44px tall tap area on touch viewports (Apple HIG). Only
      min-height, so nothing grows horizontally and inline text links (which
-     ignore min-height) are untouched. Checkboxes/radios keep their size. The
-     !important reliably wins over the h-8/h-9 utilities on shadcn buttons. */
+     ignore min-height) are untouched. The !important reliably wins over the
+     h-8/h-9 utilities on shadcn buttons.
+     Radix checkbox/radio/switch render as <button> with the matching role, so
+     they must be excluded here or the rule stretches them into 44px-tall pills
+     (their 44px tap zone comes from the pointer:coarse ::after expander below).
+     NOTE: the component variants now carry pointer-coarse: floors themselves
+     (button.tsx and friends); this blanket rule is transitional and gets
+     deleted in Phase 5 of MOBILE_FIRST_MASTER_PLAN.md. */
   @media (max-width: 767px) {
     [data-slot="button"],
-    button:not(:disabled),
+    button:not(:disabled):not([role="checkbox"]):not([role="radio"]):not([role="switch"]),
     [role="button"]:not([aria-disabled="true"]),
     select:not(:disabled),
     summary {
@@ -1226,14 +1232,22 @@
   border-radius: 0.5rem;
 }
 
-/* Touch target: ensure 44px minimum hit area on coarse-pointer devices */
+/* Touch target: ensure 44px minimum hit area on coarse-pointer devices.
+   Includes Radix checkbox/radio/switch, whose visuals stay small by design;
+   the ::after overlay gives them a full 44x44 tap zone without resizing them. */
 @media (pointer: coarse) {
   button:not([disabled]):not(.no-touch-extend),
-  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend) {
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="checkbox"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="radio"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="switch"]:not([aria-disabled="true"]):not(.no-touch-extend) {
     position: relative;
   }
   button:not([disabled]):not(.no-touch-extend)::after,
-  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend)::after {
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="checkbox"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="radio"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="switch"]:not([aria-disabled="true"]):not(.no-touch-extend)::after {
     content: "";
     position: absolute;
     top: 50%;
