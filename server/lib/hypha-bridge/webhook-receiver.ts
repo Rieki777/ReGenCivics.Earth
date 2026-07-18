@@ -401,6 +401,14 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
           log.error("cascadeClaimPassed top-level error", err),
         );
       }
+      // A formalized crowdpool contribution passed on chain: the project's DHO
+      // issued its tokens. Stamp the contribution confirmed and notify. Either
+      // ProposalExecuted or the token Transfer signals success.
+      if (bridgeSource === "crowdpool") {
+        cascadeCrowdpoolPassed(bridgeRow, event.txHash).catch((err: any) =>
+          log.error("cascadeCrowdpoolPassed top-level error", err),
+        );
+      }
       // Assembly ratification arriving machine-to-machine: the binding vote
       // concluded on Hypha and the Evolution Engine takes it from here. Only
       // ProposalExecuted (a governance outcome) triggers this — a bare token
@@ -678,6 +686,102 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
     title: "Claim was not approved",
     message: `Your claim of ${requestedAmount} ${tokenType} was rejected on Hypha. Your private balance has been refunded.`,
   } as any).catch((err: any) => log.error("claim_failed notification failed", err));
+}
+
+/**
+ * A formalized crowdpool contribution passed on chain: the project's DHO issued
+ * its tokens. Stamp the contribution confirmed (so the campaign reflects it
+ * without a join to hyphaBridges), surface it on the pool ledger, and notify
+ * the contributor and the steward. Idempotent: a compare-and-swap stamps only a
+ * contribution whose hyphaConfirmedAt is still null, and the passed-transition
+ * CAS upstream already fires this exactly once per bridge. We never mint or move
+ * tokens here; issuance happened on chain in the DHO.
+ */
+async function cascadeCrowdpoolPassed(bridgeRow: any, txHash: string | undefined): Promise<void> {
+  if (bridgeRow.source !== "crowdpool") return;
+  const db = await getDb();
+  if (!db) {
+    log.warn("cascadeCrowdpoolPassed: no db connection");
+    return;
+  }
+
+  let payload: any = null;
+  try {
+    payload = typeof bridgeRow.payload === "string" ? JSON.parse(bridgeRow.payload) : bridgeRow.payload;
+  } catch { /* ignore */ }
+  const contributionId = Number(payload?.metadata?.contributionId ?? bridgeRow.sourceId);
+  if (!Number.isFinite(contributionId) || contributionId <= 0) {
+    log.warn("cascadeCrowdpoolPassed: missing contributionId in metadata", { bridgeKey: bridgeRow.bridgeKey });
+    return;
+  }
+
+  const { campaignContributions, campaigns } = await import("../../../drizzle/schema");
+
+  // Idempotency: only the first pass stamps the confirmation.
+  const casResult = await db
+    .update(campaignContributions)
+    .set({ hyphaConfirmedAt: new Date() } as any)
+    .where(and(
+      eq(campaignContributions.id, contributionId),
+      sql`hyphaConfirmedAt IS NULL`,
+    ));
+  const affected = (casResult as unknown as { affectedRows?: number }[])[0]?.affectedRows
+    ?? (casResult as unknown as { affectedRows?: number })?.affectedRows
+    ?? 0;
+  if (affected === 0) {
+    log.info(`cascadeCrowdpoolPassed: contribution ${contributionId} already confirmed, skipping`);
+    return;
+  }
+
+  const [contribution] = await db.select().from(campaignContributions).where(eq(campaignContributions.id, contributionId)).limit(1).catch(() => []);
+  if (!contribution) return;
+  const campaignId = (contribution as any).campaignId;
+  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).limit(1).catch(() => []);
+  const projectName = (campaign as any)?.projectName || (campaign as any)?.title || "the project";
+  const needTitle = (contribution as any).title || "your contribution";
+  const txLink = txHash ? `https://basescan.org/tx/${txHash}` : ((bridgeRow as any).basescanUrl || "");
+
+  const { createUserNotification } = await import("../../db");
+  const contributorUserId = (contribution as any).userId as number | null;
+  const stewardUserId = (campaign as any)?.userId as number | null;
+
+  if (contributorUserId) {
+    await createUserNotification({
+      userId: contributorUserId,
+      type: "campaign_milestone",
+      title: "Your contribution is confirmed on chain",
+      message: `${projectName} formalized "${needTitle}" on Hypha and issued its tokens.${txLink ? ` View on Basescan: ${txLink}` : ""}`,
+      campaignId,
+      contributionId,
+    } as any).catch((err: any) => log.error("cascadeCrowdpoolPassed: contributor notification failed", err));
+  }
+  if (stewardUserId && stewardUserId !== contributorUserId) {
+    await createUserNotification({
+      userId: stewardUserId,
+      type: "campaign_milestone",
+      title: "A contribution was confirmed on chain",
+      message: `"${needTitle}" was formalized on Hypha for ${projectName}.`,
+      campaignId,
+      contributionId,
+    } as any).catch((err: any) => log.error("cascadeCrowdpoolPassed: steward notification failed", err));
+  }
+
+  // Best-effort pool-ledger event so the confirmation shows on the public feed.
+  try {
+    const { logActivityEvent } = await import("../../game");
+    await logActivityEvent(
+      "crowdpool_confirmed",
+      "player",
+      contributorUserId || 0,
+      "campaign",
+      campaignId,
+      { contributionId, bridgeKey: bridgeRow.bridgeKey },
+    );
+  } catch (err: any) {
+    log.error("cascadeCrowdpoolPassed: activity event failed", err);
+  }
+
+  log.info(`cascadeCrowdpoolPassed: contribution ${contributionId} confirmed on chain (bridge ${bridgeRow.bridgeKey})`);
 }
 
 export function registerHyphaWebhookRoutes(app: Express) {

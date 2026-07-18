@@ -1290,6 +1290,7 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   referredBy: varchar("referredBy", { length: 16 }), // Share token from ?ref=
   isAnonymous: tinyint("isAnonymous").default(0).notNull(), // Renders as "A contributor" publicly
   hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 16 }), // Set by formalizeOnHypha
+  hyphaConfirmedAt: timestamp("hyphaConfirmedAt"), // Stamped by cascadeCrowdpoolPassed when the DHO proposal passes on chain
   playerContributionId: int("playerContributionId"), // Living Tree row created on fulfilled
 
   // Metadata

@@ -539,7 +539,7 @@ export default function CampaignManage() {
         {contribution.hyphaBridgeKey && (
           <div className="pt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-[#4a7c59]">
             <CheckCircle2 className="w-4 h-4" />
-            On its way to Hypha
+            {contribution.hyphaConfirmedAt ? 'Confirmed on Hypha' : 'On its way to Hypha'}
           </div>
         )}
       </CardContent>
