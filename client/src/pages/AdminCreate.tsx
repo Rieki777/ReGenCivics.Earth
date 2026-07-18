@@ -32,6 +32,12 @@ function channelLabel(key: string): string {
   return CHANNELS.find((c) => c.key === key)?.label ?? key;
 }
 
+/** Reading surfaces (title, summary, why-now) never show em-dashes. Raw
+ * provenance sources are left untouched so they stay faithful to the original. */
+function cleanDashes(s: string): string {
+  return s.replace(/[—–]/g, "-");
+}
+
 function timeAgo(date: string | Date | null): string {
   if (!date) return "never";
   const ms = Date.now() - new Date(date).getTime();
@@ -52,7 +58,7 @@ function ScorePills({ components, ripeness }: { components: unknown; ripeness: n
     <span className="flex flex-wrap gap-1 items-center">
       <Badge className="bg-[#1a472a] text-[#7dd87d] hover:bg-[#1a472a]">{ripeness.toFixed(2)}</Badge>
       {parts.map(([name, value]) => value !== undefined && (
-        <span key={name} className="text-[10px] px-1.5 py-0.5 rounded bg-[#1a472a]/10 text-[#1a472a]/70">
+        <span key={name} className="text-[11px] px-2 py-0.5 rounded bg-[#1a472a]/10 text-[#1a472a] font-medium">
           {name} {Number(value).toFixed(2)}
         </span>
       ))}
@@ -65,17 +71,17 @@ function Provenance({ itemId, ideaId }: { itemId?: number; ideaId?: number }) {
     itemId ? { itemId } : { ideaId: ideaId! },
     { retry: false, refetchOnWindowFocus: false },
   );
-  if (query.isLoading) return <p className="text-xs text-[#1a472a]/50 py-2"><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Tracing sources...</p>;
-  if (!query.data) return <p className="text-xs text-[#1a472a]/50 py-2">No provenance recorded for this one.</p>;
+  if (query.isLoading) return <p className="text-xs text-[#2d5a3d] py-2"><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Tracing sources...</p>;
+  if (!query.data) return <p className="text-xs text-[#2d5a3d] py-2">No provenance recorded for this one.</p>;
   const { sources, linkTree, noteRefs } = query.data;
   return (
     <div className="space-y-3 py-2 text-sm">
       {sources.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">Raw sources</p>
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide">Raw sources</p>
           {sources.map((s) => (
             <div key={s.refId} className="rounded-lg bg-[#f0ebe3] px-3 py-2">
-              <p className="text-[10px] text-[#1a472a]/50 mb-1">{s.refId} · {s.date ? new Date(s.date).toLocaleDateString() : "undated"}{s.forwardedFrom ? ` · fwd: ${s.forwardedFrom}` : ""}</p>
+              <p className="text-[10px] text-[#2d5a3d] mb-1">{s.refId} · {s.date ? new Date(s.date).toLocaleDateString() : "undated"}{s.forwardedFrom ? ` · fwd: ${s.forwardedFrom}` : ""}</p>
               <p className="text-xs text-[#1a472a] whitespace-pre-wrap">{(s.text ?? "").slice(0, 700)}{(s.text ?? "").length > 700 ? "..." : ""}</p>
             </div>
           ))}
@@ -83,10 +89,10 @@ function Provenance({ itemId, ideaId }: { itemId?: number; ideaId?: number }) {
       )}
       {linkTree.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide mb-1">Link tree</p>
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide mb-1">Link tree</p>
           <div className="flex flex-col gap-1">
             {linkTree.slice(0, 12).map((url) => (
-              <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs text-[#4a7c59] hover:underline flex items-center gap-1 break-all">
+              <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs text-[#2d5a3d] hover:underline flex items-center gap-1 break-all">
                 <ExternalLink className="w-3 h-3 flex-shrink-0" />{url}
               </a>
             ))}
@@ -95,14 +101,14 @@ function Provenance({ itemId, ideaId }: { itemId?: number; ideaId?: number }) {
       )}
       {noteRefs.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide mb-1">Vault notes</p>
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide mb-1">Vault notes</p>
           {noteRefs.map((ref) => (
-            <p key={ref} className="text-xs text-[#1a472a]/70 font-mono">{ref}</p>
+            <p key={ref} className="text-xs text-[#1a472a] font-mono">{ref}</p>
           ))}
         </div>
       )}
       {sources.length === 0 && linkTree.length === 0 && noteRefs.length === 0 && (
-        <p className="text-xs text-[#1a472a]/50">No sources on file yet; the bridge fills these in.</p>
+        <p className="text-xs text-[#2d5a3d]">No sources on file yet; the bridge fills these in.</p>
       )}
     </div>
   );
@@ -121,12 +127,12 @@ function EmailSendPanel({ itemId, onSent }: { itemId: number; onSent: () => void
   const sendPreview = trpc.harvest.sendPreview.useMutation();
   const confirmSend = trpc.harvest.confirmSend.useMutation();
 
-  if (result) return <p className="text-xs text-[#4a7c59] font-medium py-1">{result}</p>;
+  if (result) return <p className="text-xs text-[#2d5a3d] font-medium py-1">{result}</p>;
 
   if (!preview) {
     return (
       <div className="flex items-center gap-2 py-1 flex-wrap">
-        <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#4a7c59]/40 text-[#1a472a]" disabled={sendPreview.isPending}
+        <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={sendPreview.isPending}
           onClick={async () => {
             try {
               const p = await sendPreview.mutateAsync({ itemId });
@@ -165,7 +171,7 @@ function EmailSendPanel({ itemId, onSent }: { itemId: number; onSent: () => void
           {confirmSend.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
           Confirm send to {preview.recipientCount}
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/60" onClick={() => setPreview(null)}>Cancel</Button>
+        <Button size="sm" variant="ghost" className="h-8 text-[#2d5a3d]" onClick={() => setPreview(null)}>Cancel</Button>
       </div>
       {confirmSend.isError && <p className="text-xs text-red-700">{confirmSend.error.message}</p>}
     </div>
@@ -182,7 +188,7 @@ function IdeaGraph({ ideas }: { ideas: Array<{ id: number; title: string; themes
     .filter((i) => i.themeList.length > 0)
     .slice(0, 80);
   const themes = Array.from(new Set(themed.flatMap((i) => i.themeList))).slice(0, 14);
-  if (themes.length === 0) return <p className="text-sm text-[#1a472a]/50">No themed ideas to graph yet.</p>;
+  if (themes.length === 0) return <p className="text-sm text-[#2d5a3d]">No themed ideas to graph yet.</p>;
 
   const W = 640, H = 420, CX = W / 2, CY = H / 2;
   const hubPos = new Map(themes.map((t, n) => {
@@ -257,41 +263,39 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
 
   return (
     <div className="rounded-2xl border border-[#4a7c59]/25 bg-white p-4 space-y-2">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-semibold text-[#1a472a]">{idea.title}</p>
-          {idea.whyNow && <p className="text-xs text-[#4a7c59] mt-0.5">{idea.whyNow}</p>}
-        </div>
+      <div className="space-y-1.5">
+        <p className="font-semibold text-[15px] leading-snug text-[#1a472a]">{cleanDashes(idea.title)}</p>
+        {idea.whyNow && <p className="text-xs text-[#2d5a3d]">{cleanDashes(idea.whyNow)}</p>}
         <ScorePills components={idea.scoreComponents} ripeness={idea.ripeness} />
       </div>
       {themes.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {themes.slice(0, 5).map((t) => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#7dd87d]/15 text-[#1a472a]/70">{t}</span>)}
+        <div className="flex flex-wrap gap-1.5">
+          {themes.slice(0, 5).map((t) => <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-[#1a472a]/10 text-[#1a472a]">{t}</span>)}
         </div>
       )}
       {idea.steer && <p className="text-xs text-amber-800 bg-amber-50 rounded px-2 py-1">Steer: {idea.steer}</p>}
 
-      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-        <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" onClick={() => setExpanded((e) => !e)}>
-          <Sparkles className="w-3.5 h-3.5 mr-1" /> Develop {expanded ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1.5">
+        <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" onClick={() => setExpanded((e) => !e)}>
+          <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Develop {expanded ? <ChevronUp className="w-3.5 h-3.5 ml-1.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-1.5" />}
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/60" disabled={snooze.isPending}
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" disabled={snooze.isPending}
           onClick={async () => { await snooze.mutateAsync({ ideaId: idea.id, days: 7 }); onChanged(); }}>
-          <Moon className="w-3.5 h-3.5 mr-1" /> Snooze
+          <Moon className="w-3.5 h-3.5 mr-1.5" /> Snooze
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/60" disabled={notThis.isPending}
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" disabled={notThis.isPending}
           onClick={async () => { await notThis.mutateAsync({ ideaId: idea.id }); onChanged(); }}>
-          <Ban className="w-3.5 h-3.5 mr-1" /> Not this
+          <Ban className="w-3.5 h-3.5 mr-1.5" /> Not this
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/60" onClick={() => setShowSteer((s) => !s)}>
-          <Compass className="w-3.5 h-3.5 mr-1" /> Steer
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" onClick={() => setShowSteer((s) => !s)}>
+          <Compass className="w-3.5 h-3.5 mr-1.5" /> Steer
         </Button>
       </div>
 
       {showSteer && (
         <div className="flex gap-2">
           <Textarea value={steerText} onChange={(e) => setSteerText(e.target.value)} placeholder="e.g. focus on the fundraising angle"
-            className="min-h-[40px] text-sm rounded-lg border-[#4a7c59]/30" rows={1} />
+            className="min-h-[40px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" rows={1} />
           <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={!steerText.trim() || steer.isPending}
             onClick={async () => { await steer.mutateAsync({ ideaId: idea.id, text: steerText.trim() }); setShowSteer(false); setSteerText(""); onChanged(); }}>
             Save
@@ -301,17 +305,17 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
 
       {expanded && (
         <div className="space-y-2 border-t border-[#1a472a]/10 pt-2">
-          {idea.summary && <p className="text-xs text-[#1a472a]/70 whitespace-pre-wrap">{idea.summary.slice(0, 500)}</p>}
+          {idea.summary && <p className="text-sm leading-relaxed text-[#1a472a] whitespace-pre-wrap">{cleanDashes(idea.summary).slice(0, 500)}</p>}
           <div className="flex flex-wrap gap-1.5">
             {CHANNELS.map((c) => (
               <button key={c.key} onClick={() => toggleChannel(c.key)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${channels.includes(c.key) ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a]/70 border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${channels.includes(c.key) ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a] border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
                 {c.label}
               </button>
             ))}
           </div>
           <input value={angle} onChange={(e) => setAngle(e.target.value)} placeholder="Angle (optional): the fatherhood thread, the numbers, ..."
-            className="w-full text-sm rounded-lg border border-[#4a7c59]/30 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]" maxLength={200} />
+            className="w-full text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={200} />
           <div className="flex items-center gap-2">
             <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={develop.isPending || channels.length === 0} onClick={runDevelop}>
               {develop.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
@@ -320,7 +324,7 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
             {develop.isError && <p className="text-xs text-red-700">{develop.error.message}</p>}
           </div>
           <details>
-            <summary className="text-xs text-[#4a7c59] cursor-pointer">Where this comes from</summary>
+            <summary className="text-xs text-[#2d5a3d] cursor-pointer">Where this comes from</summary>
             <Provenance ideaId={idea.id} />
           </details>
         </div>
@@ -368,7 +372,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const statusColor = item.status === "shipped" ? "bg-[#4a7c59] text-white" : item.status === "edited" ? "bg-amber-100 text-amber-900" : "bg-[#1a472a]/10 text-[#1a472a]/70";
+  const statusColor = item.status === "shipped" ? "bg-[#4a7c59] text-white" : item.status === "edited" ? "bg-amber-100 text-amber-900" : "bg-[#1a472a]/10 text-[#1a472a]";
   const title = (item.ideaId && ideaTitleById.get(item.ideaId)) || item.captureId;
 
   return (
@@ -377,14 +381,14 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
         <div className="flex items-center gap-2 min-w-0">
           <Badge className="bg-[#1a472a] text-white hover:bg-[#1a472a]">{channelLabel(item.channel)}</Badge>
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColor}`}>{item.status}</span>
-          <span className="text-xs text-[#1a472a]/50 truncate">{title}</span>
+          <span className="text-xs text-[#2d5a3d] truncate">{title}</span>
         </div>
-        <span className="text-[10px] text-[#1a472a]/40">{timeAgo(item.updatedAt)}</span>
+        <span className="text-[10px] text-[#2d5a3d]">{timeAgo(item.updatedAt)}</span>
       </div>
-      {item.angle && <p className="text-xs text-[#4a7c59]">Angle: {item.angle}</p>}
+      {item.angle && <p className="text-xs text-[#2d5a3d]">Angle: {item.angle}</p>}
 
       <Textarea value={body} onChange={(e) => { setBody(e.target.value); setDirty(true); }}
-        className="min-h-[140px] text-sm rounded-xl border-[#4a7c59]/30 focus-visible:ring-[#7dd87d] font-normal whitespace-pre-wrap" />
+        className="min-h-[140px] text-sm leading-relaxed text-[#1a472a] rounded-xl border-[#1a472a]/25 focus-visible:ring-[#4a7c59] font-normal whitespace-pre-wrap" />
 
       <div className="flex flex-wrap items-center gap-1.5">
         {!kindOpen ? (
@@ -392,9 +396,9 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
             {edit.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save edit"}
           </Button>
         ) : (
-          <span className="flex items-center gap-1.5 text-xs text-[#1a472a]/70">
+          <span className="flex items-center gap-1.5 text-xs text-[#1a472a]">
             That edit was
-            <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#4a7c59]/40 text-[#1a472a]" disabled={edit.isPending} onClick={() => void save("style")}>
+            <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={edit.isPending} onClick={() => void save("style")}>
               mostly style
             </Button>
             <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={edit.isPending} onClick={() => void save("content")}>
@@ -402,16 +406,16 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
             </Button>
           </span>
         )}
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/70" onClick={copyBody}>
-          {copied ? <Check className="w-3.5 h-3.5 mr-1 text-[#4a7c59]" /> : <Copy className="w-3.5 h-3.5 mr-1" />}{copied ? "Copied" : "Copy"}
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={copyBody}>
+          {copied ? <Check className="w-3.5 h-3.5 mr-1 text-[#2d5a3d]" /> : <Copy className="w-3.5 h-3.5 mr-1" />}{copied ? "Copied" : "Copy"}
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/70" onClick={() => setShowNudge((s) => !s)} disabled={item.status === "shipped"}>
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={() => setShowNudge((s) => !s)} disabled={item.status === "shipped"}>
           <RefreshCw className="w-3.5 h-3.5 mr-1" /> Regenerate
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]/70" onClick={() => setPostedOpen((s) => !s)} disabled={item.status === "shipped"}>
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={() => setPostedOpen((s) => !s)} disabled={item.status === "shipped"}>
           <Send className="w-3.5 h-3.5 mr-1" /> Mark as posted
         </Button>
-        <button className="text-xs text-[#4a7c59] hover:underline ml-auto" onClick={() => setShowSources((s) => !s)}>
+        <button className="text-xs text-[#2d5a3d] hover:underline ml-auto" onClick={() => setShowSources((s) => !s)}>
           {showSources ? "Hide sources" : "Where this comes from"}
         </button>
       </div>
@@ -419,7 +423,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
       {showNudge && (
         <div className="flex gap-2 items-center">
           <input value={nudge} onChange={(e) => setNudge(e.target.value)} placeholder="Nudge: shorter, more personal, lead with the question..."
-            className="flex-1 text-sm rounded-lg border border-[#4a7c59]/30 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]" maxLength={300} />
+            className="flex-1 text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={300} />
           <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={regenerate.isPending}
             onClick={async () => { await regenerate.mutateAsync({ itemId: item.id, ...(nudge.trim() ? { nudge: nudge.trim() } : {}) }); setShowNudge(false); setNudge(""); onChanged(); }}>
             {regenerate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
@@ -431,7 +435,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
         <div className="space-y-2 border-t border-[#1a472a]/10 pt-2">
           <Textarea value={postedText} onChange={(e) => setPostedText(e.target.value)}
             placeholder="Optional: paste the final text as it was posted (the cleanest voice signal of all)"
-            className="min-h-[60px] text-sm rounded-lg border-[#4a7c59]/30" />
+            className="min-h-[60px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" />
           <Button size="sm" className="h-8 rounded-lg bg-[#4a7c59] hover:bg-[#1a472a]" disabled={markPosted.isPending}
             onClick={async () => { await markPosted.mutateAsync({ itemId: item.id, ...(postedText.trim() ? { postedText: postedText.trim() } : {}) }); setPostedOpen(false); onChanged(); }}>
             Confirm posted
@@ -470,10 +474,10 @@ export default function AdminCreate() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f5f0] p-6">
         <div className="text-center space-y-3">
-          <Sprout className="w-8 h-8 text-[#4a7c59] mx-auto" />
+          <Sprout className="w-8 h-8 text-[#2d5a3d] mx-auto" />
           <p className="text-[#1a472a] font-semibold">The Harvest is the owner's creation studio.</p>
-          <p className="text-sm text-[#1a472a]/60">Sign in as the owner to see the feed.</p>
-          <Link href="/admin" className="text-sm text-[#4a7c59] hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-3.5 h-3.5" /> Back to admin</Link>
+          <p className="text-sm text-[#2d5a3d]">Sign in as the owner to see the feed.</p>
+          <Link href="/admin" className="text-sm text-[#2d5a3d] hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-3.5 h-3.5" /> Back to admin</Link>
         </div>
       </div>
     );
@@ -487,17 +491,17 @@ export default function AdminCreate() {
       <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <Link href="/admin" className="text-xs text-[#4a7c59] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> Admin</Link>
-            <h1 className="text-2xl font-bold text-[#1a472a] flex items-center gap-2"><Sprout className="w-6 h-6 text-[#4a7c59]" /> The Harvest</h1>
-            <Link href="/admin/voice-rules" className="text-xs text-[#4a7c59] hover:underline">Voice rules</Link>
-            <p className="text-xs text-[#1a472a]/60 mt-1">
+            <Link href="/admin" className="text-xs text-[#2d5a3d] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> Admin</Link>
+            <h1 className="text-2xl font-bold text-[#1a472a] flex items-center gap-2"><Sprout className="w-6 h-6 text-[#2d5a3d]" /> The Harvest</h1>
+            <Link href="/admin/voice-rules" className="text-xs text-[#2d5a3d] hover:underline">Voice rules</Link>
+            <p className="text-xs text-[#2d5a3d] mt-1">
               {data.ready
                 ? <>Generation ran {timeAgo(data.status.lastGeneration)} · bridge {timeAgo(data.status.lastBridge)} · digest {timeAgo(data.status.lastDigest)} · last send {timeAgo(data.status.lastSend)}</>
                 : "The feed tables are not migrated yet."}
               {staleWarning && data.ready && <span className="text-amber-700 font-medium"> · generation has not run in over two hours</span>}
             </p>
           </div>
-          <Button size="sm" variant="outline" className="h-9 rounded-lg border-[#4a7c59]/40 text-[#1a472a]" disabled={refresh.isPending}
+          <Button size="sm" variant="outline" className="h-9 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={refresh.isPending}
             onClick={async () => { await refresh.mutateAsync(); onChanged(); }}>
             {refresh.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />} Refresh
           </Button>
@@ -512,11 +516,11 @@ export default function AdminCreate() {
         {(openPublicationId !== null || (publicationsList.data?.length ?? 0) > 0) && (
           <section className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Publications</h2>
+              <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Publications</h2>
               {(publicationsList.data ?? []).slice(0, 6).map((pub) => (
                 <button key={pub.id}
                   onClick={() => setOpenPublicationId((current) => current === pub.id ? null : pub.id)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${openPublicationId === pub.id ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a]/70 border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${openPublicationId === pub.id ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a] border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
                   {pub.title.slice(0, 40)} · {pub.status}
                 </button>
               ))}
@@ -526,13 +530,13 @@ export default function AdminCreate() {
         )}
 
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Ripe ideas ({data.ideas.length})</h2>
-          {data.ideas.length === 0 && <p className="text-sm text-[#1a472a]/50">Nothing ripe right now. The bridge and the hourly worker keep this fresh.</p>}
+          <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Ripe ideas ({data.ideas.length})</h2>
+          {data.ideas.length === 0 && <p className="text-sm text-[#2d5a3d]">Nothing ripe right now. The bridge and the hourly worker keep this fresh.</p>}
           {data.ideas.map((idea) => <IdeaCard key={idea.id} idea={idea as IdeaRow} onChanged={onChanged} />)}
         </section>
 
         <details className="group">
-          <summary className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide cursor-pointer flex items-center gap-1.5">
+          <summary className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide cursor-pointer flex items-center gap-1.5">
             <Share2 className="w-3.5 h-3.5" /> Idea graph
           </summary>
           <div className="pt-3">
@@ -541,8 +545,8 @@ export default function AdminCreate() {
         </details>
 
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Drafts ({data.drafts.length})</h2>
-          {data.drafts.length === 0 && <p className="text-sm text-[#1a472a]/50">No drafts yet. Tap Develop on a ripe idea.</p>}
+          <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Drafts ({data.drafts.length})</h2>
+          {data.drafts.length === 0 && <p className="text-sm text-[#2d5a3d]">No drafts yet. Tap Develop on a ripe idea.</p>}
           {data.drafts.map((item) => (
             <DraftCard key={item.id} item={item as DraftRow & { ideaId: number | null; captureId: string }} ideaTitleById={ideaTitleById} onChanged={onChanged} />
           ))}

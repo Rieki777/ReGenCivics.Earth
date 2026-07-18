@@ -111,6 +111,16 @@ async function buildSystemPrompt(): Promise<string> {
   return parts.join("\n\n");
 }
 
+/**
+ * Deterministic backstop for the one hard rule that is purely mechanical: no
+ * em-dashes or en-dashes ever. The LLM repair pass handles contrast and vocab,
+ * but dash removal must never depend on the model getting it right. Rye likes
+ * hyphens, so we convert to a hyphen rather than deleting or rewriting.
+ */
+export function normalizeDashes(s: string): string {
+  return s.replace(/[—–]/g, "-");
+}
+
 export type DraftResult = { body: string; flags: ReturnType<typeof gradeVoice> };
 
 /**
@@ -155,7 +165,7 @@ export async function draftChannel(idea: HarvestIdea, channel: HarvestChannel, o
     ],
     maxTokens: channel === "article" ? 4000 : 1200,
   });
-  let body = (first.choices[0]?.message?.content ?? "").trim();
+  let body = normalizeDashes((first.choices[0]?.message?.content ?? "").trim());
   if (!body) throw new Error("empty draft");
 
   let flags = gradeVoice(body);
@@ -168,7 +178,7 @@ export async function draftChannel(idea: HarvestIdea, channel: HarvestChannel, o
       ],
       maxTokens: channel === "article" ? 4000 : 1200,
     });
-    const repaired = (repair.choices[0]?.message?.content ?? "").trim();
+    const repaired = normalizeDashes((repair.choices[0]?.message?.content ?? "").trim());
     if (repaired) {
       body = repaired;
       flags = gradeVoice(body);
