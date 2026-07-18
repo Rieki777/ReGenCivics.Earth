@@ -77,11 +77,24 @@ function ActionIcon({ type }: { type: string }) {
 }
 
 /**
- * How long a first click waits to see whether a second one is coming. Long
- * enough for a real double-click, short enough that the assistant does not
- * feel laggy. Only admins pay this delay; everyone else opens instantly.
+ * How long the FAB must be held to open the capture composer.
+ *
+ * We moved off double-click: on iOS Safari two fast taps are unreliable (the
+ * second is often eaten by the double-tap-to-zoom handler even with
+ * touch-action set), and a plain long-press is the standard, dependable mobile
+ * gesture. 550ms is long enough not to fire on an ordinary tap, short enough
+ * not to feel like a hang. Rye floated 2s; that reads as sluggish for a primary
+ * affordance, so this is the tuned default — change this one constant if the
+ * hold should be longer.
+ *
+ * Crucially this does NOT touch the single-tap path: a normal tap still opens
+ * the assistant via onClick, which has always worked on iOS. Long-press is
+ * layered on top for capture, so the reliable gesture stays reliable.
  */
-const DOUBLE_CLICK_MS = 250;
+const LONG_PRESS_MS = 550;
+
+/** A press that wanders more than this (px) is a scroll, not a hold — cancel. */
+const LONG_PRESS_MOVE_TOLERANCE = 10;
 
 const STARTERS = [
   "Who needs follow-up today?",
@@ -103,7 +116,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const executeMutation = trpc.adminActions.execute.useMutation();
   const undoMutation = trpc.adminActions.undo.useMutation();
 
-  // Harvest capture (Phase 1). The double-click-to-capture gesture is a client
+  // Harvest capture (Phase 1). The long-press-to-capture gesture is a client
   // display gate on admin roles; the save path stays owner-only on the server
   // (quickNotes.create is ownerProcedure), and the composer says so out loud
   // rather than pretending a non-owner's note was saved.
@@ -118,14 +131,6 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     enabled: canCapture,
   });
 
-  // Distinguish a single click from a double without letting either swallow the
-  // other: the single action is deferred by DOUBLE_CLICK_MS, and a second click
-  // inside that window cancels it and opens the composer instead.
-  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (clickTimer.current) clearTimeout(clickTimer.current);
-  }, []);
-
   const openAssistant = useCallback(() => {
     setMode("assistant");
     setMinimized(false);
@@ -138,23 +143,61 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     setOpen(true);
   }, []);
 
-  const handleFabClick = useCallback(() => {
-    // Non-admins get today's behavior exactly: open immediately, no delay.
-    if (!canCapture) {
-      openAssistant();
-      return;
+  // Long-press to capture (admins only). Pointer events cover mouse and touch
+  // with one code path. The single-tap → assistant path stays on onClick below
+  // and is deliberately untouched.
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+  // Set true when a long-press fires, so the click that a mouse press-release
+  // synthesizes afterward does not then also open the assistant.
+  const suppressClick = useRef(false);
+  const [pressing, setPressing] = useState(false);
+
+  const cancelPress = useCallback(() => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
     }
-    if (clickTimer.current) {
-      clearTimeout(clickTimer.current);
-      clickTimer.current = null;
+    pressStart.current = null;
+    setPressing(false);
+  }, []);
+
+  useEffect(() => cancelPress, [cancelPress]);
+
+  const onFabPointerDown = useCallback((e: React.PointerEvent) => {
+    if (!canCapture) return;
+    // Ignore secondary mouse buttons; let the OS handle right-click.
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    pressStart.current = { x: e.clientX, y: e.clientY };
+    setPressing(true);
+    pressTimer.current = setTimeout(() => {
+      pressTimer.current = null;
+      suppressClick.current = true;
+      setPressing(false);
       openComposer();
+    }, LONG_PRESS_MS);
+  }, [canCapture, openComposer]);
+
+  const onFabPointerMove = useCallback((e: React.PointerEvent) => {
+    const start = pressStart.current;
+    if (!start) return;
+    // A finger that travels is scrolling the page, not holding the button.
+    if (
+      Math.abs(e.clientX - start.x) > LONG_PRESS_MOVE_TOLERANCE ||
+      Math.abs(e.clientY - start.y) > LONG_PRESS_MOVE_TOLERANCE
+    ) {
+      cancelPress();
+    }
+  }, [cancelPress]);
+
+  const handleFabClick = useCallback(() => {
+    // Swallow the click that trails a completed long-press (mouse only).
+    if (suppressClick.current) {
+      suppressClick.current = false;
       return;
     }
-    clickTimer.current = setTimeout(() => {
-      clickTimer.current = null;
-      openAssistant();
-    }, DOUBLE_CLICK_MS);
-  }, [canCapture, openAssistant, openComposer]);
+    openAssistant();
+  }, [openAssistant]);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -279,23 +322,39 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     return (
       <button
         onClick={handleFabClick}
+        onPointerDown={onFabPointerDown}
+        onPointerMove={onFabPointerMove}
+        onPointerUp={cancelPress}
+        onPointerLeave={cancelPress}
+        onPointerCancel={cancelPress}
+        // Suppress the iOS long-press callout / context menu so holding opens
+        // the composer instead of a system menu.
+        onContextMenu={canCapture ? (e) => e.preventDefault() : undefined}
         data-testid="admin-fab"
-        // touch-action: manipulation is what stops a double-tap from zooming the
-        // page on mobile Safari/Chrome. Doing it here rather than
-        // preventDefault-ing touchend keeps the synthesized click intact, which
-        // is what the double-click detection above counts.
-        style={canCapture ? { touchAction: "manipulation" } : undefined}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-        title={canCapture ? "Open AI Assistant — double-click to add a note" : "Open AI Assistant"}
+        // touch-action: manipulation removes the 300ms tap delay and double-tap
+        // zoom; the callout/select suppression keeps a long hold from selecting
+        // or invoking the iOS share sheet mid-press.
+        style={canCapture ? { touchAction: "manipulation", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" } : undefined}
+        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group ${pressing ? "scale-95" : "hover:scale-105"}`}
+        title={canCapture ? "Open AI Assistant — hold to add a note" : "Open AI Assistant"}
       >
         <Bot className="w-6 h-6 text-[#7dd87d] group-hover:scale-110 transition-transform" />
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#7dd87d] rounded-full animate-pulse" />
+        {/* Press-progress ring: fills over the hold so the gesture is felt, not
+            guessed. Purely visual; the timer above is the source of truth. */}
+        {canCapture && pressing && (
+          <span
+            data-testid="admin-fab-press"
+            className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#7dd87d]"
+            style={{ animation: `fab-press-fill ${LONG_PRESS_MS}ms linear forwards` }}
+          />
+        )}
         {canCapture && (
           <span
             data-testid="admin-fab-hint"
             className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-[#1a472a] px-2 py-1 text-xs text-[#7dd87d]/90 opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
           >
-            Double-click to add a note
+            Hold to add a note
           </span>
         )}
       </button>
