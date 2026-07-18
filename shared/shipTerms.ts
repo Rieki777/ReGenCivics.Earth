@@ -35,6 +35,13 @@ export const SHIP_LATE_FEE_PER_HOUR_USD = 50;
 export const SHIP_LATE_FEE_HOURLY_WINDOW_HOURS = 12;
 export const SHIP_LATE_FEE_PER_DAY_USD = 600;
 
+/** Road miles (§5): what's included per voyage, and the overage rate after. */
+export const SHIP_MILES_INCLUDED = 1000;
+export const SHIP_OVERAGE_PER_MILE_USD = 0.5;
+
+/** The minimum age to be an approved driver (§3). */
+export const SHIP_MIN_DRIVER_AGE = 25;
+
 /** The refundable security deposit held on the Platform, in USD (Terms §11).
  *  The terms page and the booking flow both read this, so the number a guest is
  *  quoted at checkout always matches the number in the agreement they accept. */

@@ -27,11 +27,33 @@ import {
   SHIP_LATE_FEE_PER_HOUR_USD,
   SHIP_LATE_FEE_HOURLY_WINDOW_HOURS,
   SHIP_LATE_FEE_PER_DAY_USD,
+  SHIP_MILES_INCLUDED,
+  SHIP_OVERAGE_PER_MILE_USD,
+  SHIP_MIN_DRIVER_AGE,
   RADIUS_BASE_MILES,
   RADIUS_PER_EXTRA_WEEK_MILES,
   RADIUS_MAX_WEEKS,
   permittedRadiusMiles,
 } from "@shared/shipTerms";
+
+/**
+ * "Voyage at a glance" — the practical terms that shape a Crew's trip and plans,
+ * surfaced as boxes up front so the things that really matter are easy to catch
+ * before reading the full agreement. Values read from shared/shipTerms.ts so the
+ * summary and the body can never disagree. `to` deep-links to the governing §.
+ */
+const GLANCE: Array<{ label: string; value: string; note: string; to?: string; accent?: "green" | "red" | "gold" }> = [
+  { label: "Voyage window", value: "Mon 3pm → Sun 11am", note: "Whole weeks, chain up to 4", to: "#voyage" },
+  { label: "Travel radius", value: `${RADIUS_BASE_MILES} mi from Ashland`, note: `Up to ${permittedRadiusMiles(RADIUS_MAX_WEEKS).toLocaleString()} mi on a ${RADIUS_MAX_WEEKS}-week sail. Farther needs written permission first`, to: "#radius", accent: "green" },
+  { label: "Miles included", value: `${SHIP_MILES_INCLUDED.toLocaleString()} road miles`, note: `$${SHIP_OVERAGE_PER_MILE_USD.toFixed(2)}/mile after that`, to: "#miles" },
+  { label: "Drivers", value: `${SHIP_MIN_DRIVER_AGE}+, licensed`, note: "Approved on Outdoorsy. Never drive after cannabis", to: "#drivers" },
+  { label: "Crew size", value: "Up to 4 aboard", note: "Or 5 when at least 3 are children", to: "#drivers" },
+  { label: "Clean vessel", value: "Meat, alcohol & smoke-free", note: "Inside, the whole voyage, unless we say otherwise", to: "#clean-vessel", accent: "green" },
+  { label: "Pets", value: "Not allowed as a rule", note: "Exceptions need written OK + a pet fee", to: "#prohibited" },
+  { label: "Security deposit", value: `$${SHIP_DEPOSIT_USD.toLocaleString()} refundable`, note: "Held on Outdoorsy, returned after inspection", to: "#uncovered-loss", accent: "gold" },
+  { label: "Late return", value: `$${SHIP_LATE_FEE_PER_HOUR_USD}/hr, then $${SHIP_LATE_FEE_PER_DAY_USD}/day`, note: `Hourly for the first ${SHIP_LATE_FEE_HOURLY_WINDOW_HOURS} hours`, to: "#voyage" },
+  { label: "Her quirks", value: "Rented as she is", note: "A 2006; leveling jacks are partly manual", to: "#quirks", accent: "red" },
+];
 
 /** The §6.2 radius table, computed from the policy so page + map never drift. */
 const RADIUS_ROWS = Array.from({ length: RADIUS_MAX_WEEKS }, (_, i) => {
@@ -54,6 +76,39 @@ export default function ShipTerms() {
         <p className="text-sm text-muted-foreground mb-6">
           Version {SHIP_TERMS_VERSION}. Effective {SHIP_TERMS_EFFECTIVE}. These terms apply to every voyage aboard the ReGen Ship.
         </p>
+
+        {/* Voyage at a glance: the practical terms that shape your trip, up front. */}
+        <section aria-label="Voyage at a glance" className="mb-10">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#4a7c59] dark:text-[#7dd87d] mb-3">
+            Voyage at a glance
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {GLANCE.map((g) => {
+              const bar =
+                g.accent === "red" ? "bg-[#c0392b]" : g.accent === "gold" ? "bg-[#d4a574]" : "bg-[#2f5d3a] dark:bg-[#4a7c59]";
+              const inner = (
+                <>
+                  <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${bar}`} />
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</p>
+                  <p className="mt-1 font-bold leading-tight text-[15px] text-foreground">{g.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-snug">{g.note}</p>
+                </>
+              );
+              const cls =
+                "relative block h-full rounded-xl border bg-card pl-4 pr-3 py-3 overflow-hidden transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]";
+              return g.to ? (
+                <a key={g.label} href={g.to} className={`${cls} hover:shadow-md hover:-translate-y-0.5 transition-transform`}>
+                  {inner}
+                </a>
+              ) : (
+                <div key={g.label} className={cls}>{inner}</div>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            This box is the quick read. The full agreement below is what governs — please read it before you sail.
+          </p>
+        </section>
 
         <div className="prose prose-neutral dark:prose-invert max-w-2xl">
           <h2>1. Who this agreement is between</h2>
@@ -104,11 +159,11 @@ export default function ShipTerms() {
             the Ship.
           </p>
 
-          <h2>3. Who is allowed to drive and sail</h2>
+          <h2 id="drivers">3. Who is allowed to drive and sail</h2>
           <ul>
             <li>
-              Every driver must be at least <strong>25 years old</strong>, hold a valid driver's license, and be listed
-              and approved as a driver on the Platform booking before they drive.
+              Every driver must be at least <strong>{SHIP_MIN_DRIVER_AGE} years old</strong>, hold a valid driver's
+              license, and be listed and approved as a driver on the Platform booking before they drive.
             </li>
             <li>
               Only approved drivers may operate the Ship. Letting an unapproved or unlicensed person drive is a material
@@ -124,7 +179,7 @@ export default function ShipTerms() {
             </li>
           </ul>
 
-          <h2>4. The voyage: dates and turnovers</h2>
+          <h2 id="voyage">4. The voyage: dates and turnovers</h2>
           <ul>
             <li>
               Each voyage boards <strong>Monday at 3:00 pm</strong> and returns the following{" "}
@@ -140,10 +195,10 @@ export default function ShipTerms() {
             </li>
           </ul>
 
-          <h2>5. Miles included and overage</h2>
+          <h2 id="miles">5. Miles included and overage</h2>
           <ul>
-            <li>Each voyage includes <strong>1,000 road miles</strong>.</li>
-            <li>Miles driven beyond the included allowance are billed at <strong>$0.50 per mile</strong>.</li>
+            <li>Each voyage includes <strong>{SHIP_MILES_INCLUDED.toLocaleString()} road miles</strong>.</li>
+            <li>Miles driven beyond the included allowance are billed at <strong>${SHIP_OVERAGE_PER_MILE_USD.toFixed(2)} per mile</strong>.</li>
             <li>
               Odometer readings are taken at departure and return during the pre-sail and return inspections. These road
               miles are separate from the travel radius in Section 6. Road miles measure how far you drive. The radius
@@ -259,7 +314,7 @@ export default function ShipTerms() {
             </li>
           </ul>
 
-          <h2>9. Care of the Ship and prohibited uses</h2>
+          <h2 id="prohibited">9. Care of the Ship and prohibited uses</h2>
           <p>You agree to treat the Ship with care and, unless you have our written permission, you will not:</p>
           <ul>
             <li>use the Ship for any commercial purpose, ride-share, delivery, or paid transport;</li>

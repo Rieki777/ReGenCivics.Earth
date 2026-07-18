@@ -6,6 +6,26 @@
 
 ---
 
+## Voyage at a glance
+
+*The practical terms that shape your trip and your plans, up front. This box is the quick read; the full agreement below is what governs.*
+
+| | |
+|---|---|
+| **Voyage window** | Board Monday 3:00 pm, return Sunday 11:00 am. Whole weeks, chain up to 4. |
+| **Travel radius** | 500 mi from Ashland on a one-week voyage, up to 1,250 mi on a four-week sail. Beyond 500 mi needs written permission first (§6). |
+| **Miles included** | 1,000 road miles; $0.50 per mile after that (§5). |
+| **Drivers** | 25+, licensed, and approved on Outdoorsy. Never drive after cannabis (§3). |
+| **Crew size** | Up to 4 aboard, or 5 when at least 3 are children (§3). |
+| **Clean vessel** | Meat-free, alcohol-free, and smoke/vape-free inside, the whole voyage (§7). |
+| **Pets** | Not allowed as a rule; exceptions need written permission and a pet fee (§9). |
+| **Security deposit** | $1,500, refundable, held on Outdoorsy, returned after the return inspection (§11). |
+| **Late return** | $50 per hour for the first 12 hours, then $600 per day (§4). |
+| **Her quirks** | Rented as she is. She's a 2006; the leveling jacks are partly manual (§1.1). |
+| **Questions / permission** | Text or call the core team: (707) 267-7660 (§6.4). |
+
+---
+
 ## 1. Who this agreement is between
 
 This Voyage Covenant and Rental Terms ("Agreement") is between:
@@ -29,7 +49,7 @@ This Agreement sits on top of the Platform booking. It sets the conditions the C
 
 ## 3. Who is allowed to drive and sail
 
-- Every driver must be at least **25 years old** ([MIN_DRIVER_AGE]), hold a valid driver's license, and be listed and approved as a driver on the Platform booking before they drive.
+- Every driver must be at least **25 years old**, hold a valid driver's license, and be listed and approved as a driver on the Platform booking before they drive.
 - Only approved drivers may operate the Ship. Letting an unapproved or unlicensed person drive is a material breach and, in most cases, voids insurance coverage for anything that happens while they are at the wheel.
 - The Crew is capped at **four people aboard, or five when at least three are children**. You may not carry more people than the Ship is booked and equipped to sleep and seat with seatbelts.
 - No driver may consume cannabis before or while driving. You confirm that no driver is impaired by alcohol, cannabis, or any other substance at any time they operate the Ship.
@@ -37,14 +57,14 @@ This Agreement sits on top of the Platform booking. It sets the conditions the C
 ## 4. The voyage: dates and turnovers
 
 - Each voyage boards **Monday at 3:00 pm** and returns the following **Sunday at 11:00 am**, unless your booking confirmation says otherwise.
-- Voyages run in whole seven-night cycles and may be chained up to **four weeks** ([MAX_VOYAGE_WEEKS]).
+- Voyages run in whole seven-night cycles and may be chained up to **four weeks**.
 - The Ship is reset by the Keeper between voyages. Propane, water, and systems are topped up on each turnover.
 - Late return without written approval is billed at **$50 per hour for the first 12 hours, and $600 per day after that**, and may make you responsible for costs owed to the next Crew whose voyage you delay.
 
 ## 5. Miles included and overage
 
-- Each voyage includes **1,000 road miles** ([MILES_INCLUDED]).
-- Miles driven beyond the included allowance are billed at **$0.50 per mile** ([OVERAGE_PER_MILE_USD]).
+- Each voyage includes **1,000 road miles**.
+- Miles driven beyond the included allowance are billed at **$0.50 per mile**.
 - Odometer readings are taken at departure and return during the pre-sail and return inspections. These road miles are separate from the travel radius in Section 6. Road miles measure how far you drive. The radius measures how far from Ashland you are allowed to take her.
 
 ## 6. Travel radius: where the Ship may go
@@ -62,7 +82,7 @@ This is a core condition of every voyage and one of the main ways we protect the
 | 3 weeks | 1,000 miles |
 | 4 weeks | 1,250 miles |
 
-([Default: base 500 miles plus 250 miles per additional week. Rye can set these numbers.])
+(Base 500 miles plus 250 miles per additional week.)
 
 **6.3 Written permission is always required to go past the base radius.** Extending your booking does not by itself unlock the wider zone. Any travel beyond the **500-mile base radius**, and any travel outside your voyage's permitted radius, requires **explicit written permission from the core team in advance**, naming the specific destination and route. We grant this at our discretion and may attach conditions, including a longer minimum booking, a larger deposit, or a mileage limit.
 
@@ -152,7 +172,7 @@ This section is how the Church protects its asset. Read it closely.
 ## 14. Changes, cancellation, and recall
 
 - Cancellations and changes follow the Platform's cancellation policy plus any terms in your booking confirmation.
-- An approved booking that does not complete the Platform step within **72 hours** ([PLATFORM_PENDING_EXPIRY_HOURS]) may expire and release the week.
+- An approved booking that does not complete the Platform step within **72 hours** may expire and release the week.
 - The Church may **recall the Ship** or end a voyage early if you materially breach this Agreement, if the Ship is being used unsafely or outside the permitted radius, or if continuing would put the Vessel or people at risk. Where safe and reasonable we will contact you first.
 
 ## 15. Location tracking and privacy
