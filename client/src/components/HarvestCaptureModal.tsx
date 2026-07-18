@@ -8,8 +8,14 @@
  * Safari. Double-tap zoomed the page; long-press selected text / raised the
  * callout. A plain menu row is a plain tap target, which is the one thing that
  * always works. WizardRadialMenu dispatches `open-harvest-capture`; this listens
- * (exactly the SendGratitudeModal / SiteFooter pattern) and opens the composer
- * in a bottom sheet.
+ * (exactly the SendGratitudeModal / SiteFooter pattern) and opens the composer.
+ *
+ * The sheet is anchored to the TOP, not the bottom. On iOS Safari the on-screen
+ * keyboard does not shrink the layout viewport, so a bottom-anchored sheet
+ * (bottom-0) sits BEHIND the keyboard the moment the textarea focuses — which is
+ * the "screen overlay doesn't work" bug: only a sliver of the composer peeked
+ * above the keyboard. Top-anchoring keeps the whole composer — textarea, mic,
+ * Save — above where the keyboard rises.
  *
  * Admin-gated on the client (admin/superadmin). The save path stays owner-only
  * on the server (quickNotes.create is ownerProcedure); HarvestNoteComposer
@@ -53,9 +59,11 @@ export function HarvestCaptureModal() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent
-        side="bottom"
+        side="top"
         data-testid="harvest-capture-sheet"
-        className="rounded-t-2xl border-[#4a7c59]/30 bg-white p-0 max-h-[88vh] overflow-y-auto"
+        className="rounded-b-2xl border-[#4a7c59]/30 bg-white p-0 gap-0 max-h-[92vh] overflow-y-auto"
+        // Clear the status bar / notch so the header is not tucked under it.
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <SheetHeader className="px-4 pt-4 pb-0">
           <SheetTitle className="flex items-center gap-2 text-[#1a472a]">
