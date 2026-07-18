@@ -7,6 +7,12 @@
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "781bd6d3f9b19f8c9af6b53d8d0e4876d0183841b565db34ca7092ffa412d111"
     },
+    "last30days": {
+      "source": "mvanhorn/last30days-skill",
+      "sourceType": "github",
+      "skillPath": "skills/last30days/SKILL.md",
+      "computedHash": "a8185f07c01ed76b38da9385347b2e6cf784a7067992a36c8a1537d861f2503b"
+    },
     "use-railway": {
       "source": "railwayapp/railway-skills",
       "sourceType": "github",

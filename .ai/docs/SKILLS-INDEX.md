@@ -16,6 +16,14 @@ Project skills live in `.claude/skills/` (committed with the repo). Cross-projec
 - `regen-database-sql` — patterns for MySQL on Railway, Drizzle ORM, seed scripts, migrations.
 - `regen-railway-crons` — Railway HTTP cron setup and debugging. The `sh -c` shell-expansion fix, the silent-401 trap (curl exits 0 on 401), and the `${{"ReGenCivics.Earth".CRON_SECRET}}` secret reference. Use when adding or fixing any `/api/cron/*` cron.
 - `regen-deterministic-first` — foundational rule for any autonomous or recurring behavior. Build a deterministic tool that runs without an LLM at zero token cost first; only call an agent for the genuinely nondeterministic part, on a schedule. Also a hard constraint in `STEERING.md` section 11.
+- `regen-deploy-doctor` — Railway deploy failure triage: empty-CLI-log FAILED deploys (dashboard card via Chrome), instant fails (lockfile grep for dead tarballs), concurrent-push double failures. Mined from session memory 2026-07-17.
+- `regen-windows-env` — environment recipes for Rye's Windows machine + Cowork sandbox: cross-env test runs, FUSE staleness, Desktop Commander patterns, worktree gate recipe. Mined from session memory 2026-07-17.
+- `regen-skill-scout` — discover and install skills from the open ecosystem with a mandatory source-vetting gate (scripts, keys, instruction conflicts, context cost, fit). Adapted from `vercel-labs/skills` find-skills, vetted 2026-07-17. CLI installs stay gitignored per the skills-lock.json manifest policy.
+
+## Research + intelligence
+
+- `last30days` — full 30-day community research engine from `mvanhorn/last30days-skill` (installed 2026-07-17, v3.16.0, Rye-approved). Deterministic Python engine gathers Reddit/HN/web keyless, LLM synthesizes. **Keyless posture is a hard rule: never run its cookie or keychain setup scripts (setup-keychain.sh, setup-pass.sh, chrome/safari cookie extraction), never configure AUTH_TOKEN/CT0.** Session cookies are full account credentials; the ecosystem scanners rate this skill High Risk for exactly that machinery. If X/TikTok depth is ever wanted, use a SCRAPECREATORS_API_KEY, not cookies. Its output-format LAWs override our writing rules inside its own synthesis only (Rye-approved exception 2026-07-17). Installed via `npx skills add` so the directory is gitignored; `skills-lock.json` is the manifest and `npx skills install` regenerates it. The 14MB `assets/` demo media dir is safe to delete locally after install or update.
+- `regen-last30` — lean keyless WebSearch fallback for community-pulse research when the full engine is unavailable (sandbox sessions, broken toolchain) or the topic only needs a light sweep. Engine behind the weekly capacity briefing.
 
 ## Game + seasons
 

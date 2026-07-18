@@ -143,6 +143,7 @@ second-brain/
 /.agents/
 /.claude/skills/find-skills
 /.claude/skills/use-railway
+/.claude/skills/last30days
 
 # Editor backup files
 *.bak
