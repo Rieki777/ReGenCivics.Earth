@@ -43,18 +43,31 @@ export const ENV = {
   applePrivateKey: process.env.APPLE_PRIVATE_KEY ?? "",
   // App URL
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
-  // AI. OPENROUTER_API_KEY routes all LLM calls through OpenRouter's
-  // Anthropic-compatible endpoint; ANTHROPIC_API_KEY is the direct-to-Anthropic
-  // fallback when no OpenRouter key is set. AI_MODEL only applies on the
-  // OpenRouter path (direct Anthropic keeps its pinned Claude model).
+  // AI. OPENROUTER_API_KEY is the PRIMARY LLM path (Anthropic-compatible
+  // endpoint, per-task model tiers below); ANTHROPIC_API_KEY is the
+  // direct-to-Anthropic fallback when OpenRouter errors or has no key.
+  // AI_MODEL only applies on the direct Anthropic path (bare claude-* id).
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "openrouter/auto",
-  // Model used when a call fails over from first-party Anthropic to OpenRouter
-  // (e.g. Anthropic is out of credits). It must route to a provider this
-  // OpenRouter account can reach, so it is NOT a claude/anthropic model by
-  // default. Override with OPENROUTER_MODEL (any OpenRouter model slug).
-  openrouterModel: process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini",
+  // Global LLM cost circuit-breaker (see server/_core/llm.ts). Site-wide daily
+  // ceilings across EVERY invokeLLM/streamLLM call, so one runaway feature (or
+  // a bot hammering a public AI surface) cannot burn unbounded spend. Tokens
+  // are estimated at ~4 chars/token. Set to 0 to disable a given ceiling.
+  llmDailyCallBudget: Number.parseInt(process.env.LLM_DAILY_CALL_BUDGET ?? "4000", 10) || 0,
+  llmDailyTokenBudget: Number.parseInt(process.env.LLM_DAILY_TOKEN_BUDGET ?? "8000000", 10) || 0,
+  // Per-task OpenRouter model tiers (cheapest model that does the job; see
+  // server/_core/llm.ts and ADR-43). All slugs must route to providers this
+  // OpenRouter account can reach (NOT anthropic/*). Tiers that receive images
+  // (standard: ship cook + shipwright) need a multimodal model; all three
+  // defaults are multimodal. Legacy OPENROUTER_MODEL, when set, still pins the
+  // standard tier so an existing Railway var keeps its old meaning.
+  llmModelLight:
+    process.env.LLM_MODEL_LIGHT ?? "google/gemini-2.5-flash-lite",
+  llmModelStandard:
+    process.env.LLM_MODEL_STANDARD ?? process.env.OPENROUTER_MODEL ?? "moonshotai/kimi-k2.5",
+  llmModelComplex:
+    process.env.LLM_MODEL_COMPLEX ?? "moonshotai/kimi-k3",
   // Conversational Companion voice layer (all optional; browser SpeechRecognition
   // + speechSynthesis are the free v1 default). STT_API_KEY lights up the server
   // fallback transcription endpoint for browsers without SpeechRecognition

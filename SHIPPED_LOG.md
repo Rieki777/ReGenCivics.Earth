@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-17 (llm): OpenRouter primary + cheapest-model-per-task tiers (ADR-43)
+
+- **The provider chain flips: OpenRouter first, direct Anthropic as failover.** Every `invokeLLM`/`streamLLM` call now routes through OpenRouter with a per-task model tier: `light` (routing, tagging, alt text, translation, template classification) on `google/gemini-2.5-flash-lite`, `standard` (all personas, companions, guides, harvest, transcripts; the untagged default) on `moonshotai/kimi-k2.5` (multimodal, covers the cook/shipwright image calls), `complex` (Assembly synthesis, decision drafting, C-suite briefing) on `moonshotai/kimi-k3`. Tier overrides: `LLM_MODEL_LIGHT` / `LLM_MODEL_STANDARD` / `LLM_MODEL_COMPLEX` Railway vars; legacy `OPENROUTER_MODEL` still pins the standard tier if set.
+- **`isFailoverError` also fails over on model-routing errors now** (404 model/provider, "No allowed providers"): with OpenRouter primary, a deprecated slug falls through to Anthropic instead of 404ing every AI feature like 2026-07-14. Ordinary errors (401, bad request) still surface.
+- 12 call sites tagged (9 light, 3 complex); everything untouched defaults to standard. Tests: failover predicate updated + new `pickOpenRouterModel` tier-mapping tests, including a pin that no tier ever names an `anthropic/*` slug (this OpenRouter account cannot reach that provider).
+- Full reasoning: ADR-43 in `.ai/docs/DECISIONS.md`.
+
 ## 2026-07-17 (fleet): The Flagkeeper hears the story behind every flag
 
 - **Raise your flag is conversation-first now.** A new form companion, **the Flagkeeper**, opens on /ship/fleet: she sews the flag of every ship that joins and hears the story behind it before a single stitch. Her interview is the fleet lead qualification Rye asked for: why the regeneration movement matters to them, their vision for traveling with the fleet, what they'd give, and what they hope to receive, with explicit guidance to let people be honest about money ("it is not a judgment, it helps the crew place them well"). She never scores, judges, or submits; she gathers the story and the crew reads it.

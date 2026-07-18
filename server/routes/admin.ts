@@ -180,6 +180,7 @@ export const adminRouter = router({
 
       const result = await invokeLLM({
         maxTokens: 2000,
+        task: "complex",
         messages: [
           { role: "system", content: system },
           { role: "user", content: userMsg },

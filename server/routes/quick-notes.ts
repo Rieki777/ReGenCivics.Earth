@@ -65,6 +65,7 @@ async function autoTagThemes(body: string): Promise<string[] | null> {
         { role: "user", content: `<note>\n${body.slice(0, 2000)}\n</note>` },
       ],
       maxTokens: 40,
+      task: "light",
     });
     const raw = res.choices[0]?.message?.content ?? "";
     const picked = raw

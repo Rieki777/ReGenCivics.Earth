@@ -15,6 +15,20 @@ export type Message = {
   imageUrls?: string[];
 };
 
+/**
+ * Task tiers for cheapest-model-for-the-job routing (ADR-43). Call sites tag
+ * each call with the kind of work it is; the OpenRouter path picks the least
+ * expensive model that handles that tier well. Untagged calls get "standard".
+ *
+ * - "light": classification, routing, tagging, alt text, translation, small
+ *   JSON extraction. Quality bar is modest; volume can be high.
+ * - "standard": persona chat, guides, companions, writing in voice, transcript
+ *   summaries, structured form turns. The default.
+ * - "complex": governance synthesis, decision drafting, executive briefings.
+ *   Low volume, reasoning-heavy, worth a frontier model.
+ */
+export type LLMTask = "light" | "standard" | "complex";
+
 export type JsonSchema = {
   name: string;
   schema: Record<string, unknown>;
@@ -36,6 +50,8 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  /** Cheapest-model routing tier; defaults to "standard". See LLMTask. */
+  task?: LLMTask;
 };
 
 // OpenAI-compatible result shape maintained for backwards compatibility
@@ -55,16 +71,119 @@ export type InvokeResult = {
 
 // OpenRouter serves the Anthropic Messages protocol at /api/v1/messages, so the
 // SDK works unchanged: baseURL swaps the host, authToken sends the OpenRouter
-// key as a Bearer header (OpenRouter rejects x-api-key auth).
+// key as a Bearer header (OpenRouter rejects x-api-key auth). OpenRouter is the
+// PRIMARY provider (ADR-43): every call routes there with the cheapest model
+// for its task tier, and first-party Anthropic is the failover.
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api";
 
-// Default first-party Anthropic model for the site chat + companion + concierge.
-// Fast and inexpensive, and it supports the tool-forced structured output the
-// companion relies on. Override with AI_MODEL set to any bare `claude-*` id.
+// Anthropic model for the direct (failover) path. Fast and inexpensive, and it
+// supports the tool-forced structured output the companion relies on. Override
+// with AI_MODEL set to any bare `claude-*` id.
 const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
 export function isLLMConfigured(): boolean {
   return Boolean(ENV.openrouterApiKey || ENV.anthropicApiKey);
+}
+
+// ── Global cost circuit-breaker ──────────────────────────────────────────────
+// Site-wide daily ceilings across EVERY invokeLLM/streamLLM call, so a runaway
+// feature, a retry loop, or a bot hammering a public AI surface cannot burn
+// unbounded spend. This closes the "no global cost circuit-breaker" gap flagged
+// in .ai/docs/security/AI-AUTOMATION-RISKS.md.
+//
+// Counters live in memory and reset at midnight UTC (same trade-off as the
+// videoSummary rate limiter: a restart resets them, which is acceptable for a
+// safety net whose ceilings are far above normal daily use). Tokens are
+// estimated at ~4 chars per token on both input and output; the estimate only
+// needs to be right within 2x for a ceiling to do its job.
+
+export class LLMBudgetExceededError extends Error {
+  constructor(which: "calls" | "tokens", used: number, budget: number) {
+    super(
+      `LLM daily ${which} budget exceeded (${used} >= ${budget}). ` +
+        `Resets at midnight UTC. Raise LLM_DAILY_${which === "calls" ? "CALL" : "TOKEN"}_BUDGET if intentional.`
+    );
+    this.name = "LLMBudgetExceededError";
+  }
+}
+
+const budget = {
+  day: new Date().toISOString().slice(0, 10),
+  calls: 0,
+  estTokens: 0,
+  trippedAt: null as string | null,
+};
+
+function rollBudgetDay() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (budget.day !== today) {
+    budget.day = today;
+    budget.calls = 0;
+    budget.estTokens = 0;
+    budget.trippedAt = null;
+  }
+}
+
+export function estimateTokens(text: string): number {
+  return Math.ceil((text?.length ?? 0) / 4);
+}
+
+/** Throws LLMBudgetExceededError when a daily ceiling is hit. Call before dispatch. */
+function checkLLMBudget(inputChars: number): void {
+  rollBudgetDay();
+  const callCap = ENV.llmDailyCallBudget;
+  const tokenCap = ENV.llmDailyTokenBudget;
+  if (callCap > 0 && budget.calls >= callCap) {
+    if (!budget.trippedAt) {
+      budget.trippedAt = new Date().toISOString();
+      console.error(`[llm] DAILY CALL BUDGET TRIPPED at ${budget.trippedAt} (${budget.calls}/${callCap})`);
+    }
+    throw new LLMBudgetExceededError("calls", budget.calls, callCap);
+  }
+  const incoming = Math.ceil(inputChars / 4);
+  if (tokenCap > 0 && budget.estTokens + incoming >= tokenCap) {
+    if (!budget.trippedAt) {
+      budget.trippedAt = new Date().toISOString();
+      console.error(`[llm] DAILY TOKEN BUDGET TRIPPED at ${budget.trippedAt} (~${budget.estTokens}/${tokenCap})`);
+    }
+    throw new LLMBudgetExceededError("tokens", budget.estTokens + incoming, tokenCap);
+  }
+}
+
+function recordLLMUsage(inputChars: number, outputChars: number): void {
+  rollBudgetDay();
+  budget.calls += 1;
+  budget.estTokens += Math.ceil((inputChars + outputChars) / 4);
+}
+
+/** Read-only budget snapshot for admin surfaces and tests. */
+export function getLLMBudgetStatus() {
+  rollBudgetDay();
+  return {
+    day: budget.day,
+    calls: budget.calls,
+    callBudget: ENV.llmDailyCallBudget,
+    estTokens: budget.estTokens,
+    tokenBudget: ENV.llmDailyTokenBudget,
+    trippedAt: budget.trippedAt,
+  };
+}
+
+/** Test-only reset. */
+export function _resetLLMBudgetForTests(): void {
+  budget.day = new Date().toISOString().slice(0, 10);
+  budget.calls = 0;
+  budget.estTokens = 0;
+  budget.trippedAt = null;
+}
+
+// Exported for tests only: exercise the breaker without a network call.
+export const _llmBudgetInternals = { checkLLMBudget, recordLLMUsage };
+
+function totalInputChars(messages: Message[]): number {
+  let n = 0;
+  for (const m of messages) n += m.content?.length ?? 0;
+  return n;
 }
 
 /**
@@ -118,18 +237,35 @@ function anthropicModel(): string {
 }
 
 /**
- * The ordered provider chain. First-party Anthropic runs first when its key is
- * set; OpenRouter is the automatic fallback that comes online when Anthropic
- * errors on credit/quota/rate limits (see isFailoverError). If only one key is
- * present, the chain has a single entry.
+ * Cheapest OpenRouter model that handles the tier well (ADR-43). Defaults live
+ * in env.ts and are overridable per tier with LLM_MODEL_LIGHT / _STANDARD /
+ * _COMPLEX Railway vars. Exported for tests.
  */
-function providerChain(): ProviderEntry[] {
+export function pickOpenRouterModel(task: LLMTask): string {
+  switch (task) {
+    case "light":
+      return ENV.llmModelLight;
+    case "complex":
+      return ENV.llmModelComplex;
+    default:
+      return ENV.llmModelStandard;
+  }
+}
+
+/**
+ * The ordered provider chain (ADR-43). OpenRouter runs FIRST when its key is
+ * set, with the per-task cheapest model; first-party Anthropic is the
+ * automatic fallback when OpenRouter errors on credit/quota/rate limits or
+ * model routing (see isFailoverError). If only one key is present, the chain
+ * has a single entry.
+ */
+function providerChain(task: LLMTask): ProviderEntry[] {
   const chain: ProviderEntry[] = [];
+  if (ENV.openrouterApiKey) {
+    chain.push({ provider: "openrouter", client: openrouterClient(), model: pickOpenRouterModel(task) });
+  }
   if (ENV.anthropicApiKey) {
     chain.push({ provider: "anthropic", client: anthropicClient(), model: anthropicModel() });
-  }
-  if (ENV.openrouterApiKey) {
-    chain.push({ provider: "openrouter", client: openrouterClient(), model: ENV.openrouterModel });
   }
   if (chain.length === 0) {
     throw new Error("Neither ANTHROPIC_API_KEY nor OPENROUTER_API_KEY is configured");
@@ -139,15 +275,22 @@ function providerChain(): ProviderEntry[] {
 
 /**
  * True when an error means the current provider is out of credits, over quota,
- * rate limited, or overloaded, so trying the next provider in the chain is worth
- * it. Anthropic returns a 400 with a "credit balance is too low" message when a
- * workspace runs out of credits; rate limits are 429 and overload is 529.
- * Exported for testing.
+ * rate limited, overloaded, or cannot route the requested model, so trying the
+ * next provider in the chain is worth it. Anthropic returns a 400 with a
+ * "credit balance is too low" message when a workspace runs out of credits;
+ * rate limits are 429 and overload is 529. With OpenRouter primary (ADR-43),
+ * model-routing failures (a deprecated slug 404, or OpenRouter's "No allowed
+ * providers are available for the selected model") also fail over: they took
+ * every AI feature down at once on 2026-07-14, and the direct Anthropic path
+ * still works when they happen. Other ordinary errors (bad request, 401) do
+ * NOT fail over, so real bugs still surface. Exported for testing.
  */
 export function isFailoverError(err: any): boolean {
   const status = err?.status ?? err?.statusCode;
   if (status === 402 || status === 429 || status === 529) return true;
   const msg = String(err?.error?.message ?? err?.message ?? "").toLowerCase();
+  if (status === 404) return /model|provider/.test(msg);
+  if (/no allowed providers|not a valid model/.test(msg)) return true;
   return /credit|billing|quota|insufficient|balance|payment required|rate limit|over.?loaded/.test(msg);
 }
 
@@ -171,8 +314,8 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
  * Run a non-streaming request against the provider chain, failing over to the
  * next provider when the current one signals credit/quota/rate limits.
  */
-async function withProviderFailover<T>(run: (entry: ProviderEntry) => Promise<T>): Promise<T> {
-  const chain = providerChain();
+async function withProviderFailover<T>(task: LLMTask, run: (entry: ProviderEntry) => Promise<T>): Promise<T> {
+  const chain = providerChain(task);
   let lastErr: unknown;
   for (let i = 0; i < chain.length; i++) {
     try {
@@ -190,17 +333,20 @@ async function withProviderFailover<T>(run: (entry: ProviderEntry) => Promise<T>
 }
 
 export async function streamLLM(
-  params: Pick<InvokeParams, "messages" | "maxTokens" | "max_tokens">,
+  params: Pick<InvokeParams, "messages" | "maxTokens" | "max_tokens" | "task">,
   onChunk: (text: string) => void
 ): Promise<void> {
   const maxTokens = params.maxTokens ?? params.max_tokens ?? 8096;
+  const inputChars = totalInputChars(params.messages);
+  checkLLMBudget(inputChars);
+  let outputChars = 0;
 
   const systemMessage = params.messages.find((m) => m.role === "system")?.content;
   const conversationMessages = params.messages
     .filter((m) => m.role !== "system")
     .map(toAnthropicMessage);
 
-  const chain = providerChain();
+  const chain = providerChain(params.task ?? "standard");
   let lastErr: unknown;
   for (let i = 0; i < chain.length; i++) {
     const { provider, client, model } = chain[i];
@@ -215,9 +361,11 @@ export async function streamLLM(
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
           emitted = true;
+          outputChars += event.delta.text.length;
           onChunk(event.delta.text);
         }
       }
+      recordLLMUsage(inputChars, outputChars);
       return;
     } catch (err) {
       lastErr = err;
@@ -243,6 +391,8 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
   const maxTokens = params.maxTokens ?? params.max_tokens ?? 8096;
+  const inputChars = totalInputChars(messages);
+  checkLLMBudget(inputChars);
 
   // Extract system message (Anthropic takes it as a separate param)
   const systemMessage = messages.find((m) => m.role === "system")?.content;
@@ -257,7 +407,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     schema ??
     (format?.type === "json_schema" ? format.json_schema : undefined);
 
-  const { responseText, usedModel } = await withProviderFailover(async ({ client, model }) => {
+  const { responseText, usedModel } = await withProviderFailover(params.task ?? "standard", async ({ client, model }) => {
     if (jsonSchema) {
       // Use tool forcing to get structured JSON output
       const tool: Anthropic.Tool = {
@@ -291,6 +441,8 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     const textBlock = response.content.find((b) => b.type === "text");
     return { responseText: textBlock?.type === "text" ? textBlock.text : "", usedModel: model };
   });
+
+  recordLLMUsage(inputChars, responseText.length);
 
   return {
     id: `msg_${Date.now()}`,

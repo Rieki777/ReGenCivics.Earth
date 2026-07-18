@@ -91,7 +91,7 @@ export async function runDigestJob() {
 
       const prompt = `You are the ReGen Civics community curator. Review the following forum threads from the past week and write a short digest for the community. For each of the 3-5 most valuable threads, write: the thread title, a 2-sentence summary of what was discussed, and why it matters to regenerative work. Keep the tone warm, human, and forward-looking. No em-dashes. Plain language throughout.\n\n${threadData}`;
 
-      const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 800 });
+      const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 800, task: "light" });
       digestContent = (response as any).choices?.[0]?.message?.content ?? "";
     }
 

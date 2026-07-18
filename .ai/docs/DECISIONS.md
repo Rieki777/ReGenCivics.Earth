@@ -486,6 +486,17 @@ Format per entry:
 
 ---
 
+## ADR-43: OpenRouter primary with per-task model tiers (cheapest model for the job)
+
+- Date: 2026-07-17. Status: Accepted.
+- Context: every LLM call site got the same model. The chain ran first-party Anthropic (claude-haiku-4-5, $1/$5 per M tokens) first with OpenRouter only as a credit-exhaustion failover (`openai/gpt-4o-mini`). Rye asked for OpenRouter as the default across the ecosystem, Kimi K3 in the roster, and the least expensive model per task.
+- Decision: the chain order flips. OpenRouter runs FIRST for every `invokeLLM`/`streamLLM` call; direct Anthropic is the failover. Calls carry a `task` tier and OpenRouter picks the cheapest model that handles it: `light` (classification, routing, tagging, alt text, translation) defaults to `google/gemini-2.5-flash-lite` ($0.10/$0.40 per M); `standard` (persona chat, companions, guides, writing in voice; the untagged default) to `moonshotai/kimi-k2.5` ($0.40/$1.90, multimodal, covers the ship cook/shipwright image calls); `complex` (Assembly synthesis, decision drafting, C-suite briefing) to `moonshotai/kimi-k3` ($3/$15, frontier reasoning, 1M context). Each tier is overridable via `LLM_MODEL_LIGHT` / `LLM_MODEL_STANDARD` / `LLM_MODEL_COMPLEX`; legacy `OPENROUTER_MODEL`, when set, pins the standard tier so an existing Railway var keeps its meaning. `isFailoverError` additionally fails over on model-routing errors (404 model/provider messages, "No allowed providers"), because with OpenRouter primary a deprecated slug must fall through to Anthropic instead of 404ing every AI feature (as happened 2026-07-14).
+- Why: pricing spread per task is 30x ($0.10 vs $3 input). Light tasks are high-volume and quality-insensitive; complex governance tasks are rare and reasoning-bound. Routing each to the cheapest adequate model cuts the bill where volume lives and buys a frontier model where judgment lives. OpenRouter first also means one dashboard for spend and instant model swaps via env, no deploy.
+- Trade-offs: tool-forced structured output and image blocks now cross OpenRouter's Anthropic-protocol translation for non-Anthropic models; mitigated by the Anthropic failover staying warm and all three default tiers being multimodal tool-callers. Model slugs can deprecate; mitigated by the 404 failover + env overrides. This OpenRouter account cannot reach `anthropic/*` slugs, so tier vars must never name one (pinned by a test).
+- Code refs: `server/_core/llm.ts` (`LLMTask`, `pickOpenRouterModel`, `providerChain`, `isFailoverError`), `server/_core/env.ts` (tier vars), `server/llm-failover.test.ts`, call-site tags in `server/routes/{governance,assembly,admin,knowledge,tools,quick-notes,players}.ts`, `server/lib/{elder-forum,publications}.ts`, `server/jobs/{glossaryJob,digestJob}.ts`.
+
+---
+
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
 
 If a decision gets reversed, write a NEW entry that explains the reversal and mark the OLD entry `Superseded by ADR-N`. Don't delete history.

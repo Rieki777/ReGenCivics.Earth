@@ -993,6 +993,7 @@ export const assemblyRouter = router({
             { role: "user", content: conversation },
           ],
           maxTokens: 2000,
+          task: "complex",
           outputSchema: {
             name: "proposal_synthesis",
             schema: {

@@ -820,6 +820,7 @@ export const governanceRouter = router({
             { role: "user", content: `Here is the forum thread:\n\n${threadSummary}\n\nWhich template fits best?` },
           ],
           maxTokens: 1024,
+          task: "light",
           outputSchema: {
             name: "template_suggestion",
             schema: {
@@ -879,6 +880,7 @@ export const governanceRouter = router({
             { role: "user", content: `Here is the full forum thread to summarize and structure as a decision:\n\n${threadContent}` },
           ],
           maxTokens: 4000,
+          task: "complex",
           outputSchema: {
             name: "decision_draft",
             schema: {

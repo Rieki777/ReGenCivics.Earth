@@ -156,6 +156,7 @@ export const knowledgeMapRouter = router({
           },
         ],
         maxTokens: 800,
+        task: "light",
       });
 
       let suggestions: { title: string; summary: string; postId: number }[] = [];
@@ -234,6 +235,7 @@ export const translateRouter = router({
           : `Translate the following text to ${targetLangName}. Return JSON with a "content" field. Keep any markdown formatting.\n\n${input.sourceText}`;
 
         const response = await invokeLLM({
+          task: 'light',
           messages: [
             { role: 'system', content: 'You are a translator. Return only valid JSON with the translated text. Preserve markdown formatting.' },
             { role: 'user', content: prompt },

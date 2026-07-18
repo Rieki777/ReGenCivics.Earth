@@ -149,6 +149,7 @@ async function altTextFor(title: string, prompt: string): Promise<string> {
         { role: "user", content: `The image illustrates: ${title}\nIt was generated from: ${prompt.slice(0, 400)}` },
       ],
       maxTokens: 100,
+      task: "light",
     });
     const text = (res.choices[0]?.message?.content ?? "").trim().replace(/^"|"$/g, "");
     if (text) return text.slice(0, 500);

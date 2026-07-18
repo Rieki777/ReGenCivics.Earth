@@ -1893,7 +1893,7 @@ Keep answers short (2-4 sentences max) and link to relevant pages when possible.
         ...input.messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
       ];
 
-      const response = await invokeLLM({ messages, maxTokens: 300 });
+      const response = await invokeLLM({ messages, maxTokens: 300, task: "light" });
       return { reply: response ?? "I'm having trouble responding right now. Try again in a moment." };
     }),
 });

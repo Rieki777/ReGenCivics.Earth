@@ -11,7 +11,7 @@ export async function runGlossaryJob() {
 
     const prompt = `You are reviewing forum posts from the ReGen Civics community -- a regenerative civilization fund and game. Extract 2-5 domain-specific terms that appear to be used with specific meaning in this community. For each term, provide: term name, a 1-2 sentence definition based on how it is used. Return as JSON array: [{"term": "...", "definition": "..."}]. Only include terms genuinely specific to regenerative land stewardship, governance, or this community. No common words.\n\nPosts:\n${postText}`;
 
-    const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 600 });
+    const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 600, task: "light" });
     const content = (response as any).choices?.[0]?.message?.content ?? "";
 
     const match = content.match(/\[[\s\S]*\]/);
