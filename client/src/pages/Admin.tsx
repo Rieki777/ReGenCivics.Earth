@@ -25,6 +25,7 @@ import {
   Briefcase,
   Heart,
   Sprout,
+  Phone,
   Home as HomeIcon,
   UserCheck,
   HelpCircle,
@@ -3608,6 +3609,12 @@ function AdminDashboard() {
                 <Button size="sm" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#a8e6a8] font-semibold text-xs md:text-sm">
                   <Sprout className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   The Harvest
+                </Button>
+              </Link>
+              <Link href="/admin/calls">
+                <Button variant="outline" size="sm" className="border-[#7dd87d]/60 text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
+                  <Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Calls
                 </Button>
               </Link>
               <Link href="/admin/applications">

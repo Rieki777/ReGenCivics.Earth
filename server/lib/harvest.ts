@@ -435,9 +435,20 @@ export async function runWeeklyDigest(): Promise<{ proposals: number }> {
   if (inserted > 0) {
     try {
       const { notifyOwner } = await import("../_core/notification");
+      // Stage 7: the digest also carries the week's call intelligence.
+      let callsLine = "";
+      try {
+        const { weeklyCallInsightSummary } = await import("./call-insights");
+        const calls = await weeklyCallInsightSummary();
+        if (calls && calls.insights > 0) {
+          callsLine = `\n\nFrom this week's calls: ${calls.insights} insights across ${calls.calls} call${calls.calls === 1 ? "" : "s"}, ${calls.openCommitments} suggestion${calls.openCommitments === 1 ? "" : "s"} awaiting review at /admin/calls.`;
+        }
+      } catch {
+        // Pre-Stage-7 schema: no calls line.
+      }
       await notifyOwner({
         title: `The Harvest: ${inserted} article proposals this week`,
-        content: proposals.map((p, n) => `${n + 1}. ${p.title}\n   ${p.angle}`).join("\n") + "\n\nOpen /admin-create and tap Develop -> Article on any of them.",
+        content: proposals.map((p, n) => `${n + 1}. ${p.title}\n   ${p.angle}`).join("\n") + "\n\nOpen /admin-create and tap Develop -> Article on any of them." + callsLine,
       });
     } catch {
       // The proposals are in the feed either way.

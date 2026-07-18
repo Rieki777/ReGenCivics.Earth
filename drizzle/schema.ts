@@ -2591,6 +2591,29 @@ export type Recording = typeof recordings.$inferSelect;
 export type InsertRecording = typeof recordings.$inferInsert;
 
 /**
+ * Community-call intelligence (Stage 7). One cached extraction pass per
+ * recording emits typed insights: wisdom/idea flow to the vault and feed;
+ * decision/commitment/role_change/strategic_move surface in /admin/calls as
+ * SUGGESTIONS (accept/dismiss, never auto-tasks). speaker keeps attribution;
+ * the voice learning loop never trains on call material.
+ */
+export const callInsights = mysqlTable("call_insights", {
+  id: int("id").autoincrement().primaryKey(),
+  recordingId: int("recording_id").notNull(),
+  kind: mysqlEnum("kind", ["wisdom", "idea", "decision", "commitment", "role_change", "strategic_move"]).notNull(),
+  content: varchar("content", { length: 1000 }).notNull(),
+  speaker: varchar("speaker", { length: 120 }),
+  timestampSecs: int("timestamp_secs"),
+  status: mysqlEnum("status", ["suggested", "accepted", "dismissed"]).default("suggested").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  recordingIdx: index("call_insights_recording_idx").on(t.recordingId, t.kind),
+  statusIdx: index("call_insights_status_idx").on(t.status, t.kind, t.createdAt),
+}));
+export type CallInsight = typeof callInsights.$inferSelect;
+
+/**
  * roleHolders: closes Gap A in the Movement Coordination Engine spec.
  * One row per sociocratic role from `client/src/data/gameRoles.ts`. A
  * filled `userId` ties a real human to a role so a task mentioned in a

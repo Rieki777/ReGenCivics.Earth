@@ -61,6 +61,7 @@ import { companionRouter } from "./routes/companion";
 import { guideRouter } from "./routes/guide";
 import { quickNotesRouter } from "./routes/quick-notes";
 import { harvestRouter } from "./routes/harvest";
+import { callIntelligenceRouter } from "./routes/callIntelligence";
 import { videoTutorRouter } from "./routes/videoTutor";
 
 export const appRouter = router({
@@ -236,6 +237,8 @@ export const appRouter = router({
   quickNotes: quickNotesRouter,
   // The Harvest (Phase 2): the feed, Develop, provenance, owner-gated
   harvest: harvestRouter,
+  // Call intelligence (Stage 7): team ops suggestions from community calls
+  callIntelligence: callIntelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

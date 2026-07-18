@@ -690,7 +690,16 @@ async function startServer() {
     try {
       const { runGeneration } = await import("../lib/harvest");
       const stats = await runGeneration();
-      return res.json({ ok: true, ...stats });
+      // Stage 7: extract insights for newly-transcribed community calls
+      // (bounded, cached per recording; a no-op when nothing new landed).
+      let calls: { scanned: number; extracted: number; insights: number } | undefined;
+      try {
+        const { sweepCallInsights } = await import("../lib/call-insights");
+        calls = await sweepCallInsights();
+      } catch (sweepErr) {
+        log.error("call-insights sweep failed", sweepErr instanceof Error ? sweepErr : undefined);
+      }
+      return res.json({ ok: true, ...stats, calls });
     } catch (err: any) {
       log.error("cron harvest-generation failed", err);
       return res.status(500).json({ error: err.message });

@@ -20,7 +20,7 @@
  * Logging: path, ip, and row count only. Never the token, never note bodies.
  */
 import type { Express, Request, Response } from "express";
-import { and, asc, eq, gt, inArray } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { quickNotes, harvestIdeas, harvestRuns, sourceIndex } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
@@ -233,6 +233,89 @@ export function registerHarvestBridgeRoutes(app: Express) {
         return;
       }
       log.error(`ideas push failed: ${err instanceof Error ? err.message : String(err)}`);
+      res.status(500).json({ error: "internal" });
+    }
+  });
+
+  /**
+   * Stage 7: the vault pulls community-call intelligence. Returns recordings
+   * (id cursor) that HAVE extracted insights: title, date, link, summary, and
+   * the typed insights. Full transcripts never cross the bridge; the summary
+   * plus attributed excerpts are what the vault keeps, and provenance stays
+   * addressable cloud-side as source ref `call-<id>`.
+   */
+  app.get("/api/harvest/recordings", async (req: Request, res: Response) => {
+    if (!(await checkBridgeAuth(req, res))) return;
+
+    const sinceRaw = req.query.since_id;
+    const sinceId = Number(Array.isArray(sinceRaw) ? sinceRaw[0] : sinceRaw ?? 0);
+    if (!Number.isInteger(sinceId) || sinceId < 0) {
+      res.status(400).json({ error: "since_id must be a non-negative integer" });
+      return;
+    }
+
+    const db = await getDb();
+    if (!db) {
+      res.status(500).json({ error: "db_unavailable" });
+      return;
+    }
+
+    try {
+      const { callInsights, recordings } = await import("../../drizzle/schema");
+      const rows = await db.select({
+        id: recordings.id,
+        title: recordings.title,
+        sessionDate: recordings.sessionDate,
+        youtubeUrl: recordings.youtubeUrl,
+        editedYoutubeUrl: recordings.editedYoutubeUrl,
+        aiSummary: recordings.aiSummary,
+        overview: recordings.overview,
+        // Whether extraction can ever produce insights for this row. A
+        // material-less recording is skipped by the cursor, not waited on.
+        hasMaterial: sql<number>`(${recordings.transcript} IS NOT NULL OR ${recordings.overview} IS NOT NULL OR ${recordings.aiSummary} IS NOT NULL)`,
+      }).from(recordings)
+        .where(gt(recordings.id, sinceId))
+        .orderBy(asc(recordings.id))
+        .limit(20);
+
+      // The cursor advances only through the CONTIGUOUS extracted prefix: the
+      // first recording without insights stops the pull, so a call whose
+      // extraction lags can never be skipped forever. The hourly sweep
+      // unblocks it, and the next pull picks up where this one stopped.
+      const withInsights = [];
+      let latestId = sinceId;
+      for (const recording of rows) {
+        const insights = await db.select({
+          kind: callInsights.kind,
+          content: callInsights.content,
+          speaker: callInsights.speaker,
+          timestampSecs: callInsights.timestampSecs,
+        }).from(callInsights)
+          .where(eq(callInsights.recordingId, recording.id));
+        if (insights.length === 0) {
+          if (Number(recording.hasMaterial)) break; // extraction pending: wait here
+          latestId = recording.id; // nothing to extract, ever: skip past
+          continue;
+        }
+        withInsights.push({
+          id: recording.id,
+          title: recording.title,
+          date: recording.sessionDate,
+          link: recording.editedYoutubeUrl || recording.youtubeUrl || null,
+          summary: (recording.aiSummary || recording.overview || "").slice(0, 4000),
+          source_ref: `call-${recording.id}`,
+          insights,
+        });
+        latestId = recording.id;
+      }
+      log.info(`recordings pull ip=${req.ip} since_id=${sinceId} delivered=${withInsights.length}`);
+      res.json({ recordings: withInsights, latestId });
+    } catch (err) {
+      if (isMissingTableError(err)) {
+        res.status(503).json({ error: "not_ready" });
+        return;
+      }
+      log.error(`recordings pull failed: ${err instanceof Error ? err.message : String(err)}`);
       res.status(500).json({ error: "internal" });
     }
   });
