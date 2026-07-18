@@ -57,17 +57,22 @@ export const ENV = {
   llmDailyCallBudget: Number.parseInt(process.env.LLM_DAILY_CALL_BUDGET ?? "4000", 10) || 0,
   llmDailyTokenBudget: Number.parseInt(process.env.LLM_DAILY_TOKEN_BUDGET ?? "8000000", 10) || 0,
   // Per-task OpenRouter model tiers (cheapest model that does the job; see
-  // server/_core/llm.ts and ADR-43). All slugs must route to providers this
-  // OpenRouter account can reach (NOT anthropic/*). Tiers that receive images
-  // (standard: ship cook + shipwright) need a multimodal model; all three
-  // defaults are multimodal. Legacy OPENROUTER_MODEL, when set, still pins the
-  // standard tier so an existing Railway var keeps its old meaning.
+  // server/_core/llm.ts and ADR-43 + its amendment). All slugs must route to
+  // providers this OpenRouter account can reach (NOT anthropic/*). Tiers that
+  // receive images (standard: ship cook + shipwright) need a multimodal model.
+  // HARD RULE: never change a default (or set a tier var) to a model that has
+  // not passed `npx tsx scripts/eval-llm-candidates.ts --model <slug> --tier all`.
+  // Kimi k2.5/k3 FAILED that harness through OpenRouter's Anthropic-protocol
+  // endpoint (no tool_use blocks, empty persona replies, hangs), which is why
+  // the moonshot defaults were reverted on 2026-07-17. Legacy OPENROUTER_MODEL,
+  // when set, still pins the standard tier so an existing Railway var keeps
+  // its old meaning.
   llmModelLight:
     process.env.LLM_MODEL_LIGHT ?? "google/gemini-2.5-flash-lite",
   llmModelStandard:
-    process.env.LLM_MODEL_STANDARD ?? process.env.OPENROUTER_MODEL ?? "moonshotai/kimi-k2.5",
+    process.env.LLM_MODEL_STANDARD ?? process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini",
   llmModelComplex:
-    process.env.LLM_MODEL_COMPLEX ?? "moonshotai/kimi-k3",
+    process.env.LLM_MODEL_COMPLEX ?? "openai/gpt-4o-mini",
   // Conversational Companion voice layer (all optional; browser SpeechRecognition
   // + speechSynthesis are the free v1 default). STT_API_KEY lights up the server
   // fallback transcription endpoint for browsers without SpeechRecognition
