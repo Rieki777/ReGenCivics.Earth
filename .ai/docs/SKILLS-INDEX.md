@@ -28,6 +28,7 @@ Project skills live in `.claude/skills/` (committed with the repo). Cross-projec
 ## Game + seasons
 
 - `regen-quest-builder` — full quest pipeline: questData entry, modal, hero image, PDF guide, forum seed post.
+- `regen-new-character` — add a speaking character end to end: persona entry + server prompt + portrait + both voice layers (free Kokoro defaults, two designed signature voices, one per gender), audition clips via the Qwen3-TTS Space, DeepInfra clone upgrade, tests, ship checklist. Use for any new companion or chat persona.
 
 ## Design + visuals
 
