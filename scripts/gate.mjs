@@ -85,6 +85,21 @@ if (existsSync(TAP_AUDIT)) {
   run("gate 1b: tap-blocker audit", python, [TAP_AUDIT]);
 }
 
+// Gate 1c: no touch targets capped below 44px. The base ui components carry
+// pointer-coarse: floors in their variants; raw <button>/[role=button]
+// elements are currently rescued by a transitional max-width:767px
+// min-height blanket in index.css that Phase 5 of
+// MOBILE_FIRST_MASTER_PLAN.md deletes. This gate keeps new raw elements
+// self-sufficient so that deletion stays safe. STRONG findings fail the
+// gate; WARN findings are informational. Suppress a reviewed finding with a
+// `touch-ok` comment on or up to 2 lines above the element, only for a
+// <button>/[role=button] whose small visual is intentional (the ::after
+// expander still gives those a 44px hit area).
+const TOUCH_AUDIT = "scripts/audit-touch-targets.py";
+if (existsSync(TOUCH_AUDIT)) {
+  run("gate 1c: touch-target audit", python, [TOUCH_AUDIT]);
+}
+
 // Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
@@ -97,7 +112,7 @@ if (!existsSync(TSC)) {
 run("gate 3: typecheck", process.execPath, [TSC, "--noEmit"]);
 
 process.stdout.write(
-  "\n✓ Gates 1, 1b and 3 pass.\n" +
+  "\n✓ Gates 1, 1b, 1c and 3 pass.\n" +
     "  Gate 2 is manual — for each className or @keyframes you added:\n" +
     "    rg -g '*.css' '<the-name>' client/src/\n",
 );
