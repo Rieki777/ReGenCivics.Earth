@@ -51,9 +51,19 @@ function cacheSet(key: string, value: SynthesizedSpeech) {
 
 // ── Public surface ────────────────────────────────────────────────────────────
 
+/**
+ * Signature voices are live only when BOTH the key exists AND Rye has flipped
+ * TTS_VOICES_LIVE. The key can sit in Railway with zero exposure and zero
+ * spend until then (his call 2026-07-17: key added, not paying yet, Kokoro
+ * stays the default everywhere).
+ */
+export function areSignatureVoicesLive(): boolean {
+  return isTtsConfigured() && ENV.ttsVoicesLive;
+}
+
 /** The signature voices a persona's picker should offer. Empty when TTS is off. */
 export function hostedVoicesForPersona(personaId: string) {
-  if (!isTtsConfigured()) return [];
+  if (!areSignatureVoicesLive()) return [];
   return signatureVoicesForPersona(personaId).map((v) => ({
     id: v.key,
     label: v.label,
@@ -68,7 +78,7 @@ export function hostedVoicesForPersona(personaId: string) {
  * translates those into a TRPCError and the client falls back to Kokoro.
  */
 export async function synthesizeSignatureVoice(voiceKey: string, text: string): Promise<SynthesizedSpeech> {
-  if (!isTtsConfigured()) throw new Error("hosted TTS is not configured");
+  if (!areSignatureVoicesLive()) throw new Error("signature voices are not live");
   const voice = signatureVoiceByKey(voiceKey);
   if (!voice) throw new Error("unknown signature voice");
 

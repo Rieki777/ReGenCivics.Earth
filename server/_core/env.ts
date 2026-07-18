@@ -67,6 +67,14 @@ export const ENV = {
   // the moonshot defaults were reverted on 2026-07-17. Legacy OPENROUTER_MODEL,
   // when set, still pins the standard tier so an existing Railway var keeps
   // its old meaning.
+  // Optional FREE lane for the light tier (opt-in, empty = off). When set to a
+  // `:free` OpenRouter variant that passed the harness, light-tier calls try it
+  // first and fall through to the paid light model on 429/no-providers (free
+  // variants are hard rate-limited: ~20 req/min, 1000/day with $10+ credits).
+  // PRIVACY GATE: only enable after setting the OpenRouter account data policy
+  // to exclude providers that train on inputs; light-tier traffic includes
+  // Rye's private quick-notes. See ADR-45 + the monthly model review.
+  llmModelLightFree: process.env.LLM_MODEL_LIGHT_FREE ?? "",
   llmModelLight:
     process.env.LLM_MODEL_LIGHT ?? "google/gemini-2.5-flash-lite",
   llmModelStandard:
@@ -82,6 +90,10 @@ export const ENV = {
   sttApiKey: process.env.STT_API_KEY ?? "",
   sttProvider: process.env.STT_PROVIDER ?? "groq",
   ttsApiKey: process.env.TTS_API_KEY ?? "",
+  // Master switch for the signature character voices. The TTS_API_KEY can sit
+  // in Railway unspent until this is "1"/"true": pickers hide the voices and
+  // companion.speak refuses, so nothing can bill DeepInfra until Rye says go.
+  ttsVoicesLive: /^(1|true)$/i.test(process.env.TTS_VOICES_LIVE ?? ""),
   // Signature-voice cloning overrides: JSON mapping a registry key from
   // server/lib/ttsVoices.ts to a DeepInfra voice_id created via /v1/voices/add,
   // e.g. {"first-mate/marin":"abcd1234"}. Empty means every signature voice

@@ -79,13 +79,13 @@ describe("signature voice registry", () => {
     expect(signatureVoiceByKey("first-mate/nobody")).toBeNull();
   });
 
-  it("matches each voice's gender to its character", () => {
-    for (const v of SIGNATURE_VOICES) {
-      const persona = v.personaId === SHIPS_COOK.id
-        ? SHIPS_COOK
-        : COMPANION_PERSONAS[v.personaId as keyof typeof COMPANION_PERSONAS];
-      expect(persona, v.key).toBeTruthy();
-      if (persona.gender !== "neutral") expect(v.gender, v.key).toBe(persona.gender);
+  it("offers every character one female and one male signature voice", () => {
+    // Rye's 2026-07-17 direction: the two designed options per character are
+    // one of each gender, whatever the character's own gender is.
+    const personaIds = [...Object.keys(COMPANION_PERSONAS), SHIPS_COOK.id];
+    for (const personaId of personaIds) {
+      const genders = signatureVoicesForPersona(personaId).map((v) => v.gender).sort();
+      expect(genders, personaId).toEqual(["female", "male"]);
     }
   });
 });

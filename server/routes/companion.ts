@@ -22,7 +22,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { checkRateLimit } from "../rate-limit";
 import { sanitizeInput } from "../_core/security";
 import { companionTurn, isCompanionConfigured, isSttConfigured, isTtsConfigured, transcribeAudio } from "../lib/companion";
-import { hostedVoicesForPersona, synthesizeSignatureVoice } from "../lib/tts";
+import { areSignatureVoicesLive, hostedVoicesForPersona, synthesizeSignatureVoice } from "../lib/tts";
 import { COMPANION_FORMS, type CompanionFormId } from "../../shared/companions";
 
 const turnMessage = z.object({
@@ -113,7 +113,7 @@ export const companionRouter = router({
     .input(z.object({ voice: z.string().max(64), text: z.string().min(1).max(600) }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "companion_tts");
-      if (!isTtsConfigured()) {
+      if (!areSignatureVoicesLive()) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Signature voices are not aboard yet." });
       }
       try {
