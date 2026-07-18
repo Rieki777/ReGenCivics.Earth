@@ -57,6 +57,7 @@ import {
   Bell,
   ClipboardList,
   ChevronDown,
+  Menu,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -3421,6 +3422,7 @@ function AdminDashboard() {
     try { return localStorage.getItem('admin_density') === 'compact'; } catch { return false; }
   });
   const [notifCenterOpen, setNotifCenterOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   function handleAIAction(action: AdminAIAction) {
     if (action.type === "navigate" && action.tab) {
@@ -3579,7 +3581,7 @@ function AdminDashboard() {
     <div className={`admin-root flex h-[100dvh] overflow-hidden bg-[#f0ebe3] ${compact ? 'admin-compact' : ''}`}>
       <ShortcutHelpOverlay />
       <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
-      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
       <AdminCommandPalette onSelectTab={setActiveTab} />
       <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
@@ -3587,6 +3589,13 @@ function AdminDashboard() {
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-4">
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="md:hidden min-h-11 min-w-11 -ml-2 inline-flex items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors"
+                aria-label="Open admin navigation"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
               <img src="/images/logos/regencivics-logo-dark-transparent-rounded.webp" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" width={48} height={48} loading="lazy" />
               <div>
                 <div className="flex items-center gap-3">
@@ -3631,8 +3640,9 @@ function AdminDashboard() {
               </Link>
               <button
                 onClick={() => setNotifCenterOpen(true)}
-                className="relative p-2 rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors"
+                className="relative p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors"
                 title="Notification Center"
+                aria-label="Notification Center"
               >
                 <Bell className="w-4 h-4" />
               </button>
