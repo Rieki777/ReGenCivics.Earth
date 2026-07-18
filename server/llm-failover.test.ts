@@ -8,8 +8,8 @@
  * exactly which errors trigger it (and which do not, so a real bug is
  * surfaced instead of silently retried on a second provider).
  */
-import { describe, it, expect } from "vitest";
-import { isFailoverError, pickOpenRouterModel } from "./_core/llm";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { isFailoverError, pickOpenRouterModel, _providerChainForTests } from "./_core/llm";
 import { ENV } from "./_core/env";
 
 describe("isFailoverError", () => {
@@ -60,5 +60,38 @@ describe("pickOpenRouterModel", () => {
       expect(pickOpenRouterModel(task).startsWith("anthropic/")).toBe(false);
       expect(pickOpenRouterModel(task).startsWith("claude-")).toBe(false);
     }
+  });
+});
+
+describe("providerChain free lane (opt-in)", () => {
+  let saved: { or: string; an: string; free: string };
+  beforeEach(() => {
+    saved = { or: ENV.openrouterApiKey, an: ENV.anthropicApiKey, free: ENV.llmModelLightFree };
+    ENV.openrouterApiKey = "test-key";
+    ENV.anthropicApiKey = "test-key-2";
+  });
+  afterEach(() => {
+    ENV.openrouterApiKey = saved.or;
+    ENV.anthropicApiKey = saved.an;
+    ENV.llmModelLightFree = saved.free;
+  });
+
+  it("is OFF by default: light tier goes straight to the paid light model", () => {
+    ENV.llmModelLightFree = "";
+    const chain = _providerChainForTests("light");
+    expect(chain[0]).toEqual({ provider: "openrouter", model: ENV.llmModelLight });
+  });
+
+  it("when opted in, light tier tries the free variant first, then paid light, then anthropic", () => {
+    ENV.llmModelLightFree = "some/model:free";
+    const chain = _providerChainForTests("light");
+    expect(chain.map((c) => c.model)).toEqual(["some/model:free", ENV.llmModelLight, expect.any(String)]);
+    expect(chain[2].provider).toBe("anthropic");
+  });
+
+  it("the free lane never touches standard or complex tiers", () => {
+    ENV.llmModelLightFree = "some/model:free";
+    expect(_providerChainForTests("standard")[0].model).toBe(ENV.llmModelStandard);
+    expect(_providerChainForTests("complex")[0].model).toBe(ENV.llmModelComplex);
   });
 });

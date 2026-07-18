@@ -494,13 +494,13 @@ Format per entry:
 - Why: pricing spread per task is 30x ($0.10 vs $3 input). Light tasks are high-volume and quality-insensitive; complex governance tasks are rare and reasoning-bound. Routing each to the cheapest adequate model cuts the bill where volume lives and buys a frontier model where judgment lives. OpenRouter first also means one dashboard for spend and instant model swaps via env, no deploy.
 - Trade-offs: tool-forced structured output and image blocks now cross OpenRouter's Anthropic-protocol translation for non-Anthropic models; mitigated by the Anthropic failover staying warm and all three default tiers being multimodal tool-callers. Model slugs can deprecate; mitigated by the 404 failover + env overrides. This OpenRouter account cannot reach `anthropic/*` slugs, so tier vars must never name one (pinned by a test).
 - Code refs: `server/_core/llm.ts` (`LLMTask`, `pickOpenRouterModel`, `providerChain`, `isFailoverError`), `server/_core/env.ts` (tier vars), `server/llm-failover.test.ts`, call-site tags in `server/routes/{governance,assembly,admin,knowledge,tools,quick-notes,players}.ts`, `server/lib/{elder-forum,publications}.ts`, `server/jobs/{glossaryJob,digestJob}.ts`.
-- Amended by ADR-44 same day: the Kimi defaults failed the eval harness and were reverted; tier changes are harness-gated now.
+- Amended by ADR-45 same day: the Kimi defaults failed the eval harness and were reverted; tier changes are harness-gated now.
 
 ---
 
-## ADR-44: Model swaps are harness-gated; reasoning models are incompatible with the current call shapes
+## ADR-45: Model swaps are harness-gated; reasoning models are incompatible with the current call shapes
 
-- Date: 2026-07-17. Status: Accepted. Amends ADR-43 (architecture stands; the Moonshot model choices are reverted).
+- Date: 2026-07-17. Status: Accepted. Amends ADR-43 (architecture stands; the Moonshot model choices are reverted). Numbered 45 because a concurrent session claimed ADR-44 (companion voices) first; entries appear out of order in this file, dates are authoritative.
 - Context: hours after ADR-43 shipped, the new golden-prompt harness (`scripts/eval-llm-candidates.ts`) failed the live standard tier. Kimi k2.5 returned empty persona replies and no tool_use blocks through OpenRouter's Anthropic-protocol endpoint; Kimi k3 rejected requests outright ("tool_choice 'specified' is incompatible with thinking enabled"); gemini-2.5-pro and openrouter/auto failed the same shapes. The pattern: REASONING/THINKING models as a class break our three call shapes: (1) forced `tool_choice` for structured output, (2) reading only `text` content blocks, (3) tiny maxTokens caps (16 for the elder router) that reasoning tokens consume before any text emerges. Non-thinking models (gemini-2.5-flash-lite, gpt-4o-mini) pass all 5 prompts cleanly.
 - Decision, part 1 (the gate): no tier default in `env.ts` and no `LLM_MODEL_*` Railway var may name a model that has not passed `npx tsx scripts/eval-llm-candidates.ts --model <slug> --tier all`. The monthly model review recommends swaps only from harness-passing candidates.
 - Decision, part 2 (the revert): standard and complex tiers default to `openai/gpt-4o-mini` (passed 5/5); light stays `google/gemini-2.5-flash-lite` (passed 5/5). Production Railway vars set to match. Frontier reasoning models stay OUT until part 3 lands.

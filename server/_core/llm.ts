@@ -262,6 +262,13 @@ export function pickOpenRouterModel(task: LLMTask): string {
 function providerChain(task: LLMTask): ProviderEntry[] {
   const chain: ProviderEntry[] = [];
   if (ENV.openrouterApiKey) {
+    // Opt-in free lane for the light tier: try the $0 variant first and fall
+    // through to the paid light model when the free endpoint rate-limits (429)
+    // or has no allowed provider under the account's data policy. Off unless
+    // LLM_MODEL_LIGHT_FREE is set (see env.ts privacy gate).
+    if (task === "light" && ENV.llmModelLightFree) {
+      chain.push({ provider: "openrouter", client: openrouterClient(), model: ENV.llmModelLightFree });
+    }
     chain.push({ provider: "openrouter", client: openrouterClient(), model: pickOpenRouterModel(task) });
   }
   if (ENV.anthropicApiKey) {
@@ -271,6 +278,11 @@ function providerChain(task: LLMTask): ProviderEntry[] {
     throw new Error("Neither ANTHROPIC_API_KEY nor OPENROUTER_API_KEY is configured");
   }
   return chain;
+}
+
+/** Test-only view of the resolved chain (provider + model per hop). */
+export function _providerChainForTests(task: LLMTask): Array<{ provider: string; model: string }> {
+  return providerChain(task).map((e) => ({ provider: e.provider, model: e.model }));
 }
 
 /**
