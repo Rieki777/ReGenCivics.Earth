@@ -337,3 +337,36 @@
   .core-root * { scroll-behavior: auto !important; }
   .core-root .brand .seed { animation: none !important; }
 }
+
+/* ============================================================
+   Hero ambient + richer motion (added 2026-07-17)
+   Layers are injected by useCoreReveal into .core-root .hero and
+   adapt to the hero type:
+     - photo heroes (.hero-image): drifting light motes only, so
+       nothing fights the photograph or the light headline text.
+     - parchment heroes: the full Seed of Life + breathing glow +
+       green-to-gold wordmark shimmer.
+   Everything sits at z-index 0 (behind .hero .wrap, which is z-1)
+   and is fully disabled under prefers-reduced-motion.
+   ============================================================ */
+@keyframes core-rot     { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes core-breathe { 0%, 100% { opacity: .8; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.08); } }
+@keyframes core-mote    { 0% { transform: translateY(0) translateX(0); opacity: 0; } 15%, 85% { opacity: var(--o, .3); } 100% { transform: translateY(-380px) translateX(var(--d, 0)); opacity: 0; } }
+@keyframes core-shimmer { to { background-position: 200% center; } }
+
+.core-root .hero-glow  { position: absolute; top: -90px; left: 50%; width: 460px; height: 460px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, rgba(125, 216, 125, .30), transparent 62%); filter: blur(32px); pointer-events: none; z-index: 0; animation: core-breathe 7s ease-in-out infinite; }
+.core-root .hero-seed  { position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%); opacity: .12; pointer-events: none; z-index: 0; }
+.core-root .hero-seed svg { display: block; animation: core-rot 90s linear infinite; }
+.core-root .hero-motes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.core-root .hero-mote  { position: absolute; bottom: -12px; border-radius: 50%; animation: core-mote linear infinite; }
+
+.core-root .hero .kicker.core-shimmer { background: linear-gradient(100deg, #4a7c59 20%, #d4a017 40%, #7dd87d 60%, #4a7c59 80%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; animation: core-shimmer 6.5s linear infinite; }
+
+.core-root .core-nav { transition: box-shadow .3s ease, background .3s ease; }
+.core-root .core-nav.scrolled { box-shadow: 0 6px 22px rgba(26, 71, 42, .12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .core-root .hero-glow, .core-root .hero-seed svg, .core-root .hero-mote { animation: none !important; }
+  .core-root .hero-mote { display: none; }
+  .core-root .hero .kicker.core-shimmer { -webkit-text-fill-color: #4a7c59; color: #4a7c59; animation: none; }
+}
