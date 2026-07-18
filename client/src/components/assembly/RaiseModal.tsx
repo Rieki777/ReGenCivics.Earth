@@ -9,7 +9,14 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { X, Landmark, Loader2, CheckCircle2 } from "lucide-react";
+import { Landmark, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CATEGORIES = [
   { value: "community", label: "Community" },
@@ -64,23 +71,19 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
     onSuccess: () => setDone(true),
   });
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="raise-modal-title">
-      <div className="bg-gradient-to-b from-[#0d2818] to-[#1a472a] border border-white/15 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <Landmark className="w-5 h-5 text-[#7dd87d]" />
-            <h2 id="raise-modal-title" className="text-white font-bold text-lg">Raise in the Assembly</h2>
-          </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white" aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="bg-gradient-to-b from-[#0d2818] to-[#1a472a] border-white/15 text-white p-0 pt-2 gap-0 md:max-w-lg md:rounded-2xl [&_[data-slot=dialog-close]]:text-white/70 [&_[data-slot=dialog-close]:hover]:text-white">
+        <DialogHeader className="flex-row items-center gap-2 space-y-0 p-5 border-b border-white/10 text-left">
+          <Landmark className="w-5 h-5 text-[#7dd87d]" />
+          <DialogTitle className="text-white font-bold text-lg">Raise in the Assembly</DialogTitle>
+          <DialogDescription className="sr-only">
+            Raise this forum thread into a forming Assembly proposal.
+          </DialogDescription>
+        </DialogHeader>
 
         {done ? (
-          <div className="p-6 text-center space-y-3">
+          <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-[#7dd87d] mx-auto" />
             <p className="text-white font-semibold">Raised. The proposal is now forming.</p>
             <p className="text-white/65 text-sm">
@@ -91,7 +94,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
             </Link>
           </div>
         ) : (
-          <div className="p-5 space-y-4">
+          <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4">
             <div>
               <label className="text-[10px] uppercase tracking-widest text-[#7dd87d] font-bold mb-1.5 block">Proposal title</label>
               <input
@@ -225,14 +228,14 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
               type="button"
               onClick={() => raise.mutate({ forumPostId: threadId, aim: aim.trim(), lane, category, title: title.trim() || undefined, executionPayload })}
               disabled={raise.isPending || aim.trim().length < 10 || title.trim().length < 5 || (category === "game_variable" && !executionPayload)}
-              className="w-full flex items-center justify-center gap-2 bg-[#7dd87d] text-[#1a472a] font-bold text-sm rounded-xl py-2.5 hover:bg-[#9de89d] transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-[#7dd87d] text-[#1a472a] font-bold text-sm rounded-xl py-2.5 pointer-coarse:min-h-11 hover:bg-[#9de89d] transition-colors disabled:opacity-50"
             >
               {raise.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Raise the proposal
             </button>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

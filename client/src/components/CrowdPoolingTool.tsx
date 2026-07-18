@@ -57,6 +57,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import SuggestUpgradesSheet, { suggestedRoles } from '@/components/SuggestUpgradesSheet';
@@ -870,136 +876,136 @@ export default function CrowdPoolingTool() {
         </div>
         
         {/* Save Dialog */}
-        {showSaveDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-              <h3 className="text-lg font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+          <DialogContent className="bg-white md:max-w-md md:rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Save Contribution Form
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Name</label>
-                  <Input
-                    value={saveName}
-                    onChange={(e) => setSaveName(e.target.value)}
-                    placeholder="My Contribution Form"
-                    className="bg-white border-[#7dd87d]/30"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="saveAsDefault"
-                    checked={saveAsDefault}
-                    onChange={(e) => setSaveAsDefault(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#7dd87d] text-[#4a7c59]"
-                  />
-                  <label htmlFor="saveAsDefault" className="text-sm text-[#1a472a]/70">
-                    Set as default form (auto-load on new proposals)
-                  </label>
-                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Name</label>
+                <Input
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  placeholder="My Contribution Form"
+                  className="bg-white border-[#7dd87d]/30"
+                />
               </div>
-              <div className="flex gap-2 mt-6">
-                <Button
-                  type="button"
-                  onClick={() => setShowSaveDialog(false)}
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={confirmSaveToProfile}
-                  disabled={createSavedContribution.isPending}
-                  className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
-                >
-                  {createSavedContribution.isPending ? 'Saving...' : 'Save'}
-                </Button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="saveAsDefault"
+                  checked={saveAsDefault}
+                  onChange={(e) => setSaveAsDefault(e.target.checked)}
+                  className="h-4 w-4 rounded border-[#7dd87d] text-[#4a7c59]"
+                />
+                <label htmlFor="saveAsDefault" className="text-sm text-[#1a472a]/70">
+                  Set as default form (auto-load on new proposals)
+                </label>
               </div>
             </div>
-          </div>
-        )}
+            <div className="flex gap-2 mt-2">
+              <Button
+                type="button"
+                onClick={() => setShowSaveDialog(false)}
+                variant="outline"
+                className="flex-1 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmSaveToProfile}
+                disabled={createSavedContribution.isPending}
+                className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+              >
+                {createSavedContribution.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         
         {/* Load Dialog */}
-        {showLoadDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-xl max-h-[80vh] overflow-y-auto">
-              <h3 className="text-lg font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+          <DialogContent className="bg-white md:max-w-lg md:rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Load Saved Contribution Form
-              </h3>
-              {savedContributionsQuery.isLoading ? (
-                <p className="text-[#1a472a]/80 text-center py-8">Loading...</p>
-              ) : savedContributionsQuery.data?.length === 0 ? (
-                <p className="text-[#1a472a]/80 text-center py-8">No saved forms yet. Create one by clicking "Save to Profile".</p>
-              ) : (
-                <div className="space-y-2">
-                  {savedContributionsQuery.data?.map((saved) => (
-                    <div
-                      key={saved.id}
-                      className="p-4 border border-[#7dd87d]/30 rounded-xl hover:bg-[#f0f7f0] cursor-pointer transition-colors"
-                      onClick={() => loadFromProfile(saved)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-[#1a472a]">{saved.name}</span>
-                            {saved.isDefault && (
-                              <span className="text-xs bg-[#7dd87d]/20 text-[#4a7c59] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <Star className="w-3 h-3" /> Default
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-[#1a472a]/80 mt-1">
-                            {saved.projectName || 'Generic Form'} - {formatCurrency((saved.totalImmediateValue || 0) + (saved.totalFutureValue || 0), currencySymbol)} total
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          {!saved.isDefault && (
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDefaultContribution.mutate({ id: saved.id });
-                              }}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              title="Set as default"
-                            >
-                              <Star className="w-4 h-4 text-[#4a7c59]" />
-                            </Button>
+              </DialogTitle>
+            </DialogHeader>
+            {savedContributionsQuery.isLoading ? (
+              <p className="text-[#1a472a]/80 text-center py-8">Loading...</p>
+            ) : savedContributionsQuery.data?.length === 0 ? (
+              <p className="text-[#1a472a]/80 text-center py-8">No saved forms yet. Create one by clicking "Save to Profile".</p>
+            ) : (
+              <div className="space-y-2">
+                {savedContributionsQuery.data?.map((saved) => (
+                  <div
+                    key={saved.id}
+                    className="p-4 border border-[#7dd87d]/30 rounded-xl hover:bg-[#f0f7f0] cursor-pointer transition-colors"
+                    onClick={() => loadFromProfile(saved)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-[#1a472a]">{saved.name}</span>
+                          {saved.isDefault && (
+                            <span className="text-xs bg-[#7dd87d]/20 text-[#4a7c59] px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Star className="w-3 h-3" /> Default
+                            </span>
                           )}
+                        </div>
+                        <p className="text-xs text-[#1a472a]/80 mt-1">
+                          {saved.projectName || 'Generic Form'} - {formatCurrency((saved.totalImmediateValue || 0) + (saved.totalFutureValue || 0), currencySymbol)} total
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        {!saved.isDefault && (
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm('Delete this saved form?')) {
-                                deleteSavedContribution.mutate({ id: saved.id });
-                              }
+                              setDefaultContribution.mutate({ id: saved.id });
                             }}
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                            title="Delete"
-                            aria-label="Delete saved contribution"
+                            className="h-8 w-8 p-0"
+                            title="Set as default"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Star className="w-4 h-4 text-[#4a7c59]" />
                           </Button>
-                        </div>
+                        )}
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this saved form?')) {
+                              deleteSavedContribution.mutate({ id: saved.id });
+                            }
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                          title="Delete"
+                          aria-label="Delete saved contribution"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              <Button
-                onClick={() => setShowLoadDialog(false)}
-                variant="outline"
-                className="w-full mt-4 rounded-xl"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button
+              onClick={() => setShowLoadDialog(false)}
+              variant="outline"
+              className="w-full rounded-xl"
+            >
+              Close
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

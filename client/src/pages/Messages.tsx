@@ -14,6 +14,13 @@ import {
   Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
@@ -157,22 +164,16 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
     searchResults.members.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[#f0ebe3] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#1a472a]/20">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-[#1a472a]">New conversation</h2>
-          <button
-            onClick={onClose}
-            className="text-[#1a472a]/80 hover:text-[#1a472a] transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <p className="text-sm text-[#1a472a]/70 mb-4">
-          Search by display name to find someone to message.
-        </p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="bg-[#f0ebe3] border-[#1a472a]/20 md:max-w-md md:rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-[#1a472a]">
+            New conversation
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#1a472a]/70">
+            Search by display name to find someone to message.
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="relative">
           <Input
@@ -236,8 +237,8 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
             {getOrCreate.isPending ? "Opening…" : "Start conversation"}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -612,7 +613,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
         {isMobile && (
           <button
             onClick={onBack}
-            className="p-1.5 rounded-full hover:bg-[#1a472a]/10 text-[#1a472a] transition-colors"
+            className="p-1.5 min-h-11 min-w-11 inline-flex items-center justify-center rounded-full hover:bg-[#1a472a]/10 text-[#1a472a] transition-colors"
             aria-label="Back to inbox"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -703,6 +704,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         )}
                       </div>
                       {isSelf && !isDeleted && (
+                        /* touch-ok: floating corner delete over the bubble, expander gives the 44px hit area */
                         <button
                           onClick={() => {
                             if (window.confirm("Delete this message?")) {

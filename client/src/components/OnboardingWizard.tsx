@@ -5,10 +5,14 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Link } from "wouter";
-import { X, ChevronRight, Leaf, Users, BookOpen, Coins, MapPin, Droplets, Zap, Wheat, Landmark, Music, DollarSign } from "lucide-react";
+import { ChevronRight, Leaf, Users, BookOpen, Coins, MapPin, Droplets, Zap, Wheat, Landmark, Music, DollarSign } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 
@@ -272,8 +276,7 @@ export interface OnboardingWizardProps {
 
 export function OnboardingWizard({ user }: OnboardingWizardProps) {
   const [visible, setVisible] = useState(false);
-  useBodyScrollLock(visible);
-  const trapRef = useFocusTrap(visible);
+  // Scroll lock and focus trap come from the base Dialog (Radix) now.
   const [step, setStep] = useState(0); // 0-based: 0=Welcome 1=Role 2=Focus 3=GetStarted
   const [role, setRole] = useState<Role | null>(null);
   const [focusAreas, setFocusAreas] = useState<FocusArea[]>([]);
@@ -372,24 +375,12 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
   if (!visible) return null;
 
   return (
-    // Backdrop
-    <div
-      ref={trapRef}
-      className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      aria-modal="true"
-      role="dialog"
-      aria-label="Welcome to ReGen Civics"
-    >
-      {/* Modal panel */}
-      <div className="relative w-full max-w-md bg-[#0d1f12] border border-[#7dd87d]/20 rounded-2xl shadow-2xl shadow-black/60 p-6">
-        {/* Skip / close button */}
-        <button
-          onClick={handleSkip}
-          className="absolute top-4 right-4 text-white/60 hover:text-white/70 transition-colors"
-          aria-label="Skip onboarding"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <Dialog open={visible} onOpenChange={(o) => { if (!o) handleSkip(); }}>
+      <DialogContent className="gap-0 bg-[#0d1f12] border-[#7dd87d]/20 text-white shadow-2xl shadow-black/60 md:max-w-md md:rounded-2xl [&_[data-slot=dialog-close]]:text-white/60 [&_[data-slot=dialog-close]:hover]:text-white/80">
+        <DialogTitle className="sr-only">Welcome to ReGen Civics</DialogTitle>
+        <DialogDescription className="sr-only">
+          A short setup wizard. Pick your role and focus areas, or skip and explore on your own.
+        </DialogDescription>
 
         {/* Progress dots */}
         <ProgressDots total={4} current={step} />
@@ -408,7 +399,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
           {!isLastStep ? (
             <button
               onClick={handleSkip}
-              className="text-white/60 hover:text-white/70 text-sm transition-colors"
+              className="text-white/60 hover:text-white/70 text-sm transition-colors pointer-coarse:min-h-11 pointer-coarse:px-2 pointer-coarse:-ml-2"
             >
               Skip for now
             </button>
@@ -425,7 +416,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
             {!isLastStep && <ChevronRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

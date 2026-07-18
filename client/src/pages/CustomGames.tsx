@@ -29,9 +29,15 @@ import {
   Scale,
   Sparkles,
   Sprout,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
@@ -929,31 +935,19 @@ export default function CustomGames() {
         </section>
 
         {/* Waitlist Form Modal (secondary path) */}
-        {showForm && (
-          <div
-            className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowForm(false);
-            }}
-          >
-            <div className="relative bg-[#0d2818] border border-[#7dd87d]/25 rounded-2xl shadow-2xl w-full max-w-lg my-8 p-6">
-              <button
-                onClick={() => setShowForm(false)}
-                className="absolute top-4 right-4 text-white/60 hover:text-white/80 transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h2 className="text-xl font-bold text-white mb-1" style={display}>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="bg-[#0d2818] border-[#7dd87d]/25 text-white shadow-2xl md:max-w-lg md:rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-white" style={display}>
                 Join the Waitlist
-              </h2>
-              <p className="text-white/70 text-sm mb-6">
+              </DialogTitle>
+              <DialogDescription className="text-white/70 text-sm">
                 Tell us about your land project and we'll be in touch.
-              </p>
-              <CustomGameWaitlistForm onClose={() => setShowForm(false)} />
-            </div>
-          </div>
-        )}
+              </DialogDescription>
+            </DialogHeader>
+            <CustomGameWaitlistForm onClose={() => setShowForm(false)} />
+          </DialogContent>
+        </Dialog>
 
         <StickyThumbCta
           href="/custom-games/apply"
