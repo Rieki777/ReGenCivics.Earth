@@ -22,6 +22,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { checkRateLimit } from "../rate-limit";
 import { sanitizeInput } from "../_core/security";
 import { companionTurn, isCompanionConfigured, isSttConfigured, isTtsConfigured, transcribeAudio } from "../lib/companion";
+import { hostedVoicesForPersona, synthesizeSignatureVoice } from "../lib/tts";
 import { COMPANION_FORMS, type CompanionFormId } from "../../shared/companions";
 
 const turnMessage = z.object({
@@ -92,6 +93,34 @@ export const companionRouter = router({
       } catch (err) {
         console.error("[companion] transcribe failed:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "I couldn't hear that clearly. Try again, or type it." });
+      }
+    }),
+
+  /**
+   * The signature character voices available to one persona's voice picker.
+   * Empty until TTS_API_KEY is set, so the client shows nothing extra.
+   */
+  voices: publicProcedure
+    .input(z.object({ persona: z.string().max(64) }))
+    .query(({ input }) => hostedVoicesForPersona(input.persona)),
+
+  /**
+   * Speak one line in a signature voice. The text is the assistant's own reply
+   * being read aloud, so the cap is a spoken sentence or three; the client
+   * falls back to its browser Kokoro voices on any failure here.
+   */
+  speak: publicProcedure
+    .input(z.object({ voice: z.string().max(64), text: z.string().min(1).max(600) }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "companion_tts");
+      if (!isTtsConfigured()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Signature voices are not aboard yet." });
+      }
+      try {
+        return await synthesizeSignatureVoice(input.voice, sanitizeInput(input.text));
+      } catch (err) {
+        console.error("[companion] speak failed:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "That voice is resting. The browser voice will carry the line." });
       }
     }),
 });

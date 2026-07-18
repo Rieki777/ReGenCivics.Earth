@@ -497,6 +497,17 @@ Format per entry:
 
 ---
 
+## ADR-44: Companion voices — Kokoro in the browser, signature voices via hosted Qwen3-TTS
+
+- Date: 2026-07-17. Status: Accepted.
+- Context: every speaking surface (FormCompanion, ReGen Guide, Galley) used device `speechSynthesis`, which sounds robotic and varies wildly per OS. Rye wants companions that sound human, 5 shared voices plus 2 uniquely designed voices per character, at movement-friendly cost.
+- Decision: two engines behind the existing `useSpeech` surface, best first with graceful decay. (1) Kokoro-82M (Apache 2.0) runs in the visitor's browser via `kokoro-js` (WASM/WebGPU, ~90MB one-time cached download, model from the HF CDN): the default everywhere, five curated voices (Bella, Emma, Puck, George, Fable), zero cost at any scale, private by construction. (2) Signature character voices synthesize server-side on Qwen3-TTS (Apache 2.0) at DeepInfra behind `TTS_API_KEY` (`server/lib/tts.ts`): two designed voices per persona in `server/lib/ttsVoices.ts`, preset+instruct until an approved designed clip is uploaded once to `/v1/voices/add` and mapped in `TTS_VOICE_MAP`, cloned voice thereafter. Device `speechSynthesis` stays as the floor; a stored device-voice choice still resolves. CSP grew `'wasm-unsafe-eval'`, `worker-src blob:`, and HF CDN connect-src entries for the browser engine.
+- Why: Kokoro is the only path where great voices cost $0 forever and work offline, which fits both lean operations and community-first values (speech never leaves the device). Qwen3-TTS's instruct control plus one-time cloning gives each character an ownable voice for about $0.006 per spoken reply, cached server-side so greetings cost once. Keeping all three engines under `useSpeech` means no call-site changed and any failure only ever degrades voice quality, never removes voice.
+- Trade-offs: first Kokoro utterance can wait up to 12s on a slow connection before falling back to a device voice for that line. The 90MB download is heavy on mobile data (mitigated: browser-cached, kicked off at companion mount, never blocks captions). Hosted path is a paid third party; mitigated by the flag, the cache, `companion_tts` rate limit, and a 600-char cap.
+- Code refs: `client/src/components/companion/{kokoroVoices,hostedVoices,useVoice,VoicePicker}.ts(x)`, `server/lib/{tts,ttsVoices}.ts`, `server/routes/companion.ts` (`voices`, `speak`), `server/_core/security.ts` (CSP), `VOICE_TTS_RESEARCH_2026-07-17.md`.
+
+---
+
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
 
 If a decision gets reversed, write a NEW entry that explains the reversal and mark the OLD entry `Superseded by ADR-N`. Don't delete history.

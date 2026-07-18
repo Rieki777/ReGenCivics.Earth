@@ -1,23 +1,30 @@
 /**
  * <VoicePicker> - lets a member choose which voice one of the speaking agents
- * uses, from the voices their own device offers.
+ * uses.
  *
- * The list is filtered to the character: a woman persona only offers woman
- * voices, a man only offers man voices, and neutral characters (the Fox, the
- * Lantern-Bearer) offer everything. The choice is remembered per persona on this
- * device, because voices belong to the device rather than the account.
+ * The list leads with the curated Kokoro voices (natural voices generated in
+ * the browser, the same five everywhere), then any hosted signature voices the
+ * server offers for this persona, and keeps the device's own voices as a
+ * fallback group when the Kokoro engine can't run here or an old device-voice
+ * choice is still active. Voices matching the character's gender sort first
+ * and provide the default; every voice stays choosable.
  *
- * It renders nothing when the device has no speech synthesis or no voices, so
- * a browser without them simply never sees the control.
+ * The choice is remembered per persona on this device. It renders nothing only
+ * when nothing here can speak at all.
  */
-import { useCallback } from "react";
+import { useMemo } from "react";
 import { Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 import type { VoiceGender } from "@shared/voices";
-import { useVoiceChoices, useVoicePreference, resolveVoice, useAvailableVoices, speechSynthesisSupported } from "./useVoice";
+import {
+  useAvailableVoices, useKokoroEngineState, useSpeech, useVoicePreference, speechSynthesisSupported,
+} from "./useVoice";
+import { curatedVoicesFor, defaultVoiceFor, kokoroSupported } from "./kokoroVoices";
+import { isHostedVoiceId, HOSTED_PREFIX } from "./hostedVoices";
 
-/** Strip the noisy platform suffixes so the dropdown reads like a list of names. */
-function voiceLabel(v: SpeechSynthesisVoice): string {
+/** Strip the noisy platform suffixes so a device voice reads like a name. */
+function deviceVoiceLabel(v: SpeechSynthesisVoice): string {
   const name = v.name.replace(/^(microsoft|google)\s+/i, "").replace(/\s*-\s*english.*$/i, "").trim();
   const lang = v.lang ? ` (${v.lang})` : "";
   return `${name || v.name}${lang}`;
@@ -38,26 +45,27 @@ export function VoicePicker({
   label?: string;
   className?: string;
 }) {
-  const all = useAvailableVoices();
-  const choices = useVoiceChoices(gender);
+  const deviceVoices = useAvailableVoices();
   const [preferred, setPreferred] = useVoicePreference(personaKey);
+  const engine = useKokoroEngineState();
+  const { speak } = useSpeech(false, { gender, voiceURI: preferred });
 
-  // What is actually speaking right now, so the dropdown shows the true state
-  // rather than an empty selection before the member has chosen.
-  const active = resolveVoice(all, gender, preferred);
+  // Signature character voices, present only when the server is configured.
+  const hosted = trpc.companion.voices.useQuery({ persona: personaKey }, { staleTime: 300_000 });
+  const hostedVoices = hosted.data ?? [];
 
-  const preview = useCallback((uri: string) => {
-    if (!speechSynthesisSupported()) return;
-    const voice = all.find((v) => v.voiceURI === uri);
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(sampleText);
-      if (voice) u.voice = voice;
-      window.speechSynthesis.speak(u);
-    } catch { /* nothing to do; the picker still works */ }
-  }, [all, sampleText]);
+  const curated = useMemo(() => curatedVoicesFor(gender), [gender]);
+  const fallbackVoice = defaultVoiceFor(gender);
 
-  if (!speechSynthesisSupported() || choices.length === 0) return null;
+  // The device group only appears when it is genuinely needed: the engine
+  // can't run here, or the member's saved choice is still a device voice.
+  const legacySelected = Boolean(preferred) && !preferred!.startsWith("kokoro:") && !isHostedVoiceId(preferred!);
+  const showDeviceGroup = (engine === "failed" || !kokoroSupported() || legacySelected) && deviceVoices.length > 0;
+
+  const canSpeakAtAll = kokoroSupported() || speechSynthesisSupported();
+  if (!canSpeakAtAll) return null;
+
+  const selectValue = preferred ?? "";
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -66,24 +74,43 @@ export function VoicePicker({
       </label>
       <select
         id={`voice-${personaKey}`}
-        value={active?.voiceURI ?? ""}
+        value={selectValue}
         onChange={(e) => setPreferred(e.target.value || null)}
         className="min-w-0 flex-1 h-9 rounded-md border bg-background px-2 text-sm"
       >
-        {choices.map((v) => (
-          <option key={v.voiceURI} value={v.voiceURI}>{voiceLabel(v)}</option>
-        ))}
+        <option value="">{`Default (${fallbackVoice.label})`}</option>
+        {hostedVoices.length > 0 && (
+          <optgroup label="Signature voices">
+            {hostedVoices.map((v) => (
+              <option key={v.id} value={`${HOSTED_PREFIX}${v.id}`}>{`${v.label} - ${v.tone}`}</option>
+            ))}
+          </optgroup>
+        )}
+        <optgroup label="Voices">
+          {curated.map((v) => (
+            <option key={v.id} value={v.id}>{`${v.label} - ${v.tone}`}</option>
+          ))}
+        </optgroup>
+        {showDeviceGroup && (
+          <optgroup label="This device">
+            {deviceVoices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>{deviceVoiceLabel(v)}</option>
+            ))}
+          </optgroup>
+        )}
       </select>
       <button
         type="button"
-        onClick={() => active && preview(active.voiceURI)}
-        disabled={!active}
-        className="shrink-0 inline-flex items-center gap-1 rounded-md border px-2 h-9 text-xs hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] disabled:opacity-50"
+        onClick={() => speak(sampleText, preferred ?? undefined)}
+        className="shrink-0 inline-flex items-center gap-1 rounded-md border px-2 h-9 text-xs hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
         aria-label="Hear this voice"
       >
         <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
         Hear it
       </button>
+      {engine === "loading" && (
+        <span className="text-[11px] text-muted-foreground shrink-0" aria-live="polite">warming up</span>
+      )}
     </div>
   );
 }

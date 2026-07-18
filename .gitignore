@@ -184,3 +184,6 @@ data/ioverlander/
 # A nested, unrelated git repo (~180MB) that lives in this folder. Not part of
 # the app; excluded so it stays out of the `railway up` bundle (413 on 2026-07-16).
 loomio Governance Tools/
+
+# Kokoro TTS demo clips (research artifacts, not app assets)
+voice-demos/

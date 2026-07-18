@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-17 (voices): Companions sound human — Kokoro in the browser + signature voices (ADR-44)
+
+- **Every speaking surface drops the robot voice.** `useSpeech` now speaks through Kokoro-82M running in the visitor's browser (kokoro-js, WASM/WebGPU, ~90MB one-time cached download, $0 forever, speech never leaves the device). Five curated voices everywhere: Bella, Emma, Puck, George, Fable. Device `speechSynthesis` stays as the graceful floor (engine loading longer than 12s, old browsers, saved legacy choices), so no surface ever goes mute.
+- **Every character also gets two signature voices of their own** (`server/lib/ttsVoices.ts`: Marin + Brook for the First Mate, Moss + Gale for the Harbormaster, Cedar + Loam, Wren + Indigo, Ember + Scarlet, Fern + Aurelia, Sage + Clove), synthesized on Qwen3-TTS at DeepInfra behind `TTS_API_KEY` via new `companion.voices` + `companion.speak` procedures (rate-limited, 600-char cap, server-cached). Preset+instruct day one; each voice upgrades to a unique clone when its approved designed clip is uploaded once and mapped in `TTS_VOICE_MAP`.
+- **VoicePicker rebuilt** around the curated registry: signature voices, then the five Kokoro voices (gender-matched fits first but every voice choosable), device voices only as a labeled fallback group, plus a "warming up" hint while the model downloads. Preferences share the old localStorage slot, so nobody's saved choice breaks.
+- **CSP grew** `'wasm-unsafe-eval'`, `worker-src 'self' blob:`, and HF CDN + jsdelivr connect-src for the model download; documented in `OWASP-TOP10.md` A05.
+- Verify: `pnpm gate` exit 0 (truncation 0/1066, typecheck clean), companion voice tests 27/27 green, full suite 641 passed with the only failing file being `harvest-email.test.ts` (pre-existing local COOKIE_SECRET gap, fails identically on a clean tree), vite build code-splits the engine into a lazy `kokoro-*.js` chunk (2.2MB, loads only on first speak).
+- Research + model comparison: `VOICE_TTS_RESEARCH_2026-07-17.md`; decision record: ADR-44.
+- Carryover: audition clips for the 14 signature voices go to Rye for approval; approved clips get uploaded to DeepInfra and mapped in `TTS_VOICE_MAP`; Rye may then promote signature voices to per-character defaults (one-line change in `defaultVoiceFor` / a persona default map).
+
 ## 2026-07-17 (llm): OpenRouter primary + cheapest-model-per-task tiers (ADR-43)
 
 - **The provider chain flips: OpenRouter first, direct Anthropic as failover.** Every `invokeLLM`/`streamLLM` call now routes through OpenRouter with a per-task model tier: `light` (routing, tagging, alt text, translation, template classification) on `google/gemini-2.5-flash-lite`, `standard` (all personas, companions, guides, harvest, transcripts; the untagged default) on `moonshotai/kimi-k2.5` (multimodal, covers the cook/shipwright image calls), `complex` (Assembly synthesis, decision drafting, C-suite briefing) on `moonshotai/kimi-k3`. Tier overrides: `LLM_MODEL_LIGHT` / `LLM_MODEL_STANDARD` / `LLM_MODEL_COMPLEX` Railway vars; legacy `OPENROUTER_MODEL` still pins the standard tier if set.

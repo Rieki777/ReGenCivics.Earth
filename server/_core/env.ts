@@ -77,6 +77,23 @@ export const ENV = {
   sttApiKey: process.env.STT_API_KEY ?? "",
   sttProvider: process.env.STT_PROVIDER ?? "groq",
   ttsApiKey: process.env.TTS_API_KEY ?? "",
+  // Signature-voice cloning overrides: JSON mapping a registry key from
+  // server/lib/ttsVoices.ts to a DeepInfra voice_id created via /v1/voices/add,
+  // e.g. {"first-mate/marin":"abcd1234"}. Empty means every signature voice
+  // speaks through its preset+instruct fallback.
+  ttsVoiceMap: ((): Record<string, string> => {
+    try {
+      const parsed: unknown = JSON.parse(process.env.TTS_VOICE_MAP ?? "{}");
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return Object.fromEntries(
+          Object.entries(parsed as Record<string, unknown>).filter(([, v]) => typeof v === "string"),
+        ) as Record<string, string>;
+      }
+    } catch {
+      console.warn("[env] TTS_VOICE_MAP is not valid JSON; ignoring it");
+    }
+    return {};
+  })(),
   // Cloudflare Workers AI image generation
   imageGenWorkerUrl: process.env.IMAGE_GEN_WORKER_URL ?? "",
   imageGenSecret: process.env.IMAGE_GEN_SECRET ?? "",

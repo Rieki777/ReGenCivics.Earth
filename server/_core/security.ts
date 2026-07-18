@@ -71,9 +71,17 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
   //   Inline styles cannot execute code, so this is a much lower XSS risk
   //   than inline scripts. Migrating to a CSS-in-JS layer that supports
   //   nonce providers is future work tracked in CSP_NONCE_MIGRATION_PLAN.
+  //   'wasm-unsafe-eval' allows WebAssembly compilation only (it grants
+  //   nothing to eval/new Function). The Kokoro voice engine (kokoro-js,
+  //   client/src/components/companion/kokoroVoices.ts) compiles an ONNX
+  //   runtime WASM module in the browser; without this token every
+  //   companion voice would silently fall back to the robotic device
+  //   voices. worker-src blob: exists for the same engine: onnxruntime-web
+  //   spawns its threading workers from blob: URLs.
   const cspHeader = [
     "default-src 'self'",
-    `script-src 'self' ${nonceToken} 'unsafe-inline' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com`.trim(),
+    `script-src 'self' ${nonceToken} 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com`.trim(),
+    "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://www.gstatic.com",
     // https://server.arcgisonline.com serves the Esri World Imagery satellite
     // basemap + reference labels for the ship treasure map (ADR-36). Image
@@ -86,7 +94,10 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     // Order: self + same-domain CDN, geolocation lookup, Sentry telemetry,
     // Google Translate runtime, YouTube metadata, Plausible. Add new
     // origins here when we add a third-party SDK with client-side fetch.
-    "connect-src 'self' https://*.regencivics.earth https://ipapi.co https://*.ingest.sentry.io https://*.sentry.io https://translate.googleapis.com https://translate-pa.googleapis.com https://www.googleapis.com https://www.google-analytics.com https://*.youtube.com https://*.ytimg.com wss:",
+    // huggingface.co + *.hf.co serve the Kokoro voice model download (one
+    // ~90MB fetch, browser-cached); cdn.jsdelivr.net serves the ONNX
+    // runtime's WASM binary for the same engine.
+    "connect-src 'self' https://*.regencivics.earth https://ipapi.co https://*.ingest.sentry.io https://*.sentry.io https://translate.googleapis.com https://translate-pa.googleapis.com https://www.googleapis.com https://www.google-analytics.com https://*.youtube.com https://*.ytimg.com https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net wss:",
     // https://www.zeffy.com added for the CORE (Church of the Regenerative
     // Earth) donation embed on core.regencivics.earth/donate.
     "frame-src 'self' https://verify.walletconnect.com https://accounts.google.com https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com https://www.zeffy.com",
