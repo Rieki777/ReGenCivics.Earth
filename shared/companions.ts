@@ -24,7 +24,7 @@ import type { VoiceGender } from "./voices";
 
 // ── Persona display metadata (client-safe) ───────────────────────────────────
 
-export type CompanionPersonaId = "first-mate" | "harbormaster" | "gardener" | "weaver" | "sylva";
+export type CompanionPersonaId = "first-mate" | "harbormaster" | "gardener" | "weaver" | "sylva" | "flagkeeper";
 
 export type CompanionPersona = {
   id: CompanionPersonaId;
@@ -110,6 +110,22 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     ],
     accent: "text-[#7a4fb0] dark:text-[#c9a9f0] border-[#7a4fb0]/40",
   },
+  flagkeeper: {
+    id: "flagkeeper",
+    bioregionSlug: "cascadia",
+    name: "the Flagkeeper",
+    gender: "female",
+    portrait: "persona-flagkeeper.webp",
+    role: "sews the flag of every ship that joins",
+    greeting:
+      "Welcome. I'm the Flagkeeper. Every ship that joins the fleet raises a flag, and I sew each one myself, after I've heard the story behind it. So tell me about you and your ship. Take your time, I'm not in a hurry.",
+    invitations: [
+      "Every flag in this fleet has a story. Tell me yours and I'll write it down.",
+      "Before a flag goes up, I like to know the hands that raise it. Come talk with me a while.",
+      "Skip the little boxes. Tell me about you, your ship, and what pulls you toward the fleet.",
+    ],
+    accent: "text-[#a03a3a] dark:text-[#e89a9a] border-[#a03a3a]/40",
+  },
   sylva: {
     id: "sylva",
     // ReGen's own Game Guide; she belongs to no single bioregion.
@@ -188,7 +204,8 @@ export type CompanionFormId =
   | "map-add"
   | "alliance-application"
   | "land-application"
-  | "custom-game-application";
+  | "custom-game-application"
+  | "fleet-application";
 
 export type CompanionFormConfig = {
   id: CompanionFormId;
@@ -477,6 +494,48 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
         type: "text",
         guidance: "Provider NAME only, same rule: never record keys or credentials.",
       },
+    ],
+  },
+  "fleet-application": {
+    id: "fleet-application",
+    personaId: "flagkeeper",
+    title: "Raise your flag",
+    entryLabel: "Raise your flag with the Flagkeeper",
+    completion:
+      "You are ready to review once you have their name, their email, why the regeneration movement matters to them in their own words, the vision they hold for traveling with the fleet, what they want to give, and what they hope to receive. The ship details and location help but are not required. Let them tell stories; the story is the point.",
+    fields: [
+      { key: "ownerName", label: "What's your name?", type: "text", required: true },
+      { key: "email", label: "What's the best email to reach you at?", type: "text", required: true, guidance: "Capture a real email address. Read it back if it sounded unclear." },
+      { key: "rvYearMakeModel", label: "Tell me about your ship. Year, make, and model if you know them.", type: "text" },
+      { key: "location", label: "Where are you and your ship based?", type: "text" },
+      {
+        key: "whyRegeneration",
+        label: "Why does the regeneration movement matter to you? What first pulled you toward it?",
+        type: "longtext",
+        required: true,
+        guidance: "This is the heart of the talk. Let them go long and keep their words. If they give one thin line, ask what first opened them to this work, or what they have seen that convinced them.",
+      },
+      {
+        key: "fleetVision",
+        label: "What do you see yourself and your ship doing with the fleet? Paint me the picture.",
+        type: "longtext",
+        required: true,
+        guidance: "Their dream in their words: the places, the work, the life aboard. If they only describe logistics, ask what a great season with the fleet would look like for them.",
+      },
+      {
+        key: "offersText",
+        label: "What would you want to give? Skills, builds, hosting, teaching, the ship herself.",
+        type: "longtext",
+        required: true,
+      },
+      {
+        key: "needsText",
+        label: "And what do you hope to receive from sailing with us?",
+        type: "longtext",
+        required: true,
+        guidance: "Let them be honest about money. If steady income from voyages is part of the draw, write that down plainly in their words. It is not a judgment; it helps the crew place them well.",
+      },
+      { key: "message", label: "Anything else you want the fleet to know about you?", type: "longtext" },
     ],
   },
   "map-add": {

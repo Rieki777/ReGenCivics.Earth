@@ -1,6 +1,13 @@
 /**
  * /ship/fleet - The ReGen Fleet vision, the RV DAO / token model, the Regatta,
  * and the "raise your flag" application for RV owners to join.
+ *
+ * Raise-your-flag is conversation-first: the Flagkeeper (a FormCompanion
+ * persona) draws out the owner's story, why regeneration matters to them,
+ * their vision for the fleet, what they'd give and what they hope to receive,
+ * and streams it into the visible form below. She never submits; the person
+ * reviews and raises the flag themselves. The plain form stays as the typed
+ * path and the no-LLM fallback.
  */
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
@@ -13,6 +20,9 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Anchor, Coins, Flag, Sprout, Tent, HandCoins } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import FormCompanion from "@/components/companion/FormCompanion";
+
+type Turn = { role: "user" | "assistant"; content: string };
 
 export default function ShipFleet() {
   const m = trpc.ship.applyFleet.useMutation();
@@ -21,14 +31,36 @@ export default function ShipFleet() {
   const [email, setEmail] = useState("");
   const [rvYearMakeModel, setRvYearMakeModel] = useState("");
   const [location, setLocation] = useState("");
+  const [whyRegeneration, setWhyRegeneration] = useState("");
+  const [fleetVision, setFleetVision] = useState("");
+  const [offersText, setOffersText] = useState("");
+  const [needsText, setNeedsText] = useState("");
   const [message, setMessage] = useState("");
+  const [transcript, setTranscript] = useState<Turn[]>([]);
+
+  const setters: Record<string, (v: string) => void> = {
+    ownerName: setOwnerName,
+    email: setEmail,
+    rvYearMakeModel: setRvYearMakeModel,
+    location: setLocation,
+    whyRegeneration: setWhyRegeneration,
+    fleetVision: setFleetVision,
+    offersText: setOffersText,
+    needsText: setNeedsText,
+    message: setMessage,
+  };
 
   function resetForm() {
     setOwnerName("");
     setEmail("");
     setRvYearMakeModel("");
     setLocation("");
+    setWhyRegeneration("");
+    setFleetVision("");
+    setOffersText("");
+    setNeedsText("");
     setMessage("");
+    setTranscript([]);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -47,7 +79,12 @@ export default function ShipFleet() {
         email: email.trim(),
         rvYearMakeModel: rvYearMakeModel.trim() || undefined,
         location: location.trim() || undefined,
+        whyRegeneration: whyRegeneration.trim() || undefined,
+        fleetVision: fleetVision.trim() || undefined,
+        offersText: offersText.trim() || undefined,
+        needsText: needsText.trim() || undefined,
         message: message.trim() || undefined,
+        companionTranscript: transcript.length > 0 ? JSON.stringify(transcript).slice(0, 60_000) : undefined,
       });
       toast.success("Flag raised. We'll be in touch about the fleet.");
       resetForm();
@@ -172,9 +209,28 @@ export default function ShipFleet() {
           Raise your flag
         </h2>
         <p className="max-w-2xl text-foreground/85 mb-8">
-          If you own an RV and want to travel with the fleet, this is your invitation. Tell us about your ship and where
-          you're based, and we'll be in touch.
+          If you own an RV and want to travel with the fleet, this is your invitation. The Flagkeeper sews a flag for
+          every ship that joins, and she likes to hear the story behind it first. Talk it out with her, or fill in the
+          form below, and we'll be in touch.
         </p>
+
+        <FormCompanion
+          formId="fleet-application"
+          className="max-w-xl"
+          collected={{
+            ownerName,
+            email,
+            rvYearMakeModel,
+            location,
+            whyRegeneration,
+            fleetVision,
+            offersText,
+            needsText,
+            message,
+          }}
+          onField={(key, value) => setters[key]?.(value)}
+          onTranscript={setTranscript}
+        />
 
         <form onSubmit={onSubmit} className="max-w-xl space-y-6">
           <div className="space-y-2">
@@ -217,6 +273,50 @@ export default function ShipFleet() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="City, region"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="whyRegeneration">Why does the regeneration movement matter to you?</Label>
+            <Textarea
+              id="whyRegeneration"
+              value={whyRegeneration}
+              onChange={(e) => setWhyRegeneration(e.target.value)}
+              placeholder="What first pulled you toward this work?"
+              rows={4}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fleetVision">What do you see yourself and your ship doing with the fleet?</Label>
+            <Textarea
+              id="fleetVision"
+              value={fleetVision}
+              onChange={(e) => setFleetVision(e.target.value)}
+              placeholder="Paint us the picture: the places, the work, the life aboard."
+              rows={4}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="offersText">What would you want to give? (optional)</Label>
+            <Textarea
+              id="offersText"
+              value={offersText}
+              onChange={(e) => setOffersText(e.target.value)}
+              placeholder="Skills, builds, hosting, teaching, the ship herself."
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="needsText">What do you hope to receive? (optional)</Label>
+            <Textarea
+              id="needsText"
+              value={needsText}
+              onChange={(e) => setNeedsText(e.target.value)}
+              placeholder="Community, purpose, income from voyages. Honest answers help us place you well."
+              rows={3}
             />
           </div>
 

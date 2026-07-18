@@ -139,6 +139,45 @@ describe("alliance application (the Weaver)", () => {
   });
 });
 
+describe("fleet application (the Flagkeeper)", () => {
+  it("is registered, points at the flagkeeper, and requires the qualification story", () => {
+    const form = COMPANION_FORMS["fleet-application"];
+    expect(form).toBeTruthy();
+    expect(form.personaId).toBe("flagkeeper");
+    const keys = form.fields.map((f) => f.key);
+    // These keys must match the ship_fleet_applications columns applyFleet
+    // writes, so extracted values flow straight into the visible form.
+    for (const key of ["ownerName", "email", "rvYearMakeModel", "location", "whyRegeneration", "fleetVision", "offersText", "needsText", "message"]) {
+      expect(keys).toContain(key);
+    }
+    // The story is the point: qualification fields gate readyForReview.
+    for (const required of ["ownerName", "email", "whyRegeneration", "fleetVision", "offersText", "needsText"]) {
+      expect(form.fields.find((f) => f.key === required)?.required).toBe(true);
+    }
+    // Ship details help but never block the story.
+    for (const optional of ["rvYearMakeModel", "location", "message"]) {
+      expect(form.fields.find((f) => f.key === optional)?.required).toBeFalsy();
+    }
+  });
+
+  it("never lets the model write outside the declared fleet fields", async () => {
+    modelReturns({
+      reply: "That's a story worth a flag. What do you hope to receive?",
+      updates: [
+        { field: "whyRegeneration", value: "watched the rivers die in my hometown and want to help heal them" },
+        { field: "status", value: "joined" }, // not a declared field
+      ],
+      readyForReview: false,
+    });
+    const res = await companionTurn({
+      form: COMPANION_FORMS["fleet-application"],
+      history: [{ role: "user", content: "I watched the rivers die in my hometown" }],
+      collected: {},
+    });
+    expect(res.updates.map((u) => u.field)).toEqual(["whyRegeneration"]);
+  });
+});
+
 describe("land application (the Gardener)", () => {
   it("is registered, points at the gardener, and covers every required application field", () => {
     const form = COMPANION_FORMS["land-application"];

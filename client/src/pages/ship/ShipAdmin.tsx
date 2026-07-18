@@ -276,7 +276,32 @@ function ApplicationsTab({ err, ok, utils }: Common) {
         {(q.data ?? []).map((a: any) => (
           <div key={a.id} className="border rounded p-2 text-sm">
             <div className="font-medium">{a.name ?? a.ownerName ?? a.projectName} · {a.email} · {a.status}</div>
+            {(a.rvYearMakeModel || a.location) && (
+              <p className="text-xs text-muted-foreground">{[a.rvYearMakeModel, a.location].filter(Boolean).join(" · ")}</p>
+            )}
             {(a.experience || a.message || a.siteDescription) && <p className="text-muted-foreground">{a.experience || a.message || a.siteDescription}</p>}
+            {/* The Flagkeeper's qualification story (fleet applications). */}
+            {a.whyRegeneration && <p className="text-muted-foreground mt-1"><span className="font-medium text-foreground">Why regeneration:</span> {a.whyRegeneration}</p>}
+            {a.fleetVision && <p className="text-muted-foreground mt-1"><span className="font-medium text-foreground">Vision:</span> {a.fleetVision}</p>}
+            {a.offersText && <p className="text-muted-foreground mt-1"><span className="font-medium text-foreground">Offers:</span> {a.offersText}</p>}
+            {a.needsText && <p className="text-muted-foreground mt-1"><span className="font-medium text-foreground">Hopes to receive:</span> {a.needsText}</p>}
+            {a.companionTranscript && (() => {
+              let turns: Array<{ role: string; content: string }> = [];
+              try { turns = JSON.parse(a.companionTranscript); } catch { /* unreadable record; skip */ }
+              if (!Array.isArray(turns) || turns.length === 0) return null;
+              return (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-medium">Flagkeeper conversation ({turns.length} turns)</summary>
+                  <div className="mt-1 space-y-1 max-h-64 overflow-y-auto border-l-2 pl-2">
+                    {turns.map((t, i) => (
+                      <p key={i} className="text-xs">
+                        <span className="font-semibold">{t.role === "user" ? "Them" : "Flagkeeper"}:</span> {String(t.content)}
+                      </p>
+                    ))}
+                  </div>
+                </details>
+              );
+            })()}
           </div>
         ))}
         {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No applications yet.</p>}
