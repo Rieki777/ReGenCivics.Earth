@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { PageWrapper } from "@/components/PageWrapper";
 import { Anchor, Map, Sprout, Ship as ShipIcon, Droplets, Wifi, Bike, Sun } from "lucide-react";
 import {
-  ShipImage, ShipInteriorCard, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
+  ShipImage, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
   SHIP_TAGLINE, CHESTNUT_URL, shipImg,
 } from "./shipShared";
+import { ShipInteriorCarousel } from "@/components/ship/ShipInteriorCarousel";
 import { ShipInventory } from "@/components/ship/ShipInventory";
 import { StateOfShip } from "@/components/ship/StateOfShip";
 import { trpc } from "@/lib/trpc";
@@ -169,8 +170,10 @@ export default function Ship() {
         </div>
       </ShipSection>
 
-      {/* Gallery */}
+      {/* Interior photo carousel (top of the section) + gallery of places */}
       <ShipSection>
+        <ShipInteriorCarousel />
+        <div className="mt-12" />
         <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">Where she has been</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -179,21 +182,6 @@ export default function Ship() {
               <ShipImage name={g.name} alt={g.alt} className="h-full transition-transform duration-500 group-hover:scale-105" />
             </div>
           ))}
-        </div>
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Aboard the ship</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <ShipInteriorCard name="ship-galley-table.webp" label="The galley" alt="The galley table laid with fruit and shared plates." />
-            <ShipInteriorCard name="ship-interior-living.jpg" label="The living room" alt="The living area: the dinette by a wide window with a lake view, set up with Starlink for working aboard." />
-            <ShipInteriorCard name="ship-interior-bedroom.jpg" label="The primary bedroom" alt="The primary bedroom with a gold velvet headboard, ceiling fan, and trailing ivy." />
-            <ShipInteriorCard name="ship-interior-bath.jpg" label="The bath" alt="The bathroom with vanity, toilet, and the full-size washing machine in cherry cabinetry." />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <ShipInteriorCard name="ship-interior-bedroom-2.jpg" label="The bedroom, by candlelight" alt="The bedroom from the doorway, beaded curtain, framed art, and candles along the sill." />
-            <ShipInteriorCard name="ship-interior-shower.jpg" label="The shower" alt="A corner shower with frosted glass, fresh towels, and a skylight overhead." />
-            <ShipInteriorCard name="ship-interior-bath-sink.jpg" label="The vanity" alt="The bathroom vanity with a stone tile backsplash, brushed gold fixtures, and a folded towel." />
-            <ShipInteriorCard name="ship-interior-altar.jpg" label="The altar" alt="A small altar with framed agate slices, candles, selenite, and a feather." />
-          </div>
         </div>
       </ShipSection>
 
