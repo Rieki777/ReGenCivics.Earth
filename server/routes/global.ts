@@ -262,32 +262,22 @@ export function registerImageOptimization(app: Express) {
         parsedUrl.hostname === 'assets.regencivics.earth' &&
         /^\/?core\/[^/]+\.webp$/i.test(parsedUrl.pathname)
       ) {
-        const webpKey = parsedUrl.pathname.replace(/^\/+/, '');
-        const readKey = async (key: string): Promise<Buffer | null> => {
-          try {
-            const { body } = await storageStream(key);
-            const chunks: Buffer[] = [];
-            for await (const chunk of body) {
-              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-            }
-            return Buffer.concat(chunks);
-          } catch {
-            return null;
-          }
-        };
-        let out: Buffer | null = null;
-        let ct = 'image/webp';
-        if ((req.headers.accept || '').includes('image/avif')) {
-          out = await readKey(webpKey.replace(/\.webp$/i, '.avif'));
-          if (out) ct = 'image/avif';
-        }
-        if (!out) out = buffer; // the .webp we already fetched above
+        // Serve the pre-made WebP straight from R2 (already fetched above), and
+        // deliberately NOT the .avif sibling. The pre-made AVIFs fail to decode
+        // in WebKit/Safari: the top rows drop out and the transparent gap reveals
+        // the blurred LQIP underneath, so every CORE illustration rendered with a
+        // dark band across its top on iPhone. WebP is universally supported and
+        // renders these cleanly on every engine; server-side "is this WebKit"
+        // sniffing is too unreliable (iOS Chrome, in-app browsers, desktop Safari
+        // all differ) to keep AVIF for only the browsers that can decode it, and
+        // the payload delta on these few immutable, year-cached illustrations is
+        // negligible next to correctness on iOS.
         res.set({
-          'Content-Type': ct,
+          'Content-Type': 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable',
           'Vary': 'Accept',
         });
-        return res.send(out);
+        return res.send(buffer);
       }
 
       const accept = req.headers.accept || '';
