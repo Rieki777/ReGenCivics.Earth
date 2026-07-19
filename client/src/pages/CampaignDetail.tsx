@@ -44,6 +44,8 @@ import {
 import { toast } from "sonner";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { ContributionModal, type ContributionNeed } from "@/components/ContributionModal";
+import { EligibilityQuiz } from "@/components/crowdpool/EligibilityQuiz";
+import { PledgeSimulator } from "@/components/crowdpool/PledgeSimulator";
 import { CAPITAL_TYPES, CAPITAL_LABELS, CAPITAL_COLORS, CRYPTO_PAYMENT_CONTEXT, type CapitalType } from "@shared/crowdpoolingTaxonomy";
 import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -757,6 +759,10 @@ export default function CampaignDetail() {
           }}
         />
 
+        {/* Eligibility quiz: routes projects to the funder that fits before the
+            recommended-funder cards below. Deterministic, recommendation only. */}
+        <EligibilityQuiz />
+
         {/* Recommended funders: ways to fund this project we point people to.
             We collect zero fiat; you finish on the funder's own site. */}
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
@@ -842,6 +848,10 @@ export default function CampaignDetail() {
             </div>
           </div>
         </div>
+
+        {/* Pledge simulator: a pure-client "what does my pledge unlock" widget,
+            grounded in the same coach numbers as the wizard. */}
+        <PledgeSimulator items={campaign.items} region={campaign.location} />
 
         {/* Pool Ledger: the public record of pledges, deliveries, and thanks */}
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
