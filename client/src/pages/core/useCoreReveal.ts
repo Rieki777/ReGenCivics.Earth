@@ -95,10 +95,14 @@ export function useCoreReveal(deps: unknown[] = []) {
 }
 
 /**
- * Inject the ambient layers into each hero once. Photo heroes (.hero-image)
- * receive only warm drifting motes so nothing competes with the photograph or
- * the light headline; parchment heroes receive the full Seed of Life, breathing
- * glow, and a green-to-gold shimmer on the wordmark.
+ * Inject the ambient layers into each hero once. Every hero gets a breathing
+ * glow and a slowly rotating Seed of Life; CSS adapts them to the hero type:
+ * parchment heroes get a faint dark seed centered behind the headline, while
+ * photo heroes (.hero-image) get a luminous gold seed and a warm glow low in the
+ * fade zone, so the imagery melts into the page instead of ending on a flat band.
+ * All heroes also get warm drifting motes. The green-to-gold wordmark shimmer
+ * stays on parchment heroes only (the photo wordmark is already light + shadowed,
+ * and the shimmer's clip would fight that treatment).
  */
 function injectHeroAmbient() {
   document.querySelectorAll<HTMLElement>(".core-root .hero").forEach((hero) => {
@@ -106,18 +110,18 @@ function injectHeroAmbient() {
     hero.dataset.coreAmbient = "1";
     const isPhoto = hero.classList.contains("hero-image");
 
+    const glow = document.createElement("div");
+    glow.className = "hero-glow";
+    glow.setAttribute("aria-hidden", "true");
+    hero.appendChild(glow);
+
+    const seed = document.createElement("div");
+    seed.className = "hero-seed";
+    seed.setAttribute("aria-hidden", "true");
+    seed.appendChild(buildSeedOfLife());
+    hero.appendChild(seed);
+
     if (!isPhoto) {
-      const glow = document.createElement("div");
-      glow.className = "hero-glow";
-      glow.setAttribute("aria-hidden", "true");
-      hero.appendChild(glow);
-
-      const seed = document.createElement("div");
-      seed.className = "hero-seed";
-      seed.setAttribute("aria-hidden", "true");
-      seed.appendChild(buildSeedOfLife());
-      hero.appendChild(seed);
-
       const kicker = hero.querySelector(".kicker");
       if (kicker) kicker.classList.add("core-shimmer");
     }
@@ -167,7 +171,9 @@ function buildSeedOfLife(): SVGSVGElement {
     c.setAttribute("cy", String(cy));
     c.setAttribute("r", "90");
     c.setAttribute("fill", "none");
-    c.setAttribute("stroke", "#2d5a3d");
+    // currentColor so CSS tints the seed per hero type (dark on parchment,
+    // luminous gold on photo heroes) from a single .hero-seed { color } rule.
+    c.setAttribute("stroke", "currentColor");
     c.setAttribute("stroke-width", "1.1");
     svg.appendChild(c);
   });
@@ -176,7 +182,7 @@ function buildSeedOfLife(): SVGSVGElement {
   big.setAttribute("cy", "0");
   big.setAttribute("r", "180");
   big.setAttribute("fill", "none");
-  big.setAttribute("stroke", "#2d5a3d");
+  big.setAttribute("stroke", "currentColor");
   big.setAttribute("stroke-width", "0.7");
   big.setAttribute("opacity", "0.6");
   svg.appendChild(big);
