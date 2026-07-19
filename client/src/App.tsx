@@ -234,6 +234,7 @@ const ShipCrewListAction = lazy(() => import("./pages/ship/ShipCrewListAction"))
 const ShipHomecoming = lazy(() => import("./pages/ship/ShipHomecoming"));
 const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
 const ShipTerms = lazy(() => import("./pages/ship/ShipTerms"));
+const ShipManifest = lazy(() => import("./pages/ship/ShipManifest"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -265,6 +266,7 @@ function Router() {
 
       {/* ReGen Ship (CORE program) */}
       <Route path={"/ship"}><EB><Ship /></EB></Route>
+      <Route path={"/ship/inventory"}><EB><ShipManifest /></EB></Route>
       <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
       <Route path={"/ship/theme"}><EB><ShipTheme /></EB></Route>
       <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>

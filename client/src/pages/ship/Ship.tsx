@@ -101,6 +101,9 @@ export default function Ship() {
         <h2 className="text-3xl font-bold mb-2">Everything she carries</h2>
         <p className="text-foreground/80 max-w-2xl mb-6">Open the bag. Every tool, toy, and bit of magic aboard, from the paddleboard to the walking staff that plants a forest as you go. Tap a slot to see what it does and where she keeps it.</p>
         <ShipInventory />
+        <div className="mt-6">
+          <Link href="/ship/inventory" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">See the full ship inventory — every tool, hose, and battery aboard, and where she keeps it <span aria-hidden="true">→</span></Link>
+        </div>
       </ShipSection>
 
       {/* The love voyage */}
