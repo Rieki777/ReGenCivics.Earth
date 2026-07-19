@@ -8,7 +8,6 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -73,15 +72,17 @@ function ReferralShareButton() {
 
 function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: string; onSubmitted: () => void }) {
   const submit = trpc.ship.quest.submit.useMutation();
-  const [proofUrl, setProofUrl] = useState("");
   const verified = myStatus === "verified";
   const pending = myStatus === "pending";
+  const auto = action.verificationType === "auto";
+  const threadUrl = action.forumPostId ? `/community/${action.forumPostId}` : null;
+  // Multi-submission quests stay actionable after the first verify (up to the cap).
+  const canAct = !verified || (action.maxSubmissions ?? 1) > 1;
 
-  async function doSubmit() {
+  async function checkGameQuest() {
     try {
-      const res = await submit.mutateAsync({ actionId: action.id, proofUrl: proofUrl || undefined });
-      toast.success(res.status === "verified" ? "Verified. Well sailed." : "Submitted for verification.");
-      setProofUrl("");
+      const res = await submit.mutateAsync({ actionId: action.id });
+      toast.success(res.status === "verified" ? "Verified. Well sailed." : "Not yet. Finish the Food Foresting quest first, then check again.");
       onSubmitted();
     } catch (err: any) {
       toast.error(err?.message ?? "Please sign in to enter the quest.");
@@ -92,26 +93,35 @@ function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: 
     <div className={`rounded-xl border p-4 ${verified ? "bg-[#4a7c59]/10 border-[#4a7c59]" : "bg-card"}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {verified && <Check className="w-4 h-4 text-[#2f5d3a] dark:text-[#9de89d]" />}
             <h3 className="font-semibold">{action.title}</h3>
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${auto ? "bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#9de89d]" : "bg-[#ffd700]/25 text-[#8a6a0b] dark:text-[#ffe07a]"}`}>
+              {auto ? "Auto-verified" : "Crew-verified"}
+            </span>
           </div>
           {action.description && <p className="text-sm text-foreground/80 mt-1">{action.description}</p>}
         </div>
-        <span className="shrink-0 text-sm font-bold text-[#2f5d3a] dark:text-[#9de89d] bg-[#ffd700]/30 rounded-full px-3 py-1">{action.points} pts</span>
+        <span className="shrink-0 text-sm font-bold text-[#2f5d3a] dark:text-[#9de89d] bg-[#ffd700]/30 rounded-full px-3 py-1">
+          {action.points} pts{(action.maxSubmissions ?? 1) > 1 ? " each" : ""}
+        </span>
       </div>
-      {!verified && action.slug === "refer-land-project" && <ReferralShareButton />}
-      {!verified && action.slug !== "refer-land-project" && (
-        <div className="mt-3 flex flex-col sm:flex-row gap-2">
-          {(action.proofType === "link" || action.proofType === "photo" || action.proofType === "forum") && (
-            <Input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="Paste your proof link" className="text-sm" />
+      {canAct && (
+        <div className="mt-3">
+          {threadUrl ? (
+            <Button asChild size="sm" className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+              <Link href={threadUrl}>{auto ? "Post in the thread" : "Post your proof in the thread"}</Link>
+            </Button>
+          ) : action.slug === "refer-land-project" ? (
+            <ReferralShareButton />
+          ) : action.proofType === "game_quest" ? (
+            <Button size="sm" onClick={checkGameQuest} disabled={submit.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">Check my progress</Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">Verifies automatically when you use the Galley.</p>
           )}
-          <Button size="sm" onClick={doSubmit} disabled={submit.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f] shrink-0">
-            {pending ? "Resubmit" : "Submit"}
-          </Button>
         </div>
       )}
-      {pending && <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">Submitted. Waiting on verification.</p>}
+      {pending && <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">Posted. Waiting on a crew member to verify.</p>}
     </div>
   );
 }

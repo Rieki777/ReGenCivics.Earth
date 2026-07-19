@@ -4544,6 +4544,11 @@ export const shipQuestActions = mysqlTable("ship_quest_actions", {
   // the existing Food Foresting quest, for auto-verification.
   linkedQuestId: varchar("linkedQuestId", { length: 100 }),
   forumPostId: int("forumPostId"),
+  // Item 16: how the action verifies. "auto" awards on a forum post (writing
+  // quests) or a system event; "crew" awards when the reviewer approves.
+  verificationType: mysqlEnum("verificationType", ["auto", "crew"]).notNull().default("crew"),
+  // How many times one player can complete this action (item 14b / item 11).
+  maxSubmissions: int("maxSubmissions").notNull().default(1),
   sortOrder: int("sortOrder").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([

@@ -607,6 +607,13 @@ export const forumRouter = router({
         authorId: ctx.user.id,
         content: cleanContent,
       }).catch((err) => console.error(`[forum.createReply] notify fan-out failed for ${replyId}`, err));
+      // Item 16: if this thread is a Free Passage Quest thread, posting proof
+      // here awards the action (auto) or opens it for crew approval. Dynamic
+      // import avoids a load-time cycle with the ship router; fire-and-forget so
+      // it never blocks the reply.
+      void import("./ship")
+        .then((m) => m.awardQuestFromForumReply(ctx.user.id, input.postId, replyId))
+        .catch((err) => console.error(`[forum.createReply] quest award failed for reply ${replyId}`, err));
       return { id: replyId };
     }),
 

@@ -287,6 +287,39 @@ async function awardGalleyQuest(userId: number, slug: string, note: string): Pro
   if (cid) await rewardVerifiedCompletion(cid);
 }
 
+/**
+ * Item 16: award a Free Passage Quest action when a player posts in its forum
+ * thread. Auto actions verify and credit immediately; crew actions record a
+ * pending completion for the reviewer to approve. Honors the action's submission
+ * cap (counting the player's non-rejected completions). No-ops when the post is
+ * not a quest thread, so forum.createReply can call it for every reply.
+ */
+export async function awardQuestFromForumReply(userId: number, postId: number, replyId: number): Promise<void> {
+  const d = await db();
+  const [action] = await d.select().from(shipQuestActions).where(eq(shipQuestActions.forumPostId, postId)).limit(1);
+  if (!action) return; // Not a quest thread.
+  const [countRow] = await d
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(shipQuestCompletions)
+    .where(and(
+      eq(shipQuestCompletions.userId, userId),
+      eq(shipQuestCompletions.actionId, action.id),
+      sql`${shipQuestCompletions.status} <> 'rejected'`,
+    ));
+  if (Number(countRow?.n ?? 0) >= action.maxSubmissions) return; // At the cap.
+  const status = action.verificationType === "auto" ? ("verified" as const) : ("pending" as const);
+  const [res] = await d.insert(shipQuestCompletions).values({
+    userId,
+    actionId: action.id,
+    proofUrl: `/community/${postId}`,
+    note: `Posted in the quest thread (reply #${replyId}).`,
+    status,
+    verifiedAt: status === "verified" ? new Date() : null,
+  });
+  const cid = (res as { insertId?: number }).insertId;
+  if (status === "verified" && cid) await rewardVerifiedCompletion(cid);
+}
+
 export const shipRouter = router({
   // What is live (concierge, offering/gift forms, platform listing, tracker).
   featureFlags: publicProcedure.query(() => shipFeatureFlags()),
