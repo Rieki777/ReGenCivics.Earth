@@ -16,8 +16,10 @@ import {
   X, Copy, ChevronDown, ChevronUp, Play,
   Share2, Twitter, MessageCircle, Filter, SortAsc, Lock,
   Hourglass, AlertTriangle, Star,
-  Bell, CheckCircle, BookOpen, Leaf
+  Bell, CheckCircle, BookOpen, Leaf,
+  Map as MapIcon, LayoutGrid
 } from "lucide-react";
+import { CampaignMap } from "@/components/crowdpool/CampaignMap";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -566,6 +568,7 @@ export default function CrowdPoolingProjects() {
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"most-funded" | "ending-soon" | "newest" | "most-contributors">("most-funded");
   const [activeTab, setActiveTab] = useState<"active" | "upcoming" | "funded">("active");
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
   // Real campaigns from the database. Demo campaigns (isDemo = 1) come back
   // like any other row and are labeled, never merged with hardcoded data.
@@ -841,6 +844,32 @@ export default function CrowdPoolingProjects() {
                 <option value="newest">Newest</option>
                 <option value="most-contributors">Most Contributors</option>
               </select>
+
+              {/* Grid / map view toggle */}
+              <div className="inline-flex rounded-lg border border-white/20 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  aria-pressed={viewMode === "grid"}
+                  aria-label="Grid view"
+                  className={`px-2.5 py-1.5 pointer-coarse:min-h-11 flex items-center transition-colors ${
+                    viewMode === "grid" ? "bg-[#7dd87d] text-[#1a472a]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("map")}
+                  aria-pressed={viewMode === "map"}
+                  aria-label="Map view"
+                  className={`px-2.5 py-1.5 pointer-coarse:min-h-11 flex items-center transition-colors ${
+                    viewMode === "map" ? "bg-[#7dd87d] text-[#1a472a]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                  }`}
+                >
+                  <MapIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -904,7 +933,11 @@ export default function CrowdPoolingProjects() {
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-6">
+              {viewMode === "map" && !isLoading && sortedProjects.length > 0 && (
+                <CampaignMap campaigns={sortedProjects} onSelect={openCampaign} />
+              )}
+
+              <div className={`grid md:grid-cols-2 gap-6 ${viewMode === "map" ? "hidden" : ""}`}>
                 {sortedProjects.map((project) => {
                   const pct = project.targetAmount > 0 ? Math.round((project.currentAmount / project.targetAmount) * 100) : 0;
                   const isAlmost = pct >= 80;
