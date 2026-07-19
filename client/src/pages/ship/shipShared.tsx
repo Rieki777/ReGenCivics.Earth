@@ -5,8 +5,62 @@
  */
 import { useState, type ReactNode } from "react";
 import { Link } from "wouter";
+import { Anchor } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+/**
+ * The one standardized booking call to action for every Ship page. Always reads
+ * "Book Now", always routes to the booking flow (/ship/book), always the bright
+ * booking green, so it stays visually distinct from the gold quest CTA. Pass a
+ * `href` only for the referral-tagged booking link.
+ */
+export function BookNowButton({
+  className,
+  size = "lg",
+  href = "/ship/book",
+}: {
+  className?: string;
+  size?: "sm" | "default" | "lg";
+  href?: string;
+}) {
+  return (
+    <Button
+      asChild
+      size={size}
+      className={cn("bg-[#3ddc84] hover:bg-[#5ee89d] text-[#08301c] font-bold shadow-lg shadow-[#3ddc84]/25", className)}
+    >
+      <Link href={href}>
+        <Anchor className="w-4 h-4 mr-1.5" aria-hidden="true" /> Book Now
+      </Link>
+    </Button>
+  );
+}
+
+/** A tasteful mid-page booking prompt for the exploration sections. */
+export function BookNowCallout({
+  headline = "Ready to sail?",
+  sub,
+  className,
+}: {
+  headline?: string;
+  sub?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "my-10 rounded-2xl border border-[#3ddc84]/40 bg-gradient-to-br from-[#2f5d3a]/10 to-[#d4a574]/10 p-6 text-center",
+        className,
+      )}
+    >
+      <p className="text-xl font-bold">{headline}</p>
+      {sub && <p className="text-foreground/75 text-sm mt-1 max-w-xl mx-auto">{sub}</p>}
+      <div className="mt-4"><BookNowButton /></div>
+    </div>
+  );
+}
 
 export const ANCHOR_NIGHTLY = 600;
 export const TRIAL_NIGHTLY = 300; // exactly half the anchor, so the trial reads as a clean 50% off
@@ -146,7 +200,7 @@ const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string
   { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
   { href: "/ship/theme", label: "The Theme", image: "ship-double-rainbow.jpg", alt: "A double rainbow over the ship." },
   // The main event: the booking card wears the bright green shimmer (the CTA).
-  { href: "/ship/book", label: "Book a Voyage", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista.", primary: true },
+  { href: "/ship/book", label: "Book Now", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista.", primary: true },
   { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
   { href: "/ship/galley", label: "The Galley", image: "ship-galley-table.webp", alt: "A galley table of ripe fruit and greens." },
   { href: "/ship/quest", label: "The Quest", image: "ship-quest-banner.jpg", alt: "A trail under a rainbow." },

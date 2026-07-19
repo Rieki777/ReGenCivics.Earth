@@ -9,8 +9,8 @@ import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Sprout, Stamp, Anchor } from "lucide-react";
-import { ShipSection, ShipEyebrow, ShipImage } from "./shipShared";
+import { Sprout, Stamp } from "lucide-react";
+import { ShipSection, ShipEyebrow, ShipImage, BookNowButton } from "./shipShared";
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -80,11 +80,7 @@ export default function ShipHomecoming() {
       <ShipSection className="pt-0">
         <div className="max-w-2xl rounded-2xl border border-[#ffd700]/50 bg-[#ffd700]/10 p-6 text-center">
           <p className="text-lg italic mb-4">{data.closingLine}</p>
-          <Link href={refUrl}>
-            <Button size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]">
-              <Anchor className="w-5 h-5 mr-2" aria-hidden="true" /> Sail her yourself
-            </Button>
-          </Link>
+          <BookNowButton size="lg" href={refUrl} />
           <p className="text-xs text-muted-foreground mt-3">
             <Link href="/ship/log" className="underline">See every voyage that has sailed her</Link>
           </p>

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, Wrench, Anchor, ClipboardCheck, Users, ScrollText, AlertTriangle, Flame } from "lucide-react";
-import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipSection, ShipEyebrow, ShipNavRow, BookNowButton } from "./shipShared";
 import { AskShipwright } from "@/components/ship/AskShipwright";
 import { GearManifest } from "@/components/ship/GearManifest";
 import { GalleyStrip } from "@/components/ship/GalleyStrip";
@@ -114,7 +114,7 @@ export default function CaptainsBook() {
           <div className="max-w-2xl rounded-2xl border border-[#d4a574]/50 bg-[#d4a574]/10 p-5">
             <p className="text-foreground/85">The Captain's Book opens once you have a voyage aboard her. When your booking is confirmed, come back here for the Shipwright, the pre-sail checklist, your crew roles, and your log.</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/ship/book"><Button className="bg-[#2f5d3a] hover:bg-[#264a2f]">Choose a voyage week</Button></Link>
+              <BookNowButton />
               <Link href="/ship/log"><Button variant="outline">Read the fleet's log</Button></Link>
             </div>
           </div>

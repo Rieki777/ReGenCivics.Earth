@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow, BookNowCallout } from "./shipShared";
 import { GalleyTrackCards, HEALTH_NOTE, type TrackId } from "@/components/ship/GalleyTracks";
 import { GalleyRemixer } from "@/components/ship/GalleyRemixer";
 import { GALLEY_CARDS, type GalleyCard, type GalleyCategory } from "@/data/galleyCards";
@@ -196,7 +196,11 @@ export default function Galley() {
         </div>
       </ShipSection>
 
-      {/* The Cook + her tradition */}
+      <ShipSection className="py-0">
+        <BookNowCallout headline="Eat like this for a week aboard" sub="The Galley is one part of the voyage. Book an open week and taste it for yourself." />
+      </ShipSection>
+
+      {/* The Ship's Yum Dealer + her tradition */}
       <ShipSection className="py-10">
         <ShipEyebrow>The Ship's Yum Dealer</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-4">She engineers delicious nourishment out of living food</h2>

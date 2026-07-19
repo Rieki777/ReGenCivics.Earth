@@ -10,7 +10,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { Anchor, Map, Sprout, Ship as ShipIcon, Droplets, Wifi, Bike, Sun } from "lucide-react";
 import {
   ShipImage, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
-  SHIP_TAGLINE, CHESTNUT_URL, shipImg,
+  SHIP_TAGLINE, CHESTNUT_URL, shipImg, BookNowButton, BookNowCallout,
 } from "./shipShared";
 import { ShipInteriorCarousel } from "@/components/ship/ShipInteriorCarousel";
 import { ShipInventory } from "@/components/ship/ShipInventory";
@@ -64,9 +64,7 @@ export default function Ship() {
             <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] animate-glow transition-shadow">
               <Link href="/ship/quest">Win a free voyage</Link>
             </Button>
-            <Button asChild size="lg" className="bg-white text-[#1a472a] font-semibold text-base px-7 hover:bg-white/90 shadow-lg">
-              <Link href="/ship/book">See open weeks</Link>
-            </Button>
+            <BookNowButton size="lg" className="text-base px-7" />
           </div>
         </div>
       </section>
@@ -183,6 +181,7 @@ export default function Ship() {
             </div>
           ))}
         </div>
+        <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Sunday through Cascadia." />
       </ShipSection>
 
       {/* Perks */}
@@ -211,7 +210,7 @@ export default function Ship() {
             <h2 className="text-3xl font-bold mb-4">Her community trial year</h2>
             <PriceTag className="mb-4" />
             <p className="text-foreground/90 mb-4">One-week voyages, for the crew who get here first. Those with abundance are asked to wait for year two, when upgrades land and the rate climbs toward what she is worth.</p>
-            <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/book">Request a week</Link></Button>
+            <BookNowButton size="default" />
           </div>
           <div className="rounded-2xl border p-6 bg-card">
             <h3 className="font-semibold text-lg mb-2">How a voyage is arranged</h3>

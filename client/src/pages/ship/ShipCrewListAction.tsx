@@ -9,7 +9,7 @@ import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { ShipSection, ShipEyebrow } from "./shipShared";
+import { ShipSection, ShipEyebrow, BookNowButton } from "./shipShared";
 
 export default function ShipCrewListAction({ mode }: { mode: "confirm" | "unsubscribe" }) {
   const confirm = trpc.ship.crewList.confirm.useMutation();
@@ -52,7 +52,7 @@ export default function ShipCrewListAction({ mode }: { mode: "confirm" | "unsubs
             <p className="text-foreground/80 mb-4">{copy[state].body}</p>
             <div className="flex flex-wrap gap-3">
               <Link href="/ship"><Button className="bg-[#2f5d3a] hover:bg-[#264a2f]">Back to the ship</Button></Link>
-              <Link href="/ship/book"><Button variant="outline">See open weeks</Button></Link>
+              <BookNowButton size="default" />
             </div>
           </div>
         )}

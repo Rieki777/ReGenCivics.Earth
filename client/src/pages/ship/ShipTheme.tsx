@@ -19,7 +19,7 @@ import {
   Heart, HeartPulse, Sprout, Mountain, Flame, Droplets, Utensils,
   MessageCircle, Anchor, BookOpen, Moon, Users,
 } from "lucide-react";
-import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow, BookNowButton, BookNowCallout } from "./shipShared";
 
 /** The docking that sets the theme. Update this when she moves. */
 const CURRENT_THEME = {
@@ -151,9 +151,7 @@ export default function ShipTheme() {
           <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-6xl font-bold mb-5 drop-shadow-lg">{CURRENT_THEME.name}</h1>
           <p data-reveal data-reveal-delay="160" className="text-lg md:text-2xl mb-8 text-white drop-shadow">She is docked at {CURRENT_THEME.dock}. So this season she sails as a sanctuary, and the sanctuary is built on love.</p>
           <div data-reveal data-reveal-delay="240" className="flex flex-wrap gap-4 justify-center">
-            <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] transition-shadow">
-              <Link href="/ship/book">Book the Love Voyage</Link>
-            </Button>
+            <BookNowButton size="lg" className="text-base px-7" />
             <Button asChild size="lg" className="bg-white text-[#1a472a] font-semibold text-base px-7 hover:bg-white/90 shadow-lg">
               <a href="/blog/more-than-one-honeymoon">Read the honeymoon story</a>
             </Button>
@@ -233,7 +231,7 @@ export default function ShipTheme() {
           ))}
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]"><Link href="/ship/book">Take the Quest of Love</Link></Button>
+          <BookNowButton size="default" />
           <Button asChild variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/log">Read what past crews did</Link></Button>
         </div>
       </ShipSection>
@@ -273,6 +271,7 @@ export default function ShipTheme() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground mt-6">Interior photos come aboard as the refit finishes. Open flame stays in the fire ring, never in the coach.</p>
+        <BookNowCallout headline="Come sail the Sanctuary of Love" sub="Her weeks board Monday and return Sunday. Pick an open week and take the voyage." />
       </ShipSection>
 
       {/* CORE */}
@@ -309,7 +308,7 @@ export default function ShipTheme() {
         <h2 className="text-3xl font-bold mb-4">When is your next honeymoon?</h2>
         <p className="text-white/85 max-w-2xl mx-auto mb-7">She is docked at The Sanctuary through her first sailing year. Her weeks board Monday and return Sunday. The trial year rate is the sweetest she will ever be, and the crew who get there first get her at it.</p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]"><Link href="/ship/book">See open weeks</Link></Button>
+          <BookNowButton size="lg" />
           <Button asChild size="lg" variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/quest">Win a free voyage</Link></Button>
         </div>
       </ShipSection>

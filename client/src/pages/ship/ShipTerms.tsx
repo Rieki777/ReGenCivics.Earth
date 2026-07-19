@@ -516,7 +516,7 @@ export default function ShipTerms() {
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground">
-          Ready to sail? <Link href="/ship/book" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Request a voyage week</Link>.
+          Ready to sail? <Link href="/ship/book" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Book Now</Link>.
         </p>
       </ShipSection>
     </PageWrapper>
