@@ -108,6 +108,24 @@ export async function runDigestJob() {
     console.log("[DigestJob] Digest generated and saved.");
 
     await sendDigestEmails(threads.slice(0, 5), weekNum);
+
+    // Steward weekly digest: per active campaign, nudge the steward on open
+    // needs, claims to deliver, new followers, and pending reviews. Piggybacks
+    // this weekly slot so it fires at most once a week. Its own try/catch keeps
+    // a failure here from touching the community digest above.
+    try {
+      const { getDb } = await import("../db");
+      const { sendStewardWeeklyDigest } = await import("./stewardDigestJob");
+      const dbc = await getDb();
+      if (dbc) {
+        const r = await sendStewardWeeklyDigest(dbc);
+        console.log(
+          `[DigestJob] Steward digests: ${r.sent} sent, ${r.skippedQuiet} quiet, ${r.skippedFrequency} opted out (of ${r.campaigns} active).`,
+        );
+      }
+    } catch (err) {
+      console.error("[DigestJob] steward digest failed", err);
+    }
   } catch (e) {
     console.error("[DigestJob] Error:", e);
     try { const Sentry = await import("@sentry/node"); Sentry.captureException(e, { tags: { job: "digest" } }); } catch {}
