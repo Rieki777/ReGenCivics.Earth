@@ -23,6 +23,7 @@ import {
   SUGGESTED_VOYAGES, MAX_VOYAGE_WEEKS, buildRoughChart, firstMateSeedAnswers, suggestedVoyageById,
   type SuggestedVoyage, type SuggestedVoyageId,
 } from "@shared/shipVoyages";
+import { applyMultiWeekDiscount, multiWeekDiscountPct, nextTierNudge } from "@shared/shipPricing";
 import { FirstMateQuickCustomize } from "./ShipFirstMate";
 import { CrewListJoin } from "@/components/ship/CrewListJoin";
 import { SHIP_TERMS_VERSION, SHIP_DEPOSIT_USD } from "@shared/shipTerms";
@@ -101,9 +102,14 @@ export default function ShipBook() {
   const anchorTotal = selected.reduce((sum, w) => sum + w.price.anchorTotal, 0);
   // The trial discount applies only when every selected week is trial-rate.
   const allTrial = selected.length > 0 && selected.every((w) => !w.isYear2);
-  const savedTotal = anchorTotal - total;
-  const savedPct = anchorTotal > 0 ? Math.round((savedTotal / anchorTotal) * 100) : 0;
-  const perPerson = guests > 0 ? Math.round(total / guests) : total;
+  // Multi-week discount, stacked on top of the first-year rate already baked into
+  // each week's price. Extending the run recomputes it across the whole booking.
+  const mw = applyMultiWeekDiscount(total, selected.length);
+  const finalTotal = mw.total;
+  const totalSaved = anchorTotal - finalTotal;
+  const totalSavedPct = anchorTotal > 0 ? Math.round((totalSaved / anchorTotal) * 100) : 0;
+  const nudge = nextTierNudge(selected.length);
+  const perPerson = guests > 0 ? Math.round(finalTotal / guests) : finalTotal;
   const bioregions = Array.from(new Set(selected.map((w) => w.bioregion)));
 
   const voyagePkg = voyageId ? suggestedVoyageById(voyageId) : null;
@@ -220,6 +226,22 @@ export default function ShipBook() {
         <ShipEyebrow>Book a voyage</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Choose your voyage week</h1>
         <PriceTag className="mb-4" />
+        {/* Multi-week savings ladder: stacks on top of the first-year 50% off. */}
+        <div className="mb-4 rounded-2xl border border-[#3ddc84]/40 bg-[#3ddc84]/[0.06] p-4 max-w-2xl">
+          <p className="text-sm font-semibold mb-2">Stay longer, save more. Multi-week savings stack on top of the first-year 50% off.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[1, 2, 3, 4].map((w) => {
+              const p = multiWeekDiscountPct(w);
+              return (
+                <div key={w} className={`rounded-xl border p-2 text-center ${w === 4 ? "border-[#ffd700] bg-[#ffd700]/10" : "bg-card"}`}>
+                  <p className="text-xs text-muted-foreground">{w === 4 ? "A month" : `${w} ${w === 1 ? "week" : "weeks"}`}</p>
+                  <p className="font-bold text-[#2f5d3a] dark:text-[#7dd87d]">{p === 0 ? "Base rate" : `${p}% off`}</p>
+                  {w === 4 && <p className="text-[10px] font-bold text-[#b8860b] dark:text-[#ffd700]">Best value</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover. Every week below is a real open week on her calendar.</p>
       </ShipSection>
 
@@ -232,7 +254,9 @@ export default function ShipBook() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {SUGGESTED_VOYAGES.map((v) => {
               const run = findRun(weeks, v.weeks);
-              const price = run === null ? null : weeks.slice(run, run + v.weeks).reduce((sum, w) => sum + w.price.total, 0);
+              const subtotal = run === null ? null : weeks.slice(run, run + v.weeks).reduce((sum, w) => sum + w.price.total, 0);
+              const pkg = subtotal === null ? null : applyMultiWeekDiscount(subtotal, v.weeks);
+              const price = pkg?.total ?? null;
               const active = voyageId === v.id;
               const Icon = VOYAGE_ICONS[v.id];
               return (
@@ -251,6 +275,9 @@ export default function ShipBook() {
                   <div className="flex items-center gap-2 mb-1.5">
                     <Icon className="w-5 h-5 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
                     <span className="font-semibold">{v.name}</span>
+                    {v.weeks >= MAX_VOYAGE_WEEKS && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-[#ffd700] text-[#1a472a] text-[10px] font-bold px-1.5 py-0.5 shrink-0">Best value</span>
+                    )}
                   </div>
                   <p className="text-sm text-foreground/80">{v.tagline}</p>
                   <p className="text-xs font-semibold text-[#2f5d3a] dark:text-[#7dd87d] mt-1">Sails {v.routeName}</p>
@@ -259,8 +286,13 @@ export default function ShipBook() {
                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d] mr-2">
                       {v.weeks} {v.weeks === 1 ? "week" : "weeks"}
                     </span>
-                    {price !== null ? (
-                      <span><span className="font-semibold">${price.toLocaleString()}</span><span className="text-muted-foreground"> the voyage</span></span>
+                    {price !== null && pkg ? (
+                      <span className="inline-flex items-baseline flex-wrap gap-1.5">
+                        {pkg.discountPct > 0 && <span className="line-through text-muted-foreground text-xs">${pkg.subtotal.toLocaleString()}</span>}
+                        <span className="font-semibold">${price.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs">the voyage</span>
+                        {pkg.discountPct > 0 && <span className="inline-flex items-center rounded-full bg-[#3ddc84] text-[#08301c] text-[10px] font-bold px-1.5 py-0.5">{pkg.discountPct}% off</span>}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground">No open run of {v.weeks} weeks right now</span>
                     )}
@@ -379,19 +411,32 @@ export default function ShipBook() {
               <div className="rounded-2xl border border-[#ffd700]/60 bg-[#ffd700]/10 p-4">
                 <p className="font-semibold">Your voyage: {fmtDay(startDate)} to {fmtDay(endDate)}</p>
                 <p className="text-sm text-foreground/80 mt-1">
-                  {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}.{" "}
-                  {allTrial ? (
-                    <>
-                      <span className="line-through text-muted-foreground">${anchorTotal.toLocaleString()}</span>{" "}
-                      <span className="font-semibold">${total.toLocaleString()}</span> suggested total ask across the rental and the offering, {savedPct}% off, so you save ${savedTotal.toLocaleString()}.
-                    </>
-                  ) : (
-                    <>Suggested total ask ${total.toLocaleString()} across the rental and the offering.</>
+                  {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}.
+                </p>
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="line-through text-muted-foreground">${anchorTotal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${finalTotal.toLocaleString()}</span>
+                  {totalSavedPct > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-[#2f5d3a] text-white text-xs font-bold px-2 py-0.5">{totalSavedPct}% off</span>
                   )}
-                </p>
+                  <span className="text-sm text-muted-foreground">suggested total ask</span>
+                </div>
+                {(allTrial || mw.discountPct > 0) && (
+                  <p className="text-xs text-foreground/75 mt-1">
+                    {allTrial && "First year 50% off"}
+                    {allTrial && mw.discountPct > 0 && ", plus "}
+                    {mw.discountPct > 0 && `${mw.discountPct}% off for ${selected.length} weeks`}
+                    {`. You save $${totalSaved.toLocaleString()} off her $${anchorTotal.toLocaleString()} value.`}
+                  </p>
+                )}
                 <p className="text-sm text-foreground/80 mt-1">
-                  That is about <span className="font-semibold">${perPerson.toLocaleString()} per person</span> for the {guests} sailing. Plus applicable taxes.
+                  About <span className="font-semibold">${mw.perWeek.toLocaleString()} per week</span> and <span className="font-semibold">${perPerson.toLocaleString()} per person</span> for the {guests} sailing. Plus applicable taxes.
                 </p>
+                {nudge && (
+                  <p className="mt-2 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">
+                    {nudge.atWeeks >= 4 ? "Book a month" : "Add a week"} and save {nudge.pct}% off the whole booking.
+                  </p>
+                )}
                 {selected.length > 1 && (
                   <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks each Sunday, your way: dump and refill on route, or swing through Ashland and the Keeper does it.</p>
                 )}

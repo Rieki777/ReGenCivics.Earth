@@ -58,6 +58,7 @@ export function BookNowCallout({
       <p className="text-xl font-bold">{headline}</p>
       {sub && <p className="text-foreground/75 text-sm mt-1 max-w-xl mx-auto">{sub}</p>}
       <div className="mt-4"><BookNowButton /></div>
+      <p className="text-xs text-muted-foreground mt-2">First year 50% off, plus up to 15% off a month.</p>
     </div>
   );
 }
@@ -167,6 +168,7 @@ export function PriceTag({ className }: { className?: string }) {
       <span className="inline-flex items-center rounded-full bg-[#2f5d3a] text-white text-xs font-bold px-2 py-0.5">{pct}% off</span>
       <span className="text-muted-foreground">per voyage week, trial year</span>
       <span className="text-xs text-muted-foreground/80 w-full">Her full ${ANCHOR_NIGHTLY}/night rate, reduced by {pct}% for the trial year, so you save ${saved.toLocaleString()} a week. Full rate returns April 2027. Plus applicable taxes.</span>
+      <span className="text-xs font-semibold text-[#2f5d3a] dark:text-[#7dd87d] w-full">Book more weeks and save more, stacked on top: 2 weeks 5% off, 3 weeks 10% off, a month 15% off.</span>
     </div>
   );
 }
