@@ -147,7 +147,9 @@ function CollapsibleSection({
   id?: string;
 }) {
   const isDesktopSection = useMediaQuery('(min-width: 1024px)');
-  const resolvedDefault = defaultOpen ?? false;
+  // Sections without an explicit defaultOpen follow the viewport: open on desktop
+  // for scannable reading, closed on mobile so the long page stays short to skim.
+  const resolvedDefault = defaultOpen ?? isDesktopSection;
   const [isOpen, setIsOpen] = useState(resolvedDefault);
 
   return (
