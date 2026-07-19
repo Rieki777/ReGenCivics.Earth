@@ -67,10 +67,29 @@ Telegram works offline, opens instantly, and never fails. Capture has to match t
 - A **big button on the admin dashboard** takes you there.
 - Two tiers as in section 1: ripe ideas with Develop, and drafts to edit.
 - Each item shows a **why now** line and, for drafts, the score components.
+- **Source provenance on every card.** Clicking a card opens a detail view that traces the piece to its origin: the raw capture or Telegram messages that seeded it (with dates), the link tree of every URL inside those sources, the related notes in the vault, and a jump into the Obsidian note. Nothing is orphaned from where it came from. The drafting prompt is built from these raw sources so drafts use your own words and invent no facts. This mirrors the local command center, which already does this.
 - Controls beyond Ship: **Snooze** (hide for N days), **Not this** (suppress this idea or angle, a negative signal into ripeness), **Steer** (a box like "focus on the fundraising angle"), and **Regenerate** with inline nudges (shorter, more personal, lead with the question). Regenerations do not count as voice edits.
 - **Channels:** LinkedIn, Facebook, Instagram, Threads and X, a newsletter blurb, and an **Article** output wired to the existing article assembly line (title, angle, theme MOCs, seed notes). One channel drafts eagerly, the rest draft on demand when you expand the item, to control cost.
 - **Mark as posted** captures which channel it went to, and optionally lets you paste back the final posted text, which is the cleanest voice signal of all.
 - **One-button email push for big announcements.** The newsletter blurb has a Send action through Resend. It is hardened: only an edited-and-saved item can be sent, never a raw draft. Send returns a preview plus a signed confirm token bound to the exact body hash and recipient list, and the actual send requires that token back, so an injected note can never silently become an email. Hard caps (for example one send per ten minutes, three per day), an idempotency key so a double-click is a no-op, and CAN-SPAM basics (unsubscribe link, postal address, honor the Resend suppression list). Every send is logged as who, when, recipient count, and body hash, with no recipient PII in plaintext.
+
+## 5b. Compose to Publish: one idea to a full package
+
+A compose box sits at the top of The Harvest. You drop an idea by text or voice, and it fans out into a complete, publishable package grounded in your own notes.
+
+**Input.** Text or voice (reusing the Phase 1 capture and transcription, with the cleanup pass). The moment an idea lands, the system retrieves your related notes and source messages and shows what it is drawing from, so you can add or remove sources. Drafting uses those raw words and the voice profile, never generic invention.
+
+**Output, as one Publication object:**
+
+1. **An article for the site.** Drafted in your voice from your sources, with image slots marked (hero and inline). Each slot gets two or three generated options in your visual identity, each with alt text. The article is created as a hidden preview first, at a private URL, with SEO and OG metadata auto-filled and the hero as the OG image. The voice grader runs before publish. One button makes it public.
+2. **Social posts per channel.** LinkedIn, Facebook, Instagram, Threads and X, each drafted in that channel's register with character counts and the right media. One button publishes to a channel, or Publish all once approved. Publishing runs through a social publishing API so you connect your channels once, rather than five fragile integrations. Publish now or schedule.
+3. **Optional email blast** for a big announcement, using the hardened one-button send from section 5.
+
+**Staged, never one-shot.** One idea creates the whole package, but every surface has its own approve and publish control, and a single review screen shows everything that will go out before anything does. Publishing to the live site, to social, and to the list are irreversible public actions, so each is gated, rate-limited, and never fired from a raw or unapproved draft. An unpublish window covers mistakes.
+
+**The Visual Identity profile.** The image twin of the Voice Profile, in `90 Voice Profile/Visual Identity.md`. It holds your recurring aesthetic (aurora over food-forest villages, mycelia and crystal kingdoms, children and animals, ancient and futuristic) and grounds every image prompt. It learns from which generated options you pick, the same way the voice loop learns from edits.
+
+**Learning.** Which images you choose trains the visual profile. Your per-channel edits train per-channel voice sub-profiles, since LinkedIn and X differ. The final posted text, captured on publish, is the cleanest signal of all.
 
 ## 6. The learning loop, done safely
 
@@ -88,10 +107,16 @@ When you edit an item and save, the system learns the style parts of your edit. 
 Cloud (MySQL, owner-gated, filtered by `owner_id = ctx.user.id`):
 
 - `quick_notes` - id, capture_id (uuid, unique), owner_id, body, source (text or voice), audio_key null, themes json null, status (inbox or processed), created_at. Hard-deleted after the bridge confirms the vault write.
-- `creation_items` - id, owner_id, capture_id, channel, ripeness, body, status (ready, edited, shipped), created_at, updated_at. Unique key `(owner_id, capture_id, channel)`. Write-once from the worker once status leaves ready.
+- `creation_items` - id, owner_id, capture_id, channel, ripeness, body, source_refs json (the capture ids, vault note refs, and raw message ids that seeded this, for the provenance view), status (ready, edited, shipped), created_at, updated_at. Unique key `(owner_id, capture_id, channel)`. Write-once from the worker once status leaves ready.
+- `source_index` - an addressable store of raw messages and captures (id, date, text, links, forwarded_from, media), so any card can show exactly where it came from. Built locally from the export, mirrored to the app for the ideas that seed the feed.
 - `voice_edits` - id, owner_id, item_id, channel, edit_kind (style or content), ai_version, edited_version, created_at. Purged after rule extraction.
 - `voice_rules` - id, owner_id, rule, weight, first_seen, last_seen.
 - `harvest_runs` - last_bridge_run_at, last_generation_run_at, counts, for the status line.
+- `publications` - id, owner_id, source_refs json, article_item_id, channel_item_ids json, image_keys json, email_item_id null, status (draft, partially_published, published), created_at. Groups everything that comes from one composed idea.
+- `publication_targets` - id, publication_id, surface (site, linkedin, facebook, instagram, threads, x, email), status (draft, approved, scheduled, published, failed), scheduled_for null, external_url null, published_at null. Per-surface state, so publishing is staged and idempotent.
+- `images` - id, owner_id, publication_id, slot (hero, inline), r2_key, alt_text, prompt, chosen bool.
+
+Local vault addition: `90 Voice Profile/Visual Identity.md`, the image-prompt profile, loaded by the image generator the way the Voice Profile is loaded by the drafter.
 
 Local vault: `00 Inbox` intake, `_pipeline/ingest_inbox.py`, `90 Voice Profile/Learned From Edits.md` as a rendered view, existing folders and pipeline for sorting and cross-linking.
 
@@ -125,6 +150,8 @@ Local vault: `00 Inbox` intake, `_pipeline/ingest_inbox.py`, `90 Voice Profile/L
 
 **Phase 4, the self-driving layer.** Auto-drafting of top-confidence items, resurfacing, the weekly digest, the graph view, and the email push. This comes after the voice model has calibrated on real edits, so the first impression is good.
 
+**Phase 5, Compose to Publish.** The top-of-page compose box, the Publication object, image generation in the Visual Identity profile with alt text, article preview and publish to the site, and social publishing through an aggregator API with staged per-surface approval. This is the most integration-heavy and the most irreversible, so it ships last and behind the strongest confirm gates. The compose input can land earlier as a simple wrapper over Develop, with the publishing integrations following.
+
 ## 11. Handoff breakdown
 
 | Work | Who | Notes |
@@ -151,3 +178,6 @@ Local vault: `00 Inbox` intake, `_pipeline/ingest_inbox.py`, `90 Voice Profile/L
 1. Transcription provider choice between Deepgram and OpenAI Whisper API.
 2. The email list source and how recipients consented, for the compliance basics.
 3. Whether the backlog seed drafts articles, social, or both on first run.
+4. Social publishing approach: an aggregator API (Postiz self-hosted, Buffer, Ayrscribe, Blotato) versus per-platform integrations. Recommendation: aggregator, because Instagram, Threads, and X each restrict automated posting and per-platform auth is brittle. Confirm the aggregator supports every target channel.
+5. Image generation provider for the Visual Identity slots (the Nano Banana Pro or another model), and where images are stored and served from (private R2, then attached to the article and posts).
+6. How the site blog publishes: the existing blog data model and preview mechanism, so the article publish writes to it cleanly.

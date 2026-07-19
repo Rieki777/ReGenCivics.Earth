@@ -946,6 +946,9 @@ export default function CrowdPoolingTool() {
                     key={saved.id}
                     className="p-4 border border-[#7dd87d]/30 rounded-xl hover:bg-[#f0f7f0] cursor-pointer transition-colors"
                     onClick={() => loadFromProfile(saved)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadFromProfile(saved); } }}
                   >
                     <div className="flex items-center justify-between">
                       <div>

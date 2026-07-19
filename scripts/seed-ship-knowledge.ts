@@ -60,7 +60,7 @@ const CHUNKS: Chunk[] = [
   },
   {
     title: "Fresh water and filtration: the ship's water doctrine",
-    content: "She has whole-RV chlorine filtration plus filtered showers and a gravity drinking-water filter, and a spring-water intake pump that draws from springs up to about 50 feet away. Use only the soaps and cleaning materials aboard. Sanitize the fresh tank periodically and keep the drinking filter clean.",
+    content: "She has whole-RV chlorine filtration plus filtered showers and an in-line drinking-water filter, and a spring-water intake pump that draws from springs up to about 50 feet away. Use only the soaps and cleaning materials aboard. Sanitize the fresh tank periodically and keep the drinking filter clean.",
     system: "water_filtration", sourceType: "manual", sourceRef: "Ship water doctrine (REGEN_SHIP Section 9)", isApproved: true,
   },
   {

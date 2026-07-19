@@ -309,6 +309,9 @@ function AdminCustomGameWaitlist() {
             <div
               className="p-4 cursor-pointer hover:bg-white/8 transition-colors"
               onClick={() => setExpanded(expanded === inq.id ? null : inq.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(expanded === inq.id ? null : inq.id); } }}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -497,6 +500,9 @@ function AdminCustomGameApplications() {
             <div
               className="p-4 cursor-pointer hover:bg-white/8 transition-colors"
               onClick={() => setExpanded(expanded === app.id ? null : app.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(expanded === app.id ? null : app.id); } }}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>

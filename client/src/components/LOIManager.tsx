@@ -178,6 +178,9 @@ export function LOIManager() {
                     setSelectedLOI(loi);
                     setDetailOpen(true);
                   }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedLOI(loi); setDetailOpen(true); } }}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

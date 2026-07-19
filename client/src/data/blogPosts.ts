@@ -107,7 +107,7 @@ The ReGen Ship is a program of the Church of the Regenerative Earth, and this ar
 
 ## When is your next honeymoon?
 
-Her trial year is now: one-week voyages at $299 a night (the rate climbs as she gets even better, so early crews get the sweetest deal). And if you want to sail free, the Maiden Voyage Quest is open to everyone; qualify by August 16 and you are in the drawing for a free voyage, and more free voyages are drawn as the year books up. Winners pick their own dates.
+Her trial year is now: one-week voyages at $300 a night, half her full $600 rate (the full rate returns in April 2027, so early crews get the sweetest deal). And if you want to sail free, the Maiden Voyage Quest is open to everyone; qualify by August 16 and you are in the drawing for a free voyage, and more free voyages are drawn as the year books up. Winners pick their own dates.
 
 Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, tenth one. You're allowed.
 

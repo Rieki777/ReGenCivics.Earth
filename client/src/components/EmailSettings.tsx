@@ -404,6 +404,9 @@ function EmailTemplatePreview() {
                           setSelectedTemplate(t.id);
                           setIsEditing(false);
                         }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedTemplate(t.id); setIsEditing(false); } }}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <Icon className={`w-4 h-4 ${t.color}`} />

@@ -229,6 +229,9 @@ function AnimatedTokenFlow() {
               i === step ? 'border-white/40 bg-white/10' : 'border-white/10 bg-white/5 hover:bg-white/8'
             }`}
             onClick={() => { setIsPlaying(false); setStep(i); }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsPlaying(false); setStep(i); } }}
           >
             <div className="text-base sm:text-lg mb-1">{s.icon}</div>
             <p className="text-[9px] sm:text-xs text-white/60 leading-tight break-words text-balance">{s.label}</p>

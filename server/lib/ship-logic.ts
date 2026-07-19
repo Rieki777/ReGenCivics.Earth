@@ -231,7 +231,7 @@ export function enumerateVoyageWeeks(input: EnumerateWeeksInput): VoyageWeek[] {
       selectable: state === "open" || state === "requested",
       priceMultiplier,
       price: computeVoyagePrice(VOYAGE_NIGHTS, priceMultiplier),
-      windowLabel: win?.label ?? (isYear2 ? "Year two, full rate" : null),
+      windowLabel: win?.label ?? (isYear2 ? "Full rate" : null),
     });
   }
   return out;

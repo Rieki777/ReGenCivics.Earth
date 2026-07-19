@@ -98,6 +98,12 @@ export default function ShipBook() {
   const startDate = selected[0]?.startDate ?? "";
   const endDate = selected[selected.length - 1]?.endDate ?? "";
   const total = selected.reduce((sum, w) => sum + w.price.total, 0);
+  const anchorTotal = selected.reduce((sum, w) => sum + w.price.anchorTotal, 0);
+  // The trial discount applies only when every selected week is trial-rate.
+  const allTrial = selected.length > 0 && selected.every((w) => !w.isYear2);
+  const savedTotal = anchorTotal - total;
+  const savedPct = anchorTotal > 0 ? Math.round((savedTotal / anchorTotal) * 100) : 0;
+  const perPerson = guests > 0 ? Math.round(total / guests) : total;
   const bioregions = Array.from(new Set(selected.map((w) => w.bioregion)));
 
   const voyagePkg = voyageId ? suggestedVoyageById(voyageId) : null;
@@ -313,6 +319,11 @@ export default function ShipBook() {
                     const meta = STATE_META[wk.state as WeekState];
                     const sel = isSelected(i);
                     const returnDay = (wk as { returnDate?: string }).returnDate ?? wk.endDate;
+                    // Trial weeks show the full rate struck through with the discount;
+                    // full-rate weeks (from April 2027) just show their price.
+                    const wkDiscount = !wk.isYear2 && wk.price.anchorTotal > wk.price.total
+                      ? Math.round((1 - wk.price.total / wk.price.anchorTotal) * 100)
+                      : 0;
                     return (
                       <li key={wk.startDate} role="option" aria-selected={sel}>
                         <button
@@ -339,8 +350,19 @@ export default function ShipBook() {
                           <div className={view === "list" ? "text-right shrink-0" : "flex items-center justify-between"}>
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.badge}`}>{meta.label}</span>
                             <span className="block text-sm mt-1">
-                              <span className="font-semibold">${wk.price.total.toLocaleString()}</span>
-                              <span className="text-muted-foreground"> the voyage</span>
+                              {wkDiscount > 0 ? (
+                                <>
+                                  <span className="text-muted-foreground line-through">${wk.price.anchorTotal.toLocaleString()}</span>{" "}
+                                  <span className="font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">${wk.price.total.toLocaleString()}</span>
+                                  <span className="text-muted-foreground"> the voyage</span>
+                                  <span className="ml-1.5 inline-flex items-center rounded-full bg-[#2f5d3a] text-white text-[10px] font-bold px-1.5 py-0.5 align-middle">{wkDiscount}% off</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="font-semibold">${wk.price.total.toLocaleString()}</span>
+                                  <span className="text-muted-foreground"> the voyage</span>
+                                </>
+                              )}
                               {wk.windowLabel && <span className="text-muted-foreground"> · {wk.windowLabel}</span>}
                             </span>
                           </div>
@@ -357,7 +379,18 @@ export default function ShipBook() {
               <div className="rounded-2xl border border-[#ffd700]/60 bg-[#ffd700]/10 p-4">
                 <p className="font-semibold">Your voyage: {fmtDay(startDate)} to {fmtDay(endDate)}</p>
                 <p className="text-sm text-foreground/80 mt-1">
-                  {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}. Suggested total ask ${total.toLocaleString()} across the rental and the offering.
+                  {selected.length} voyage {selected.length === 1 ? "week" : "weeks"} through {bioregions.join(" and ")}.{" "}
+                  {allTrial ? (
+                    <>
+                      <span className="line-through text-muted-foreground">${anchorTotal.toLocaleString()}</span>{" "}
+                      <span className="font-semibold">${total.toLocaleString()}</span> suggested total ask across the rental and the offering, {savedPct}% off, so you save ${savedTotal.toLocaleString()}.
+                    </>
+                  ) : (
+                    <>Suggested total ask ${total.toLocaleString()} across the rental and the offering.</>
+                  )}
+                </p>
+                <p className="text-sm text-foreground/80 mt-1">
+                  That is about <span className="font-semibold">${perPerson.toLocaleString()} per person</span> for the {guests} sailing. Plus applicable taxes.
                 </p>
                 {selected.length > 1 && (
                   <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks each Sunday, your way: dump and refill on route, or swing through Ashland and the Keeper does it.</p>
@@ -503,13 +536,13 @@ export default function ShipBook() {
                 She is a <strong>2006 Fleetwood Revolution</strong>, and she carries her years honestly. You are sailing her as she is, with the quirks any twenty-year-old vehicle has. We would rather you hear them from us than find them at dusk: right now the <strong>leveling jacks are not fully working, and one has to be lowered by hand</strong>. You do not need them to drive her, sleep in her, or love the voyage. Nothing we know of stands between you and an epic trip.
               </p>
               <p className="text-sm text-foreground/80 mt-2">
-                That is part of why this year sails at ${TRIAL_VOYAGE.toLocaleString()} instead of ${ANCHOR_VOYAGE.toLocaleString()}. What this year earns goes back into her, into the upgrades and repairs that make the later years a more polished sail at a higher price. Want the comforts more than the discount? Book a year-two week. Want the voyage and the story? This is your year.{" "}
+                That is part of why this year sails at ${TRIAL_VOYAGE.toLocaleString()} instead of ${ANCHOR_VOYAGE.toLocaleString()}. What this year earns goes back into her, into the upgrades and repairs that make the later years a more polished sail at a higher price. Want the comforts more than the discount? Book a full-rate week from April 2027. Want the voyage and the story? This is your year.{" "}
                 <Link href="/ship/terms#quirks" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read her quirks in the covenant</Link>.
               </p>
             </div>
             <div className="rounded-2xl border bg-card p-6">
               <h3 className="font-semibold text-lg mb-2">Reading the calendar</h3>
-              <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 3pm, return Sunday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. Year-two weeks sail at her full rate. The projected bioregion tells you roughly where she will be.</p>
+              <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 3pm, return Sunday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. From April 2027 on she sails at her full rate; every week before then is half price. The projected bioregion tells you roughly where she will be.</p>
             </div>
             {weeks.some((w) => !w.selectable) && <CrewListJoin source="book_page" />}
           </div>
