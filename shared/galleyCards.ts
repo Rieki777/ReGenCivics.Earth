@@ -95,7 +95,7 @@ export const GALLEY_CARDS: GalleyCard[] = [
     fillings: ["ginger", "parsley"],
     toppings: [],
     sauce: [],
-    method: "Blend and strain, or run it through a juicer.",
+    method: "Blend it smooth in the Vitamix and drink it as is, pulp and all.",
     why: "Cooling and alkaline, a clean way to open the day.",
   },
   {

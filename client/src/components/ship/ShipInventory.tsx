@@ -24,6 +24,7 @@ type Item = {
   quantity: number;
   storagePlace: string | null;
   activityTags: unknown;
+  comingYear2?: boolean;
 };
 
 // Rarity-style ring + glyph per category (subtle, painterly, never casino).
@@ -140,18 +141,21 @@ export function ShipInventory() {
                 <button
                   type="button"
                   onClick={() => setOpen(it)}
-                  className={`group w-full aspect-square rounded-2xl border-2 ${m.ring} bg-[#0d1f16]/90 ${m.glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg`}
-                  aria-label={`${it.name}, ${m.label}${it.quantity > 1 ? `, ${it.quantity} aboard` : ""}`}
+                  className={`group relative w-full aspect-square rounded-2xl border-2 ${m.ring} bg-[#0d1f16]/90 ${m.glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg ${it.comingYear2 ? "opacity-80" : ""}`}
+                  aria-label={`${it.name}, ${m.label}${it.comingYear2 ? ", coming year two" : ""}${it.quantity > 1 ? `, ${it.quantity} aboard` : ""}`}
                 >
+                  {it.comingYear2 && (
+                    <span className="absolute top-1 left-1 rounded-full bg-[#b5762f]/90 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">Year two</span>
+                  )}
+                  {it.quantity > 1 && (
+                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{it.quantity}</span>
+                  )}
                   {it.iconUrl ? (
                     <img src={it.iconUrl} alt="" className="w-12 h-12 object-contain" loading="lazy" />
                   ) : (
                     <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
                   )}
                   <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{it.name}</span>
-                  {it.quantity > 1 && (
-                    <span className="absolute mt-14 ml-14 text-[10px] font-bold text-[#ffd700]">×{it.quantity}</span>
-                  )}
                 </button>
               </li>
             );
@@ -178,6 +182,7 @@ export function ShipInventory() {
                 </div>
                 <div className="min-w-0">
                   <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d]">{meta(open.category).label}</span>
+                  {open.comingYear2 && <span className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-[#b5762f]/15 text-[#8a5a2b] dark:text-[#e0b483]">Coming year two</span>}
                   {open.quantity > 1 && <span className="ml-2 text-xs text-muted-foreground">{open.quantity} aboard</span>}
                   {open.lore && <p className="mt-2 text-sm italic text-foreground/80">{open.lore}</p>}
                 </div>

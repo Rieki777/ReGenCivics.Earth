@@ -4812,6 +4812,8 @@ export const shipInventoryItems = mysqlTable("ship_inventory_items", {
   isVisible: boolean("isVisible").notNull().default(true),
   /** Flagged for the boarding/return gear check (V5 gear manifest). */
   isGearChecked: boolean("isGearChecked").notNull().default(false),
+  /** True for gear that is not aboard yet and arrives in year two (shown with a badge). */
+  comingYear2: boolean("comingYear2").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

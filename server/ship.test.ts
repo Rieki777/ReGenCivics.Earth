@@ -236,18 +236,18 @@ describe("ship-logic: voyage week grid", () => {
     expect(weeks[0].endDate).toBe("2026-08-01"); // exclusive end of the 7-day slot
     expect(weeks[1].startDate).toBe("2026-08-01"); // shared turnover boundary
     expect(weeks[0].isYear2).toBe(false);
-    expect(weeks[0].price.total).toBe(299 * 7);
+    expect(weeks[0].price.total).toBe(300 * 7);
   });
 
-  it("doubles the price and labels year-two weeks", () => {
+  it("doubles the price and labels full-rate weeks", () => {
     const weeks = enumerate({ year2Start: "2026-08-08", year2Multiplier: 2, horizonWeeks: 4 });
     const y1 = weeks.find((w) => w.startDate === "2026-08-01");
     const y2 = weeks.find((w) => w.startDate === "2026-08-08");
     expect(y1?.isYear2).toBe(false);
     expect(y2?.isYear2).toBe(true);
     expect(y2?.priceMultiplier).toBe(2);
-    expect(y2?.windowLabel).toBe("Year two, full rate");
-    expect(y2?.price.total).toBe(299 * 7 * 2);
+    expect(y2?.windowLabel).toBe("Full rate");
+    expect(y2?.price.total).toBe(300 * 7 * 2);
   });
 
   it("drops fully-past weeks relative to today", () => {
@@ -285,21 +285,21 @@ describe("ship-logic: voyage week grid", () => {
     });
     expect(weeks[0].windowLabel).toBe("Peak");
     expect(weeks[0].priceMultiplier).toBe(1.25);
-    expect(weeks[0].price.total).toBe(Math.round(149 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
+    expect(weeks[0].price.total).toBe(Math.round(150 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
   });
 });
 
 describe("ship-logic: pricing", () => {
   it("splits a 7-night voyage into rental + offering at the trial rate", () => {
     const p = computeVoyagePrice(7);
-    expect(p.rentalTotal).toBe(149 * 7);
+    expect(p.rentalTotal).toBe(150 * 7);
     expect(p.offeringTotal).toBe(150 * 7);
-    expect(p.total).toBe(299 * 7);
+    expect(p.total).toBe(300 * 7);
     expect(p.anchorTotal).toBe(600 * 7);
   });
   it("applies a seasonal multiplier", () => {
     const p = computeVoyagePrice(7, 1.25);
-    expect(p.total).toBe(Math.round(149 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
+    expect(p.total).toBe(Math.round(150 * 7 * 1.25) + Math.round(150 * 7 * 1.25));
   });
 });
 
@@ -547,7 +547,7 @@ describe("ship router guards (reject before any DB call)", () => {
   it("quote returns a two-line price breakdown", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
     const p = await caller.ship.quote({ startDate: "2026-08-01", endDate: "2026-08-08" });
-    expect(p.total).toBe(299 * 7);
+    expect(p.total).toBe(300 * 7);
   });
 
   it("featureFlags reports concierge off when no LLM key is set", async () => {

@@ -22,11 +22,15 @@ import { isStripeConfigured } from "./stripe";
 /** The listed anchor price the ship is worth, per night; struck through as the reference. */
 export const ANCHOR_NIGHTLY_USD = 600;
 /** Trial-year insured rental charged on the platform (custom offer), per-night basis. */
-export const TRIAL_RENTAL_NIGHTLY_USD = 149;
+export const TRIAL_RENTAL_NIGHTLY_USD = 150;
 /** Trial-year suggested voyage offering to CORE (legally voluntary), per-night basis. */
 export const TRIAL_OFFERING_NIGHTLY_USD = 150;
-/** Trial-year total ask per night (rental + offering), the per-voyage derivation basis. */
-export const TRIAL_TOTAL_NIGHTLY_USD = TRIAL_RENTAL_NIGHTLY_USD + TRIAL_OFFERING_NIGHTLY_USD; // 299
+/**
+ * Trial-year total ask per night (rental + offering), the per-voyage derivation
+ * basis. Held at exactly half the $600/night anchor so the trial reads as a
+ * clean 50% off everywhere it is shown.
+ */
+export const TRIAL_TOTAL_NIGHTLY_USD = TRIAL_RENTAL_NIGHTLY_USD + TRIAL_OFFERING_NIGHTLY_USD; // 300
 
 /** One voyage is a single 7-night tank cycle (Mon 3pm board to Sun 11am return). */
 export const VOYAGE_NIGHTS = 7;
@@ -34,12 +38,12 @@ export const VOYAGE_NIGHTS = 7;
 // Per-voyage totals (the numbers a guest actually sees; the site is per-voyage).
 /** Anchor value of one voyage week, struck through ($600 × 7). */
 export const ANCHOR_VOYAGE_USD = ANCHOR_NIGHTLY_USD * VOYAGE_NIGHTS; // 4200
-/** Trial-year platform rental for one voyage week (~$1,043). */
-export const TRIAL_RENTAL_VOYAGE_USD = TRIAL_RENTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 1043
-/** Trial-year suggested offering for one voyage week (~$1,050). */
+/** Trial-year platform rental for one voyage week ($1,050). */
+export const TRIAL_RENTAL_VOYAGE_USD = TRIAL_RENTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 1050
+/** Trial-year suggested offering for one voyage week ($1,050). */
 export const TRIAL_OFFERING_VOYAGE_USD = TRIAL_OFFERING_NIGHTLY_USD * VOYAGE_NIGHTS; // 1050
-/** Trial-year total ask for one voyage week (~$2,100). */
-export const TRIAL_TOTAL_VOYAGE_USD = TRIAL_TOTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 2093
+/** Trial-year total ask for one voyage week ($2,100, exactly half the anchor). */
+export const TRIAL_TOTAL_VOYAGE_USD = TRIAL_TOTAL_NIGHTLY_USD * VOYAGE_NIGHTS; // 2100
 
 /**
  * Year two sails at her full rate: double the trial (~$4,200 per voyage, near
@@ -48,8 +52,13 @@ export const TRIAL_TOTAL_VOYAGE_USD = TRIAL_TOTAL_NIGHTLY_USD * VOYAGE_NIGHTS; /
  * CLAUDE_CODE_PROMPT_2026-07-11_SHIP_MAINTAINER_INVENTORY.md.
  */
 export const YEAR2_PRICE_MULTIPLIER = 2;
-/** First bookable Monday of year two. Weeks on/after this bill at the full rate. */
-export const SHIP_YEAR2_START_YMD = "2027-07-26";
+/**
+ * When the 50%-off trial ends and she bills at the full $600/night rate. Every
+ * bookable week on or after this Monday is full rate; every week before it is
+ * the trial half-price. Confirmed by Rye: full rate starts April 2027 (first
+ * bookable Monday, 2027-04-05).
+ */
+export const SHIP_YEAR2_START_YMD = "2027-04-05";
 
 // ── Crew capacity ────────────────────────────────────────────────────────────
 // Four guests max, designed for one couple and comfortable for two. A fifth
@@ -167,6 +176,15 @@ export const MIN_DRIVER_AGE = 25;
 /** Included miles per voyage, then per-mile overage. */
 export const MILES_INCLUDED = 1000;
 export const OVERAGE_PER_MILE_USD = 0.5;
+
+// ── State-of-the-ship baselines (real-world totals from before tracking) ──────
+// Seeds were planted and voyages sailed before the ledger existed. These
+// baselines seed the public trust dashboard so it tells the true story from day
+// one; live DB counts are added on top and the tiles keep growing. Rye can
+// override either at runtime with the game variables ship.seeds_planted_base and
+// ship.voyages_sailed_base (no deploy needed) once the ledger catches up.
+export const SEEDS_PLANTED_BASELINE = 489;
+export const VOYAGES_SAILED_BASELINE = 1;
 
 /** churchDonations program tags so Transparency/Reconciliation segments ship revenue. */
 export const SHIP_PROGRAM_TAG = "regen_ship";

@@ -9,11 +9,11 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 
 export const ANCHOR_NIGHTLY = 600;
-export const TRIAL_NIGHTLY = 299;
+export const TRIAL_NIGHTLY = 300; // exactly half the anchor, so the trial reads as a clean 50% off
 // Pricing is per voyage now (Mon 3pm board to Sun 11am return). Keep these in
 // sync with server/lib/ship-config.ts (ANCHOR_VOYAGE_USD / TRIAL_TOTAL_VOYAGE_USD).
 export const ANCHOR_VOYAGE = ANCHOR_NIGHTLY * 7; // 4200, struck through
-export const TRIAL_VOYAGE = TRIAL_NIGHTLY * 7; // 2093, the trial-year voyage total
+export const TRIAL_VOYAGE = TRIAL_NIGHTLY * 7; // 2100, the trial-year voyage total (half of anchor)
 export const SHIP_TAGLINE = "Visiting the most beautiful places on earth in reverence and regeneration.";
 export const CHESTNUT_URL = "https://regencivics.earth/blog/great-american-chestnut-abundance";
 
@@ -75,14 +75,44 @@ export function InteriorPlaceholder({ label }: { label: string }) {
   );
 }
 
-/** The price display: per-voyage anchor struck through, trial voyage rate shown. */
-export function PriceTag({ className }: { className?: string }) {
+/**
+ * A captioned interior photo. Shows the real shot when the file is present, and
+ * degrades to the same "coming aboard soon" placeholder when it is missing, so
+ * the section never breaks while photos are being added.
+ */
+export function ShipInteriorCard({ name, label, alt }: { name: string; label: string; alt: string }) {
+  const [err, setErr] = useState(false);
+  if (err) return <InteriorPlaceholder label={label} />;
   return (
-    <div className={cn("flex items-baseline gap-3 flex-wrap", className)}>
+    <figure className="relative aspect-[4/3] overflow-hidden rounded-2xl group">
+      <img
+        src={shipImg(name)}
+        alt={alt}
+        loading="lazy"
+        onError={() => setErr(true)}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+      <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+      <figcaption className="absolute inset-x-0 bottom-0 p-2 text-center text-white text-sm font-semibold leading-tight">{label}</figcaption>
+    </figure>
+  );
+}
+
+/**
+ * The price display: full per-voyage anchor struck through, the trial voyage
+ * rate shown, and the discount made explicit (a clean 50% off, with the dollars
+ * saved). Full rate returns April 2027.
+ */
+export function PriceTag({ className }: { className?: string }) {
+  const saved = ANCHOR_VOYAGE - TRIAL_VOYAGE;
+  const pct = Math.round((saved / ANCHOR_VOYAGE) * 100);
+  return (
+    <div className={cn("flex items-baseline gap-x-3 gap-y-1 flex-wrap", className)}>
       <span className="text-muted-foreground line-through text-xl">${ANCHOR_VOYAGE.toLocaleString()}</span>
       <span className="text-3xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${TRIAL_VOYAGE.toLocaleString()}</span>
+      <span className="inline-flex items-center rounded-full bg-[#2f5d3a] text-white text-xs font-bold px-2 py-0.5">{pct}% off</span>
       <span className="text-muted-foreground">per voyage week, trial year</span>
-      <span className="text-xs text-muted-foreground/80 w-full">Her ${ANCHOR_NIGHTLY}/night value, one Monday-to-Sunday voyage at a time.</span>
+      <span className="text-xs text-muted-foreground/80 w-full">Her full ${ANCHOR_NIGHTLY}/night rate, reduced by {pct}% for the trial year, so you save ${saved.toLocaleString()} a week. Full rate returns April 2027. Plus applicable taxes.</span>
     </div>
   );
 }
@@ -115,7 +145,7 @@ export function ShipEyebrow({ children }: { children: ReactNode }) {
 const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string; primary?: boolean }> = [
   { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
   { href: "/ship/theme", label: "The Theme", image: "ship-double-rainbow.jpg", alt: "A double rainbow over the ship." },
-  // The main event: the booking card wears the gold everywhere.
+  // The main event: the booking card wears the bright green shimmer (the CTA).
   { href: "/ship/book", label: "Book a Voyage", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista.", primary: true },
   { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
   { href: "/ship/galley", label: "The Galley", image: "ship-galley-table.webp", alt: "A galley table of ripe fruit and greens." },
@@ -139,10 +169,12 @@ export function ShipNavRow({ current }: { current?: string }) {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "group relative block overflow-hidden rounded-xl aspect-[4/3] transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]",
-                c.primary
-                  ? "ring-2 ring-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.5)] hover:shadow-[0_0_32px_rgba(255,215,0,0.8)]"
-                  : active
-                    ? "ring-2 ring-[#ffd700] shadow-lg"
+                // Pure gold ring = the page you are on (always wins). Bright green
+                // shimmer = the booking call to action. The two never share a color.
+                active
+                  ? "ring-2 ring-[#ffd700] shadow-lg"
+                  : c.primary
+                    ? "ship-nav-book"
                     : "ring-1 ring-black/10",
               )}
             >
@@ -154,15 +186,15 @@ export function ShipNavRow({ current }: { current?: string }) {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
               <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-              {c.primary && (
-                <span className="absolute top-1 right-1 rounded-full bg-[#ffd700] text-[#1a472a] text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 leading-none">
-                  Start here
+              {c.primary && !active && (
+                <span className="absolute top-1 right-1 z-[3] rounded-full bg-[#3ddc84] text-[#08301c] text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 leading-none shadow">
+                  Grab your spot
                 </span>
               )}
               <span className={cn(
-                "absolute inset-x-0 bottom-0 p-1.5 sm:p-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-sm",
-                (active || c.primary) && "text-[#ffd700]",
-                c.primary && "font-bold",
+                "absolute inset-x-0 bottom-0 z-[3] p-1.5 sm:p-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-sm",
+                active && "text-[#ffd700]",
+                c.primary && !active && "text-[#7dffa8] font-bold",
               )}>
                 {c.label}
               </span>

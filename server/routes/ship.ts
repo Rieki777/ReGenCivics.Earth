@@ -52,6 +52,7 @@ import {
   MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
   SHIP_SEASON_START_YMD, SHIP_YEAR2_START_YMD, YEAR2_PRICE_MULTIPLIER, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
   SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
+  SEEDS_PLANTED_BASELINE, VOYAGES_SAILED_BASELINE,
 } from "../lib/ship-config";
 import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
 import { remixHaul, rollRemix, type HaulItemInput } from "../lib/galley-remix";
@@ -305,7 +306,11 @@ export const shipRouter = router({
     // Admin-editable game variables (asset value, community-owned so far, trees).
     // Absent variables fall back to 0 so the tiles degrade gracefully.
     const { getGameVariables } = await import("../game");
-    const vars = await getGameVariables(["ship.asset_value_usd", "ship.community_owned_usd", "ship.trees_planted"]).catch(() => ({} as Record<string, number>));
+    const vars = await getGameVariables(["ship.asset_value_usd", "ship.community_owned_usd", "ship.trees_planted", "ship.seeds_planted_base", "ship.voyages_sailed_base"]).catch(() => ({} as Record<string, number>));
+    // Real-world totals from before the ledger existed, added on top of live
+    // counts. Overridable at runtime via game variables (no deploy needed).
+    const seedsBase = vars["ship.seeds_planted_base"] ?? SEEDS_PLANTED_BASELINE;
+    const voyagesBase = vars["ship.voyages_sailed_base"] ?? VOYAGES_SAILED_BASELINE;
     const assetValue = vars["ship.asset_value_usd"] ?? 0;
     const communityOwned = vars["ship.community_owned_usd"] ?? 0;
     const communityOwnedPct = assetValue > 0 ? Math.max(0, Math.min(100, Math.round((communityOwned / assetValue) * 100))) : 0;
@@ -316,8 +321,8 @@ export const shipRouter = router({
       freeVoyagesUnlocked: free.freeVoyagesUnlocked,
       freeVoyagesTotal: free.freeVoyagesTotal,
       poolSize: free.poolSize,
-      seedsPlanted: Number(seeds?.n ?? 0),
-      voyagesSailed: sailed.length,
+      seedsPlanted: Number(seeds?.n ?? 0) + seedsBase,
+      voyagesSailed: sailed.length + voyagesBase,
       assetValueUsd: assetValue,
       communityOwnedUsd: communityOwned,
       communityOwnedPct,

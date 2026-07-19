@@ -110,7 +110,7 @@ const RITES = [
 const INTERIOR = [
   { title: "The altar", body: "A small fixed shelf by the galley. Bring what you hold sacred. Every crew leaves one thing and takes one thing." },
   { title: "The love nest", body: "The primary bedroom, made up in organic linens, blackout for real sleep, and a window you can watch the stars through." },
-  { title: "The apothecary galley", body: "Cast iron, real food, gravity-filtered drinking water, and a jar of honey from a Cascadia beekeeper who works wild-flowering land." },
+  { title: "The apothecary galley", body: "Cast iron, real food, in-line-filtered drinking water, and a jar of honey from a Cascadia beekeeper who works wild-flowering land." },
   { title: "The Hermitage seat", body: "One chair, set apart, facing out. Love needs solitude next to it. Whoever needs the seat takes it, and the other leaves them to it." },
   { title: "The seed chest", body: "The treasure. It rides where you can see it, because it is the reason the voyage is a voyage and not a vacation." },
   { title: "The Captain's Book", body: "Her log, her rites, and the prompt cards for the Rite of Truth. You write in it. The next crew reads it." },
