@@ -52,6 +52,106 @@ const CONTRIBUTION_TYPE_TO_CAPITAL = {
   knowledge: 'intellectual',
 } as const;
 
+/**
+ * Link anonymous contributions made under a verified email to a now-signed-in
+ * user, and back-create the verified Living Tree rows for any that were already
+ * delivered (fulfilled or thanked). Mirrors the fulfilled-side payoff in
+ * updateContributionStatus so a person who claimed anonymously and later makes
+ * an account still gets their delivered contributions on their profile.
+ *
+ * Idempotent and self-healing. It claims only rows still owned by no one, and
+ * back-creates only delivered rows with no playerContributionId yet, so
+ * repeated calls (it runs on every login) never double-count. recordScoreEvent
+ * is not idempotent, so it fires only after playerContributionId is set, which
+ * removes the row from the candidate set on any later run.
+ *
+ * Called by campaigns.claimMyContributions and best-effort from the auth flow.
+ */
+export async function linkAnonymousContributions(
+  database: any,
+  userId: number,
+  email: string,
+): Promise<{ linked: number; livingTreeAdded: number }> {
+  if (!database || !userId || !email) return { linked: 0, livingTreeAdded: 0 };
+
+  // 1. Claim anonymous rows for this verified email (case-insensitive by the
+  //    column's default collation).
+  const [linkRes] = await database.execute(sql`
+    UPDATE campaign_contributions
+    SET userId = ${userId}
+    WHERE userId IS NULL AND contributorEmail = ${email}
+  `);
+  const linked = Number((linkRes as any)?.affectedRows ?? 0);
+
+  // 2. Back-create Living Tree rows for delivered contributions now owned by
+  //    this user that do not have one yet.
+  const [rows] = await database.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.campaignItemId, cc.contributionType, cc.title,
+           cc.estimatedValue, c.projectName
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.userId = ${userId}
+      AND cc.status IN ('fulfilled', 'thanked')
+      AND cc.playerContributionId IS NULL
+  `);
+  const candidates = (rows as any[]) ?? [];
+  if (candidates.length === 0) return { linked, livingTreeAdded: 0 };
+
+  const profile = await db.getPlayerProfileByUserId(userId);
+  if (!profile) return { linked, livingTreeAdded: 0 }; // no profile yet: nothing to attach
+
+  let livingTreeAdded = 0;
+  for (const c of candidates) {
+    try {
+      const need = c.campaignItemId ? await db.getCampaignItemById(Number(c.campaignItemId)) : null;
+      const capitalType =
+        need?.capitalType ??
+        CONTRIBUTION_TYPE_TO_CAPITAL[c.contributionType as keyof typeof CONTRIBUTION_TYPE_TO_CAPITAL] ??
+        'material';
+      const playerContributionId = await db.createPlayerContribution({
+        profileId: profile.id,
+        userId,
+        capitalType,
+        title: String(c.title ?? 'A contribution'),
+        estimatedValue: Number(c.estimatedValue ?? 0),
+        projectName: c.projectName ?? null,
+        status: 'verified',
+        verifiedAt: new Date(),
+      });
+      // Mark done first (idempotency gate), then the one-time score event.
+      await db.updateContribution(Number(c.id), { playerContributionId });
+      livingTreeAdded++;
+      try {
+        await recordScoreEvent(
+          userId,
+          'crowdpool_contribution',
+          'scoring.weights.crowdpool_contribution',
+          'crowdpool',
+          Number(c.id),
+        );
+      } catch (err) {
+        console.warn('[link-contributions] score event failed (non-fatal):', err);
+      }
+    } catch (err) {
+      console.warn(`[link-contributions] Living Tree row failed for contribution ${c.id}:`, err);
+    }
+  }
+
+  // Recompute the cached Living Tree total once, the same way the fulfilled path
+  // and playerContributions.create do.
+  if (livingTreeAdded > 0) {
+    try {
+      const all = await db.getPlayerContributionsByProfileId(profile.id);
+      const total = all.reduce((sum, x) => sum + (x.estimatedValue ?? 0), 0);
+      await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
+    } catch (err) {
+      console.warn('[link-contributions] total recompute failed (non-fatal):', err);
+    }
+  }
+
+  return { linked, livingTreeAdded };
+}
+
 export const campaignsRouter = router({
   // Verify campaign creator access password (server-side)
   verifyCampaignAccess: protectedProcedure
@@ -805,6 +905,18 @@ export const campaignsRouter = router({
   // Get user's contributions
   myContributions: protectedProcedure.query(async ({ ctx }) => {
     return await db.getContributionsByUser(ctx.user.id);
+  }),
+
+  // Link past anonymous contributions to this account by verified email, and
+  // back-create any delivered ones onto the Living Tree. Idempotent, so it is
+  // safe to call from a "claim your past contributions" button as well as the
+  // automatic auth-flow hook.
+  claimMyContributions: protectedProcedure.mutation(async ({ ctx }) => {
+    const email = ctx.user.email;
+    if (!email) return { linked: 0, livingTreeAdded: 0 };
+    const database = await getDb();
+    if (!database) return { linked: 0, livingTreeAdded: 0 };
+    return await linkAnonymousContributions(database, ctx.user.id, email);
   }),
 
   // Get campaigns owned by user

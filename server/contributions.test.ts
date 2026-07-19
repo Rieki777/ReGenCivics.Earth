@@ -694,4 +694,121 @@ describe('Campaign Contribution System', () => {
       expect(row?.acknowledgedNote).toContain('spring beds');
     });
   });
+
+  describe('claimMyContributions (anonymous linking)', () => {
+    const CLAIMER_USER_ID = 999777;
+
+    it.skipIf(skipIfNoDb)(
+      'links an anonymous fulfilled contribution to the account and back-creates its Living Tree row, idempotently',
+      async () => {
+        await ensureCrowdpoolScoreVariable();
+
+        // The claimer signs in later; here they are just an email on an
+        // anonymous pledge. Unique per run so reruns on the shared dev DB do
+        // not collide.
+        const claimerEmail = `claimer-${Date.now()}@example.com`;
+
+        // Steward (test user 999999) runs a live campaign with one need.
+        const stewardCtx = createAuthContext('10.7.7.1');
+        const steward = appRouter.createCaller(stewardCtx);
+        const campaign = await steward.campaigns.create({
+          title: 'Anon Linking Campaign',
+          description: 'Testing claimMyContributions',
+          projectName: 'Linking Project',
+          currency: 'USD',
+          financialTarget: 500,
+          items: [
+            {
+              category: 'resource',
+              resourceName: 'Seedlings',
+              resourceDescription: 'Native seedlings needed',
+              estimatedValue: 250,
+            },
+          ],
+        });
+        await steward.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+        const fresh = await steward.campaigns.getById({ id: campaign.id });
+        expect(fresh).toBeTruthy();
+        const need = fresh!.items[0];
+
+        // Someone pledges anonymously (no account) under the claimer's email.
+        const anonCtx = { ...createAuthContext('10.7.7.2'), user: null } as unknown as TrpcContext;
+        const anon = appRouter.createCaller(anonCtx);
+        const contribution = await anon.campaigns.submitContribution({
+          campaignId: campaign.id,
+          campaignItemId: need.id,
+          contributionType: 'resource',
+          title: 'Anon seedlings',
+          estimatedValue: 250,
+          contributorName: 'Anonymous Giver',
+          contributorEmail: claimerEmail,
+          resourceName: 'Seedlings',
+          resourceQuantity: 20,
+          resourceUnit: 'trays',
+        });
+
+        // Guarantee the anonymous precondition regardless of submit internals.
+        const database = await dbHelpers.getDb();
+        if (!database) return;
+        await database
+          .update(campaignContributions)
+          .set({ userId: null })
+          .where(eq(campaignContributions.id, contribution.id));
+
+        // Steward accepts, then marks it delivered. Anonymous, so no Living
+        // Tree row is created at fulfillment time.
+        await steward.campaigns.updateContributionStatus({ contributionId: contribution.id, status: 'accepted' });
+        await steward.campaigns.updateContributionStatus({ contributionId: contribution.id, status: 'fulfilled' });
+
+        const beforeClaim = await dbHelpers.getContributionById(contribution.id);
+        expect(beforeClaim?.status).toBe('fulfilled');
+        expect(beforeClaim?.userId ?? null).toBeNull();
+        expect(beforeClaim?.playerContributionId ?? null).toBeNull();
+
+        // The claimer now makes an account with the same email and claims.
+        let profile = await dbHelpers.getPlayerProfileByUserId(CLAIMER_USER_ID);
+        if (!profile) {
+          await dbHelpers.createPlayerProfile({ userId: CLAIMER_USER_ID, displayName: 'Claimer' });
+          profile = await dbHelpers.getPlayerProfileByUserId(CLAIMER_USER_ID);
+        }
+        const claimerCtx = {
+          ...createAuthContext('10.7.7.3'),
+          user: { ...stewardCtx.user!, id: CLAIMER_USER_ID, email: claimerEmail },
+        } as unknown as TrpcContext;
+        const claimer = appRouter.createCaller(claimerCtx);
+
+        const result = await claimer.campaigns.claimMyContributions();
+        expect(result.linked).toBeGreaterThanOrEqual(1);
+        expect(result.livingTreeAdded).toBeGreaterThanOrEqual(1);
+
+        // The contribution now belongs to the claimer and points at a Living
+        // Tree row.
+        const afterClaim = await dbHelpers.getContributionById(contribution.id);
+        expect(afterClaim?.userId).toBe(CLAIMER_USER_ID);
+        expect(afterClaim?.playerContributionId ?? null).not.toBeNull();
+
+        // A verified player_contributions row exists for the claimer.
+        const treeRows = await database
+          .select()
+          .from(playerContributions)
+          .where(eq(playerContributions.id, afterClaim!.playerContributionId!));
+        expect(treeRows.length).toBe(1);
+        expect(treeRows[0].status).toBe('verified');
+        expect(treeRows[0].title).toBe('Anon seedlings');
+        expect(treeRows[0].userId).toBe(CLAIMER_USER_ID);
+
+        // Idempotent: a second claim links nothing new and adds no duplicate.
+        const again = await claimer.campaigns.claimMyContributions();
+        expect(again.linked).toBe(0);
+        expect(again.livingTreeAdded).toBe(0);
+
+        const dupCheck = await database
+          .select()
+          .from(playerContributions)
+          .where(eq(playerContributions.userId, CLAIMER_USER_ID));
+        const forThisTitle = dupCheck.filter((r) => r.title === 'Anon seedlings');
+        expect(forThisTitle.length).toBe(1);
+      },
+    );
+  });
 });
