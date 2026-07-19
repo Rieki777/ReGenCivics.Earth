@@ -1,5 +1,5 @@
 /**
- * Seed the Maiden Voyage Quest checklist: the 7 founding actions plus the
+ * Seed the Free Passage Quest checklist: the 7 founding actions plus the
  * 6 actions of the current docking theme (The Sanctuary of Love, /ship/theme).
  *
  * Idempotent by slug. The Food Foresting action links to the existing quest

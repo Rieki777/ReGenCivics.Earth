@@ -1,5 +1,5 @@
 /**
- * Seed example crews for the Maiden Voyage Quest draw board, so the first real
+ * Seed example crews for the Free Passage Quest draw board, so the first real
  * person to reach the points line does not feel like the first person aboard.
  *
  * What it does:

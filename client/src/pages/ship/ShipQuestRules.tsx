@@ -1,5 +1,5 @@
 /**
- * /ship/quest/rules - Official contest rules for the Maiden Voyage Quest.
+ * /ship/quest/rules - Official contest rules for the Free Passage Quest.
  * Static content, no data calls. Plain-language summary, counsel review pending.
  */
 import { SEO } from "@/components/SEO";
@@ -12,7 +12,7 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     heading: "1. Sponsor",
     body: (
       <p>
-        The Maiden Voyage Quest is sponsored and administered by the Church of the Regenerative Earth. The church runs
+        The Free Passage Quest is sponsored and administered by the Church of the Regenerative Earth. The church runs
         the quest, verifies proofs, and holds the draws that award the free voyages.
       </p>
     ),
@@ -122,8 +122,8 @@ export default function ShipQuestRules() {
   return (
     <PageWrapper>
       <SEO
-        title="Maiden Voyage Quest Rules"
-        description="Official rules for the ReGen Ship Maiden Voyage Quest. Reach 150 points to enter the draw, or enter by approved nomination. Up to six free voyages, awarded by weighted random draw as bookings grow."
+        title="Free Passage Quest Rules"
+        description="Official rules for the ReGen Ship Free Passage Quest. Reach 150 points to enter the draw, or enter by approved nomination. Up to six free voyages, awarded by weighted random draw as bookings grow."
         url="/ship/quest/rules"
       />
 
@@ -140,7 +140,7 @@ export default function ShipQuestRules() {
         <ShipEyebrow>Official rules</ShipEyebrow>
         <h1 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
           <ScrollText className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
-          Maiden Voyage Quest rules
+          Free Passage Quest rules
         </h1>
         <p className="text-foreground/80 max-w-3xl">
           This is a plain-language summary of how the quest works, who can enter, and how the prize is awarded. Read it

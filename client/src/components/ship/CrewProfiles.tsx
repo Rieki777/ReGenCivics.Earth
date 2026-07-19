@@ -1,5 +1,5 @@
 /**
- * Crew profiles + sponsorship for the Maiden Voyage Quest.
+ * Crew profiles + sponsorship for the Free Passage Quest.
  *
  * Two pieces:
  *  - CrewProfileEditor: the signed-in crew fills in a card (name, photo, bio,

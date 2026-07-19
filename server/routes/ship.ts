@@ -3,7 +3,7 @@
  *
  * A regenerative pirate ship + the ReGen Fleet. Bookings (our calendar is the
  * source of truth; the insured rental is a separate legal charge), the treasure
- * map, the AI concierge, the Maiden Voyage Quest, seed plantings, the public
+ * map, the AI concierge, the Free Passage Quest, seed plantings, the public
  * voyage log, the digital passport, and live position pings.
  *
  * Security posture (BUILD-PLAYBOOK + AI-AUTOMATION-RISKS):
@@ -265,7 +265,7 @@ async function assertHaulOwner(d: ShipDb, haulId: number, userId: number) {
 
 // Auto-verify a Galley quest action (logging a haul, trying the Deeper Reset) and
 // credit the ReGen reward, once. No-ops when the action is not seeded yet, so it
-// is always safe to call. A nudge into the Maiden Voyage Quest, never a gate.
+// is always safe to call. A nudge into the Free Passage Quest, never a gate.
 async function awardGalleyQuest(userId: number, slug: string, note: string): Promise<void> {
   const d = await db();
   const [action] = await d.select().from(shipQuestActions).where(eq(shipQuestActions.slug, slug)).limit(1);
@@ -722,7 +722,7 @@ export const shipRouter = router({
     }),
   }),
 
-  // ── Maiden Voyage Quest ─────────────────────────────────────────────────────
+  // ── Free Passage Quest ─────────────────────────────────────────────────────
   quest: router({
     actions: publicProcedure.query(async () => {
       const d = await db();
@@ -1756,7 +1756,7 @@ export const shipRouter = router({
           title: input.title ? sanitizeInput(input.title) : null,
           visibility: input.visibility,
         });
-        // Logging a haul is a Maiden Voyage Quest nudge (never blocks the haul).
+        // Logging a haul is a Free Passage Quest nudge (never blocks the haul).
         await awardGalleyQuest(ctx.user.id, "galley-log-haul", "Logged a market haul in the Galley").catch(() => {});
         return { id: (res as { insertId?: number }).insertId ?? null, bookingId };
       }),
@@ -1841,7 +1841,7 @@ export const shipRouter = router({
         }
 
         const result = remixHaul(haulItems, input.track as GalleyTrack, 3);
-        // Trying the Deeper Reset is a Maiden Voyage Quest nudge.
+        // Trying the Deeper Reset is a Free Passage Quest nudge.
         if (input.track === "reset") {
           await awardGalleyQuest(ctx.user.id, "galley-deeper-reset", "Tried the Deeper Reset in the Galley").catch(() => {});
         }

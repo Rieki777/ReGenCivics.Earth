@@ -276,7 +276,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
           <li>The Half Honeymoon and The Honeymoon: one or two weeks made for couples.</li>
           <li>The Full Lunar Cycle: four weeks, one whole moon aboard.</li>
         </ul>
-        <p><a href="/ship/book">Book a voyage</a>, enter the <a href="/ship/quest">Maiden Voyage Quest</a> (complete regenerative actions and you are in every free-voyage draw), or read <a href="/blog/the-regen-ship">the ship's story</a>. She is the flagship of the ReGen Fleet: as more ships join, the fleet becomes a way to visit and serve land projects across the bioregion.</p>
+        <p><a href="/ship/book">Book a voyage</a>, enter the <a href="/ship/quest">Free Passage Quest</a> (complete regenerative actions and you are in every free-voyage draw), or read <a href="/blog/the-regen-ship">the ship's story</a>. She is the flagship of the ReGen Fleet: as more ships join, the fleet becomes a way to visit and serve land projects across the bioregion.</p>
       </article>
     `,
   },

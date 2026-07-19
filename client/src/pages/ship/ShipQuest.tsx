@@ -1,5 +1,5 @@
 /**
- * /ship/quest - The Maiden Voyage Quest. The heart of the announcement.
+ * /ship/quest - The Free Passage Quest. The heart of the announcement.
  * Full story, seven ways to earn points toward the 150-point entry threshold,
  * the live draw board with the threshold line, the crew cards you can sponsor,
  * and the nomination track callout.
@@ -90,7 +90,7 @@ export default function ShipQuest() {
 
   return (
     <PageWrapper>
-      <SEO title="The Maiden Voyage Quest" description="Reach 150 points by August 16 and you are in the drawing for a free voyage. Every point above raises your odds. Winners pick their own dates, and more free voyages unlock as the year books up, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
+      <SEO title="The Free Passage Quest" description="Reach 150 points by August 16 and you are in the drawing for a free voyage. Every point above raises your odds. Winners pick their own dates, and more free voyages unlock as the year books up, up to six." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
       <ShipNavRow current="/ship/quest" />
 
       {/* Hero */}
@@ -98,7 +98,7 @@ export default function ShipQuest() {
         <ShipImage name="ship-quest-banner.jpg" alt="A trail across Cascadia toward the coast under a rainbow." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-16 text-white">
-          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The Maiden Voyage Quest</p>
+          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The Free Passage Quest</p>
           <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points to qualify for the drawing.</h1>
           <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Qualify by August 16 to enter the drawing for a free voyage. Winners pick their own dates. More unlock as the first year books up, up to six.</p>
           <p data-reveal data-reveal-delay="240" className="mt-4 inline-flex items-center gap-2 bg-[#ffd700]/20 border border-[#ffd700]/50 rounded-full px-4 py-2 font-semibold"><Trophy className="w-5 h-5 text-[#ffd700]" /> {unlocked} of {totalFree} free voyages unlocked</p>
@@ -143,7 +143,9 @@ export default function ShipQuest() {
         <div data-reveal>
           <ShipEyebrow>How the free voyages work</ShipEyebrow>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">The more we book, the more sail free</h2>
-          <p className="text-foreground/85 max-w-3xl mb-6">Reach {threshold} points by August 16 and you are in the draw. On August 16 we hold the first drawing and pull a free voyage from everyone who has qualified. It is a weighted draw, so every point above {threshold} is another raffle ticket and the more you complete the better your odds. Winners pick their own dates from the open weeks. After that first draw, more free voyages unlock as the first year books up, at 40%, 60%, 75%, 85%, and 95% booked, up to six at a fully booked year.</p>
+          <p className="text-foreground/85 max-w-3xl mb-4">Reach {threshold} points by August 16 and you are in the draw. On August 16 we hold the first drawing and pull a free voyage from everyone who has qualified. It is a weighted draw, so every point above {threshold} is another raffle ticket and the more you complete the better your odds. Winners pick their own dates from the open weeks. After that first draw, more free voyages unlock as the first year books up, at 40%, 60%, 75%, 85%, and 95% booked, up to six at a fully booked year.</p>
+
+          <p className="text-sm text-muted-foreground max-w-3xl mb-6"><span className="font-semibold text-foreground/80">The fine print:</span> the first drawing does not happen until the whole crew has earned 5,000 points together, counted across everyone in the quest. That collective line is separate from your own {threshold} points. Your {threshold} qualifies you for the draw; the crew reaching 5,000 together is what opens it.</p>
 
           <div className="max-w-3xl">
             <FreeVoyageLadder />
