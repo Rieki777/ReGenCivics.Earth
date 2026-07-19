@@ -119,8 +119,12 @@ export const companionRouter = router({
       try {
         return await synthesizeSignatureVoice(input.voice, sanitizeInput(input.text));
       } catch (err) {
-        console.error("[companion] speak failed:", err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "That voice is resting. The browser voice will carry the line." });
+        // Expected, self-healing degradation: the hosted voice provider blipped
+        // and the client already falls back to its browser voice. Use
+        // SERVICE_UNAVAILABLE (not INTERNAL_SERVER_ERROR) so the tRPC onError
+        // hook skips Sentry capture and the issues dashboard stays high-signal.
+        console.warn("[companion] speak failed, client falls back to browser voice:", err);
+        throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "That voice is resting. The browser voice will carry the line." });
       }
     }),
 });
