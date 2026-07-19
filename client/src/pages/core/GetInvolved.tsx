@@ -39,7 +39,7 @@ export default function GetInvolved() {
             className="section-media"
             sizes="820px"
             fallback={null}
-            imgStyle={{ marginBottom: 34 }}
+            style={{ marginBottom: 34 }}
           />
           <div className="steps reveal">
             <div className="step">
@@ -80,7 +80,7 @@ export default function GetInvolved() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginBottom: 34 }}
+            style={{ marginBottom: 34 }}
           />
           <p className="eyebrow">Governed by the people</p>
           <h2>Your voice shapes this church</h2>

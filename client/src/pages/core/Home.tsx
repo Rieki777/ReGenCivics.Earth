@@ -141,7 +141,7 @@ export default function Home() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginTop: 34 }}
+            style={{ marginTop: 34 }}
           />
           <div className="center" style={{ marginTop: 30 }}>
             <Link href="/faith" className="btn btn-ghost">Read our full faith</Link>
@@ -158,7 +158,7 @@ export default function Home() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginTop: 28 }}
+            style={{ marginTop: 28 }}
           />
           <div className="grid grid-3 reveal" style={{ marginTop: 34 }}>
             <div className="card"><span className="icon" aria-hidden="true">🌿</span><h3>Online gatherings</h3><p>We meet regularly to pray, sing, learn, and tend the community across the distance between us.</p></div>

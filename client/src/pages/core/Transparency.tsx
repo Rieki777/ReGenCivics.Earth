@@ -112,7 +112,7 @@ export default function Transparency() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginBottom: 34 }}
+            style={{ marginBottom: 34 }}
           />
           <p className="eyebrow center">The Earth has a voice</p>
           <h2>We honor the rights of nature</h2>

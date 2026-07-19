@@ -101,7 +101,7 @@ export default function Elders() {
 
       <section className="center">
         <div className="wrap" style={{ maxWidth: 500 }}>
-          <CoreImage id="elders-future-lantern" className="section-media media-sm" sizes="500px" fallback={null} imgStyle={{ marginBottom: 34 }} />
+          <CoreImage id="elders-future-lantern" className="section-media media-sm" sizes="500px" fallback={null} style={{ marginBottom: 34 }} />
           <p className="eyebrow center">A growing circle</p>
           <h2>More elders will join this circle</h2>
           <p className="lead center">

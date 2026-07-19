@@ -44,7 +44,7 @@ export default function Donate() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginBottom: 34 }}
+            style={{ marginBottom: 34 }}
           />
           <p className="eyebrow center">Where your gift goes</p>
           <h2 className="center">Every dollar is a seed</h2>

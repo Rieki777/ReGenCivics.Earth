@@ -122,7 +122,7 @@ export default function Faith() {
             className="section-media media-sm"
             sizes="500px"
             fallback={null}
-            imgStyle={{ marginTop: 34 }}
+            style={{ marginTop: 34 }}
           />
         </div>
       </section>
@@ -167,7 +167,7 @@ export default function Faith() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginBottom: 34 }}
+            style={{ marginBottom: 34 }}
           />
           <p className="eyebrow center">Our compass</p>
           <h2 className="center">Eight core values</h2>
