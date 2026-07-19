@@ -92,9 +92,10 @@ export default function ShipBook() {
   const guests = adults + children;
   // Up to four aboard, or five when at least three are children.
   const crewOk = guests <= 4 || (guests === 5 && children >= 3);
-  const [diet, setDiet] = useState(false);
-  const [water, setWater] = useState(false);
+  // Two required agreements gate the booking: the Terms and Conditions (rental
+  // terms + cancellation) and the Voyage Covenant (diet, water, conduct).
   const [terms, setTerms] = useState(false);
+  const [covenant, setCovenant] = useState(false);
   const [notes, setNotes] = useState("");
   const submitRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
@@ -220,7 +221,7 @@ export default function ShipBook() {
     e.preventDefault();
     if (!startDate) return toast.error("Pick a voyage week.");
     if (!crewOk) return toast.error("Up to four aboard, or five when at least three are children.");
-    if (!diet || !water || !terms) return toast.error("All three commitments are required to sail.");
+    if (!terms || !covenant) return toast.error("Agree to the Terms and Conditions and the Voyage Covenant to sail.");
     try {
       // Carry the chosen suggested voyage to the crew in the notes, so the
       // confirmation and the First Mate both know the intent.
@@ -244,9 +245,8 @@ export default function ShipBook() {
       toast.success("Your voyage request is in. We will confirm your week soon.");
       setStartIdx(null);
       setCount(1);
-      setDiet(false);
-      setWater(false);
       setTerms(false);
+      setCovenant(false);
       setNotes("");
       setVoyageId(null);
       setCustomizeOpen(false);
@@ -261,8 +261,8 @@ export default function ShipBook() {
     ? "Pick a voyage week to continue."
     : !crewOk
       ? "Up to four aboard, or five when at least three are children."
-      : !diet || !water || !terms
-        ? "Confirm all three commitments to sail."
+      : !terms || !covenant
+        ? "Agree to the Terms and Conditions and the Voyage Covenant to sail."
         : null;
 
   return (
@@ -616,18 +616,18 @@ export default function ShipBook() {
                 context={`${voyagePkg ? `The guest chose the suggested ${voyagePkg.name} voyage (${selected.length} ${selected.length === 1 ? "week" : "weeks"}). ` : ""}The guest has chosen the voyage boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm those dates with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
                 collected={{
                   guests: String(guests),
-                  dietCommitment: diet ? "yes" : "",
-                  waterDoctrineCommitment: water ? "yes" : "",
+                  // The diet + water doctrine both live in the Voyage Covenant now,
+                  // so either confirmation checks the single covenant agreement.
+                  dietCommitment: covenant ? "yes" : "",
+                  waterDoctrineCommitment: covenant ? "yes" : "",
                   notes,
                 }}
                 onField={(key, value) => {
                   if (key === "guests") {
                     const n = Number(value.match(/\d+/)?.[0] ?? value);
                     if (Number.isFinite(n) && n >= 1) setAdults(Math.max(1, Math.min(4, Math.round(n))));
-                  } else if (key === "dietCommitment") {
-                    if (companionBool(value)) setDiet(true);
-                  } else if (key === "waterDoctrineCommitment") {
-                    if (companionBool(value)) setWater(true);
+                  } else if (key === "dietCommitment" || key === "waterDoctrineCommitment") {
+                    if (companionBool(value)) setCovenant(true);
                   } else if (key === "notes") {
                     setNotes(value);
                   }
@@ -654,24 +654,17 @@ export default function ShipBook() {
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <Checkbox id="diet" checked={diet} onCheckedChange={(v) => setDiet(Boolean(v))} />
-              <p className="font-normal leading-snug text-sm">
-                <Label htmlFor="diet" className="font-normal">I will keep the Ship meat-free, alcohol-free, and smoke-free inside for the whole voyage, unless the core team gives me written permission otherwise.</Label>{" "}
-                <Link href="/ship#the-table" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the protocols and menu</Link>.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <Checkbox id="water" checked={water} onCheckedChange={(v) => setWater(Boolean(v))} />
-              <p className="font-normal leading-snug text-sm">
-                <Label htmlFor="water" className="font-normal">I commit to the ship's water doctrine: only the soaps and cleaning materials aboard, no chemical body products.</Label>{" "}
-                <Link href="/ship/guide" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the doctrine</Link>.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
               <Checkbox id="terms" checked={terms} onCheckedChange={(v) => setTerms(Boolean(v))} />
               <p className="font-normal leading-snug text-sm">
-                <Label htmlFor="terms" className="font-normal">I agree to the Terms and Conditions, the Voyage Covenant and Rental Terms, including the cancellation policy, the 500-mile travel radius, the meat, alcohol, and smoke-free rule aboard, and my responsibility for loss that insurance does not cover.</Label>{" "}
+                <Label htmlFor="terms" className="font-normal">I agree to the Terms and Conditions, the rental terms including the cancellation policy, the 500-mile travel radius, and my responsibility for loss that insurance does not cover.</Label>{" "}
                 <a href="/ship/terms#cancellation" target="_blank" rel="noopener noreferrer" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the Terms and Conditions (opens in a new tab)</a>.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <Checkbox id="covenant" checked={covenant} onCheckedChange={(v) => setCovenant(Boolean(v))} />
+              <p className="font-normal leading-snug text-sm">
+                <Label htmlFor="covenant" className="font-normal">I agree to the Voyage Covenant, including the dietary policy (meat-free, alcohol-free, and smoke-free aboard), the water doctrine, and the voyage expectations for conduct and care of the Ship.</Label>{" "}
+                <a href="/ship/terms#clean-vessel" target="_blank" rel="noopener noreferrer" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the Voyage Covenant (opens in a new tab)</a>.
               </p>
             </div>
             <div>
