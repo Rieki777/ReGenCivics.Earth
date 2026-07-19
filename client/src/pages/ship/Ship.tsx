@@ -56,9 +56,9 @@ export default function Ship() {
         <ShipImage name="ship-zion-redrock-hero.jpg" alt="The ReGen Ship beneath red rock cliffs in crisp daylight." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-24 text-white">
-          <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">A partnership of ReGen Civics and CORE (Church of the Regenerative Earth) presenting:</p>
-          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-6xl font-bold mb-5 drop-shadow-lg">The ReGen Ship has raised her flag</h1>
-          <p data-reveal data-reveal-delay="160" className="text-lg md:text-2xl mb-8 text-white drop-shadow">{SHIP_TAGLINE}</p>
+          <h1 data-reveal className="text-4xl md:text-6xl font-bold mb-5 drop-shadow-lg text-[#ffd700]">The ReGen Ship sets Sail in Cascadia</h1>
+          <p data-reveal data-reveal-delay="80" className="text-lg md:text-2xl mb-4 text-white drop-shadow">Come visit the most beautiful places on earth in reverence and regeneration.</p>
+          <p data-reveal data-reveal-delay="160" className="uppercase tracking-widest text-sm font-semibold text-white mb-8">A partnership of ReGen Civics and CORE (Church of the Regenerative Earth) presenting:</p>
           <div data-reveal data-reveal-delay="240" className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] animate-glow transition-shadow">
               <Link href="/ship/quest">Win a free voyage</Link>
@@ -184,7 +184,7 @@ export default function Ship() {
           <h3 className="text-lg font-semibold mb-3">Aboard the ship</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <ShipInteriorCard name="ship-galley-table.webp" label="The galley" alt="The galley table laid with fruit and shared plates." />
-            <ShipInteriorCard name="ship-interior-living.jpg" label="The living room" alt="The dinette lounge with sheepskin seating, cushions, and the regenerative walking staff by the window." />
+            <ShipInteriorCard name="ship-interior-living.jpg" label="The living room" alt="The living area: the dinette by a wide window with a lake view, set up with Starlink for working aboard." />
             <ShipInteriorCard name="ship-interior-bedroom.jpg" label="The primary bedroom" alt="The primary bedroom with a gold velvet headboard, ceiling fan, and trailing ivy." />
             <ShipInteriorCard name="ship-interior-bath.jpg" label="The bath" alt="The bathroom with vanity, toilet, and the full-size washing machine in cherry cabinetry." />
           </div>

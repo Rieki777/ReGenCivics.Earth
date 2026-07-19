@@ -459,12 +459,12 @@ export function GalleyRemixer() {
       <div className="rounded-2xl border bg-gradient-to-br from-[#b5651d]/8 to-[#ffd700]/6 p-5">
         <div className="flex items-center gap-2 mb-2">
           <ChefHat className="w-5 h-5 text-[#b5651d]" aria-hidden="true" />
-          <h3 className="text-lg font-semibold">Ask the Ship's Cook</h3>
+          <h3 className="text-lg font-semibold">Ask the Ship's Yum Dealer</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Want something wilder? Tell the Cook what you're after, or snap your haul, and she'll dream up a dish that
+          Want something wilder? Tell the Yum Dealer what you're after, or snap your haul, and she'll dream up a dish that
           fits your track. She's a natural hygienist, so ask her why we eat this way aboard and she'll tell you.
-          She's a cook, not a doctor, so anything to do with your health goes to a professional.
+          She's a yum dealer, not a doctor, so anything to do with your health goes to a professional.
         </p>
 
         {cookTurns.length > 0 && (
@@ -517,7 +517,7 @@ export function GalleyRemixer() {
           )}
           <div className="flex items-center gap-2">
             <Button type="submit" disabled={cookMut.isPending || uploadingCook || cookMsg.trim().length < 1} className="min-h-11 bg-[#b5651d] hover:bg-[#9c531a] text-white">
-              {cookMut.isPending ? "Cooking…" : "Ask the Cook"}
+              {cookMut.isPending ? "Cooking…" : "Ask the Yum Dealer"}
             </Button>
             <input ref={cookFileRef} type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => void onCookPhoto(e.target.files)} />
             <Button type="button" variant="outline" className="min-h-11" disabled={uploadingCook || cookPhotos.length >= MAX_PHOTOS} onClick={() => cookFileRef.current?.click()}>

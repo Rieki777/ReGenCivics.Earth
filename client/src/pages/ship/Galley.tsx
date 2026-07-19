@@ -148,6 +148,18 @@ export default function Galley() {
 
       <ShipNavRow current="/ship/galley" />
 
+      {/* The interactive, up top: the most hands-on part of the Galley leads,
+          and the story of why we eat this way follows underneath. */}
+      <ShipSection className="py-10">
+        <ShipEyebrow>What's aboard?</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-3">Remix it</h2>
+        <p className="text-foreground/80 max-w-2xl mb-6">
+          Log what you gathered at the market and what is already aboard, then remix it into dishes that follow the
+          ship's diet. Instant with the Remix engine, or ask the Ship's Yum Dealer for something wilder.
+        </p>
+        <GalleyRemixer />
+      </ShipSection>
+
       {/* Why the diet is the regeneration */}
       <ShipSection className="py-10">
         <div data-reveal className="rounded-2xl border border-[#4a7c59]/40 bg-[#4a7c59]/5 p-6">
@@ -171,7 +183,8 @@ export default function Galley() {
       {/* Daily rhythm */}
       <ShipSection className="bg-[#d4a574]/10 py-10">
         <ShipEyebrow>A day aboard</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-6">The daily rhythm</h2>
+        <h2 className="text-3xl font-bold mb-3">One way a day can flow</h2>
+        <p className="text-foreground/80 max-w-2xl mb-6">This is an example, not a schedule. Some crews eat close to this every day and some never do. Eat when you are hungry, rest when you are tired, and take whatever fits.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {RHYTHM.map((r, i) => (
             <div key={r.title} data-reveal data-reveal-delay={i * 80} className="rounded-2xl border bg-card p-5">
@@ -185,16 +198,19 @@ export default function Galley() {
 
       {/* The Cook + her tradition */}
       <ShipSection className="py-10">
-        <ShipEyebrow>The Ship's Cook</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-4">She cooks from a tradition, not a trend</h2>
+        <ShipEyebrow>The Ship's Yum Dealer</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-4">She engineers delicious nourishment out of living food</h2>
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div data-reveal="left" className="prose prose-lg max-w-none text-foreground/90 space-y-4">
             <p>
-              The Ship's Cook is a natural hygienist. That is a real lineage, not a label. It was gathered into a
+              The crew calls her the Yum Dealer because what she serves is pure delight and leaves you better than it
+              found you. Almost nothing she makes ever meets a flame. What she
+              really does is engineer nourishment: she takes ripe, raw, living food and composes it into meals that
+              taste like a treat and feel good to eat. She is a natural hygienist, a real lineage gathered into a
               system in the 1830s by Sylvester Graham and carried forward by Herbert Shelton, Arnold Ehret, and
-              T.C. Fry through the Life Science course, and its roots run back much further, through the Essenes and
-              Hippocrates. Close to two hundred years of people paying careful attention to what living food does in
-              a body, and what happens when you get out of the body's way.
+              T.C. Fry through the Life Science course, with roots running back through the Essenes and Hippocrates.
+              Close to two hundred years of people paying careful attention to what living food does in a body, and
+              what happens when you get out of the body's way.
             </p>
             <p>
               She knows why we eat fruit in the morning and melons on their own, why simple meals of a few
@@ -223,7 +239,7 @@ export default function Galley() {
             <div className="rounded-2xl border border-[#b5651d]/40 bg-[#b5651d]/5 p-5">
               <h3 className="font-semibold text-lg mb-2">What she is, and what she isn't</h3>
               <p className="text-sm text-foreground/85">
-                She is a cook and a guide to a food tradition. She is not a doctor, and she will tell you so herself.
+                She is the crew's nourishment engineer and a guide to a food tradition. She is not a doctor, and she will tell you so herself.
                 She does not diagnose, she does not read symptoms, and she does not coach fasting. For anything to do
                 with your health, especially if you are pregnant, nursing, on medication, or managing a condition,
                 talk to a professional who can actually look after you.
@@ -231,17 +247,6 @@ export default function Galley() {
             </div>
           </div>
         </div>
-      </ShipSection>
-
-      {/* The interactive */}
-      <ShipSection className="py-10">
-        <ShipEyebrow>What's aboard?</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-3">Remix it</h2>
-        <p className="text-foreground/80 max-w-2xl mb-6">
-          Log what you gathered at the market and what is already aboard, then remix it into dishes that follow the
-          ship's diet. Instant with the Remix engine, or ask the Ship's Cook for something wilder.
-        </p>
-        <GalleyRemixer />
       </ShipSection>
 
       {/* The cookbook */}
