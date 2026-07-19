@@ -267,6 +267,7 @@ function Router() {
       {/* ReGen Ship (CORE program) */}
       <Route path={"/ship"}><EB><Ship /></EB></Route>
       <Route path={"/ship/inventory"}><EB><ShipManifest /></EB></Route>
+      <Route path={"/ship/inventory/:slug"}><EB><ShipManifest /></EB></Route>
       <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
       <Route path={"/ship/theme"}><EB><ShipTheme /></EB></Route>
       <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>

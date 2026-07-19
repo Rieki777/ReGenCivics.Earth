@@ -152,12 +152,12 @@ export async function conciergeReply(params: {
   locations: ConciergeLocation[];
   itinerary: Itinerary | null;
   /** What she carries (the bag), so "what should we bring to the lake" answers true. */
-  inventory?: Array<{ name: string; category: string; activityTags?: string[] }>;
+  inventory?: Array<{ name: string; category: string; activityTags?: string[]; location?: string }>;
 }): Promise<string> {
   const { history, locations, itinerary, inventory } = params;
   const bag = (inventory ?? []).length
-    ? `\nAboard, in the bag (mention only what fits the moment): ${(inventory ?? [])
-        .map((i) => `${i.name}${i.activityTags?.length ? ` (${i.activityTags.join(", ")})` : ""}`)
+    ? `\nAboard, in the bag (mention only what fits the moment, and if asked where a thing is, say where it is stored): ${(inventory ?? [])
+        .map((i) => `${i.name}${i.activityTags?.length ? ` (${i.activityTags.join(", ")})` : ""}${i.location ? ` [stored: ${i.location}]` : ""}`)
         .join("; ")}`
     : "";
   // She sees the whole charted plan, day by day, so "swap day 5 for a soak"

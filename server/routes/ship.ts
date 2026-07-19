@@ -55,6 +55,7 @@ import {
   SEEDS_PLANTED_BASELINE, VOYAGES_SAILED_BASELINE,
 } from "../lib/ship-config";
 import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
+import { buildToolContext, locationOf, type InventoryRow } from "../lib/ship-inventory-context";
 import { remixHaul, rollRemix, type HaulItemInput } from "../lib/galley-remix";
 import { askShipCook } from "../lib/ship-cook";
 import type { GalleyTrack } from "../../shared/galleyCards";
@@ -1235,13 +1236,31 @@ export const shipRouter = router({
         const history = ((session.messages as Array<{ role: "user" | "assistant"; content: string }>) ?? []).concat({ role: "user", content: sanitizeInput(input.message) });
         const locs = await d.select().from(shipLocations).where(eq(shipLocations.isVerified, true));
         const locations: ConciergeLocation[] = locs.map((l) => ({ id: l.id, name: l.name, type: l.type, bioregion: l.bioregion, description: l.description }));
-        // The First Mate knows the bag: pass visible inventory so "what should we
-        // bring to the lake" answers from real gear aboard (Section 2.1).
-        const bag = await d
-          .select({ name: shipInventoryItems.name, category: shipInventoryItems.category, activityTags: shipInventoryItems.activityTags })
+        // The First Mate knows the bag: pass the top-level gear aboard (not the
+        // deep tool tree, which is the Shipwright's domain) with where each one
+        // lives, so "what should we bring to the lake" and "where is the
+        // paddleboard" both answer from real gear (Section 2.1).
+        const bagRows = await d
+          .select({
+            id: shipInventoryItems.id, name: shipInventoryItems.name, category: shipInventoryItems.category,
+            activityTags: shipInventoryItems.activityTags, storagePlace: shipInventoryItems.storagePlace,
+            quantity: shipInventoryItems.quantity, parentId: shipInventoryItems.parentId,
+            manifestCategory: shipInventoryItems.manifestCategory,
+            isContainer: shipInventoryItems.isContainer, isVisible: shipInventoryItems.isVisible,
+          })
           .from(shipInventoryItems)
-          .where(eq(shipInventoryItems.isVisible, true));
-        const inventory = bag.map((b) => ({ name: b.name, category: b.category, activityTags: Array.isArray(b.activityTags) ? (b.activityTags as string[]) : [] }));
+          // Exclude year-two gear that is not aboard yet, so the First Mate never
+          // tells a guest to bring something that is not actually on the ship.
+          .where(and(eq(shipInventoryItems.isVisible, true), eq(shipInventoryItems.comingYear2, false)));
+        const bagById = new Map(bagRows.map((b) => [b.id, b as InventoryRow]));
+        const inventory = bagRows
+          .filter((b) => b.parentId == null && !b.isContainer)
+          .map((b) => ({
+            name: b.name,
+            category: b.category,
+            activityTags: Array.isArray(b.activityTags) ? (b.activityTags as string[]) : [],
+            location: locationOf(b as InventoryRow, bagById),
+          }));
         const reply = await conciergeReply({ history, locations, itinerary: (session.itinerary as Itinerary | null) ?? null, inventory });
         // Cap the stored transcript so a long-running session cannot grow the
         // JSON column without bound; the model only reads the recent turns anyway.
@@ -1499,12 +1518,29 @@ export const shipRouter = router({
           }
         }).slice(0, 4);
 
+        // The Shipwright knows the tools aboard: pass repair-relevant inventory
+        // with where each one is stored, so it only ever suggests a tool that is
+        // actually aboard (mirrors the concierge's "First Mate knows the bag").
+        const invRows = await d
+          .select({
+            id: shipInventoryItems.id, name: shipInventoryItems.name, quantity: shipInventoryItems.quantity,
+            parentId: shipInventoryItems.parentId, storagePlace: shipInventoryItems.storagePlace,
+            category: shipInventoryItems.category, manifestCategory: shipInventoryItems.manifestCategory,
+            isContainer: shipInventoryItems.isContainer, isVisible: shipInventoryItems.isVisible,
+          })
+          .from(shipInventoryItems)
+          // Only tools actually aboard now: exclude year-two gear so the Shipwright
+          // never names a tool that has not arrived yet.
+          .where(and(eq(shipInventoryItems.isVisible, true), eq(shipInventoryItems.comingYear2, false)));
+        const tools = buildToolContext(invRows as InventoryRow[]);
+
         const { reply, escalated, reason } = await askShipwright({
           question,
           history,
           chunks,
           cases: priorCases.map((c) => ({ title: c.title, resolution: c.resolution, whatWorked: c.whatWorked })),
           photoUrls: safePhotoUrls,
+          tools,
         });
 
         // Log/append the case so the ship's health has a continuous history.
@@ -1617,8 +1653,15 @@ export const shipRouter = router({
   }),
 
   // ── The Ship's Inventory (the bag) ──────────────────────────────────────────
+  // A nested tree: top-level nodes (parentId IS NULL) are the hero cards on the
+  // /ship overview; container nodes (isContainer) drill into their child items on
+  // /ship/inventory/:slug. list() returns every VISIBLE row (top-level + nested)
+  // so the client can render the overview (filter to parentId === null), search
+  // across the whole tree, and group a container's children by manifestCategory.
+  // A bare .select() now also returns the nesting columns added in 0210
+  // (parentId, isContainer, frameUrl, manifestCategory, storagePlace, zone, …).
   inventory: router({
-    // Public: every visible item, grouped client-side into the grid.
+    // Public: every visible item (top-level + nested), ordered for the grid.
     list: publicProcedure.query(async () => {
       const d = await db();
       return d
@@ -1627,6 +1670,50 @@ export const shipRouter = router({
         .where(eq(shipInventoryItems.isVisible, true))
         .orderBy(asc(shipInventoryItems.sortOrder), asc(shipInventoryItems.name));
     }),
+
+    // Public: one item by slug, plus its visible children and the breadcrumb trail
+    // from the top-level ancestor down to it. Powers the /ship/inventory/:slug
+    // detail sub-page (breadcrumb + category-grouped child list).
+    get: publicProcedure
+      .input(z.object({ slug: z.string().min(1).max(160) }))
+      .query(async ({ input }) => {
+        const d = await db();
+        const [item] = await d
+          .select()
+          .from(shipInventoryItems)
+          .where(and(eq(shipInventoryItems.slug, input.slug), eq(shipInventoryItems.isVisible, true)))
+          .limit(1);
+        if (!item) return { item: null, children: [], breadcrumb: [] as { id: number; slug: string; name: string }[] };
+
+        const children = await d
+          .select()
+          .from(shipInventoryItems)
+          .where(and(eq(shipInventoryItems.parentId, item.id), eq(shipInventoryItems.isVisible, true)))
+          .orderBy(asc(shipInventoryItems.sortOrder), asc(shipInventoryItems.name));
+
+        // Breadcrumb: walk up parentId. One bounded query over id/slug/name/parentId
+        // (the whole tree is tiny, ~135 rows) with a cycle guard so a bad parentId
+        // can never loop forever.
+        const nodes = await d
+          .select({
+            id: shipInventoryItems.id,
+            slug: shipInventoryItems.slug,
+            name: shipInventoryItems.name,
+            parentId: shipInventoryItems.parentId,
+          })
+          .from(shipInventoryItems);
+        const byId = new Map(nodes.map((n) => [n.id, n]));
+        const breadcrumb: { id: number; slug: string; name: string }[] = [];
+        const seen = new Set<number>();
+        let cur: (typeof nodes)[number] | undefined = byId.get(item.id);
+        while (cur && !seen.has(cur.id)) {
+          seen.add(cur.id);
+          breadcrumb.unshift({ id: cur.id, slug: cur.slug, name: cur.name });
+          cur = cur.parentId != null ? byId.get(cur.parentId) : undefined;
+        }
+
+        return { item, children, breadcrumb };
+      }),
   }),
 
   // ── The Galley (food experience) ────────────────────────────────────────────
@@ -2332,9 +2419,39 @@ export const shipRouter = router({
         isVisible: z.boolean().default(true),
         isGearChecked: z.boolean().default(false),
         sortOrder: z.number().int().default(0),
+        comingYear2: z.boolean().default(false),
+        // Nested tree + physical-manifest merge (0210_ship_inventory_nesting.sql).
+        parentId: z.number().int().nullable().optional(),
+        isContainer: z.boolean().default(false),
+        provenance: z.enum(["curated", "transcribed", "curator_added"]).default("curated"),
+        zone: z.string().max(40).optional(),
+        unit: z.string().max(40).optional(),
+        itemCondition: z.string().max(60).optional(),
+        confidence: z.string().max(12).optional(),
+        sourceVideo: z.string().max(120).optional(),
+        sourceTimestamp: z.string().max(12).optional(),
+        frameUrl: z.string().max(512).optional(),
+        manifestCategory: z.string().max(40).optional(),
       }))
       .mutation(async ({ input }) => {
         const d = await db();
+        // Resolve the parent, guarding against cycles: never an item's own id, and
+        // never one of its descendants (that would orphan the whole subtree from the
+        // top-level view). This is the procedure-layer integrity the schema relies on.
+        let parentId = input.parentId && input.parentId !== input.id ? input.parentId : null;
+        if (parentId && input.id) {
+          const nodes = await d
+            .select({ id: shipInventoryItems.id, parentId: shipInventoryItems.parentId })
+            .from(shipInventoryItems);
+          const parentOf = new Map(nodes.map((n) => [n.id, n.parentId]));
+          let cur: number | null | undefined = parentId;
+          const seen = new Set<number>();
+          while (cur != null && !seen.has(cur)) {
+            if (cur === input.id) { parentId = null; break; } // proposed parent is under this item
+            seen.add(cur);
+            cur = parentOf.get(cur);
+          }
+        }
         const values = {
           name: sanitizeInput(input.name),
           slug: input.slug,
@@ -2349,6 +2466,18 @@ export const shipRouter = router({
           isVisible: input.isVisible,
           isGearChecked: input.isGearChecked,
           sortOrder: input.sortOrder,
+          comingYear2: input.comingYear2,
+          parentId,
+          isContainer: input.isContainer,
+          provenance: input.provenance,
+          zone: input.zone ? sanitizeInput(input.zone) : null,
+          unit: input.unit ? sanitizeInput(input.unit) : null,
+          itemCondition: input.itemCondition ? sanitizeInput(input.itemCondition) : null,
+          confidence: input.confidence || null,
+          sourceVideo: input.sourceVideo || null,
+          sourceTimestamp: input.sourceTimestamp || null,
+          frameUrl: input.frameUrl || null,
+          manifestCategory: input.manifestCategory ? sanitizeInput(input.manifestCategory) : null,
         };
         if (input.id) {
           await d.update(shipInventoryItems).set(values).where(eq(shipInventoryItems.id, input.id));

@@ -1,51 +1,22 @@
 /**
- * The Ship's Inventory (the bag) — SHIP_MAINTAINER_INVENTORY Section 2.
+ * The Ship's Inventory overview (the bag) — SHIP_MAINTAINER_INVENTORY Section 2.
  *
- * Everything she carries, shown as game-style item slots in the solarpunk
- * elven-futuristic style. Tap a slot to open its item card (icon, lore line,
- * practical description, where it is stowed, activity tags). Search by name and
- * filter by "what are you up to?" activity chips. Rarity-style ring colors by
- * category, subtle and tasteful.
+ * The top level of the nested inventory tree: only parentId === null nodes show
+ * here as game-style slots. Container cards (isContainer) get a gold ring, an
+ * "N inside" count, and a chevron, and drill into /ship/inventory/:slug. Leaf
+ * cards open their item card in a dialog (icon, lore, description, storage,
+ * activity tags). Search by name and filter by "what are you up to?" chips.
+ * Overview cards use iconUrl (glyph fallback), never the per-item video frames.
  */
 import { useMemo, useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Package } from "lucide-react";
-
-type Item = {
-  id: number;
-  name: string;
-  slug: string;
-  category: string;
-  description: string | null;
-  lore: string | null;
-  iconUrl: string | null;
-  quantity: number;
-  storagePlace: string | null;
-  activityTags: unknown;
-  comingYear2?: boolean;
-};
-
-// Rarity-style ring + glyph per category (subtle, painterly, never casino).
-const CATEGORY: Record<string, { ring: string; glow: string; glyph: string; label: string }> = {
-  magic: { ring: "border-[#b98bd6]", glow: "shadow-[0_0_18px_rgba(185,139,214,0.35)]", glyph: "✨", label: "Magic" },
-  adventure: { ring: "border-[#4a9c7c]", glow: "shadow-[0_0_16px_rgba(74,156,124,0.3)]", glyph: "🧭", label: "Adventure" },
-  water: { ring: "border-[#5aa9d6]", glow: "shadow-[0_0_16px_rgba(90,169,214,0.3)]", glyph: "💧", label: "Water" },
-  power: { ring: "border-[#d6b25a]", glow: "shadow-[0_0_16px_rgba(214,178,90,0.3)]", glyph: "⚡", label: "Power" },
-  connectivity: { ring: "border-[#7c8bd6]", glow: "shadow-[0_0_16px_rgba(124,139,214,0.3)]", glyph: "📡", label: "Connectivity" },
-  galley: { ring: "border-[#d68b5a]", glow: "shadow-[0_0_16px_rgba(214,139,90,0.3)]", glyph: "🍲", label: "Galley" },
-  tools: { ring: "border-[#9c8a7c]", glow: "shadow-[0_0_16px_rgba(156,138,124,0.3)]", glyph: "🔧", label: "Tools" },
-  comfort: { ring: "border-[#82b06a]", glow: "shadow-[0_0_16px_rgba(130,176,106,0.3)]", glyph: "🌿", label: "Comfort" },
-  safety: { ring: "border-[#d67a7a]", glow: "shadow-[0_0_16px_rgba(214,122,122,0.3)]", glyph: "🛟", label: "Safety" },
-};
-
-function meta(cat: string) {
-  return CATEGORY[cat] ?? CATEGORY.comfort;
-}
-function tagsOf(item: Item): string[] {
-  return Array.isArray(item.activityTags) ? (item.activityTags as string[]) : [];
-}
+import { Search, Package, ChevronRight } from "lucide-react";
+import {
+  InventoryItem, meta, tagsOf, CONTAINER_RING, CONTAINER_GLOW,
+} from "./shipInventoryMeta";
 
 // "What are you up to?" chips filter by activity tag.
 const ACTIVITIES = [
@@ -58,16 +29,45 @@ const ACTIVITIES = [
   { key: "repairs", label: "Repairs" },
 ];
 
+/** Count every item nested under a container, at any depth. */
+function buildDescendantCounts(items: InventoryItem[]): Map<number, number> {
+  const childrenOf = new Map<number, InventoryItem[]>();
+  for (const it of items) {
+    if (it.parentId == null) continue;
+    const arr = childrenOf.get(it.parentId) ?? [];
+    arr.push(it);
+    childrenOf.set(it.parentId, arr);
+  }
+  const memo = new Map<number, number>();
+  const count = (id: number, seen: Set<number>): number => {
+    if (memo.has(id)) return memo.get(id)!;
+    if (seen.has(id)) return 0; // cycle guard
+    seen.add(id);
+    let n = 0;
+    for (const child of childrenOf.get(id) ?? []) n += 1 + count(child.id, seen);
+    memo.set(id, n);
+    return n;
+  };
+  const result = new Map<number, number>();
+  for (const it of items) if (it.isContainer) result.set(it.id, count(it.id, new Set()));
+  return result;
+}
+
 export function ShipInventory() {
   const { data, isLoading } = trpc.ship.inventory.list.useQuery();
   const [query, setQuery] = useState("");
   const [activity, setActivity] = useState<string | null>(null);
-  const [open, setOpen] = useState<Item | null>(null);
+  const [open, setOpen] = useState<InventoryItem | null>(null);
 
-  const items = (data ?? []) as Item[];
+  const items = (data ?? []) as InventoryItem[];
+  const insideCounts = useMemo(() => buildDescendantCounts(items), [items]);
+
+  // Only parentId === null nodes are hero cards on the overview.
+  const topLevel = useMemo(() => items.filter((it) => it.parentId == null), [items]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((it) => {
+    return topLevel.filter((it) => {
       if (activity && !tagsOf(it).some((t) => t.toLowerCase() === activity)) return false;
       if (!q) return true;
       return (
@@ -77,18 +77,20 @@ export function ShipInventory() {
         tagsOf(it).some((t) => t.toLowerCase().includes(q))
       );
     });
-  }, [items, query, activity]);
+  }, [topLevel, query, activity]);
 
-  // Only show chips that actually match at least one loaded item, so no chip
-  // can land on the empty "Nothing in the bag for that" state and look broken.
+  // Only show chips that match at least one loaded item, so no chip lands on the
+  // empty state and looks broken.
+  // Built from topLevel (not all items): the activity filter runs over topLevel,
+  // so a chip whose only tag lives on a nested item would land on the empty state.
   const availableTags = useMemo(() => {
     const s = new Set<string>();
-    for (const it of items) for (const t of tagsOf(it)) s.add(t.toLowerCase());
+    for (const it of topLevel) for (const t of tagsOf(it)) s.add(t.toLowerCase());
     return s;
-  }, [items]);
+  }, [topLevel]);
   const visibleActivities = ACTIVITIES.filter((a) => availableTags.has(a.key));
 
-  if (!isLoading && items.length === 0) return null; // nothing to show yet
+  if (!isLoading && topLevel.length === 0) return null; // nothing to show yet
 
   return (
     <div>
@@ -136,27 +138,55 @@ export function ShipInventory() {
         <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {filtered.map((it) => {
             const m = meta(it.category);
+            const inside = it.isContainer ? insideCounts.get(it.id) ?? 0 : 0;
+            const ring = it.isContainer ? CONTAINER_RING : m.ring;
+            const glow = it.isContainer ? CONTAINER_GLOW : m.glow;
+            const cardClass = `group relative w-full aspect-square rounded-2xl border-2 ${ring} bg-[#0d1f16]/90 ${glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg ${it.comingYear2 ? "opacity-80" : ""}`;
+            const inner = (
+              <>
+                {it.comingYear2 && (
+                  <span className="absolute top-1 left-1 rounded-full bg-[#b5762f]/90 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">Year two</span>
+                )}
+                {it.isContainer ? (
+                  inside > 0 && (
+                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/70 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">{inside} inside</span>
+                  )
+                ) : (
+                  it.quantity > 1 && (
+                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{it.quantity}</span>
+                  )
+                )}
+                {it.iconUrl ? (
+                  <img src={it.iconUrl} alt="" className="w-12 h-12 object-contain" loading="lazy" />
+                ) : (
+                  <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
+                )}
+                <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{it.name}</span>
+                {it.isContainer && (
+                  <ChevronRight className="absolute bottom-1 right-1 w-4 h-4 text-[#ffd700]/80" aria-hidden="true" />
+                )}
+              </>
+            );
             return (
               <li key={it.id}>
-                <button
-                  type="button"
-                  onClick={() => setOpen(it)}
-                  className={`group relative w-full aspect-square rounded-2xl border-2 ${m.ring} bg-[#0d1f16]/90 ${m.glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg ${it.comingYear2 ? "opacity-80" : ""}`}
-                  aria-label={`${it.name}, ${m.label}${it.comingYear2 ? ", coming year two" : ""}${it.quantity > 1 ? `, ${it.quantity} aboard` : ""}`}
-                >
-                  {it.comingYear2 && (
-                    <span className="absolute top-1 left-1 rounded-full bg-[#b5762f]/90 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">Year two</span>
-                  )}
-                  {it.quantity > 1 && (
-                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{it.quantity}</span>
-                  )}
-                  {it.iconUrl ? (
-                    <img src={it.iconUrl} alt="" className="w-12 h-12 object-contain" loading="lazy" />
-                  ) : (
-                    <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
-                  )}
-                  <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{it.name}</span>
-                </button>
+                {it.isContainer ? (
+                  <Link
+                    href={`/ship/inventory/${it.slug}`}
+                    className={cardClass}
+                    aria-label={`${it.name}, ${inside} items inside. Open`}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setOpen(it)}
+                    className={cardClass}
+                    aria-label={`${it.name}, ${m.label}${it.comingYear2 ? ", coming year two" : ""}${it.quantity > 1 ? `, ${it.quantity} aboard` : ""}`}
+                  >
+                    {inner}
+                  </button>
+                )}
               </li>
             );
           })}
