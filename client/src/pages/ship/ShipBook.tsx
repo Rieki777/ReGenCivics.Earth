@@ -670,8 +670,8 @@ export default function ShipBook() {
             <div className="flex items-start gap-3">
               <Checkbox id="terms" checked={terms} onCheckedChange={(v) => setTerms(Boolean(v))} />
               <p className="font-normal leading-snug text-sm">
-                <Label htmlFor="terms" className="font-normal">I have read and agree to the Voyage Covenant and Rental Terms, including the 500-mile travel radius, the meat, alcohol, and smoke-free rule aboard, and my responsibility for loss that insurance does not cover.</Label>{" "}
-                <Link href="/ship/terms" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the terms</Link>.
+                <Label htmlFor="terms" className="font-normal">I agree to the Terms and Conditions, the Voyage Covenant and Rental Terms, including the cancellation policy, the 500-mile travel radius, the meat, alcohol, and smoke-free rule aboard, and my responsibility for loss that insurance does not cover.</Label>{" "}
+                <a href="/ship/terms#cancellation" target="_blank" rel="noopener noreferrer" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Read the Terms and Conditions (opens in a new tab)</a>.
               </p>
             </div>
             <div>

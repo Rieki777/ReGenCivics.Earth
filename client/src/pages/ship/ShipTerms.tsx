@@ -440,9 +440,13 @@ export default function ShipTerms() {
             </li>
           </ul>
 
-          <h2>14. Changes, cancellation, and recall</h2>
+          <h2 id="cancellation">14. Cancellation Policy</h2>
+          <p>Life happens, and she holds one crew at a time. We follow Outdoorsy's Moderate cancellation policy in full, and go a step more generous where we can.</p>
+          <p>Cancel more than 30 days before you board and your fare is fully refunded. Between 30 and 8 days out, take 50% back, or hold your full fare as a credit to reschedule any open week within a year, your choice. Inside 7 days, the fare is held. Change your mind within 24 hours of booking, as long as you are more than 7 days out, and your fare comes fully back.</p>
+          <p>And if she ever cannot sail, a mechanical or a keeper's emergency, you are made whole: a full refund, or the next open week you choose.</p>
+          <p>Bookings run through Outdoorsy, and their Moderate policy is the binding foundation. The one-year reschedule credit is ours, offered in good faith to give you more room than the policy requires.</p>
+          <p className="font-semibold mt-4">Changes and recall</p>
           <ul>
-            <li>Cancellations and changes follow the Platform's cancellation policy plus any terms in your booking confirmation.</li>
             <li>An approved booking that does not complete the Platform step within <strong>72 hours</strong> may expire and release the week.</li>
             <li>
               The Church may <strong>recall the Ship</strong> or end a voyage early if you materially breach this
