@@ -103,7 +103,20 @@ async function main() {
     return;
   }
 
-  const conn = await mysql.createConnection(url!);
+  let conn = await mysql.createConnection(url!);
+  // The Railway proxy drops an idle DB connection during the slow ffmpeg+upload
+  // steps; reconnect and retry a write once if the socket has closed under us.
+  const execUpdate = async (frameUrl: string, id: number): Promise<void> => {
+    try {
+      await conn.execute("UPDATE ship_inventory_items SET frameUrl = ? WHERE id = ?", [frameUrl, id]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/closed|CONNECTION_LOST|ECONNRESET|read ECONN/i.test(msg)) {
+        conn = await mysql.createConnection(url!);
+        await conn.execute("UPDATE ship_inventory_items SET frameUrl = ? WHERE id = ?", [frameUrl, id]);
+      } else throw e;
+    }
+  };
   const r2 = isLocal ? null : makeR2Client();
   const bucket = process.env.AWS_BUCKET_NAME;
   if (!isLocal && !bucket) { console.error("ERROR: AWS_BUCKET_NAME not set (needed for R2 upload). Use --local to write static files instead."); process.exit(1); }
@@ -147,7 +160,7 @@ async function main() {
           // version query to bust caches when replacing a bad frame.
           frameUrl = `${ASSETS_BASE}/${key}${isForce ? `?v=${Date.now()}` : ""}`;
         }
-        await conn.execute("UPDATE ship_inventory_items SET frameUrl = ? WHERE id = ?", [frameUrl, row.id]);
+        await execUpdate(frameUrl, row.id);
         done++;
         if (done % 20 === 0) console.log(`  ...${done} frames done`);
       } catch (e) {

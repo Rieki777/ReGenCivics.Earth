@@ -30,6 +30,10 @@ dotenv.config();
 
 const isDryRun = process.argv.includes("--dry-run");
 const isForce = process.argv.includes("--force");
+// --no-db: generate the webp files only, do NOT set iconUrl. Lets you commit +
+// deploy the static icons first, then set iconUrl (a plain re-run) so the cards
+// never point at a not-yet-deployed file.
+const isNoDb = process.argv.includes("--no-db");
 
 const REPO_ROOT = path.resolve(process.cwd());
 const OUT_DIR = path.join(REPO_ROOT, "client", "public", "images", "ship", "items");
@@ -97,22 +101,31 @@ async function main() {
         "--filename", pngPath, "--resolution", "1K", "--aspect", "1:1",
       ].filter(Boolean);
 
-      console.log(`  generating ${row.slug}…`);
-      const run = spawnSync(python, args, { stdio: "inherit" });
-      if (run.status !== 0 || !fs.existsSync(pngPath)) { console.warn(`  ! generation failed for ${row.slug}`); failed++; continue; }
-
-      // A single undecodable PNG must not abort the batch or leave a stray png in
-      // the served public dir.
-      try {
-        await sharp(pngPath).resize(256, 256, { fit: "cover" }).webp({ quality: 82 }).toFile(webpPath);
-        fs.rmSync(pngPath, { force: true });
-        await conn.execute("UPDATE ship_inventory_items SET iconUrl = ? WHERE id = ?", [`/images/ship/items/${row.slug}.webp`, row.id]);
-        done++;
-      } catch (e) {
-        console.warn(`  ! webp/db step failed for ${row.slug}: ${e instanceof Error ? e.message : e}`);
-        try { fs.rmSync(pngPath, { force: true }); } catch { /* best effort */ }
-        failed++;
+      // Generate only when the webp isn't already there (idempotent); --force regenerates.
+      if (isForce || !fs.existsSync(webpPath)) {
+        console.log(`  generating ${row.slug}…`);
+        const run = spawnSync(python, args, { stdio: "inherit" });
+        if (run.status !== 0 || !fs.existsSync(pngPath)) { console.warn(`  ! generation failed for ${row.slug}`); failed++; continue; }
+        // A single undecodable PNG must not abort the batch or leave a stray png.
+        try {
+          await sharp(pngPath).resize(256, 256, { fit: "cover" }).webp({ quality: 82 }).toFile(webpPath);
+          fs.rmSync(pngPath, { force: true });
+        } catch (e) {
+          console.warn(`  ! webp step failed for ${row.slug}: ${e instanceof Error ? e.message : e}`);
+          try { fs.rmSync(pngPath, { force: true }); } catch { /* best effort */ }
+          failed++;
+          continue;
+        }
+      } else {
+        console.log(`  ${row.slug}: webp already present, skipping generation`);
       }
+
+      // Point the card at the static webp — skip under --no-db so we can commit +
+      // deploy the file before the DB references it (no broken-image window).
+      if (!isNoDb) {
+        await conn.execute("UPDATE ship_inventory_items SET iconUrl = ? WHERE id = ?", [`/images/ship/items/${row.slug}.webp`, row.id]);
+      }
+      done++;
     }
 
     console.log(`\nIcons: ${done} generated + set, ${failed} failed. Review them in ${OUT_DIR}.`);
