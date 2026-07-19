@@ -57,6 +57,7 @@ import { churchRolesRouter } from "./routes/churchRoles";
 import { churchDonationsRouter } from "./routes/churchDonations";
 import { elderChatRouter } from "./routes/elderChat";
 import { shipRouter } from "./routes/ship";
+import { shipManifestRouter } from "./routes/shipManifest";
 import { companionRouter } from "./routes/companion";
 import { guideRouter } from "./routes/guide";
 import { quickNotesRouter } from "./routes/quick-notes";
@@ -228,6 +229,8 @@ export const appRouter = router({
   elderChat: elderChatRouter,
   // CORE: The ReGen Ship (bookings, treasure map, quest, concierge, fleet)
   ship: shipRouter,
+  // The Ship's physical inventory manifest (ship_inventory), surfaced at /ship/inventory
+  shipManifest: shipManifestRouter,
   companion: companionRouter,
   guide: guideRouter,
   // Video Tutor: context-aware Q&A over any YouTube video on the site

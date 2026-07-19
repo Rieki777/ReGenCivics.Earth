@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PageWrapper } from "@/components/PageWrapper";
 import { Anchor, Map, Sprout, Ship as ShipIcon, Droplets, Wifi, Bike, Sun } from "lucide-react";
 import {
-  ShipImage, InteriorPlaceholder, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
+  ShipImage, ShipInteriorCard, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
   SHIP_TAGLINE, CHESTNUT_URL, shipImg,
 } from "./shipShared";
 import { ShipInventory } from "@/components/ship/ShipInventory";
@@ -19,9 +19,9 @@ import AutoplayVideo from "@/components/AutoplayVideo";
 
 const PERKS = [
   { icon: Sun, title: "The healthiest coach on the road", body: "A 2006 luxury build chosen on purpose: real wood and stone trim, cured decades past off-gassing. 100% organic linens and towels, cast iron and natural cookware, organic soaps and body products stocked for you." },
-  { icon: Droplets, title: "Water like nowhere else", body: "Whole-coach filtration strips chlorine from any city fill. Filtered showers. Gravity-filtered drinking water. And a spring-water intake pump that fills your tanks straight from a living spring up to 50 feet away." },
+  { icon: Droplets, title: "Water like nowhere else", body: "Whole-coach filtration strips chlorine from any city fill. Filtered showers. In-line-filtered drinking water. And a spring-water intake pump that fills your tanks straight from a living spring up to 50 feet away." },
   { icon: Wifi, title: "Fully off-grid, fully connected", body: "Generator and electrical system meet 100% of your energy needs. Starlink internet anywhere on earth. Propane cooking and hot water. A full-size washing machine with drying stand." },
-  { icon: Bike, title: "The adventure pack", body: "Electric bike. Stand-up paddleboard. Paddle ball. Hammocks. Cascadia field guides, instruments, and games." },
+  { icon: Bike, title: "The adventure pack", body: "Stand-up paddleboard. Hammocks. Cascadia field guides, instruments, and games. A Love Your Body kit for tending yourselves aboard. The electric bike and paddle ball come aboard in year two." },
   { icon: ShipIcon, title: "Room to live", body: "Forty feet, three slide-outs, two bedrooms, two bathrooms, and a living room big enough for morning yoga. Designed for a couple; up to four aboard in comfort, or five when at least three are children." },
   { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
 ];
@@ -101,6 +101,9 @@ export default function Ship() {
         <h2 className="text-3xl font-bold mb-2">Everything she carries</h2>
         <p className="text-foreground/80 max-w-2xl mb-6">Open the bag. Every tool, toy, and bit of magic aboard, from the paddleboard to the walking staff that plants a forest as you go. Tap a slot to see what it does and where she keeps it.</p>
         <ShipInventory />
+        <div className="mt-6">
+          <Link href="/ship/inventory" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">See the full ship inventory — every tool, hose, and battery aboard, and where she keeps it <span aria-hidden="true">→</span></Link>
+        </div>
       </ShipSection>
 
       {/* The love voyage */}
@@ -180,10 +183,16 @@ export default function Ship() {
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-3">Aboard the ship</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <InteriorPlaceholder label="The galley" />
-            <InteriorPlaceholder label="The living room" />
-            <InteriorPlaceholder label="The primary bedroom" />
-            <InteriorPlaceholder label="The bath" />
+            <ShipInteriorCard name="ship-galley-table.webp" label="The galley" alt="The galley table laid with fruit and shared plates." />
+            <ShipInteriorCard name="ship-interior-living.jpg" label="The living room" alt="The dinette lounge with sheepskin seating, cushions, and the regenerative walking staff by the window." />
+            <ShipInteriorCard name="ship-interior-bedroom.jpg" label="The primary bedroom" alt="The primary bedroom with a gold velvet headboard, ceiling fan, and trailing ivy." />
+            <ShipInteriorCard name="ship-interior-bath.jpg" label="The bath" alt="The bathroom with vanity, toilet, and the full-size washing machine in cherry cabinetry." />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <ShipInteriorCard name="ship-interior-bedroom-2.jpg" label="The bedroom, by candlelight" alt="The bedroom from the doorway, beaded curtain, framed art, and candles along the sill." />
+            <ShipInteriorCard name="ship-interior-shower.jpg" label="The shower" alt="A corner shower with frosted glass, fresh towels, and a skylight overhead." />
+            <ShipInteriorCard name="ship-interior-bath-sink.jpg" label="The vanity" alt="The bathroom vanity with a stone tile backsplash, brushed gold fixtures, and a folded towel." />
+            <ShipInteriorCard name="ship-interior-altar.jpg" label="The altar" alt="A small altar with framed agate slices, candles, selenite, and a feather." />
           </div>
         </div>
       </ShipSection>

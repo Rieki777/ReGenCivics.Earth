@@ -4812,6 +4812,8 @@ export const shipInventoryItems = mysqlTable("ship_inventory_items", {
   isVisible: boolean("isVisible").notNull().default(true),
   /** Flagged for the boarding/return gear check (V5 gear manifest). */
   isGearChecked: boolean("isGearChecked").notNull().default(false),
+  /** True for gear that is not aboard yet and arrives in year two (shown with a badge). */
+  comingYear2: boolean("comingYear2").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -5394,3 +5396,35 @@ export const questCompletionAttestations = mysqlTable("quest_completion_attestat
   attesterIdx: index("quest_completion_attestations_attesterUserId_idx").on(t.attesterUserId),
 }));
 export type QuestCompletionAttestation = typeof questCompletionAttestations.$inferSelect;
+
+// ── The Ship's Inventory: physical manifest (RV walkthrough) ──────────────────
+// One row per distinct item aboard the 2006 Fleetwood Revolution LE, transcribed
+// from the walkthrough videos (Photos-1-001.zip: IMG_1048/1051/1053) and seeded
+// from data/rv_inventory.json via scripts/seed-ship-inventory.ts.
+// Distinct from `ship_inventory_items` above (the gamified Shipwright gear bag):
+// this is the real "what's aboard and where" manifest surfaced at /ship/inventory.
+// `id` is the natural key from the JSON (e.g. "inv-001") so seeds upsert cleanly.
+// Column mapping (record field -> column): condition -> itemCondition,
+// source_video -> sourceVideo, timestamp -> sourceTimestamp (condition & timestamp
+// are MySQL reserved words).
+export const shipInventory = mysqlTable("ship_inventory", {
+  id: varchar("id", { length: 80 }).primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  quantity: int("quantity").notNull().default(1),
+  unit: varchar("unit", { length: 40 }),
+  category: varchar("category", { length: 40 }).notNull().default("Misc"),
+  zone: varchar("zone", { length: 40 }).notNull().default("Storage-general"),
+  location: varchar("location", { length: 255 }),
+  itemCondition: varchar("itemCondition", { length: 60 }),
+  notes: text("notes"),
+  sourceVideo: varchar("sourceVideo", { length: 120 }),
+  sourceTimestamp: varchar("sourceTimestamp", { length: 12 }),
+  confidence: varchar("confidence", { length: 12 }).notNull().default("medium"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_inventory_zone_idx").on(table.zone),
+  index("ship_inventory_cat_idx").on(table.category),
+]));
+export type ShipInventory = typeof shipInventory.$inferSelect;
+export type InsertShipInventory = typeof shipInventory.$inferInsert;
