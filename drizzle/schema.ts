@@ -4815,12 +4815,31 @@ export const shipInventoryItems = mysqlTable("ship_inventory_items", {
   /** True for gear that is not aboard yet and arrives in year two (shown with a badge). */
   comingYear2: boolean("comingYear2").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),
+  // ── Nested tree + physical-manifest merge (0210_ship_inventory_nesting.sql) ──
+  /** Self-reference -> ship_inventory_items(id). Nullable = top-level (a hero card).
+   *  No .references() by house convention; integrity is enforced in the procedure layer. */
+  parentId: int("parentId"),
+  /** True for hero cards that hold child items (drillable on /ship/inventory). */
+  isContainer: boolean("isContainer").notNull().default(false),
+  /** Where the row came from: the hand-authored bag, the transcribed manifest, or a curator-added container. */
+  provenance: mysqlEnum("provenance", ["curated", "transcribed", "curator_added"]).notNull().default("curated"),
+  zone: varchar("zone", { length: 40 }),
+  unit: varchar("unit", { length: 40 }),
+  itemCondition: varchar("itemCondition", { length: 60 }),
+  confidence: varchar("confidence", { length: 12 }),
+  sourceVideo: varchar("sourceVideo", { length: 120 }),
+  sourceTimestamp: varchar("sourceTimestamp", { length: 12 }),
+  /** Real photo pulled from the walkthrough video (detail view; the overview uses iconUrl). */
+  frameUrl: varchar("frameUrl", { length: 512 }),
+  /** The manifest taxonomy value, kept verbatim (not remapped into the 9-value `category` enum). */
+  manifestCategory: varchar("manifestCategory", { length: 40 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
   index("ship_inventory_category_idx").on(table.category),
   index("ship_inventory_sort_idx").on(table.sortOrder),
   index("ship_inventory_visible_idx").on(table.isVisible),
+  index("ship_inventory_parent_idx").on(table.parentId),
 ]));
 export type ShipInventoryItem = typeof shipInventoryItems.$inferSelect;
 export type InsertShipInventoryItem = typeof shipInventoryItems.$inferInsert;
@@ -5397,34 +5416,12 @@ export const questCompletionAttestations = mysqlTable("quest_completion_attestat
 }));
 export type QuestCompletionAttestation = typeof questCompletionAttestations.$inferSelect;
 
-// ── The Ship's Inventory: physical manifest (RV walkthrough) ──────────────────
-// One row per distinct item aboard the 2006 Fleetwood Revolution LE, transcribed
-// from the walkthrough videos (Photos-1-001.zip: IMG_1048/1051/1053) and seeded
-// from data/rv_inventory.json via scripts/seed-ship-inventory.ts.
-// Distinct from `ship_inventory_items` above (the gamified Shipwright gear bag):
-// this is the real "what's aboard and where" manifest surfaced at /ship/inventory.
-// `id` is the natural key from the JSON (e.g. "inv-001") so seeds upsert cleanly.
-// Column mapping (record field -> column): condition -> itemCondition,
-// source_video -> sourceVideo, timestamp -> sourceTimestamp (condition & timestamp
-// are MySQL reserved words).
-export const shipInventory = mysqlTable("ship_inventory", {
-  id: varchar("id", { length: 80 }).primaryKey(),
-  name: varchar("name", { length: 200 }).notNull(),
-  quantity: int("quantity").notNull().default(1),
-  unit: varchar("unit", { length: 40 }),
-  category: varchar("category", { length: 40 }).notNull().default("Misc"),
-  zone: varchar("zone", { length: 40 }).notNull().default("Storage-general"),
-  location: varchar("location", { length: 255 }),
-  itemCondition: varchar("itemCondition", { length: 60 }),
-  notes: text("notes"),
-  sourceVideo: varchar("sourceVideo", { length: 120 }),
-  sourceTimestamp: varchar("sourceTimestamp", { length: 12 }),
-  confidence: varchar("confidence", { length: 12 }).notNull().default("medium"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ([
-  index("ship_inventory_zone_idx").on(table.zone),
-  index("ship_inventory_cat_idx").on(table.category),
-]));
-export type ShipInventory = typeof shipInventory.$inferSelect;
-export type InsertShipInventory = typeof shipInventory.$inferInsert;
+// ── The Ship's Inventory: physical manifest (RV walkthrough) — RETIRED ─────────
+// The standalone `ship_inventory` table + shipManifest router were retired on
+// 2026-07-18. The 118-item physical manifest (data/rv_inventory.json) is now
+// merged into `ship_inventory_items` above as a nested tree (parentId /
+// isContainer / provenance='transcribed' + zone/unit/itemCondition/confidence/
+// sourceVideo/sourceTimestamp/frameUrl/manifestCategory), seeded by
+// scripts/seed-ship-inventory-manifest.ts and surfaced via ship.inventory.*.
+// The old DB table still exists in Railway; Rye may DROP it separately (no
+// destructive migration is emitted here).

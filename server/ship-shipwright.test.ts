@@ -109,4 +109,27 @@ describe("askShipwright", () => {
     expect(res.escalated).toBe(false);
     expect(res.reply).toContain("Keeper");
   });
+
+  it("passes the tools aboard with where each is stored, and forbids inventing tools", async () => {
+    modelReturns("Grab the multimeter from the outdoor tool bag and check for 12 volts across the terminals. If anything feels unsafe, stop and call your Keeper.");
+    const res = await askShipwright({
+      question: "how do I check if the house battery is charging?",
+      chunks: [],
+      cases: [],
+      tools: [
+        { name: "Volt meter / multimeter", quantity: 1, location: "Outdoor tool bag ▸ Tool section, passenger side" },
+        { name: "Multi-screwdriver", quantity: 1, location: "The tool bag ▸ Indoor tool bag" },
+      ],
+    });
+    const call = invokeLLM.mock.calls[0][0] as LLMCall;
+    const system = call.messages[0].content;
+    // The tool list, a real tool, and its storage location all reach the model.
+    expect(system).toContain("TOOLS ABOARD");
+    expect(system).toContain("Volt meter / multimeter");
+    expect(system).toContain("Outdoor tool bag ▸ Tool section, passenger side");
+    expect(system).toContain("Never invent a tool");
+    // The reply names a real tool and its location.
+    expect(res.reply).toContain("multimeter");
+    expect(res.reply).toContain("outdoor tool bag");
+  });
 });
