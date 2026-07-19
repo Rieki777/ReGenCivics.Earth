@@ -11,6 +11,7 @@ import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
+import { extractPartnerFunding, type PartnerFunding, type PartnerKey } from "../lib/partner-funding-parse";
 
 // ─── Step 1: Advance Lunar Cycles ──────────────────────────────────────────
 
@@ -593,6 +594,153 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
   return { expired, reminders };
 }
 
+// ─── Step 10: Partner-progress hydration ───────────────────────────────────
+//
+// Ma Earth (gifts + matching) and GoSteward (loans) are recommended funders,
+// not partners: money never touches us. Their campaign_partner_links rows carry
+// cached raised / contributor / percent numbers that the campaign detail page
+// shows read-only, "as of {lastFetchedAt}". This job refreshes those numbers.
+//
+// For every link on an active or funded campaign it fetches the funder's public
+// page and reads the numbers with server/lib/partner-funding-parse. Defensive by
+// design: each fetch has a 10s timeout, at most `concurrency` run at once, and a
+// fetch error, a non-200, or a page it cannot parse leaves that row's cached
+// values AND lastFetchedAt exactly as they were. It never zeroes a number it
+// could not read, so a funder that blocks bots or hides its totals behind
+// client-side rendering simply keeps its last good cache.
+//
+// The db access and the fetch are injectable so the orchestration is unit
+// tested without a live database or network (server/partner-hydration.test.ts).
+
+/** Minimal shape of the response the job needs; matches global fetch(). */
+export type FetchLike = (
+  url: string,
+  init?: any,
+) => Promise<{ ok: boolean; status?: number; text: () => Promise<string> }>;
+
+interface PartnerLinkRow {
+  id: number;
+  partner: string;
+  url: string;
+}
+
+export interface HydratePartnerOptions {
+  fetchImpl?: FetchLike;
+  concurrency?: number;
+  timeoutMs?: number;
+  /** Load the links to refresh. Injectable for tests. */
+  loadLinks?: (db: any) => Promise<PartnerLinkRow[]>;
+  /** Persist parsed numbers for one link. Injectable for tests. */
+  writeUpdate?: (db: any, id: number, funding: PartnerFunding) => Promise<void>;
+}
+
+// A plain identifier: some funder edges block obvious bots, in which case the
+// job degrades to stale cache, which is acceptable.
+const PARTNER_FETCH_UA =
+  "Mozilla/5.0 (compatible; RegenCivicsBot/1.0; +https://regencivics.earth)";
+
+async function defaultLoadLinks(db: any): Promise<PartnerLinkRow[]> {
+  const [rows] = await db.execute(sql`
+    SELECT pl.id, pl.partner, pl.url
+    FROM campaign_partner_links pl
+    JOIN campaigns c ON c.id = pl.campaignId
+    WHERE c.status IN ('active', 'funded')
+      AND pl.partner IN ('maearth', 'gosteward')
+      AND pl.url IS NOT NULL AND pl.url <> ''
+  `);
+  return ((rows as any[]) ?? []).map((r) => ({
+    id: Number(r.id),
+    partner: String(r.partner),
+    url: String(r.url),
+  }));
+}
+
+async function defaultWriteUpdate(db: any, id: number, funding: PartnerFunding): Promise<void> {
+  // COALESCE keeps the existing cached value when a field parsed to null, so a
+  // partial read never clobbers a previously good number. lastFetchedAt only
+  // moves here, on a real parse, so the "as of {date}" line stays honest.
+  await db.execute(sql`
+    UPDATE campaign_partner_links
+    SET cachedRaised = COALESCE(${funding.raised}, cachedRaised),
+        cachedContributorCount = COALESCE(${funding.contributorCount}, cachedContributorCount),
+        cachedPercent = COALESCE(${funding.percent}, cachedPercent),
+        lastFetchedAt = NOW()
+    WHERE id = ${id}
+  `);
+}
+
+async function fetchPartnerHtml(
+  url: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: { "user-agent": PARTNER_FETCH_UA, accept: "text/html,application/xhtml+xml" },
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function hydrateCampaignPartnerLinks(
+  db: any,
+  opts: HydratePartnerOptions = {},
+): Promise<{ checked: number; updated: number; stale: number; failed: number }> {
+  const fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike | undefined);
+  const concurrency = Math.max(1, opts.concurrency ?? 5);
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+  const loadLinks = opts.loadLinks ?? defaultLoadLinks;
+  const writeUpdate = opts.writeUpdate ?? defaultWriteUpdate;
+
+  if (!fetchImpl) return { checked: 0, updated: 0, stale: 0, failed: 0 };
+
+  const links = await loadLinks(db);
+  let checked = 0;
+  let updated = 0;
+  let stale = 0; // fetched fine, nothing parseable -> left untouched
+  let failed = 0; // fetch error / non-200 / write error -> left untouched
+
+  for (let i = 0; i < links.length; i += concurrency) {
+    const batch = links.slice(i, i + concurrency);
+    checked += batch.length;
+    const outcomes = await Promise.all(
+      batch.map(async (link): Promise<"updated" | "stale" | "failed"> => {
+        let html: string | null;
+        try {
+          html = await fetchPartnerHtml(link.url, fetchImpl, timeoutMs);
+        } catch {
+          return "failed"; // network, abort, or timeout: leave cache + lastFetchedAt
+        }
+        if (html == null) return "failed"; // non-200
+        const partner: PartnerKey = link.partner === "gosteward" ? "gosteward" : "maearth";
+        const funding = extractPartnerFunding(html, partner);
+        if (!funding) return "stale"; // parsed nothing: degrade to last good cache
+        try {
+          await writeUpdate(db, link.id, funding);
+          return "updated";
+        } catch (err) {
+          console.warn(`[partner-hydration] write failed for link ${link.id}:`, err);
+          return "failed";
+        }
+      }),
+    );
+    for (const o of outcomes) {
+      if (o === "updated") updated++;
+      else if (o === "stale") stale++;
+      else failed++;
+    }
+  }
+
+  return { checked, updated, stale, failed };
+}
+
 // ─── Main Router ───────────────────────────────────────────────────────────
 
 export const batchJobsRouter = router({
@@ -687,6 +835,17 @@ export const batchJobsRouter = router({
       crowdpoolReminders = result.reminders;
     } catch (e: any) { errors.push(`Step 9 (crowdpool claims): ${e.message}`); }
 
+    let partnerLinksChecked = 0;
+    let partnerLinksUpdated = 0;
+    try {
+      // Step 10: Partner-progress hydration. Refresh cached Ma Earth / GoSteward
+      // numbers on active + funded campaigns. Fetch or parse failures leave the
+      // stale cache untouched (never zeroed).
+      const result = await hydrateCampaignPartnerLinks(db);
+      partnerLinksChecked = result.checked;
+      partnerLinksUpdated = result.updated;
+    } catch (e: any) { errors.push(`Step 10 (partner hydration): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -700,7 +859,7 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, partnerLinksChecked, partnerLinksUpdated };
   }),
 
   // Manual trigger for the stale-claim cleanup (admin-only). Useful for

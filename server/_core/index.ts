@@ -1154,6 +1154,14 @@ async function startServer() {
         await expireCrowdpoolClaims(database);
       } catch (e: any) { errors.push(`crowdpoolClaims: ${e.message}`); }
 
+      // Partner-progress hydration: refresh cached Ma Earth / GoSteward numbers
+      // on active + funded campaigns. Fetch or parse failures leave stale cache
+      // untouched (never zeroed).
+      try {
+        const { hydrateCampaignPartnerLinks } = await import("../routes/batchJobs");
+        await hydrateCampaignPartnerLinks(database);
+      } catch (e: any) { errors.push(`partnerHydration: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`
