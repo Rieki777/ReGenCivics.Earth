@@ -150,6 +150,7 @@ const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
 const ReGenCoCreatorsGuide = lazy(() => import("./pages/ReGenCoCreatorsGuide"));
+const RegenCommunityOnboarding = lazy(() => import("./pages/RegenCommunityOnboarding"));
 const LOI = lazy(() => import("./pages/LOI"));
 const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
@@ -292,6 +293,7 @@ function Router() {
       <Route path={"/opportunity"}><EB><Opportunity /></EB></Route>
       <Route path={"/governance"}><EB><Governance /></EB></Route>
       <Route path={"/co-creators-guide"}><EB><ReGenCoCreatorsGuide /></EB></Route>
+      <Route path={"/regen-community-onboarding"}><EB><RegenCommunityOnboarding /></EB></Route>
       <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
       <Route path={"/loi"}><EB><LOI /></EB></Route>
       <Route path={"/404"}><EB><NotFound /></EB></Route>
