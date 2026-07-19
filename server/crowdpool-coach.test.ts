@@ -11,7 +11,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { designCompanionTurn, sanitizeSuggestion } from "./lib/crowdpool-coach";
+import { designCompanionTurn, sanitizeSuggestion, deEmDash } from "./lib/crowdpool-coach";
 import { isLLMConfigured } from "./_core/llm";
 import { CAPITAL_TYPES } from "../shared/capitals";
 import { NEED_KINDS } from "../shared/crowdpoolingTaxonomy";
@@ -175,6 +175,35 @@ describe("Design Companion", () => {
       // All nine capitals are missing, so there are gaps to recommend.
       expect(result.gaps.length).toBeGreaterThan(0);
       expect(result.suggestions.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("deEmDash (writing-rule backstop)", () => {
+    it("replaces em-dashes with a comma, keeping hyphens and ranges", () => {
+      // The live coach was observed emitting these em-dashes.
+      expect(deEmDash("What a gift—a 400-year-old valley coming back to life")).toBe(
+        "What a gift, a 400-year-old valley coming back to life",
+      );
+      expect(deEmDash("up at night right now—what's blocking you?")).toBe(
+        "up at night right now, what's blocking you?",
+      );
+      // Real hyphens and en-dash ranges are untouched.
+      expect(deEmDash("a 12-week, 2024–2025 role")).toBe("a 12-week, 2024–2025 role");
+      expect(deEmDash("no dashes here")).toBe("no dashes here");
+    });
+
+    it("strips em-dashes from sanitized suggestion text", () => {
+      const s = sanitizeSuggestion({
+        title: "Dance Coordinator—weekly circle",
+        capitalType: "cultural",
+        kind: "role",
+        rationale: "Your community gathers already—this holds the rhythm.",
+        estimatedValue: 1200,
+      });
+      expect(s).not.toBeNull();
+      expect(s!.title).not.toContain("—");
+      expect(s!.rationale).not.toContain("—");
+      expect(s!.title).toBe("Dance Coordinator, weekly circle");
     });
   });
 });
