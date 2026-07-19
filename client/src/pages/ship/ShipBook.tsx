@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { MapPin, Compass, LayoutGrid, List as ListIcon, Moon, Heart, Sailboat, type LucideIcon } from "lucide-react";
+import { MapPin, Compass, LayoutGrid, List as ListIcon, Moon, Heart, Sailboat, ChevronDown, type LucideIcon } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag, useShipFlags, ANCHOR_VOYAGE, TRIAL_VOYAGE } from "./shipShared";
 import { FormCompanion } from "@/components/companion";
 import { companionBool } from "@shared/companions";
@@ -64,6 +64,16 @@ const STATE_META: Record<WeekState, { label: string; badge: string }> = {
   migration: { label: "On passage", badge: "bg-blue-400/15 text-blue-700 dark:text-blue-300" },
 };
 
+/** True when `len` consecutive selectable weeks start at index `i` (no booked or
+ *  passage week in between), so an N-week voyage can begin there. */
+function canStartRun(weeks: Array<{ selectable: boolean }>, i: number, len: number): boolean {
+  if (i + len > weeks.length) return false;
+  for (let j = 0; j < len; j++) {
+    if (!weeks[i + j]?.selectable) return false;
+  }
+  return true;
+}
+
 export default function ShipBook() {
   const availability = trpc.ship.availability.useQuery();
   const request = trpc.ship.requestBooking.useMutation();
@@ -75,6 +85,8 @@ export default function ShipBook() {
   const [startIdx, setStartIdx] = useState<number | null>(null);
   const [count, setCount] = useState(1);
   const [view, setView] = useState<"cards" | "list">("cards");
+  // The length tiles double as a booking-length + availability filter (default 1).
+  const [bookLength, setBookLength] = useState(1);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const guests = adults + children;
@@ -112,6 +124,19 @@ export default function ShipBook() {
   const perPerson = guests > 0 ? Math.round(finalTotal / guests) : finalTotal;
   const bioregions = Array.from(new Set(selected.map((w) => w.bioregion)));
 
+  // The length tiles double as an availability filter. For a length > 1, only the
+  // start weeks with that many consecutive open weeks qualify, and each option's
+  // price is tied to that length's multi-week discount.
+  const filterPct = multiWeekDiscountPct(bookLength);
+  const windowStarts = useMemo(() => {
+    if (bookLength <= 1) return [] as number[];
+    const out: number[] = [];
+    for (let i = 0; i + bookLength <= weeks.length; i++) {
+      if (canStartRun(weeks, i, bookLength)) out.push(i);
+    }
+    return out;
+  }, [weeks, bookLength]);
+
   const voyagePkg = voyageId ? suggestedVoyageById(voyageId) : null;
   // The rough chart is deterministic: recomputed instantly from the package and
   // the claimed weeks, no LLM call (STEERING deterministic-first).
@@ -126,6 +151,7 @@ export default function ShipBook() {
     if (i === null) return;
     setStartIdx(i);
     setCount(v.weeks);
+    setBookLength(v.weeks);
     setVoyageId(v.id);
     setCustomizeOpen(false);
     setFmCharted(false);
@@ -166,6 +192,28 @@ export default function ShipBook() {
 
   function isSelected(i: number): boolean {
     return startIdx !== null && i >= startIdx && i < startIdx + count;
+  }
+
+  /** Click a length tile: set the filter and clear any selection that no longer fits. */
+  function selectLength(len: number) {
+    setBookLength(len);
+    setVoyageId(null);
+    setCustomizeOpen(false);
+    setFmCharted(false);
+    // Keep a still-valid selection of the new length; otherwise clear it.
+    if (!(startIdx !== null && canStartRun(weeks, startIdx, len))) {
+      setStartIdx(null);
+    }
+    setCount(len);
+  }
+
+  /** Click a filtered start window: select the full N-week run beginning at i. */
+  function selectWindow(i: number) {
+    setVoyageId(null);
+    setCustomizeOpen(false);
+    setFmCharted(false);
+    setStartIdx(i);
+    setCount(bookLength);
   }
 
   async function submit(e: React.FormEvent) {
@@ -229,20 +277,38 @@ export default function ShipBook() {
         {/* Multi-week savings ladder: stacks on top of the first-year 50% off. */}
         <div className="mb-4 rounded-2xl border border-[#3ddc84]/40 bg-[#3ddc84]/[0.06] p-4 max-w-2xl">
           <p className="text-sm font-semibold mb-2">Stay longer, save more. She is $600 a night, 50% off through early April 2027, so $300 a night now. These multi-week savings stack on top of that.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="group" aria-label="Choose booking length">
             {[1, 2, 3, 4].map((w) => {
               const p = multiWeekDiscountPct(w);
+              const activeTile = bookLength === w;
               return (
-                <div key={w} className={`rounded-xl border p-2 text-center ${w === 4 ? "border-[#ffd700] bg-[#ffd700]/10" : "bg-card"}`}>
+                <button
+                  type="button"
+                  key={w}
+                  onClick={() => selectLength(w)}
+                  aria-pressed={activeTile}
+                  className={[
+                    "rounded-xl border p-2 text-center transition-all cursor-pointer",
+                    activeTile
+                      ? "border-[#2f5d3a] ring-2 ring-[#2f5d3a] bg-[#2f5d3a]/10"
+                      : w === 4
+                        ? "border-[#ffd700] bg-[#ffd700]/10 hover:-translate-y-0.5"
+                        : "bg-card hover:-translate-y-0.5 hover:border-[#2f5d3a]",
+                  ].join(" ")}
+                >
                   <p className="text-xs text-muted-foreground">{w === 4 ? "A month" : `${w} ${w === 1 ? "week" : "weeks"}`}</p>
                   <p className="font-bold text-[#2f5d3a] dark:text-[#7dd87d]">{p === 0 ? "Base rate" : `${p}% off`}</p>
                   {w === 4 && <p className="text-[10px] font-bold text-[#b8860b] dark:text-[#ffd700]">Best value</p>}
-                </div>
+                </button>
               );
             })}
           </div>
+          <p className="text-xs text-muted-foreground mt-2">Tap a length to filter the open weeks below to the windows that fit it.</p>
         </div>
-        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover. Every week below is a real open week on her calendar.</p>
+        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover.</p>
+        <a href="#open-weeks" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#2f5d3a]/40 bg-[#2f5d3a]/5 px-3.5 py-1.5 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d] hover:bg-[#2f5d3a]/10 transition-colors">
+          See open weeks below <ChevronDown className="w-4 h-4 animate-bounce" aria-hidden="true" />
+        </a>
       </ShipSection>
 
       {/* Suggested voyages: one tap claims the first open run and charts it. */}
@@ -307,7 +373,7 @@ export default function ShipBook() {
         </ShipSection>
       )}
 
-      <ShipSection className="bg-[#4a7c59]/8 pt-0">
+      <ShipSection id="open-weeks" className="bg-[#4a7c59]/8 pt-0">
         <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 items-start">
           {/* Week picker + form */}
           <form onSubmit={submit} className="space-y-6">
@@ -331,6 +397,19 @@ export default function ShipBook() {
                 ))}
               </div>
 
+              {/* The discount that applies to the selected length, above the options. */}
+              <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-[#3ddc84]/40 bg-[#3ddc84]/[0.06] px-3 py-2 text-sm">
+                <span className="font-semibold">{bookLength === 1 ? "One week" : bookLength === 4 ? "A month (4 weeks)" : `${bookLength} weeks`}:</span>
+                {filterPct > 0 ? (
+                  <span className="font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">{filterPct}% off, stacked on the 50% first year</span>
+                ) : (
+                  <span className="text-muted-foreground">base rate, 50% off through early April 2027</span>
+                )}
+                {bookLength > 1 && (
+                  <span className="text-muted-foreground">· {windowStarts.length} {windowStarts.length === 1 ? "window" : "windows"} where {bookLength} weeks are open back to back</span>
+                )}
+              </div>
+
               {availability.isLoading && (
                 <p className="text-sm text-muted-foreground py-8 text-center">Unrolling the calendar…</p>
               )}
@@ -347,7 +426,7 @@ export default function ShipBook() {
                   aria-label="Voyage weeks"
                   className={view === "cards" ? "grid sm:grid-cols-2 gap-3 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1" : "space-y-2 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1"}
                 >
-                  {weeks.map((wk, i) => {
+                  {bookLength === 1 ? weeks.map((wk, i) => {
                     const meta = STATE_META[wk.state as WeekState];
                     const sel = isSelected(i);
                     const returnDay = (wk as { returnDate?: string }).returnDate ?? wk.endDate;
@@ -397,6 +476,49 @@ export default function ShipBook() {
                               )}
                               {wk.windowLabel && <span className="text-muted-foreground"> · {wk.windowLabel}</span>}
                             </span>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  }) : windowStarts.length === 0 ? (
+                    <li className="sm:col-span-2">
+                      <p className="text-sm text-muted-foreground py-8 text-center">No {bookLength}-week windows are open back to back right now. Try a shorter stay above.</p>
+                    </li>
+                  ) : windowStarts.map((wi) => {
+                    const run = weeks.slice(wi, wi + bookLength);
+                    const first = run[0];
+                    const last = run[run.length - 1];
+                    const returnDay = (last as { returnDate?: string }).returnDate ?? last.endDate;
+                    const winAnchor = run.reduce((s, w) => s + w.price.anchorTotal, 0);
+                    const winSubtotal = run.reduce((s, w) => s + w.price.total, 0);
+                    const winPrice = applyMultiWeekDiscount(winSubtotal, bookLength);
+                    const winPct = winAnchor > 0 ? Math.round(((winAnchor - winPrice.total) / winAnchor) * 100) : 0;
+                    const winBioregions = Array.from(new Set(run.map((w) => w.bioregion)));
+                    const sel = startIdx === wi && count === bookLength;
+                    return (
+                      <li key={`win-${first.startDate}`} role="option" aria-selected={sel}>
+                        <button
+                          type="button"
+                          onClick={() => selectWindow(wi)}
+                          aria-label={`Board ${fmtDay(first.startDate)} 3pm, return ${fmtDay(returnDay)} 11am, ${bookLength} weeks, $${winPrice.total.toLocaleString()} total`}
+                          className={[
+                            "w-full text-left rounded-2xl border p-4 transition-all cursor-pointer",
+                            sel ? "border-[#ffd700] ring-2 ring-[#ffd700] bg-[#ffd700]/10" : "bg-card hover:border-[#2f5d3a]",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-center gap-2 font-semibold">
+                            <Compass className="w-4 h-4 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
+                            Board {fmtDay(first.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-foreground/70 mt-1">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> {winBioregions.join(" and ")}
+                          </div>
+                          <div className="mt-2 text-sm">
+                            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d] mr-2">{bookLength} weeks</span>
+                            <span className="text-muted-foreground line-through text-xs">${winAnchor.toLocaleString()}</span>{" "}
+                            <span className="font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">${winPrice.total.toLocaleString()}</span>
+                            <span className="text-muted-foreground"> total</span>
+                            {winPct > 0 && <span className="ml-1.5 inline-flex items-center rounded-full bg-[#3ddc84] text-[#08301c] text-[10px] font-bold px-1.5 py-0.5 align-middle">{winPct}% off</span>}
                           </div>
                         </button>
                       </li>
