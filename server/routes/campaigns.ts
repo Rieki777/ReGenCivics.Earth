@@ -152,6 +152,49 @@ export async function linkAnonymousContributions(
   return { linked, livingTreeAdded };
 }
 
+// ── Server-side geocoding for the projects map ──────────────────────────────
+// Campaigns store a free-text location and no coordinates. The gallery map
+// resolves those strings here, on the server, because the browser CSP blocks a
+// direct Nominatim call (connect-src). Results cache in memory for the life of
+// the process and lookups are spaced out to respect the OpenStreetMap usage
+// policy. A location that cannot be resolved comes back null and gets no pin.
+const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
+
+async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+  const key = location.trim().toLowerCase();
+  if (!key) return null;
+  if (geocodeCache.has(key)) return geocodeCache.get(key) ?? null;
+  let result: { lat: number; lng: number } | null = null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`,
+      {
+        signal: controller.signal,
+        headers: {
+          "user-agent": "RegenCivicsBot/1.0 (+https://regencivics.earth)",
+          "accept-language": "en",
+        },
+      },
+    );
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      const hit = Array.isArray(data) ? data[0] : null;
+      if (hit && hit.lat && hit.lon) {
+        const lat = parseFloat(hit.lat);
+        const lng = parseFloat(hit.lon);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) result = { lat, lng };
+      }
+    }
+  } catch {
+    // Network error, timeout, or a block: leave null so the pin is just omitted.
+  }
+  geocodeCache.set(key, result);
+  return result;
+}
+
 export const campaignsRouter = router({
   // Verify campaign creator access password (server-side)
   verifyCampaignAccess: protectedProcedure
@@ -288,6 +331,23 @@ export const campaignsRouter = router({
         .select()
         .from(campaignPartnerLinks)
         .where(eq(campaignPartnerLinks.campaignId, input.campaignId));
+    }),
+
+  // Server-side geocode for the gallery map. Same-origin so it clears the CSP
+  // the browser enforces on a direct Nominatim call. Cached and spaced to
+  // respect the OSM usage policy. Returns location -> {lat,lng} | null.
+  geocodeLocations: publicProcedure
+    .input(z.object({ locations: z.array(z.string().min(1).max(200)).max(60) }))
+    .query(async ({ input }) => {
+      const unique = Array.from(new Set(input.locations.map((l) => l.trim()).filter(Boolean)));
+      const out: Record<string, { lat: number; lng: number } | null> = {};
+      for (const loc of unique) {
+        const wasCached = geocodeCache.has(loc.toLowerCase());
+        out[loc] = await geocodeLocation(loc);
+        // Only pace real network lookups, never cache hits.
+        if (!wasCached) await new Promise((r) => setTimeout(r, 1100));
+      }
+      return out;
     }),
 
   // The Design Companion: a warm AI coach for campaign design, grounded in the
