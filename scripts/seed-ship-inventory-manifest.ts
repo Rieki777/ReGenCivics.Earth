@@ -194,11 +194,23 @@ const PARENT_OVERRIDE: Record<string, string> = {
   "inv-083": "screw-fastener-box",            // the screw box
   "inv-094": "screw-fastener-box",            // bag of extra screws & drill tips
   "inv-038": "@inv-037", "inv-039": "@inv-037", "inv-040": "@inv-037", "inv-041": "@inv-037", // mystery-box contents
+  "inv-023": "@inv-024",                      // air-mattress pump -> under the air mattress (Rye)
+  "inv-029": "outdoor-tool-bag",              // rubber boots -> passenger-side rear container, with the tools (Rye)
+  "inv-032": "outdoor-tool-bag",              // sanitary gloves -> kept in the tool bags (Rye)
 };
 // Manifest rows that are themselves containers.
-const ITEM_CONTAINERS = new Set(["inv-037"]); // "Box of assorted parts ('random mysteries')"
+const ITEM_CONTAINERS = new Set(["inv-037", "inv-024"]); // mystery box + the air mattress (holds its pump)
 // Owner-private / do-not-show rows: created but isVisible=false, no parent.
 const HIDE_IDS = new Set(["inv-116"]);
+// Intentionally top-level + visible even with no parent (curated placement, not "review").
+const TOP_LEVEL_VISIBLE = new Set(["inv-024"]); // the air mattress (a hero card holding its pump)
+// Rye-supplied storage places for items the transcript left vague.
+const STORAGE_OVERRIDE: Record<string, string> = {
+  "inv-024": "Main cabin, under the couch",
+  "inv-023": "Cupboard above the bed",
+  "inv-029": "Passenger-side rear exterior container, with the tool bag",
+  "inv-032": "Kept in the tool bags",
+};
 
 // Ordered keyword engine: first match wins. Returns a parent slug or null (review).
 function resolveParentSlug(item: RawItem): string | null {
@@ -296,7 +308,7 @@ function buildPlan(items: RawItem[]) {
       }
     }
 
-    const isReview = !isHidden && parentSlug === null;
+    const isReview = !isHidden && parentSlug === null && !TOP_LEVEL_VISIBLE.has(it.id);
     if (isHidden) hidden.push(it);
     else if (isReview) review.push(it);
 
@@ -306,7 +318,7 @@ function buildPlan(items: RawItem[]) {
       category: toEnumCategory(it.category),
       quantity: it.quantity ?? 1,
       unit: it.unit || null,
-      storagePlace: it.location || null,
+      storagePlace: STORAGE_OVERRIDE[it.id] || it.location || null,
       description: it.notes || null,
       lore: null,
       // Review + owner-private rows stay hidden until an admin curates them.
