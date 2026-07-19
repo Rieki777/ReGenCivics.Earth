@@ -12,11 +12,64 @@ import { Input } from "@/components/ui/input";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Trophy, Anchor, Check } from "lucide-react";
+import { Trophy, Anchor, Check, Share2 } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
 import { CrewProfileEditor, CrewsSection } from "@/components/ship/CrewProfiles";
+import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/_core/hooks/useAuth";
+
+/**
+ * Item 10: the referral share button on the "Refer a land project" action.
+ * Generates the user's /apply?ref=<handle> link and opens the native share
+ * sheet with a pre-filled message. Signing in first is required so the referral
+ * is attributed (the server matches ?ref against the user's handle).
+ */
+function ReferralShareButton() {
+  const { isAuthenticated, user } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const handle = (user as { handle?: string } | null)?.handle;
+
+  async function share() {
+    if (!isAuthenticated) {
+      setAuthOpen(true);
+      return;
+    }
+    if (!handle) {
+      toast.error("Set a handle on your profile first, so your referral tracks to you.");
+      return;
+    }
+    const url = `${window.location.origin}/apply?ref=${encodeURIComponent(handle)}`;
+    const message = "Hey, I think you'd be interested in this for your project";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "ReGen Civics", text: message, url });
+      } else {
+        await navigator.clipboard.writeText(`${message}: ${url}`);
+        toast.success("Referral link copied. Send it to a land project.");
+      }
+    } catch {
+      // The user dismissed the share sheet; nothing to do.
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <Button size="sm" onClick={share} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+        <Share2 className="w-4 h-4 mr-1.5" aria-hidden="true" /> Share my referral link
+      </Button>
+      {!isAuthenticated && (
+        <p className="text-xs text-muted-foreground mt-2">Sign in first so your referral is tracked to you.</p>
+      )}
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        onLogin={() => setAuthOpen(false)}
+        title="Sign in so your referral is tracked"
+      />
+    </div>
+  );
+}
 
 function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: string; onSubmitted: () => void }) {
   const submit = trpc.ship.quest.submit.useMutation();
@@ -47,7 +100,8 @@ function ActionRow({ action, myStatus, onSubmitted }: { action: any; myStatus?: 
         </div>
         <span className="shrink-0 text-sm font-bold text-[#2f5d3a] dark:text-[#9de89d] bg-[#ffd700]/30 rounded-full px-3 py-1">{action.points} pts</span>
       </div>
-      {!verified && (
+      {!verified && action.slug === "refer-land-project" && <ReferralShareButton />}
+      {!verified && action.slug !== "refer-land-project" && (
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
           {(action.proofType === "link" || action.proofType === "photo" || action.proofType === "forum") && (
             <Input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="Paste your proof link" className="text-sm" />
