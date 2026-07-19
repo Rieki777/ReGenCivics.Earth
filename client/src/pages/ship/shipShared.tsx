@@ -58,7 +58,7 @@ export function BookNowCallout({
       <p className="text-xl font-bold">{headline}</p>
       {sub && <p className="text-foreground/75 text-sm mt-1 max-w-xl mx-auto">{sub}</p>}
       <div className="mt-4"><BookNowButton /></div>
-      <p className="text-xs text-muted-foreground mt-2">First year 50% off, plus up to 15% off a month.</p>
+      <p className="text-xs text-muted-foreground mt-2">50% off through early April 2027, plus up to 15% off a month.</p>
     </div>
   );
 }
@@ -161,14 +161,15 @@ export function ShipInteriorCard({ name, label, alt }: { name: string; label: st
 export function PriceTag({ className }: { className?: string }) {
   const saved = ANCHOR_VOYAGE - TRIAL_VOYAGE;
   const pct = Math.round((saved / ANCHOR_VOYAGE) * 100);
+  const trialNightly = Math.round((ANCHOR_NIGHTLY * (100 - pct)) / 100);
   return (
     <div className={cn("flex items-baseline gap-x-3 gap-y-1 flex-wrap", className)}>
       <span className="text-muted-foreground line-through text-xl">${ANCHOR_VOYAGE.toLocaleString()}</span>
       <span className="text-3xl font-bold text-[#2f5d3a] dark:text-[#9de89d]">${TRIAL_VOYAGE.toLocaleString()}</span>
       <span className="inline-flex items-center rounded-full bg-[#2f5d3a] text-white text-xs font-bold px-2 py-0.5">{pct}% off</span>
       <span className="text-muted-foreground">per voyage week, trial year</span>
-      <span className="text-xs text-muted-foreground/80 w-full">Her full ${ANCHOR_NIGHTLY}/night rate, reduced by {pct}% for the trial year, so you save ${saved.toLocaleString()} a week. Full rate returns April 2027. Plus applicable taxes.</span>
-      <span className="text-xs font-semibold text-[#2f5d3a] dark:text-[#7dd87d] w-full">Book more weeks and save more, stacked on top: 2 weeks 5% off, 3 weeks 10% off, a month 15% off.</span>
+      <span className="text-xs text-muted-foreground/80 w-full">Her full rate is ${ANCHOR_NIGHTLY} a night, {pct}% off through early April 2027, so ${trialNightly} a night now. After that she reverts to ${ANCHOR_NIGHTLY} a night. Plus applicable taxes.</span>
+      <span className="text-xs font-semibold text-[#2f5d3a] dark:text-[#7dd87d] w-full">Book more weeks and it stacks on the ${trialNightly} a night: 2 weeks 5% off, 3 weeks 10% off, a month 15% off.</span>
     </div>
   );
 }

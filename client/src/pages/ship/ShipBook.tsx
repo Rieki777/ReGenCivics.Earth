@@ -228,7 +228,7 @@ export default function ShipBook() {
         <PriceTag className="mb-4" />
         {/* Multi-week savings ladder: stacks on top of the first-year 50% off. */}
         <div className="mb-4 rounded-2xl border border-[#3ddc84]/40 bg-[#3ddc84]/[0.06] p-4 max-w-2xl">
-          <p className="text-sm font-semibold mb-2">Stay longer, save more. Multi-week savings stack on top of the first-year 50% off.</p>
+          <p className="text-sm font-semibold mb-2">Stay longer, save more. She is $600 a night, 50% off through early April 2027, so $300 a night now. These multi-week savings stack on top of that.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[1, 2, 3, 4].map((w) => {
               const p = multiWeekDiscountPct(w);
@@ -423,7 +423,7 @@ export default function ShipBook() {
                 </div>
                 {(allTrial || mw.discountPct > 0) && (
                   <p className="text-xs text-foreground/75 mt-1">
-                    {allTrial && "First year 50% off"}
+                    {allTrial && "50% off through early April 2027"}
                     {allTrial && mw.discountPct > 0 && ", plus "}
                     {mw.discountPct > 0 && `${mw.discountPct}% off for ${selected.length} weeks`}
                     {`. You save $${totalSaved.toLocaleString()} off her $${anchorTotal.toLocaleString()} value.`}
