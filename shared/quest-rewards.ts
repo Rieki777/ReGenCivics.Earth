@@ -61,6 +61,10 @@ export const QUEST_REWARDS: Record<string, QuestReward> = {
   "the-fifth-agreement": { regen: 99, rvoice: 1 },
   // Ringing Cedars pays 33 per book; the canonical base amount is one book.
   "ringing-cedars": { regen: 33, rvoice: 1 },
+  // pool-your-gifts was added to seasonalQuestsData after this table was first
+  // authored; mirror its live reward so the server canonical matches what
+  // players already see (keeps the parity test green).
+  "pool-your-gifts": { regen: 111, rvoice: 1 },
 };
 
 /**
