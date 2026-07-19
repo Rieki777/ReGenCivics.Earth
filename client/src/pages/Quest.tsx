@@ -49,7 +49,6 @@ import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { PathPortalsSelector } from "@/components/PathPortalsSelector";
 import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
 import { useActivePathHash } from "@/hooks/useActivePathHash";
-import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
 import { MultiplayerQuestsBanner } from "@/components/MultiplayerQuestsBanner";
 import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
@@ -67,6 +66,27 @@ function questImageUrl(id: number, slug: string) {
 
 function questImageFallback(id: number, slug: string) {
   return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
+}
+
+// Absolute lead-art URL for a quest, keyed by the "quest-<id>" string that
+// questDetailsData uses. The Hypha bridge is an external consumer and the server
+// validates leadImageUrl as a full URL, so this must be absolute; the quest art
+// is served from /images/quests (not R2).
+const QUEST_LEAD_IMAGE: Record<string, string> = {};
+for (const group of Object.values(questData) as Array<unknown>) {
+  const quests = (Array.isArray(group) ? group : [group]) as Array<{ id: number; slug?: string }>;
+  for (const q of quests) {
+    if (q?.slug) {
+      QUEST_LEAD_IMAGE[`quest-${q.id}`] = questImageFallback(q.id, q.slug);
+    }
+  }
+}
+
+function questLeadImageUrl(key: string | null): string | undefined {
+  const rel = key ? QUEST_LEAD_IMAGE[key] : undefined;
+  if (!rel) return undefined;
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://regencivics.earth";
+  return origin + rel;
 }
 
 
@@ -1680,7 +1700,7 @@ export default function Quest() {
 
       {/* Quest Detail Modal */}
       <QuestDetailModal
-        quest={selectedQuest ? questDetailsData[selectedQuest] : null}
+        quest={selectedQuest ? { ...questDetailsData[selectedQuest], imageUrl: questLeadImageUrl(selectedQuest) } : null}
         isOpen={!!selectedQuest}
         onClose={closeQuestDetails}
       />
