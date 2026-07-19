@@ -75,6 +75,26 @@ async function ensureTestPlayerProfile() {
   return profile!;
 }
 
+/**
+ * The fulfilled payoff calls recordScoreEvent, which reads the
+ * 'scoring.weights.crowdpool_contribution' game variable and throws if it is
+ * missing (campaigns.ts then swallows that as non-fatal, silently zeroing the
+ * payoff). The CI integration DB is built from the schema baseline, which has
+ * no game_variables seed rows and marks the old seed migration as already
+ * applied, so that variable is absent there. Seed it idempotently. On the dev
+ * DB, where migration 0097 already ran, this only re-affirms the row is active
+ * and never overwrites its configured value.
+ */
+async function ensureCrowdpoolScoreVariable() {
+  const database = await dbHelpers.getDb();
+  if (!database) return;
+  await database.execute(sql`
+    INSERT INTO game_variables (category, subcategory, \`key\`, displayName, description, value, valueType, defaultValue, isActive)
+    VALUES ('scoring', 'weights', 'scoring.weights.crowdpool_contribution', 'Crowd-pooling contribution', 'Points per crowd-pooling pledge', 20, 'integer', 20, 1)
+    ON DUPLICATE KEY UPDATE isActive = 1
+  `);
+}
+
 describe('Campaign Contribution System', () => {
   describe('Contribution Creation', () => {
     it.skipIf(skipIfNoDb)('should create a contribution for a campaign', async () => {
@@ -534,6 +554,7 @@ describe('Campaign Contribution System', () => {
       const db = await dbHelpers.getDb();
       expect(db).toBeTruthy();
       await ensureTestPlayerProfile();
+      await ensureCrowdpoolScoreVariable();
 
       const campaign = await caller.campaigns.create({
         title: 'Payoff Test Campaign',
