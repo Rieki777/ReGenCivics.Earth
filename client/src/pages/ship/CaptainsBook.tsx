@@ -6,7 +6,7 @@
  * a booking is confirmed or active; a signed-out or crewless visitor gets a warm
  * pointer to book or sign in.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -16,11 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, Wrench, Anchor, ClipboardCheck, Users, ScrollText, AlertTriangle } from "lucide-react";
+import { BookOpen, Wrench, Anchor, ClipboardCheck, Users, ScrollText, AlertTriangle, Flame } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import { AskShipwright } from "@/components/ship/AskShipwright";
 import { GearManifest } from "@/components/ship/GearManifest";
 import { GalleyStrip } from "@/components/ship/GalleyStrip";
+import { RiteOfTruthDeck } from "@/components/ship/RiteOfTruthDeck";
 
 const ROLES = [
   { key: "captain", label: "The Captain", desc: "The driver, head of the ship, fully responsible for her under way." },
@@ -56,6 +57,15 @@ export default function CaptainsBook() {
   const [checks, setChecks] = useState<boolean[]>(() => PRE_SAIL.map(() => false));
   const [driverName, setDriverName] = useState("");
   const allChecked = checks.every(Boolean);
+
+  // Deep link from the Saturday Rite of Truth card lands at #rite-of-truth.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#rite-of-truth") return;
+    const t = window.setTimeout(() => {
+      document.getElementById("rite-of-truth")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => window.clearTimeout(t);
+  }, []);
   const preSailRuns = useMemo(() => (Array.isArray(booking?.preSailLog) ? (booking!.preSailLog as Array<{ at: string; byName: string }>) : []), [booking]);
 
   async function saveRoles() {
@@ -111,6 +121,14 @@ export default function CaptainsBook() {
         ) : (
           <p className="text-foreground/80 max-w-2xl">Your voyage boards {booking.startDate}. This is your book for the week: ask the Shipwright, hold your roles, and run the pre-sail checklist before every drive.</p>
         )}
+      </ShipSection>
+
+      {/* The Rite of Truth deck (Saturday rite). Open to everyone, so the deep
+          link from the theme page lands on a real deck whether or not a voyage
+          is booked yet. */}
+      <ShipSection id="rite-of-truth" className="pt-0">
+        <h2 className="text-2xl font-bold mb-3 flex items-center gap-2"><Flame className="w-6 h-6 text-[#ffd700]" aria-hidden="true" /> The Rite of Truth deck</h2>
+        <RiteOfTruthDeck />
       </ShipSection>
 
       {booking && (

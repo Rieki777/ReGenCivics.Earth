@@ -155,7 +155,7 @@ export default function Galley() {
         <h2 className="text-3xl font-bold mb-3">Remix it</h2>
         <p className="text-foreground/80 max-w-2xl mb-6">
           Log what you gathered at the market and what is already aboard, then remix it into dishes that follow the
-          ship's diet. Instant with the Remix engine, or ask the Ship's Cook for something wilder.
+          ship's diet. Instant with the Remix engine, or ask the Ship's Yum Dealer for something wilder.
         </p>
         <GalleyRemixer />
       </ShipSection>
@@ -183,7 +183,8 @@ export default function Galley() {
       {/* Daily rhythm */}
       <ShipSection className="bg-[#d4a574]/10 py-10">
         <ShipEyebrow>A day aboard</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-6">The daily rhythm</h2>
+        <h2 className="text-3xl font-bold mb-3">One way a day can flow</h2>
+        <p className="text-foreground/80 max-w-2xl mb-6">This is an example, not a schedule. Some crews eat close to this every day and some never do. Eat when you are hungry, rest when you are tired, and take whatever fits.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {RHYTHM.map((r, i) => (
             <div key={r.title} data-reveal data-reveal-delay={i * 80} className="rounded-2xl border bg-card p-5">
@@ -197,12 +198,13 @@ export default function Galley() {
 
       {/* The Cook + her tradition */}
       <ShipSection className="py-10">
-        <ShipEyebrow>The Ship's Nourishment Engineer</ShipEyebrow>
+        <ShipEyebrow>The Ship's Yum Dealer</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-4">She engineers delicious nourishment out of living food</h2>
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div data-reveal="left" className="prose prose-lg max-w-none text-foreground/90 space-y-4">
             <p>
-              The crew calls her the Cook as a wink, because almost nothing she makes ever meets a flame. What she
+              The crew calls her the Yum Dealer because what she serves is pure delight and leaves you better than it
+              found you. Almost nothing she makes ever meets a flame. What she
               really does is engineer nourishment: she takes ripe, raw, living food and composes it into meals that
               taste like a treat and feel good to eat. She is a natural hygienist, a real lineage gathered into a
               system in the 1830s by Sylvester Graham and carried forward by Herbert Shelton, Arnold Ehret, and

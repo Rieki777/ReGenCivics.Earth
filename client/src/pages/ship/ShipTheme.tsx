@@ -54,7 +54,15 @@ const FOUR_LOVES = [
 ];
 
 /** The Quest of Love. Seven rites, one per day of the Monday-to-Sunday voyage. */
-const RITES = [
+const RITES: Array<{
+  day: string;
+  icon: typeof Flame;
+  title: string;
+  subtitle: string;
+  body: string;
+  href?: string;
+  linkLabel?: string;
+}> = [
   {
     day: "Monday",
     icon: Flame,
@@ -74,7 +82,7 @@ const RITES = [
     icon: Utensils,
     title: "The Rite of the Table",
     subtitle: "Cook the land for each other",
-    body: "Harvest, glean, or buy from the closest grower you can find. Cook one meal on her cast iron, no phones at the table. Eat honey. Save the seeds from everything you eat: at the voyage's end they go into the healing hole, growing plants that hold your love.",
+    body: "Harvest, glean, or buy from the closest grower you can find. Enjoy your meal together in a beautiful paradise. Save the seeds from everything you eat: at the voyage's end they go into the healing hole, growing plants that hold your love.",
   },
   {
     day: "Thursday",
@@ -96,6 +104,8 @@ const RITES = [
     title: "The Rite of Truth",
     subtitle: "The conversation you have been putting off",
     body: "There are prompt cards in the Captain's Book. Pull one, sit by the fire, and take turns. This is the day the week has been softening you for. Couples who are struggling and want to deepen: this rite is why the ship exists.",
+    href: "/ship/voyage#rite-of-truth",
+    linkLabel: "Open the Rite of Truth deck",
   },
   {
     day: "Sunday",
@@ -108,7 +118,7 @@ const RITES = [
 
 /** How the theme dresses her inside. Refit in progress; photos land as it does. */
 const INTERIOR = [
-  { title: "The altar", body: "A small fixed shelf by the galley. Bring what you hold sacred. Every crew leaves one thing and takes one thing." },
+  { title: "The altar", body: "A small fixed shelf by the galley. Bring what you hold sacred. Every crew is welcome to leave something behind, if they desire." },
   { title: "The love nest", body: "The primary bedroom, made up in organic linens, blackout for real sleep, and a window you can watch the stars through." },
   { title: "The apothecary galley", body: "Cast iron, real food, in-line-filtered drinking water, and a jar of honey from a Cascadia beekeeper who works wild-flowering land." },
   { title: "The Hermitage seat", body: "One chair, set apart, facing out. Love needs solitude next to it. Whoever needs the seat takes it, and the other leaves them to it." },
@@ -118,10 +128,6 @@ const INTERIOR = [
 
 /** Point-earning actions before you sail, themed to this docking. */
 const LOVE_ACTIONS = [
-  { title: "Write a love letter to a landscape", points: 25, body: "The place that made you. Post it on the quest thread." },
-  { title: "Keep a moon of honey", points: 25, body: "Find a beekeeper working wild-flowering land near you. Share who they are." },
-  { title: "Cook a local meal for someone you love", points: 25, body: "One meal, close to home ground. Share the photo and the story." },
-  { title: "Plant something with another person", points: 50, body: "Two pairs of hands, one hole. Photo of both." },
   { title: "Give a day to a land project near you", points: 50, body: "Whatever they need doing. Share what you did." },
   { title: "Bring a couple onto the crew list", points: 50, body: "Someone who needs their next honeymoon. Send them the article." },
 ];
@@ -214,6 +220,14 @@ export default function ShipTheme() {
                 <h3 className="font-bold text-lg leading-tight">{r.title}</h3>
                 <p className="text-white/70 text-sm mb-2">{r.subtitle}</p>
                 <p className="text-white/85">{r.body}</p>
+                {r.href && (
+                  <Link
+                    href={r.href}
+                    className="mt-2 inline-flex items-center gap-1 font-semibold text-[#ffd700] underline decoration-2 underline-offset-4 hover:text-[#ffe14d]"
+                  >
+                    {r.linkLabel ?? "Open"} <span aria-hidden="true">→</span>
+                  </Link>
+                )}
               </div>
             </div>
           ))}
