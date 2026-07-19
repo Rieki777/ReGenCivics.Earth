@@ -138,13 +138,13 @@ export default function ShipTheme() {
       <SEO
         title="The Sanctuary of Love | The ReGen Ship"
         description="The ship takes the theme of wherever she is docked. She is docked at The Sanctuary in Ashland, Oregon, so this season she sails as The Sanctuary of Love."
-        image="/images/ship/ship-campfire-dusk.jpg"
+        image="/images/ship/ship-sanctuary-of-love-hero.jpg"
         url="/ship/theme"
       />
 
       {/* Hero */}
       <section className="relative min-h-[62vh] flex items-center justify-center text-center overflow-hidden">
-        <ShipImage name="ship-campfire-dusk.jpg" alt="A fire ring and two chairs beside the ship at dusk." rounded={false} className="absolute inset-0 -z-10" />
+        <ShipImage name="ship-sanctuary-of-love-hero.jpg" alt="A white lion statue on a stone ledge overlooking the valley at golden sunset, at the Ashland Sanctuary." rounded={false} className="absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-black/50" />
         <div className="max-w-3xl mx-auto px-4 py-24 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-4">The current docking</p>

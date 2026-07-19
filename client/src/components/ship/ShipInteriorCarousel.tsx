@@ -21,6 +21,7 @@ const INTERIOR_PHOTOS: InteriorPhoto[] = [
   { name: "ship-interior-galley-kitchen.jpg", label: "The galley kitchen", alt: "The real galley kitchen: counter, sink, and cabinetry for cooking aboard." },
   { name: "ship-interior-living.jpg", label: "The living room", alt: "The living area: the dinette by a wide window, set up with Starlink for working aboard." },
   { name: "ship-interior-bedroom.jpg", label: "The primary bedroom", alt: "The primary bedroom with a gold velvet headboard, ceiling fan, and trailing ivy." },
+  { name: "ship-interior-bedroom-2.jpg", label: "The bedroom", alt: "The bedroom from the doorway, with a beaded curtain and framed art." },
   { name: "ship-interior-bath.jpg", label: "The bath", alt: "The bathroom with vanity, toilet, and the full-size washing machine in cherry cabinetry." },
   { name: "ship-interior-shower.jpg", label: "The shower", alt: "A corner shower with frosted glass, fresh towels, and a skylight overhead." },
   { name: "ship-interior-bath-sink.jpg", label: "The vanity", alt: "The bathroom vanity with a stone tile backsplash, brushed gold fixtures, and a folded towel." },
