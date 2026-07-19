@@ -4574,6 +4574,40 @@ export const shipQuestCompletions = mysqlTable("ship_quest_completions", {
 ]));
 export type ShipQuestCompletion = typeof shipQuestCompletions.$inferSelect;
 
+// Item 13: crew pooling. A qualified player (150+ points) can pool with others
+// into a crew (cap 4, or 5 for a family), matched by overlapping open weeks.
+export const shipQuestCrews = mysqlTable("ship_quest_crews", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  isFamily: tinyint("isFamily").notNull().default(0),
+  status: mysqlEnum("status", ["forming", "matched", "drawn"]).notNull().default("forming"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("ship_quest_crews_creator_idx").on(t.createdByUserId),
+]));
+export type ShipQuestCrew = typeof shipQuestCrews.$inferSelect;
+
+export const shipQuestCrewMembers = mysqlTable("ship_quest_crew_members", {
+  id: int("id").autoincrement().primaryKey(),
+  crewId: int("crewId").notNull(),
+  userId: int("userId").notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("ship_quest_crew_member_user_uq").on(t.userId),
+  index("ship_quest_crew_member_crew_idx").on(t.crewId),
+]));
+export type ShipQuestCrewMember = typeof shipQuestCrewMembers.$inferSelect;
+
+// Per-player availability: the weeks they cannot sail + whether they want matching.
+export const shipQuestAvailability = mysqlTable("ship_quest_availability", {
+  userId: int("userId").primaryKey(),
+  blockedWeeks: json("blockedWeeks"),
+  seekingCrew: tinyint("seekingCrew").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ShipQuestAvailability = typeof shipQuestAvailability.$inferSelect;
+
 // Nomination track: anyone can nominate anyone (including self) for a bonus slot.
 export const shipNominations = mysqlTable("ship_nominations", {
   id: int("id").autoincrement().primaryKey(),

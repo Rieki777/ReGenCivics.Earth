@@ -26,6 +26,7 @@ import { getDb } from "../db";
 import {
   shipLocations, shipLocationFlags, shipBookings, shipBlackoutDates, shipPricingWindows,
   shipQuestActions, shipQuestCompletions, shipNominations, shipKeeperApplications,
+  shipQuestCrews, shipQuestCrewMembers, shipQuestAvailability,
   shipFleetApplications, shipWinterHostApplications, shipConciergeSessions,
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
   shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
@@ -318,6 +319,70 @@ export async function awardQuestFromForumReply(userId: number, postId: number, r
   });
   const cid = (res as { insertId?: number }).insertId;
   if (status === "verified" && cid) await rewardVerifiedCompletion(cid);
+}
+
+// ── Item 13: crew pooling helpers ─────────────────────────────────────────────
+
+/**
+ * The live pool of open voyage weeks (state "open" in the voyage grid). Capacity
+ * aware: a week that fills with a blocking booking is no longer "open" and drops
+ * out automatically, so matching and pooling never offer a full date.
+ */
+async function openVoyageWeekStarts(): Promise<string[]> {
+  const d = await db();
+  const blocking = await d.select({ startDate: shipBookings.startDate, endDate: shipBookings.endDate })
+    .from(shipBookings).where(inArray(shipBookings.status, [...BLOCKING_STATUSES]));
+  const requested = await d.select({ startDate: shipBookings.startDate, endDate: shipBookings.endDate })
+    .from(shipBookings).where(eq(shipBookings.status, "requested"));
+  const blackouts = await d.select().from(shipBlackoutDates);
+  const pricing = await d.select().from(shipPricingWindows).orderBy(asc(shipPricingWindows.startDate));
+  const today = new Date().toISOString().slice(0, 10);
+  const weeks = enumerateVoyageWeeks({
+    seasonStart: SHIP_SEASON_START_YMD, year2Start: SHIP_YEAR2_START_YMD,
+    year2Multiplier: YEAR2_PRICE_MULTIPLIER, horizonWeeks: SHIP_BOOKING_HORIZON_WEEKS, today,
+    booked: blocking, requested,
+    blackouts: blackouts.map((b) => ({ startDate: b.startDate, endDate: b.endDate, reason: b.reason })),
+    pricingWindows: pricing.map((p) => ({ startDate: p.startDate, endDate: p.endDate, multiplier: p.multiplier, label: p.label })),
+    bands: SHIP_SEASONAL_BANDS,
+  });
+  return weeks.filter((w) => w.state === "open").map((w) => w.startDate);
+}
+
+/** A player's blocked (unavailable) voyage weeks. */
+async function getBlockedWeeks(userId: number): Promise<string[]> {
+  const d = await db();
+  const [a] = await d.select().from(shipQuestAvailability).where(eq(shipQuestAvailability.userId, userId)).limit(1);
+  const bw = a?.blockedWeeks;
+  return Array.isArray(bw) ? bw.filter((x): x is string => typeof x === "string") : [];
+}
+
+/** The crew a player belongs to (with its members), or null. */
+async function getUserCrew(userId: number): Promise<{ crew: typeof shipQuestCrews.$inferSelect; members: Array<typeof shipQuestCrewMembers.$inferSelect> } | null> {
+  const d = await db();
+  const [membership] = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.userId, userId)).limit(1);
+  if (!membership) return null;
+  const [crew] = await d.select().from(shipQuestCrews).where(eq(shipQuestCrews.id, membership.crewId)).limit(1);
+  if (!crew) return null;
+  const members = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.crewId, crew.id));
+  return { crew, members };
+}
+
+/** The weeks open to every member of a crew (intersection of their open weeks). */
+async function crewSharedOpenWeeks(userIds: number[], open: string[]): Promise<Set<string>> {
+  let shared = new Set(open);
+  for (const uid of userIds) {
+    const blocked = await getBlockedWeeks(uid);
+    shared = new Set([...shared].filter((w) => !blocked.includes(w)));
+  }
+  return shared;
+}
+
+/** Mark a player as wanting to be matched into a crew. */
+async function markSeekingCrew(userId: number): Promise<void> {
+  const d = await db();
+  const [ex] = await d.select().from(shipQuestAvailability).where(eq(shipQuestAvailability.userId, userId)).limit(1);
+  if (ex) await d.update(shipQuestAvailability).set({ seekingCrew: 1 }).where(eq(shipQuestAvailability.userId, userId));
+  else await d.insert(shipQuestAvailability).values({ userId, blockedWeeks: [], seekingCrew: 1 });
 }
 
 export const shipRouter = router({
@@ -843,6 +908,155 @@ export const shipRouter = router({
           handle: byId.get(s.userId)?.handle ?? null,
         })),
       };
+    }),
+  }),
+
+  // ── Crew pooling (item 13) ──────────────────────────────────────────────────
+  pool: router({
+    // My pooling picture: eligibility, my crew, my availability, the open weeks.
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db();
+      const points = await verifiedPointsForUser(ctx.user.id);
+      const open = await openVoyageWeekStarts();
+      const blocked = await getBlockedWeeks(ctx.user.id);
+      const myOpen = open.filter((w) => !blocked.includes(w));
+      const [avail] = await d.select().from(shipQuestAvailability).where(eq(shipQuestAvailability.userId, ctx.user.id)).limit(1);
+      const mine = await getUserCrew(ctx.user.id);
+      let crew = null as null | {
+        id: number; name: string; isFamily: boolean; cap: number; status: string;
+        members: Array<{ userId: number; name: string; handle: string | null; points: number }>;
+        pooledPoints: number; sharedOpenWeeks: string[];
+      };
+      if (mine) {
+        const ids = mine.members.map((m) => m.userId);
+        const profiles = ids.length ? await d.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, ids)) : [];
+        const byId = new Map(profiles.map((p) => [p.id, p]));
+        const memberPoints = await Promise.all(ids.map((id) => verifiedPointsForUser(id)));
+        const shared = await crewSharedOpenWeeks(ids, open);
+        crew = {
+          id: mine.crew.id, name: mine.crew.name, isFamily: Boolean(mine.crew.isFamily),
+          cap: mine.crew.isFamily ? 5 : 4, status: mine.crew.status,
+          members: ids.map((id, i) => ({ userId: id, name: byId.get(id)?.name ?? "A crew member", handle: byId.get(id)?.handle ?? null, points: memberPoints[i] })),
+          pooledPoints: memberPoints.reduce((s, n) => s + n, 0),
+          sharedOpenWeeks: [...shared],
+        };
+      }
+      return {
+        eligible: points >= SHIP_ENTRY_THRESHOLD_POINTS,
+        points, threshold: SHIP_ENTRY_THRESHOLD_POINTS,
+        openWeeks: open, myOpenWeeks: myOpen, blockedWeeks: blocked,
+        seekingCrew: Boolean(avail?.seekingCrew), crew,
+      };
+    }),
+
+    // The open forming crews others can join (with space, and their shared weeks).
+    openCrews: protectedProcedure.query(async () => {
+      const d = await db();
+      const open = await openVoyageWeekStarts();
+      const forming = await d.select().from(shipQuestCrews).where(eq(shipQuestCrews.status, "forming")).orderBy(desc(shipQuestCrews.createdAt)).limit(50);
+      const out: Array<{ id: number; name: string; size: number; cap: number; sharedOpenWeeks: string[] }> = [];
+      for (const crew of forming) {
+        const members = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.crewId, crew.id));
+        const cap = crew.isFamily ? 5 : 4;
+        if (members.length >= cap) continue;
+        const shared = await crewSharedOpenWeeks(members.map((m) => m.userId), open);
+        out.push({ id: crew.id, name: crew.name, size: members.length, cap, sharedOpenWeeks: [...shared] });
+      }
+      return out;
+    }),
+
+    setAvailability: protectedProcedure
+      .input(z.object({ blockedWeeks: z.array(z.string().max(10)).max(80), seekingCrew: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const [existing] = await d.select().from(shipQuestAvailability).where(eq(shipQuestAvailability.userId, ctx.user.id)).limit(1);
+        if (existing) {
+          await d.update(shipQuestAvailability).set({ blockedWeeks: input.blockedWeeks, seekingCrew: input.seekingCrew ? 1 : 0 }).where(eq(shipQuestAvailability.userId, ctx.user.id));
+        } else {
+          await d.insert(shipQuestAvailability).values({ userId: ctx.user.id, blockedWeeks: input.blockedWeeks, seekingCrew: input.seekingCrew ? 1 : 0 });
+        }
+        return { ok: true };
+      }),
+
+    create: protectedProcedure
+      .input(z.object({ name: z.string().min(1).max(120), isFamily: z.boolean().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
+        if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew. Leave it first." });
+        const [res] = await d.insert(shipQuestCrews).values({ name: sanitizeInput(input.name), createdByUserId: ctx.user.id, isFamily: input.isFamily ? 1 : 0 });
+        const crewId = (res as { insertId?: number }).insertId ?? 0;
+        await d.insert(shipQuestCrewMembers).values({ crewId, userId: ctx.user.id });
+        return { crewId };
+      }),
+
+    join: protectedProcedure
+      .input(z.object({ crewId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
+        if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew." });
+        const [crew] = await d.select().from(shipQuestCrews).where(eq(shipQuestCrews.id, input.crewId)).limit(1);
+        if (!crew) throw new TRPCError({ code: "NOT_FOUND", message: "That crew does not exist." });
+        const members = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.crewId, crew.id));
+        if (members.length >= (crew.isFamily ? 5 : 4)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "That crew is full." });
+        await d.insert(shipQuestCrewMembers).values({ crewId: crew.id, userId: ctx.user.id });
+        return { ok: true };
+      }),
+
+    leave: protectedProcedure.mutation(async ({ ctx }) => {
+      const d = await db();
+      const mine = await getUserCrew(ctx.user.id);
+      if (!mine) return { ok: true };
+      await d.delete(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.userId, ctx.user.id));
+      const remaining = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.crewId, mine.crew.id));
+      if (remaining.length === 0) await d.delete(shipQuestCrews).where(eq(shipQuestCrews.id, mine.crew.id));
+      return { ok: true };
+    }),
+
+    // "Match me": join a forming crew with an overlapping open week, or start one
+    // with other seekers whose availability overlaps mine, up to a group of four.
+    matchMe: protectedProcedure.mutation(async ({ ctx }) => {
+      const d = await db();
+      if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
+      if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew." });
+      await markSeekingCrew(ctx.user.id);
+      const open = await openVoyageWeekStarts();
+      const myBlocked = await getBlockedWeeks(ctx.user.id);
+      const myOpen = new Set(open.filter((w) => !myBlocked.includes(w)));
+
+      // 1. Join an existing forming crew that has space and a week open to us both.
+      const forming = await d.select().from(shipQuestCrews).where(eq(shipQuestCrews.status, "forming"));
+      for (const crew of forming) {
+        const members = await d.select().from(shipQuestCrewMembers).where(eq(shipQuestCrewMembers.crewId, crew.id));
+        if (members.length === 0 || members.length >= (crew.isFamily ? 5 : 4)) continue;
+        const crewOpen = await crewSharedOpenWeeks(members.map((m) => m.userId), open);
+        if ([...crewOpen].some((w) => myOpen.has(w))) {
+          await d.insert(shipQuestCrewMembers).values({ crewId: crew.id, userId: ctx.user.id });
+          return { matched: true as const, crewId: crew.id };
+        }
+      }
+
+      // 2. Start a crew with up to three other seekers whose weeks overlap mine.
+      const seekers = await d.select().from(shipQuestAvailability).where(eq(shipQuestAvailability.seekingCrew, 1));
+      const partners: number[] = [];
+      for (const s of seekers) {
+        if (s.userId === ctx.user.id || partners.length >= 3) continue;
+        if (await getUserCrew(s.userId)) continue;
+        if (await verifiedPointsForUser(s.userId) < SHIP_ENTRY_THRESHOLD_POINTS) continue;
+        const sBlocked = Array.isArray(s.blockedWeeks) ? (s.blockedWeeks as unknown[]).filter((x): x is string => typeof x === "string") : [];
+        if (open.filter((w) => !sBlocked.includes(w)).some((w) => myOpen.has(w))) partners.push(s.userId);
+      }
+      if (partners.length > 0) {
+        const [res] = await d.insert(shipQuestCrews).values({ name: "A matched crew", createdByUserId: ctx.user.id, isFamily: 0 });
+        const crewId = (res as { insertId?: number }).insertId ?? 0;
+        await d.insert(shipQuestCrewMembers).values({ crewId, userId: ctx.user.id });
+        for (const p of partners) await d.insert(shipQuestCrewMembers).values({ crewId, userId: p });
+        return { matched: true as const, crewId };
+      }
+
+      // 3. No overlap yet: stay in the seeking pool for the next person to match.
+      return { matched: false as const };
     }),
   }),
 

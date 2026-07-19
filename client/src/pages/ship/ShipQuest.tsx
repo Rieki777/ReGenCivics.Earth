@@ -15,6 +15,7 @@ import { Trophy, Anchor, Check, Share2 } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
 import { CrewProfileEditor, CrewsSection } from "@/components/ship/CrewProfiles";
+import { CrewPooling } from "@/components/ship/CrewPooling";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -189,6 +190,13 @@ export default function ShipQuest() {
               <CrewProfileEditor inTheDraw={inTheDraw} existing={myProgress.data?.crewProfile ?? null} onSaved={refresh} />
             </div>
           </div>
+        </ShipSection>
+      )}
+
+      {/* Crew pooling (item 13): qualified crews pool + get matched by open weeks. */}
+      {isAuthenticated && (
+        <ShipSection className="py-8">
+          <CrewPooling />
         </ShipSection>
       )}
 
