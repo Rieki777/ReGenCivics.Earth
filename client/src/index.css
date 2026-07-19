@@ -319,25 +319,7 @@
       font-size: 16px !important;
     }
   }
-  /* Touch targets: iPhone/Safari is the primary platform. Give every standalone
-     control at least a 44px tall tap area on touch viewports (Apple HIG). Only
-     min-height, so nothing grows horizontally and inline text links (which
-     ignore min-height) are untouched. The !important reliably wins over the
-     h-8/h-9 utilities on shadcn buttons.
-     Radix checkbox/radio/switch render as <button> with the matching role, so
-     they must be excluded here or the rule stretches them into 44px-tall pills
-     (their 44px tap zone comes from the pointer:coarse ::after expander below).
-     NOTE: the component variants now carry pointer-coarse: floors themselves
-     (button.tsx and friends); this blanket rule is transitional and gets
-     deleted in Phase 5 of MOBILE_FIRST_MASTER_PLAN.md. */
   @media (max-width: 767px) {
-    [data-slot="button"],
-    button:not(:disabled):not([role="checkbox"]):not([role="radio"]):not([role="switch"]),
-    [role="button"]:not([aria-disabled="true"]),
-    select:not(:disabled),
-    summary {
-      min-height: 44px !important;
-    }
     /* Leaflet map controls (the treasure map is a key mobile surface). */
     .leaflet-bar a {
       min-width: 44px;
