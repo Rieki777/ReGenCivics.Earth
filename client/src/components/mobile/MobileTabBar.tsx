@@ -19,6 +19,7 @@
  *
  * Mobile only. Desktop keeps SmartBottomNav.
  */
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
 import { Home } from "lucide-react";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -40,7 +41,7 @@ export default function MobileTabBar() {
     pinQuestsSlot: false,
   });
 
-  return (
+  const bar = (
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#0a1f0f] to-[#1a472a]/95 backdrop-blur-xl border-t border-[#7dd87d]/20 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.45)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
@@ -102,4 +103,10 @@ export default function MobileTabBar() {
       </div>
     </nav>
   );
+
+  // Portal to <body> so the fixed bar is always positioned against the viewport,
+  // never trapped by an ancestor's transform / filter / backdrop-filter / contain
+  // (any of which would turn "fixed" into "absolute" and float the bar mid-page).
+  if (typeof document === "undefined") return bar;
+  return createPortal(bar, document.body);
 }

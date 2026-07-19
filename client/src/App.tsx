@@ -523,7 +523,7 @@ function MainApp() {
           )}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content" className="pb-20">
+          <main id="main-content" className="pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]">
             <Router />
           </main>
           {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (
