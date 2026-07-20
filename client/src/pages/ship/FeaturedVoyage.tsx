@@ -1,8 +1,9 @@
 /**
  * FeaturedVoyage — the first fully-built voyage on the treasure map page:
- * "Cascadia Epic Voyage: The Full Lunar Cycle." The illustrated map, a stats
- * card, an honest season band, a tappable stop layer synced to the map, general
- * per-region RV logistics, and the booking funnel for a month.
+ * "Cascadia Epic Voyage: The Full Lunar Cycle." An interactive illustrated map
+ * (tappable markers over each stop, synced to the list and a detail card, plus
+ * a full-screen view), a stats card, an honest season band, a tappable stop
+ * layer, general per-region RV logistics, and the booking funnel for a month.
  *
  * This is one worked example, not the gallery. The other routes and the full
  * gallery are a later pass.
@@ -31,6 +32,56 @@ function fmtDate(ymd: string): string {
 }
 
 const STOP_ICON: Record<Stop["kind"], string> = { home: "⚓", landmark: "📍", spring: "♨️" };
+const DOT_COLOR: Record<Stop["kind"], string> = { home: "bg-[#3ddc84]", landmark: "bg-[#ffd700]", spring: "bg-[#ff9a3d]" };
+
+/** The illustrated map with tappable markers over each stop. */
+function InteractiveMap({ active, onSelect, onExpand }: { active: number | null; onSelect: (i: number) => void; onExpand: () => void }) {
+  return (
+    <div>
+      <div className="relative overflow-hidden rounded-2xl border border-[#ffd700]/30">
+        <img
+          src={shipImg(MAP_IMAGE)}
+          alt={`Illustrated bird's-eye map of the ${VOYAGE.title}, the loop from Ashland up the Oregon coast, across the Columbia Gorge and Cascades, down to Crater Lake and home`}
+          className="block w-full h-auto"
+          loading="lazy"
+        />
+        {STOPS.map((s, i) => {
+          const isActive = active === i;
+          const labelAbove = s.y > 0.82;
+          return (
+            <button
+              key={s.name}
+              type="button"
+              onClick={() => onSelect(i)}
+              aria-label={`${s.name}${s.kind === "spring" ? ", hot spring" : ""}${isActive ? ", selected" : ""}`}
+              aria-pressed={isActive}
+              style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%` }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center w-6 h-6 group focus-visible:outline-none ${isActive ? "z-20" : "z-10"}`}
+            >
+              <span
+                className={`block rounded-full ring-2 shadow transition-transform group-hover:scale-125 group-focus-visible:ring-white ${DOT_COLOR[s.kind]} ${isActive ? "w-4 h-4 ring-white scale-125" : "w-2.5 h-2.5 ring-black/60"}`}
+              />
+              {isActive && (
+                <span className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/85 text-white text-[10px] font-medium px-1.5 py-0.5 pointer-events-none ${labelAbove ? "bottom-full mb-1" : "top-full mt-1"}`}>
+                  {STOP_ICON[s.kind]} {s.name}
+                </span>
+              )}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-label="Open the map full screen"
+          className="absolute top-2 right-2 z-30 inline-flex items-center gap-1 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs px-2.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
+        >
+          <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" /> Expand
+        </button>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1.5">Tap a marker to read the place. Gold is a stop, amber is a hot spring, green is home port. Expand for the full map.</p>
+    </div>
+  );
+}
 
 function MapLightbox({ onClose }: { onClose: () => void }) {
   useEffect(() => {
@@ -76,7 +127,7 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 export function FeaturedVoyage() {
   const [full, setFull] = useState(false);
-  const [openStop, setOpenStop] = useState<number | null>(null);
+  const [activeStop, setActiveStop] = useState<number | null>(null);
 
   const availability = trpc.ship.availability.useQuery(undefined, { staleTime: 60_000 });
   const weeks = availability.data?.weeks ?? [];
@@ -107,6 +158,8 @@ export function FeaturedVoyage() {
 
   const springs = STOPS.filter((s) => s.kind === "spring");
   const bookHref = "/ship/book?voyage=lunar_cycle";
+  const toggleStop = (i: number) => setActiveStop((cur) => (cur === i ? null : i));
+  const sel = activeStop != null ? STOPS[activeStop] : null;
 
   return (
     <ShipSection className="bg-gradient-to-b from-[#0d1f16]/[0.06] to-transparent">
@@ -120,24 +173,24 @@ export function FeaturedVoyage() {
         <p className="text-foreground/80 mt-2 max-w-2xl">{VOYAGE.tagline}</p>
 
         <div className="mt-6 grid lg:grid-cols-2 gap-6 items-start">
-          {/* The map, tap to open full screen */}
+          {/* The interactive map + synced detail */}
           <div>
-            <button
-              type="button"
-              onClick={() => setFull(true)}
-              className="group relative block w-full overflow-hidden rounded-2xl border border-[#ffd700]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
-              aria-label="Open the voyage map full screen"
-            >
-              <img
-                src={shipImg(MAP_IMAGE)}
-                alt={`Illustrated bird's-eye map of the ${VOYAGE.title}, the loop from Ashland up the Oregon coast, across the Columbia Gorge and Cascades, down to Crater Lake and home`}
-                className="w-full h-auto transition-transform duration-500 group-hover:scale-[1.02]"
-                loading="lazy"
-              />
-              <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/60 text-white text-xs px-2.5 py-1">
-                <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" /> Tap to open full screen
-              </span>
-            </button>
+            <InteractiveMap active={activeStop} onSelect={toggleStop} onExpand={() => setFull(true)} />
+            <div className="mt-2 rounded-xl border p-3 bg-background/60 min-h-[84px]">
+              {sel ? (
+                <>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span aria-hidden="true">{STOP_ICON[sel.kind]}</span>
+                    <span className="font-semibold text-foreground">{sel.name}</span>
+                    {sel.seasonal && <span className="text-[10px] uppercase tracking-wide rounded-full bg-[#b5762f]/15 text-[#8a5a2b] dark:text-[#e0b483] px-1.5 py-0.5">Summer to fall</span>}
+                    <span className="ml-auto text-xs text-muted-foreground">{sel.region}</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 mt-1.5">{sel.blurb}</p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Tap a marker on the map, or a stop in the list below, to read that place.</p>
+              )}
+            </div>
           </div>
 
           {/* Stats + funnel */}
@@ -188,23 +241,23 @@ export function FeaturedVoyage() {
           <p className="text-sm text-foreground/80 mt-2">{SEASON.note}</p>
         </div>
 
-        {/* Stop layer */}
+        {/* Stop layer, synced to the map */}
         <div className="mt-8">
           <ShipEyebrow>The stops</ShipEyebrow>
           <h3 className="text-2xl font-bold mb-1">Every anchor on the map</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            In loop order from home port. Tap a stop to read the place. <span className="whitespace-nowrap">♨️ marks a hot spring.</span>
+            In loop order from home port. Tap a stop to read the place and light it on the map. <span className="whitespace-nowrap">♨️ marks a hot spring.</span>
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
             {STOPS.map((s, i) => {
-              const isOpen = openStop === i;
+              const isOpen = activeStop === i;
               return (
                 <li key={s.name}>
                   <button
                     type="button"
-                    onClick={() => setOpenStop(isOpen ? null : i)}
+                    onClick={() => toggleStop(i)}
                     aria-expanded={isOpen}
-                    className={`w-full text-left rounded-xl border p-3 transition-colors ${isOpen ? "border-[#2f5d3a]/50 bg-[#2f5d3a]/5" : "border-border hover:border-[#2f5d3a]/40"}`}
+                    className={`w-full text-left rounded-xl border p-3 transition-colors ${isOpen ? "border-[#2f5d3a]/60 bg-[#2f5d3a]/5 ring-1 ring-[#2f5d3a]/30" : "border-border hover:border-[#2f5d3a]/40"}`}
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-lg leading-none" aria-hidden="true">{STOP_ICON[s.kind]}</span>

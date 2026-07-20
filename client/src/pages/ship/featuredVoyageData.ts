@@ -5,8 +5,11 @@
  * stop layer, the honest per-region RV logistics, and the season notes that the
  * FeaturedVoyage component renders beside it.
  *
- * Tillamook Creamery still appears on the illustration, but by Rye's call it is
- * NOT a stop in the built experience, so it is intentionally absent below.
+ * Each stop carries a normalized (x, y) position (0 to 1) of its label on the
+ * illustration, so the component can drop a tappable marker over the map that is
+ * synced to the stop list. Tillamook Creamery still appears on the illustration,
+ * but by Rye's call it is NOT a stop in the built experience, so it is absent
+ * below and gets no marker.
  *
  * All copy is grounded and honest. RV logistics are general guidance by region
  * only, with no fabricated dump-station addresses or facility names: the First
@@ -45,55 +48,59 @@ export type Stop = {
   kind: StopKind;
   region: string;
   blurb: string;
+  /** Normalized position of the marker on the map image, 0 to 1. */
+  x: number;
+  y: number;
   /** True when the stop is only reachable in the warm season. */
   seasonal?: boolean;
 };
 
 /**
  * The stop layer, in loop order from Ashland. Springs carry a distinct icon.
- * Tillamook is intentionally omitted (removed as a stop).
+ * Tillamook is intentionally omitted (removed as a stop). x/y place the tappable
+ * marker over the illustration.
  */
 export const STOPS: Stop[] = [
-  { name: "Ashland", kind: "home", region: "Home port", blurb: "Home port in the Rogue Valley, where every voyage begins and ends. She waters, provisions, and rests here before the loop opens and after it closes." },
+  { name: "Ashland", kind: "home", region: "Home port", x: 0.502, y: 0.955, blurb: "Home port in the Rogue Valley, where every voyage begins and ends. She waters, provisions, and rests here before the loop opens and after it closes." },
 
   // The Oregon coast
-  { name: "Astoria", kind: "landmark", region: "The Oregon Coast", blurb: "The old river mouth town where the Columbia meets the Pacific, all lighthouses, long bridges, and morning fog." },
-  { name: "Cannon Beach", kind: "landmark", region: "The Oregon Coast", blurb: "Wide sand and sea stacks, tide pools at low water, the classic Oregon coast in one view." },
-  { name: "Haystack Rock", kind: "landmark", region: "The Oregon Coast", blurb: "The great monolith standing just off the beach, seabirds nesting on its shoulders and starfish around its base." },
-  { name: "Sea Lion Caves", kind: "landmark", region: "The Oregon Coast", blurb: "A sea cave worn into the headland where sea lions haul out and their voices echo off the rock." },
-  { name: "Newport", kind: "landmark", region: "The Oregon Coast", blurb: "The green arch of Yaquina Bay Bridge over a working harbor, a good place to breathe salt air and eat off the docks." },
-  { name: "Devil's Punchbowl", kind: "landmark", region: "The Oregon Coast", blurb: "A collapsed sea cave that churns and booms as the tide floods in and out of it." },
-  { name: "Florence", kind: "landmark", region: "The Oregon Coast", blurb: "Old town riverfront and the gateway to the dunes, a soft landing between coast and sand." },
-  { name: "Oregon Dunes", kind: "landmark", region: "The Oregon Coast", blurb: "Mountains of sand between the forest and the surf, the largest expanse of coastal dunes in North America." },
+  { name: "Astoria", kind: "landmark", region: "The Oregon Coast", x: 0.172, y: 0.200, blurb: "The old river mouth town where the Columbia meets the Pacific, all lighthouses, long bridges, and morning fog." },
+  { name: "Cannon Beach", kind: "landmark", region: "The Oregon Coast", x: 0.172, y: 0.328, blurb: "Wide sand and sea stacks, tide pools at low water, the classic Oregon coast in one view." },
+  { name: "Haystack Rock", kind: "landmark", region: "The Oregon Coast", x: 0.108, y: 0.398, blurb: "The great monolith standing just off the beach, seabirds nesting on its shoulders and starfish around its base." },
+  { name: "Sea Lion Caves", kind: "landmark", region: "The Oregon Coast", x: 0.100, y: 0.256, blurb: "A sea cave worn into the headland where sea lions haul out and their voices echo off the rock." },
+  { name: "Newport", kind: "landmark", region: "The Oregon Coast", x: 0.110, y: 0.540, blurb: "The green arch of Yaquina Bay Bridge over a working harbor, a good place to breathe salt air and eat off the docks." },
+  { name: "Devil's Punchbowl", kind: "landmark", region: "The Oregon Coast", x: 0.100, y: 0.630, blurb: "A collapsed sea cave that churns and booms as the tide floods in and out of it." },
+  { name: "Florence", kind: "landmark", region: "The Oregon Coast", x: 0.117, y: 0.694, blurb: "Old town riverfront and the gateway to the dunes, a soft landing between coast and sand." },
+  { name: "Oregon Dunes", kind: "landmark", region: "The Oregon Coast", x: 0.122, y: 0.783, blurb: "Mountains of sand between the forest and the surf, the largest expanse of coastal dunes in North America." },
 
   // The Willamette Valley and the Gorge
-  { name: "Eugene", kind: "landmark", region: "The Willamette Valley and Gorge", blurb: "The green valley city, farmers markets and river paths, an easy resupply before the mountains." },
-  { name: "Silver Falls", kind: "landmark", region: "The Willamette Valley and Gorge", blurb: "A canyon of waterfalls you can walk behind, ferns and moss and cool spray on the trail." },
-  { name: "Columbia River Gorge", kind: "landmark", region: "The Willamette Valley and Gorge", blurb: "A river canyon cut clean through the Cascades, walls of basalt and a corridor of falling water." },
-  { name: "Multnomah Falls", kind: "landmark", region: "The Willamette Valley and Gorge", blurb: "The tall two tier falls off the gorge wall, a stone footbridge crossing its middle." },
-  { name: "Hood River", kind: "landmark", region: "The Willamette Valley and Gorge", blurb: "A wind and water town on the Columbia, orchards on the hills above and windsurfers on the river below." },
+  { name: "Eugene", kind: "landmark", region: "The Willamette Valley and Gorge", x: 0.284, y: 0.643, blurb: "The green valley city, farmers markets and river paths, an easy resupply before the mountains." },
+  { name: "Silver Falls", kind: "landmark", region: "The Willamette Valley and Gorge", x: 0.312, y: 0.427, blurb: "A canyon of waterfalls you can walk behind, ferns and moss and cool spray on the trail." },
+  { name: "Columbia River Gorge", kind: "landmark", region: "The Willamette Valley and Gorge", x: 0.722, y: 0.198, blurb: "A river canyon cut clean through the Cascades, walls of basalt and a corridor of falling water." },
+  { name: "Multnomah Falls", kind: "landmark", region: "The Willamette Valley and Gorge", x: 0.888, y: 0.242, blurb: "The tall two tier falls off the gorge wall, a stone footbridge crossing its middle." },
+  { name: "Hood River", kind: "landmark", region: "The Willamette Valley and Gorge", x: 0.784, y: 0.335, blurb: "A wind and water town on the Columbia, orchards on the hills above and windsurfers on the river below." },
 
   // Mount Hood and the northern Cascades
-  { name: "Mount Hood", kind: "landmark", region: "Mount Hood", blurb: "The glaciered peak that watches the whole region, alpine meadows and wildflowers on its lower skirts.", seasonal: true },
-  { name: "Timberline Lodge", kind: "landmark", region: "Mount Hood", blurb: "The great timberline lodge high on Mount Hood, hand built of stone and timber, with snow that lingers into summer.", seasonal: true },
+  { name: "Mount Hood", kind: "landmark", region: "Mount Hood", x: 0.808, y: 0.486, seasonal: true, blurb: "The glaciered peak that watches the whole region, alpine meadows and wildflowers on its lower skirts." },
+  { name: "Timberline Lodge", kind: "landmark", region: "Mount Hood", x: 0.888, y: 0.562, seasonal: true, blurb: "The great timberline lodge high on Mount Hood, hand built of stone and timber, with snow that lingers into summer." },
 
   // The central Cascades and high desert
-  { name: "Smith Rock", kind: "landmark", region: "The Central Cascades and high desert", blurb: "Rust red spires rising over a river bend, where climbers and the dry desert light meet." },
-  { name: "Sisters", kind: "landmark", region: "The Central Cascades and high desert", blurb: "A small Cascade town under the Three Sisters peaks, pine air and a slow main street." },
-  { name: "Bend", kind: "landmark", region: "The Central Cascades and high desert", blurb: "The high desert hub on the Deschutes River, trails and water and a full resupply." },
-  { name: "Mount Bachelor", kind: "landmark", region: "The Central Cascades and high desert", blurb: "The volcano south of Bend, ringed with alpine lakes and trails around its base.", seasonal: true },
-  { name: "Cascade Lakes Highway", kind: "landmark", region: "The Central Cascades and high desert", blurb: "A high scenic road strung between alpine lakes and volcanoes, a summer to fall drive that closes under snow.", seasonal: true },
-  { name: "Painted Hills", kind: "landmark", region: "The Central Cascades and high desert", blurb: "Banded hills of red, gold, and black, an ancient seabed painted by time and best in low light." },
+  { name: "Smith Rock", kind: "landmark", region: "The Central Cascades and high desert", x: 0.590, y: 0.391, blurb: "Rust red spires rising over a river bend, where climbers and the dry desert light meet." },
+  { name: "Sisters", kind: "landmark", region: "The Central Cascades and high desert", x: 0.426, y: 0.558, blurb: "A small Cascade town under the Three Sisters peaks, pine air and a slow main street." },
+  { name: "Bend", kind: "landmark", region: "The Central Cascades and high desert", x: 0.572, y: 0.586, blurb: "The high desert hub on the Deschutes River, trails and water and a full resupply." },
+  { name: "Mount Bachelor", kind: "landmark", region: "The Central Cascades and high desert", x: 0.472, y: 0.513, seasonal: true, blurb: "The volcano south of Bend, ringed with alpine lakes and trails around its base." },
+  { name: "Cascade Lakes Highway", kind: "landmark", region: "The Central Cascades and high desert", x: 0.620, y: 0.703, seasonal: true, blurb: "A high scenic road strung between alpine lakes and volcanoes, a summer to fall drive that closes under snow." },
+  { name: "Painted Hills", kind: "landmark", region: "The Central Cascades and high desert", x: 0.881, y: 0.702, blurb: "Banded hills of red, gold, and black, an ancient seabed painted by time and best in low light." },
 
   // The southern Cascades and home
-  { name: "Crater Lake", kind: "landmark", region: "The Southern Cascades", blurb: "The deepest and bluest lake in the country, held in a collapsed volcano with an island rising from its center. The rim road is a summer to fall route.", seasonal: true },
-  { name: "Umpqua National Forest", kind: "landmark", region: "The Southern Cascades", blurb: "Old growth and waterfalls along the North Umpqua, deep green and quiet, the long way home." },
+  { name: "Crater Lake", kind: "landmark", region: "The Southern Cascades", x: 0.657, y: 0.868, seasonal: true, blurb: "The deepest and bluest lake in the country, held in a collapsed volcano with an island rising from its center. The rim road is a summer to fall route." },
+  { name: "Umpqua National Forest", kind: "landmark", region: "The Southern Cascades", x: 0.401, y: 0.776, blurb: "Old growth and waterfalls along the North Umpqua, deep green and quiet, the long way home." },
 
   // Hot springs (distinct icon)
-  { name: "Breitenbush", kind: "spring", region: "Hot springs", blurb: "Forest hot springs on the Breitenbush River, pools among old growth, a place to soak and let the week settle out of you.", seasonal: true },
-  { name: "Belknap", kind: "spring", region: "Hot springs", blurb: "Riverside hot springs in the McKenzie country, warm mineral water and cold forest air together." },
-  { name: "Umpqua Hot Springs", kind: "spring", region: "Hot springs", blurb: "Terraced pools on a bluff above the North Umpqua, steam rising over the running river below.", seasonal: true },
-  { name: "Stewart Mineral Springs", kind: "spring", region: "Hot springs", blurb: "Mineral springs in the Shasta country to the south, a last soak near the home stretch of the loop." },
+  { name: "Breitenbush", kind: "spring", region: "Hot springs", x: 0.639, y: 0.503, seasonal: true, blurb: "Forest hot springs on the Breitenbush River, pools among old growth, a place to soak and let the week settle out of you." },
+  { name: "Belknap", kind: "spring", region: "Hot springs", x: 0.463, y: 0.650, blurb: "Riverside hot springs in the McKenzie country, warm mineral water and cold forest air together." },
+  { name: "Umpqua Hot Springs", kind: "spring", region: "Hot springs", x: 0.458, y: 0.730, seasonal: true, blurb: "Terraced pools on a bluff above the North Umpqua, steam rising over the running river below." },
+  { name: "Stewart Mineral Springs", kind: "spring", region: "Hot springs", x: 0.731, y: 0.620, blurb: "Mineral springs in the Shasta country to the south, a last soak near the home stretch of the loop." },
 ];
 
 /** Honest general RV guidance per region. No fabricated facilities or addresses. */
