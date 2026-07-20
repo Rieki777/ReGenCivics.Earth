@@ -39,6 +39,7 @@ import {
 } from "./shipVoyage";
 import { FirstMatePlanner, FIRST_MATE_GREETING, type Itinerary } from "./ShipFirstMate";
 import { FormCompanion } from "@/components/companion";
+import { FeaturedVoyage } from "./FeaturedVoyage";
 
 const PINS_CACHE_KEY = "ship_map_pins_v1";
 
@@ -247,6 +248,9 @@ export default function ShipMap() {
     <PageWrapper>
       <SEO title="The Treasure Map" description="Springs, waterfalls, food forests, free boondocks, and the land projects regenerating Cascadia. Chart your voyage." url="/ship/map" />
       <ShipNavRow current="/ship/map" />
+
+      {/* The first fully-built featured voyage, above the interactive board. */}
+      <FeaturedVoyage />
 
       <ShipSection>
         <ShipEyebrow>The treasure map</ShipEyebrow>

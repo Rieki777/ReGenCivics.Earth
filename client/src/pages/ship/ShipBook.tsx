@@ -5,7 +5,7 @@
  * deduce a start date), commit to the vegan diet and the water doctrine, and
  * submit. The insured rental is arranged separately on the platform.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -158,6 +158,20 @@ export default function ShipBook() {
     setFmCharted(false);
     window.setTimeout(() => chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
+
+  // Deep link from a featured voyage: ?voyage=<id> claims that package's first
+  // open run once the calendar loads. Runs once.
+  const voyageParamApplied = useRef(false);
+  useEffect(() => {
+    if (voyageParamApplied.current || weeks.length === 0) return;
+    const id = new URLSearchParams(window.location.search).get("voyage");
+    if (!id) return;
+    const v = suggestedVoyageById(id);
+    if (!v) return;
+    voyageParamApplied.current = true;
+    chooseSuggested(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weeks]);
 
   function clickWeek(i: number) {
     const wk = weeks[i];
