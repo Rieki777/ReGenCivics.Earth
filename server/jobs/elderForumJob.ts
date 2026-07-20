@@ -14,10 +14,10 @@
  *      from that elder; an @handle mention in a reply brings the named elder in.
  *      "Once" is structural, so a branch ends at the elder's answer.
  */
-import { and, asc, desc, eq, gt, inArray, notInArray } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, notInArray } from "drizzle-orm";
 import * as db from "../db";
 import { getDb } from "../db";
-import { forumCategories, forumPosts, forumReplies } from "../../drizzle/schema";
+import { forumCategories, forumPosts, forumReplies, shipQuestActions } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { retrieveCanonPassages } from "../lib/elder-retrieval";
 import { buildElderForumCommentPrompt, buildElderForumReplyPrompt, detectCrisis } from "../lib/elder-safety";
@@ -64,6 +64,18 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
     ? (await database.select({ id: forumCategories.id }).from(forumCategories).where(inArray(forumCategories.slug, EXCLUDED_CATEGORY_SLUGS))).map((c) => c.id)
     : [];
 
+  // The ReGen Ship "Free Passage Quest" threads are curated (item 17): each
+  // carries exactly one comment from each elder, seeded and human-reviewed. The
+  // general best-fit-elder routing must never add, double, or one-sidedly claim
+  // top-level comments on them, so exclude every ship-quest-linked post from the
+  // comment pass below. (Elders may still answer direct replies to their own
+  // comments there, which is conversational, not crowding.)
+  const shipQuestPostIds = (
+    await database.select({ id: shipQuestActions.forumPostId }).from(shipQuestActions).where(isNotNull(shipQuestActions.forumPostId))
+  )
+    .map((r) => r.id)
+    .filter((id): id is number => id != null);
+
   // All replies ever written by the elders. Small set; used to know which posts
   // and replies each elder has already responded to.
   const botReplies = await database
@@ -100,6 +112,7 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
         eq(forumPosts.isLocked, 0),
         notInArray(forumPosts.authorId, botUserIds),
         excludedCatIds.length ? notInArray(forumPosts.categoryId, excludedCatIds) : undefined,
+        shipQuestPostIds.length ? notInArray(forumPosts.id, shipQuestPostIds) : undefined,
       ),
     )
     .orderBy(asc(forumPosts.createdAt))

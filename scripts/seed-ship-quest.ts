@@ -10,7 +10,8 @@
  *     the Galley pair) verify from events and have no thread.
  *
  * Idempotent by slug. Forum threads are created once (category "Quests & Gameplay")
- * and linked via ship_quest_actions.forumPostId, authored by the reviewer account.
+ * and linked via ship_quest_actions.forumPostId, authored by the non-personal
+ * "CORE + ReGen Ship" system account (item 17), never a person's account.
  *
  * Also retires the actions superseded by items 11 and 14: moon-of-honey (replaced
  * by Loving Service) and add-map-location (folded into Loving Service). Rye's call
@@ -29,7 +30,11 @@ dotenv.config({ quiet: true } as never);
 const DRY_RUN = process.argv.includes("--dry-run");
 
 const QUEST_CATEGORY_ID = 5; // "Quests & Gameplay"
-const REVIEWER_USER_ID = 1; // rieki.cordon@gmail.com, sole approver
+// Free Passage Quest threads are authored by the non-personal CORE + ReGen Ship
+// identity (item 17), not a person's account. Created idempotently in main().
+const SHIP_FORUM_AUTHOR_OPENID = "system:core-regen-ship";
+const SHIP_FORUM_AUTHOR_NAME = "CORE + ReGen Ship";
+const SHIP_FORUM_AUTHOR_HANDLE = "core-regen-ship";
 const RETIRED_SLUGS = ["moon-of-honey", "add-map-location"];
 
 type Verification = "auto" | "crew";
@@ -142,6 +147,23 @@ const ACTIONS: Action[] = [
   },
 ];
 
+/**
+ * The non-personal identity that authors the quest forum threads (item 17).
+ * Idempotent on the synthetic openId, so re-seeding never posts these anchor
+ * threads under a person's account. Mirrors migration 0214.
+ */
+async function getOrCreateShipForumAuthorId(conn: mysql.Connection): Promise<number> {
+  await conn.execute(
+    `INSERT IGNORE INTO users (openId, name, handle, loginMethod, role)
+     VALUES (?, ?, ?, 'system', 'user')`,
+    [SHIP_FORUM_AUTHOR_OPENID, SHIP_FORUM_AUTHOR_NAME, SHIP_FORUM_AUTHOR_HANDLE],
+  );
+  const [rows] = await conn.execute("SELECT id FROM users WHERE openId = ? LIMIT 1", [SHIP_FORUM_AUTHOR_OPENID]);
+  const id = Array.isArray(rows) && rows.length ? (rows[0] as { id: number }).id : null;
+  if (id == null) throw new Error("could not create or find the CORE + ReGen Ship forum author");
+  return id;
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -159,6 +181,8 @@ async function main() {
   const conn = await mysql.createConnection(url);
   let inserted = 0, updated = 0, threads = 0;
   try {
+    const authorId = await getOrCreateShipForumAuthorId(conn);
+
     // 1. Retire superseded actions and clear their completions (Rye: CLEAR points).
     for (const slug of RETIRED_SLUGS) {
       const [rows] = await conn.execute("SELECT id FROM ship_quest_actions WHERE slug = ? LIMIT 1", [slug]);
@@ -199,7 +223,7 @@ async function main() {
           const [pres] = await conn.execute(
             `INSERT INTO forumPosts (categoryId, authorId, title, content, isSeed, createdAt, updatedAt)
              VALUES (?, ?, ?, ?, 1, NOW(), NOW())`,
-            [QUEST_CATEGORY_ID, REVIEWER_USER_ID, a.thread.title, a.thread.body],
+            [QUEST_CATEGORY_ID, authorId, a.thread.title, a.thread.body],
           );
           const postId = (pres as { insertId: number }).insertId;
           await conn.execute("UPDATE ship_quest_actions SET forumPostId = ? WHERE id = ?", [postId, actionId]);
