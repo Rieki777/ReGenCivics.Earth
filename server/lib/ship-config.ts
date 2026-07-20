@@ -186,6 +186,32 @@ export const OVERAGE_PER_MILE_USD = 0.5;
 export const SEEDS_PLANTED_BASELINE = 489;
 export const VOYAGES_SAILED_BASELINE = 1;
 
+// ── Free Voyage Giveaway (public entry layer) ────────────────────────────────
+// The public sweepstakes constants live in @shared/shipGiveaway so the draw, the
+// router credit math, and the client preview cannot drift. The rules gate below
+// is server-only (it reads a Railway var).
+export {
+  GIVEAWAY_BONUS,
+  REFERRAL_CREDIT_CAP,
+  REFERRAL_MILESTONE_STICKERS,
+  REFERRAL_MILESTONE_LEADERBOARD,
+  GIVEAWAY_ENTRIES_OPEN_YMD,
+  GIVEAWAY_ENTRIES_CLOSE_YMD,
+  GIVEAWAY_DRAW_YMD,
+  GIVEAWAY_ENTRIES_CLOSE_ISO,
+  GIVEAWAY_ARV_USD,
+} from "@shared/shipGiveaway";
+
+/**
+ * The official-rules gate. The rules page and the public entry button stay off
+ * until Oregon counsel signs off and GIVEAWAY_RULES_APPROVED is set on Railway.
+ * Lets the whole entry layer deploy ahead of the legal review (the page shows a
+ * "rules publish before entries open" placeholder and the enter button disables).
+ */
+export function isGiveawayRulesApproved(): boolean {
+  return ENV.giveawayRulesApproved;
+}
+
 /** churchDonations program tags so Transparency/Reconciliation segments ship revenue. */
 export const SHIP_PROGRAM_TAG = "regen_ship";
 export const SHIP_GIFT_PROGRAM_TAG = "regen_ship_gift";

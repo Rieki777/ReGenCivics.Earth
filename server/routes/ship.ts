@@ -31,7 +31,7 @@ import {
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
   shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
   shipCrewListSignups, shipGearChecks,
-  shipCrewProfiles, shipGiveawayDrawings, churchDonations,
+  shipCrewProfiles, shipGiveawayDrawings, shipGiveawayEntries, churchDonations,
   galleyHauls, galleyHaulItems, galleyRemixes,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
@@ -46,6 +46,7 @@ import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice, voyageNightsFromAnswers,
   computeQuestStandings, countEntered, freeVoyagesUnlocked, percentBooked,
   weightedDraw, sponsorshipProgress, enumerateVoyageWeeks,
+  cappedThresholdTickets, publicEntryTickets,
   type QuestCompletionRow, type DrawEntry,
 } from "../lib/ship-logic";
 import {
@@ -2440,75 +2441,120 @@ export const shipRouter = router({
     // is logged to ship_giveaway_drawings (eligible set, weights, seed, roll) so
     // it is reproducible and auditable. Does not create the booking; the admin
     // arranges it, then flags it a winner voyage.
-    drawFreeVoyageWinner: adminProcedure.mutation(async ({ ctx }) => {
-      const d = await db();
-      const { standings } = await loadQuestStandings();
+    drawFreeVoyageWinner: adminProcedure
+      .input(z.object({
+        // The counsel-approved ceiling on effort-earned draw weight (threshold
+        // quest points and nominations) for THIS draw. null = uncapped, which is
+        // how the pre-public milestone draws run. Public entries, whose weight the
+        // official rules define, are never lowered by it. Recorded on the audit row.
+        thresholdTicketCap: z.number().int().min(1).max(1_000_000).nullish(),
+      }).optional())
+      .mutation(async ({ ctx, input }) => {
+        const d = await db();
+        const cap = input?.thresholdTicketCap ?? null;
+        const { standings } = await loadQuestStandings();
 
-      // Prior winners: anyone holding a winner voyage, plus prior draw winners.
-      const priorBookings = await d.select({ userId: shipBookings.userId }).from(shipBookings).where(eq(shipBookings.isWinnerVoyage, true));
-      const priorDraws = await d.select({ winnerUserId: shipGiveawayDrawings.winnerUserId, winnerNominationId: shipGiveawayDrawings.winnerNominationId }).from(shipGiveawayDrawings);
-      // Demo accounts seeded for launch social proof (@shared/shipDemo) stay on the
-      // draw board but can never win: excluding them here means the draw simply
-      // lands on a real crew, and the audit records them as excluded. No redraw.
-      const demoAccounts = await d
-        .select({ userId: users.id })
-        .from(users)
-        .where(like(users.openId, `${DEMO_ACCOUNT_OPENID_PREFIX}%`));
-      const excludeUserIds = new Set<number>([
-        ...priorBookings.map((b) => b.userId),
-        ...priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null),
-        ...demoAccounts.map((u) => u.userId),
-      ]);
-      const wonNominationIds = new Set<number>(priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null));
+        // Prior winners: anyone holding a winner voyage, plus prior draw winners
+        // across all three entry kinds.
+        const priorBookings = await d.select({ userId: shipBookings.userId }).from(shipBookings).where(eq(shipBookings.isWinnerVoyage, true));
+        const priorDraws = await d.select({ winnerUserId: shipGiveawayDrawings.winnerUserId, winnerNominationId: shipGiveawayDrawings.winnerNominationId, winnerEntryId: shipGiveawayDrawings.winnerEntryId }).from(shipGiveawayDrawings);
+        // Demo accounts seeded for launch social proof (@shared/shipDemo) stay on the
+        // draw board but can never win: excluding them here means the draw simply
+        // lands on a real crew, and the audit records them as excluded. No redraw.
+        const demoAccounts = await d
+          .select({ userId: users.id })
+          .from(users)
+          .where(like(users.openId, `${DEMO_ACCOUNT_OPENID_PREFIX}%`));
+        const excludeUserIds = new Set<number>([
+          ...priorBookings.map((b) => b.userId),
+          ...priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null),
+          ...demoAccounts.map((u) => u.userId),
+        ]);
+        const wonNominationIds = new Set<number>(priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null));
+        const wonEntryIds = new Set<number>(priorDraws.map((p) => p.winnerEntryId).filter((n): n is number => n != null));
 
-      // Threshold entrants: tickets equal to points.
-      const entries: DrawEntry[] = standings
-        .filter((s) => s.isEntered)
-        .map((s) => ({ userId: s.userId, tickets: s.tickets, kind: "threshold" as const, label: `user:${s.userId}` }));
+        // Exclude prior winners by email as well, so a past winner who enters the
+        // public draw with no linked account is still caught.
+        const priorWinnerEmails = new Set<string>();
+        const priorUserIds = priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null);
+        if (priorUserIds.length) {
+          const rows = await d.select({ email: users.email }).from(users).where(inArray(users.id, priorUserIds));
+          for (const r of rows) if (r.email) priorWinnerEmails.add(r.email.toLowerCase());
+        }
+        const priorNomIds = priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null);
+        if (priorNomIds.length) {
+          const rows = await d.select({ c: shipNominations.nomineeContact }).from(shipNominations).where(inArray(shipNominations.id, priorNomIds));
+          for (const r of rows) if (r.c && r.c.includes("@")) priorWinnerEmails.add(r.c.toLowerCase());
+        }
+        if (wonEntryIds.size) {
+          const rows = await d.select({ email: shipGiveawayEntries.email }).from(shipGiveawayEntries).where(inArray(shipGiveawayEntries.id, Array.from(wonEntryIds)));
+          for (const r of rows) if (r.email) priorWinnerEmails.add(r.email.toLowerCase());
+        }
 
-      // Approved nominees: a flat ticket count. Skip nominations that already won.
-      const approvedNoms = await d.select().from(shipNominations).where(eq(shipNominations.status, "approved_for_draw"));
-      for (const nom of approvedNoms) {
-        if (wonNominationIds.has(nom.id)) continue;
-        entries.push({ userId: nom.nomineeUserId ?? null, nominationId: nom.id, tickets: NOMINATION_TICKETS, kind: "nomination", label: `nomination:${nom.id} (${nom.nomineeName})` });
-      }
+        // Threshold entrants: tickets equal to points, clamped to the draw cap.
+        const entries: DrawEntry[] = standings
+          .filter((s) => s.isEntered)
+          .map((s) => ({ userId: s.userId, tickets: cappedThresholdTickets(s.tickets, cap), kind: "threshold" as const, label: `user:${s.userId}` }));
 
-      const seed = Math.floor(Math.random() * 2_147_483_647);
-      const result = weightedDraw(entries, seed, excludeUserIds);
-      if (!result) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No one is in the draw yet." });
-      const { winner, audit } = result;
+        // Approved nominees: a flat count, clamped to the same cap. Skip prior winners.
+        const approvedNoms = await d.select().from(shipNominations).where(eq(shipNominations.status, "approved_for_draw"));
+        for (const nom of approvedNoms) {
+          if (wonNominationIds.has(nom.id)) continue;
+          entries.push({ userId: nom.nomineeUserId ?? null, nominationId: nom.id, tickets: cappedThresholdTickets(NOMINATION_TICKETS, cap), kind: "nomination", label: `nomination:${nom.id} (${nom.nomineeName})` });
+        }
 
-      // Resolve the winner for notification + display.
-      let name: string | null = null;
-      let handle: string | null = null;
-      let winnerEmail: string | null = null;
-      if (winner.userId) {
-        const [u] = await d.select().from(users).where(eq(users.id, winner.userId)).limit(1);
-        name = u?.name ?? null;
-        handle = u?.handle ?? null;
-        winnerEmail = u?.email ?? null;
-      } else if (winner.nominationId) {
-        const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, winner.nominationId)).limit(1);
-        name = nom?.nomineeName ?? null;
-        winnerEmail = nom?.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
-      }
+        // Public entries: verified email entrants, weight 1 + capped bonuses (the
+        // official rules define this; the draw cap never lowers it). Skip prior
+        // public winners.
+        const publicEntries = await d.select().from(shipGiveawayEntries).where(isNotNull(shipGiveawayEntries.verifiedAt));
+        for (const pe of publicEntries) {
+          if (wonEntryIds.has(pe.id)) continue;
+          entries.push({ userId: pe.userId ?? null, entryId: pe.id, email: pe.email, tickets: publicEntryTickets(pe.bonusTickets), kind: "public", label: `entry:${pe.id}` });
+        }
 
-      const eligibleCount = audit.entries.filter((e) => !e.excluded).length;
-      await d.insert(shipGiveawayDrawings).values({
-        drawnByUserId: ctx.user.id,
-        seed,
-        totalTickets: audit.totalTickets,
-        roll: audit.roll.toFixed(4),
-        eligibleCount,
-        winnerUserId: winner.userId ?? null,
-        winnerNominationId: winner.nominationId ?? null,
-        winnerLabel: winner.label ?? null,
-        audit: audit as unknown as object,
-      });
+        const seed = Math.floor(Math.random() * 2_147_483_647);
+        const result = weightedDraw(entries, seed, excludeUserIds, priorWinnerEmails);
+        if (!result) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No one is in the draw yet." });
+        const { winner, audit } = result;
 
-      if (winnerEmail) await emailQuestWinner(winnerEmail);
-      return { userId: winner.userId ?? null, nominationId: winner.nominationId ?? null, name, handle, poolSize: eligibleCount, totalTickets: audit.totalTickets };
-    }),
+        // Resolve the winner for notification + display. A linked public entry
+        // resolves through its account first (better contact); an email-only public
+        // entry resolves through the entry row.
+        let name: string | null = null;
+        let handle: string | null = null;
+        let winnerEmail: string | null = null;
+        if (winner.userId) {
+          const [u] = await d.select().from(users).where(eq(users.id, winner.userId)).limit(1);
+          name = u?.name ?? null;
+          handle = u?.handle ?? null;
+          winnerEmail = u?.email ?? null;
+        } else if (winner.nominationId) {
+          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, winner.nominationId)).limit(1);
+          name = nom?.nomineeName ?? null;
+          winnerEmail = nom?.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
+        } else if (winner.entryId) {
+          const [pe] = await d.select().from(shipGiveawayEntries).where(eq(shipGiveawayEntries.id, winner.entryId)).limit(1);
+          winnerEmail = pe?.email ?? null;
+        }
+
+        const eligibleCount = audit.entries.filter((e) => !e.excluded).length;
+        await d.insert(shipGiveawayDrawings).values({
+          drawnByUserId: ctx.user.id,
+          seed,
+          totalTickets: audit.totalTickets,
+          roll: audit.roll.toFixed(4),
+          eligibleCount,
+          winnerUserId: winner.userId ?? null,
+          winnerNominationId: winner.nominationId ?? null,
+          winnerEntryId: winner.entryId ?? null,
+          thresholdCap: cap,
+          winnerLabel: winner.label ?? null,
+          audit: audit as unknown as object,
+        });
+
+        if (winnerEmail) await emailQuestWinner(winnerEmail);
+        return { userId: winner.userId ?? null, nominationId: winner.nominationId ?? null, entryId: winner.entryId ?? null, name, handle, poolSize: eligibleCount, totalTickets: audit.totalTickets, thresholdCap: cap };
+      }),
 
     // Referral auto-verification: called when a referred application is shortlisted.
     verifyReferralForApplication: adminProcedure.input(z.object({ applicationId: z.number().int() })).mutation(async ({ input }) => {

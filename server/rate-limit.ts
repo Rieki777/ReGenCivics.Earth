@@ -38,6 +38,14 @@ const ACTION_LIMITS: Record<string, number> = {
   ship_galley_cook: 30,   // LLM-backed, so a touch tighter
   ship_galley_haul: 15,
   ship_galley_publish: 15,
+
+  // Free Voyage Giveaway public entry layer. Entry is idempotent (one email = one
+  // entry), so a slightly higher cap tolerates shared networks without letting a
+  // script farm the list. verify/tag/bonus act on an existing entry via its token.
+  ship_giveaway_enter: 12,
+  ship_giveaway_verify: 20,
+  ship_giveaway_tag: 20,
+  ship_giveaway_bonus: 20,
 };
 
 function maxForAction(action: string): number {

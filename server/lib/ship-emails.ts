@@ -171,6 +171,36 @@ export async function emailNominationReceived(to: string, nomineeName: string): 
   await send(to, "Your ReGen Ship nomination", html);
 }
 
+// ── Free Voyage Giveaway (public entry layer) ─────────────────────────────────
+// Word discipline: these say "entries" and "the draw", never "raffle" or
+// "tickets". Free sweepstakes, not a paid raffle (campaign brief section 3).
+
+// Sent on enter(): confirm the email before the entry counts. Also re-sent once by
+// the nightly sweep at day 3 if still unconfirmed.
+export async function emailVerifyGiveawayEntry(to: string, opts: { verifyUrl: string }): Promise<void> {
+  const html =
+    h("Confirm your entry") +
+    p("You entered the draw for a free week aboard the ReGen Ship. Confirm your email and you are in.") +
+    btn(opts.verifyUrl, "Confirm my entry") +
+    p("The ReGen Ship is a solar vessel that makes far more power than she needs, so we point the surplus at real work on the land: water pumps, power tools, light and sound for gatherings off the grid. To launch her first sailing year, one crew sails a week free.") +
+    p("Entries close September 6, 2026. No purchase or donation is ever needed to enter or win. If you did not enter, you can ignore this message.");
+  await send(to, "Confirm your ReGen Ship entry", html);
+}
+
+// Sent on verify(): the entry is live. Carries the referral link, one story
+// paragraph, and the countdown line.
+export async function emailGiveawayWelcome(to: string, opts: { referralUrl: string }): Promise<void> {
+  const html =
+    h("You are in the draw") +
+    p("Your entry is confirmed. One crew sails a free week aboard the ReGen Ship this year, and your name is in for it.") +
+    p("She is a solar vessel that makes far more power than she needs, so we point the surplus at real work on the land: water pumps, power tools, light and sound for gatherings off the grid.") +
+    p("Want better odds? Share your link. Every friend who enters through it and confirms their email adds five entries, up to forty. Bring five crewmates and we mail you the ship's colors.") +
+    p(`Your link: <a href="${opts.referralUrl}">${opts.referralUrl}</a>`) +
+    btn(opts.referralUrl, "Open your entry page") +
+    p("Entries close September 6, 2026. The draw is on or about September 8. One crew sails free, and every entry helps chart where she sails next.");
+  await send(to, "You are in the ReGen Ship draw", html);
+}
+
 // ── The Ship's Manifest sequence (time-triggered; dispatched by a job) ────────
 
 export type ManifestStage = "welcome" | "t14" | "t7" | "t2" | "day3" | "homecoming";

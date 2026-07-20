@@ -4666,12 +4666,55 @@ export const shipGiveawayDrawings = mysqlTable("ship_giveaway_drawings", {
   winnerUserId: int("winnerUserId"),
   winnerNominationId: int("winnerNominationId"),
   winnerLabel: varchar("winnerLabel", { length: 200 }),
+  // Set when a public entry (ship_giveaway_entries) wins: lets a prior public
+  // winner be excluded from later draws and be notified at their entry email.
+  winnerEntryId: int("winnerEntryId"),
+  // The threshold-ticket cap chosen at draw time (null = uncapped). Recorded so
+  // the counsel decision and the exact weights used are on the audit row.
+  thresholdCap: int("thresholdCap"),
   audit: json("audit"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("ship_giveaway_created_idx").on(table.createdAt),
 ]));
 export type ShipGiveawayDrawing = typeof shipGiveawayDrawings.$inferSelect;
+
+// The public entry layer for the Free Voyage Giveaway. A zero-effort base entry
+// (email only) for the public sweepstakes; verified entries feed the SAME draw as
+// quest threshold entrants and approved nominations. bonusTickets holds the
+// credited bonus entries; referrals is capped at 40 (the referral credit ceiling)
+// and the draw weight of an entry is 1 + referrals + nomination + quest + ig + yt
+// (publicEntryTickets in server/lib/ship-logic.ts). funnelTag routes the entrant
+// to the right post-campaign list. No "raffle"/"tickets" wording ever reaches a
+// public surface; those are internal names only.
+export const shipGiveawayEntries = mysqlTable("ship_giveaway_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  userId: int("userId"),
+  verifiedAt: timestamp("verifiedAt"),
+  verifyToken: varchar("verifyToken", { length: 64 }).notNull(),
+  verifyEmailSentAt: timestamp("verifyEmailSentAt"),
+  verifyResentAt: timestamp("verifyResentAt"),
+  welcomeEmailSentAt: timestamp("welcomeEmailSentAt"),
+  funnelTag: mysqlEnum("funnelTag", ["land", "voyage", "support", "curious"]),
+  referralCode: varchar("referralCode", { length: 16 }).notNull(),
+  referredBy: varchar("referredBy", { length: 16 }),
+  bonusTickets: json("bonusTickets").$type<{ referrals: number; nomination: number; quest: number; ig: number; yt: number }>(),
+  nominationText: text("nominationText"),
+  nominationId: int("nominationId"),
+  src: varchar("src", { length: 80 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("ship_giveaway_entry_email_uq").on(table.email),
+  unique("ship_giveaway_entry_code_uq").on(table.referralCode),
+  unique("ship_giveaway_entry_token_uq").on(table.verifyToken),
+  index("ship_giveaway_entry_referredby_idx").on(table.referredBy),
+  index("ship_giveaway_entry_verified_idx").on(table.verifiedAt),
+  index("ship_giveaway_entry_user_idx").on(table.userId),
+]));
+export type ShipGiveawayEntry = typeof shipGiveawayEntries.$inferSelect;
+export type InsertShipGiveawayEntry = typeof shipGiveawayEntries.$inferInsert;
 
 // Ship Keeper role applications ($200 per turnover).
 export const shipKeeperApplications = mysqlTable("ship_keeper_applications", {

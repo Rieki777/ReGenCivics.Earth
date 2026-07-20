@@ -8,10 +8,14 @@ import { adminProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { sql } from "drizzle-orm";
+import { sql, and, eq, isNull, isNotNull, lte, gt } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { extractPartnerFunding, type PartnerFunding, type PartnerKey } from "../lib/partner-funding-parse";
+import { shipGiveawayEntries } from "../../drizzle/schema";
+import { ENV } from "../_core/env";
+import { emailVerifyGiveawayEntry } from "../lib/ship-emails";
+import { GIVEAWAY_BONUS, REFERRAL_CREDIT_CAP, normalizeBonus } from "@shared/shipGiveaway";
 
 // ─── Step 1: Advance Lunar Cycles ──────────────────────────────────────────
 
@@ -741,6 +745,76 @@ export async function hydrateCampaignPartnerLinks(
   return { checked, updated, stale, failed };
 }
 
+// ─── Free Voyage Giveaway: unverified sweep + referral-credit recompute ──────
+// Deterministic, zero LLM (STEERING section 11), idempotent. Resends the
+// verification email once between day 3 and day 7, expires still-unconfirmed
+// entries at day 7 (they never held draw weight), and recomputes referral credits
+// from confirmed referrals as a safety net over the live crediting in
+// shipGiveaway.verify. Runs daily from the in-process scheduler and on demand via
+// batchJobsRouter.runGiveawaySweep. No "raffle"/"tickets" wording reaches a user.
+export async function expireGiveawayEntries(
+  db: any,
+): Promise<{ expired: number; resent: number; recomputed: number }> {
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const cutoff3 = new Date(now - 3 * DAY);
+  const cutoff7 = new Date(now - 7 * DAY);
+
+  // 1. Resend verification once, between day 3 and day 7, while still unconfirmed.
+  const toResend = await db
+    .select()
+    .from(shipGiveawayEntries)
+    .where(
+      and(
+        isNull(shipGiveawayEntries.verifiedAt),
+        isNull(shipGiveawayEntries.verifyResentAt),
+        lte(shipGiveawayEntries.createdAt, cutoff3),
+        gt(shipGiveawayEntries.createdAt, cutoff7),
+      ),
+    );
+  let resent = 0;
+  for (const e of toResend) {
+    await emailVerifyGiveawayEntry(e.email, { verifyUrl: `${ENV.appUrl}/ship/giveaway?verify=${e.verifyToken}` });
+    await db.update(shipGiveawayEntries).set({ verifyResentAt: new Date() }).where(eq(shipGiveawayEntries.id, e.id));
+    resent++;
+  }
+
+  // 2. Expire (delete) unverified entries older than 7 days. Unverified entries
+  //    have no draw weight, so removing them is clean and frees the email + code.
+  const stale = await db
+    .select({ id: shipGiveawayEntries.id })
+    .from(shipGiveawayEntries)
+    .where(and(isNull(shipGiveawayEntries.verifiedAt), lte(shipGiveawayEntries.createdAt, cutoff7)));
+  let expired = 0;
+  if (stale.length) {
+    await db.delete(shipGiveawayEntries).where(and(isNull(shipGiveawayEntries.verifiedAt), lte(shipGiveawayEntries.createdAt, cutoff7)));
+    expired = stale.length;
+  }
+
+  // 3. Recompute referral credit from confirmed referrals:
+  //    credit = min(confirmed * perReferral, cap). Only writes when it changed.
+  const counts = await db
+    .select({ code: shipGiveawayEntries.referredBy, c: sql<number>`COUNT(*)` })
+    .from(shipGiveawayEntries)
+    .where(and(isNotNull(shipGiveawayEntries.verifiedAt), isNotNull(shipGiveawayEntries.referredBy)))
+    .groupBy(shipGiveawayEntries.referredBy);
+  let recomputed = 0;
+  for (const row of counts) {
+    if (!row.code) continue;
+    const target = Math.min(Number(row.c) * GIVEAWAY_BONUS.perReferral, REFERRAL_CREDIT_CAP);
+    const [referrer] = await db.select().from(shipGiveawayEntries).where(eq(shipGiveawayEntries.referralCode, row.code)).limit(1);
+    if (!referrer) continue;
+    const bonus = normalizeBonus(referrer.bonusTickets);
+    if (bonus.referrals !== target) {
+      bonus.referrals = target;
+      await db.update(shipGiveawayEntries).set({ bonusTickets: bonus }).where(eq(shipGiveawayEntries.id, referrer.id));
+      recomputed++;
+    }
+  }
+
+  return { expired, resent, recomputed };
+}
+
 // ─── Main Router ───────────────────────────────────────────────────────────
 
 export const batchJobsRouter = router({
@@ -860,6 +934,14 @@ export const batchJobsRouter = router({
     }
 
     return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, partnerLinksChecked, partnerLinksUpdated };
+  }),
+
+  // Manual trigger for the Free Voyage Giveaway sweep (admin-only). The same work
+  // runs daily from the in-process scheduler; this is for an ad-hoc run.
+  runGiveawaySweep: adminProcedure.mutation(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+    return expireGiveawayEntries(db);
   }),
 
   // Manual trigger for the stale-claim cleanup (admin-only). Useful for

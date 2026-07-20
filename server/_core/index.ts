@@ -1384,6 +1384,22 @@ setTimeout(async () => {
   }, 24 * 60 * 60 * 1000);
 }, 9 * 60 * 1000); // first run after 9 minutes
 
+// ─── Daily Free Voyage Giveaway sweep ────────────────────────────────────────
+// Expires unverified public entries after 7 days (one resend at day 3) and
+// recomputes referral credits from confirmed referrals. Deterministic, zero LLM,
+// idempotent; also triggerable via batchJobsRouter.runGiveawaySweep.
+setTimeout(async () => {
+  const runGiveawaySweep = async () => {
+    const { expireGiveawayEntries } = await import("../routes/batchJobs");
+    const database = await db.getDb();
+    if (database) await expireGiveawayEntries(database);
+  };
+  try { await runGiveawaySweep(); } catch (e) { log.error("GiveawaySweep error", e); }
+  setInterval(async () => {
+    try { await runGiveawaySweep(); } catch (e) { log.error("GiveawaySweep error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 13 * 60 * 1000); // first run after 13 minutes
+
 // ─── Multiplayer crew assembly (every 30 minutes) ────────────────────────────
 // Forms quest crews when (quest, bioregion) signups reach crewSizeMin, creates
 // crew chat threads, sends formation emails (idempotent per member per crew),

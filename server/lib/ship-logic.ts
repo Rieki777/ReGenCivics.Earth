@@ -354,15 +354,22 @@ export function countEntered(standings: QuestStanding[]): number {
 
 // ── Weighted draw (auditable) ────────────────────────────────────────────────
 export type DrawEntry = {
-  /** The account, when the entrant has one. Null for a not-yet-activated nominee. */
+  /** The account, when the entrant has one. Null for a not-yet-activated nominee
+   *  or a public entry that entered without signing in. */
   userId: number | null;
   /** Set for nomination entries. */
   nominationId?: number | null;
-  /** Raffle tickets (points for threshold entrants, a flat count for nominees). */
+  /** Set for public entries: the ship_giveaway_entries row id. */
+  entryId?: number | null;
+  /** Set for public entries: the entry email, so a prior winner is excluded by
+   *  email even when the entry has no linked account. */
+  email?: string | null;
+  /** Draw weight (points for threshold entrants, a flat count for nominees,
+   *  1 + capped bonuses for public entries). Internal name; never shown publicly. */
   tickets: number;
   /** Human label for the audit log. */
   label?: string;
-  kind: "threshold" | "nomination";
+  kind: "threshold" | "nomination" | "public";
 };
 
 export type DrawAudit = {
@@ -387,20 +394,30 @@ function mulberry32(seed: number): () => number {
 
 /**
  * Weighted-random draw. Each entry's odds are proportional to its tickets.
- * Entries whose account is in `excludeUserIds` (prior winners) or that hold no
- * tickets are ineligible. Deterministic in `seed`, and returns a full audit
- * (eligible set, per-entry cumulative weight, seed, roll) so a drawing can be
- * logged and re-checked. Returns null when no one is eligible.
+ * Entries whose account is in `excludeUserIds`, whose email is in
+ * `excludeEmails` (both cover prior winners, the email set catching a public
+ * entrant who won before without a linked account), or that hold no tickets are
+ * ineligible. Deterministic in `seed`, and returns a full audit (eligible set,
+ * per-entry cumulative weight, seed, roll) so a drawing can be logged and
+ * re-checked. Returns null when no one is eligible.
  */
 export function weightedDraw(
   entries: DrawEntry[],
   seed: number,
   excludeUserIds: Iterable<number> = [],
+  excludeEmails: Iterable<string> = [],
 ): { winner: DrawEntry; audit: DrawAudit } | null {
   const excluded = new Set<number>(excludeUserIds);
+  const excludedEmails = new Set<string>();
+  for (const em of excludeEmails) {
+    if (em) excludedEmails.add(em.trim().toLowerCase());
+  }
   let cumulative = 0;
   const annotated = entries.map((e) => {
-    const isExcluded = (e.userId != null && excluded.has(e.userId)) || e.tickets <= 0;
+    const isExcluded =
+      (e.userId != null && excluded.has(e.userId)) ||
+      (e.email != null && excludedEmails.has(e.email.trim().toLowerCase())) ||
+      e.tickets <= 0;
     if (!isExcluded) cumulative += e.tickets;
     return { ...e, cumulative, excluded: isExcluded };
   });
@@ -440,6 +457,19 @@ export function percentBooked(bookedVoyages: number, target: number): number {
  * @shared/shipFreeVoyage so the client ladder preview uses the same math.
  */
 export { freeVoyagesUnlocked } from "@shared/shipFreeVoyage";
+
+// ── Public giveaway entries (email base + capped bonuses) ─────────────────────
+// The public sweepstakes weight math lives in @shared/shipGiveaway so the draw,
+// the router credit math, and the client preview never drift. Re-exported here so
+// the ship router pulls all of its draw helpers from one module.
+export {
+  publicEntryTickets,
+  cappedThresholdTickets,
+  REFERRAL_CREDIT_CAP,
+  GIVEAWAY_BONUS,
+  emptyBonus,
+  type PublicEntryBonus,
+} from "@shared/shipGiveaway";
 
 // ── Crew sponsorship (accumulation toward the voyage goal) ────────────────────
 export type SponsorshipProgress = {

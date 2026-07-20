@@ -223,6 +223,8 @@ const Galley = lazy(() => import("./pages/ship/Galley"));
 const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
 const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
 const ShipQuestRules = lazy(() => import("./pages/ship/ShipQuestRules"));
+const ShipGiveaway = lazy(() => import("./pages/ship/ShipGiveaway"));
+const ShipGiveawayRules = lazy(() => import("./pages/ship/ShipGiveawayRules"));
 const ShipNominate = lazy(() => import("./pages/ship/ShipNominate"));
 const ShipFleet = lazy(() => import("./pages/ship/ShipFleet"));
 const ShipKeeper = lazy(() => import("./pages/ship/ShipKeeper"));
@@ -275,6 +277,8 @@ function Router() {
       <Route path={"/ship/concierge"}><EB><ShipConcierge /></EB></Route>
       <Route path={"/ship/quest/rules"}><EB><ShipQuestRules /></EB></Route>
       <Route path={"/ship/quest"}><EB><ShipQuest /></EB></Route>
+      <Route path={"/ship/giveaway/rules"}><EB><ShipGiveawayRules /></EB></Route>
+      <Route path={"/ship/giveaway"}><EB><ShipGiveaway /></EB></Route>
       <Route path={"/ship/nominate"}><EB><ShipNominate /></EB></Route>
       <Route path={"/ship/fleet"}><EB><ShipFleet /></EB></Route>
       <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
