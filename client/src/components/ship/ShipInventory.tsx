@@ -141,29 +141,34 @@ export function ShipInventory() {
             const inside = it.isContainer ? insideCounts.get(it.id) ?? 0 : 0;
             const ring = it.isContainer ? CONTAINER_RING : m.ring;
             const glow = it.isContainer ? CONTAINER_GLOW : m.glow;
-            const cardClass = `group relative w-full aspect-square rounded-2xl border-2 ${ring} bg-[#0d1f16]/90 ${glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg ${it.comingYear2 ? "opacity-80" : ""}`;
+            const cardClass = `group relative w-full aspect-square rounded-2xl border-2 ${ring} bg-[#0d1f16] ${glow} overflow-hidden flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg ${it.comingYear2 ? "opacity-80" : ""}`;
             const inner = (
               <>
                 {it.comingYear2 && (
-                  <span className="absolute top-1 left-1 rounded-full bg-[#b5762f]/90 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">Year two</span>
+                  <span className="absolute top-1 left-1 z-10 rounded-full bg-[#b5762f]/90 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">Year two</span>
                 )}
                 {it.isContainer ? (
                   inside > 0 && (
-                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/70 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">{inside} inside</span>
+                    <span className="absolute top-1 right-1 z-10 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/70 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">{inside} inside</span>
                   )
                 ) : (
                   it.quantity > 1 && (
-                    <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{it.quantity}</span>
+                    <span className="absolute top-1 right-1 z-10 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{it.quantity}</span>
                   )
                 )}
                 {it.iconUrl ? (
-                  <img src={it.iconUrl} alt="" className="w-12 h-12 object-contain" loading="lazy" />
+                  <>
+                    <img src={it.iconUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    <span className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-1 pt-5 pb-1.5 text-[11px] leading-tight text-white line-clamp-2">{it.name}</span>
+                  </>
                 ) : (
-                  <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
+                  <>
+                    <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
+                    <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{it.name}</span>
+                  </>
                 )}
-                <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{it.name}</span>
                 {it.isContainer && (
-                  <ChevronRight className="absolute bottom-1 right-1 w-4 h-4 text-[#ffd700]/80" aria-hidden="true" />
+                  <ChevronRight className="absolute bottom-1 right-1 z-10 w-4 h-4 text-[#ffd700]/80" aria-hidden="true" />
                 )}
               </>
             );
@@ -203,9 +208,9 @@ export function ShipInventory() {
                 </DialogTitle>
               </DialogHeader>
               <div className="flex items-start gap-4">
-                <div className={`shrink-0 w-24 h-24 rounded-2xl border-2 ${meta(open.category).ring} bg-[#0d1f16]/90 ${meta(open.category).glow} flex items-center justify-center`}>
+                <div className={`shrink-0 w-24 h-24 rounded-2xl border-2 ${meta(open.category).ring} bg-[#0d1f16] ${meta(open.category).glow} flex items-center justify-center overflow-hidden`}>
                   {open.iconUrl ? (
-                    <img src={open.iconUrl} alt="" className="w-16 h-16 object-contain" />
+                    <img src={open.iconUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-4xl" aria-hidden="true">{meta(open.category).glyph}</span>
                   )}

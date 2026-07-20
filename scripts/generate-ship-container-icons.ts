@@ -39,9 +39,12 @@ const REPO_ROOT = path.resolve(process.cwd());
 const OUT_DIR = path.join(REPO_ROOT, "client", "public", "images", "ship", "items");
 const PY_SCRIPT = path.join(REPO_ROOT, "scripts", "nano-banana-pro-generate-image.py");
 
-/** Locked ship-icon style. Keep in sync with generate-ship-item-icon.ts / admin prefill. */
+/** Locked ship-icon style. Keep in sync with generate-ship-item-icon.ts / admin prefill.
+ *  The subject sits directly on the card's own deep forest-green (#0d1f16), edge
+ *  to edge, with NO rim/frame/slot, so the icon blends into the card instead of
+ *  reading as a bordered sticker. */
 function iconPrompt(itemSubject: string): string {
-  return `Game inventory icon of ${itemSubject}, solarpunk elven-futuristic regenerative style, painterly, glowing accents of living green and warm gold, centered on a deep forest-green background in a rounded-square slot with a thin gold rim, no text, 1:1`;
+  return `Game inventory icon of ${itemSubject}, solarpunk elven-futuristic regenerative style, painterly, glowing accents of living green and warm gold, subject centered and filling most of the frame, on a solid uniform deep forest-green background color hex 0d1f16 that fills the entire square edge to edge, absolutely no border, no rim, no frame, no slot outline, no vignette, no text, 1:1`;
 }
 
 // Short painterly subjects for the container hero cards (by slug).

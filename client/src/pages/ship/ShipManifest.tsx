@@ -9,7 +9,9 @@
  *                            grouped by manifest category with real video-frame
  *                            photos (glyph fallback).
  *
- * Overview cards use iconUrl (glyph fallback); leaf detail rows use frameUrl.
+ * All cards + rows use iconUrl (glyph fallback). The old per-item video-frame
+ * photos (frameUrl) are not shown for now — the screenshots weren't right, so
+ * they were pulled; the field still exists for when real photos come back.
  * Owner/admin sees inline "+ Add gear" / "Edit" controls (server adminProcedure
  * is the real gate).
  */
@@ -36,22 +38,27 @@ function CardTile({ item, inside }: { item: InventoryItem; inside: number }) {
   return (
     <Link
       href={`/ship/inventory/${item.slug}`}
-      className={`group relative w-full aspect-square rounded-2xl border-2 ${ring} bg-[#0d1f16]/90 ${glow} flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg`}
+      className={`group relative w-full aspect-square rounded-2xl border-2 ${ring} bg-[#0d1f16] ${glow} overflow-hidden flex flex-col items-center justify-center p-2 text-center transition-transform hover:-translate-y-0.5 hover:shadow-lg`}
       aria-label={item.isContainer ? `${item.name}, ${inside} items inside. Open` : `${item.name}. Open`}
     >
       {item.isContainer && inside > 0 && (
-        <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/70 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">{inside} inside</span>
+        <span className="absolute top-1 right-1 z-10 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/70 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">{inside} inside</span>
       )}
       {!item.isContainer && item.quantity > 1 && (
-        <span className="absolute top-1 right-1 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{item.quantity}</span>
+        <span className="absolute top-1 right-1 z-10 rounded-full bg-[#0d1f16]/90 border border-[#ffd700]/60 px-1.5 py-0.5 text-[10px] font-bold text-[#ffd700] leading-none">×{item.quantity}</span>
       )}
       {item.iconUrl ? (
-        <img src={item.iconUrl} alt="" className="w-12 h-12 object-contain" loading="lazy" />
+        <>
+          <img src={item.iconUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <span className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-1 pt-5 pb-1.5 text-[11px] leading-tight text-white line-clamp-2">{item.name}</span>
+        </>
       ) : (
-        <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
+        <>
+          <span className="text-3xl" aria-hidden="true">{m.glyph}</span>
+          <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{item.name}</span>
+        </>
       )}
-      <span className="mt-1 text-[11px] leading-tight text-white/85 line-clamp-2">{item.name}</span>
-      {item.isContainer && <ChevronRight className="absolute bottom-1 right-1 w-4 h-4 text-[#ffd700]/80" aria-hidden="true" />}
+      {item.isContainer && <ChevronRight className="absolute bottom-1 right-1 z-10 w-4 h-4 text-[#ffd700]/80" aria-hidden="true" />}
     </Link>
   );
 }
@@ -166,9 +173,9 @@ function InventoryOverview() {
                   return (
                     <li key={it.id}>
                       <Link href={`/ship/inventory/${it.slug}`} className="flex items-center gap-3 rounded-xl border border-border bg-card/40 p-3 hover:border-[#2f5d3a]/40">
-                        <span className="shrink-0 w-10 h-10 rounded-lg bg-[#0d1f16]/90 border border-border flex items-center justify-center overflow-hidden">
-                          {it.frameUrl || it.iconUrl
-                            ? <img src={it.frameUrl || it.iconUrl || ""} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        <span className="shrink-0 w-10 h-10 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
+                          {it.iconUrl
+                            ? <img src={it.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
                             : <span aria-hidden="true">{meta(it.category).glyph}</span>}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -284,9 +291,8 @@ function InventoryDetail({ slug }: { slug: string }) {
         {item && (
           <>
             <div className="mt-4 flex items-start gap-4">
-              <div className={`shrink-0 w-20 h-20 rounded-2xl border-2 ${item.isContainer ? CONTAINER_RING : m.ring} bg-[#0d1f16]/90 ${item.isContainer ? CONTAINER_GLOW : m.glow} flex items-center justify-center overflow-hidden`}>
-                {item.iconUrl ? <img src={item.iconUrl} alt="" className="w-14 h-14 object-contain" />
-                  : item.frameUrl ? <img src={item.frameUrl} alt="" className="w-full h-full object-cover" />
+              <div className={`shrink-0 w-20 h-20 rounded-2xl border-2 ${item.isContainer ? CONTAINER_RING : m.ring} bg-[#0d1f16] ${item.isContainer ? CONTAINER_GLOW : m.glow} flex items-center justify-center overflow-hidden`}>
+                {item.iconUrl ? <img src={item.iconUrl} alt="" className="w-full h-full object-cover" />
                   : <span className="text-4xl" aria-hidden="true">{m.glyph}</span>}
               </div>
               <div className="min-w-0">
@@ -352,8 +358,9 @@ function InventoryDetail({ slug }: { slug: string }) {
                   const cm = meta(c.category);
                   return (
                     <li key={c.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-3">
-                      <span className="shrink-0 w-14 h-14 rounded-lg bg-[#0d1f16]/90 border border-border flex items-center justify-center overflow-hidden">
-                        {c.frameUrl ? <img src={c.frameUrl} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
+                      <span className="shrink-0 w-14 h-14 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
+                        {c.iconUrl
+                          ? <img src={c.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
                           : <span className="text-2xl" aria-hidden="true">{cm.glyph}</span>}
                       </span>
                       <div className="min-w-0 flex-1">
