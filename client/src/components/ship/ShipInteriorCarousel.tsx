@@ -1,20 +1,23 @@
 /**
- * The "Aboard the ship" interior photos, as a horizontal carousel with a
- * full-screen lightbox on click. Add more shots by extending INTERIOR_PHOTOS.
+ * Ship photo carousels: a two-row horizontal carousel with a full-screen
+ * lightbox on click. Used for both "Aboard the ship" (interior) and
+ * "Where she has been" (places). Extend a set by adding to its photo array.
  *
- * Each card degrades to a warm placeholder if its file is missing, so the row
- * never breaks while photos are being swapped.
+ * The generic ShipPhotoCarousel takes any photo list so both sections behave
+ * the same: two rows tall, scroll horizontally for more, tap to open full
+ * screen. Each card degrades to a warm placeholder if its file is missing, so
+ * the rows never break while photos are being swapped.
  */
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { shipImg } from "@/pages/ship/shipShared";
 
-type InteriorPhoto = { name: string; label: string; alt: string };
+export type CarouselPhoto = { name: string; label: string; alt: string };
 
 // Ordered set. The four cabin/galley/lounge shots are the real interior photos;
 // the rest are her rooms. The old inaccurate galley table and the mislabelled
 // "by candlelight" bedroom were removed.
-const INTERIOR_PHOTOS: InteriorPhoto[] = [
+const INTERIOR_PHOTOS: CarouselPhoto[] = [
   { name: "ship-interior-cabin-wide.jpg", label: "The cabin", alt: "A wide view of the ship's cabin, wood trim and soft daylight through the windows." },
   { name: "ship-interior-cabin-forward.jpg", label: "Looking forward", alt: "The cabin looking forward toward the cockpit, seats and dash ahead." },
   { name: "ship-interior-lounge-sofa.jpg", label: "The lounge", alt: "The lounge nook with the cream sofa and cushions by the window." },
@@ -28,13 +31,13 @@ const INTERIOR_PHOTOS: InteriorPhoto[] = [
   { name: "ship-interior-altar.jpg", label: "The altar", alt: "A small altar with framed agate slices, candles, selenite, and a feather." },
 ];
 
-function CarouselCard({ photo, onOpen }: { photo: InteriorPhoto; onOpen: () => void }) {
+function CarouselCard({ photo, onOpen }: { photo: CarouselPhoto; onOpen: () => void }) {
   const [err, setErr] = useState(false);
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="group relative shrink-0 w-56 sm:w-64 snap-start overflow-hidden rounded-2xl aspect-[4/3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
+      className="group relative w-56 sm:w-64 snap-start overflow-hidden rounded-2xl aspect-[4/3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
       aria-label={`Open photo: ${photo.label}`}
     >
       {err ? (
@@ -54,8 +57,8 @@ function CarouselCard({ photo, onOpen }: { photo: InteriorPhoto; onOpen: () => v
   );
 }
 
-export function ShipInteriorCarousel() {
-  const [open, setOpen] = useState<InteriorPhoto | null>(null);
+export function ShipPhotoCarousel({ photos, title, helper }: { photos: CarouselPhoto[]; title?: string; helper?: string }) {
+  const [open, setOpen] = useState<CarouselPhoto | null>(null);
 
   // Dismiss the lightbox on Escape; lock body scroll while it is open.
   useEffect(() => {
@@ -69,13 +72,14 @@ export function ShipInteriorCarousel() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-3">Aboard the ship</h3>
-      <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 [scrollbar-width:thin]">
-        {INTERIOR_PHOTOS.map((p) => (
+      {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
+      {/* Two rows tall, filling column by column, scrolling horizontally for more. */}
+      <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 [scrollbar-width:thin]">
+        {photos.map((p) => (
           <CarouselCard key={p.name} photo={p} onOpen={() => setOpen(p)} />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-1">Swipe or scroll to see more. Tap a photo to open it full screen.</p>
+      <p className="text-xs text-muted-foreground mt-1">{helper ?? "Swipe or scroll to see more. Tap a photo to open it full screen."}</p>
 
       {open && (
         <div
@@ -101,4 +105,8 @@ export function ShipInteriorCarousel() {
       )}
     </div>
   );
+}
+
+export function ShipInteriorCarousel() {
+  return <ShipPhotoCarousel title="Aboard the ship" photos={INTERIOR_PHOTOS} />;
 }

@@ -12,7 +12,7 @@ import {
   ShipImage, PriceTag, ShipSection, ShipEyebrow, ShipNavRow,
   SHIP_TAGLINE, CHESTNUT_URL, shipImg, BookNowButton, BookNowCallout,
 } from "./shipShared";
-import { ShipInteriorCarousel } from "@/components/ship/ShipInteriorCarousel";
+import { ShipInteriorCarousel, ShipPhotoCarousel, type CarouselPhoto } from "@/components/ship/ShipInteriorCarousel";
 import { ShipInventory } from "@/components/ship/ShipInventory";
 import { StateOfShip } from "@/components/ship/StateOfShip";
 import { trpc } from "@/lib/trpc";
@@ -27,15 +27,23 @@ const PERKS = [
   { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
 ];
 
-const GALLERY = [
-  { name: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the Cascadia pines, awning out, a paddleboard leaning against her, someone playing guitar." },
-  { name: "ship-cascadia-forest.jpg", alt: "The ship nestled in old-growth Cascadia conifers." },
-  { name: "ship-double-rainbow.jpg", alt: "A double rainbow arching over the ship." },
-  { name: "ship-canyon-overlook.jpg", alt: "Feet resting over a canyon river at a Cascadia overlook." },
-  { name: "ship-campfire-dusk.jpg", alt: "A fire ring and chairs beside the ship at dusk." },
-  { name: "ship-riverbank-rest.jpg", alt: "Resting barefoot by a calm forest river in the pines." },
-  { name: "ship-tipis-prairie.jpg", alt: "The ship between two tipis under a big sky." },
-  { name: "ship-lake-powell-overlook.jpg", alt: "The ship above a wide lake vista." },
+const GALLERY: CarouselPhoto[] = [
+  { name: "ship-forest-camp-guitar.jpg", label: "Cascadia pines camp", alt: "The ship camped in the Cascadia pines, awning out, a paddleboard leaning against her, someone playing guitar." },
+  { name: "ship-cascadia-forest.jpg", label: "Old-growth Cascadia", alt: "The ship nestled in old-growth Cascadia conifers." },
+  { name: "ship-double-rainbow.jpg", label: "Double rainbow", alt: "A double rainbow arching over the ship." },
+  { name: "ship-canyon-overlook.jpg", label: "Canyon overlook", alt: "Feet resting over a canyon river at a Cascadia overlook." },
+  { name: "ship-campfire-dusk.jpg", label: "Campfire at dusk", alt: "A fire ring and chairs beside the ship at dusk." },
+  { name: "ship-riverbank-rest.jpg", label: "Riverbank rest", alt: "Resting barefoot by a calm forest river in the pines." },
+  { name: "ship-tipis-prairie.jpg", label: "Tipis on the prairie", alt: "The ship between two tipis under a big sky." },
+  { name: "ship-lake-powell-overlook.jpg", label: "Lake overlook", alt: "The ship above a wide lake vista." },
+  { name: "ship-cascadia-spring.jpg", label: "A Cascadia spring", alt: "A clear spring in the Cascadia forest, water running over mossy stones." },
+  { name: "ship-desert-sunset-boondock.jpg", label: "Desert boondock", alt: "The ship boondocked alone in the desert under a burning sunset sky." },
+  { name: "ship-fleet-caravan.jpg", label: "The fleet caravan", alt: "A caravan of the fleet traveling together down an open road." },
+  { name: "ship-winter-anchorage.jpg", label: "Winter anchorage", alt: "The ship anchored in a quiet snowy landscape in winter." },
+  { name: "ship-regatta.jpg", label: "The regatta", alt: "A gathering of the fleet together, rigs and people, at a regatta." },
+  { name: "ship-yoga-earth.jpg", label: "Yoga on the earth", alt: "Someone doing yoga on the bare earth at sunrise near the ship." },
+  { name: "ship-healing-hole.jpg", label: "The healing hole", alt: "The healing hole in the ground where crews plant their saved meal seeds to grow." },
+  { name: "ship-food-forest-abundance.jpg", label: "Food forest abundance", alt: "Baskets of fresh produce and abundance gathered from a food forest." },
 ];
 
 export default function Ship() {
@@ -174,13 +182,7 @@ export default function Ship() {
         <div className="mt-12" />
         <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">Where she has been</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {GALLERY.map((g, i) => (
-            <div key={g.name} data-reveal data-reveal-delay={i * 80} className="aspect-[4/3] overflow-hidden rounded-2xl group">
-              <ShipImage name={g.name} alt={g.alt} className="h-full transition-transform duration-500 group-hover:scale-105" />
-            </div>
-          ))}
-        </div>
+        <ShipPhotoCarousel photos={GALLERY} />
         <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Monday through Cascadia." />
       </ShipSection>
 
