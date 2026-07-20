@@ -181,7 +181,7 @@ export default function Ship() {
             </div>
           ))}
         </div>
-        <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Sunday through Cascadia." />
+        <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Monday through Cascadia." />
       </ShipSection>
 
       {/* Perks */}

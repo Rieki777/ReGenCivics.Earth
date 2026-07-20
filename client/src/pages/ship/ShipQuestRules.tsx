@@ -100,7 +100,7 @@ const RULES: Array<{ heading: string; body: React.ReactNode }> = [
     heading: "8. The prizes",
     body: (
       <p>
-        Each prize is one free voyage week on the ReGen Ship, boarding Monday and returning Sunday. Approximate retail
+        Each prize is one free voyage week on the ReGen Ship, boarding Monday and returning the following Monday. Approximate retail
         value, the anchor value, is about $4,200 per voyage. Up to six voyages are given away in the first year, starting with the first draw on August 16, 2026 and
         adding one more at 40%, 60%, 75%, 85%, and 95% of the year booked. A prize covers the voyage rental. Personal costs during the voyage,
         such as fuel, food, and travel to and from the ship, are the winner's own.

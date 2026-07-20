@@ -29,7 +29,7 @@ export const blogPosts: BlogPost[] = [
     excerpt: 'Between every voyage, someone holds the ship. The Keeper is the steward who resets her, hands the keys to each new crew, and keeps her healthy for the next family. This is the role, in full.',
     content: `Between every voyage, someone holds the ship.
 
-The crews come and go. They board on a Monday, sail their week through Cascadia, plant their seeds, and hand her back on a Sunday. In the quiet hours between one crew and the next, the ReGen Ship is held by a Keeper. The Keeper is why the next family walks into a clean, full, ready ship and feels, from the first step, that she has been cared for.
+The crews come and go. They board on a Monday, sail their week through Cascadia, plant their seeds, and hand her back the following Monday. In the quiet hours between one crew and the next, the ReGen Ship is held by a Keeper. The Keeper is why the next family walks into a clean, full, ready ship and feels, from the first step, that she has been cared for.
 
 This is the role, in full, so you know what you would be saying yes to.
 
@@ -37,7 +37,7 @@ This is the role, in full, so you know what you would be saying yes to.
 
 ## The turnover
 
-The heart of the role is the turnover. A voyage ends Sunday at eleven, and the next one boards Monday at three. That window, Sunday afternoon into Monday morning, is yours. We set it that way on purpose, so a weekday morning is always inside the turnover and the services that close on Sundays, propane fills and the like, are open before the next crew boards.
+The heart of the role is the turnover. A voyage ends Monday at eleven, and the next one boards Monday at five. That window, Monday late morning into the afternoon, is yours. We set it on a weekday on purpose, so the services that close on weekends, propane fills and the like, are open before the next crew boards.
 
 In that window you reset her completely. Dump and rinse the tanks. Fill fresh water, ideally from a spring. Deep clean the galley, the bathrooms, the bedrooms, and the living room. Launder and fold the linens and towels. Restock the pantry commons and the cleaning materials, using only the soaps and body-safe products the ship sails under. Check that the adventure gear is aboard and sound. Top up propane. Walk her outside and in. When you are done, she looks and feels the way you would want to find her if you were the one arriving.
 

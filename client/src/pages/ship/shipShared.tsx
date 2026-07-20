@@ -65,7 +65,7 @@ export function BookNowCallout({
 
 export const ANCHOR_NIGHTLY = 600;
 export const TRIAL_NIGHTLY = 300; // exactly half the anchor, so the trial reads as a clean 50% off
-// Pricing is per voyage now (Mon 3pm board to Sun 11am return). Keep these in
+// Pricing is per voyage now (Mon 5pm board to Mon 11am return). Keep these in
 // sync with server/lib/ship-config.ts (ANCHOR_VOYAGE_USD / TRIAL_TOTAL_VOYAGE_USD).
 export const ANCHOR_VOYAGE = ANCHOR_NIGHTLY * 7; // 4200, struck through
 export const TRIAL_VOYAGE = TRIAL_NIGHTLY * 7; // 2100, the trial-year voyage total (half of anchor)

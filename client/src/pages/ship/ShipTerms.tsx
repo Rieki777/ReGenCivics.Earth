@@ -43,7 +43,7 @@ import {
  * summary and the body can never disagree. `to` deep-links to the governing §.
  */
 const GLANCE: Array<{ label: string; value: string; note: string; to?: string; accent?: "green" | "red" | "gold" }> = [
-  { label: "Voyage window", value: "Mon 3pm → Sun 11am", note: "Whole weeks, chain up to 4", to: "#voyage" },
+  { label: "Voyage window", value: "Mon 5pm → Mon 11am", note: "Whole weeks, chain up to 4", to: "#voyage" },
   { label: "Travel radius", value: `${RADIUS_BASE_MILES} mi from Ashland`, note: `Up to ${permittedRadiusMiles(RADIUS_MAX_WEEKS).toLocaleString()} mi on a ${RADIUS_MAX_WEEKS}-week sail. Farther needs written permission first`, to: "#radius", accent: "green" },
   { label: "Miles included", value: `${SHIP_MILES_INCLUDED.toLocaleString()} road miles`, note: `$${SHIP_OVERAGE_PER_MILE_USD.toFixed(2)}/mile after that`, to: "#miles" },
   { label: "Drivers", value: `${SHIP_MIN_DRIVER_AGE}+, licensed`, note: "Approved on Outdoorsy. Never drive after cannabis", to: "#drivers" },
@@ -182,8 +182,8 @@ export default function ShipTerms() {
           <h2 id="voyage">4. The voyage: dates and turnovers</h2>
           <ul>
             <li>
-              Each voyage boards <strong>Monday at 3:00 pm</strong> and returns the following{" "}
-              <strong>Sunday at 11:00 am</strong>, unless your booking confirmation says otherwise.
+              Each voyage boards <strong>Monday at 5:00 pm</strong> and returns the following{" "}
+              <strong>Monday at 11:00 am</strong>, unless your booking confirmation says otherwise.
             </li>
             <li>Voyages run in whole seven-night cycles and may be chained up to <strong>four weeks</strong>.</li>
             <li>The Ship is reset by the Keeper between voyages. Propane, water, and systems are topped up on each turnover.</li>

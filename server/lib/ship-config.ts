@@ -92,9 +92,9 @@ export function isValidCrewSize(adults: number, children: number): boolean {
 
 // ── Voyage week grid + seasonal bands ────────────────────────────────────────
 // Bookable weeks derive from a fixed Monday grid, not a free date field. Each
-// voyage boards Monday 3pm and returns the following Sunday 11am; turnover runs
-// Sunday afternoon into Monday morning (a weekday window so propane fills and
-// other services are open before the next crew boards). The 7-day slot is shared
+// voyage boards Monday 5pm and returns the following Monday 11am; turnover runs
+// Monday 11am to 5pm (a weekday window so propane fills and
+// other services are open before the next crew boards). The 7-night slot is shared
 // at the Monday boundary (half-open ranges). A guest never has to deduce a valid
 // start date: the server enumerates the grid and the booking page renders only
 // real weeks. Edit the anchor and horizon here.

@@ -11,12 +11,12 @@
  * booking and the full pass after.
  *
  * Standing doctrine baked into every route: the first night stays in or just
- * outside Ashland (board Monday 3pm, orientation films, learn her systems).
+ * outside Ashland (board Monday 5pm, orientation films, learn her systems).
  * Free camps are the default recommendation; the WellSprings, a farm stay
  * arranged through the crew, or the Sanctuary are bookable, each at its own
  * cost, and none is built into the price. Tuesday morning is the Ashland
  * farmers market to fill the galley. Every week carries at least one forest
- * stop with a hike and a seed planting. Mid-voyage Sunday turnovers are the
+ * stop with a hike and a seed planting. Mid-voyage Monday turnovers are the
  * crew's choice: dump and refill on route, or swing through Ashland for the
  * Keeper. Paddling on Crater Lake itself is not permitted, so paddle days
  * point at the calm lakes nearby: Diamond Lake, Lemolo Lake, Lost Creek Lake,
@@ -53,14 +53,14 @@ export type SuggestedVoyage = {
   paceHint: string;
 };
 
-// ── Route weeks (each exactly 7 days, Monday board to Sunday) ─────────────────
+// ── Route weeks (each exactly 7 nights, Monday board to the following Monday) ──
 // Day 7 of any non-final week is replaced by the turnover day at chart time.
 
 /** The shared first night: board in Ashland, free camps recommended. */
 const DAY_ONE_ASHLAND: RouteDay = {
   title: "Board and settle in Ashland",
   notes:
-    "Board at 3pm and take the first night easy in or just outside Ashland. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Watch the orientation films, learn her systems, and begin rested.",
+    "Board at 5pm and take the first night easy in or just outside Ashland. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Watch the orientation films, learn her systems, and begin rested.",
 };
 
 /** The Three Chakras: heart on Mount Ashland, root at Mount Shasta, crown at Crater Lake. */
@@ -94,7 +94,7 @@ const WEEK_THREE_CHAKRAS: RouteDay[] = [
   {
     title: "Return",
     notes:
-      "Sail home easy and have her back by Sunday 11am. The crown water travels with you, and your saved meal seeds go into the healing hole to grow on.",
+      "Sail home easy and have her back by Monday 11am. The crown water travels with you, and your saved meal seeds go into the healing hole to grow on.",
   },
 ];
 
@@ -103,7 +103,7 @@ const WEEK_SPRINGS_FOR_TWO: RouteDay[] = [
   {
     title: "Board and settle in Ashland",
     notes:
-      "Board at 3pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
+      "Board at 5pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
   },
   {
     title: "Market morning, then the baths",
@@ -132,7 +132,7 @@ const WEEK_SPRINGS_FOR_TWO: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am, carrying the water and each other.",
+    notes: "Sail home easy, back by Monday 11am, carrying the water and each other.",
   },
 ];
 
@@ -141,7 +141,7 @@ const WEEK_HONEYMOON_ROOT: RouteDay[] = [
   {
     title: "Board and settle in Ashland",
     notes:
-      "Board at 3pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
+      "Board at 5pm and take the first night easy in or just outside Ashland, just the two of you. Free camps sit around town and we point you to them. Or book a night at the WellSprings, a farm stay through us, or the Sanctuary, each at its own cost. Orientation films, her systems, and a slow first evening.",
   },
   {
     title: "Market morning, then the heart",
@@ -169,7 +169,7 @@ const WEEK_HONEYMOON_ROOT: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am.",
+    notes: "Sail home easy, back by Monday 11am.",
   },
 ];
 
@@ -206,7 +206,7 @@ const WEEK_HONEYMOON_CROWN: RouteDay[] = [
   {
     title: "Return",
     notes:
-      "Sail home easy, back by Sunday 11am. Your saved meal seeds go into the healing hole, growing plants that hold your love. Married to the land now too.",
+      "Sail home easy, back by Monday 11am. Your saved meal seeds go into the healing hole, growing plants that hold your love. Married to the land now too.",
   },
 ];
 
@@ -239,7 +239,7 @@ const WEEK_WATERS: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am.",
+    notes: "Sail home easy, back by Monday 11am.",
   },
 ];
 
@@ -271,7 +271,7 @@ const WEEK_FORESTS: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am.",
+    notes: "Sail home easy, back by Monday 11am.",
   },
 ];
 
@@ -304,7 +304,7 @@ const WEEK_WANING: RouteDay[] = [
   },
   {
     title: "Return",
-    notes: "Sail home easy, back by Sunday 11am, a whole moon older and lighter.",
+    notes: "Sail home easy, back by Monday 11am, a whole moon older and lighter.",
   },
 ];
 
@@ -317,7 +317,7 @@ export const SUGGESTED_VOYAGES: SuggestedVoyage[] = [
     weeks: 1,
     tagline: "One voyage week, the classic sail.",
     description:
-      "Board Monday, return Sunday, sailing The Three Chakras: heart on Mount Ashland, root at Mount Shasta, crown at Crater Lake and its forests.",
+      "Board Monday, return the following Monday, sailing The Three Chakras: heart on Mount Ashland, root at Mount Shasta, crown at Crater Lake and its forests.",
     routeName: "The Three Chakras",
     routeWeeks: [WEEK_THREE_CHAKRAS],
     summaryLine: "Heart on Mount Ashland, root at Mount Shasta, crown at Crater Lake.",
@@ -343,7 +343,7 @@ export const SUGGESTED_VOYAGES: SuggestedVoyage[] = [
     weeks: 2,
     tagline: "Fourteen days for the two of you.",
     description:
-      "Two voyage weeks for two. Week one opens the heart in Ashland and roots deep in and around Shasta; week two crowns at Crater Lake and its waters: hot springs, waterfalls, paddle days, and a closing ceremony. The Sunday turnover is your choice: do it yourselves on route, or swing through Ashland and the Keeper does it.",
+      "Two voyage weeks for two. Week one opens the heart in Ashland and roots deep in and around Shasta; week two crowns at Crater Lake and its waters: hot springs, waterfalls, paddle days, and a closing ceremony. The Monday turnover is your choice: do it yourselves on route, or swing through Ashland and the Keeper does it.",
     routeName: "The Opening and the Deepening",
     routeWeeks: [WEEK_HONEYMOON_ROOT, WEEK_HONEYMOON_CROWN],
     summaryLine:
@@ -397,7 +397,7 @@ function addDays(ymd: string, days: number): string {
 const TURNOVER_DAY: RouteDay = {
   title: "Turnover, your way",
   notes:
-    "Sunday she resets for the next week, and how is your choice: dump and refill her yourselves on route, or swing through Ashland and the Keeper tops up propane and water while you rest. A fresh week opens Monday morning.",
+    "Monday she resets for the next week, and how is your choice: dump and refill her yourselves on route, or swing through Ashland and the Keeper tops up propane and water while you rest. A fresh week boards Monday evening.",
 };
 
 /**

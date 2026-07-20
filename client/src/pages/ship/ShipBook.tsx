@@ -267,7 +267,7 @@ export default function ShipBook() {
 
   return (
     <PageWrapper>
-      <SEO title="Book a Voyage" description="Request an open voyage week aboard the ReGen Ship through Cascadia. Board Monday, return Sunday." url="/ship/book" />
+      <SEO title="Book a Voyage" description="Request an open voyage week aboard the ReGen Ship through Cascadia. Board Monday, return the following Monday." url="/ship/book" />
       <ShipNavRow current="/ship/book" />
 
       <ShipSection>
@@ -305,7 +305,7 @@ export default function ShipBook() {
           </div>
           <p className="text-xs text-muted-foreground mt-2">Tap a length to filter the open weeks below to the windows that fit it.</p>
         </div>
-        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 3pm</strong> and returns the following <strong>Sunday at 11am</strong>. She turns over Sunday afternoon into Monday morning, when the Keeper resets her and tops up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover.</p>
+        <p className="text-foreground/80 max-w-2xl">Each voyage boards <strong>Monday at 5pm</strong> and returns the following <strong>Monday at 11am</strong>. The Keeper resets her on the Monday turnover, between 11am and 5pm, topping up propane and water before the next crew boards. Pricing is per voyage. Chain up to four weeks, one full lunar cycle, for a longer sail; she resets her tanks on each turnover.</p>
         <a href="#open-weeks" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#2f5d3a]/40 bg-[#2f5d3a]/5 px-3.5 py-1.5 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d] hover:bg-[#2f5d3a]/10 transition-colors">
           See open weeks below <ChevronDown className="w-4 h-4 animate-bounce" aria-hidden="true" />
         </a>
@@ -441,7 +441,7 @@ export default function ShipBook() {
                           type="button"
                           onClick={() => clickWeek(i)}
                           disabled={!wk.selectable}
-                          aria-label={`Board ${fmtDay(wk.startDate)} 3pm, return ${fmtDay(returnDay)} 11am, ${wk.bioregion}, ${meta.label}, $${wk.price.total.toLocaleString()} the voyage`}
+                          aria-label={`Board ${fmtDay(wk.startDate)} 5pm, return ${fmtDay(returnDay)} 11am, ${wk.bioregion}, ${meta.label}, $${wk.price.total.toLocaleString()} the voyage`}
                           className={[
                             "w-full text-left rounded-2xl border p-4 transition-all",
                             view === "list" ? "flex items-center justify-between gap-4" : "",
@@ -500,7 +500,7 @@ export default function ShipBook() {
                         <button
                           type="button"
                           onClick={() => selectWindow(wi)}
-                          aria-label={`Board ${fmtDay(first.startDate)} 3pm, return ${fmtDay(returnDay)} 11am, ${bookLength} weeks, $${winPrice.total.toLocaleString()} total`}
+                          aria-label={`Board ${fmtDay(first.startDate)} 5pm, return ${fmtDay(returnDay)} 11am, ${bookLength} weeks, $${winPrice.total.toLocaleString()} total`}
                           className={[
                             "w-full text-left rounded-2xl border p-4 transition-all cursor-pointer",
                             sel ? "border-[#ffd700] ring-2 ring-[#ffd700] bg-[#ffd700]/10" : "bg-card hover:border-[#2f5d3a]",
@@ -560,7 +560,7 @@ export default function ShipBook() {
                   </p>
                 )}
                 {selected.length > 1 && (
-                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks each Sunday, your way: dump and refill on route, or swing through Ashland and the Keeper does it.</p>
+                  <p className="text-xs text-muted-foreground mt-1">A multi-week voyage resets her tanks each Monday turnover, your way: dump and refill on route, or swing through Ashland and the Keeper does it.</p>
                 )}
               </div>
             )}
@@ -702,7 +702,7 @@ export default function ShipBook() {
             </div>
             <div className="rounded-2xl border bg-card p-6">
               <h3 className="font-semibold text-lg mb-2">Reading the calendar</h3>
-              <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 3pm, return Sunday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. From April 2027 on she sails at her full rate; every week before then is half price. The projected bioregion tells you roughly where she will be.</p>
+              <p className="text-sm text-foreground/80">Each card is one voyage week: board Monday 5pm, return Monday 11am. Open weeks are yours to request. Weeks marked <em>requested by others</em> are still yours to request too, we confirm the calendar by hand. <em>On passage</em> weeks are when she repositions between bioregions, so she cannot host. From April 2027 on she sails at her full rate; every week before then is half price. The projected bioregion tells you roughly where she will be.</p>
             </div>
             {weeks.some((w) => !w.selectable) && <CrewListJoin source="book_page" />}
           </div>

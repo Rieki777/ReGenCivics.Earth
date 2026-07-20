@@ -65,7 +65,7 @@ const CHUNKS: Chunk[] = [
   },
   {
     title: "Plumbing and tanks: dump and reset between voyage weeks",
-    content: "One voyage is a single tank cycle. On a multi-week sail she resets her tanks at each Sunday-to-Monday turnover: dump the black then the grey, rinse, and refill fresh. Watch tank levels through the week; the Quartermaster keeps an eye on water and tanks.",
+    content: "One voyage is a single tank cycle. On a multi-week sail she resets her tanks at each Monday turnover: dump the black then the grey, rinse, and refill fresh. Watch tank levels through the week; the Quartermaster keeps an eye on water and tanks.",
     system: "plumbing", sourceType: "manual", sourceRef: "General RV tank-management guidance", isApproved: true,
   },
   {

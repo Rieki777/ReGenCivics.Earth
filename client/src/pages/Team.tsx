@@ -635,8 +635,8 @@ export default function Team() {
                 <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>The Keeper of the Fleet</h3>
               </div>
               <p className="text-white/80 leading-relaxed mb-4">
-                Between every voyage, someone holds the ship. The Keeper resets her on the Sunday-into-Monday
-                turnover, runs the two-hour orientation and the handing of the keys for every first-time crew,
+                Between every voyage, someone holds the ship. The Keeper resets her on the Monday turnover,
+                between 11am and 5pm, runs the two-hour orientation and the handing of the keys for every first-time crew,
                 counts her treasures at boarding and return, and keeps her healthy voyage after voyage. Flat pay,
                 two hundred dollars per turnover.
               </p>

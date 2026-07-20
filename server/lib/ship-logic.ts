@@ -125,9 +125,9 @@ export type SeasonalBand = {
 };
 
 export type VoyageWeek = {
-  /** Monday the voyage boards, 3pm (YYYY-MM-DD). */
+  /** Monday the voyage boards, 5pm (YYYY-MM-DD). */
   startDate: string;
-  /** The following Sunday she returns, 11am (display date; six days after boarding). */
+  /** The following Monday she returns, 11am (display date; seven nights after boarding). */
   returnDate: string;
   /** The following Monday: exclusive end of the 7-day slot, shared with the next week. */
   endDate: string;
@@ -172,10 +172,10 @@ export type EnumerateWeeksInput = {
 };
 
 /**
- * Enumerate the bookable voyage-week grid. Each week boards Monday 3pm and
- * returns the following Sunday 11am; the 7-day slot is shared at the Monday
+ * Enumerate the bookable voyage-week grid. Each week boards Monday 5pm and
+ * returns the following Monday 11am; the 7-day slot is shared at the Monday
  * boundary (half-open ranges, so a week ending the day another starts does not
- * overlap), and the Sunday-into-Monday window is turnover. Each week resolves to
+ * overlap), and the Monday 11am to 5pm window is turnover. Each week resolves to
  * a single state, a projected bioregion, and a per-voyage price (doubled in year
  * two). This is the source of truth for the booking page: the guest never
  * deduces a valid start date.
@@ -188,7 +188,7 @@ export function enumerateVoyageWeeks(input: EnumerateWeeksInput): VoyageWeek[] {
   for (let i = 0; i < 520 && out.length < input.horizonWeeks; i++) {
     const startDate = cursor;
     const endDate = addDaysYmd(startDate, VOYAGE_NIGHTS);
-    const returnDate = addDaysYmd(startDate, VOYAGE_NIGHTS - 1); // Sunday she returns
+    const returnDate = addDaysYmd(startDate, VOYAGE_NIGHTS); // the following Monday she returns
     cursor = endDate; // next week boards the following Monday
     if (startDate <= input.today) continue; // already begun or past: cannot start it
 

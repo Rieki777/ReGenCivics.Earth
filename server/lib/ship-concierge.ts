@@ -37,13 +37,13 @@ function itineraryRules(nights: number): string[] {
     `Chart every day: day numbers run 1 through ${nights}.`,
     ...(weeks > 1
       ? [
-          `This is a ${weeks}-week voyage. Give each week its own arc with rest days, and note that the ship resets her tanks each Sunday-to-Monday turnover.`,
+          `This is a ${weeks}-week voyage. Give each week its own arc with rest days, and note that the ship resets her tanks each Monday turnover.`,
           "Keep each day's notes to one or two short sentences so the whole chart fits.",
         ]
       : []),
     "Standing doctrine for voyages boarding in the Rogue Valley: the first night stays in or just outside Ashland. Recommend the free camps around town first; the WellSprings, a farm stay arranged through the crew, or the Sanctuary are bookable at extra cost, and none is included in the price. Tuesday morning is the Ashland farmers market to stock the galley with organic produce.",
     "Build at least one forest stop into every week: a hike and a seed planting from the chest.",
-    "Mid-voyage Sunday turnovers are the crew's choice: they can dump and refill the ship themselves on route, or swing through Ashland and the Keeper does it.",
+    "Mid-voyage Monday turnovers are the crew's choice: they can dump and refill the ship themselves on route, or swing through Ashland and the Keeper does it.",
     "Saved meal seeds go into the healing hole at the voyage's end to grow plants, never into the seed chest.",
     "Paddling on Crater Lake itself is not permitted. For paddleboard days favor the calm lakes on the map: Diamond Lake, Lemolo Lake, Lost Creek Lake, or Lake Siskiyou.",
     "You may ONLY reference the numbered locations provided in the context block. Never invent a place.",

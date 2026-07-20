@@ -40,8 +40,8 @@ const UNDO = process.argv.includes("--undo");
 const SEED_OPENID_PREFIX = DEMO_BOOKING_OPENID_PREFIX;
 const SEED_NOTES_TAG = "seed:social-proof";
 
-// A one-week voyage boards Monday and returns the following Sunday; the next
-// week boards the following Monday (server/lib/ship-config VOYAGE_NIGHTS = 7,
+// A one-week voyage boards Monday and returns the following Monday; the next
+// week boards that same Monday (server/lib/ship-config VOYAGE_NIGHTS = 7,
 // SHIP_SEASON_START_YMD = 2026-07-27). endDate is start + 7 nights.
 function nextMondayGridEnd(startYmd: string): string {
   const d = new Date(`${startYmd}T00:00:00Z`);

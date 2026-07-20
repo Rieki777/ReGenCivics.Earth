@@ -53,7 +53,7 @@ const FOUR_LOVES = [
   },
 ];
 
-/** The Quest of Love. Seven rites, one per day of the Monday-to-Sunday voyage. */
+/** The Quest of Love. Seven rites, one per day of the Monday-to-Monday voyage. */
 const RITES: Array<{
   day: string;
   icon: typeof Flame;
@@ -208,7 +208,7 @@ export default function ShipTheme() {
       <ShipSection className="bg-[#2f5d3a] text-white">
         <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-3">The Quest of Love</p>
         <h2 className="text-3xl font-bold mb-3">Seven days, seven rites, one voyage</h2>
-        <p className="text-white/85 max-w-2xl mb-8">Every voyage boards on Monday and returns on Sunday. This season each of those days carries a rite. You do not have to do any of them. Crews who do them come home different, and the ones who do all seven get their week recorded in the Voyage Log as a completed Quest of Love.</p>
+        <p className="text-white/85 max-w-2xl mb-8">Every voyage boards on Monday and returns the following Monday. This season each of those days carries a rite. You do not have to do any of them. Crews who do them come home different, and the ones who do all seven get their week recorded in the Voyage Log as a completed Quest of Love.</p>
         <div className="space-y-4">
           {RITES.map((r, i) => (
             <div key={r.day} data-reveal data-reveal-delay={Math.min(i, 6) * 60} className="flex gap-4 rounded-2xl border border-white/15 bg-white/5 p-5">
@@ -271,7 +271,7 @@ export default function ShipTheme() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground mt-6">Interior photos come aboard as the refit finishes. Open flame stays in the fire ring, never in the coach.</p>
-        <BookNowCallout headline="Come sail the Sanctuary of Love" sub="Her weeks board Monday and return Sunday. Pick an open week and take the voyage." />
+        <BookNowCallout headline="Come sail the Sanctuary of Love" sub="Her weeks board Monday and return the following Monday. Pick an open week and take the voyage." />
       </ShipSection>
 
       {/* CORE */}
@@ -306,7 +306,7 @@ export default function ShipTheme() {
       {/* Closing CTA */}
       <ShipSection className="bg-[#2f5d3a] text-white text-center">
         <h2 className="text-3xl font-bold mb-4">When is your next honeymoon?</h2>
-        <p className="text-white/85 max-w-2xl mx-auto mb-7">She is docked at The Sanctuary through her first sailing year. Her weeks board Monday and return Sunday. The trial year rate is the sweetest she will ever be, and the crew who get there first get her at it.</p>
+        <p className="text-white/85 max-w-2xl mx-auto mb-7">She is docked at The Sanctuary through her first sailing year. Her weeks board Monday and return the following Monday. The trial year rate is the sweetest she will ever be, and the crew who get there first get her at it.</p>
         <div className="flex flex-wrap gap-4 justify-center">
           <BookNowButton size="lg" />
           <Button asChild size="lg" variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/quest">Win a free voyage</Link></Button>
