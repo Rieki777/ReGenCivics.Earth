@@ -151,7 +151,7 @@ describe("suggested voyages + the rough chart", () => {
     expect(chart.days[14].title).toContain("Full moon");
     expect(chart.days[21].title).toContain("Waning moon");
     expect(chart.days[27].title).toBe("Return");
-    expect(chart.days[27].notes).toContain("Sunday 11am");
+    expect(chart.days[27].notes).toContain("Monday 11am");
     expect(chart.summary).toContain("Rogue & Southern Cascadia");
     expect(chart.summary).toContain("Willamette");
   });
@@ -232,7 +232,7 @@ describe("ship-logic: voyage week grid", () => {
     const weeks = enumerate();
     expect(weeks).toHaveLength(6);
     expect(weeks[0].startDate).toBe("2026-07-25"); // boards this day, 3pm
-    expect(weeks[0].returnDate).toBe("2026-07-31"); // returns the following Sunday, 11am (start + 6)
+    expect(weeks[0].returnDate).toBe("2026-08-01"); // returns the following Monday, 11am (start + 7)
     expect(weeks[0].endDate).toBe("2026-08-01"); // exclusive end of the 7-day slot
     expect(weeks[1].startDate).toBe("2026-08-01"); // shared turnover boundary
     expect(weeks[0].isYear2).toBe(false);
