@@ -1,16 +1,15 @@
 /**
- * FeaturedVoyage — the first fully-built voyage on the treasure map page:
- * "Cascadia Epic Voyage: The Full Lunar Cycle." An interactive illustrated map
- * (tappable markers over each stop, synced to the list and a detail card, plus
- * a full-screen view), a stats card, an honest season band, a tappable stop
- * layer, general per-region RV logistics, and the booking funnel for a month.
- *
- * This is one worked example, not the gallery. The other routes and the full
- * gallery are a later pass.
+ * FeaturedVoyage — the featured voyage on the treasure map page: "Cascadia Epic
+ * Voyage: The Full Lunar Cycle," expanded south into Northern California and Mt
+ * Shasta. An interactive illustrated map whose LABELS are the tap targets (a
+ * transparent box over each printed label, a dark pill for the extra sites), a
+ * synced detail card and stop list, real driving-distance badges and a leg by
+ * leg breakdown, an honest season band, per-region RV logistics, and the booking
+ * funnel for a month. The interactive layer works in the full-screen view too.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { X, Maximize2, Moon, Route, Mountain, CalendarRange, Compass } from "lucide-react";
+import { X, Maximize2, Moon, Route, Mountain, CalendarRange, Compass, ChevronDown } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { applyMultiWeekDiscount } from "@shared/shipPricing";
 import {
@@ -18,7 +17,7 @@ import {
   ANCHOR_VOYAGE, TRIAL_VOYAGE,
 } from "./shipShared";
 import {
-  VOYAGE, SEASON, STOPS, LOGISTICS, LOGISTICS_FRAME, MAP_IMAGE, TOTAL_MILES,
+  VOYAGE, SEASON, STOPS, LEGS, LOGISTICS, LOGISTICS_FRAME, MAP_IMAGE, TOTAL_MILES,
   type Stop,
 } from "./featuredVoyageData";
 
@@ -32,43 +31,41 @@ function fmtDate(ymd: string): string {
 }
 
 const STOP_ICON: Record<Stop["kind"], string> = { home: "⚓", landmark: "📍", spring: "♨️" };
-const DOT_COLOR: Record<Stop["kind"], string> = { home: "bg-[#3ddc84]", landmark: "bg-[#ffd700]", spring: "bg-[#ff9a3d]" };
 
-/** The illustrated map with tappable markers over each stop. */
-function InteractiveMap({ active, onSelect, onExpand }: { active: number | null; onSelect: (i: number) => void; onExpand: () => void }) {
+/** The interactive map: illustration + clickable label targets. */
+function InteractiveMapView({ active, onSelect, onExpand }: { active: number | null; onSelect: (i: number) => void; onExpand?: () => void }) {
   return (
-    <div>
-      <div className="relative overflow-hidden rounded-2xl border border-[#ffd700]/30">
-        <img
-          src={shipImg(MAP_IMAGE)}
-          alt={`Illustrated bird's-eye map of the ${VOYAGE.title}, the loop from Ashland up the Oregon coast, across the Columbia Gorge and Cascades, down to Crater Lake and home`}
-          className="block w-full h-auto"
-          loading="lazy"
-        />
-        {STOPS.map((s, i) => {
-          const isActive = active === i;
-          const labelAbove = s.y > 0.82;
-          return (
-            <button
-              key={s.name}
-              type="button"
-              onClick={() => onSelect(i)}
-              aria-label={`${s.name}${s.kind === "spring" ? ", hot spring" : ""}${isActive ? ", selected" : ""}`}
-              aria-pressed={isActive}
-              style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%` }}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center w-6 h-6 group focus-visible:outline-none ${isActive ? "z-20" : "z-10"}`}
-            >
-              <span
-                className={`block rounded-full ring-2 shadow transition-transform group-hover:scale-125 group-focus-visible:ring-white ${DOT_COLOR[s.kind]} ${isActive ? "w-4 h-4 ring-white scale-125" : "w-2.5 h-2.5 ring-black/60"}`}
-              />
-              {isActive && (
-                <span className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/85 text-white text-[10px] font-medium px-1.5 py-0.5 pointer-events-none ${labelAbove ? "bottom-full mb-1" : "top-full mt-1"}`}>
-                  {STOP_ICON[s.kind]} {s.name}
-                </span>
-              )}
-            </button>
-          );
-        })}
+    <div className="relative w-full h-full overflow-hidden">
+      <img
+        src={shipImg(MAP_IMAGE)}
+        alt={`Illustrated bird's-eye map of the ${VOYAGE.title}, a grand loop from Ashland up the Oregon coast and Cascades and south to Mount Shasta and Northern California`}
+        className="block w-full h-full object-contain"
+        loading="lazy"
+      />
+      {/* Clickable label targets */}
+      {STOPS.map((s, i) => {
+        const isActive = active === i;
+        const wPct = Math.min(30, Math.max(7, s.name.length * 1.05 + 6));
+        return (
+          <button
+            key={s.name}
+            type="button"
+            onClick={() => onSelect(i)}
+            aria-label={`${s.name}${s.kind === "spring" ? ", hot spring" : ""}${isActive ? ", selected" : ""}`}
+            aria-pressed={isActive}
+            style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%`, width: `${wPct}%`, height: "3.6%" }}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 z-10 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] ${isActive ? "z-20 ring-2 ring-[#ffd700] bg-[#ffd700]/15" : "hover:ring-1 hover:ring-white/60 hover:bg-white/5"}`}
+          >
+            {/* Extra sites the art did not print get their own dark pill label. */}
+            {!s.baked && (
+              <span className={`absolute inset-0 flex items-center justify-center rounded-md border text-white leading-none whitespace-nowrap overflow-hidden ${isActive ? "bg-[#0d1f16] border-[#ffd700]" : "bg-[#0d1f16]/85 border-white/20"}`} style={{ fontSize: "clamp(7px, 1.2vw, 12px)" }}>
+                {s.kind === "spring" ? "♨️ " : ""}{s.name}
+              </span>
+            )}
+          </button>
+        );
+      })}
+      {onExpand && (
         <button
           type="button"
           onClick={onExpand}
@@ -77,13 +74,13 @@ function InteractiveMap({ active, onSelect, onExpand }: { active: number | null;
         >
           <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" /> Expand
         </button>
-      </div>
-      <p className="text-xs text-muted-foreground mt-1.5">Tap a marker to read the place. Gold is a stop, amber is a hot spring, green is home port. Expand for the full map.</p>
+      )}
     </div>
   );
 }
 
-function MapLightbox({ onClose }: { onClose: () => void }) {
+function MapLightbox({ active, onSelect, onClose }: { active: number | null; onSelect: (i: number) => void; onClose: () => void }) {
+  const sel = active != null ? STOPS[active] : null;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -92,23 +89,28 @@ function MapLightbox({ onClose }: { onClose: () => void }) {
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [onClose]);
   return (
-    <div
-      className="fixed inset-0 z-[1300] flex items-center justify-center p-3 bg-black/90 backdrop-blur-sm"
-      role="dialog" aria-modal="true" aria-label={`${VOYAGE.title}: ${VOYAGE.subtitle}, full map`}
-      onClick={onClose}
-    >
-      <button
-        type="button" aria-label="Close full-screen map" onClick={onClose}
-        className="absolute top-4 right-4 rounded-full bg-white/15 hover:bg-white/25 text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
-      >
+    <div className="fixed inset-0 z-[1300] flex flex-col items-center justify-center p-3 bg-black/90 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`${VOYAGE.title}, full map`}>
+      <button type="button" aria-label="Close full-screen map" onClick={onClose} className="absolute top-4 right-4 z-10 rounded-full bg-white/15 hover:bg-white/25 text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]">
         <X className="w-6 h-6" aria-hidden="true" />
       </button>
-      <img
-        src={shipImg(MAP_IMAGE)}
-        alt={`Illustrated map of the ${VOYAGE.title}, ${VOYAGE.subtitle}, the loop from Ashland up the coast, across the Cascades, and back`}
-        className="max-w-full max-h-[92vh] object-contain rounded-lg shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className="relative max-h-[88vh] max-w-[96vw] aspect-[3392/5056] rounded-lg overflow-hidden shadow-2xl">
+        <InteractiveMapView active={active} onSelect={onSelect} />
+      </div>
+      <div className="mt-2 max-w-[96vw] w-[520px] rounded-xl bg-[#0d1f16]/90 border border-white/15 p-3 text-white min-h-[64px]">
+        {sel ? (
+          <>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span aria-hidden="true">{STOP_ICON[sel.kind]}</span>
+              <span className="font-semibold">{sel.name}</span>
+              {sel.seasonal && <span className="text-[10px] uppercase tracking-wide rounded-full bg-[#b5762f]/30 text-[#e0b483] px-1.5 py-0.5">Summer to fall</span>}
+              <span className="ml-auto text-xs text-white/60">{sel.region}</span>
+            </div>
+            <p className="text-sm text-white/85 mt-1">{sel.blurb}</p>
+          </>
+        ) : (
+          <p className="text-sm text-white/70">Tap a label on the map to read that place.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -128,11 +130,11 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 export function FeaturedVoyage() {
   const [full, setFull] = useState(false);
   const [activeStop, setActiveStop] = useState<number | null>(null);
+  const [legsOpen, setLegsOpen] = useState(false);
 
   const availability = trpc.ship.availability.useQuery(undefined, { staleTime: 60_000 });
   const weeks = availability.data?.weeks ?? [];
 
-  // The next open month: the first run of four consecutive open weeks.
   const monthWindow = useMemo(() => {
     for (let i = 0; i + 4 <= weeks.length; i++) {
       const run = weeks.slice(i, i + 4);
@@ -146,8 +148,6 @@ export function FeaturedVoyage() {
     return null;
   }, [weeks]);
 
-  // Fall back to the standard month math while availability loads or if no open
-  // month run exists yet, so the price and savings always render.
   const priced = monthWindow ?? (() => {
     const subtotal = TRIAL_VOYAGE * 4;
     const mw = applyMultiWeekDiscount(subtotal, 4);
@@ -173,9 +173,12 @@ export function FeaturedVoyage() {
         <p className="text-foreground/80 mt-2 max-w-2xl">{VOYAGE.tagline}</p>
 
         <div className="mt-6 grid lg:grid-cols-2 gap-6 items-start">
-          {/* The interactive map + synced detail */}
+          {/* Interactive map + synced detail */}
           <div>
-            <InteractiveMap active={activeStop} onSelect={toggleStop} onExpand={() => setFull(true)} />
+            <div className="relative rounded-2xl overflow-hidden border border-[#ffd700]/30 aspect-[3392/5056]">
+              <InteractiveMapView active={activeStop} onSelect={toggleStop} onExpand={() => setFull(true)} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Tap a label to read the place. Real driving distances are in the leg by leg list below. Expand for the full map.</p>
             <div className="mt-2 rounded-xl border p-3 bg-background/60 min-h-[84px]">
               {sel ? (
                 <>
@@ -188,7 +191,7 @@ export function FeaturedVoyage() {
                   <p className="text-sm text-foreground/80 mt-1.5">{sel.blurb}</p>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Tap a marker on the map, or a stop in the list below, to read that place.</p>
+                <p className="text-sm text-muted-foreground">Tap a label on the map, or a stop in the list below, to read that place.</p>
               )}
             </div>
           </div>
@@ -197,13 +200,12 @@ export function FeaturedVoyage() {
           <div className="space-y-5">
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl border p-4 bg-background/60">
               <StatRow icon={<Moon className="w-5 h-5" />} label="Length" value={`About ${VOYAGE.nights} nights (${VOYAGE.weeks} voyage weeks, one whole moon)`} />
-              <StatRow icon={<Route className="w-5 h-5" />} label="Route" value={`About ${TOTAL_MILES} miles around the loop`} />
+              <StatRow icon={<Route className="w-5 h-5" />} label="Route" value={`${TOTAL_MILES.toLocaleString()} real road miles around the loop`} />
               <StatRow icon={<Compass className="w-5 h-5" />} label="Pace" value={VOYAGE.pace} />
               <StatRow icon={<Mountain className="w-5 h-5" />} label="Terrain" value={VOYAGE.terrain} />
               <StatRow icon={<CalendarRange className="w-5 h-5" />} label="Best months" value={VOYAGE.bestMonths} />
             </dl>
 
-            {/* Funnel: the open month + stacked savings + Book Now */}
             <div className="rounded-2xl border border-[#3ddc84]/40 bg-gradient-to-br from-[#2f5d3a]/10 to-[#d4a574]/10 p-5">
               <p className="text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">Book the whole moon</p>
               <div className="mt-1 flex items-baseline gap-3 flex-wrap">
@@ -221,10 +223,7 @@ export function FeaturedVoyage() {
               )}
               <div className="mt-4 flex flex-wrap gap-2">
                 <BookNowButton href={bookHref} />
-                <Link
-                  href={bookHref}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-[#2f5d3a]/40 px-4 py-2 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d] hover:bg-[#2f5d3a]/10"
-                >
+                <Link href={bookHref} className="inline-flex items-center gap-1.5 rounded-md border border-[#2f5d3a]/40 px-4 py-2 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d] hover:bg-[#2f5d3a]/10">
                   <Compass className="w-4 h-4" aria-hidden="true" /> Customize with your First Mate
                 </Link>
               </div>
@@ -241,24 +240,37 @@ export function FeaturedVoyage() {
           <p className="text-sm text-foreground/80 mt-2">{SEASON.note}</p>
         </div>
 
+        {/* The route, leg by leg (real distances) */}
+        <div className="mt-8">
+          <button type="button" onClick={() => setLegsOpen((v) => !v)} aria-expanded={legsOpen} className="flex items-center gap-2 text-left">
+            <ChevronDown className={`w-5 h-5 transition-transform ${legsOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            <span><span className="font-bold text-lg">The route, leg by leg</span> <span className="text-sm text-muted-foreground">real driving miles, {TOTAL_MILES.toLocaleString()} total</span></span>
+          </button>
+          {legsOpen && (
+            <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+              {LEGS.map((l, i) => (
+                <li key={i} className="flex justify-between border-b border-border/50 py-1">
+                  <span className="text-foreground/85">{l.from} <span className="text-muted-foreground">to</span> {l.to}</span>
+                  <span className="shrink-0 font-semibold text-[#2f5d3a] dark:text-[#7dd87d]">{l.mi} mi</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Stop layer, synced to the map */}
         <div className="mt-8">
           <ShipEyebrow>The stops</ShipEyebrow>
           <h3 className="text-2xl font-bold mb-1">Every anchor on the map</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            In loop order from home port. Tap a stop to read the place and light it on the map. <span className="whitespace-nowrap">♨️ marks a hot spring.</span>
+            Tap a stop to read the place and light its label on the map. <span className="whitespace-nowrap">♨️ marks a hot spring.</span>
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
             {STOPS.map((s, i) => {
               const isOpen = activeStop === i;
               return (
                 <li key={s.name}>
-                  <button
-                    type="button"
-                    onClick={() => toggleStop(i)}
-                    aria-expanded={isOpen}
-                    className={`w-full text-left rounded-xl border p-3 transition-colors ${isOpen ? "border-[#2f5d3a]/60 bg-[#2f5d3a]/5 ring-1 ring-[#2f5d3a]/30" : "border-border hover:border-[#2f5d3a]/40"}`}
-                  >
+                  <button type="button" onClick={() => toggleStop(i)} aria-expanded={isOpen} className={`w-full text-left rounded-xl border p-3 transition-colors ${isOpen ? "border-[#2f5d3a]/60 bg-[#2f5d3a]/5 ring-1 ring-[#2f5d3a]/30" : "border-border hover:border-[#2f5d3a]/40"}`}>
                     <span className="flex items-center gap-2">
                       <span className="text-lg leading-none" aria-hidden="true">{STOP_ICON[s.kind]}</span>
                       <span className="font-semibold text-foreground">{s.name}</span>
@@ -273,11 +285,11 @@ export function FeaturedVoyage() {
             })}
           </ul>
           <p className="text-xs text-muted-foreground mt-3">
-            The four hot springs on this loop: {springs.map((s) => s.name).join(", ")}. Tillamook Creamery appears on the map, but it is not a stop on this voyage.
+            Hot springs on this loop: {springs.map((s) => s.name).join(", ")}. Tillamook Creamery appears on the map, but it is not a stop on this voyage.
           </p>
         </div>
 
-        {/* RV logistics, honest general guidance per region */}
+        {/* RV logistics */}
         <div className="mt-8">
           <ShipEyebrow>Rig logistics</ShipEyebrow>
           <h3 className="text-2xl font-bold mb-1">Hookups, water, and dumps, by region</h3>
@@ -298,16 +310,13 @@ export function FeaturedVoyage() {
             <h3 className="text-lg font-bold">Make it yours</h3>
             <p className="text-sm text-foreground/80">Keep the grand loop or reshape it. The First Mate charts your exact days, stops, and soaks from the real places on the treasure map, then it becomes your voyage.</p>
           </div>
-          <Link
-            href={bookHref}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-[#2f5d3a] hover:bg-[#264a2f] text-white px-4 py-2.5 text-sm font-semibold"
-          >
+          <Link href={bookHref} className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-[#2f5d3a] hover:bg-[#264a2f] text-white px-4 py-2.5 text-sm font-semibold">
             <Compass className="w-4 h-4" aria-hidden="true" /> Customize this voyage
           </Link>
         </div>
       </div>
 
-      {full && <MapLightbox onClose={() => setFull(false)} />}
+      {full && <MapLightbox active={activeStop} onSelect={toggleStop} onClose={() => setFull(false)} />}
     </ShipSection>
   );
 }
