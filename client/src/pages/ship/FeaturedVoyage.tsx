@@ -93,7 +93,7 @@ function MapLightbox({ active, onSelect, onClose }: { active: number | null; onS
       <button type="button" aria-label="Close full-screen map" onClick={onClose} className="absolute top-4 right-4 z-10 rounded-full bg-white/15 hover:bg-white/25 text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]">
         <X className="w-6 h-6" aria-hidden="true" />
       </button>
-      <div className="relative max-h-[88vh] max-w-[96vw] aspect-[3392/5056] rounded-lg overflow-hidden shadow-2xl">
+      <div className="relative max-h-[88vh] max-w-[96vw] aspect-[3072/5504] rounded-lg overflow-hidden shadow-2xl">
         <InteractiveMapView active={active} onSelect={onSelect} />
       </div>
       <div className="mt-2 max-w-[96vw] w-[520px] rounded-xl bg-[#0d1f16]/90 border border-white/15 p-3 text-white min-h-[64px]">
@@ -175,7 +175,7 @@ export function FeaturedVoyage() {
         <div className="mt-6 grid lg:grid-cols-2 gap-6 items-start">
           {/* Interactive map + synced detail */}
           <div>
-            <div className="relative rounded-2xl overflow-hidden border border-[#ffd700]/30 aspect-[3392/5056]">
+            <div className="relative rounded-2xl overflow-hidden border border-[#ffd700]/30 aspect-[3072/5504]">
               <InteractiveMapView active={activeStop} onSelect={toggleStop} onExpand={() => setFull(true)} />
             </div>
             <p className="text-xs text-muted-foreground mt-1.5">Tap a label to read the place. Real driving distances are in the leg by leg list below. Expand for the full map.</p>
