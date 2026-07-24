@@ -22,6 +22,10 @@
  * happens in the Cowork session the generated prompt sets up.
  */
 
+import { stripBannedDashes } from "@shared/funding";
+
+export { stripBannedDashes };
+
 /** The tier used for substantive drafting elsewhere in the codebase (ADR-43/45). */
 export const POSITIONING_LLM_TASK = "complex" as const;
 
@@ -176,35 +180,6 @@ export interface FunderRowForPrompt {
   link?: string | null;
   notes?: string | null;
   priority?: string | null;
-}
-
-/**
- * Strip em-dashes and en-dashes out of generated copy.
- *
- * STEERING section 1.1 bans them in everything Rye reads or pastes, and the
- * kernel says so, but a model will still reach for one. The instruction is the
- * ask; this is the enforcement. Applied to every generated text field before
- * it is stored.
- *
- * An en-dash between numbers is a range, so it becomes "to", which is how the
- * memo and the answer bank already write ranges ("7% to 345%"). Everything else
- * becomes a comma or a hyphen, whichever keeps the sentence readable.
- */
-export function stripBannedDashes(text: string): string {
-  return text
-    // Numeric range: 7-345, $250K-$5M+, 15-25%. The unit character before the
-    // dash matters: the seed writes sizes as "$250K-$5M+", not "$250-$5".
-    .replace(/(\d[\d,.]*\s*(?:%|[KMBkmb])?)\s*[–—]\s*(\$?\d)/g, "$1 to $2")
-    // Spaced dash used as a break: "weeks - not years".
-    .replace(/\s+[–—]\s+/g, ", ")
-    // Tight em-dash between words: "months—each build".
-    .replace(/([^\s])—([^\s])/g, "$1, $2")
-    // Anything left: a tight en-dash is a compound, an em-dash is a break.
-    .replace(/–/g, "-")
-    .replace(/—/g, ", ")
-    // The replacements above can leave ", ," or " ,".
-    .replace(/,\s*,+/g, ",")
-    .replace(/\s+,/g, ",");
 }
 
 /** Slug used in the delivered filename, e.g. APPLICATION_Z_FELLOWS_2026-07-24.md */
