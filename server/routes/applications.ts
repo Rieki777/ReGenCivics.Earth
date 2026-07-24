@@ -171,6 +171,26 @@ export const applicationsRouter = router({
       }
       await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date(), stewardUserId: ctx.user.id });
 
+      // Backfill map coordinates when the applicant submitted without dropping a
+      // pin on /apply. The pin is optional, so a text-only location would leave
+      // the project invisible on the globe (mapData requires lat+lng). Best-effort:
+      // a geocoding hiccup must never block the submission.
+      if ((application.latitude == null || application.longitude == null) && application.location) {
+        try {
+          const { geocodeLocation } = await import("../lib/geocode");
+          const geo = await geocodeLocation(application.location);
+          if (geo) {
+            await db.updateApplication(input.id, {
+              latitude: geo.lat,
+              longitude: geo.lng,
+              country: application.country || geo.country || undefined,
+            });
+          }
+        } catch (e) {
+          console.warn("[Geocode] Application submit backfill failed:", e);
+        }
+      }
+
       // Mirror the optional needs/offers capture to the board tables (Phase B2).
       // Non-fatal by design: a board hiccup never blocks a submission.
       const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
