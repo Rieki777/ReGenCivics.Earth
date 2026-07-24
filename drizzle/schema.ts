@@ -1,4 +1,4 @@
-import { bigint, char, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, char, date, decimal, index, int, json, mediumtext, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -5507,3 +5507,92 @@ export type QuestCompletionAttestation = typeof questCompletionAttestations.$inf
 // scripts/seed-ship-inventory-manifest.ts and surfaced via ship.inventory.*.
 // The old DB table still exists in Railway; Rye may DROP it separately (no
 // destructive migration is emitted here).
+
+// ── Funding pipeline portal + application engine ────────────────────────────
+/**
+ * The funder pipeline: 117 sources researched and verified against their own
+ * sites on 2026-07-24 (data/funding-pipeline-seed.json). Two column groups
+ * with different owners. The research columns (category through notes) are the
+ * compiled record and get re-upserted by scripts/seed-funding-pipeline.ts on
+ * `name`. The tracking columns (appStatus, owner, nextAction, nextActionDate,
+ * lastTouch, sortOrder) belong to Rye in /admin/funding, so the seed sets them
+ * on first insert only and never overwrites a later edit. `priority` ships with
+ * the research and stays editable.
+ *
+ * appStatus is the funnel. `cultivating` covers the invitation-only funders
+ * (Kalliopeia, Fetzer, Hidden Leaf) that need a months-long relationship before
+ * an application exists; `parked` is the off-ramp for a real row that is not
+ * now (closed round, wrong entity, geography we have not landed in).
+ */
+export const fundingPipeline = mysqlTable("funding_pipeline", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 120 }).notNull(),
+  capitalType: varchar("capitalType", { length: 255 }),
+  whatItFunds: text("whatItFunds"),
+  typicalSize: varchar("typicalSize", { length: 160 }),
+  geography: varchar("geography", { length: 160 }),
+  eligibility: text("eligibility"),
+  accessStatus: varchar("accessStatus", { length: 255 }),
+  deadline: varchar("deadline", { length: 160 }),
+  fit: varchar("fit", { length: 120 }),
+  /** Which ReGen vehicle applies here. Never the Fund where funds are excluded. */
+  regenEntity: varchar("regenEntity", { length: 255 }),
+  link: varchar("link", { length: 500 }),
+  notes: text("notes"),
+  priority: mysqlEnum("priority", ["P1", "P2", "P3", "ADV", "ALLY"]).notNull().default("P2"),
+  appStatus: mysqlEnum("appStatus", [
+    "not_started",
+    "researching",
+    "preparing",
+    "cultivating",
+    "submitted",
+    "in_review",
+    "awarded",
+    "declined",
+    "parked",
+  ]).notNull().default("not_started"),
+  owner: varchar("owner", { length: 120 }),
+  nextAction: varchar("nextAction", { length: 500 }),
+  nextActionDate: date("nextActionDate"),
+  lastTouch: timestamp("lastTouch"),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("funding_pipeline_name_uq").on(table.name),
+  index("funding_pipeline_priority_idx").on(table.priority),
+  index("funding_pipeline_status_idx").on(table.appStatus),
+  index("funding_pipeline_category_idx").on(table.category),
+  index("funding_pipeline_next_action_date_idx").on(table.nextActionDate),
+]));
+export type FundingPipelineRow = typeof fundingPipeline.$inferSelect;
+export type InsertFundingPipelineRow = typeof fundingPipeline.$inferInsert;
+
+/**
+ * One row per positioning run from the application engine
+ * (adminFunding.generateApplication). Regenerating adds a row instead of
+ * replacing one: the history is how Rye compares a re-run against what the
+ * kernel said last time.
+ *
+ * When the model returns output that fails schema validation twice, the raw
+ * text lands in positioningSummary and flags carries "generation_unvalidated",
+ * so a bad generation is visible rather than lost.
+ */
+export const fundingApplications = mysqlTable("funding_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  pipelineId: int("pipelineId").notNull(),
+  positioningSummary: text("positioningSummary"),
+  keyPoints: json("keyPoints").$type<string[]>(),
+  entityToUse: varchar("entityToUse", { length: 255 }),
+  flags: json("flags").$type<string[]>(),
+  coworkPrompt: mediumtext("coworkPrompt"),
+  modelUsed: varchar("modelUsed", { length: 120 }),
+  /** Admin user who ran the generation. */
+  generatedBy: int("generatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("funding_applications_pipeline_idx").on(table.pipelineId),
+]));
+export type FundingApplication = typeof fundingApplications.$inferSelect;
+export type InsertFundingApplication = typeof fundingApplications.$inferInsert;

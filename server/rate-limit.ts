@@ -46,6 +46,11 @@ const ACTION_LIMITS: Record<string, number> = {
   ship_giveaway_verify: 20,
   ship_giveaway_tag: 20,
   ship_giveaway_bonus: 20,
+
+  // Funding application engine. Each run is one complex-tier LLM call, so the
+  // cap bounds spend and stops an accidental regenerate loop. Admin-only and
+  // deliberate work, so 10 per 15 minutes is well above a real working session.
+  funding_generate: 10,
 };
 
 function maxForAction(action: string): number {

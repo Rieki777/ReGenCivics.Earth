@@ -50,6 +50,7 @@ import { playerPathsRouter } from "./routes/playerPaths";
 import { analyticsRouter } from "./routes/analytics";
 import { adminActionsRouter } from "./routes/adminActions";
 import { adminAutomationsRouter } from "./routes/adminAutomations";
+import { adminFundingRouter } from "./routes/adminFunding";
 import { roleHoldersRouter } from "./routes/roleHolders";
 import { rolesRouter } from "./routes/roles";
 import { bountiesRouter } from "./routes/bounties";
@@ -130,6 +131,7 @@ export const appRouter = router({
   adminAI: adminAIRouter,
   adminActions: adminActionsRouter,
   adminAutomations: adminAutomationsRouter,
+  adminFunding: adminFundingRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,

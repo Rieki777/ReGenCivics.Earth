@@ -58,6 +58,7 @@ import {
   ClipboardList,
   ChevronDown,
   Menu,
+  Landmark,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -3624,6 +3625,12 @@ function AdminDashboard() {
                 <Button variant="outline" size="sm" className="border-[#7dd87d]/60 text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
                   <Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Calls
+                </Button>
+              </Link>
+              <Link href="/admin/funding">
+                <Button variant="outline" size="sm" className="border-[#7dd87d]/60 text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
+                  <Landmark className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Funding
                 </Button>
               </Link>
               <Link href="/admin/applications">

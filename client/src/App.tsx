@@ -132,6 +132,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const AdminCreate = lazy(() => import("./pages/AdminCreate"));
 const AdminVoiceRules = lazy(() => import("./pages/AdminVoiceRules"));
 const AdminCalls = lazy(() => import("./pages/AdminCalls"));
+const AdminFunding = lazy(() => import("./pages/AdminFunding"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 const CrowdPooling = lazy(() => import("./pages/CrowdPooling"));
 const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
@@ -333,6 +334,7 @@ function Router() {
       <Route path={"/admin-create"}><EB><AdminCreate /></EB></Route>
       <Route path={"/admin/voice-rules"}><EB><AdminVoiceRules /></EB></Route>
       <Route path={"/admin/calls"}><EB><AdminCalls /></EB></Route>
+      <Route path={"/admin/funding"}><EB><AdminFunding /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
