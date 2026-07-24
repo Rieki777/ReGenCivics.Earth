@@ -46,6 +46,36 @@ const GALLERY: CarouselPhoto[] = [
   { name: "ship-food-forest-abundance.jpg", label: "Food forest abundance", alt: "Baskets of fresh produce and abundance gathered from a food forest." },
 ];
 
+// The quick spec breakdown, shown right after the photos.
+const MANIFEST: Array<{ label: string; value: string }> = [
+  { label: "Length", value: "40 ft" },
+  { label: "Bedrooms", value: "Two" },
+  { label: "Bathrooms", value: "Two" },
+  { label: "Galley", value: "Full" },
+  { label: "Comms", value: "Starlink" },
+  { label: "Water", value: "Spring-fed" },
+  { label: "Crew", value: "2 to 4, or 5*" },
+  { label: "Home Port", value: "Ashland, OR" },
+];
+
+function ShipManifest() {
+  return (
+    <div className="rounded-2xl bg-[#0d1f16] text-white p-6 sm:p-8 max-w-3xl mx-auto shadow-lg">
+      <p className="uppercase tracking-[0.25em] text-xs font-semibold text-[#c9a84a]">Ship&apos;s Manifest</p>
+      <h2 className="text-2xl sm:text-3xl font-serif italic mt-2 mb-4">2006 Fleetwood Revolution LE</h2>
+      <dl className="grid grid-cols-2 gap-x-8">
+        {MANIFEST.map((row) => (
+          <div key={row.label} className="border-t border-white/12 py-4">
+            <dt className="uppercase tracking-widest text-[11px] text-white/50">{row.label}</dt>
+            <dd className="text-xl sm:text-2xl font-serif mt-1">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-xs text-white/45 mt-4">* Five aboard when at least three of the crew are children.</p>
+    </div>
+  );
+}
+
 export default function Ship() {
   // The entry threshold is admin-tunable server-side; read it live so the hero
   // callout never drifts from the real points line.
@@ -78,6 +108,18 @@ export default function Ship() {
       </section>
 
       <ShipNavRow current="/ship" />
+
+      {/* Photos first: the interior and where she has been, the first thing a
+          visitor sees after the ship menu, then the quick spec manifest. */}
+      <ShipSection className="pt-8 pb-6">
+        <ShipInteriorCarousel />
+        <div className="mt-12" />
+        <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>
+        <h2 className="text-3xl font-bold mb-6">Where she has been</h2>
+        <ShipPhotoCarousel photos={GALLERY} />
+        <div className="mt-10"><ShipManifest /></div>
+        <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Monday through Cascadia." />
+      </ShipSection>
 
       {/* The current docking sets the season's theme */}
       <ShipSection className="py-8">
@@ -174,16 +216,6 @@ export default function Ship() {
           </div>
           <div data-reveal="right" className="aspect-[4/3]"><ShipImage name="ship-galley-table.webp" alt="A galley table laid with ripe fruit, greens, and shared plates." className="h-full" /></div>
         </div>
-      </ShipSection>
-
-      {/* Interior photo carousel (top of the section) + gallery of places */}
-      <ShipSection>
-        <ShipInteriorCarousel />
-        <div className="mt-12" />
-        <ShipEyebrow>The most beautiful places on earth</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-6">Where she has been</h2>
-        <ShipPhotoCarousel photos={GALLERY} />
-        <BookNowCallout headline="See her for yourself" sub="Pick an open week and board Monday. Voyages run Monday to Monday through Cascadia." />
       </ShipSection>
 
       {/* Perks */}

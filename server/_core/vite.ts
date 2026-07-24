@@ -217,7 +217,7 @@ export function serveStatic(app: Express) {
     "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
     "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems.", image: `${BASE_URL}/og/tools.jpg` },
     "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
-    "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "A regenerative pirate ship you can book: voyages through Cascadia with a treasure chest of seeds. Book a voyage or enter the Free Passage Quest." },
+    "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "Visiting the most beautiful places on earth in reverence and regeneration.", image: `${BASE_URL}/images/ship/ship-zion-redrock-hero.jpg` },
   };
 
   let indexHtmlCache: string | null = null;
