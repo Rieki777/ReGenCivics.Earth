@@ -27,6 +27,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
+    "ui:harness": "vite --config harness/vite.config.ts",
+    "ui:shots": "node harness/shoot.mjs",
     "gate": "node scripts/gate.mjs",
     "check:foundations": "node scripts/check-migration-numbers.mjs && node scripts/check-env-example.mjs",
     "preview": "vite preview",

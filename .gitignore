@@ -188,3 +188,8 @@ loomio Governance Tools/
 
 # Kokoro TTS demo clips (research artifacts, not app assets)
 voice-demos/
+
+# UI harness screenshots and raw video output (local dev artifacts)
+harness/shots/
+harness/.out/
+video-out/
