@@ -189,6 +189,14 @@ export const harvestRouter = router({
         .set({ body: input.body, status: item.status === "shipped" ? "shipped" : "edited" })
         .where(eq(creationItems.id, item.id));
 
+      // Edited text is unchecked text. Any surface carrying this draft loses
+      // its fact-check verdict until it is verified again, so an edit can
+      // never inherit an earlier pass.
+      const { publicationTargets } = await import("../../drizzle/schema");
+      await db.update(publicationTargets)
+        .set({ verificationStatus: "unverified", verificationFlags: null, verifiedAt: null })
+        .where(eq(publicationTargets.itemId, item.id));
+
       if (item.aiBody && item.aiBody !== input.body) {
         const { processEdit } = await import("../lib/voice-learning");
         void processEdit({
@@ -391,6 +399,20 @@ export const harvestRouter = router({
     }
   }),
 
+  /**
+   * Published surfaces still waiting on their weekly note. The whole analytics
+   * surface: what went out, and where an honest sentence is still missing.
+   */
+  notesDue: ownerProcedure.query(async ({ ctx }) => {
+    const { listTargetsAwaitingNote } = await import("../lib/publications");
+    try {
+      return await listTargetsAwaitingNote(ctx.user.id);
+    } catch (err) {
+      if (isMissingTableError(err)) return [];
+      throw err;
+    }
+  }),
+
   publicationReview: ownerProcedure
     .input(z.object({ publicationId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
@@ -400,7 +422,95 @@ export const harvestRouter = router({
       return review;
     }),
 
-  /** Approve one surface. Publishing still needs the explicit publish call. */
+  /**
+   * Fact-check one drafted surface against the material it was composed from
+   * plus the canon facts. The voice grader covers how a draft reads; this
+   * covers whether it is true. Fails closed: a checker error leaves the row
+   * 'unverified' rather than letting it through.
+   */
+  verifyTarget: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 20 }))
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select().from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const [target] = await db.select().from(publicationTargets)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        )).limit(1);
+      if (!target?.itemId) throw new TRPCError({ code: "NOT_FOUND", message: "No draft on this surface to verify" });
+
+      const [item] = await db.select({ body: creationItems.body }).from(creationItems)
+        .where(and(eq(creationItems.ownerId, ctx.user.id), eq(creationItems.id, target.itemId))).limit(1);
+      if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+
+      // The source material is what Rye composed from, snapshotted on the idea.
+      const [idea] = pub.ideaId
+        ? await db.select({ summary: harvestIdeas.summary }).from(harvestIdeas)
+            .where(eq(harvestIdeas.id, pub.ideaId)).limit(1)
+        : [];
+
+      const { verifyDraft } = await import("../lib/content-verify");
+      const result = await verifyDraft({
+        body: item.body ?? "",
+        firstComment: target.firstComment,
+        sourceText: idea?.summary ?? "",
+      });
+
+      await db.update(publicationTargets)
+        .set({ verificationStatus: result.status, verificationFlags: result.flags, verifiedAt: new Date() })
+        .where(eq(publicationTargets.id, target.id));
+      return result;
+    }),
+
+  /**
+   * The first comment (where the link lives) and the weekly note (whether it
+   * landed). Editing the first comment resets verification, because it is
+   * published text; the weekly note is written after the fact and never is.
+   */
+  updateTargetFields: ownerProcedure
+    .input(z.object({
+      publicationId: z.number().int().positive(),
+      surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]),
+      firstComment: z.string().max(3000).optional(),
+      weeklyNote: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const patch: Record<string, unknown> = {};
+      if (input.firstComment !== undefined) {
+        patch.firstComment = input.firstComment;
+        patch.verificationStatus = "unverified";
+        patch.verificationFlags = null;
+        patch.verifiedAt = null;
+      }
+      if (input.weeklyNote !== undefined) patch.weeklyNote = input.weeklyNote;
+      if (Object.keys(patch).length === 0) return { ok: true };
+
+      await db.update(publicationTargets).set(patch)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        ));
+      return { ok: true };
+    }),
+
+  /**
+   * Approve one surface. Publishing still needs the explicit publish call.
+   * Refuses while a block-level fact flag is unresolved: a draft that
+   * contradicts its sources or the canon never reaches 'approved', however
+   * well it reads.
+   */
   approveTarget: ownerProcedure
     .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
     .mutation(async ({ ctx, input }) => {
@@ -409,6 +519,21 @@ export const harvestRouter = router({
       const [pub] = await db.select({ id: publications.id }).from(publications)
         .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
       if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const [target] = await db.select({ flags: publicationTargets.verificationFlags })
+        .from(publicationTargets)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        )).limit(1);
+      const { hasBlockingFlags } = await import("../lib/content-verify");
+      if (target && hasBlockingFlags(target.flags)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "This draft has unresolved block-level fact flags. Fix the copy, then re-verify.",
+        });
+      }
+
       await db.update(publicationTargets)
         .set({ status: "approved" })
         .where(and(

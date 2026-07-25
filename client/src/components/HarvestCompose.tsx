@@ -13,7 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PenLine, Sparkles, Check, Globe, ImagePlus, ExternalLink, Undo2 } from "lucide-react";
+import { Loader2, PenLine, Sparkles, Check, Globe, ImagePlus, ExternalLink, Undo2, Copy } from "lucide-react";
 
 const SURFACE_LABEL: Record<string, string> = {
   site: "Article on the site",
@@ -72,17 +72,36 @@ export function ComposeBox({ onComposed }: { onComposed: (publicationId: number)
   );
 }
 
+type FactFlag = { claim: string; problem: string; severity: "block" | "warn" };
+
 function TargetRow({ publicationId, target, item, onChanged }: {
   publicationId: number;
-  target: { id: number; surface: string; status: string; externalUrl: string | null };
+  target: {
+    id: number; surface: string; status: string; externalUrl: string | null;
+    verificationStatus?: string | null; verificationFlags?: unknown;
+    firstComment?: string | null; weeklyNote?: string | null;
+  };
   item: { id: number; body: string | null; status: string } | undefined;
   onChanged: () => void;
 }) {
   const [profileId, setProfileId] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  const [firstCommentDraft, setFirstCommentDraft] = useState(target.firstComment ?? "");
+  const [weeklyNoteDraft, setWeeklyNoteDraft] = useState(target.weeklyNote ?? "");
+  const [copied, setCopied] = useState(false);
   const approve = trpc.harvest.approveTarget.useMutation();
   const publish = trpc.harvest.publishTarget.useMutation();
+  const verify = trpc.harvest.verifyTarget.useMutation();
+  const updateFields = trpc.harvest.updateTargetFields.useMutation();
   const needsProfile = !["site", "email"].includes(target.surface);
+  // The first comment is a social-surface tactic: the site and email have no
+  // comment thread to put a link in.
+  const takesFirstComment = !["site", "email"].includes(target.surface);
+
+  // Fact-check state. Blocks are hard stops on approve; warns are for the eye.
+  const flags: FactFlag[] = Array.isArray(target.verificationFlags) ? (target.verificationFlags as FactFlag[]) : [];
+  const blocks = flags.filter((f) => f.severity === "block");
+  const verification = target.verificationStatus ?? "unverified";
   const statusColor = target.status === "published" ? "bg-[#4a7c59] text-white"
     : target.status === "approved" ? "bg-amber-100 text-amber-900"
     : target.status === "failed" ? "bg-red-100 text-red-800"
@@ -93,14 +112,36 @@ function TargetRow({ publicationId, target, item, onChanged }: {
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium text-[#1a472a]">{SURFACE_LABEL[target.surface] ?? target.surface}</span>
         <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColor}`}>{target.status}</span>
+        {item?.body && (
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+            blocks.length > 0 ? "bg-red-100 text-red-800"
+              : verification === "flagged" ? "bg-amber-100 text-amber-900"
+              : verification === "passed" ? "bg-[#1a472a]/10 text-[#1a472a]"
+              : "bg-[#f0ebe3] text-[#2d5a3d]"
+          }`}>
+            {blocks.length > 0 ? `${blocks.length} block${blocks.length > 1 ? "s" : ""}`
+              : verification === "flagged" ? `${flags.length} to check`
+              : verification === "passed" ? "facts checked"
+              : "unverified"}
+          </span>
+        )}
         {target.externalUrl && !target.externalUrl.startsWith("buffer:") && (
           <a href={target.externalUrl} target="_blank" rel="noreferrer" className="text-xs text-[#2d5a3d] hover:underline inline-flex items-center gap-1">
             <ExternalLink className="w-3 h-3" /> view
           </a>
         )}
         <span className="flex-1" />
+        {item?.body && target.status !== "published" && (
+          <Button size="sm" variant="ghost" className="h-7 rounded-lg text-xs text-[#2d5a3d]" disabled={verify.isPending}
+            onClick={async () => { await verify.mutateAsync({ publicationId, surface: target.surface as never }); onChanged(); }}>
+            {verify.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+            {verification === "unverified" ? "Verify" : "Re-verify"}
+          </Button>
+        )}
         {target.status === "draft" && (
-          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" disabled={approve.isPending || !item?.body}
+          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]"
+            disabled={approve.isPending || !item?.body || blocks.length > 0}
+            title={blocks.length > 0 ? "Resolve the block-level fact flags first: edit the draft, then re-verify." : undefined}
             onClick={async () => { await approve.mutateAsync({ publicationId, surface: target.surface as never }); onChanged(); }}>
             <Check className="w-3 h-3 mr-1" /> Approve
           </Button>
@@ -122,6 +163,76 @@ function TargetRow({ publicationId, target, item, onChanged }: {
         )}
       </div>
       {item?.body && <p className="text-xs text-[#2d5a3d] line-clamp-2">{item.body.slice(0, 200)}</p>}
+      {/* Fact flags come before the draft preview's convenience: judgment first. */}
+      {flags.length > 0 && (
+        <div className={`rounded-lg border px-2 py-1.5 space-y-1 ${blocks.length > 0 ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+          {flags.map((f, i) => (
+            <p key={i} className="text-[11px] leading-snug">
+              <span className={`mr-1.5 px-1 rounded text-[10px] ${f.severity === "block" ? "bg-red-200 text-red-900" : "bg-amber-200 text-amber-900"}`}>{f.severity}</span>
+              <span className="italic text-[#1a472a]">&ldquo;{f.claim}&rdquo;</span>
+              <span className="text-[#2d5a3d]"> {f.problem}</span>
+            </p>
+          ))}
+        </div>
+      )}
+      {/* The link lives here, not in the body: a URL in the post suppresses
+          reach on LinkedIn and Instagram. Verified alongside the draft. */}
+      {takesFirstComment && target.status !== "published" && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-[#2d5a3d] uppercase tracking-wide">First comment</span>
+            <span className="text-[10px] text-[#2d5a3d]/80">the link goes here, not in the post</span>
+            <span className="flex-1" />
+            {firstCommentDraft.trim() && (
+              <button
+                type="button"
+                className="text-[10px] text-[#2d5a3d] hover:underline inline-flex items-center gap-1"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(firstCommentDraft);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+              >
+                <Copy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}
+              </button>
+            )}
+          </div>
+          <Textarea
+            value={firstCommentDraft}
+            onChange={(e) => setFirstCommentDraft(e.target.value)}
+            onBlur={() => {
+              if ((target.firstComment ?? "") !== firstCommentDraft) {
+                updateFields.mutate(
+                  { publicationId, surface: target.surface as never, firstComment: firstCommentDraft },
+                  { onSuccess: onChanged },
+                );
+              }
+            }}
+            placeholder="Full write-up: https://..."
+            className="min-h-[52px] text-xs"
+          />
+        </div>
+      )}
+      {/* The honest replacement for analytics, written after the fact. */}
+      {target.status === "published" && (
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold text-[#2d5a3d] uppercase tracking-wide">Weekly note</span>
+          <Textarea
+            value={weeklyNoteDraft}
+            onChange={(e) => setWeeklyNoteDraft(e.target.value)}
+            onBlur={() => {
+              if ((target.weeklyNote ?? "") !== weeklyNoteDraft) {
+                updateFields.mutate(
+                  { publicationId, surface: target.surface as never, weeklyNote: weeklyNoteDraft },
+                  { onSuccess: onChanged },
+                );
+              }
+            }}
+            placeholder="Did this land, and why do you think so? One sentence."
+            className="min-h-[44px] text-xs"
+          />
+        </div>
+      )}
       {target.surface === "email" && target.status !== "published" && (
         <p className="text-[11px] text-[#2d5a3d]">Email only goes out through the hardened send: edit the newsletter draft below, then Preview email send.</p>
       )}

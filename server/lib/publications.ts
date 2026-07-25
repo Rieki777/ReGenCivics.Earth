@@ -15,7 +15,7 @@
  *    never five hand-rolled platform integrations
  */
 import crypto from "crypto";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
 import { getDb } from "../db";
 import {
   creationItems, harvestIdeas, publications, publicationTargets,
@@ -122,18 +122,43 @@ export async function composePublication(ownerId: number, input: { text: string;
   for (const surface of PUBLICATION_SURFACES) {
     const channel: HarvestChannel = surface === "site" ? "article" : SURFACE_TO_CHANNEL[surface];
     let itemId: number | null = null;
+    let draftBody = "";
     try {
       const { body } = await draftChannel(idea, channel);
+      draftBody = body;
       itemId = await upsertDraft(idea, channel, body);
     } catch (err) {
       log.error(`compose draft failed for ${surface}`, err instanceof Error ? err : undefined);
     }
+
+    // Fact-check the draft against the material it was composed from, so the
+    // review screen opens with verdicts already in place. Fail-soft: a checker
+    // error leaves the surface 'unverified', which the approve gate reads as
+    // not-yet-checked rather than as a pass.
+    let verificationStatus: "unverified" | "passed" | "flagged" = "unverified";
+    let verificationFlags: Array<{ claim: string; problem: string; severity: "block" | "warn" }> | null = null;
+    let verifiedAt: Date | null = null;
+    if (draftBody) {
+      try {
+        const { verifyDraft } = await import("./content-verify");
+        const result = await verifyDraft({ body: draftBody, sourceText: input.text });
+        verificationStatus = result.status;
+        verificationFlags = result.flags;
+        verifiedAt = new Date();
+      } catch (err) {
+        log.error(`compose verify failed for ${surface}`, err instanceof Error ? err : undefined);
+      }
+    }
+
     await db.insert(publicationTargets).values({
       publicationId,
       surface,
       itemId,
       status: "draft",
-    }).onDuplicateKeyUpdate({ set: { itemId } });
+      verificationStatus,
+      verificationFlags,
+      verifiedAt,
+    }).onDuplicateKeyUpdate({ set: { itemId, verificationStatus, verificationFlags, verifiedAt } });
   }
 
   log.info(`publication ${publicationId} composed (${sourceRefs.length} sources)`);
@@ -222,6 +247,39 @@ export async function getPublicationReview(ownerId: number, publicationId: numbe
   const [article] = await db.select().from(publishedArticles)
     .where(and(eq(publishedArticles.ownerId, ownerId), eq(publishedArticles.publicationId, publicationId)));
   return { publication, targets, items, images, article: article ?? null };
+}
+
+/**
+ * Published surfaces that still have no weekly note. This is the whole
+ * analytics loop: no scraping, no vanity metrics, just the question "did this
+ * land" asked about things that actually went out.
+ *
+ * It deliberately rides the harvest-digest cron's existing weekly rhythm
+ * rather than inventing a second schedule. The 28-day window means a note is
+ * still askable a few weeks later, and stops being nagged about after that.
+ */
+export async function listTargetsAwaitingNote(ownerId: number, sinceDays = 28) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+  return db
+    .select({
+      publicationId: publicationTargets.publicationId,
+      surface: publicationTargets.surface,
+      publishedAt: publicationTargets.publishedAt,
+      title: publications.title,
+    })
+    .from(publicationTargets)
+    .innerJoin(publications, eq(publications.id, publicationTargets.publicationId))
+    .where(and(
+      eq(publications.ownerId, ownerId),
+      eq(publicationTargets.status, "published"),
+      // Cleared notes come back as empty strings, not NULL.
+      or(isNull(publicationTargets.weeklyNote), eq(publicationTargets.weeklyNote, "")),
+      gte(publicationTargets.publishedAt, since),
+    ))
+    .orderBy(desc(publicationTargets.publishedAt))
+    .limit(50);
 }
 
 async function refreshPublicationStatus(publicationId: number): Promise<void> {

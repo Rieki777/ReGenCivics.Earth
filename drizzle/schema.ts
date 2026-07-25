@@ -5276,6 +5276,26 @@ export const publicationTargets = mysqlTable("publication_targets", {
   scheduledFor: timestamp("scheduled_for"),
   externalUrl: varchar("external_url", { length: 600 }),
   publishedAt: timestamp("published_at"),
+  /**
+   * Fact-check state (server/lib/content-verify.ts), separate from `status`:
+   * this is the machine's verdict on whether the copy is TRUE, while `status`
+   * stays the human/workflow state. approveTarget refuses while a block-level
+   * flag is unresolved; editing the draft resets this to 'unverified'.
+   */
+  verificationStatus: mysqlEnum("verification_status", ["unverified", "passed", "flagged"]).default("unverified").notNull(),
+  verificationFlags: json("verification_flags"),
+  verifiedAt: timestamp("verified_at"),
+  /**
+   * Where the link goes. A raw URL in the body suppresses reach on LinkedIn and
+   * Instagram, so the post carries the idea and this carries the link. Verified
+   * alongside the body, because it is published text too.
+   */
+  firstComment: text("first_comment"),
+  /**
+   * The honest replacement for analytics: one sentence after the fact on
+   * whether it landed, written on the harvest-digest cron's weekly rhythm.
+   */
+  weeklyNote: text("weekly_note"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
