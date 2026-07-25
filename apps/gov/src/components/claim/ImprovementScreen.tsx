@@ -14,7 +14,7 @@ export function ImprovementScreen({ draft, setDraft, next, back }: ScreenProps) 
         rows={6}
         className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/35 focus:outline-none focus:border-[#7dd87d] mb-4"
       />
-      <p className="text-white/45 text-xs mb-6">If you drop something in here, we'll post it to the forum under Air &gt; Onboarding Games &gt; Historical Contribution Accounting, tagged to your name.</p>
+      <p className="text-white/60 text-xs mb-6">If you drop something in here, we'll post it to the forum under Air &gt; Onboarding Games &gt; Historical Contribution Accounting, tagged to your name.</p>
       <div className="flex justify-between">
         <PillButton variant="secondary" onClick={back}>Back</PillButton>
         <PillButton onClick={next}>Next</PillButton>

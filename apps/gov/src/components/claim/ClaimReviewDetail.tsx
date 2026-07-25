@@ -119,8 +119,8 @@ export function ClaimReviewDetail({ id }: { id: number }) {
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10 text-sm">
-          <div><div className="text-white/45 text-xs uppercase">Duration</div><div className="text-white">{claim.duration}</div></div>
-          <div><div className="text-white/45 text-xs uppercase">Reach</div><div className="text-white">{claim.reach}</div></div>
+          <div><div className="text-white/60 text-xs uppercase">Duration</div><div className="text-white">{claim.duration}</div></div>
+          <div><div className="text-white/60 text-xs uppercase">Reach</div><div className="text-white">{claim.reach}</div></div>
         </div>
       </GlassCard>
 
@@ -141,7 +141,7 @@ export function ClaimReviewDetail({ id }: { id: number }) {
           <div className="space-y-3">
             {outputs.map((o: any, i: number) => (
               <div key={i} className="border-l-2 border-[#7dd87d]/40 pl-3">
-                <div className="text-white font-semibold text-sm">{o.name} <span className="text-white/45 text-xs font-normal">({o.type})</span></div>
+                <div className="text-white font-semibold text-sm">{o.name} <span className="text-white/60 text-xs font-normal">({o.type})</span></div>
                 <div className="text-white/65 text-xs">{o.description}</div>
               </div>
             ))}

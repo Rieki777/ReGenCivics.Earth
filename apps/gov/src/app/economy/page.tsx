@@ -94,7 +94,7 @@ export default function EconomyPage() {
             </div>
           ))}
         </div>
-        <p className="text-white/45 text-xs text-center mt-4">
+        <p className="text-white/60 text-xs text-center mt-4">
           Planted vs. sold transparency: 67% of committed capital has been deployed to land projects. 33% remains in reserve for upcoming seasons.
         </p>
       </GlassCard>

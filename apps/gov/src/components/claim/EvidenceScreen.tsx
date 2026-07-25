@@ -14,7 +14,7 @@ export function EvidenceScreen({ draft, setDraft, next, back }: ScreenProps) {
       <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Any links we should see?</h2>
       <p className="text-white/60 text-sm mb-6">Totally optional. A website, a project, a piece of writing, a video. Whatever shows some of the work.</p>
       <div className="space-y-2 mb-4">
-        {links.length === 0 && <p className="text-white/40 text-sm italic">No links added.</p>}
+        {links.length === 0 && <p className="text-white/60 text-sm italic">No links added.</p>}
         {links.map((link, i) => (
           <div key={i} className="flex gap-2">
             <input
