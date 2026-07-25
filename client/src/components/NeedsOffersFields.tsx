@@ -24,7 +24,7 @@ export function NeedsOffersFields({
 }: NeedsOffersFieldsProps) {
   const label =
     variant === "dark" ? "block text-white/80 text-sm mb-1" : "block text-[#1a472a] text-sm font-medium mb-1";
-  const hint = variant === "dark" ? "text-white/50 text-xs" : "text-[#1a472a]/60 text-xs";
+  const hint = variant === "dark" ? "text-white/60 text-xs" : "text-[#1a472a]/75 text-xs";
   const field =
     variant === "dark"
       ? "w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"

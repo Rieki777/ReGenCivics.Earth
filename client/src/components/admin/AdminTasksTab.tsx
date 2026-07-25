@@ -71,12 +71,12 @@ function ProposalCard({ bounty, onChanged }: { bounty: Bounty; onChanged: () => 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <p className="font-bold text-[#1a472a]">{bounty.title}</p>
-          <p className="text-xs text-[#1a472a]/60 mt-0.5">
+          <p className="text-xs text-[#1a472a]/75 mt-0.5">
             <span className="capitalize">{bounty.sourceType === "contribution" ? `code ${bounty.kind ?? "contribution"}` : "call task"}</span>
             {bounty.githubRepo && <> · {bounty.githubRepo}{bounty.githubIssueNumber ? ` #${bounty.githubIssueNumber}` : ""}</>}
           </p>
         </div>
-        <span className="text-xs text-[#1a472a]/50">
+        <span className="text-xs text-[#1a472a]/75">
           {new Date(bounty.createdAt as string).toLocaleDateString()}
         </span>
       </div>
@@ -159,7 +159,7 @@ function HeldPayoutCard({ role, onChanged }: { role: HeldRole; onChanged: () => 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <p className="font-bold text-[#1a472a] text-sm">{role.bounty?.title ?? `Bounty #${role.bountyId}`}</p>
-          <div className="text-xs text-[#1a472a]/60 mt-0.5 flex items-center gap-1 flex-wrap">
+          <div className="text-xs text-[#1a472a]/75 mt-0.5 flex items-center gap-1 flex-wrap">
             <span className="capitalize">{role.role} role ·</span>
             <RewardAmount amount={role.amount} tokenType={role.bounty?.tokenType} breakdown={(role.bounty as any)?.valuationBreakdown ?? null} tone="light" size="sm" />
             <span>held</span>
@@ -221,13 +221,13 @@ function ReviewCard({ bounty, onChanged }: { bounty: ReviewBounty; onChanged: ()
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <p className="font-bold text-[#1a472a]">{bounty.title}</p>
-          <p className="text-xs text-[#1a472a]/60 mt-0.5">call task · awaiting review</p>
+          <p className="text-xs text-[#1a472a]/75 mt-0.5">call task · awaiting review</p>
         </div>
-        <span className="text-xs text-[#1a472a]/50">{new Date(bounty.createdAt as string).toLocaleDateString()}</span>
+        <span className="text-xs text-[#1a472a]/75">{new Date(bounty.createdAt as string).toLocaleDateString()}</span>
       </div>
 
       {bounty.artifacts.length === 0 ? (
-        <p className="text-sm text-[#1a472a]/60">No work artifact submitted yet.</p>
+        <p className="text-sm text-[#1a472a]/75">No work artifact submitted yet.</p>
       ) : (
         <div className="space-y-2">
           {bounty.artifacts.map((a) => (
@@ -238,7 +238,7 @@ function ReviewCard({ bounty, onChanged }: { bounty: ReviewBounty; onChanged: ()
                 </a>
               )}
               {a.artifactText && <p className="text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{a.artifactText}</p>}
-              <p className="text-[10px] text-[#1a472a]/40 mt-1">{new Date(a.createdAt as string).toLocaleString()}</p>
+              <p className="text-[10px] text-[#1a472a]/75 mt-1">{new Date(a.createdAt as string).toLocaleString()}</p>
             </div>
           ))}
         </div>
@@ -303,13 +303,13 @@ export function AdminTasksTab() {
               {tab.label}
             </button>
           ))}
-          <span className="ml-auto text-xs text-[#1a472a]/70">
+          <span className="ml-auto text-xs text-[#1a472a]/75">
             {queue.isLoading ? "loading…" : `${proposals.length} proposals · ${reviewBounties.length} in review · ${heldRoles.length} held`}
           </span>
         </div>
 
         {queue.isLoading ? (
-          <div className="text-sm text-[#1a472a]/70 inline-flex items-center gap-2">
+          <div className="text-sm text-[#1a472a]/75 inline-flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> loading
           </div>
         ) : (
@@ -317,7 +317,7 @@ export function AdminTasksTab() {
             {(filter === "proposals" || filter === "all") && proposals.length > 0 && (
               <section className="space-y-3">
                 {filter === "all" && (
-                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Proposals</h4>
+                  <h4 className="text-xs font-bold text-[#1a472a]/75 uppercase tracking-wider">Proposals</h4>
                 )}
                 {proposals.map((b) => <ProposalCard key={b.id} bounty={b} onChanged={refetch} />)}
               </section>
@@ -325,7 +325,7 @@ export function AdminTasksTab() {
             {(filter === "review" || filter === "all") && reviewBounties.length > 0 && (
               <section className="space-y-3 mt-4">
                 {filter === "all" && (
-                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Awaiting Review</h4>
+                  <h4 className="text-xs font-bold text-[#1a472a]/75 uppercase tracking-wider">Awaiting Review</h4>
                 )}
                 {reviewBounties.map((b) => <ReviewCard key={b.id} bounty={b} onChanged={refetch} />)}
               </section>
@@ -333,13 +333,13 @@ export function AdminTasksTab() {
             {(filter === "held_payouts" || filter === "all") && heldRoles.length > 0 && (
               <section className="space-y-3 mt-4">
                 {filter === "all" && (
-                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Held Payouts</h4>
+                  <h4 className="text-xs font-bold text-[#1a472a]/75 uppercase tracking-wider">Held Payouts</h4>
                 )}
                 {heldRoles.map((r) => <HeldPayoutCard key={r.id} role={r} onChanged={refetch} />)}
               </section>
             )}
             {proposals.length === 0 && heldRoles.length === 0 && reviewBounties.length === 0 && (
-              <p className="text-sm text-[#1a472a]/70 py-6 text-center">
+              <p className="text-sm text-[#1a472a]/75 py-6 text-center">
                 Nothing in the queue. Proposed bounties from players appear here for review.
               </p>
             )}

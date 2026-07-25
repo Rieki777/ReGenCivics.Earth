@@ -388,7 +388,7 @@ export default function ContributionAggregation({
                           <div className="space-y-1">
                             {immediate.map((c: any, i: number) => (
                               <div key={i} className="flex justify-between text-sm bg-white rounded p-2">
-                                <span className="text-[#1a472a]/70">{c.description || c.category}</span>
+                                <span className="text-[#1a472a]/75">{c.description || c.category}</span>
                                 <span className="font-medium text-[#1a472a]">{formatCurrency(c.value, currencySymbol)}</span>
                               </div>
                             ))}
@@ -408,7 +408,7 @@ export default function ContributionAggregation({
                           <div className="space-y-1">
                             {future.map((c: any, i: number) => (
                               <div key={i} className="flex justify-between text-sm bg-white rounded p-2">
-                                <span className="text-[#1a472a]/70">
+                                <span className="text-[#1a472a]/75">
                                   {c.roleName}: {c.weeks}w x {c.hoursPerWeek}h/w @ {formatCurrency(c.hourlyRate, currencySymbol)}/h
                                 </span>
                                 <span className="font-medium text-[#1a472a]">

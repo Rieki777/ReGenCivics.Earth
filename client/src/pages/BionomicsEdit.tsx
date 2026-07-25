@@ -242,7 +242,7 @@ export default function BionomicsEdit() {
                       className="w-full bg-[#0a1a10] border border-white/15 rounded-lg px-3 py-2 text-white text-sm leading-relaxed focus:outline-none focus:border-[#7dd87d]/50 resize-y"
                     />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-[10px] text-white/45">
+                      <p className="text-[10px] text-white/60">
                         {current.length} character{current.length === 1 ? "" : "s"}
                       </p>
                       {isChanged && (

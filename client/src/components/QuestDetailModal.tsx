@@ -731,7 +731,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                   <Send className="w-4 h-4" />
                   Ready to Submit?
                 </h4>
-                <p className="text-xs text-[#1a472a]/70 mt-1">Submit your completed quest in the Game Space to earn tokens</p>
+                <p className="text-xs text-[#1a472a]/75 mt-1">Submit your completed quest in the Game Space to earn tokens</p>
               </div>
               <a
                 href="https://app.hypha.earth/en/dho/regen-games/agreements"

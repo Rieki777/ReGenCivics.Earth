@@ -145,7 +145,7 @@ function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
   if (!name) return null;
   return (
     <div>
-      <p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Bioregion</p>
+      <p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Bioregion</p>
       <p className="text-sm text-[#1a472a]/90 mt-0.5">{name}</p>
     </div>
   );
@@ -226,7 +226,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       {[1, 2, 3].map(s => (
         <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s ? 'bg-[#7dd87d]' : 'bg-[#1a472a]/10'}`} />
       ))}
-      <span className="text-xs text-[#1a472a]/70 whitespace-nowrap">Step {step} of 3</span>
+      <span className="text-xs text-[#1a472a]/75 whitespace-nowrap">Step {step} of 3</span>
     </div>
   );
 
@@ -243,22 +243,22 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">e.g. Land steward, investor, builder, artist…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, investor, builder, artist…</p>
             <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, investor, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">The deeper calling that brought you here…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">The deeper calling that brought you here…</p>
             <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you looking to get from this ecosystem?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">What would make this worth your time and energy?</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">What would make this worth your time and energy?</p>
             <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">Skills, resources, wisdom, connections…</p>
             <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
             <p className="text-xs text-[#1a472a]/80 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
@@ -309,7 +309,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                     </div>
                     <div className="p-3">
                       <img src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")} alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" width={600} height={400} loading="lazy" />
-                      <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                      <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                         <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                         <li>Look at the top right of the page</li>
                         <li>Find your account address (e.g., 0xaAaF…354e)</li>
@@ -332,7 +332,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
               Continue <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
-          <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#1a472a]/70 hover:text-[#1a472a] underline">
+          <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#1a472a]/75 hover:text-[#1a472a] underline">
             Skip for now →
           </button>
         </div>
@@ -342,15 +342,15 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       {step === 3 && (
         <div className="space-y-5">
           <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-4 space-y-3">
-            <p className="text-xs text-[#1a472a]/70 uppercase tracking-wider font-semibold">Your Profile Preview</p>
+            <p className="text-xs text-[#1a472a]/75 uppercase tracking-wider font-semibold">Your Profile Preview</p>
             <p className="text-lg font-bold text-[#1a472a]">{displayName || 'Your Name'}</p>
-            {role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Role</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{role}</p></div>}
-            {soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
-            {desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
-            {gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
-            {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
+            {role && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Role</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{role}</p></div>}
+            {soul && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
+            {desires && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
+            {gifts && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
+            {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
             {bioregionId != null && <BioregionPreviewRow bioregionId={bioregionId} />}
-            {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
+            {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(2)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
@@ -432,7 +432,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                       className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
                       loading="lazy"
                     />
-                    <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                    <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                       <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a></li>
                       <li>Look at the top right corner</li>
                       <li>Click the <strong>copy icon</strong> next to your address</li>
@@ -459,7 +459,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
               loading="lazy"
             />
-            <p className="text-sm text-[#1a472a]/70">
+            <p className="text-sm text-[#1a472a]/75">
               <strong>Find your account:</strong> Visit <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a>, look at the top right, and click the copy icon next to your address.
             </p>
           </div>
@@ -563,10 +563,10 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           if (parsed && (parsed.role || parsed.soul || parsed.desires || parsed.gifts)) {
             return (
               <div className="space-y-3">
-                {parsed.role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Role</p><p className="text-[#1a472a]">{parsed.role}</p></div>}
-                {parsed.soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Soul's Mission</p><p className="text-[#1a472a]">{parsed.soul}</p></div>}
-                {parsed.desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Seeking</p><p className="text-[#1a472a]">{parsed.desires}</p></div>}
-                {parsed.gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Gifts to Offer</p><p className="text-[#1a472a]">{parsed.gifts}</p></div>}
+                {parsed.role && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Role</p><p className="text-[#1a472a]">{parsed.role}</p></div>}
+                {parsed.soul && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Soul's Mission</p><p className="text-[#1a472a]">{parsed.soul}</p></div>}
+                {parsed.desires && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Seeking</p><p className="text-[#1a472a]">{parsed.desires}</p></div>}
+                {parsed.gifts && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Gifts to Offer</p><p className="text-[#1a472a]">{parsed.gifts}</p></div>}
               </div>
             );
           }
@@ -599,7 +599,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
               <button
                 onClick={onSyncTokens}
                 disabled={syncIsPending}
-                className="flex items-center gap-1.5 text-[#4a7c59]/70 hover:text-[#4a7c59] text-xs transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 text-[#1a472a]/75 hover:text-[#4a7c59] text-xs transition-colors disabled:opacity-40"
               >
                 <RefreshCw className={`w-3 h-3 ${syncIsPending ? "animate-spin" : ""}`} />
                 {syncIsPending ? "Syncing..." : "Refresh balances"}

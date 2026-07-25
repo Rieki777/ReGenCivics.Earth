@@ -334,7 +334,7 @@ export function CrowdPoolingProjectsManager() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {project.projectDescription && (
-                      <p className="text-sm text-[#1a472a]/70 line-clamp-2">
+                      <p className="text-sm text-[#1a472a]/75 line-clamp-2">
                         {project.projectDescription}
                       </p>
                     )}

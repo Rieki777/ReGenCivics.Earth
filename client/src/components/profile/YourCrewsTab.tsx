@@ -69,7 +69,7 @@ export function YourCrewsTab() {
               </Link>
             )}
           </div>
-          <div className="text-white/50 text-xs mt-2">
+          <div className="text-white/60 text-xs mt-2">
             Crew: {crew.members.map((m) => m.name).join(", ")}
           </div>
         </div>

@@ -80,13 +80,13 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
         <Label className="text-sm font-semibold text-[#1a472a]">Impact data (ReGen impact schema)</Label>
       </div>
       {impactQuery.isLoading ? (
-        <p className="text-sm text-[#1a472a]/60">Loading…</p>
+        <p className="text-sm text-[#1a472a]/75">Loading…</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">
             {NUMBER_FIELDS.map((f) => (
               <div key={f.key as string}>
-                <label className="block text-xs text-[#1a472a]/70 mb-0.5">
+                <label className="block text-xs text-[#1a472a]/75 mb-0.5">
                   {f.label}
                   {f.hint ? ` (${f.hint})` : ""}
                 </label>
@@ -100,7 +100,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             ))}
           </div>
           <div>
-            <label className="block text-xs text-[#1a472a]/70 mb-0.5">Governance maturity</label>
+            <label className="block text-xs text-[#1a472a]/75 mb-0.5">Governance maturity</label>
             <select
               value={governance}
               onChange={(e) => setGovernance(e.target.value)}
@@ -115,7 +115,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-[#1a472a]/70 mb-0.5">Context (methods, measurement notes)</label>
+            <label className="block text-xs text-[#1a472a]/75 mb-0.5">Context (methods, measurement notes)</label>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value.slice(0, 4000))}
@@ -124,7 +124,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-[#1a472a]/50">
+            <span className="text-xs text-[#1a472a]/75">
               {impactQuery.data?.impact?.updatedAt
                 ? `Last saved ${new Date(impactQuery.data.impact.updatedAt).toLocaleString()}`
                 : "Nothing recorded yet"}

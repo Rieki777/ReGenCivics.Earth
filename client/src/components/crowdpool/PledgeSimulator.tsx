@@ -108,7 +108,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
         <Sparkles className="w-5 h-5 text-[#4a7c59]" />
         See what your pledge unlocks
       </h2>
-      <p className="text-sm text-[#1a472a]/70 mb-5">
+      <p className="text-sm text-[#1a472a]/75 mb-5">
         Try it out. Pick a need or offer some hours, and watch which capital it fills and what it is worth. Nothing is sent.
       </p>
 
@@ -119,7 +119,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
             type="button"
             onClick={() => setMode("need")}
             className={`px-4 py-2 rounded-full text-sm font-medium pointer-coarse:min-h-11 flex items-center gap-1.5 transition-colors ${
-              mode === "need" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/70"
+              mode === "need" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/75"
             }`}
           >
             <ListChecks className="w-4 h-4" /> Fill a need
@@ -129,7 +129,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
           type="button"
           onClick={() => setMode("time")}
           className={`px-4 py-2 rounded-full text-sm font-medium pointer-coarse:min-h-11 flex items-center gap-1.5 transition-colors ${
-            mode === "time" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/70"
+            mode === "time" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/75"
           }`}
         >
           <Clock className="w-4 h-4" /> Offer time
@@ -139,7 +139,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
       {/* Controls */}
       {mode === "need" && needs.length > 0 ? (
         <div className="mb-5">
-          <label className="block text-xs font-medium text-[#1a472a]/70 mb-2">Which need would you fill?</label>
+          <label className="block text-xs font-medium text-[#1a472a]/75 mb-2">Which need would you fill?</label>
           <select
             value={needIdx}
             onChange={(e) => setNeedIdx(Number(e.target.value))}
@@ -155,7 +155,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
       ) : (
         <div className="mb-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#1a472a]/70 mb-2">What kind of capital?</label>
+            <label className="block text-xs font-medium text-[#1a472a]/75 mb-2">What kind of capital?</label>
             <div className="flex flex-wrap gap-2">
               {CAPITAL_TYPES.map((c) => (
                 <button
@@ -178,7 +178,7 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
           </div>
           <div>
             <div className="flex items-baseline justify-between mb-2">
-              <label className="text-xs font-medium text-[#1a472a]/70">Hours a week, over {WEEKS} weeks</label>
+              <label className="text-xs font-medium text-[#1a472a]/75">Hours a week, over {WEEKS} weeks</label>
               <span className="text-sm font-bold text-[#1a472a]">{hours} hrs/wk</span>
             </div>
             <Slider
@@ -201,12 +201,12 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
         </div>
         <p className="text-2xl font-bold text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
           {fmt(sim.band.mid)}
-          <span className="text-sm font-normal text-[#1a472a]/60">
+          <span className="text-sm font-normal text-[#1a472a]/75">
             {" "}
             fair value ({fmt(sim.band.low)} to {fmt(sim.band.high)})
           </span>
         </p>
-        <p className="text-xs text-[#1a472a]/70 mt-1">{sim.band.note}</p>
+        <p className="text-xs text-[#1a472a]/75 mt-1">{sim.band.note}</p>
         <p className="text-sm text-[#1a472a] mt-3">
           It {movement}
           {opensNewForm ? " and covers a form the pool did not have yet." : "."}

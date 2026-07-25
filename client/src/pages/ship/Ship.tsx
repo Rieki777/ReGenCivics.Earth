@@ -66,12 +66,12 @@ function ShipManifest() {
       <dl className="grid grid-cols-2 gap-x-8">
         {MANIFEST.map((row) => (
           <div key={row.label} className="border-t border-white/12 py-4">
-            <dt className="uppercase tracking-widest text-[11px] text-white/50">{row.label}</dt>
+            <dt className="uppercase tracking-widest text-[11px] text-white/60">{row.label}</dt>
             <dd className="text-xl sm:text-2xl font-serif mt-1">{row.value}</dd>
           </div>
         ))}
       </dl>
-      <p className="text-xs text-white/45 mt-4">* Five aboard when at least three of the crew are children.</p>
+      <p className="text-xs text-white/60 mt-4">* Five aboard when at least three of the crew are children.</p>
     </div>
   );
 }

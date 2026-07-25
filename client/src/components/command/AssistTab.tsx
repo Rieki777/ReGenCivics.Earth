@@ -83,7 +83,7 @@ export function AssistTab({ onClose }: Props = {}) {
       </button>
 
       <div className="space-y-1.5">
-        <p className="text-[10px] uppercase tracking-wider text-white/40 px-1">Or try</p>
+        <p className="text-[10px] uppercase tracking-wider text-white/60 px-1">Or try</p>
         <div className="flex flex-col gap-1.5">
           {STARTER_PROMPTS.map((prompt) => (
             <button

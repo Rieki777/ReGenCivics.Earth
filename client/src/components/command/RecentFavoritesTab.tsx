@@ -15,7 +15,7 @@ export function RecentFavoritesTab() {
           <Star className="w-3 h-3" /> Favorites
         </h3>
         {favorites.length === 0 ? (
-          <p className="text-[11px] text-white/50 pl-4">No favorites yet. Star a recent page below.</p>
+          <p className="text-[11px] text-white/60 pl-4">No favorites yet. Star a recent page below.</p>
         ) : (
           <ul className="space-y-0.5">
             {favorites.map(fav => (
@@ -45,7 +45,7 @@ export function RecentFavoritesTab() {
           <Clock className="w-3 h-3" /> Recent
         </h3>
         {recentPages.length === 0 ? (
-          <p className="text-[11px] text-white/50 pl-4">No recent pages yet.</p>
+          <p className="text-[11px] text-white/60 pl-4">No recent pages yet.</p>
         ) : (
           <ul className="space-y-0.5">
             {recentPages.map(page => (

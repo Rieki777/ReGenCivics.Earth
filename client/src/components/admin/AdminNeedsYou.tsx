@@ -39,7 +39,7 @@ export function AdminNeedsYou({ onSelectTab }: { onSelectTab?: (tab: string) => 
       </div>
 
       {items.length === 0 ? (
-        <div className="flex items-center gap-2 text-[#1a472a]/60 text-sm py-3">
+        <div className="flex items-center gap-2 text-[#1a472a]/75 text-sm py-3">
           <CheckCircle2 className="w-5 h-5 text-[#4a7c59] flex-shrink-0" />
           You're all caught up. Nothing is waiting on you right now.
         </div>
@@ -59,7 +59,7 @@ export function AdminNeedsYou({ onSelectTab }: { onSelectTab?: (tab: string) => 
                   </span>
                   <span className="flex-1 min-w-0 text-[#1a472a] font-semibold text-sm">{i.label}</span>
                   <span className="text-xl font-bold text-[#1a472a] tabular-nums">{i.count.toLocaleString()}</span>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-[#1a472a]/30 group-hover:text-[#1a472a]/60 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-[#1a472a]/30 group-hover:text-[#1a472a]/75 group-hover:translate-x-0.5 transition-all" />
                 </button>
               </li>
             );

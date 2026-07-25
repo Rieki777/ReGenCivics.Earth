@@ -468,9 +468,9 @@ function FirstPartyEventsPanel() {
 function FunnelCell({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="rounded-lg border border-[#1a472a]/10 bg-[#f8f6f1] p-3">
-      <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/60 font-bold">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/75 font-bold">{label}</p>
       <p className="text-2xl font-bold text-[#1a472a] mt-1">{value.toLocaleString()}</p>
-      {sub && <p className="text-xs text-[#1a472a]/70 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-[#1a472a]/75 mt-0.5">{sub}</p>}
     </div>
   );
 }

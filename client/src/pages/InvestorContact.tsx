@@ -215,10 +215,10 @@ export default function InvestorContact() {
                 }}
                 placeholder="What would you like to know? Returns, structure, timeline, due-diligence access..."
                 rows={8}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40 mt-1"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/60 mt-1"
                 maxLength={4000}
               />
-              <p className="text-white/40 text-xs mt-1 text-right">
+              <p className="text-white/60 text-xs mt-1 text-right">
                 {message.length}/4000
               </p>
             </div>

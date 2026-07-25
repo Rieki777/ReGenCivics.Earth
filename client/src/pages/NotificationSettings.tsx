@@ -42,7 +42,7 @@ function PushSection() {
     return (
       <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
         <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
-        <p className="text-sm text-[#1a472a]/60">This browser does not support push notifications.</p>
+        <p className="text-sm text-[#1a472a]/75">This browser does not support push notifications.</p>
       </section>
     );
   }
@@ -51,7 +51,7 @@ function PushSection() {
     return (
       <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
         <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
-        <p className="text-sm text-[#1a472a]/70 flex items-start gap-2">
+        <p className="text-sm text-[#1a472a]/75 flex items-start gap-2">
           <Smartphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
           On iPhone, push works once the app is on your home screen: tap the share button in Safari, then "Add to Home Screen", and turn push on from the installed app.
         </p>
@@ -89,7 +89,7 @@ function PushSection() {
   return (
     <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
       <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
-      <p className="text-xs text-[#1a472a]/70 mb-3">
+      <p className="text-xs text-[#1a472a]/75 mb-3">
         Mentions, replies, and gratitude reach this device even when the site is closed.
       </p>
       <Button
@@ -181,7 +181,7 @@ export default function NotificationSettings() {
           <h1 className="text-2xl font-bold text-[#1a472a] mt-4 mb-1" style={{ fontFamily: 'Righteous, cursive' }}>
             Notification settings
           </h1>
-          <p className="text-sm text-[#1a472a]/70 mb-6">
+          <p className="text-sm text-[#1a472a]/75 mb-6">
             Choose how each kind of notification reaches your inbox. Everything still shows in the bell.
           </p>
 
@@ -217,18 +217,18 @@ export default function NotificationSettings() {
 
               <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
                 <h2 className="font-bold text-[#1a472a] mb-1">Muted people</h2>
-                <p className="text-xs text-[#1a472a]/70 mb-3">
+                <p className="text-xs text-[#1a472a]/75 mb-3">
                   Their mentions and replies stay out of your notifications and inbox. Mute someone from their profile.
                 </p>
                 {(mutesQuery.data ?? []).length === 0 ? (
-                  <p className="text-sm text-[#1a472a]/60">No one muted.</p>
+                  <p className="text-sm text-[#1a472a]/75">No one muted.</p>
                 ) : (
                   <ul className="space-y-2">
                     {(mutesQuery.data ?? []).map(m => (
                       <li key={m.id} className="flex items-center justify-between gap-2 text-sm text-[#1a472a]">
                         <span>
                           {m.mutedUserName}
-                          {m.mutedUserHandle && <span className="text-[#1a472a]/60"> @{m.mutedUserHandle}</span>}
+                          {m.mutedUserHandle && <span className="text-[#1a472a]/75"> @{m.mutedUserHandle}</span>}
                         </span>
                         <Button variant="ghost" size="sm"
                           onClick={() => removeMute.mutate({ mutedUserId: m.mutedUserId })}
@@ -243,11 +243,11 @@ export default function NotificationSettings() {
 
               <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
                 <h2 className="font-bold text-[#1a472a] mb-1">Muted threads</h2>
-                <p className="text-xs text-[#1a472a]/70 mb-3">
+                <p className="text-xs text-[#1a472a]/75 mb-3">
                   Threads you follow but silenced. Direct mentions still reach you.
                 </p>
                 {mutedThreads.length === 0 ? (
-                  <p className="text-sm text-[#1a472a]/60">No muted threads.</p>
+                  <p className="text-sm text-[#1a472a]/75">No muted threads.</p>
                 ) : (
                   <ul className="space-y-2">
                     {mutedThreads.map(s => (

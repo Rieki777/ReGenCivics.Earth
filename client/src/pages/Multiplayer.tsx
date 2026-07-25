@@ -187,14 +187,14 @@ export default function Multiplayer() {
                           <Button
                             onClick={() => leaveMutation.mutate({ crewId: crew.id })}
                             disabled={leaveMutation.isPending}
-                            className="bg-transparent text-white/50 hover:text-white hover:bg-white/10 rounded-full px-4"
+                            className="bg-transparent text-white/60 hover:text-white hover:bg-white/10 rounded-full px-4"
                           >
                             Leave
                           </Button>
                         )}
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-white/50 text-sm">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-white/60 text-sm">
                       <span>Crew:</span>
                       {crew.members.map((m) => (
                         <span
@@ -250,7 +250,7 @@ export default function Multiplayer() {
                   <Button
                     onClick={() => cancelMutation.mutate({ signupId: signup.id })}
                     disabled={cancelMutation.isPending}
-                    className="bg-transparent text-white/50 hover:text-white hover:bg-white/10 rounded-full px-3 text-sm"
+                    className="bg-transparent text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3 text-sm"
                   >
                     Withdraw
                   </Button>
@@ -358,7 +358,7 @@ export default function Multiplayer() {
                               <div className="text-white font-medium mb-1">Done means</div>
                               <p className="text-white/70">{quest.definitionOfDone}</p>
                             </div>
-                            <div className="text-white/50">
+                            <div className="text-white/60">
                               Deliverable: {quest.deliverable} · Time: {quest.estimatedTime}
                             </div>
                           </div>

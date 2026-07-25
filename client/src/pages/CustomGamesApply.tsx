@@ -740,7 +740,7 @@ export default function CustomGamesApply() {
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-[#1a472a]">What she's written down</p>
-                  <span className="text-xs text-[#1a472a]/70">{filledCount} of {REQUIRED_FIELDS.length}</span>
+                  <span className="text-xs text-[#1a472a]/75">{filledCount} of {REQUIRED_FIELDS.length}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {REQUIRED_FIELDS.map(({ key, label }) => {
@@ -751,7 +751,7 @@ export default function CustomGamesApply() {
                         className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
                           filled
                             ? "border-[#7dd87d] bg-[#7dd87d]/15 text-[#1a472a]"
-                            : "border-[#1a472a]/15 text-[#1a472a]/50"
+                            : "border-[#1a472a]/15 text-[#1a472a]/75"
                         }`}
                       >
                         {filled && <CheckCircle2 className="w-3 h-3 text-[#4a7c59]" />}
@@ -833,7 +833,7 @@ export default function CustomGamesApply() {
                       {si + 1}. {section.title}
                     </h2>
                     {section.intro && (
-                      <p className="text-sm text-[#1a472a]/70 mb-4">{section.intro}</p>
+                      <p className="text-sm text-[#1a472a]/75 mb-4">{section.intro}</p>
                     )}
                     <div className="space-y-5 mt-4">
                       {section.fields.map((field) => {
@@ -870,7 +870,7 @@ export default function CustomGamesApply() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {field.hint && <p className="text-xs text-[#1a472a]/70 mt-1">{field.hint}</p>}
+                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
                             </div>
                           );
                         }
@@ -887,7 +887,7 @@ export default function CustomGamesApply() {
                                 placeholder={field.placeholder}
                                 className="mt-1"
                               />
-                              {field.hint && <p className="text-xs text-[#1a472a]/70 mt-1">{field.hint}</p>}
+                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
                             </div>
                           );
                         }
@@ -903,7 +903,7 @@ export default function CustomGamesApply() {
                                 rows={4}
                                 className="mt-1"
                               />
-                              {field.hint && <p className="text-xs text-[#1a472a]/70 mt-1">{field.hint}</p>}
+                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
                             </div>
                           );
                         }
@@ -917,7 +917,7 @@ export default function CustomGamesApply() {
                               placeholder={field.placeholder}
                               className="mt-1"
                             />
-                            {field.hint && <p className="text-xs text-[#1a472a]/70 mt-1">{field.hint}</p>}
+                            {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
                           </div>
                         );
                       })}
@@ -946,7 +946,7 @@ export default function CustomGamesApply() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                  <span className="text-xs text-[#1a472a]/60">
+                  <span className="text-xs text-[#1a472a]/75">
                     {filledCount} of {REQUIRED_FIELDS.length} required answers in place
                   </span>
                   <Button

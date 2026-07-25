@@ -572,7 +572,7 @@ function ProjectDetailPanel({ applicationId }: { applicationId: number }) {
       {/* Dietary tags */}
       {dietaryTags.length > 0 && (
         <div>
-          <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+          <p className="text-white/60 text-[10px] uppercase tracking-widest mb-1">Diet</p>
           <div className="flex flex-wrap gap-1">
             {dietaryTags.map((d: string) => (
               <span key={d} className="text-[10px] px-2 py-0.5 rounded-full bg-[#4a7c59]/30 text-[#7dd87d] font-medium capitalize">
@@ -586,7 +586,7 @@ function ProjectDetailPanel({ applicationId }: { applicationId: number }) {
       {/* All answer fields */}
       {visible.map(([label, value]) => (
         <div key={label}>
-          <p className="text-white/50 text-[10px] uppercase tracking-widest mb-0.5">{label}</p>
+          <p className="text-white/60 text-[10px] uppercase tracking-widest mb-0.5">{label}</p>
           <p className="text-white/85 text-xs leading-relaxed">{String(value)}</p>
         </div>
       ))}

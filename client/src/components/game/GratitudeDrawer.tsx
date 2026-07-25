@@ -58,7 +58,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose, bountyId 
           </button>
         </div>
 
-        <p className="text-sm text-[#1a472a]/70">to {recipientName}</p>
+        <p className="text-sm text-[#1a472a]/75">to {recipientName}</p>
 
         {/* Leaf token selector */}
         <div className="flex gap-2 justify-center py-2">

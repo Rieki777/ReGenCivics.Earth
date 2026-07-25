@@ -31,7 +31,7 @@ export function BountyCard({ bounty, isAuthenticated, mine, claimingRoleId, onCl
     <div className="group flex flex-col rounded-xl border border-white/12 bg-[#0d2818]/70 p-4 transition-all hover:border-[#7dd87d]/40 hover:shadow-[0_0_24px_-6px_rgba(125,216,125,0.35)]">
       {/* Provenance */}
       {bounty.recordingTitle ? (
-        <div className="mb-2 text-xs text-white/55">
+        <div className="mb-2 text-xs text-white/60">
           {provenance ? (
             <a href={provenance} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#7dd87d]/90 hover:text-[#7dd87d] hover:underline" onClick={(e) => e.stopPropagation()}>
               From: {bounty.recordingTitle} <ExternalLink className="w-3 h-3" />
@@ -55,7 +55,7 @@ export function BountyCard({ bounty, isAuthenticated, mine, claimingRoleId, onCl
       {/* Evidence quote */}
       {bounty.evidenceQuote ? (
         <p className="mt-2 flex gap-1.5 text-xs italic text-white/60 line-clamp-2">
-          <Quote className="w-3 h-3 shrink-0 mt-0.5 text-white/40" aria-hidden />
+          <Quote className="w-3 h-3 shrink-0 mt-0.5 text-white/60" aria-hidden />
           {bounty.evidenceQuote}
         </p>
       ) : (
@@ -82,7 +82,7 @@ export function BountyCard({ bounty, isAuthenticated, mine, claimingRoleId, onCl
 
       {/* Footer: freshness + claim */}
       <div className="mt-4 flex items-end justify-between gap-3 pt-3 border-t border-white/8">
-        <div className="text-[11px] text-white/45 space-y-0.5">
+        <div className="text-[11px] text-white/60 space-y-0.5">
           <div>{freshness(bounty.createdAt)}</div>
           {closing ? <div className="inline-flex items-center gap-1 text-amber-300/80"><Clock className="w-3 h-3" />{closing}</div> : null}
         </div>
@@ -108,7 +108,7 @@ export function BountyCard({ bounty, isAuthenticated, mine, claimingRoleId, onCl
                   Claim
                 </Button>
               ) : (
-                <span className="text-[11px] text-white/40">sign in to claim</span>
+                <span className="text-[11px] text-white/60">sign in to claim</span>
               )}
             </div>
           ))}

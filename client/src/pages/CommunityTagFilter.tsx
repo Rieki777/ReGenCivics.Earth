@@ -192,7 +192,7 @@ export default function CommunityTagFilter() {
                               {post.content.replace(/[#*_~`]/g, "").slice(0, 120)}
                             </p>
                             <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs" style={{ fontFamily: "var(--font-body)" }}>
-                              <span className="font-medium text-[#4a7c59]/70">{post.authorName}</span>
+                              <span className="font-medium text-[#1a472a]/75">{post.authorName}</span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {timeAgo(post.createdAt)}

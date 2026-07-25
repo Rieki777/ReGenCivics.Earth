@@ -35,12 +35,12 @@ export function FreeVoyageLadder({ onDark = false }: { onDark?: boolean }) {
       : "border bg-card",
     heading: onDark ? "text-white" : "text-foreground",
     sub: onDark ? "text-white/70" : "text-muted-foreground",
-    tileUnlit: onDark ? "border-white/10 bg-white/5 text-white/40" : "border-[#4a7c59]/20 bg-[#4a7c59]/5 text-muted-foreground",
+    tileUnlit: onDark ? "border-white/10 bg-white/5 text-white/60" : "border-[#4a7c59]/20 bg-[#4a7c59]/5 text-muted-foreground",
     tileLitText: onDark ? "text-white" : "text-foreground",
     iconUnlit: onDark ? "text-white/30" : "text-muted-foreground/40",
     label: onDark ? "text-white/60" : "text-muted-foreground",
     readout: onDark ? "text-white/85" : "text-foreground/85",
-    live: onDark ? "text-white/55" : "text-muted-foreground",
+    live: onDark ? "text-white/60" : "text-muted-foreground",
     backLink: onDark ? "text-white/60 hover:text-white" : "text-muted-foreground hover:text-foreground",
   };
 

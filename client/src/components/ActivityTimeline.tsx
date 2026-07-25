@@ -109,7 +109,7 @@ export function ActivityTimeline({ email, contactType, contactId }: ActivityTime
                     <MessageSquare className="w-3 h-3" />
                     Note by {item.authorName}
                   </div>
-                  <p className="mt-1 text-[#1a472a]/70 whitespace-pre-wrap">{item.note}</p>
+                  <p className="mt-1 text-[#1a472a]/75 whitespace-pre-wrap">{item.note}</p>
                   <p className="text-[10px] text-amber-500/60 mt-1">{item.date.toLocaleString()}</p>
                 </div>
               )}

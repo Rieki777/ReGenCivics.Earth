@@ -126,7 +126,7 @@ export default function GovBackField() {
                 {item.reason && (
                   <p className="text-white/70 text-xs mt-2 italic">Why parked: {item.reason}</p>
                 )}
-                <div className="flex items-center gap-3 text-[10px] text-white/45 mt-3">
+                <div className="flex items-center gap-3 text-[10px] text-white/60 mt-3">
                   <Clock className="w-3 h-3" />
                   <span>Parked {new Date(item.createdAt).toLocaleDateString()}</span>
                 </div>

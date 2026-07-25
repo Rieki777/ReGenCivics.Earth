@@ -158,7 +158,7 @@ export default function AdminApplicationDetail() {
               <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
                 {application.projectName}
               </h1>
-              <div className="flex items-center gap-4 text-[#1a472a]/70">
+              <div className="flex items-center gap-4 text-[#1a472a]/75">
                 <span>{application.location}</span>
                 <span>•</span>
                 <span className="capitalize">{application.projectType.replace("_", " ")}</span>
@@ -332,7 +332,7 @@ export default function AdminApplicationDetail() {
                   <details>
                     <summary className="cursor-pointer text-2xl font-bold text-[#1a472a]">
                       Conversation with the Gardener
-                      <span className="ml-2 text-sm font-normal text-[#1a472a]/60">{turns.length} turns</span>
+                      <span className="ml-2 text-sm font-normal text-[#1a472a]/75">{turns.length} turns</span>
                     </summary>
                     <div className="mt-4 space-y-2 max-h-[32rem] overflow-y-auto">
                       {turns.map((t, i) => (

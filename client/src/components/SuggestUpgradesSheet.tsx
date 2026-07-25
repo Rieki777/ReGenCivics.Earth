@@ -390,7 +390,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
             <Wrench className="w-5 h-5 text-[#7dd87d]" />
             Help Improve This Tool
           </SheetTitle>
-          <SheetDescription className="text-[#1a472a]/70">
+          <SheetDescription className="text-[#1a472a]/75">
             Suggest improvements, vote on ideas, and help shape the future of Crowd Pooling!
           </SheetDescription>
         </SheetHeader>
@@ -586,7 +586,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                               </span>
                             </div>
                           </div>
-                          <p className="text-sm text-[#1a472a]/70 mt-1">{idea.description}</p>
+                          <p className="text-sm text-[#1a472a]/75 mt-1">{idea.description}</p>
                           
                           {/* Comments section */}
                           <div className="mt-3">

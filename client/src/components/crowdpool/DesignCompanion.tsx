@@ -198,7 +198,7 @@ export function DesignCompanion({
             <Sparkles className="w-5 h-5 text-[#4a7c59]" />
             Design coach
           </SheetTitle>
-          <SheetDescription className="text-xs text-[#1a472a]/70">
+          <SheetDescription className="text-xs text-[#1a472a]/75">
             A second set of eyes on your campaign. Suggestions only. You choose what to add, and
             nothing here blocks you from launching.
           </SheetDescription>
@@ -229,7 +229,7 @@ export function DesignCompanion({
               ))}
 
               {pending && (
-                <div className="flex items-center gap-2 text-xs text-[#1a472a]/70">
+                <div className="flex items-center gap-2 text-xs text-[#1a472a]/75">
                   <span className="w-2 h-2 rounded-full bg-[#4a7c59] animate-pulse" />
                   Thinking it through...
                 </div>
@@ -239,7 +239,7 @@ export function DesignCompanion({
             {/* Live coach suggestions */}
             {!errored && suggestions.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-[11px] font-semibold text-[#1a472a]/60 uppercase tracking-wide">
+                <p className="text-[11px] font-semibold text-[#1a472a]/75 uppercase tracking-wide">
                   Suggested additions
                 </p>
                 {suggestions.map((s, i) => (
@@ -254,13 +254,13 @@ export function DesignCompanion({
             )}
 
             {coverageNote && !errored && (
-              <p className="mt-3 text-xs text-[#1a472a]/70 leading-relaxed">{coverageNote}</p>
+              <p className="mt-3 text-xs text-[#1a472a]/75 leading-relaxed">{coverageNote}</p>
             )}
 
             {/* Deterministic fallback when the live coach is unavailable */}
             {errored && (
               <div className="mt-4 space-y-3">
-                <p className="text-xs text-[#1a472a]/70 leading-relaxed">
+                <p className="text-xs text-[#1a472a]/75 leading-relaxed">
                   The live coach is resting. Here is what the built-in guide notices about the balance
                   of capitals in your draft.
                 </p>
@@ -365,7 +365,7 @@ function SuggestionCard({
               </span>
             )}
             {suggestion.estimatedValue > 0 && (
-              <span className="text-[11px] text-[#1a472a]/70">
+              <span className="text-[11px] text-[#1a472a]/75">
                 {formatMoney(suggestion.estimatedValue, currencySymbol)}
               </span>
             )}
@@ -398,7 +398,7 @@ function SuggestionCard({
         </Button>
       </div>
       {suggestion.rationale && (
-        <p className="text-xs text-[#1a472a]/70 mt-2 leading-relaxed">{suggestion.rationale}</p>
+        <p className="text-xs text-[#1a472a]/75 mt-2 leading-relaxed">{suggestion.rationale}</p>
       )}
     </div>
   );

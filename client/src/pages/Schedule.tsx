@@ -77,7 +77,7 @@ function chapterUrl(youtubeUrl: string, tSeconds: number): string {
 function RecordingDetail({ id }: { id: number }) {
   const { data, isLoading } = trpc.recordings.getPublic.useQuery({ id });
   const [showTranscript, setShowTranscript] = useState(false);
-  if (isLoading) return <p className="text-white/50 text-sm px-3 pb-3">Loading…</p>;
+  if (isLoading) return <p className="text-white/60 text-sm px-3 pb-3">Loading…</p>;
   if (!data) return null;
   const chapters = (data.chaptersJson as Array<{ tSeconds: number; title: string }> | null) ?? [];
   const decisions = (data.decisionsJson as string[] | null) ?? [];
@@ -86,7 +86,7 @@ function RecordingDetail({ id }: { id: number }) {
   const yt = data.youtubeUrl;
 
   if (!data.overview && chapters.length === 0 && decisions.length === 0 && actionItems.length === 0 && transcript.length === 0) {
-    return <p className="text-white/40 text-sm px-3 pb-3">No summary yet for this session.</p>;
+    return <p className="text-white/60 text-sm px-3 pb-3">No summary yet for this session.</p>;
   }
 
   return (
@@ -104,7 +104,7 @@ function RecordingDetail({ id }: { id: number }) {
                     <span className="text-[#7dd87d]/70 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}
                   </a>
                 ) : (
-                  <span className="text-white/80"><span className="text-white/40 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}</span>
+                  <span className="text-white/80"><span className="text-white/60 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}</span>
                 )}
               </li>
             ))}
@@ -145,7 +145,7 @@ function RecordingDetail({ id }: { id: number }) {
                   {yt ? (
                     <a href={chapterUrl(yt, seg.start)} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d]/60 font-mono mr-2 hover:text-[#7dd87d]">{fmtTs(seg.start)}</a>
                   ) : (
-                    <span className="text-white/40 font-mono mr-2">{fmtTs(seg.start)}</span>
+                    <span className="text-white/60 font-mono mr-2">{fmtTs(seg.start)}</span>
                   )}
                   {seg.text}
                 </p>

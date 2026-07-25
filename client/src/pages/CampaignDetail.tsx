@@ -423,7 +423,7 @@ export default function CampaignDetail() {
                   value={subscribeEmail}
                   onChange={(e) => setSubscribeEmail(e.target.value)}
                   placeholder="Your email for campaign updates"
-                  className="bg-white border-[#4a7c59]/40 text-[#1a472a] placeholder:text-[#1a472a]/50"
+                  className="bg-white border-[#4a7c59]/40 text-[#1a472a] placeholder:text-[#1a472a]/75"
                 />
               </div>
               <Button
@@ -473,7 +473,7 @@ export default function CampaignDetail() {
               <Layers className="w-5 h-5 text-[#4a7c59]" />
               The whole capital stack
             </h2>
-            <p className="text-sm text-[#1a472a]/70 mb-4">
+            <p className="text-sm text-[#1a472a]/75 mb-4">
               What money can't buy, pooled here. What it can, through the funders we recommend.
             </p>
             <div className="w-full flex rounded-full overflow-hidden h-4 bg-[#1a472a]/10">
@@ -770,7 +770,7 @@ export default function CampaignDetail() {
             <Heart className="w-5 h-5 text-[#4a7c59]" />
             Recommended ways to fund this project
           </h2>
-          <p className="text-sm text-[#1a472a]/70 mb-6">
+          <p className="text-sm text-[#1a472a]/75 mb-6">
             Some needs take money we don't hold. These are the funders we point projects to. You give on their site and they get it to the project.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -788,16 +788,16 @@ export default function CampaignDetail() {
               {maEarthLink && maEarthLink.cachedRaised != null && (
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3 text-sm">
                   <span className="font-bold text-[#4a7c59] text-lg">{formatCurrency(maEarthLink.cachedRaised)}</span>
-                  <span className="text-[#1a472a]/70">raised</span>
+                  <span className="text-[#1a472a]/75">raised</span>
                   {maEarthLink.cachedPercent != null && (
-                    <span className="text-[#1a472a]/70">· {maEarthLink.cachedPercent}% funded</span>
+                    <span className="text-[#1a472a]/75">· {maEarthLink.cachedPercent}% funded</span>
                   )}
                   {maEarthLink.cachedContributorCount != null && (
-                    <span className="text-[#1a472a]/70">· {maEarthLink.cachedContributorCount} givers</span>
+                    <span className="text-[#1a472a]/75">· {maEarthLink.cachedContributorCount} givers</span>
                   )}
                 </div>
               )}
-              <p className="text-xs text-[#1a472a]/70 mb-4">
+              <p className="text-xs text-[#1a472a]/75 mb-4">
                 Donations run through Ma Earth. We recommend them and don't take a cut.
               </p>
               <div className="mt-auto">
@@ -807,7 +807,7 @@ export default function CampaignDetail() {
                     Give on Ma Earth
                   </Button>
                 </a>
-                <p className="text-xs text-[#1a472a]/60 mt-2 text-center">You'll finish this on their site.</p>
+                <p className="text-xs text-[#1a472a]/75 mt-2 text-center">You'll finish this on their site.</p>
               </div>
             </div>
             {/* GoSteward: regenerative loans */}
@@ -824,16 +824,16 @@ export default function CampaignDetail() {
               {goStewardLink && goStewardLink.cachedRaised != null && (
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3 text-sm">
                   <span className="font-bold text-[#4a7c59] text-lg">{formatCurrency(goStewardLink.cachedRaised)}</span>
-                  <span className="text-[#1a472a]/70">committed</span>
+                  <span className="text-[#1a472a]/75">committed</span>
                   {goStewardLink.cachedPercent != null && (
-                    <span className="text-[#1a472a]/70">· {goStewardLink.cachedPercent}% funded</span>
+                    <span className="text-[#1a472a]/75">· {goStewardLink.cachedPercent}% funded</span>
                   )}
                   {goStewardLink.cachedContributorCount != null && (
-                    <span className="text-[#1a472a]/70">· {goStewardLink.cachedContributorCount} lenders</span>
+                    <span className="text-[#1a472a]/75">· {goStewardLink.cachedContributorCount} lenders</span>
                   )}
                 </div>
               )}
-              <p className="text-xs text-[#1a472a]/70 mb-4">
+              <p className="text-xs text-[#1a472a]/75 mb-4">
                 Loans run through Steward, who also help projects design their whole capital stack.
               </p>
               <div className="mt-auto">
@@ -843,7 +843,7 @@ export default function CampaignDetail() {
                     Lend through Steward
                   </Button>
                 </a>
-                <p className="text-xs text-[#1a472a]/60 mt-2 text-center">You'll finish this on their site.</p>
+                <p className="text-xs text-[#1a472a]/75 mt-2 text-center">You'll finish this on their site.</p>
               </div>
             </div>
           </div>
@@ -860,7 +860,7 @@ export default function CampaignDetail() {
             Pool Ledger
           </h2>
           {!activity || activity.length === 0 ? (
-            <p className="text-sm text-[#1a472a]/70">
+            <p className="text-sm text-[#1a472a]/75">
               Every pledge, delivery, and thank-you lands here. Nothing yet, this pool is just getting started.
             </p>
           ) : (
@@ -885,7 +885,7 @@ export default function CampaignDetail() {
                         {event.kind === 'pledged' && ' pledged '}
                         {event.title}
                       </p>
-                      <p className="text-xs text-[#1a472a]/70 capitalize">
+                      <p className="text-xs text-[#1a472a]/75 capitalize">
                         {event.contributionType} · {formatCurrency(event.estimatedValue || 0)} · {new Date(event.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
@@ -913,7 +913,7 @@ export default function CampaignDetail() {
             Updates ({updates?.length ?? 0})
           </h2>
           {!updates || updates.length === 0 ? (
-            <p className="text-sm text-[#1a472a]/70">
+            <p className="text-sm text-[#1a472a]/75">
               No updates yet. Follow the campaign to hear when the first one lands.
             </p>
           ) : (
@@ -926,7 +926,7 @@ export default function CampaignDetail() {
                     </span>
                     <h3 className="font-bold text-[#1a472a]">{update.title}</h3>
                   </div>
-                  <p className="text-xs text-[#1a472a]/70 mb-2">
+                  <p className="text-xs text-[#1a472a]/75 mb-2">
                     {update.publishedAt ? new Date(update.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
                   </p>
                   <p className="text-sm text-[#1a472a]/80 whitespace-pre-line">{update.body}</p>
@@ -973,7 +973,7 @@ export default function CampaignDetail() {
                       {c.location}
                     </p>
                   )}
-                  <p className="text-xs text-[#1a472a]/70 mb-3 line-clamp-2 flex-1">
+                  <p className="text-xs text-[#1a472a]/75 mb-3 line-clamp-2 flex-1">
                     {c.description?.slice(0, 100)}{c.description && c.description.length > 100 ? "…" : ""}
                   </p>
                   {cTotal > 0 && (
@@ -1165,7 +1165,7 @@ function NeedsRegistry({
           {coveredCount} of 9 forms of capital
         </span>
       </div>
-      <p className="text-sm text-[#1a472a]/70 mb-6">
+      <p className="text-sm text-[#1a472a]/75 mb-6">
         What this project needs, organized by the capital it feeds. Claim a slot and the steward takes it from there.
       </p>
       <div className="space-y-8">
@@ -1180,7 +1180,7 @@ function NeedsRegistry({
                 <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color }}>
                   {CAPITAL_LABELS[capital].label} Capital
                 </h3>
-                <p className="text-xs text-[#1a472a]/70">{CAPITAL_LABELS[capital].blurb}</p>
+                <p className="text-xs text-[#1a472a]/75">{CAPITAL_LABELS[capital].blurb}</p>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 {groupItems.map((item: any) => (
@@ -1301,13 +1301,13 @@ function NeedCard({
             <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${claimedPct}%`, backgroundColor: `${accent}59` }} />
             <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${deliveredPct}%`, backgroundColor: accent }} />
           </div>
-          <p className="text-xs text-[#1a472a]/70 mt-1.5">
+          <p className="text-xs text-[#1a472a]/75 mt-1.5">
             {delivered} of {wanted} delivered
             {claimed > delivered ? `, ${claimed - delivered} more claimed` : ''}
           </p>
         </div>
         {(item.needDeadline || item.shiftStartsAt || item.loanWindowStart) && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/70">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/75">
             {item.needDeadline && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" style={{ color: accent }} />
@@ -1329,7 +1329,7 @@ function NeedCard({
           </div>
         )}
         {kind === 'crypto' && (
-          <p className="text-xs text-[#1a472a]/60 flex items-start gap-1">
+          <p className="text-xs text-[#1a472a]/75 flex items-start gap-1">
             <Coins className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: accent }} />
             {CRYPTO_PAYMENT_CONTEXT.helperText}
           </p>

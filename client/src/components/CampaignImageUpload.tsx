@@ -235,7 +235,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="w-8 h-8 animate-spin text-[#7dd87d]" />
-              <p className="text-sm text-[#1a472a]/70">Uploading your photo...</p>
+              <p className="text-sm text-[#1a472a]/75">Uploading your photo...</p>
             </div>
           ) : imageCount >= maxImages ? (
             <div className="flex flex-col items-center gap-2">
@@ -245,7 +245,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           ) : (
             <>
               <ImagePlus className="w-8 h-8 mx-auto text-[#4a7c59] mb-2" />
-              <p className="text-sm text-[#1a472a]/70">
+              <p className="text-sm text-[#1a472a]/75">
                 Drop images here or tap to browse
               </p>
               <p className="text-xs text-[#1a472a]/80 mt-1">

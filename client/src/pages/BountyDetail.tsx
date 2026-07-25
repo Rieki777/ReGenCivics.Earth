@@ -80,7 +80,7 @@ export default function BountyDetail() {
             </Badge>
           ) : null}
           {b.tier ? <Badge className="bg-white/8 text-white/60 border-white/15 text-xs capitalize">{TIER_EFFORT[b.tier] ?? b.tier}</Badge> : null}
-          <Badge className="bg-white/8 text-white/50 border-white/15 text-xs capitalize">{b.workStatus}</Badge>
+          <Badge className="bg-white/8 text-white/60 border-white/15 text-xs capitalize">{b.workStatus}</Badge>
         </div>
         <h1 className="text-2xl md:text-4xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)" }}>{b.title}</h1>
         <div className="mb-6"><RewardAmount amount={amount} tokenType={b.tokenType} breakdown={b.valuationBreakdown} size="lg" /></div>
@@ -89,10 +89,10 @@ export default function BountyDetail() {
         {b.evidenceQuote ? (
           <div className="mb-6 rounded-xl border border-white/10 bg-[#0d2818]/60 p-4">
             <p className="flex gap-2 text-sm italic text-white/70">
-              <Quote className="w-4 h-4 shrink-0 mt-0.5 text-white/40" aria-hidden /> {b.evidenceQuote}
+              <Quote className="w-4 h-4 shrink-0 mt-0.5 text-white/60" aria-hidden /> {b.evidenceQuote}
             </p>
             {b.recordingTitle ? (
-              <p className="mt-2 text-xs text-white/50">
+              <p className="mt-2 text-xs text-white/60">
                 From:{" "}
                 {provenance ? (
                   <a href={provenance} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#7dd87d]/90 hover:underline">

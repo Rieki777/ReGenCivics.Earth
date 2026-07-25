@@ -756,7 +756,7 @@ export default function CrowdPoolingTool() {
                   onChange={(e) => setHasNoTarget(e.target.checked)}
                   className="h-4 w-4 rounded border-[#7dd87d] text-[#4a7c59] focus:ring-[#7dd87d]"
                 />
-                <label htmlFor="noTarget" className="text-xs text-[#1a472a]/70 cursor-pointer">
+                <label htmlFor="noTarget" className="text-xs text-[#1a472a]/75 cursor-pointer">
                   No target (unlimited)
                 </label>
               </div>
@@ -901,7 +901,7 @@ export default function CrowdPoolingTool() {
                   onChange={(e) => setSaveAsDefault(e.target.checked)}
                   className="h-4 w-4 rounded border-[#7dd87d] text-[#4a7c59]"
                 />
-                <label htmlFor="saveAsDefault" className="text-sm text-[#1a472a]/70">
+                <label htmlFor="saveAsDefault" className="text-sm text-[#1a472a]/75">
                   Set as default form (auto-load on new proposals)
                 </label>
               </div>
@@ -1353,7 +1353,7 @@ export default function CrowdPoolingTool() {
                           className="bg-white border-[#7dd87d]/30 w-full"
                         />
                         {contribution.category === 'crypto' && (
-                          <p className="text-xs text-[#1a472a]/70">
+                          <p className="text-xs text-[#1a472a]/75">
                             {CRYPTO_PAYMENT_CONTEXT.fiatNote}
                           </p>
                         )}
@@ -1412,7 +1412,7 @@ export default function CrowdPoolingTool() {
                 {CAPITAL_TYPES.map((capital) => (
                   <div key={capital}>
                     <p className="text-xs font-bold text-[#1a472a]">{CAPITAL_LABELS[capital].label} Capital</p>
-                    <p className="text-[11px] text-[#1a472a]/70 mb-1.5">{CAPITAL_LABELS[capital].blurb}</p>
+                    <p className="text-[11px] text-[#1a472a]/75 mb-1.5">{CAPITAL_LABELS[capital].blurb}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {ROLE_TEMPLATES_BY_CAPITAL[capital].map((role) => (
                         <button

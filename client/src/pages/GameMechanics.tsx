@@ -889,7 +889,7 @@ function GameSimulator() {
               );
             })}
           </ol>
-          <p className="text-[10px] text-white/45 mt-2 px-2">
+          <p className="text-[10px] text-white/60 mt-2 px-2">
             Reverting rolls your simulator back to exactly that state and trims the history after it.
           </p>
         </div>
@@ -1286,7 +1286,7 @@ function MiniSectionSimulator({
                 >
                   {changed ? (
                     <>
-                      <span className="text-white/40 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
+                      <span className="text-white/60 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
                       {current}{v.unit ?? ""}
                     </>
                   ) : (
@@ -1330,7 +1330,7 @@ function MiniSectionSimulator({
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Why do you want to change these values?"
           rows={2}
-          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/40 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
+          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/60 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
         />
       </div>
 
@@ -1482,7 +1482,7 @@ function BountyValuationSection() {
       {/* Learned demand factors */}
       <div>
         <h3 className="text-white/90 font-semibold mb-1">What the engine has learned</h3>
-        <p className="text-white/50 text-xs mb-3 max-w-2xl">
+        <p className="text-white/60 text-xs mb-3 max-w-2xl">
           Demand factors per circle and size. Above 1 means that kind of bounty kept going unclaimed, so the reward
           rose. Precedent is the median of what similar work has actually paid.
         </p>
@@ -1492,7 +1492,7 @@ function BountyValuationSection() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/50 text-left border-b border-white/10">
+                <tr className="text-white/60 text-left border-b border-white/10">
                   <th className="py-2 pr-4 font-medium">Circle</th>
                   <th className="py-2 pr-4 font-medium">Size</th>
                   <th className="py-2 pr-4 font-medium">Demand</th>
@@ -1507,7 +1507,7 @@ function BountyValuationSection() {
                     <td className="py-2 pr-4 text-white/70 capitalize">{d.scopeTier}</td>
                     <td className="py-2 pr-4 font-mono text-[#7dd87d]">{Number(d.factor).toFixed(2)}x</td>
                     <td className="py-2 pr-4 font-mono text-white/70">{d.precedentMedian != null ? `${fmtNum(d.precedentMedian)} $ReGen` : "—"}</td>
-                    <td className="py-2 text-white/50">{d.sampleSize}</td>
+                    <td className="py-2 text-white/60">{d.sampleSize}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1523,7 +1523,7 @@ function BountyValuationSection() {
           <p className="text-white/70 text-sm">
             <span className="font-mono text-[#7dd87d]">{fmtNum(info.committed)}</span> committed of{" "}
             <span className="font-mono">{fmtNum(info.seasonBudget)}</span> $ReGen
-            <span className="text-white/50"> ({fmtNum(Math.max(0, info.seasonBudget - info.committed))} available)</span>
+            <span className="text-white/60"> ({fmtNum(Math.max(0, info.seasonBudget - info.committed))} available)</span>
           </p>
         ) : (
           <p className="text-white/60 text-sm">
@@ -1587,7 +1587,7 @@ function BountyValuationSection() {
             </p>
           </div>
         ) : (
-          <p className="text-white/40 text-sm">Computing…</p>
+          <p className="text-white/60 text-sm">Computing…</p>
         )}
       </div>
     </div>

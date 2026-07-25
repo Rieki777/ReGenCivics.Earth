@@ -819,7 +819,7 @@ export default function CreateCampaign() {
                 <h1 className="text-2xl md:text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                   Create Your Campaign
                 </h1>
-                <p className="text-[#1a472a]/70 mt-2 max-w-md mx-auto">
+                <p className="text-[#1a472a]/75 mt-2 max-w-md mx-auto">
                   Select your project from the list of season applicants. Your application data will be automatically loaded into the campaign.
                 </p>
               </div>
@@ -961,7 +961,7 @@ export default function CreateCampaign() {
           <h1 className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Create Your Crowd Pooling Campaign
           </h1>
-          <p className="text-[#1a472a]/70 max-w-2xl mx-auto mb-4">
+          <p className="text-[#1a472a]/75 max-w-2xl mx-auto mb-4">
             We don't need as much money as we think we do! Pool diverse forms of capital from your community: land, equipment, roles, skills, and more. Skip straight to what your project actually needs to launch.
           </p>
           <p className="text-sm text-[#4a7c59] max-w-xl mx-auto">
@@ -1021,7 +1021,7 @@ export default function CreateCampaign() {
                   <DialogTitle>Choose a Campaign Template</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 mt-4">
-                  <p className="text-sm text-[#1a472a]/70">
+                  <p className="text-sm text-[#1a472a]/75">
                     Start with a pre-filled template for common project types:
                   </p>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -1110,7 +1110,7 @@ export default function CreateCampaign() {
                     <DialogTitle>Import from Application</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-3 mt-4">
-                    <p className="text-sm text-[#1a472a]/70">
+                    <p className="text-sm text-[#1a472a]/75">
                       Select an application to pre-fill your campaign details:
                     </p>
                     {userApplications.map((app: any) => (
@@ -1342,7 +1342,7 @@ export default function CreateCampaign() {
                         placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
                         className="bg-white border-[#7dd87d]/30"
                       />
-                      <p className="text-xs text-[#4a7c59]/70 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
+                      <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
                     </div>
                   </div>
                 </div>
@@ -1428,7 +1428,7 @@ export default function CreateCampaign() {
                   <Camera className="w-5 h-5 text-[#4a7c59]" />
                   Project Photos
                 </h3>
-                <p className="text-sm text-[#1a472a]/70 mb-4">
+                <p className="text-sm text-[#1a472a]/75 mb-4">
                   Add photos of your land, team, and progress to help contributors understand your project.
                   The first image will be used as your campaign cover photo.
                 </p>
@@ -1772,7 +1772,7 @@ function LandSection({
                   className="bg-white border-[#7dd87d]/30"
                 />
               </div>
-              <p className="text-xs text-[#4a7c59]/70 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
+              <p className="text-xs text-[#1a472a]/75 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
             </div>
             
             {/* Estimated Value */}
@@ -2321,7 +2321,7 @@ function RolesSection({
               >
                 <div className="text-left">
                   <span className="font-medium text-[#1a472a]">{info.label} Capital</span>
-                  <p className="text-xs text-[#1a472a]/70">{info.blurb}</p>
+                  <p className="text-xs text-[#1a472a]/75">{info.blurb}</p>
                 </div>
                 {selectedCategory === capital ? (
                   <ChevronUp className="w-4 h-4 text-[#1a472a]/80 flex-shrink-0" />
@@ -2812,7 +2812,7 @@ function FinancialTargetSection({
           <Info className="w-5 h-5 text-[#d4a017] flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-medium text-[#1a472a]">Why set a crypto target?</h3>
-            <p className="text-sm text-[#1a472a]/70 mt-1">
+            <p className="text-sm text-[#1a472a]/75 mt-1">
               Crowd pooling covers land, equipment, and skills directly, and some things still need money:
               permits, insurance, emergency funds, and operating costs. Your crypto target is tracked right
               here on your campaign, pledged and delivered wallet to wallet. National currency runs through
@@ -2904,7 +2904,7 @@ function FinancialTargetSection({
               }}
               className="w-24 bg-white border-[#7dd87d]/30 text-center text-lg font-bold"
             />
-            <span className="text-[#1a472a]/70">days</span>
+            <span className="text-[#1a472a]/75">days</span>
           </div>
           
           <div className="flex flex-wrap gap-2">

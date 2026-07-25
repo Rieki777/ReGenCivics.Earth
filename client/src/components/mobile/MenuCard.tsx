@@ -45,7 +45,7 @@ export function MenuCard({ label, sub, href, icon, primary = false, onSelect }: 
       <div className="flex-shrink-0">{renderIcon()}</div>
       <div className="flex-1 min-w-0 text-left">
         <div className={`font-bold text-sm ${primary ? "text-[#1a472a]" : "text-white"}`}>{label}</div>
-        {sub && <div className={`text-[11px] ${primary ? "text-[#1a472a]/70" : "text-white/70"}`}>{sub}</div>}
+        {sub && <div className={`text-[11px] ${primary ? "text-[#1a472a]/75" : "text-white/70"}`}>{sub}</div>}
       </div>
     </Link>
   );

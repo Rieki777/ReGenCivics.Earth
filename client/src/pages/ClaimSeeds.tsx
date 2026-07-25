@@ -702,7 +702,7 @@ export default function ClaimSeeds() {
                             height={400}
                             loading="lazy"
                           />
-                          <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                          <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                             <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                             <li>Look at the top right of the page</li>
                             <li>Find your account address (e.g., 0xaAaF…354e)</li>

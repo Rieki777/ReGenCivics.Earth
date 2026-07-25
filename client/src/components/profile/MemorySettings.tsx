@@ -67,14 +67,14 @@ export function MemorySettings() {
               >
                 <div className="text-white/75 text-sm">
                   {f.fact}
-                  <span className="text-white/35 text-xs ml-2">
+                  <span className="text-white/60 text-xs ml-2">
                     {new Date(f.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <button
                   onClick={() => deleteFact.mutate({ id: f.id })}
                   disabled={deleteFact.isPending}
-                  className="text-white/40 hover:text-white shrink-0"
+                  className="text-white/60 hover:text-white shrink-0"
                   title="Delete this note"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export function MemorySettings() {
           </div>
         </>
       ) : (
-        <p className="text-white/40 text-xs">
+        <p className="text-white/60 text-xs">
           {optIn
             ? "Nothing recorded yet. Notes appear within a day of your next quest completion or crew."
             : "Nothing is stored."}

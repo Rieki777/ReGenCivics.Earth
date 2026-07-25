@@ -242,7 +242,7 @@ export default function CommunityCategory() {
                 ))}
               </div>
               {sortMode === 'numerical' && (
-                <span className="text-white/40 text-xs">Lower number shows first</span>
+                <span className="text-white/60 text-xs">Lower number shows first</span>
               )}
             </div>
           )}
@@ -394,7 +394,7 @@ export default function CommunityCategory() {
 
                         {/* Meta info */}
                         <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
-                          <span className="font-medium text-[#4a7c59]/70">{post.authorName}</span>
+                          <span className="font-medium text-[#1a472a]/75">{post.authorName}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {timeAgo(post.createdAt)}

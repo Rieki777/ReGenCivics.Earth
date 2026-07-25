@@ -256,7 +256,7 @@ export function NotificationPreferences() {
                     <div className="ml-12 border-t border-[#1a472a]/10 pt-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Mail className="w-3.5 h-3.5 text-[#1a472a]/80" />
-                        <span className="text-xs font-medium text-[#1a472a]/70">
+                        <span className="text-xs font-medium text-[#1a472a]/75">
                           Email Routing
                         </span>
                       </div>
@@ -295,7 +295,7 @@ export function NotificationPreferences() {
                             return (
                               <span
                                 key={i}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/10 text-xs text-[#1a472a]/70"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/10 text-xs text-[#1a472a]/75"
                               >
                                 <Mail className="w-3 h-3" />
                                 {trimmed}
@@ -316,7 +316,7 @@ export function NotificationPreferences() {
         <div className="mt-5 p-3 bg-[#7dd87d]/10 rounded-lg border border-[#7dd87d]/20">
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-[#1a472a]/70 leading-relaxed">
+            <p className="text-xs text-[#1a472a]/75 leading-relaxed">
               <strong>How it works:</strong> Toggle switches control whether
               notifications are sent for each event type. Click any row to expand
               email routing options. Custom email addresses override the default

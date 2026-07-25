@@ -156,7 +156,7 @@ export function QuestStoryDetailModal({ story, onClose }: QuestStoryDetailModalP
             )}
             <div className="flex-1 min-w-0">
               <p className="text-[#1a472a] font-bold text-base">{name}</p>
-              <p className="text-[#1a472a]/65 text-sm">
+              <p className="text-[#1a472a]/75 text-sm">
                 {story.questTitle}
                 {dateStr ? ` · ${dateStr}` : ""}
               </p>

@@ -68,7 +68,7 @@ export function TokenBox({ tokenKey, label, publicBalance, privateBalance }: Tok
           {compact}
         </p>
         <p className="text-sm text-[#1a472a]/80 mt-1">{label}</p>
-        <p className="text-[11px] text-[#1a472a]/55 mt-1.5 leading-tight">
+        <p className="text-[11px] text-[#1a472a]/75 mt-1.5 leading-tight">
           <span className="whitespace-nowrap">{formatCompactNumber(publicBalance)} on Base</span>
           <span className="mx-1">·</span>
           <span className="whitespace-nowrap">{formatCompactNumber(privateBalance)} On the Cloud</span>

@@ -33,16 +33,16 @@ function RuleRow({ rule, onChanged }: {
     <div className="rounded-xl border border-[#4a7c59]/25 bg-white px-4 py-3 space-y-1.5">
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="outline" className="text-[10px] border-[#4a7c59]/40 text-[#4a7c59]">{rule.category.replace("_", " ")}</Badge>
-        <span className="text-[10px] text-[#1a472a]/50">weight {rule.weight.toFixed(2)} · last seen {new Date(rule.lastSeen).toLocaleDateString()}</span>
+        <span className="text-[10px] text-[#1a472a]/75">weight {rule.weight.toFixed(2)} · last seen {new Date(rule.lastSeen).toLocaleDateString()}</span>
         <span className="flex-1" />
         {!editing && (
           <>
-            <button title="Edit" className="text-[#1a472a]/50 hover:text-[#1a472a]" onClick={() => setEditing(true)}><Pencil className="w-3.5 h-3.5" /></button>
-            <button title="Demote (halve the weight)" className="text-[#1a472a]/50 hover:text-amber-700" disabled={update.isPending}
+            <button title="Edit" className="text-[#1a472a]/75 hover:text-[#1a472a]" onClick={() => setEditing(true)}><Pencil className="w-3.5 h-3.5" /></button>
+            <button title="Demote (halve the weight)" className="text-[#1a472a]/75 hover:text-amber-700" disabled={update.isPending}
               onClick={async () => { await update.mutateAsync({ ruleId: rule.id, weight: Math.max(0.1, rule.weight / 2) }); onChanged(); }}>
               <ArrowDown className="w-3.5 h-3.5" />
             </button>
-            <button title="Delete" className="text-[#1a472a]/50 hover:text-red-700" disabled={remove.isPending}
+            <button title="Delete" className="text-[#1a472a]/75 hover:text-red-700" disabled={remove.isPending}
               onClick={async () => { await remove.mutateAsync({ ruleId: rule.id }); onChanged(); }}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -65,7 +65,7 @@ function RuleRow({ rule, onChanged }: {
             }}>
             <Check className="w-4 h-4" />
           </button>
-          <button className="text-[#1a472a]/50" onClick={() => { setEditing(false); setText(rule.rule); }}><X className="w-4 h-4" /></button>
+          <button className="text-[#1a472a]/75" onClick={() => { setEditing(false); setText(rule.rule); }}><X className="w-4 h-4" /></button>
         </div>
       ) : (
         <p className="text-sm text-[#1a472a]">{rule.rule}</p>
@@ -101,11 +101,11 @@ export default function AdminVoiceRules() {
         <div>
           <Link href="/admin-create" className="text-xs text-[#4a7c59] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> The Harvest</Link>
           <h1 className="text-2xl font-bold text-[#1a472a]">Voice rules</h1>
-          <p className="text-xs text-[#1a472a]/60 mt-1">What the system has learned from your edits. Edit, demote, or delete anything. Rules decay unless your edits keep reinforcing them.</p>
+          <p className="text-xs text-[#1a472a]/75 mt-1">What the system has learned from your edits. Edit, demote, or delete anything. Rules decay unless your edits keep reinforcing them.</p>
         </div>
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Hard rules (immovable, always supreme)</h2>
+          <h2 className="text-sm font-semibold text-[#1a472a]/75 uppercase tracking-wide flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Hard rules (immovable, always supreme)</h2>
           {HARD_RULES.map((rule) => (
             <div key={rule} className="rounded-xl bg-[#1a472a] text-white/90 px-4 py-2.5 text-sm flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-[#7dd87d] flex-shrink-0" />{rule}
@@ -114,9 +114,9 @@ export default function AdminVoiceRules() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">Learned rules ({learned.length})</h2>
+          <h2 className="text-sm font-semibold text-[#1a472a]/75 uppercase tracking-wide">Learned rules ({learned.length})</h2>
           {learned.length === 0 && (
-            <p className="text-sm text-[#1a472a]/50">Nothing learned yet. Edit a draft on The Harvest, save it, and tap "mostly style" when the change was about how it sounds.</p>
+            <p className="text-sm text-[#1a472a]/75">Nothing learned yet. Edit a draft on The Harvest, save it, and tap "mostly style" when the change was about how it sounds.</p>
           )}
           {learned.map((rule) => (
             <RuleRow key={(rule as { id: number }).id} rule={rule as { id: number; category: string; rule: string; weight: number; lastSeen: string | Date }} onChanged={onChanged} />

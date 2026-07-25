@@ -119,7 +119,7 @@ export default function AdminCalls() {
           <div>
             <Link href="/admin" className="text-xs text-[#4a7c59] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> Admin</Link>
             <h1 className="text-2xl font-bold text-[#1a472a] flex items-center gap-2"><Phone className="w-6 h-6 text-[#4a7c59]" /> Call intelligence</h1>
-            <p className="text-xs text-[#1a472a]/60 mt-1">
+            <p className="text-xs text-[#1a472a]/75 mt-1">
               {list.data.ready
                 ? "What our community calls decided, committed to, and taught. Accepting records the team's judgment; nothing turns into a task on its own."
                 : "The call_insights table is not migrated yet."}
@@ -128,7 +128,7 @@ export default function AdminCalls() {
           <div className="flex gap-1.5">
             {(["all", "suggested", "accepted"] as const).map((f) => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${filter === f ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a]/70 border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${filter === f ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a]/75 border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
                 {f}
               </button>
             ))}
@@ -140,7 +140,7 @@ export default function AdminCalls() {
             <h2 className="text-sm font-semibold text-amber-800 uppercase tracking-wide">Awaiting review ({openSuggestions.length}, oldest first)</h2>
             {openSuggestions.slice(0, 8).map((s) => (
               <div key={s.id} className="flex items-center gap-2">
-                <span className="text-[10px] text-[#1a472a]/40 w-16 flex-shrink-0">{timeAgo(s.createdAt)}</span>
+                <span className="text-[10px] text-[#1a472a]/75 w-16 flex-shrink-0">{timeAgo(s.createdAt)}</span>
                 <div className="flex-1 min-w-0"><InsightRow insight={s} onChanged={onChanged} /></div>
               </div>
             ))}
@@ -148,9 +148,9 @@ export default function AdminCalls() {
         )}
 
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-[#1a472a]/70 uppercase tracking-wide">By call ({list.data.calls.length})</h2>
+          <h2 className="text-sm font-semibold text-[#1a472a]/75 uppercase tracking-wide">By call ({list.data.calls.length})</h2>
           {list.data.calls.length === 0 && (
-            <p className="text-sm text-[#1a472a]/50">Nothing extracted yet. Insights appear within an hour of a call's transcript landing.</p>
+            <p className="text-sm text-[#1a472a]/75">Nothing extracted yet. Insights appear within an hour of a call's transcript landing.</p>
           )}
           {list.data.calls.map((call) => (
             <div key={call.recordingId} className="rounded-2xl border border-[#4a7c59]/25 bg-white p-4 space-y-2">

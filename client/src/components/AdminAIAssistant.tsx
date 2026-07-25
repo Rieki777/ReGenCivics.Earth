@@ -328,7 +328,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       <button
                         key={s}
                         onClick={() => sendMessage(s)}
-                        className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/8 border border-[#1a472a]/20 text-[#1a472a]/70 hover:bg-[#7dd87d]/20 hover:text-[#1a472a] hover:border-[#7dd87d]/50 transition-colors"
+                        className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/8 border border-[#1a472a]/20 text-[#1a472a]/75 hover:bg-[#7dd87d]/20 hover:text-[#1a472a] hover:border-[#7dd87d]/50 transition-colors"
                       >
                         {s}
                       </button>

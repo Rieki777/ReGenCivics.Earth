@@ -238,7 +238,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 )}
               </>
             ) : (
-              <p className="text-white/40 text-xs">Could not load thread.</p>
+              <p className="text-white/60 text-xs">Could not load thread.</p>
             )}
           </div>
         </div>

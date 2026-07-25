@@ -343,7 +343,7 @@ export default function AdminModeration() {
             <div className="space-y-2">
               {moderatorsQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
-                  <Shield className="w-10 h-10 text-white/45 mx-auto mb-3" />
+                  <Shield className="w-10 h-10 text-white/60 mx-auto mb-3" />
                   <p className="text-white/65 text-sm">No moderators assigned yet</p>
                 </div>
               ) : (

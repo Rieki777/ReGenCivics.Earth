@@ -170,7 +170,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
           <DialogTitle className="text-lg font-semibold text-[#1a472a]">
             New conversation
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#1a472a]/70">
+          <DialogDescription className="text-sm text-[#1a472a]/75">
             Search by display name to find someone to message.
           </DialogDescription>
         </DialogHeader>
@@ -186,7 +186,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
               setSelectedUserName("");
             }}
             onKeyDown={handleKeyDown}
-            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/55"
+            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
           />
 
           {showDropdown && (
@@ -212,7 +212,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
         </div>
 
         {selectedUserName && selectedUserId && (
-          <p className="mt-2 text-sm text-[#1a472a]/70">
+          <p className="mt-2 text-sm text-[#1a472a]/75">
             Starting conversation with <strong>{selectedUserName}</strong>.
           </p>
         )}
@@ -225,7 +225,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
           <Button
             variant="ghost"
             onClick={onClose}
-            className="text-[#1a472a]/70 hover:text-[#1a472a]"
+            className="text-[#1a472a]/75 hover:text-[#1a472a]"
           >
             Cancel
           </Button>
@@ -410,7 +410,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
                   </span>
                   <span className="text-xs text-[#1a472a]/80 flex-shrink-0">{timeAgo(r.createdAt)}</span>
                 </div>
-                <p className="text-xs text-[#1a472a]/70 line-clamp-2">
+                <p className="text-xs text-[#1a472a]/75 line-clamp-2">
                   {highlightMatch(r.snippet, debouncedQuery)}
                 </p>
               </button>
@@ -438,7 +438,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
             {!isLoading && (!conversations || conversations.length === 0) && (
               <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
                 <MessageCircle className="w-12 h-12 text-[#7dd87d]/80 mb-4" />
-                <p className="text-[#1a472a]/70 text-sm leading-relaxed">
+                <p className="text-[#1a472a]/75 text-sm leading-relaxed">
                   No messages yet. Connect with a fellow regenerator to get started.
                 </p>
                 <Button
@@ -696,7 +696,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         }`}
                       >
                         {isDeleted ? (
-                          <span className={`italic text-sm ${isSelf ? "text-white/40" : "text-[#1a472a]/80"}`}>
+                          <span className={`italic text-sm ${isSelf ? "text-white/60" : "text-[#1a472a]/80"}`}>
                             [Message deleted]
                           </span>
                         ) : (

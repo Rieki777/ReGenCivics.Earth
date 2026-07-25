@@ -74,7 +74,7 @@ export function AdminOtherInquiriesTab({
                             {inquiry.pathType?.replace(/_/g, ' ') || 'General'}
                           </Badge>
                           {inquiry.message && (
-                            <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
+                            <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                               {inquiry.message}
                             </p>
                           )}
@@ -94,7 +94,7 @@ export function AdminOtherInquiriesTab({
                           {ageOther.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                           {ageOther.label}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
+                        <ChevronRight className="w-4 h-4 text-[#1a472a]/75" />
                       </div>
                     </div>
                   </div>
@@ -116,11 +116,11 @@ export function AdminOtherInquiriesTab({
                     {/* Contact Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Email</p>
                         <a href={`mailto:${inquiry.email}`} className="text-[#4a7c59] hover:underline">{inquiry.email}</a>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
                         <Badge className={
                           inquiry.status === 'new' || inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                           inquiry.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -131,12 +131,12 @@ export function AdminOtherInquiriesTab({
                         </Badge>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Submitted</p>
                         <p className="text-[#1a472a]">{new Date(inquiry.createdAt).toLocaleString()}</p>
                       </div>
                       {inquiry.location && (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Location</p>
+                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Location</p>
                           <p className="text-[#1a472a]">{inquiry.location}</p>
                         </div>
                       )}
@@ -145,7 +145,7 @@ export function AdminOtherInquiriesTab({
                     {/* Message */}
                     {inquiry.message && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Message</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Message</p>
                         <div className="bg-[#f0ebe3] rounded-lg p-4">
                           <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.message}</p>
                         </div>
@@ -215,7 +215,7 @@ export function AdminOtherInquiriesTab({
             );
           })}
           {(!inquiries || inquiries.filter((i: any) => ['other', 'learn', 'finance'].includes(i.pathType)).length === 0) && (
-            <div className="p-8 text-center text-[#1a472a]/70">
+            <div className="p-8 text-center text-[#1a472a]/75">
               <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
               <p>No other inquiries yet</p>
             </div>

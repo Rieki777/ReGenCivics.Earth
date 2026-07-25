@@ -90,7 +90,7 @@ function AmoraShot({
           <p className="text-white/85 text-sm md:text-base font-medium leading-snug max-w-xs">
             {caption}
           </p>
-          <p className="text-white/50 text-xs">Live screenshot coming soon</p>
+          <p className="text-white/60 text-xs">Live screenshot coming soon</p>
         </div>
       </div>
     );
@@ -609,7 +609,7 @@ export default function CustomGames() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-white/55 text-sm leading-relaxed">
+              <p className="mt-5 text-white/60 text-sm leading-relaxed">
                 This strip updates as the platform ships. ReGen Civics is the
                 builder shipping upgrades; Amora is client #1. Every game we
                 deliver starts from the newest foundation.

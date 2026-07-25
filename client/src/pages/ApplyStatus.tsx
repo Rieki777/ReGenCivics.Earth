@@ -92,7 +92,7 @@ export default function ApplyStatus() {
                         {isComplete ? <CheckCircle2 className="w-5 h-5" /> : isCurrent ? <Clock className="w-4 h-4" /> : <span className="text-xs font-bold">{i + 1}</span>}
                       </div>
                       <div className="flex-1">
-                        <p className={`font-semibold text-sm ${isCurrent ? 'text-[#1a472a]' : isPending ? 'text-[#1a472a]/75' : 'text-[#1a472a]/70'}`}>{step.label}</p>
+                        <p className={`font-semibold text-sm ${isCurrent ? 'text-[#1a472a]' : isPending ? 'text-[#1a472a]/75' : 'text-[#1a472a]/75'}`}>{step.label}</p>
                         <p className={`text-xs mt-0.5 ${isPending ? 'text-[#1a472a]/75' : 'text-[#1a472a]/80'}`}>{step.description}</p>
                       </div>
                     </div>

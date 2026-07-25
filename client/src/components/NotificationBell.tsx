@@ -222,7 +222,7 @@ export function NotificationBell() {
                         {decodeEntities(item.groupCount > 1 ? `${item.groupCount} new replies: ${item.title.replace(/^New reply in /, '')}` : item.title)}
                       </h4>
                       {item.body && (
-                        <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{decodeEntities(item.body)}</p>
+                        <p className="text-xs text-[#1a472a]/75 mt-1 line-clamp-2">{decodeEntities(item.body)}</p>
                       )}
                       <p className="text-xs text-[#1a472a]/80 mt-1">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}

@@ -642,7 +642,7 @@ export default function CampaignManage() {
               <Target className="w-5 h-5 text-[#4a7c59]" />
               Needs ({campaign.items.length})
             </h2>
-            <p className="text-sm text-[#1a472a]/70 mb-4">
+            <p className="text-sm text-[#1a472a]/75 mb-4">
               Delivered fills the bar solid; accepted claims show lighter. Unfilled needs are where to point your next share.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -811,7 +811,7 @@ export default function CampaignManage() {
             <BookOpen className="w-5 h-5 text-[#4a7c59]" />
             Updates ({campaignUpdates?.length ?? 0})
           </h2>
-          <p className="text-sm text-[#1a472a]/70 mb-4">
+          <p className="text-sm text-[#1a472a]/75 mb-4">
             Post progress to your campaign page. Followers and email subscribers hear about it.
           </p>
           <div className="space-y-3 mb-6">
@@ -873,7 +873,7 @@ export default function CampaignManage() {
                     </span>
                     <h3 className="font-bold text-[#1a472a]">{update.title}</h3>
                   </div>
-                  <p className="text-xs text-[#1a472a]/70 mb-1">
+                  <p className="text-xs text-[#1a472a]/75 mb-1">
                     {update.publishedAt ? new Date(update.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
                   </p>
                   <p className="text-sm text-[#1a472a]/80 whitespace-pre-line">{update.body}</p>
@@ -903,7 +903,7 @@ export default function CampaignManage() {
           <Camera className="w-5 h-5 text-[#4a7c59]" />
           Campaign Photos
         </h2>
-        <p className="text-sm text-[#1a472a]/70 mb-4">
+        <p className="text-sm text-[#1a472a]/75 mb-4">
           Upload photos of your land, team, and progress. These will appear on your campaign card and detail page.
         </p>
         <CampaignImageUpload campaignId={parseInt(id!)} />

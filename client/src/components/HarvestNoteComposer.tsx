@@ -243,7 +243,7 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
           Voice transcript. Tweak it, then save.
           <button
             onClick={() => setAudioKey(null)}
-            className="ml-1 text-[#4a7c59]/60 hover:text-[#4a7c59]"
+            className="ml-1 text-[#1a472a]/75 hover:text-[#4a7c59]"
             title="Treat as typed text"
           >
             <X className="w-3 h-3" />
@@ -306,7 +306,7 @@ export function HarvestNoteComposer({ voiceEnabled }: { voiceEnabled: boolean })
       {chips.length > 0 && (
         <div className="space-y-1 pt-1 border-t border-[#1a472a]/10">
           {chips.map((c) => (
-            <p key={c.key} className="text-xs text-[#1a472a]/70 flex items-center gap-1.5 truncate">
+            <p key={c.key} className="text-xs text-[#1a472a]/75 flex items-center gap-1.5 truncate">
               {c.state === "saving" && <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />}
               {c.state === "saved" && <Check className="w-3 h-3 text-[#4a7c59] flex-shrink-0" />}
               {c.state === "queued" && <CloudOff className="w-3 h-3 text-amber-700 flex-shrink-0" />}

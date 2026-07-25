@@ -95,11 +95,11 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
             {role.amount > 0 ? (
               <RewardAmount amount={role.amount} tokenType={bounty?.tokenType} breakdown={(bounty as any)?.valuationBreakdown ?? null} size="sm" />
             ) : (
-              <span className="text-white/50">see tier</span>
+              <span className="text-white/60">see tier</span>
             )}
           </p>
         </div>
-        <span className="text-xs text-white/50 capitalize">{role.payStatus}</span>
+        <span className="text-xs text-white/60 capitalize">{role.payStatus}</span>
       </div>
 
       {role.payStatus === "paid" && <HoldCountdown claimableAt={role.claimableAt} />}
@@ -171,7 +171,7 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
             onChange={(e) => setWorkNote(e.target.value)}
             placeholder="A short note on what you did"
             rows={2}
-            className="w-full rounded-md text-xs text-white bg-white/5 border border-white/20 px-2 py-1.5 placeholder:text-white/40"
+            className="w-full rounded-md text-xs text-white bg-white/5 border border-white/20 px-2 py-1.5 placeholder:text-white/60"
           />
           <Button
             type="button"
@@ -192,7 +192,7 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
       )}
 
       {isContribution && bounty?.githubRepo && (
-        <p className="text-xs text-white/50">
+        <p className="text-xs text-white/60">
           Repo:{" "}
           <a
             href={`https://github.com/${bounty.githubRepo}`}
@@ -270,7 +270,7 @@ export function ProfileCallTasksTab() {
       <section className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-2">
         <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">GitHub identity</h3>
         {githubQuery.isLoading ? (
-          <p className="text-white/50 text-xs inline-flex items-center gap-1.5">
+          <p className="text-white/60 text-xs inline-flex items-center gap-1.5">
             <Loader2 className="w-3 h-3 animate-spin" /> loading
           </p>
         ) : gh?.linked ? (
@@ -328,7 +328,7 @@ export function ProfileCallTasksTab() {
         return (
           <section key={key} className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">
-              {label} <span className="ml-2 text-white/50 font-medium normal-case">({list.length})</span>
+              {label} <span className="ml-2 text-white/60 font-medium normal-case">({list.length})</span>
             </h3>
             <div className="space-y-3">
               {list.map((r) => <RoleCard key={r.id} role={r} onChanged={() => query.refetch()} />)}

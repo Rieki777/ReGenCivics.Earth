@@ -55,9 +55,9 @@ const TONES: Record<Tone, {
   },
   cream: {
     section: "bg-gradient-to-b from-[#f4efe7] to-[#e9e2d6] text-[#1a472a]",
-    eyebrow: "text-[#1a472a]/70 border-[#7dd87d]/30 bg-white/60",
+    eyebrow: "text-[#1a472a]/75 border-[#7dd87d]/30 bg-white/60",
     title: "text-[#1a472a]",
-    subtitle: "text-[#1a472a]/65",
+    subtitle: "text-[#1a472a]/75",
     primary: "bg-[#1a472a] text-white hover:bg-[#0d2818]",
     secondary: "text-[#1a472a] border-[#1a472a]/25 hover:bg-[#1a472a]/5",
     glowA: "bg-[#7dd87d]/25",

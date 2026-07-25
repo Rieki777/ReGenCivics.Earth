@@ -85,8 +85,8 @@ export function TractionStrip({ eyebrow, stats, tone = "forest", className }: Tr
   const isForest = tone === "forest";
   const sectionTone = isForest ? "bg-[#0d2818] text-white" : "bg-[#f0ebe3] text-[#1a472a]";
   const accent = isForest ? "text-[#7dd87d]" : "text-[#1a472a]";
-  const labelTone = isForest ? "text-white/60" : "text-[#1a472a]/60";
-  const eyebrowTone = isForest ? "text-[#7dd87d]/80" : "text-[#1a472a]/60";
+  const labelTone = isForest ? "text-white/60" : "text-[#1a472a]/75";
+  const eyebrowTone = isForest ? "text-[#7dd87d]/80" : "text-[#1a472a]/75";
   const divide = isForest ? "divide-white/10" : "divide-[#1a472a]/10";
 
   return (

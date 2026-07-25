@@ -85,7 +85,7 @@ export function EligibilityQuiz() {
         <Compass className="w-5 h-5 text-[#4a7c59]" />
         Find the funder that fits
       </h2>
-      <p className="text-sm text-[#1a472a]/70 mb-6">
+      <p className="text-sm text-[#1a472a]/75 mb-6">
         Three quick questions. We recommend a funder, and you finish on their own site.
       </p>
 
@@ -130,7 +130,7 @@ export function EligibilityQuiz() {
             </h3>
           </div>
           <p className="text-sm text-[#1a472a]/80">{result.body}</p>
-          <p className="text-xs text-[#1a472a]/60 mt-3">
+          <p className="text-xs text-[#1a472a]/75 mt-3">
             A recommendation, not an introduction. See the funder cards below to give or lend on their site.
           </p>
           <button

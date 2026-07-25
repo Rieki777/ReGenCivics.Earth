@@ -392,7 +392,7 @@ export default function Community() {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a7c59]/40 hover:text-[#4a7c59] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
               aria-label="Clear search"
             >
               <X className="w-4 h-4" />
@@ -424,7 +424,7 @@ export default function Community() {
                       <MessageCircle className="w-4 h-4 text-[#7dd87d] flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[#1a472a] truncate">{post.title}</p>
-                        <p className="text-xs text-[#4a7c59]/60 truncate">
+                        <p className="text-xs text-[#1a472a]/75 truncate">
                           {post.categoryName} &middot; {post.authorName}
                         </p>
                       </div>
@@ -701,7 +701,7 @@ export default function Community() {
                               <div className="flex gap-1 mt-1">
                                 <button
                                   onClick={() => { setEditingCategoryId(category.id); setEditCategoryName(category.name); setEditCategoryDesc(category.description || ""); }}
-                                  className="p-1 rounded hover:bg-[#f0f7f0] text-[#4a7c59]/60 hover:text-[#4a7c59] transition-colors"
+                                  className="p-1 rounded hover:bg-[#f0f7f0] text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
                                   title="Edit category"
                                   aria-label="Edit category"
                                 >
@@ -1315,7 +1315,7 @@ export default function Community() {
               <h3 className="font-bold text-[#1a472a] text-sm mb-1" style={{ fontFamily: 'var(--font-display)' }}>
                 Community Guidelines
               </h3>
-              <p className="text-[#1a472a]/70 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+              <p className="text-[#1a472a]/75 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
                 Be kind, be honest, be regenerative. Share what you know, ask what you don't. Every voice matters here.
               </p>
             </div>

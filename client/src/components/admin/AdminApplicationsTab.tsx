@@ -217,7 +217,7 @@ export function AdminApplicationsTab({
             <CardDescription className="mt-1">
               {applications?.length || 0} submitted
               {(draftApplications?.length || 0) > 0 && (
-                <span className="text-[#1a472a]/70">
+                <span className="text-[#1a472a]/75">
                   {" "}
                   · {draftApplications?.length} draft
                   {draftApplications?.length !== 1 ? "s" : ""}
@@ -247,13 +247,13 @@ export function AdminApplicationsTab({
         </div>
         <div className="flex gap-2 mt-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
             <input
               type="text"
               placeholder="Search by project name, location, or vision..."
               value={appSearch}
               onChange={(e) => setAppSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
           <select
@@ -268,7 +268,7 @@ export function AdminApplicationsTab({
           </select>
         </div>
         {filteredApps.length !== (applications?.length || 0) && (
-          <p className="text-xs text-[#1a472a]/70 pt-1">
+          <p className="text-xs text-[#1a472a]/75 pt-1">
             Showing {filteredApps.length} of {applications?.length || 0} applications
           </p>
         )}
@@ -325,7 +325,7 @@ export function AdminApplicationsTab({
                               )}
                             </div>
                             {app.vision && (
-                              <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
+                              <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                                 {app.vision}
                               </p>
                             )}
@@ -448,7 +448,7 @@ export function AdminApplicationsTab({
             })}
           </div>
         ) : (
-          <div className="p-8 text-center text-[#1a472a]/70">
+          <div className="p-8 text-center text-[#1a472a]/75">
             <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No project applications yet</p>
           </div>
@@ -471,13 +471,13 @@ export function AdminApplicationsTab({
                 {draftApplications?.map((app: any) => (
                   <div key={app.id} className="p-4 flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#1a472a]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sprout className="w-4 h-4 text-[#1a472a]/70" />
+                      <Sprout className="w-4 h-4 text-[#1a472a]/75" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[#1a472a]/80 text-sm">
                         {app.projectName || "Unnamed project"}
                       </p>
-                      <p className="text-xs text-[#1a472a]/70">
+                      <p className="text-xs text-[#1a472a]/75">
                         {app.location || "No location"} · Started{" "}
                         {new Date(app.createdAt).toLocaleDateString()}
                       </p>

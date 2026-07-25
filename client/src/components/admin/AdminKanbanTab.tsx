@@ -21,7 +21,7 @@ export function AdminKanbanTab({ investors, inquiries, applications }: Props) {
         <CardDescription>Drag cards between columns to update status</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/70">Loading board…</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/75">Loading board…</div>}>
           <AdminKanban
             investors={investors}
             inquiries={inquiries}

@@ -531,13 +531,13 @@ export function AdminBroadcastPanel() {
             </div>
             {link && (
               <div>
-                <Label className="text-[#1a472a]/70 text-xs">Link</Label>
+                <Label className="text-[#1a472a]/75 text-xs">Link</Label>
                 <p className="text-sm text-[#1a472a] break-all mt-0.5">{link}</p>
               </div>
             )}
             {imageUrl && (
               <div>
-                <Label className="text-[#1a472a]/70 text-xs">Image</Label>
+                <Label className="text-[#1a472a]/75 text-xs">Image</Label>
                 <img
                   src={imageUrl}
                   alt="Preview"
@@ -549,7 +549,7 @@ export function AdminBroadcastPanel() {
               </div>
             )}
             <div>
-              <Label className="text-[#1a472a]/70 text-xs">Channels</Label>
+              <Label className="text-[#1a472a]/75 text-xs">Channels</Label>
               <p className="text-sm text-[#1a472a] mt-0.5">
                 {selectedChannels.length > 0
                   ? selectedChannels

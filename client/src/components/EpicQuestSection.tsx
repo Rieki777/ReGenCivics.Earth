@@ -96,7 +96,7 @@ function EpicCard({ quest, staggerDelay }: { quest: EpicQuest; staggerDelay?: nu
         <p className="text-white/65 text-sm leading-relaxed">{quest.description}</p>
 
         {/* Meta row with duration and commitment badges */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto pt-2 border-t border-white/8 text-xs text-white/45">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto pt-2 border-t border-white/8 text-xs text-white/60">
           {/* Duration badge */}
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
             <span className="text-white/70">Duration:</span> {quest.duration}

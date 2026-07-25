@@ -999,9 +999,9 @@ function BulkEmailSender() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2 text-[#1a472a]/70 font-medium">#</th>
-                    <th className="text-left px-3 py-2 text-[#1a472a]/70 font-medium">Email</th>
-                    <th className="text-left px-3 py-2 text-[#1a472a]/70 font-medium">Name</th>
+                    <th className="text-left px-3 py-2 text-[#1a472a]/75 font-medium">#</th>
+                    <th className="text-left px-3 py-2 text-[#1a472a]/75 font-medium">Email</th>
+                    <th className="text-left px-3 py-2 text-[#1a472a]/75 font-medium">Name</th>
                     <th className="px-3 py-2 w-10"></th>
                   </tr>
                 </thead>
@@ -1010,7 +1010,7 @@ function BulkEmailSender() {
                     <tr key={r.email} className="border-t hover:bg-gray-50">
                       <td className="px-3 py-1.5 text-[#1a472a]/80 text-xs">{i + 1}</td>
                       <td className="px-3 py-1.5 text-[#1a472a]">{r.email}</td>
-                      <td className="px-3 py-1.5 text-[#1a472a]/70">{r.name}</td>
+                      <td className="px-3 py-1.5 text-[#1a472a]/75">{r.name}</td>
                       <td className="px-3 py-1.5">
                         <button
                           onClick={() => handleRemoveRecipient(r.email)}

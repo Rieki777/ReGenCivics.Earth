@@ -102,7 +102,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
-                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
               />
             </div>
 
@@ -116,10 +116,10 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                   onChange={(e) => setAim(e.target.value)}
                   maxLength={300}
                   placeholder="..."
-                  className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                  className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                 />
               </div>
-              <p className="text-white/50 text-[11px] mt-1">
+              <p className="text-white/60 text-[11px] mt-1">
                 One sentence. Objections are weighed against this aim, so make it concrete.
               </p>
             </div>
@@ -170,11 +170,11 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                   <div className="text-xs text-white/80 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[#7dd87d]">{selectedVar.key}</span>
-                      <button type="button" onClick={() => { setVarKey(null); setNewValue(""); }} className="text-white/50 hover:text-white/80 text-[11px] underline">
+                      <button type="button" onClick={() => { setVarKey(null); setNewValue(""); }} className="text-white/60 hover:text-white/80 text-[11px] underline">
                         change
                       </button>
                     </div>
-                    {selectedVar.description && <p className="text-white/55 text-[11px]">{selectedVar.description}</p>}
+                    {selectedVar.description && <p className="text-white/60 text-[11px]">{selectedVar.description}</p>}
                     <p className="text-white/65 text-[11px]">
                       Current: <span className="font-mono">{Number(selectedVar.value)}</span>
                       {selectedVar.unit ? ` ${selectedVar.unit}` : ""} · allowed {Number(selectedVar.minValue)} to {Number(selectedVar.maxValue)}
@@ -184,7 +184,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={newValue}
                       onChange={(e) => setNewValue(e.target.value)}
                       placeholder="Proposed new value"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {parsedNewValue !== null && selectedVar.minValue != null && (parsedNewValue < Number(selectedVar.minValue) || parsedNewValue > Number(selectedVar.maxValue)) && (
                       <p className="text-amber-300 text-[11px]">
@@ -199,7 +199,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={varSearch}
                       onChange={(e) => setVarSearch(e.target.value)}
                       placeholder="Search variables by name or key"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {varMatches.length > 0 && (
                       <ul className="mt-1 rounded-lg border border-white/10 bg-[#0d2818] divide-y divide-white/5 max-h-48 overflow-y-auto">
@@ -211,7 +211,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                               className="w-full text-left px-3 py-2 hover:bg-white/5"
                             >
                               <span className="text-white text-xs font-medium block">{v.displayName}</span>
-                              <span className="text-white/50 text-[10px] font-mono">{v.key} · {Number(v.value)}{v.unit ? ` ${v.unit}` : ""}</span>
+                              <span className="text-white/60 text-[10px] font-mono">{v.key} · {Number(v.value)}{v.unit ? ` ${v.unit}` : ""}</span>
                             </button>
                           </li>
                         ))}

@@ -64,7 +64,7 @@ function ProposeBountyDialog() {
               <option value="large">Large, a substantial build</option>
             </select>
           </div>
-          <p className="text-[11px] text-white/45">A maintainer confirms the size and impact, and the engine sets a transparent reward before it opens for claiming.</p>
+          <p className="text-[11px] text-white/60">A maintainer confirms the size and impact, and the engine sets a transparent reward before it opens for claiming.</p>
         </div>
         <DialogFooter>
           <Button

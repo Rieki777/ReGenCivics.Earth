@@ -416,7 +416,7 @@ export default function Showcase() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <p className="text-sm text-[#1a472a]/70 line-clamp-3">
+                      <p className="text-sm text-[#1a472a]/75 line-clamp-3">
                         {project.description}
                       </p>
                       
@@ -520,7 +520,7 @@ export default function Showcase() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <p className="text-sm text-[#1a472a]/70">
+                      <p className="text-sm text-[#1a472a]/75">
                         {org.description}
                       </p>
 

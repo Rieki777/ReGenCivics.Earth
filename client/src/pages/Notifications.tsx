@@ -125,8 +125,8 @@ export default function Notifications() {
                       <h3 className={`text-sm ${!item.isRead ? 'font-semibold' : ''} text-[#1a472a]`}>
                         {item.groupCount > 1 ? `${item.groupCount} new: ${item.title}` : item.title}
                       </h3>
-                      {item.body && <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{item.body}</p>}
-                      <p className="text-xs text-[#1a472a]/60 mt-1">
+                      {item.body && <p className="text-xs text-[#1a472a]/75 mt-1 line-clamp-2">{item.body}</p>}
+                      <p className="text-xs text-[#1a472a]/75 mt-1">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                       </p>
                     </div>

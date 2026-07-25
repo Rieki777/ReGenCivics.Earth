@@ -22,7 +22,7 @@ export function SeasonalDepthCard({ quest, isLocked }: SeasonalDepthCardProps) {
     return (
       <div className="relative bg-white/60 rounded-xl border-2 border-[#1a472a]/5 shadow-sm opacity-60 pointer-events-none">
         <div className={`relative w-full h-36 bg-gradient-to-br ${ELEMENT_GRADIENTS[quest.element as keyof typeof ELEMENT_GRADIENTS] ?? DEFAULT_ELEMENT_GRADIENT} rounded-t-xl overflow-hidden flex items-center justify-center`}>
-          <Lock className="w-8 h-8 text-white/40" />
+          <Lock className="w-8 h-8 text-white/60" />
         </div>
         <div className="p-5">
           <h4 className="font-bold text-[#1a472a]/80 text-sm leading-tight" style={{ fontFamily: "var(--font-display)" }}>
@@ -52,7 +52,7 @@ export function SeasonalDepthCard({ quest, isLocked }: SeasonalDepthCardProps) {
             <h4 className="font-bold text-[#1a472a] text-sm leading-tight" style={{ fontFamily: "var(--font-display)" }}>
               {quest.title}
             </h4>
-            <p className="text-xs text-[#1a472a]/70 mt-0.5">{quest.tagline}</p>
+            <p className="text-xs text-[#1a472a]/75 mt-0.5">{quest.tagline}</p>
           </div>
           {/* Time pill */}
           <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#1a472a]/5 text-[#1a472a]/80">

@@ -69,9 +69,9 @@ function PlaySection({
           <span className="text-white font-medium">{title}</span>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-white/40" />
+          <ChevronUp className="w-4 h-4 text-white/60" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-white/40" />
+          <ChevronDown className="w-4 h-4 text-white/60" />
         )}
       </button>
       {isOpen && (
@@ -151,7 +151,7 @@ export default function PlayDetail() {
           <h2 className="text-white text-xl font-semibold mb-2">
             Play not found
           </h2>
-          <p className="text-white/50 mb-6">
+          <p className="text-white/60 mb-6">
             This play may have been removed or the link is incorrect.
           </p>
           <Link href="/plays">
@@ -234,7 +234,7 @@ export default function PlayDetail() {
             </AnimatedSection>
 
             {/* Section completion indicator */}
-            <div className="flex items-center gap-2 text-white/40 text-xs">
+            <div className="flex items-center gap-2 text-white/60 text-xs">
               <Check className="w-3.5 h-3.5" />
               <span>
                 {filledSections} of {PLAY_SECTIONS.length} sections filled
@@ -276,7 +276,7 @@ export default function PlayDetail() {
                       value={endorseText}
                       onChange={(e) => setEndorseText(e.target.value)}
                       placeholder="Share why you recommend this play and how it has shaped your community..."
-                      className="w-full bg-transparent text-white placeholder:text-white/40 text-sm resize-none min-h-[80px] border-0 focus-visible:ring-0 mb-3"
+                      className="w-full bg-transparent text-white placeholder:text-white/60 text-sm resize-none min-h-[80px] border-0 focus-visible:ring-0 mb-3"
                     />
                     <div className="flex justify-end">
                       <Button
@@ -301,7 +301,7 @@ export default function PlayDetail() {
                   </div>
                 ) : (
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-center">
-                    <p className="text-white/50 text-sm mb-3">
+                    <p className="text-white/60 text-sm mb-3">
                       Sign in to share your endorsement.
                     </p>
                     <a href={getLoginUrl()}>
@@ -336,7 +336,7 @@ export default function PlayDetail() {
                             <span className="text-white/70 text-sm font-medium">
                               {e.userName}
                             </span>
-                            <span className="text-white/40 text-xs">
+                            <span className="text-white/60 text-xs">
                               {new Date(e.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -390,7 +390,7 @@ export default function PlayDetail() {
               )}
 
               {/* Stats */}
-              <div className="flex gap-4 text-white/50 text-sm">
+              <div className="flex gap-4 text-white/60 text-sm">
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" /> {play.totalAdoptions ?? 0}{" "}
                   adopted
@@ -466,7 +466,7 @@ export default function PlayDetail() {
 
               {/* Community type */}
               {play.communityType && (
-                <div className="text-white/40 text-xs pt-2 border-t border-white/10">
+                <div className="text-white/60 text-xs pt-2 border-t border-white/10">
                   Community type: {play.communityType}
                 </div>
               )}

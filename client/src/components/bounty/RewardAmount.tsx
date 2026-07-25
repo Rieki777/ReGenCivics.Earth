@@ -70,7 +70,7 @@ interface Props {
 export function RewardAmount({ amount, tokenType, breakdown, tone = "dark", size = "md", className = "" }: Props) {
   const label = `${amount.toLocaleString()} ${tokenLabel(tokenType ?? breakdown?.token)}`;
   const amountColor = tone === "light" ? "text-[#1a472a]" : "text-[#7dd87d]";
-  const infoColor = tone === "light" ? "text-[#1a472a]/50 hover:text-[#1a472a]" : "text-white/50 hover:text-white/90";
+  const infoColor = tone === "light" ? "text-[#1a472a]/75 hover:text-[#1a472a]" : "text-white/60 hover:text-white/90";
   const sizeCls = size === "lg" ? "text-2xl" : size === "sm" ? "text-xs" : "text-sm";
   const lines = breakdown ? explain(breakdown) : [];
 

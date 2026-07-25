@@ -48,7 +48,7 @@ function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
         <span className={`block text-sm text-[#1a472a] truncate group-hover:text-[#4a7c59] ${neverRead || unread > 0 ? 'font-bold' : 'font-medium'}`}>
           {decodeEntities(post.title)}
         </span>
-        <span className="block text-xs text-[#1a472a]/60 truncate">
+        <span className="block text-xs text-[#1a472a]/75 truncate">
           {post.authorName} · {post.categoryName}
           {post.bioregionName ? ` · ${post.bioregionName}` : ''}
         </span>
@@ -58,7 +58,7 @@ function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
           {unread} new
         </span>
       )}
-      <span className="flex items-center gap-1 text-xs text-[#1a472a]/60 flex-shrink-0">
+      <span className="flex items-center gap-1 text-xs text-[#1a472a]/75 flex-shrink-0">
         <MessageCircle className="w-3 h-3" /> {post.replyCount ?? 0}
       </span>
       {showWhy && reasons.length > 0 && (
@@ -68,7 +68,7 @@ function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
             aria-expanded={whyOpen}
             onClick={() => setWhyOpen(!whyOpen)}
             onBlur={() => setTimeout(() => setWhyOpen(false), 150)}
-            className="p-1 text-[#1a472a]/40 hover:text-[#4a7c59] transition-colors"
+            className="p-1 text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
           >
             <Info className="w-3.5 h-3.5" />
           </button>
@@ -153,7 +153,7 @@ export function CommunityFeedTabs() {
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <p className="text-sm text-[#1a472a]/70 bg-white/60 rounded-xl border border-[#1a472a]/10 p-4">
+        <p className="text-sm text-[#1a472a]/75 bg-white/60 rounded-xl border border-[#1a472a]/10 p-4">
           {EMPTY_COPY[tab]}
         </p>
       ) : (

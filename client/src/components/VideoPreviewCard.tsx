@@ -112,7 +112,7 @@ export default function VideoPreviewCard({
             <span className="font-bold text-sm md:text-base" style={{ fontFamily: "var(--font-accent)" }}>
               {playLabel}
             </span>
-            <ExternalLink className="w-3.5 h-3.5 text-[#1a472a]/70 flex-shrink-0" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#1a472a]/75 flex-shrink-0" />
           </div>
         )}
       </button>

@@ -146,7 +146,7 @@ function rungStyles(state: RungState) {
       return {
         dot: "bg-[#7dd87d]/70 border-[#7dd87d]/70",
         label: "text-white/60",
-        oneLiner: "text-white/50",
+        oneLiner: "text-white/60",
       };
     case "current":
       return {
@@ -163,8 +163,8 @@ function rungStyles(state: RungState) {
     case "future":
       return {
         dot: "bg-transparent border-white/15",
-        label: "text-white/50",
-        oneLiner: "text-white/40",
+        label: "text-white/60",
+        oneLiner: "text-white/60",
       };
   }
 }

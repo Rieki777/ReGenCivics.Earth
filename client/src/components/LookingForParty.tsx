@@ -92,13 +92,13 @@ export function LookingForParty({ questId, isActive }: LookingForPartyProps) {
             </div>
             <span>{members.length} looking for party</span>
           </div>
-          <p className="text-[10px] text-[#4a7c59]/70 italic flex items-center gap-1">
+          <p className="text-[10px] text-[#1a472a]/75 italic flex items-center gap-1">
             <MessageCircle className="w-3 h-3" /> Tap an avatar to message them.
           </p>
         </div>
       )}
       {members.length === 0 && amLooking && (
-        <p className="text-xs italic text-[#4a7c59]/70">Waiting for other players to join up.</p>
+        <p className="text-xs italic text-[#1a472a]/75">Waiting for other players to join up.</p>
       )}
     </div>
   );

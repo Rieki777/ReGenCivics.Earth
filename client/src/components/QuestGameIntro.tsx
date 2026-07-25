@@ -381,7 +381,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
             style={{ fontFamily: "var(--font-accent, sans-serif)" }}
           >
             {current + 1}
-            <span className="text-white/40">/{PANELS.length}</span>
+            <span className="text-white/60">/{PANELS.length}</span>
           </div>
         </div>
         <div className="flex justify-center gap-2">

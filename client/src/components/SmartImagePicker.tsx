@@ -57,7 +57,7 @@ function t(theme: Theme) {
     label: dark ? "text-white/60" : "text-[#1a472a]/80",
     tabBg: dark ? "bg-white/5 border-white/10" : "bg-[#f0f7f0] border-[#e8e4de]",
     tabActive: "bg-[#7dd87d]/20 text-[#7dd87d]",
-    tabInactive: dark ? "text-white/70 hover:text-white/70" : "text-[#1a472a]/80 hover:text-[#1a472a]/70",
+    tabInactive: dark ? "text-white/70 hover:text-white/70" : "text-[#1a472a]/80 hover:text-[#1a472a]/75",
     dropzone: dark ? "border-white/20 hover:border-white/40 bg-white/5" : "border-[#e8e4de] hover:border-[#7dd87d]/50 bg-[#f8f5f0]",
     dropzoneActive: "border-[#7dd87d] bg-[#7dd87d]/10",
     dropIcon: dark ? "text-white/70" : "text-[#1a472a]/25",

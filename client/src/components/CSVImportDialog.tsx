@@ -183,11 +183,11 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
               <FileText className="w-4 h-4" />
               CSV Format Requirements
             </h3>
-            <p className="text-sm text-[#1a472a]/70 mb-2">
+            <p className="text-sm text-[#1a472a]/75 mb-2">
               Your CSV file must include the following columns:
             </p>
             {type === 'equipment' ? (
-              <ul className="text-sm text-[#1a472a]/70 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-[#1a472a]/75 space-y-1 list-disc list-inside">
                 <li><strong>category</strong>: Equipment category (e.g., Agriculture, Construction)</li>
                 <li><strong>name</strong>: Equipment name</li>
                 <li><strong>quantity</strong>: Number of units needed</li>
@@ -195,7 +195,7 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
                 <li><strong>estimatedValue</strong>: Estimated cost per unit</li>
               </ul>
             ) : (
-              <ul className="text-sm text-[#1a472a]/70 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-[#1a472a]/75 space-y-1 list-disc list-inside">
                 <li><strong>title</strong>: Role title</li>
                 <li><strong>category</strong>: Role category (e.g., Operations & Management)</li>
                 <li><strong>description</strong>: Role description</li>
@@ -283,18 +283,18 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
                         <tr key={index} className="border-t border-[#7dd87d]/20">
                           {type === 'equipment' ? (
                             <>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.category}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.name}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.quantity}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">${item.estimatedValue.toLocaleString()}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.category}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.name}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.quantity}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">${item.estimatedValue.toLocaleString()}</td>
                             </>
                           ) : (
                             <>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.title}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.category}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.hoursPerWeek}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">{item.weeksNeeded}</td>
-                              <td className="px-3 py-2 text-[#1a472a]/70">${item.hourlyRate}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.title}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.category}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.hoursPerWeek}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">{item.weeksNeeded}</td>
+                              <td className="px-3 py-2 text-[#1a472a]/75">${item.hourlyRate}</td>
                             </>
                           )}
                         </tr>

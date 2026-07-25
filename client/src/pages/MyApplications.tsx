@@ -64,7 +64,7 @@ export default function MyApplications() {
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
-          <p className="text-[#1a472a]/70 mb-6">
+          <p className="text-[#1a472a]/75 mb-6">
             You need to be logged in to view your applications.
           </p>
           <Button
@@ -87,7 +87,7 @@ export default function MyApplications() {
             <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
               My Applications
             </h1>
-            <p className="text-[#1a472a]/70">
+            <p className="text-[#1a472a]/75">
               Track your project applications and their status
             </p>
           </div>
@@ -106,7 +106,7 @@ export default function MyApplications() {
             <h2 className="text-2xl font-bold text-[#1a472a] mb-2">
               No Applications Yet
             </h2>
-            <p className="text-[#1a472a]/70 mb-6">
+            <p className="text-[#1a472a]/75 mb-6">
               Start your journey by submitting your first application
             </p>
             <Link href="/apply">
@@ -142,7 +142,7 @@ export default function MyApplications() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-[#1a472a]/70 mb-3">
+                      <div className="flex items-center gap-4 text-sm text-[#1a472a]/75 mb-3">
                         <span>{app.location}</span>
                         <span>•</span>
                         <span className="capitalize">

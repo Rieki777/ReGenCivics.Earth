@@ -129,7 +129,7 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCircle className="w-8 h-8 text-green-400 mb-3" />
-              <p className="text-sm font-medium text-[#1a472a]/70">All caught up</p>
+              <p className="text-sm font-medium text-[#1a472a]/75">All caught up</p>
               <p className="text-xs text-[#1a472a]/80 mt-1">No pending notifications</p>
             </div>
           ) : (

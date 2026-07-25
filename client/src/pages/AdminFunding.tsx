@@ -429,7 +429,7 @@ export default function AdminFunding() {
               <span className="block text-xs font-bold text-[#1a472a]/80 mb-1">Search</span>
               <div className="relative">
                 <Search
-                  className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/70 pointer-events-none"
+                  className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/75 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input

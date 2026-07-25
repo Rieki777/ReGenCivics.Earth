@@ -40,7 +40,7 @@ export function RecentlyCompleted() {
       <div className="flex items-center justify-between gap-3 mb-4">
         <h2 className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>Recently completed</h2>
         {isAuthenticated && budget ? (
-          <span className="text-xs text-white/50">{budget.remaining} of {budget.total} gratitude left this season</span>
+          <span className="text-xs text-white/60">{budget.remaining} of {budget.total} gratitude left this season</span>
         ) : null}
       </div>
       <div className="space-y-2">

@@ -238,13 +238,13 @@ export default function Board() {
                       {post.kind === "need" ? "Need" : "Offer"}
                     </span>
                     <span className="font-medium text-white">{post.title}</span>
-                    <span className="text-white/40 ml-2 text-xs">{post.status}</span>
+                    <span className="text-white/60 ml-2 text-xs">{post.status}</span>
                   </div>
                   {post.status !== "closed" && (
                     <Button
                       onClick={() => closeMutation.mutate({ kind: post.kind, id: post.id })}
                       disabled={closeMutation.isPending}
-                      className="bg-transparent text-white/50 hover:text-white hover:bg-white/10 rounded-full px-3 text-sm shrink-0"
+                      className="bg-transparent text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3 text-sm shrink-0"
                     >
                       Close
                     </Button>
@@ -277,7 +277,7 @@ export default function Board() {
                     )}
                   </div>
                   {row.body && <p className="text-white/70 text-sm mt-2 whitespace-pre-line">{row.body}</p>}
-                  <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-white/50">
+                  <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-white/60">
                     {row.tags.map((t) => (
                       <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70">
                         <Tag className="w-3 h-3" /> {t}

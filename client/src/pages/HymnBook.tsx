@@ -126,7 +126,7 @@ export default function HymnBook() {
             <NowPlayingPanel />
 
             <div className="mt-6">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-white/50 mb-2 flex items-center gap-2">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-white/60 mb-2 flex items-center gap-2">
                 <ListMusic className="w-4 h-4 text-[#7dd87d]" /> Up Next
               </h2>
               <ul>
@@ -169,7 +169,7 @@ export default function HymnBook() {
                           {showPause && <EqualizerBars />}
                         </span>
                         {song.artist && (
-                          <span className="block text-white/55 text-xs truncate">{song.artist}</span>
+                          <span className="block text-white/60 text-xs truncate">{song.artist}</span>
                         )}
                       </button>
                       <ShareButton
@@ -501,7 +501,7 @@ function NowPlayingPanel() {
           </p>
           <p className="text-white/60 text-sm truncate">{song?.artist ?? "Hymns of the ReGeneration"}</p>
         </div>
-        <span className="hidden md:block text-white/40 text-xs tabular-nums flex-shrink-0 self-start pt-1">
+        <span className="hidden md:block text-white/60 text-xs tabular-nums flex-shrink-0 self-start pt-1">
           {audio.currentIndex + 1} / {audio.playlist.length}
         </span>
       </div>
@@ -574,7 +574,7 @@ function NowPlayingPanel() {
           onClick={audio.toggleMute}
           aria-label={audio.muted ? "Unmute" : "Mute"}
           aria-pressed={audio.muted}
-          className="text-white/50 hover:text-white transition-colors p-2 -m-2 flex-shrink-0"
+          className="text-white/60 hover:text-white transition-colors p-2 -m-2 flex-shrink-0"
         >
           {audio.muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>

@@ -96,14 +96,14 @@ export function AdminInvestorsTab({
         {/* Search & Filter Row */}
         <div className="flex flex-col sm:flex-row gap-2 pt-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
             <input
               type="text"
               data-search-input
               placeholder="Search by name, email, range, or org..."
               value={investorSearch}
               onChange={(e) => setInvestorSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
           <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>
@@ -123,7 +123,7 @@ export function AdminInvestorsTab({
           </Select>
         </div>
         {filteredInvestors.length !== (investors?.length || 0) && (
-          <p className="text-xs text-[#1a472a]/70 pt-1">
+          <p className="text-xs text-[#1a472a]/75 pt-1">
             Showing {filteredInvestors.length} of {investors?.length || 0} investors
           </p>
         )}
@@ -131,7 +131,7 @@ export function AdminInvestorsTab({
       <CardContent className="p-0">
         {investors && investors.length > 0 ? (
           filteredInvestors.length === 0 ? (
-            <div className="p-8 text-center text-[#1a472a]/70">
+            <div className="p-8 text-center text-[#1a472a]/75">
               <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p>No investors match your search</p>
               <button onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }} className="text-[#7dd87d] text-sm mt-2 hover:underline">
@@ -165,7 +165,7 @@ export function AdminInvestorsTab({
                             )}
                           </div>
                           {investor.motivation && (
-                            <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
+                            <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                               {investor.motivation}
                             </p>
                           )}
@@ -204,7 +204,7 @@ export function AdminInvestorsTab({
                             Duplicate email
                           </Badge>
                         )}
-                        <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
+                        <ChevronRight className="w-4 h-4 text-[#1a472a]/75" />
                       </div>
                     </div>
                   </div>
@@ -226,13 +226,13 @@ export function AdminInvestorsTab({
                     {/* Contact Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Email</p>
                         <a href={`mailto:${investor.email}`} className="text-[#4a7c59] hover:underline break-all">
                           {investor.email}
                         </a>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
                         <Badge className={
                           investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                           investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -245,12 +245,12 @@ export function AdminInvestorsTab({
                         </Badge>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Submitted</p>
                         <p className="text-[#1a472a]">{new Date(investor.createdAt).toLocaleString()}</p>
                       </div>
                       {investor.organization && (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Organization</p>
+                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Organization</p>
                           <p className="text-[#1a472a]">{investor.organization}</p>
                         </div>
                       )}
@@ -290,7 +290,7 @@ export function AdminInvestorsTab({
                     {/* Primary Interest */}
                     {investor.primaryInterest && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Primary Interest</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Primary Interest</p>
                         <Badge className="bg-green-100 text-green-800 border-green-200 capitalize">
                           {investor.primaryInterest?.replace(/_/g, ' ')}
                         </Badge>
@@ -300,7 +300,7 @@ export function AdminInvestorsTab({
                     {/* Motivation */}
                     {investor.motivation && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Motivation</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Motivation</p>
                         <div className="bg-[#f0ebe3] rounded-lg p-4">
                           <p className="text-[#1a472a] whitespace-pre-wrap">{investor.motivation}</p>
                         </div>
@@ -310,7 +310,7 @@ export function AdminInvestorsTab({
                     {/* Experience */}
                     {investor.experience && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Investment Experience</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Investment Experience</p>
                         <div className="bg-[#f0ebe3] rounded-lg p-4">
                           <p className="text-[#1a472a] whitespace-pre-wrap">{investor.experience}</p>
                         </div>
@@ -320,7 +320,7 @@ export function AdminInvestorsTab({
                     {/* Questions */}
                     {investor.questions && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Questions</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Questions</p>
                         <div className="bg-[#f0ebe3] rounded-lg p-4">
                           <p className="text-[#1a472a] whitespace-pre-wrap">{investor.questions}</p>
                         </div>
@@ -330,7 +330,7 @@ export function AdminInvestorsTab({
                     {/* How They Heard */}
                     {investor.howHeard && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">How They Heard About Us</p>
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">How They Heard About Us</p>
                         <p className="text-[#1a472a]">{investor.howHeard}</p>
                       </div>
                     )}
@@ -412,7 +412,7 @@ export function AdminInvestorsTab({
           </div>
           )
         ) : (
-          <div className="p-8 text-center text-[#1a472a]/70">
+          <div className="p-8 text-center text-[#1a472a]/75">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No investor inquiries yet</p>
             <p className="text-xs mt-2">Investor inquiries will appear here when submitted</p>

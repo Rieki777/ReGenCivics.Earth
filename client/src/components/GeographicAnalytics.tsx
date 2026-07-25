@@ -208,7 +208,7 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-[#4a7c59]/30 bg-gradient-to-br from-[#f0f7f0] to-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Total Countries</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total Countries</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
         
         <Card className="border-[#4a7c59]/30 bg-gradient-to-br from-[#f0f7f0] to-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Total Cities</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total Cities</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -232,7 +232,7 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
         
         <Card className="border-[#4a7c59]/30 bg-gradient-to-br from-[#f0f7f0] to-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Top Country</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Top Country</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">

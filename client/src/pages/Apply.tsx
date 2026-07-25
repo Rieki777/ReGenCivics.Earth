@@ -495,7 +495,7 @@ export default function Apply() {
             <div className="mt-2">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-[#1a472a]">What she's written down</p>
-                <span className="text-xs text-[#1a472a]/70">{gardenerFilledCount} of {GARDENER_REQUIRED.length}</span>
+                <span className="text-xs text-[#1a472a]/75">{gardenerFilledCount} of {GARDENER_REQUIRED.length}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {GARDENER_REQUIRED.map(({ key, label }) => {
@@ -507,7 +507,7 @@ export default function Apply() {
                       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
                         filled
                           ? "border-[#7dd87d] bg-[#7dd87d]/15 text-[#1a472a]"
-                          : "border-[#1a472a]/15 text-[#1a472a]/50"
+                          : "border-[#1a472a]/15 text-[#1a472a]/75"
                       }`}
                     >
                       {filled && <CheckCircle2 className="w-3 h-3 text-[#4a7c59]" />}

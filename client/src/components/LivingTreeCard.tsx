@@ -153,7 +153,7 @@ export function LivingTreeCard() {
               >
                 The Nine Forms of Capital
               </h3>
-              <p className="text-sm md:text-base text-[#1a472a]/70 mb-6">
+              <p className="text-sm md:text-base text-[#1a472a]/75 mb-6">
                 Every capital is a root that feeds your tree.
               </p>
               <div className="grid md:grid-cols-[1fr_1.2fr] gap-6">
@@ -217,7 +217,7 @@ export function LivingTreeCard() {
                     );
                   })}
                   <div className="mt-4 pt-4 border-t border-[#1a472a]/10 flex items-center justify-between">
-                    <span className="text-[#1a472a]/70 font-medium">Total</span>
+                    <span className="text-[#1a472a]/75 font-medium">Total</span>
                     <span className="text-xl font-bold text-[#1a472a]">{total}</span>
                   </div>
                 </div>

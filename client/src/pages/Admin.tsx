@@ -59,6 +59,7 @@ import {
   ChevronDown,
   Menu,
   Landmark,
+  ArrowRight,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -209,18 +210,18 @@ function AdminAuditLogTab() {
                         className="hover:bg-[#f5f9f5] cursor-pointer transition-colors"
                         onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
                       >
-                        <td className="px-4 py-3 text-[#1a472a]/70 whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#1a472a]/75 whitespace-nowrap">
                           <span title={createdAt.toLocaleString()}>
                             {formatRelativeTime(createdAt)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#1a472a]/70">#{entry.adminUserId}</td>
+                        <td className="px-4 py-3 text-[#1a472a]/75">#{entry.adminUserId}</td>
                         <td className="px-4 py-3">
                           <span className="inline-block bg-[#1a472a]/10 text-[#1a472a] text-xs px-2 py-0.5 rounded font-mono">
                             {entry.action}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#1a472a]/70">
+                        <td className="px-4 py-3 text-[#1a472a]/75">
                           {entry.entityType && (
                             <span>
                               {entry.entityType}
@@ -501,7 +502,7 @@ function AdminCustomGameApplications() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white text-sm">{app.applicantName} <span className="text-white/50 font-normal">({app.applicantRole})</span></p>
+                  <p className="font-semibold text-white text-sm">{app.applicantName} <span className="text-white/60 font-normal">({app.applicantRole})</span></p>
                   <a href={`mailto:${app.applicantEmail}`} onClick={(e) => e.stopPropagation()} className="text-[#7dd87d] text-xs hover:underline">{app.applicantEmail}</a>
                   <p className="text-white/80 text-sm mt-0.5">{app.projectName}</p>
                 </div>
@@ -510,7 +511,7 @@ function AdminCustomGameApplications() {
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[app.status] ?? "bg-white/10 text-white/60 border-white/10"}`}>
                     {app.status}
                   </span>
-                  <span className="text-white/50 text-xs">{new Date(app.createdAt).toLocaleDateString()}</span>
+                  <span className="text-white/60 text-xs">{new Date(app.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
@@ -798,12 +799,12 @@ function ContactNotesPanel({ contactType, contactId }: { contactType: string; co
         <MessageSquare className="w-3.5 h-3.5" />
         Internal Notes {notes?.length ? `(${notes.length})` : ''}
       </p>
-      {isLoading && <p className="text-xs text-[#1a472a]/65">Loading…</p>}
+      {isLoading && <p className="text-xs text-[#1a472a]/75">Loading…</p>}
       {notes?.map((note: any) => (
         <div key={note.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[#1a472a] whitespace-pre-wrap">{note.note}</p>
-            <p className="text-xs text-[#1a472a]/65 mt-1">
+            <p className="text-xs text-[#1a472a]/75 mt-1">
               {note.authorName} · {new Date(note.createdAt).toLocaleString()}
             </p>
           </div>
@@ -982,7 +983,7 @@ function ContactTagsPanel({ contactType, contactId }: { contactType: string; con
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/20 border border-[#4a7c59]/30 text-xs text-[#1a472a]"
           >
             {t.tag}
-            <button onClick={() => removeTag.mutate({ id: t.id })} className="text-[#1a472a]/65 hover:text-red-500">
+            <button onClick={() => removeTag.mutate({ id: t.id })} className="text-[#1a472a]/75 hover:text-red-500">
               <X className="w-2.5 h-2.5" />
             </button>
           </span>
@@ -1119,7 +1120,7 @@ function StatsCard({ title, value, icon: Icon, color, description, onClick, link
               {value}
             </p>
             {description && (
-              <p className="text-xs text-[#1a472a]/70 mt-1 break-words">{description}</p>
+              <p className="text-xs text-[#1a472a]/75 mt-1 break-words">{description}</p>
             )}
           </div>
           <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${color} flex items-center justify-center flex-shrink-0 ml-2`}>
@@ -1485,7 +1486,7 @@ function ReviewerEmailManager() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-[#1a472a]/70">
+          <div className="text-center py-8 text-[#1a472a]/75">
             <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No reviewer emails configured</p>
             <p className="text-sm mt-1">Add reviewers to receive notifications when applications are submitted</p>
@@ -1517,7 +1518,7 @@ function NewsletterSubscribersList() {
   
   if (!subscribers || subscribers.length === 0) {
     return (
-      <div className="text-center py-8 text-[#1a472a]/70">
+      <div className="text-center py-8 text-[#1a472a]/75">
         <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
         <p>No newsletter subscribers yet</p>
         <p className="text-sm mt-1">Subscribers will appear here when people sign up</p>
@@ -1543,7 +1544,7 @@ function NewsletterSubscribersList() {
             </div>
             <div>
               <p className="font-medium text-[#1a472a]">{subscriber.email}</p>
-              <p className="text-xs text-[#1a472a]/70">
+              <p className="text-xs text-[#1a472a]/75">
                 Subscribed {new Date(subscriber.createdAt).toLocaleDateString()}
                 {subscriber.source && ` via ${subscriber.source}`}
               </p>
@@ -1754,7 +1755,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
 
   if (filteredInquiries.length === 0) {
     return (
-      <div className="text-center py-8 text-[#1a472a]/70">
+      <div className="text-center py-8 text-[#1a472a]/75">
         <Icon className="w-12 h-12 mx-auto mb-4 opacity-30" />
         <p>No {config.label.toLowerCase()} inquiries yet</p>
       </div>
@@ -1797,18 +1798,18 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
       <div className="p-4 border-b border-[#1a472a]/10 bg-[#f0ebe3]/30">
         {/* Search Row */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
           <input
             type="text"
             placeholder={`Search ${config.label.toLowerCase()} by name, email, or message...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
           />
         </div>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <p className="text-sm text-[#1a472a]/70">
+            <p className="text-sm text-[#1a472a]/75">
               {filteredInquiries.length} {filteredInquiries.length === 1 ? 'inquiry' : 'inquiries'}
               {activeFilterName && (
                 <span className="ml-1 text-[#7dd87d]">for {activeFilterName}</span>
@@ -1842,7 +1843,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       </button>
                       
                       <div className="border-t border-[#1a472a]/10 my-2" />
-                      <p className="px-3 py-1 text-xs text-[#1a472a]/70 font-medium">
+                      <p className="px-3 py-1 text-xs text-[#1a472a]/75 font-medium">
                         Filter by {pathType === 'live' ? 'Land Project' : 'Organization'}:
                       </p>
                       {projectList.map((project) => {
@@ -1864,7 +1865,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     </div>
                     <button
                       onClick={() => setShowFilterDropdown(false)}
-                      className="w-full text-center py-2 text-xs text-[#1a472a]/70 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
+                      className="w-full text-center py-2 text-xs text-[#1a472a]/75 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
                     >
                       Close
                     </button>
@@ -1925,7 +1926,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   {projectList && (
                     <>
                       <div className="border-t border-[#1a472a]/10 my-2" />
-                      <p className="px-3 py-1 text-xs text-[#1a472a]/70 font-medium">
+                      <p className="px-3 py-1 text-xs text-[#1a472a]/75 font-medium">
                         Export by {pathType === 'live' ? 'Land Project' : 'Alliance Organization'}:
                       </p>
                       {projectList.map((project) => {
@@ -1949,7 +1950,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 </div>
                 <button
                   onClick={() => setShowExportDropdown(false)}
-                  className="w-full text-center py-2 text-xs text-[#1a472a]/70 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
+                  className="w-full text-center py-2 text-xs text-[#1a472a]/75 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
                 >
                   Close
                 </button>
@@ -2170,7 +2171,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-[#1a472a]">{inquiry.fullName || 'Anonymous'}</p>
                         {inquiry.location && (
-                          <span className="text-xs text-[#1a472a]/70 flex items-center">
+                          <span className="text-xs text-[#1a472a]/75 flex items-center">
                             <MapPin className="w-3 h-3 mr-1" />
                             {inquiry.location}
                           </span>
@@ -2210,7 +2211,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       
                       {/* Preview of message */}
                       {(inquiry.message || formData.additionalNotes) && (
-                        <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
+                        <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                           {inquiry.message || formData.additionalNotes}
                         </p>
                       )}
@@ -2229,7 +2230,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                         </span>
                       );
                     })()}
-                    <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
+                    <ChevronRight className="w-4 h-4 text-[#1a472a]/75" />
                   </div>
                 </div>
               </div>
@@ -2251,23 +2252,23 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Contact Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Email</p>
                     <p className="text-[#1a472a]">{inquiry.email}</p>
                   </div>
                   {inquiry.location && (
                     <div>
-                      <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Location</p>
+                      <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Location</p>
                       <p className="text-[#1a472a]">{inquiry.location}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
                     <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
                       {inquiry.status}
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Submitted</p>
                     <p className="text-[#1a472a]">{new Date(inquiry.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
@@ -2275,7 +2276,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Selected Projects/Orgs */}
                 {selectedProjects.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Selected Land Projects</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Selected Land Projects</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedProjects.map((proj: string) => (
                         <Badge key={proj} className="bg-green-100 text-green-800 border-green-200">
@@ -2288,7 +2289,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {selectedOrgs.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Selected Alliance Organizations</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Selected Alliance Organizations</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedOrgs.map((org: string) => (
                         <Badge key={org} className="bg-purple-100 text-purple-800 border-purple-200">
@@ -2301,7 +2302,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {roleArchetypes.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Role Archetypes</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Role Archetypes</p>
                     <div className="flex flex-wrap gap-2">
                       {roleArchetypes.map((role: string) => (
                         <Badge key={role} className="bg-amber-100 text-amber-800 border-amber-200">
@@ -2314,7 +2315,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {contributionTypes.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Contribution Types</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Contribution Types</p>
                     <div className="flex flex-wrap gap-2">
                       {contributionTypes.map((type: string) => (
                         <Badge key={type} className="bg-blue-100 text-blue-800 border-blue-200">
@@ -2394,7 +2395,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Role Interest */}
                 {inquiry.roleInterest && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Role Interest</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Role Interest</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.roleInterest}</p>
                     </div>
@@ -2404,7 +2405,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Unique Contribution (Something Else path) */}
                 {inquiry.uniqueContribution && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Unique Contribution</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Unique Contribution</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.uniqueContribution}</p>
                     </div>
@@ -2418,7 +2419,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (capitals.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Forms of Capital to Contribute</p>
+                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Forms of Capital to Contribute</p>
                           <div className="flex flex-wrap gap-2">
                             {capitals.map((cap: string) => (
                               <Badge key={cap} className="bg-teal-100 text-teal-800 border-teal-200 capitalize">
@@ -2440,7 +2441,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (orgCaps.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Organizational Capital</p>
+                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Organizational Capital</p>
                           <div className="flex flex-wrap gap-2">
                             {orgCaps.map((cap: string) => (
                               <Badge key={cap} className="bg-indigo-100 text-indigo-800 border-indigo-200 capitalize">
@@ -2462,7 +2463,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (categories.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Alliance Support Categories</p>
+                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Alliance Support Categories</p>
                           <div className="flex flex-wrap gap-2">
                             {categories.map((cat: string) => (
                               <Badge key={cat} className="bg-violet-100 text-violet-800 border-violet-200 capitalize">
@@ -2480,7 +2481,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Alliance Support Description */}
                 {inquiry.allianceSupportDescription && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">How Alliance Supports Land Projects</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">How Alliance Supports Land Projects</p>
                     <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
                       <p className="text-violet-900 whitespace-pre-wrap">{inquiry.allianceSupportDescription}</p>
                     </div>
@@ -2490,7 +2491,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Other Alliance Support */}
                 {inquiry.otherAllianceSupport && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Other Support Category</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Other Support Category</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.otherAllianceSupport}</p>
                     </div>
@@ -2500,7 +2501,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Value Contribution */}
                 {inquiry.valueContribution && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Value Contribution</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Value Contribution</p>
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-emerald-900 whitespace-pre-wrap">{inquiry.valueContribution}</p>
                     </div>
@@ -2510,7 +2511,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Why Ideal Fit */}
                 {inquiry.whyIdealFit && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Why They Would Be an Ideal Fit</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Why They Would Be an Ideal Fit</p>
                     <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
                       <p className="text-sky-900 whitespace-pre-wrap">{inquiry.whyIdealFit}</p>
                     </div>
@@ -2520,7 +2521,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Message/Notes */}
                 {(inquiry.message || formData.additionalNotes) && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Message</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Message</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.message || formData.additionalNotes}</p>
                     </div>
@@ -2530,9 +2531,9 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* All Form Data */}
                 {Object.keys(formData).length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">All Form Data</p>
+                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">All Form Data</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4 overflow-x-auto">
-                      <pre className="text-xs text-[#1a472a]/70">
+                      <pre className="text-xs text-[#1a472a]/75">
                         {JSON.stringify(formData, null, 2)}
                       </pre>
                     </div>
@@ -2581,7 +2582,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   </Select>
                 </div>
                 {/* Navigation indicator */}
-                <div className="w-full flex items-center justify-between text-xs text-[#1a472a]/70">
+                <div className="w-full flex items-center justify-between text-xs text-[#1a472a]/75">
                   <span>Inquiry {currentIndex + 1} of {filteredInquiries.length}</span>
                   <div className="flex gap-2">
                     {currentIndex > 0 && (
@@ -2697,9 +2698,9 @@ function ScheduledEmailsManager() {
         <CardDescription>{pending.length} pending</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/75">Loading…</p>}
         {!isLoading && scheduled?.length === 0 && (
-          <p className="text-sm text-[#1a472a]/65">No scheduled emails. Use "Send Later" when composing to schedule.</p>
+          <p className="text-sm text-[#1a472a]/75">No scheduled emails. Use "Send Later" when composing to schedule.</p>
         )}
         {pending.length > 0 && (
           <div className="space-y-2 mb-4">
@@ -2729,8 +2730,8 @@ function ScheduledEmailsManager() {
             {past.slice(0, 10).map((s: any) => (
               <div key={s.id} className="flex items-center gap-3 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[#1a472a]/70 truncate">{s.subject}</p>
-                  <p className="text-xs text-[#1a472a]/65">
+                  <p className="font-medium text-[#1a472a]/75 truncate">{s.subject}</p>
+                  <p className="text-xs text-[#1a472a]/75">
                     To: {s.recipientName || s.recipientEmail} ·
                     <span className={s.status === 'sent' ? 'text-green-600' : s.status === 'cancelled' ? 'text-gray-500' : 'text-red-500'}> {s.status}</span>
                   </p>
@@ -2889,16 +2890,16 @@ function OrgClaimsAdminPanel() {
         <CardDescription>Review requests from users claiming stewardship of land projects or alliance orgs</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/75">Loading…</p>}
         {!isLoading && !claims?.length && (
-          <p className="text-sm text-[#1a472a]/65">No stewardship claims yet.</p>
+          <p className="text-sm text-[#1a472a]/75">No stewardship claims yet.</p>
         )}
         <div className="space-y-3 mb-4">
           {claims?.map((claim: any) => (
             <div key={claim.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0]">
               <div>
                 <p className="font-medium text-[#1a472a] text-sm">{claim.orgName}</p>
-                <p className="text-xs text-[#1a472a]/70">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
+                <p className="text-xs text-[#1a472a]/75">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={
@@ -3012,9 +3013,9 @@ function JoinRequestsAdminPanel() {
         <CardDescription>All requests submitted via /connect to join a land project or alliance org</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/75">Loading…</p>}
         {!isLoading && !requests?.length && (
-          <p className="text-sm text-[#1a472a]/65">No join requests yet.</p>
+          <p className="text-sm text-[#1a472a]/75">No join requests yet.</p>
         )}
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {requests?.map((req: any) => (
@@ -3022,10 +3023,10 @@ function JoinRequestsAdminPanel() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-[#1a472a]">{req.submitterName}</p>
-                  <p className="text-xs text-[#1a472a]/70">{req.submitterEmail}</p>
+                  <p className="text-xs text-[#1a472a]/75">{req.submitterEmail}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-[#1a472a]/70 font-medium">{req.targetName}</p>
+                  <p className="text-xs text-[#1a472a]/75 font-medium">{req.targetName}</p>
                   <Badge variant="outline" className="text-xs h-5 mt-0.5">
                     {req.status}
                   </Badge>
@@ -3140,16 +3141,16 @@ function ProjectConnectionsAdmin() {
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-[#1a472a]/70">Loading...</p>
+          <p className="text-sm text-[#1a472a]/75">Loading...</p>
         ) : connections && connections.length > 0 ? (
           <div className="space-y-2 mt-2">
             {connections.map(c => (
               <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-[#f8f5f0] border border-[#e8e4de]">
                 <div className="text-sm text-[#1a472a]">
                   <span className="font-semibold">#{c.postAId}</span>
-                  <span className="text-[#1a472a]/65 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
+                  <span className="text-[#1a472a]/75 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
                   <span className="font-semibold">#{c.postBId}</span>
-                  {c.note && <span className="text-[#1a472a]/70 ml-2 text-xs">: {c.note}</span>}
+                  {c.note && <span className="text-[#1a472a]/75 ml-2 text-xs">: {c.note}</span>}
                 </div>
                 <Button
                   size="sm"
@@ -3163,7 +3164,7 @@ function ProjectConnectionsAdmin() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#1a472a]/65 italic">No connections yet.</p>
+          <p className="text-sm text-[#1a472a]/75 italic">No connections yet.</p>
         )}
       </CardContent>
     </Card>
@@ -3262,7 +3263,7 @@ function GlossaryAdminPanel() {
                 <div key={t.id} className="flex items-start justify-between p-2 rounded bg-[#f8f5f0] border border-[#e8e4de]">
                   <div>
                     <p className="font-semibold text-[#1a472a] text-xs">{t.term}</p>
-                    <p className="text-[#1a472a]/70 text-xs line-clamp-1">{t.definition}</p>
+                    <p className="text-[#1a472a]/75 text-xs line-clamp-1">{t.definition}</p>
                   </div>
                 </div>
               ))}
@@ -3270,9 +3271,9 @@ function GlossaryAdminPanel() {
           </div>
         )}
 
-        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading glossary...</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/75">Loading glossary...</p>}
         {!isLoading && (terms || []).length === 0 && (
-          <p className="text-sm text-[#1a472a]/65 italic">No terms yet. AI will propose terms weekly based on forum activity.</p>
+          <p className="text-sm text-[#1a472a]/75 italic">No terms yet. AI will propose terms weekly based on forum activity.</p>
         )}
       </CardContent>
     </Card>
@@ -3312,7 +3313,7 @@ function AdminPlayersTab() {
               <button
                 key={f}
                 onClick={() => setPlayerFilter(f)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${playerFilter === f ? 'bg-[#1a472a] text-white border-[#1a472a]' : 'border-[#1a472a]/20 text-[#1a472a]/70 hover:bg-[#f0ebe3]'}`}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${playerFilter === f ? 'bg-[#1a472a] text-white border-[#1a472a]' : 'border-[#1a472a]/20 text-[#1a472a]/75 hover:bg-[#f0ebe3]'}`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
@@ -3691,11 +3692,35 @@ function AdminDashboard() {
         </div>
       </div>
 
+      {/* The Harvest: the daily driver. The header chip is easy to miss, so the
+          content pipeline gets a front door you cannot walk past. */}
+      <div className="bg-white border-b border-[#1a472a]/10">
+        <div className="container px-4 py-4">
+          <Link
+            href="/admin-create"
+            className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-5 md:px-7 md:py-6 shadow-sm transition-all hover:from-[#2d5a3d] hover:to-[#4a7c59] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#7dd87d]/40"
+          >
+            <span className="flex-shrink-0 inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 text-[#7dd87d]">
+              <Sprout className="w-6 h-6 md:w-7 md:h-7" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
+                The Harvest
+              </span>
+              <span className="block text-sm md:text-base text-white/85">
+                Compose, fact-check, and publish. Your content pipeline.
+              </span>
+            </span>
+            <ArrowRight className="hidden sm:block w-6 h-6 flex-shrink-0 text-[#7dd87d] transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      </div>
+
       {/* Global Search Bar */}
       <div className="bg-white border-b border-[#1a472a]/10">
         <div className="container px-4 py-2.5">
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75 pointer-events-none" />
             <input
               type="text"
               data-global-search
@@ -3722,58 +3747,58 @@ function AdminDashboard() {
               aria-label="Search contacts, projects, posts"
             />
             {globalSearch && (
-              <button onClick={() => { setGlobalSearch(''); setGlobalSearchOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/65 hover:text-[#1a472a]">
+              <button onClick={() => { setGlobalSearch(''); setGlobalSearchOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#1a472a]">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
             {globalSearchOpen && isSearching && globalResults && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1a472a]/20 rounded-xl shadow-xl z-50 overflow-hidden max-h-[60vh] overflow-y-auto">
                 {globalResults.investors.length === 0 && globalResults.applications.length === 0 && globalResults.inquiries.length === 0 && globalResults.forumPosts.length === 0 && globalResults.campaigns.length === 0 ? (
-                  <p className="p-4 text-sm text-[#1a472a]/65 text-center">No results for "{globalSearch}"</p>
+                  <p className="p-4 text-sm text-[#1a472a]/75 text-center">No results for "{globalSearch}"</p>
                 ) : (
                   <div className="divide-y divide-[#1a472a]/10">
                     {globalResults.investors.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-amber-50">Investors</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-amber-50">Investors</p>
                         {globalResults.investors.map((i: any) => (
                           <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setInvestorSearch(i.email || i.fullName); setActiveTab('investors'); setGlobalSearch(''); }}>
                             <TrendingUp className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName}</span>
-                            <span className="text-xs text-[#1a472a]/70 truncate">{i.email}</span>
+                            <span className="text-xs text-[#1a472a]/75 truncate">{i.email}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {globalResults.applications.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-green-50">Projects</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-green-50">Projects</p>
                         {globalResults.applications.map((a: any) => (
                           <button key={a.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setAppSearch(a.projectName || a.contactName); setActiveTab('applications'); setGlobalSearch(''); }}>
                             <Sprout className="w-3.5 h-3.5 text-[#4a7c59] flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{a.projectName || a.contactName}</span>
-                            <span className="text-xs text-[#1a472a]/70">{a.location}</span>
+                            <span className="text-xs text-[#1a472a]/75">{a.location}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {globalResults.inquiries.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-purple-50">Inquiries</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-purple-50">Inquiries</p>
                         {globalResults.inquiries.map((i: any) => (
                           <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setActiveTab(i.pathType || 'live'); setGlobalSearch(''); }}>
                             <MessageSquare className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName || i.email}</span>
-                            <span className="text-xs text-[#1a472a]/70">{i.pathType?.replace(/_/g, ' ')}</span>
+                            <span className="text-xs text-[#1a472a]/75">{i.pathType?.replace(/_/g, ' ')}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {globalResults.campaigns.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-blue-50">Campaigns</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-blue-50">Campaigns</p>
                         {globalResults.campaigns.map((c: any) => (
                           <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer"
                             className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2 block"
@@ -3787,7 +3812,7 @@ function AdminDashboard() {
                     )}
                     {globalResults.forumPosts.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-teal-50">Forum Posts</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-teal-50">Forum Posts</p>
                         {globalResults.forumPosts.map((p: any) => (
                           <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer"
                             className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2 block"
@@ -3813,12 +3838,37 @@ function AdminDashboard() {
       <div className="flex-1 overflow-y-auto">
       {/* Stats */}
       <div className="container py-8">
+        {/* Funding Pipeline: the primary way into /admin/funding. The header
+            chip is easy to miss, and this is the surface Rye works from most
+            during a raise, so it gets a full-width card instead of a button in
+            a row of six. White on #1a472a measures 10.6:1. */}
+        <Link href="/admin/funding">
+          <a className="group block mb-6 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/30 p-5 md:p-6 hover:border-[#7dd87d]/70 hover:shadow-xl transition-all">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 border border-[#7dd87d]/40 flex items-center justify-center flex-shrink-0">
+                <Landmark className="w-6 h-6 md:w-7 md:h-7 text-[#7dd87d]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl md:text-2xl font-bold text-white">Funding Pipeline</h2>
+                <p className="text-white/85 text-sm md:text-base">
+                  All 117 researched funders, where each application stands, and the positioning generator. Prepare an
+                  application to get a Cowork prompt you can run.
+                </p>
+              </div>
+              <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold px-5 py-3 min-h-11 flex-shrink-0 group-hover:bg-[#a8e6a8] transition-colors">
+                Open
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </div>
+          </a>
+        </Link>
+
         {/* The clickable KPI row inside the Overview tab is the single stat
             surface now; the old duplicate summary cards were removed. */}
 
         {/* Main Tabs - navigation is handled by AdminSidebar */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <Suspense fallback={<div className="py-20 text-center text-[#1a472a]/50 text-sm">Loading section…</div>}>
+          <Suspense fallback={<div className="py-20 text-center text-[#1a472a]/75 text-sm">Loading section…</div>}>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
