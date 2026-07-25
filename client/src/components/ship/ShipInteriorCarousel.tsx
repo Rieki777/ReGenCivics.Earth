@@ -14,9 +14,9 @@ import { shipImg } from "@/pages/ship/shipShared";
 
 export type CarouselPhoto = { name: string; label: string; alt: string };
 
-// Ordered set. The four cabin/galley/lounge shots are the real interior photos;
-// the rest are her rooms. The old inaccurate galley table and the mislabelled
-// "by candlelight" bedroom were removed.
+// Ordered set of real interior photos of the coach: her cabin, galley, lounge,
+// bedrooms (by day and by candlelight), bath, wardrobe, and the view down her
+// length. Add more shots by extending this list.
 const INTERIOR_PHOTOS: CarouselPhoto[] = [
   { name: "ship-interior-cabin-wide.jpg", label: "The cabin", alt: "A wide view of the ship's cabin, wood trim and soft daylight through the windows." },
   { name: "ship-interior-cabin-forward.jpg", label: "Looking forward", alt: "The cabin looking forward toward the cockpit, seats and dash ahead." },
@@ -29,6 +29,17 @@ const INTERIOR_PHOTOS: CarouselPhoto[] = [
   { name: "ship-interior-shower.jpg", label: "The shower", alt: "A corner shower with frosted glass, fresh towels, and a skylight overhead." },
   { name: "ship-interior-bath-sink.jpg", label: "The vanity", alt: "The bathroom vanity with a stone tile backsplash, brushed gold fixtures, and a folded towel." },
   { name: "ship-interior-altar.jpg", label: "The altar", alt: "A small altar with framed agate slices, candles, selenite, and a feather." },
+  { name: "ship-interior-love-berth.jpg", label: "The love berth", alt: "The primary bedroom with a gold velvet drapery headboard, string lights, and trailing ivy." },
+  { name: "ship-interior-berth-night.jpg", label: "The berth by night", alt: "The primary bedroom under warm lamplight, gold drapery and patterned pillows made up for rest." },
+  { name: "ship-interior-candlelight.jpg", label: "By candlelight", alt: "The bedroom by warm lamplight at night, soft and made up for sleep." },
+  { name: "ship-interior-berth-daylight.jpg", label: "A berth in daylight", alt: "A bedroom in daylight, a quilted spread and a window onto the world outside." },
+  { name: "ship-interior-rear-bedroom.jpg", label: "The rear bedroom", alt: "The bedroom from the foot of the bed, a ceiling fan and framed art on wood-panelled walls." },
+  { name: "ship-interior-lounge-day.jpg", label: "The lounge in daylight", alt: "The cream sofa piled with sheepskins in the daylight, wide windows onto the outside." },
+  { name: "ship-interior-reading-nook.jpg", label: "The reading nook", alt: "The lounge sofa with sheepskins, a book and a mug of tea on the table by the window." },
+  { name: "ship-interior-galley-work.jpg", label: "The galley at work", alt: "The galley counter and sink set up for cooking, kettle and pot to the side." },
+  { name: "ship-interior-hall.jpg", label: "Down her length", alt: "A view down the length of the coach, wood floors with the galley and lounge opening off the hall." },
+  { name: "ship-interior-wardrobe.jpg", label: "The wardrobe", alt: "A robe hanging in the cherry-wood wardrobe, ready for the voyage." },
+  { name: "ship-interior-bath-shower.jpg", label: "The bath and shower", alt: "The bathroom with a frosted-glass corner shower and a skylight overhead." },
 ];
 
 function CarouselCard({ photo, onOpen }: { photo: CarouselPhoto; onOpen: () => void }) {
