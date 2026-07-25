@@ -219,6 +219,25 @@ function anthropicClient(): Anthropic {
 function openrouterClient(): Anthropic {
   if (!_openrouter) {
     _openrouter = new Anthropic({
+      // apiKey MUST be null, not merely omitted. The SDK falls back to
+      // process.env.ANTHROPIC_API_KEY when apiKey is undefined and sends it as
+      // an x-api-key header alongside our Bearer token. OpenRouter reads that
+      // header as an Anthropic BYOK credential and pins routing to the
+      // anthropic provider, so every non-Anthropic model then 404s with "No
+      // allowed providers are available for the selected model"
+      // (available_providers: google-vertex/google-ai-studio,
+      // requested_providers: anthropic).
+      //
+      // That silently disabled OpenRouter for ALL THREE tiers on production:
+      // light, standard and complex each 404'd and failed over to first-party
+      // Anthropic, so every LLM call in the app ran on the failover model while
+      // ADR-43's cheapest-model routing looked configured and did nothing. It
+      // only reproduces when ANTHROPIC_API_KEY is present in the environment,
+      // which is why local runs without that key never showed it.
+      //
+      // It also meant our Anthropic key was transmitted to OpenRouter on every
+      // request. Verified 2026-07-24 by intercepting the outbound request.
+      apiKey: null,
       authToken: ENV.openrouterApiKey,
       baseURL: OPENROUTER_BASE_URL,
       defaultHeaders: {
@@ -228,6 +247,12 @@ function openrouterClient(): Anthropic {
     });
   }
   return _openrouter;
+}
+
+/** Test hook: the OpenRouter client must never carry an Anthropic api key. */
+export function _openrouterClientForTests(): { apiKey: unknown; authToken: unknown } {
+  const c = openrouterClient() as unknown as { apiKey: unknown; authToken: unknown };
+  return { apiKey: c.apiKey, authToken: c.authToken };
 }
 
 function anthropicModel(): string {

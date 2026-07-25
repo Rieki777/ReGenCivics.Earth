@@ -137,3 +137,37 @@ describe("providerChain free lane (opt-in)", () => {
     expect(_providerChainForTests("complex")[0].model).toBe(ENV.llmModelComplex);
   });
 });
+
+describe("OpenRouter client never carries an Anthropic key", () => {
+  /**
+   * Regression guard for the 2026-07-24 outage-in-plain-sight.
+   *
+   * The Anthropic SDK falls back to process.env.ANTHROPIC_API_KEY whenever
+   * `apiKey` is undefined, and sends it as an x-api-key header next to our
+   * Bearer token. OpenRouter reads that header as an Anthropic BYOK credential
+   * and pins routing to the anthropic provider, so every non-Anthropic model
+   * 404s with "No allowed providers are available for the selected model".
+   *
+   * The effect was total and silent: light, standard and complex all 404'd on
+   * production and failed over to first-party Anthropic, so ADR-43's routing
+   * looked configured while doing nothing, and our Anthropic key was sent to a
+   * third party on every call. Only reproducible with ANTHROPIC_API_KEY set,
+   * which is why it survived local testing.
+   *
+   * If apiKey is ever loosened back to undefined, this fails.
+   */
+  it("passes apiKey: null so no x-api-key header is sent", async () => {
+    const prev = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = "sk-ant-should-never-reach-openrouter";
+    try {
+      const { _openrouterClientForTests } = await import("./_core/llm");
+      const client = _openrouterClientForTests();
+      expect(client.apiKey).toBeNull();
+      expect(client.apiKey).not.toBe(process.env.ANTHROPIC_API_KEY);
+      expect(client.authToken).not.toBe(process.env.ANTHROPIC_API_KEY);
+    } finally {
+      if (prev === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = prev;
+    }
+  });
+});
