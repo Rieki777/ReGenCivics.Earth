@@ -334,6 +334,22 @@ export async function runGeneration(): Promise<{ scanned: number; drafted: numbe
   }
 
   const stats = { scanned: candidates.length, drafted, skipped, backpressure, resurfaced };
+  // Give real titles to whatever the bridge brought in since the last run. The
+  // vault sends the first ~45 raw characters as a title, cut mid-word, and the
+  // feed is unreadable without this. Bounded and fail-soft: titles are
+  // cosmetic, so a failure here never costs us a generation run.
+  try {
+    if (ENV.ownerUserId) {
+      const { titleUntitledIdeas } = await import("./harvest-titles");
+      // Sixty an hour, three model calls, so a full backlog clears in about
+      // nine hours without anyone running a script.
+      const titled = await titleUntitledIdeas(ENV.ownerUserId, 60);
+      if (titled > 0) log.info(`titled ${titled} ideas`);
+    }
+  } catch (err) {
+    log.error("idea titling skipped", err instanceof Error ? err : undefined);
+  }
+
   await db.insert(harvestRuns).values({ kind: "generation", stats });
   log.info(`generation run: ${JSON.stringify(stats)}`);
   return stats;

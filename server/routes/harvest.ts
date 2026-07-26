@@ -12,7 +12,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { ownerProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { creationItems, harvestIdeas, harvestRuns, sourceIndex } from "../../drizzle/schema";
 import { draftChannel, upsertDraft, runGeneration, HARVEST_CHANNELS, RIPENESS_THRESHOLD, type HarvestChannel } from "../lib/harvest";
 
@@ -69,21 +69,40 @@ export const harvestRouter = router({
           .limit(60))
           .filter((i) => !i.snoozedUntil || i.snoozedUntil < now);
 
+        // Ordered by creation, not last touch. Sorting by updatedAt meant a
+        // card jumped to the top the moment you saved an edit, which reads as
+        // the draft you were working on disappearing.
         const drafts = tier === "ideas" ? [] : await db
           .select()
           .from(creationItems)
           .where(eq(creationItems.ownerId, ctx.user.id))
-          .orderBy(desc(creationItems.updatedAt))
+          .orderBy(desc(creationItems.createdAt))
           .limit(120);
 
-        const runs = await db
-          .select()
+        // MAX per kind rather than a window over the newest rows. Generation
+        // runs hourly, so a LIMIT 40 was pure generation and pushed bridge,
+        // seed, and digest out of view: the status line said "never" for jobs
+        // that had in fact run days earlier.
+        const runRows = await db
+          .select({ kind: harvestRuns.kind, last: sql<string | null>`MAX(${harvestRuns.ranAt})` })
+          .from(harvestRuns)
+          .groupBy(harvestRuns.kind);
+        const lastOf = (kind: string): Date | null => {
+          const hit = runRows.find((r) => r.kind === kind)?.last;
+          return hit ? new Date(hit) : null;
+        };
+        const lastGeneration = lastOf("generation");
+        const bridgeRun = lastOf("bridge");
+        const seedRun = lastOf("seed");
+        const lastBridge = bridgeRun && seedRun
+          ? (bridgeRun > seedRun ? bridgeRun : seedRun)
+          : (bridgeRun ?? seedRun);
+        const lastDigest = lastOf("digest");
+        const [latestRun] = await db
+          .select({ stats: harvestRuns.stats })
           .from(harvestRuns)
           .orderBy(desc(harvestRuns.ranAt))
-          .limit(40);
-        const lastGeneration = runs.find((r) => r.kind === "generation")?.ranAt ?? null;
-        const lastBridge = runs.find((r) => r.kind === "bridge" || r.kind === "seed")?.ranAt ?? null;
-        const lastDigest = runs.find((r) => r.kind === "digest")?.ranAt ?? null;
+          .limit(1);
 
         let lastSend: Date | null = null;
         try {
@@ -109,7 +128,7 @@ export const harvestRouter = router({
             lastDigest,
             lastSend,
             generationStale: lastGeneration ? Date.now() - lastGeneration.getTime() > 2 * 60 * 60 * 1000 : true,
-            lastStats: runs[0]?.stats ?? null,
+            lastStats: latestRun?.stats ?? null,
           },
         };
       } catch (err) {
@@ -540,6 +559,33 @@ export const harvestRouter = router({
           eq(publicationTargets.publicationId, input.publicationId),
           eq(publicationTargets.surface, input.surface),
           inArray(publicationTargets.status, ["draft", "failed", "approved"]),
+        ));
+      return { ok: true };
+    }),
+
+  /**
+   * Undo an approval that was a mistake. Only ever moves 'approved' back to
+   * 'draft': something already published stays published, because unpublishing
+   * is a different and louder action.
+   *
+   * The verification verdict is left alone on purpose. Un-approving does not
+   * change a word of the copy, so re-running the fact-checker would just burn
+   * a call to reach the same answer.
+   */
+  unapproveTarget: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      await db.update(publicationTargets)
+        .set({ status: "draft" })
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+          eq(publicationTargets.status, "approved"),
         ));
       return { ok: true };
     }),

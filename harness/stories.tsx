@@ -42,7 +42,8 @@ const REVIEW_FIXTURE = {
       weeklyNote: null,
     },
     {
-      id: 2, publicationId: 1, surface: "instagram", itemId: 12, status: "draft",
+      // Approved, so the un-approve escape hatch shows.
+      id: 2, publicationId: 1, surface: "instagram", itemId: 12, status: "approved",
       externalUrl: null,
       verificationStatus: "passed", verificationFlags: [],
       firstComment: null, weeklyNote: null,

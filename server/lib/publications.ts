@@ -74,7 +74,14 @@ export async function findRelatedMaterial(ownerId: number, text: string, limit =
     Array.isArray(idea.sourceRefs) ? (idea.sourceRefs as unknown[]).filter((r): r is string => typeof r === "string") : [],
   )));
   return {
-    ideas: scored.map(({ idea }) => ({ id: idea.id, ideaRef: idea.ideaRef, title: idea.title, sourceRefs: idea.sourceRefs })),
+    // Prefer the generated title. The vault's raw `title` is a mid-word cut of
+    // the note, which is what made "what would this draw from" unreadable.
+    ideas: scored.map(({ idea }) => ({
+      id: idea.id,
+      ideaRef: idea.ideaRef,
+      title: (idea.displayTitle ?? "").trim() || idea.title,
+      sourceRefs: idea.sourceRefs,
+    })),
     sourceRefs,
   };
 }

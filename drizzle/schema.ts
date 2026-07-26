@@ -5128,7 +5128,13 @@ export const harvestIdeas = mysqlTable("harvest_ideas", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("owner_id").notNull(),
   ideaRef: varchar("idea_ref", { length: 191 }).notNull(),
+  /** As the vault sends it: the first ~45 raw characters, usually cut mid-word. */
   title: varchar("title", { length: 300 }).notNull(),
+  /**
+   * A real title generated from the summary (server/lib/harvest-titles.ts).
+   * What the UI shows. Kept separate so re-syncing the bridge never clobbers it.
+   */
+  displayTitle: varchar("display_title", { length: 300 }),
   summary: text("summary"),
   themes: json("themes"),
   ripeness: double("ripeness").notNull().default(0),

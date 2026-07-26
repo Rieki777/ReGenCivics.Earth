@@ -89,6 +89,13 @@ function TargetRow({ publicationId, target, item, onChanged }: {
   const [firstCommentDraft, setFirstCommentDraft] = useState(target.firstComment ?? "");
   const [weeklyNoteDraft, setWeeklyNoteDraft] = useState(target.weeklyNote ?? "");
   const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [bodyDraft, setBodyDraft] = useState(item?.body ?? "");
+  const [saved, setSaved] = useState(false);
+  const unapprove = trpc.harvest.unapproveTarget.useMutation();
+  // The same mutation the Drafts tier uses, so edits made here feed
+  // voice-learning and reset the fact-check exactly as they do there.
+  const editItem = trpc.harvest.editItem.useMutation();
   const approve = trpc.harvest.approveTarget.useMutation();
   const publish = trpc.harvest.publishTarget.useMutation();
   const verify = trpc.harvest.verifyTarget.useMutation();
@@ -146,6 +153,14 @@ function TargetRow({ publicationId, target, item, onChanged }: {
             <Check className="w-3 h-3 mr-1" /> Approve
           </Button>
         )}
+        {/* Approving is easy to do by accident. Undoing it should be too, right
+            up until the thing is actually published. */}
+        {target.status === "approved" && (
+          <Button size="sm" variant="ghost" className="h-7 rounded-lg text-xs text-[#2d5a3d]" disabled={unapprove.isPending}
+            onClick={async () => { await unapprove.mutateAsync({ publicationId, surface: target.surface as never }); onChanged(); }}>
+            <Undo2 className="w-3 h-3 mr-1" /> Un-approve
+          </Button>
+        )}
         {target.status === "approved" && target.surface !== "email" && (
           <Button size="sm" className="h-7 rounded-lg text-xs bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={publish.isPending || (needsProfile && !profileId)}
             onClick={async () => {
@@ -162,7 +177,53 @@ function TargetRow({ publicationId, target, item, onChanged }: {
           </Button>
         )}
       </div>
-      {item?.body && <p className="text-xs text-[#2d5a3d] line-clamp-2">{item.body.slice(0, 200)}</p>}
+      {/* Click the preview to open the full draft and edit it in place. Saving
+          goes through the same editItem the Drafts tier uses, so the second
+          brain learns from the edit and verification resets itself. */}
+      {item?.body && !open && (
+        <button
+          type="button"
+          onClick={() => { setBodyDraft(item.body ?? ""); setOpen(true); }}
+          className="w-full text-left text-xs text-[#2d5a3d] line-clamp-2 hover:text-[#1a472a]"
+          title="Open the full draft to read and edit it"
+        >
+          {item.body.slice(0, 200)}
+        </button>
+      )}
+      {item?.body && open && (
+        <div className="space-y-2">
+          <Textarea
+            value={bodyDraft}
+            onChange={(e) => { setBodyDraft(e.target.value); setSaved(false); }}
+            className="min-h-[260px] text-xs leading-relaxed"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] text-[#2d5a3d]">Saving teaches the voice loop. Was the edit:</span>
+            {(["style", "content"] as const).map((kind) => (
+              <Button
+                key={kind}
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]"
+                disabled={editItem.isPending || bodyDraft.trim() === "" || bodyDraft === item.body}
+                onClick={async () => {
+                  await editItem.mutateAsync({ itemId: item.id, body: bodyDraft, editKind: kind });
+                  setSaved(true);
+                  onChanged();
+                }}
+              >
+                {editItem.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                mostly {kind}
+              </Button>
+            ))}
+            <span className="flex-1" />
+            {saved && <span className="text-[11px] text-[#1a472a]">Saved</span>}
+            <Button size="sm" variant="ghost" className="h-7 rounded-lg text-xs text-[#2d5a3d]" onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Fact flags come before the draft preview's convenience: judgment first. */}
       {flags.length > 0 && (
         <div className={`rounded-lg border px-2 py-1.5 space-y-1 ${blocks.length > 0 ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>

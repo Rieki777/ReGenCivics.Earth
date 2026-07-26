@@ -234,7 +234,8 @@ function IdeaGraph({ ideas }: { ideas: Array<{ id: number; title: string; themes
 }
 
 type IdeaRow = {
-  id: number; title: string; summary: string | null; whyNow: string | null;
+  id: number; title: string; displayTitle: string | null;
+  summary: string | null; whyNow: string | null;
   ripeness: number; scoreComponents: unknown; themes: unknown; steer: string | null;
 };
 
@@ -260,12 +261,30 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
   }
 
   const themes = Array.isArray(idea.themes) ? (idea.themes as string[]) : [];
+  const [showSources, setShowSources] = useState(false);
+  // The vault's `title` is the first ~45 raw characters of the note, cut
+  // mid-word. displayTitle is the generated one; fall back while it backfills.
+  const headline = (idea.displayTitle ?? "").trim() || idea.title;
 
   return (
     <div className="rounded-2xl border border-[#4a7c59]/25 bg-white p-4 space-y-2">
       <div className="space-y-1.5">
-        <p className="font-semibold text-[15px] leading-snug text-[#1a472a]">{cleanDashes(idea.title)}</p>
-        {idea.whyNow && <p className="text-xs text-[#2d5a3d]">{cleanDashes(idea.whyNow)}</p>}
+        <p className="font-semibold text-[15px] leading-snug text-[#1a472a]">{cleanDashes(headline)}</p>
+        {idea.whyNow && (
+          <button
+            type="button"
+            onClick={() => setShowSources((s) => !s)}
+            className="text-left text-xs text-[#2d5a3d] underline decoration-dotted underline-offset-2 hover:text-[#1a472a]"
+            title="See the notes this idea webs together"
+          >
+            {cleanDashes(idea.whyNow)}
+          </button>
+        )}
+        {showSources && (
+          <div className="rounded-lg bg-[#f8f5f0] px-3 py-2">
+            <Provenance ideaId={idea.id} />
+          </div>
+        )}
         <ScorePills components={idea.scoreComponents} ripeness={idea.ripeness} />
       </div>
       {themes.length > 0 && (
@@ -276,7 +295,7 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
       {idea.steer && <p className="text-xs text-amber-800 bg-amber-50 rounded px-2 py-1">Steer: {idea.steer}</p>}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1.5">
-        <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" onClick={() => setExpanded((e) => !e)}>
+        <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] text-[#f0ebe3] hover:bg-[#2d5a3d] hover:text-white" onClick={() => setExpanded((e) => !e)}>
           <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Develop {expanded ? <ChevronUp className="w-3.5 h-3.5 ml-1.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-1.5" />}
         </Button>
         <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" disabled={snooze.isPending}
@@ -317,7 +336,7 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
           <input value={angle} onChange={(e) => setAngle(e.target.value)} placeholder="Angle (optional): the fatherhood thread, the numbers, ..."
             className="w-full text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={200} />
           <div className="flex items-center gap-2">
-            <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={develop.isPending || channels.length === 0} onClick={runDevelop}>
+            <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] text-[#f0ebe3] hover:bg-[#2d5a3d] hover:text-white" disabled={develop.isPending || channels.length === 0} onClick={runDevelop}>
               {develop.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
               {develop.isPending ? "Drafting..." : `Draft ${channels.length} channel${channels.length === 1 ? "" : "s"}`}
             </Button>
@@ -462,7 +481,10 @@ export default function AdminCreate() {
 
   const ideaTitleById = useMemo(() => {
     const map = new Map<number, string>();
-    for (const idea of feed.data?.ideas ?? []) map.set(idea.id, idea.title);
+    // Generated title where we have one; the vault's mid-word cut otherwise.
+    for (const idea of feed.data?.ideas ?? []) {
+      map.set(idea.id, (idea.displayTitle ?? "").trim() || idea.title);
+    }
     return map;
   }, [feed.data?.ideas]);
 
