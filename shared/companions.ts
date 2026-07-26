@@ -133,7 +133,7 @@ export const COMPANION_PERSONAS: Record<CompanionPersonaId, CompanionPersona> = 
     name: "Sylva",
     gender: "female",
     portrait: "persona-sylva.webp",
-    role: "ReGen's Game Guide, of the forest",
+    role: "ReGen's Game Guide",
     greeting:
       "Welcome. I'm Sylva, ReGen's Game Guide. Every community that builds a game with us names a guide of its own, and this talk is how yours begins. Tell me about your land and your people, and I'll start sketching your game.",
     invitations: [
