@@ -141,22 +141,40 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
 
   return (
     <div
-      className="rgi-root fixed inset-0 z-50 flex flex-col items-center justify-center px-6 pt-32 pb-12 overflow-auto"
+      className="rgi-root fixed inset-0 z-50 overflow-hidden"
       style={{ backgroundColor: "#06160b" }}
     >
       <style>{`
         .rgi-root {
           --rgi-accent: ${panel.accent};
+          /* The site's bottom nav is fixed, 4rem tall and also z-50
+             (MobileTabBar on phones, SmartBottomNav from md up), so it paints
+             over this overlay. Everything interactive has to end above it. */
+          --rgi-nav-clear: calc(4rem + env(safe-area-inset-bottom, 0px));
+          background:
+            radial-gradient(ellipse 90% 70% at 50% 18%, rgba(125,216,125,0.10), transparent 60%),
+            radial-gradient(ellipse 120% 90% at 50% 120%, rgba(10,31,15,0.9), #06160b 70%),
+            #06160b;
+        }
+
+        /* The scrolling half of the overlay. Kept separate from .rgi-root so
+           the ambient layers and the pinned chrome (progress ring, Skip) live
+           outside the scrollport: they can neither scroll away nor stretch the
+           scrollable area. Only the vertical axis scrolls -- the decorative
+           layers are wider than a phone by design and used to drag a
+           horizontal scrollbar along with them. */
+        .rgi-scroll {
+          position: absolute; inset: 0; z-index: 10;
+          display: flex; flex-direction: column; align-items: center;
+          overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          padding: 8rem 1.5rem calc(var(--rgi-nav-clear) + 2.5rem);
           /* Panels 3 and 4 are taller than a short phone. Plain center
              alignment overflows them upward, sliding the art and kicker under
              the progress ring; "safe" falls back to start alignment once the
              content stops fitting, so the top padding is always respected and
              the overflow scrolls downward instead. */
           justify-content: safe center;
-          background:
-            radial-gradient(ellipse 90% 70% at 50% 18%, rgba(125,216,125,0.10), transparent 60%),
-            radial-gradient(ellipse 120% 90% at 50% 120%, rgba(10,31,15,0.9), #06160b 70%),
-            #06160b;
         }
 
         /* Aurora glow blobs, tinted with the active panel accent */
@@ -170,13 +188,18 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
           mix-blend-mode: screen; pointer-events: none;
           transition: background-color 0.9s ease;
         }
+        /* Sized off the viewport's larger axis with a floor: a plain vw size
+           collapses to a ~180px dot on a portrait phone, which reads as a
+           smudge in one corner rather than an ambient wash. */
         .rgi-aurora-a {
-          width: 46vw; height: 46vw; left: -6vw; top: -4vw;
+          width: clamp(300px, 46vmax, 720px); height: clamp(300px, 46vmax, 720px);
+          left: -12%; top: -6%;
           background: radial-gradient(circle, var(--rgi-accent), transparent 68%);
           opacity: 0.28; animation: rgi-aurora 18s ease-in-out infinite;
         }
         .rgi-aurora-b {
-          width: 40vw; height: 40vw; right: -8vw; bottom: -6vw;
+          width: clamp(260px, 40vmax, 640px); height: clamp(260px, 40vmax, 640px);
+          right: -14%; bottom: -6%;
           background: radial-gradient(circle, #2f8f6b, transparent 68%);
           opacity: 0.22; animation: rgi-aurora 22s ease-in-out infinite reverse;
         }
@@ -194,6 +217,11 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
           pointer-events: none;
         }
         .rgi-seed {
+          /* The SVG's own width/height are the desktop size; these override
+             them so the geometry fits inside a phone instead of being cropped
+             into a few disconnected arcs. Height follows from the viewBox. */
+          width: min(620px, 88vw);
+          height: auto;
           animation: rgi-rotate 90s linear infinite;
           color: var(--rgi-accent);
           transition: color 0.9s ease;
@@ -348,14 +376,29 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         />
       ))}
 
-      {/* Skip — bottom right (keeps clear of the centered step indicator on
-          narrow viewports). */}
+      {/* Skip — bottom left, lifted above the site's bottom nav. Left rather
+          than right because the WizardRadialMenu FAB owns the bottom-right
+          corner on phones at z-[60] and would sit on top of it. */}
       <button
         onClick={handleEnter}
-        className="absolute bottom-4 right-4 text-white/70 hover:text-white text-sm transition-colors underline-offset-4 hover:underline z-20"
+        className="absolute left-4 text-white/70 hover:text-white text-sm transition-colors underline-offset-4 hover:underline z-20"
+        style={{ bottom: "calc(var(--rgi-nav-clear) + 0.75rem)" }}
       >
         Skip
       </button>
+
+      {/* Top scrim. The ring below is pinned rather than scrolling with the
+          panel, so on a short viewport the long panel bodies slide underneath
+          it. This fades them out on the way up instead of letting two layers
+          of text collide. */}
+      <div
+        className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-[15]"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(6,22,11,0.97) 0%, rgba(6,22,11,0.88) 48%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
 
       {/* Progress ring + step dots (top center). Sits above the panel content:
           the centered content block is tall enough on short viewports to
@@ -402,90 +445,93 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         </div>
       </div>
 
-      {/* Panel content */}
-      <div
-        key={current}
-        className={`relative z-10 max-w-2xl w-full text-center mx-auto ${
-          transitioning ? "rgi-fadeout" : "rgi-fadein"
-        }`}
-      >
-        {panel.image && !brokenImages.has(current) && (
-          <div className="rgi-img-wrap">
-            <span className="rgi-img-glow" aria-hidden="true" />
-            <img
-              className="rgi-img"
-              src={cdnImg(panel.image, 800)}
-              alt={panel.imageAlt}
-              width={1600}
-              height={2000}
-              loading="eager"
-              decoding="async"
-              onError={() =>
-                setBrokenImages((prev) => {
-                  const next = new Set(prev);
-                  next.add(current);
-                  return next;
-                })
-              }
-            />
-          </div>
-        )}
-
+      {/* Scrolling region: panel content + the Next button. */}
+      <div className="rgi-scroll">
+        {/* Panel content */}
         <div
-          className="text-[color:var(--rgi-accent)] text-xs font-bold uppercase tracking-[0.3em] mb-6 rgi-stagger"
-          style={{ fontFamily: "var(--font-accent, sans-serif)", animationDelay: "0.05s" }}
+          key={current}
+          className={`relative max-w-2xl w-full text-center mx-auto ${
+            transitioning ? "rgi-fadeout" : "rgi-fadein"
+          }`}
         >
-          {String(current + 1).padStart(2, "0")} / {String(PANELS.length).padStart(2, "0")}
+          {panel.image && !brokenImages.has(current) && (
+            <div className="rgi-img-wrap">
+              <span className="rgi-img-glow" aria-hidden="true" />
+              <img
+                className="rgi-img"
+                src={cdnImg(panel.image, 800)}
+                alt={panel.imageAlt}
+                width={1600}
+                height={2000}
+                loading="eager"
+                decoding="async"
+                onError={() =>
+                  setBrokenImages((prev) => {
+                    const next = new Set(prev);
+                    next.add(current);
+                    return next;
+                  })
+                }
+              />
+            </div>
+          )}
+
+          <div
+            className="text-[color:var(--rgi-accent)] text-xs font-bold uppercase tracking-[0.3em] mb-6 rgi-stagger"
+            style={{ fontFamily: "var(--font-accent, sans-serif)", animationDelay: "0.05s" }}
+          >
+            {String(current + 1).padStart(2, "0")} / {String(PANELS.length).padStart(2, "0")}
+          </div>
+
+          {panel.heading && (
+            <h2
+              className={`rgi-heading rgi-stagger text-3xl md:text-5xl font-bold leading-tight ${
+                panel.body ? "mb-8" : ""
+              } ${panel.pulse ? "rgi-pulse" : ""}`}
+              style={{ fontFamily: "var(--font-display, serif)", animationDelay: "0.14s" }}
+            >
+              {panel.heading}
+            </h2>
+          )}
+
+          {panel.body && (
+            <p
+              className="rgi-stagger text-lg md:text-xl text-white/80 leading-relaxed max-w-xl mx-auto"
+              style={{ animationDelay: "0.26s" }}
+            >
+              {panel.body}
+            </p>
+          )}
+
+          {panel.cta && (
+            <div className="rgi-stagger mt-10" style={{ animationDelay: "0.4s" }}>
+              <span className="rgi-cta-wrap">
+                <span className="rgi-cta-halo" aria-hidden="true" />
+                <button
+                  onClick={handleEnter}
+                  className="rgi-cta px-14 py-5 rounded-full font-bold text-xl shadow-lg"
+                  style={{ backgroundColor: "var(--rgi-accent)", color: "#06160b" }}
+                >
+                  Start Your First Quest
+                </button>
+              </span>
+            </div>
+          )}
         </div>
 
-        {panel.heading && (
-          <h2
-            className={`rgi-heading rgi-stagger text-3xl md:text-5xl font-bold leading-tight ${
-              panel.body ? "mb-8" : ""
-            } ${panel.pulse ? "rgi-pulse" : ""}`}
-            style={{ fontFamily: "var(--font-display, serif)", animationDelay: "0.14s" }}
-          >
-            {panel.heading}
-          </h2>
-        )}
-
-        {panel.body && (
-          <p
-            className="rgi-stagger text-lg md:text-xl text-white/80 leading-relaxed max-w-xl mx-auto"
-            style={{ animationDelay: "0.26s" }}
-          >
-            {panel.body}
-          </p>
-        )}
-
-        {panel.cta && (
-          <div className="rgi-stagger mt-10" style={{ animationDelay: "0.4s" }}>
-            <span className="rgi-cta-wrap">
-              <span className="rgi-cta-halo" aria-hidden="true" />
-              <button
-                onClick={handleEnter}
-                className="rgi-cta px-14 py-5 rounded-full font-bold text-xl shadow-lg"
-                style={{ backgroundColor: "var(--rgi-accent)", color: "#06160b" }}
-              >
-                Start Your First Quest
-              </button>
-            </span>
+        {/* Navigation */}
+        {!panel.cta && (
+          <div className="relative mt-14 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={handleNext}
+              className="rgi-cta px-10 py-4 rounded-full font-bold text-lg shadow-lg"
+              style={{ backgroundColor: "var(--rgi-accent)", color: "#06160b" }}
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
-
-      {/* Navigation */}
-      {!panel.cta && (
-        <div className="relative z-10 mt-14 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={handleNext}
-            className="rgi-cta px-10 py-4 rounded-full font-bold text-lg shadow-lg"
-            style={{ backgroundColor: "var(--rgi-accent)", color: "#06160b" }}
-          >
-            Next
-          </button>
-        </div>
-      )}
 
       {/* Bottom vignette */}
       <div
