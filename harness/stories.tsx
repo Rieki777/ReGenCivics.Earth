@@ -6,6 +6,7 @@
 import type { ReactNode } from "react";
 import { mockData } from "./trpc-stub";
 import { PublicationReview } from "@/components/HarvestCompose";
+import { QuestGameIntro } from "@/components/QuestGameIntro";
 
 export type Story = {
   title: string;
@@ -71,7 +72,41 @@ const REVIEW_FIXTURE = {
   article: null,
 };
 
+/**
+ * Stand-in for the app's fixed bottom nav. MobileTabBar and SmartBottomNav both
+ * need wouter, season tint and tRPC, which the harness has no business booting
+ * just to occupy 4rem of screen. What matters for layout is the geometry, so
+ * this reproduces it exactly: fixed, full width, h-16, z-50.
+ */
+function BottomNavStandIn() {
+  return (
+    <div
+      data-standin-nav
+      className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-[#7dd87d]/20 bg-[#1a472a] flex items-center justify-center text-[11px] text-white/60"
+    >
+      bottom nav stand-in (h-16, z-50)
+    </div>
+  );
+}
+
 export const STORIES: Record<string, Story> = {
+  /**
+   * The first-run quest intro over the bottom nav. Two things to check:
+   * nothing scrolls horizontally, and the Next / Skip controls clear the bar.
+   */
+  "quest-game-intro": {
+    title: "Quest intro overlay, with the fixed bottom nav in place",
+    setup: () => {
+      localStorage.removeItem("regen_game_entered");
+    },
+    render: () => (
+      <>
+        <QuestGameIntro onEnter={() => undefined} />
+        <BottomNavStandIn />
+      </>
+    ),
+  },
+
   "publication-review": {
     title: "Publication review: fact flags, first comment, weekly note",
     setup: () => {
