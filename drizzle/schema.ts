@@ -5622,3 +5622,48 @@ export const fundingApplications = mysqlTable("funding_applications", {
 ]));
 export type FundingApplication = typeof fundingApplications.$inferSelect;
 export type InsertFundingApplication = typeof fundingApplications.$inferInsert;
+
+/* ════════════════════════════════════════════════════════════════════
+ * Governance fork relay (ADR-46): the hub runs ONE Alchemy listener for
+ * every fork of the village platform. When an on-chain proposal carrying a
+ * fork's [gm:<id>] mechanics marker executes, the outcome is relayed to
+ * each registered fork's callback with that fork's shared secret. Forks
+ * discard markers that are not theirs, so delivery is broadcast and
+ * at-least-once; the fork-side receiver is idempotent by contract.
+ * Migration: 0220_governance_fork_relay.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const governanceForkRelays = mysqlTable("governanceForkRelays", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The fork's platform instance id (from its /api/platform/info), for the directory. */
+  instanceId: varchar("instanceId", { length: 80 }),
+  name: varchar("name", { length: 120 }).notNull(),
+  /** The fork's receiver: POST <callbackUrl> with x-governance-hub-secret. */
+  callbackUrl: varchar("callbackUrl", { length: 500 }).notNull(),
+  secret: varchar("secret", { length: 200 }).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastRelayAt: timestamp("lastRelayAt"),
+  lastStatus: varchar("lastStatus", { length: 200 }),
+});
+export type GovernanceForkRelay = typeof governanceForkRelays.$inferSelect;
+
+export const governanceRelayDeliveries = mysqlTable("governanceRelayDeliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  forkId: int("forkId").notNull(),
+  /** The [gm:<id>] marker's id — the fork resolves it to its proposal. */
+  marker: varchar("marker", { length: 80 }).notNull(),
+  outcome: mysqlEnum("outcome", ["passed", "failed"]).notNull(),
+  txHash: varchar("txHash", { length: 80 }),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 80 }),
+  basescanUrl: varchar("basescanUrl", { length: 200 }),
+  attempts: int("attempts").default(0).notNull(),
+  lastAttemptAt: timestamp("lastAttemptAt"),
+  lastError: varchar("lastError", { length: 300 }),
+  deliveredAt: timestamp("deliveredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("gov_relay_once_idx").on(table.forkId, table.marker, table.outcome),
+  index("gov_relay_pending_idx").on(table.deliveredAt, table.lastAttemptAt),
+]));
+export type GovernanceRelayDelivery = typeof governanceRelayDeliveries.$inferSelect;

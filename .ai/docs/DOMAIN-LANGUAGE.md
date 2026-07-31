@@ -251,3 +251,6 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 - **Worldview Pack**: the versioned, curated, redaction-gated bundle of Rye's voice, concepts, positions, and style rules, built from the vault and loaded by agent surfaces via `server/lib/worldview.ts` (ADR-38). Never contains raw sources.
 - **Agent contract**: `second-brain/contract.json` plus its AGENT GUIDE section: the machine-readable rules for how any agent reads and writes vault memory (ADR-40).
 - **Supersession**: marking an idea or position replaced (`superseded_by`) while retaining it as history. Agents never delete worldview content.
+
+### Governance fork relay (gm-marker)
+The hub-side pipeline (ADR-46) that carries on-chain vote outcomes to forks of the village platform. A **gm-marker** is `[gm:<proposalId>]` in a Hypha proposal title — the fork-side mechanics proposal's identity, matched by the hub's Alchemy listener and relayed to every registered fork's `mechanics-governance` webhook. Distinct from our own `[rc:<bridgeKey>]` bridge markers: `rc` means this repo's bridge rows, `gm` means a fork's game-mechanics proposal. Never mint either shape by hand outside the owning module.

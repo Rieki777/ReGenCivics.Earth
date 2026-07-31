@@ -27,6 +27,7 @@ import { eventsRouter } from "./routes/events";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
+import { governanceForksRouter } from "./routes/governanceForks";
 import { governanceRouter } from "./routes/governance";
 import { assemblyRouter } from "./routes/assembly";
 import { walletRouter } from "./routes/wallet";
@@ -179,6 +180,10 @@ export const appRouter = router({
 
   // Hypha Bridge (every ReGen Civics -> Hypha handoff goes through here)
   hyphaBridge: hyphaBridgeRouter,
+
+  // Governance fork relay roster (ADR-46: the hub relays on-chain outcomes
+  // to registered village-platform forks)
+  governanceForks: governanceForksRouter,
 
   // Governance pipeline (Stage 1: forum readiness + promotion patterns)
   governance: governanceRouter,

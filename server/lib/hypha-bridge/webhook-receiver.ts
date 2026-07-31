@@ -22,6 +22,7 @@ import { checkCitizenshipTiers } from "../citizenship";
 import type { QuestBridgeMetadata } from "./types";
 import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
 import { logger } from "../../_core/logger";
+import { flushForkRelays, maybeQueueForkRelay } from "./fork-relay";
 
 const log = logger("hypha-alchemy");
 
@@ -830,7 +831,14 @@ export function registerHyphaWebhookRoutes(app: Express) {
       const results = [];
       for (const ev of events) {
         results.push(await handleHyphaEvent(ev));
+        // ADR-46: a [gm:<id>] marker is a FORK's mechanics proposal — it can
+        // never match this repo's [rc:] bridges, so relaying it is purely
+        // additive. Queue is idempotent per (fork, marker, outcome).
+        await maybeQueueForkRelay(ev).catch((e) => log.warn("fork relay enqueue failed", { error: String(e) }));
       }
+      // Flush owed deliveries opportunistically on the chain's own heartbeat
+      // (every incoming webhook) — retries ride the backoff in the queue.
+      void flushForkRelays().catch((e) => log.warn("fork relay flush failed", { error: String(e) }));
       return res.json({ ok: true, processed: results.length, matched: results.filter((r) => r.matched).length });
     } catch (err: any) {
       log.error("handler error", err);
