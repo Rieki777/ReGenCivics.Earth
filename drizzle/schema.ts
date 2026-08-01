@@ -134,6 +134,11 @@ export const applications = mysqlTable("applications", {
   
   // Metadata
   submittedAt: timestamp("submittedAt"),
+  // Incubator season cohort (1, 2, ...). Stamped at submit time from
+  // shared/incubatorSeason.ts; migration 0219 backfilled existing rows.
+  // The admin season filter reads this tag, never dates (the Season 1
+  // batch was seeded with submittedAt later than real Season 2 apps).
+  season: int("season").default(2),
   adminSeeded: tinyint("adminSeeded").default(0).notNull(),
   stewardUserId: int("stewardUserId"),
 
