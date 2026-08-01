@@ -10,8 +10,12 @@
  * separate the cohorts.
  */
 
-/** Season 2 runs through September 2026 (per Rye, 2026-08-01). */
-const SEASON_3_STARTS = new Date("2026-10-01T00:00:00Z");
+/**
+ * Season 3 begins at the September 2026 equinox, when the Season 2 cohort
+ * kicks off (per Rye, 2026-08-01). Same date the game-season rotation in
+ * client/src/lib/seasons.ts turns over.
+ */
+const SEASON_3_STARTS = new Date("2026-09-22T00:00:00Z");
 
 export function currentIncubatorSeason(now: Date = new Date()): number {
   return now < SEASON_3_STARTS ? 2 : 3;
