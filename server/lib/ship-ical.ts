@@ -82,10 +82,16 @@ function stateToKind(state: VoyageWeek["state"]): IcalBlockKind | null {
   return "unavailable"; // booked, turnover, migration
 }
 
+/**
+ * SUMMARY is read by a human in a calendar app, so it is user-facing copy and
+ * the no-em-dash rule applies (STEERING.md 1.1). A colon carries the same
+ * separation and survives iCalendar unescaped: RFC 5545 splits a content line
+ * at its FIRST colon, so a later one stays inside the value.
+ */
 function summaryFor(kind: IcalBlockKind, reason: string): string {
   return kind === "hold"
-    ? `ReGen Ship — held (${reason})`
-    : `ReGen Ship — ${reason}`;
+    ? `ReGen Ship: held (${reason})`
+    : `ReGen Ship: ${reason}`;
 }
 
 export type BuildBlocksInput = {

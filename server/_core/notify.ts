@@ -185,3 +185,28 @@ export async function notifyRecordingReady(recording: {
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
+
+/**
+ * Raise an Outdoorsy booking that lands on a week already spoken for.
+ *
+ * The sync writes the blackout anyway, so the calendar is safe. What needs a
+ * human is the guest: two people believe they have the same week, and only Rye
+ * can decide which one sails and how the other is looked after. Carries dates
+ * and row ids only, never a guest name.
+ */
+export async function notifyShipCalendarConflict(conflicts: string[]): Promise<void> {
+  if (conflicts.length === 0) return;
+
+  const lines = conflicts.slice(0, 10).map((c) => `- ${c}`).join("\n");
+  const more = conflicts.length > 10 ? `\n...and ${conflicts.length - 10} more` : "";
+
+  const message =
+    `*Ship calendar conflict*\n\n` +
+    `An Outdoorsy booking overlaps a week that is already held on regencivics.earth. ` +
+    `The dates are blocked either way, so nothing is oversold. Two guests may both ` +
+    `think the week is theirs.\n\n` +
+    `${lines}${more}\n\n` +
+    `Ship admin: ${APP_BASE_URL}/admin/ship`;
+
+  await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
+}

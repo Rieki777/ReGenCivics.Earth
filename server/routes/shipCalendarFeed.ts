@@ -25,7 +25,7 @@
 
 import type { Express, Request, Response } from "express";
 import crypto from "node:crypto";
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "../db";
 import { shipBookings, shipBlackoutDates, shipPricingWindows } from "../../drizzle/schema";
 import { enumerateVoyageWeeks } from "../lib/ship-logic";
@@ -37,6 +37,7 @@ import {
   SHIP_SEASONAL_BANDS,
 } from "../lib/ship-config";
 import { buildBlocksFromWeeks, buildShipCalendar } from "../lib/ship-ical";
+import { OUTDOORSY_SOURCE } from "../jobs/outdoorsySync";
 import { logger } from "../_core/logger";
 
 const log = logger("ship-ical");
@@ -98,9 +99,16 @@ export function registerShipCalendarRoutes(app: Express): void {
         .filter((r) => !r.createdAt || r.createdAt >= holdCutoff)
         .map((r) => ({ startDate: r.startDate, endDate: r.endDate }));
 
-      // Phase 2 adds a `source` column here; Outdoorsy-sourced blackouts must be
-      // excluded at that point or we hand the channel its own bookings back.
-      const blackouts = await d.select().from(shipBlackoutDates);
+      // Outdoorsy-sourced blackouts are excluded, and this is not optional. The
+      // inbound sync writes a blackout for every Outdoorsy booking; echoing
+      // those back would hand the channel its own bookings as blocks, and worse,
+      // a cancellation there could never reopen the week because our feed would
+      // keep asserting it. Blocks from any OTHER source still go out: a week
+      // held by hand, or by a future channel, is a week Outdoorsy must not sell.
+      const blackouts = await d
+        .select()
+        .from(shipBlackoutDates)
+        .where(ne(shipBlackoutDates.source, OUTDOORSY_SOURCE));
       const pricing = await d
         .select()
         .from(shipPricingWindows)

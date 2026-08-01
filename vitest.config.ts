@@ -22,6 +22,7 @@ export default defineConfig({
       ["client/**/*.test.ts", "jsdom"],
       ["server/**/*.test.ts", "node"],
       ["server/**/*.spec.ts", "node"],
+      ["shared/**/*.test.ts", "node"],
     ],
     include: [
       "server/**/*.test.ts",
@@ -29,6 +30,10 @@ export default defineConfig({
       "client/**/*.test.tsx",
       "client/**/*.test.ts",
       "client/**/*.spec.tsx",
+      // shared/ was absent until 2026-08-01, so a test written there ran zero
+      // times and still reported green. Code both halves of the app depend on
+      // was the one place tests could not reach.
+      "shared/**/*.test.ts",
     ],
     setupFiles: ["client/src/test-setup.ts"],
     globalSetup: ["server/test-global-teardown.ts"],

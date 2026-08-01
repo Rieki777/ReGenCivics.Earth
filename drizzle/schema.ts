@@ -4518,9 +4518,19 @@ export const shipBlackoutDates = mysqlTable("ship_blackout_dates", {
   startDate: date("startDate", { mode: "string" }).notNull(),
   endDate: date("endDate", { mode: "string" }).notNull(),
   reason: varchar("reason", { length: 255 }),
+  // Who wrote this row: "manual" for the admin panel, "outdoorsy" for the
+  // inbound sync. The outbound iCal feed must exclude the synced ones or we
+  // hand the channel its own bookings back as blocks (migration 0224).
+  source: varchar("source", { length: 24 }).notNull().default("manual"),
+  /** The channel's own VEVENT UID. Unique, and NULL on every hand-written row. */
+  externalUid: varchar("externalUid", { length: 255 }),
+  externalUpdatedAt: timestamp("externalUpdatedAt"),
+  syncedAt: timestamp("syncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("ship_blackout_start_idx").on(table.startDate),
+  unique("ship_blackout_external_uid_idx").on(table.externalUid),
+  index("ship_blackout_source_idx").on(table.source),
 ]));
 export type ShipBlackoutDate = typeof shipBlackoutDates.$inferSelect;
 

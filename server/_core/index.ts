@@ -650,6 +650,37 @@ async function startServer() {
   // First-party analytics ingest (POST /api/analytics/collect)
   registerAnalyticsRoutes(app);
 
+  // ── Outdoorsy calendar sync cron endpoint ──────────────────────────────────
+  // Called every 15 minutes by Railway cron: POST /api/cron/outdoorsy-sync
+  // Pulls the Outdoorsy bookings feed, snaps each booking outward to whole
+  // voyage weeks, and reconciles ship_blackout_dates against it. Idempotent:
+  // rows are keyed on the channel's UID, so a repeat run over an unchanged feed
+  // reports created/updated/deleted all zero.
+  //
+  // Fifteen minutes rather than matching Outdoorsy's two-hour pull, because the
+  // window where a cancellation still reads as booked on our side is dead
+  // inventory, and this direction is cheap.
+  // Spec: CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6.
+  app.post("/api/cron/outdoorsy-sync", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runOutdoorsySync } = await import("../jobs/outdoorsySync");
+      const report = await runOutdoorsySync();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron outdoorsy-sync failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Governance jobs cron endpoint ──────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/governance-jobs
   // Runs the full sweep: expire promotions, mark closing-soon, assign
