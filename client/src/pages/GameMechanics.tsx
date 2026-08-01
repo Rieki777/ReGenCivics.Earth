@@ -234,6 +234,7 @@ interface SimState {
   gratitudeRecipients: number;
   streakCycles: number;
   regenDistributionPool: number;
+  maxPayoutPerPerson: number;
   claimThreshold: number;
 }
 
@@ -253,6 +254,7 @@ function initialSimState(): SimState {
     gratitudeRecipients: 10,
     streakCycles: 0,
     regenDistributionPool: 10000,
+    maxPayoutPerPerson: 1000,
     claimThreshold: 1000,
   };
 }
@@ -595,11 +597,15 @@ function GameSimulator() {
       // Sim math works in fractions; percentage rows may store points (15 = 15%).
       compostingDecay: asFraction(varNum(vars, "composting.decay_rate", 0.15)),
       harvestPoolSize: varNum(vars, "harvest.pool_size", 50000),
-      gratitudeBudget: varNum(vars, "gratitude.budget_base", 100),
+      // Key is gratitude.base_budget (seeded in 0173). This read
+      // gratitude.budget_base, which does not exist, so the slider silently
+      // sat on its hardcoded default and never reflected the live variable.
+      gratitudeBudget: varNum(vars, "gratitude.base_budget", 100),
       // Simulation scenario inputs, not game variables.
       gratitudeRecipients: 10,
       streakCycles: 0,
       regenDistributionPool: varNum(vars, "gratitude.pool_per_cycle", 10000),
+      maxPayoutPerPerson: varNum(vars, "gratitude.max_payout_per_person", 1000),
       claimThreshold: varNum(vars, "governance.claim_threshold_regen", 1000),
     }),
     [vars],
@@ -765,14 +771,23 @@ function GameSimulator() {
   const streakBonus = Math.min(sim.streakCycles * 0.03, 0.30);
   const effectiveBudget = Math.round(sim.gratitudeBudget * tierMultiplier * (1 + streakBonus));
 
-  // Per-person share based on recipients
+  // Per-person share, mirroring computePerPersonShare on the server: the
+  // divisor is max(recipients, threshold), so acknowledging fewer than the
+  // threshold forfeits the remainder instead of concentrating it.
+  const fullPowerThreshold = varNum(vars, "gratitude.full_power_threshold", 10);
   const perPerson = sim.gratitudeRecipients > 0
-    ? Math.round(effectiveBudget / sim.gratitudeRecipients)
-    : effectiveBudget;
+    ? Math.round(effectiveBudget / Math.max(sim.gratitudeRecipients, fullPowerThreshold))
+    : 0;
+  const fullPowerShare = Math.round(effectiveBudget / fullPowerThreshold);
+  const isFullPower = sim.gratitudeRecipients >= fullPowerThreshold;
+  const budgetDeployed = perPerson * sim.gratitudeRecipients;
+  const budgetForfeited = Math.max(0, effectiveBudget - budgetDeployed);
 
-  // Full power: first 10 recipients get max share (budget / 10)
-  const fullPowerShare = Math.round(effectiveBudget / 10);
-  const isFullPower = sim.gratitudeRecipients <= 10;
+  // What a cycle can actually mint: the pool, or the cap times the number of
+  // people receiving, whichever is smaller.
+  const cappedPayout = sim.maxPayoutPerPerson > 0
+    ? Math.min(sim.regenDistributionPool, sim.maxPayoutPerPerson * sim.gratitudeRecipients)
+    : sim.regenDistributionPool;
 
   const proposalParams = new URLSearchParams({
     category: "game_variable",
@@ -982,9 +997,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Gratitude Base Budget (per cycle)"
-            help={varHelp(vars, "gratitude.budget_base")}
+            help={varHelp(vars, "gratitude.base_budget")}
             value={sim.gratitudeBudget}
-            {...varBounds(vars, "gratitude.budget_base", 50, 200)}
+            {...varBounds(vars, "gratitude.base_budget", 50, 200)}
             step={10}
             onChange={update("gratitudeBudget")}
             trajectory={trajectories.gratitudeBudget}
@@ -994,7 +1009,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="People Acknowledged (this cycle)"
-            help="How many different people you send gratitude to this cycle. The first 10 get your full impact. After 10, your impact per person starts diluting."
+            help="How many different people you acknowledge this cycle. Your budget is divided by this number or by the full-power threshold, whichever is larger. Acknowledge fewer than the threshold and the rest of your budget is forfeited."
             value={sim.gratitudeRecipients}
             min={1}
             max={30}
@@ -1029,6 +1044,19 @@ function GameSimulator() {
             trajectory={trajectories.regenDistributionPool}
             baseline={baseline.regenDistributionPool}
             ghost={ghostMap.regenDistributionPool}
+            compare={compareMode}
+          />
+          <SliderRow
+            label="Max Payout per Person (per cycle)"
+            help={varHelp(vars, "gratitude.max_payout_per_person")}
+            value={sim.maxPayoutPerPerson}
+            {...varBounds(vars, "gratitude.max_payout_per_person", 0, 10000)}
+            step={100}
+            unit="$"
+            onChange={update("maxPayoutPerPerson")}
+            trajectory={trajectories.maxPayoutPerPerson}
+            baseline={baseline.maxPayoutPerPerson}
+            ghost={ghostMap.maxPayoutPerPerson}
             compare={compareMode}
           />
           <SliderRow
@@ -1076,12 +1104,27 @@ function GameSimulator() {
           <OutcomeRow
             label={`Acknowledging ${sim.gratitudeRecipients} ${sim.gratitudeRecipients === 1 ? "person" : "people"}`}
             value={`${perPerson} per person`}
-            detail={isFullPower ? `Full power: each of ${sim.gratitudeRecipients} gets ${perPerson}` : `Diluting: over 10 recipients (${fullPowerShare} at full power)`}
+            detail={
+              sim.gratitudeRecipients < fullPowerThreshold
+                ? `${budgetDeployed} of ${effectiveBudget} deployed, ${budgetForfeited} forfeited (below the ${fullPowerThreshold}-person threshold)`
+                : isFullPower && sim.gratitudeRecipients === fullPowerThreshold
+                  ? `Full power: each of ${sim.gratitudeRecipients} gets ${perPerson}`
+                  : `Diluting: past ${fullPowerThreshold} recipients (${fullPowerShare} at full power)`
+            }
+          />
+          <OutcomeRow
+            label="Most the pool can mint this cycle"
+            value={`${cappedPayout.toLocaleString()} $ReGen`}
+            detail={
+              sim.maxPayoutPerPerson > 0
+                ? `${sim.gratitudeRecipients} recipients x ${sim.maxPayoutPerPerson.toLocaleString()} cap, held under the ${sim.regenDistributionPool.toLocaleString()} pool. Anything the cap holds back is never created.`
+                : `Cap disabled: the whole ${sim.regenDistributionPool.toLocaleString()} pool is distributed.`
+            }
           />
           <OutcomeRow
             label="$ReGen from gratitude (if avg recipient)"
-            value={`~${Math.round(sim.regenDistributionPool / 50)} per cycle`}
-            detail={`Pool of ${sim.regenDistributionPool.toLocaleString()} split proportionally. Claim at ${sim.claimThreshold}+.`}
+            value={`~${Math.min(sim.maxPayoutPerPerson > 0 ? sim.maxPayoutPerPerson : Infinity, Math.round(sim.regenDistributionPool / 50))} per cycle`}
+            detail={`Pool of ${sim.regenDistributionPool.toLocaleString()} split proportionally, capped per person. Claim at ${sim.claimThreshold}+.`}
           />
         </CardContent>
       </Card>

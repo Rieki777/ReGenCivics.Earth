@@ -98,20 +98,27 @@ async function enrichBounties<T extends BountyRowLike>(db: DbInstance, rows: T[]
   });
 }
 
-/** Sum of gratitude gifts (private $ReGen credited with source 'gratitude_bounty') per bounty. */
+/**
+ * How many people acknowledged the work on each bounty.
+ *
+ * Repointed 2026-07-28 from user_token_ledger rows tagged 'gratitude_bounty'.
+ * Those rows were minted by the retired seasonal send path, so the tally
+ * would have frozen at its historical value the moment that path was
+ * removed. Under the lunar model gratitude is a signal with no token amount
+ * attached, so `total` stays 0 and the count is what means anything.
+ */
 async function gratitudeTallyForBounties(db: DbInstance, bountyIds: number[]): Promise<Map<number, { total: number; count: number }>> {
   const out = new Map<number, { total: number; count: number }>();
   if (!bountyIds.length) return out;
-  const refs = bountyIds.map((id) => `bounty:${id}`);
   const rows = await db.execute(sql`
-    SELECT sourceRef, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt
-    FROM user_token_ledger
-    WHERE source = 'gratitude_bounty' AND sourceRef IN (${sql.join(refs, sql`, `)})
-    GROUP BY sourceRef
+    SELECT sourceId, COUNT(*) AS cnt
+    FROM gratitudeLog
+    WHERE sourceType = 'bounty' AND sourceId IN (${sql.join(bountyIds.map((id) => sql`${id}`), sql`, `)})
+    GROUP BY sourceId
   `).then((r: any) => r[0] ?? []);
   for (const row of rows) {
-    const id = Number(String(row.sourceRef).split(":")[1]);
-    if (Number.isFinite(id)) out.set(id, { total: Number(row.total) || 0, count: Number(row.cnt) || 0 });
+    const id = Number(row.sourceId);
+    if (Number.isFinite(id)) out.set(id, { total: 0, count: Number(row.cnt) || 0 });
   }
   return out;
 }

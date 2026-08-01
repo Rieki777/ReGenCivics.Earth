@@ -3,9 +3,14 @@
  *
  * Implements the proportional-budget model from GRATITUDE_SYSTEM_SPEC.md:
  * each player gets a per-cycle budget (base x tier multiplier x streak
- * bonus) that splits equally across the unique people they acknowledge.
- * At cycle close, recipients earn $ReGen from a fixed pool proportional
- * to the weighted gratitude they received.
+ * bonus) that splits across the unique people they acknowledge, divided by
+ * AT LEAST the full-power threshold. Acknowledging fewer people than the
+ * threshold forfeits the remainder: use it or lose it.
+ *
+ * At cycle close, recipients earn $ReGen from a fixed pool proportional to
+ * the weighted gratitude they received, capped per person per cycle. Pool
+ * money above that cap is never minted, which is what stops a small
+ * colluding group from draining a whole cycle's pool.
  *
  * Pure math lives in the exported compute* functions (unit-tested without
  * a DB). Orchestration functions take a drizzle instance.
@@ -46,31 +51,64 @@ export function computeEffectiveBudget(inputs: BudgetInputs): { streakBonus: num
   };
 }
 
-/** Per-person share when a budget splits across n unique recipients. */
-export function computePerPersonShare(effectiveBudget: number, uniqueRecipients: number): number {
-  if (uniqueRecipients <= 0) return effectiveBudget;
-  return effectiveBudget / uniqueRecipients;
+/**
+ * Per-person share when a budget splits across n unique recipients.
+ *
+ * The divisor is max(n, fullPowerThreshold), so the first `threshold`
+ * acknowledgments each carry a full share and acknowledging fewer than that
+ * forfeits the rest of the budget rather than concentrating it. That is the
+ * "use it or lose it" rule; dividing by n alone made recipient count change
+ * only the concentration, never the total a sender emitted.
+ *
+ * Acknowledging nobody emits nothing.
+ */
+export function computePerPersonShare(
+  effectiveBudget: number,
+  uniqueRecipients: number,
+  fullPowerThreshold: number,
+): number {
+  if (uniqueRecipients <= 0) return 0;
+  return effectiveBudget / Math.max(uniqueRecipients, Math.max(1, fullPowerThreshold));
 }
 
 /**
  * Pool distribution: each recipient's exact share of the cycle pool,
- * proportional to weighted gratitude received. Whole-token credit amounts
- * are floored (user_token_ledger.amount is INT); remainders stay in the
- * pool rather than minting extra tokens.
+ * proportional to weighted gratitude received.
+ *
+ * Two things reduce what is actually minted, both deliberately:
+ *
+ *  - `maxPayoutPerPerson` caps what any one recipient can be credited in a
+ *    cycle. With a 10,000 pool and a 1,000 cap, a two-person cycle mints
+ *    2,000, not 10,000. This is the anti-collusion floor: a small group
+ *    acknowledging only each other cannot capture the pool.
+ *  - Credits are floored, because user_token_ledger.amount is an INT.
+ *
+ * In both cases the difference is never minted and does not roll forward.
+ * The pool is a ceiling on issuance, not a promise to issue.
  */
 export function computePoolShares(
   weightByUser: Map<number, number>,
   poolPerCycle: number,
-): { totalWeight: number; shares: Array<{ userId: number; weightReceived: number; poolShare: number; creditedAmount: number }> } {
+  maxPayoutPerPerson: number,
+): {
+  totalWeight: number;
+  distributed: number;
+  shares: Array<{ userId: number; weightReceived: number; poolShare: number; creditedAmount: number; capped: boolean }>;
+} {
   let totalWeight = 0;
   for (const w of weightByUser.values()) totalWeight += w;
-  if (totalWeight <= 0) return { totalWeight: 0, shares: [] };
+  if (totalWeight <= 0) return { totalWeight: 0, distributed: 0, shares: [] };
+
+  const cap = maxPayoutPerPerson > 0 ? maxPayoutPerPerson : Infinity;
+  let distributed = 0;
 
   const shares = [...weightByUser.entries()].map(([userId, weightReceived]) => {
     const poolShare = (weightReceived / totalWeight) * poolPerCycle;
-    return { userId, weightReceived, poolShare, creditedAmount: Math.floor(poolShare) };
+    const creditedAmount = Math.min(Math.floor(poolShare), cap);
+    distributed += creditedAmount;
+    return { userId, weightReceived, poolShare, creditedAmount, capped: Math.floor(poolShare) > cap };
   });
-  return { totalWeight, shares };
+  return { totalWeight, distributed, shares };
 }
 
 /* ─── Game variables ───────────────────────────────────────────────────── */
@@ -98,6 +136,7 @@ export async function getGratitudeVars() {
     "gratitude.budget_multiplier.steward",
     "gratitude.budget_multiplier.sage",
     "gratitude.pool_per_cycle",
+    "gratitude.max_payout_per_person",
     "gratitude.claim_threshold",
   ]);
   return {
@@ -112,6 +151,9 @@ export async function getGratitudeVars() {
       sage: vars["gratitude.budget_multiplier.sage"] ?? TIER_MULTIPLIER_DEFAULTS.sage,
     } as Record<string, number>,
     poolPerCycle: vars["gratitude.pool_per_cycle"] ?? 10000,
+    // Anti-collusion ceiling: the most $ReGen any one person can be credited
+    // from a single cycle's pool. 0 disables the cap.
+    maxPayoutPerPerson: vars["gratitude.max_payout_per_person"] ?? 1000,
     claimThreshold: vars["gratitude.claim_threshold"] ?? 1000,
   };
 }
@@ -266,9 +308,11 @@ async function closeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
     .where(eq(gratitudeLog.cycleId, cycle.id))
     .groupBy(gratitudeLog.senderId);
 
+  const vars = await getGratitudeVars();
+
   for (const s of senders) {
     const budget = await getOrCreateCycleBudget(db, s.senderId, cycle);
-    const share = computePerPersonShare(budget.effectiveBudget, s.uniqueRecipients);
+    const share = computePerPersonShare(budget.effectiveBudget, s.uniqueRecipients, vars.fullPowerThreshold);
     await db
       .update(gratitudeLog)
       .set({ weight: share })
@@ -287,7 +331,11 @@ async function closeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
 
   const weightByUser = new Map<number, number>();
   for (const r of received) weightByUser.set(r.recipientId, Number(r.w));
-  const { totalWeight, shares } = computePoolShares(weightByUser, cycle.poolPerCycle);
+  const { totalWeight, distributed, shares } = computePoolShares(
+    weightByUser,
+    cycle.poolPerCycle,
+    vars.maxPayoutPerPerson,
+  );
 
   // 3. Credit recipients. uniq_dist + idempotencyKey make retries no-ops.
   let creditedUsers = 0;
@@ -320,7 +368,7 @@ async function closeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
 
   await db
     .update(gratitudeCycles)
-    .set({ status: "closed", distributedAt: new Date(), totalWeight })
+    .set({ status: "closed", distributedAt: new Date(), totalWeight, distributedTotal: distributed })
     .where(eq(gratitudeCycles.id, cycle.id));
   return creditedUsers;
 }

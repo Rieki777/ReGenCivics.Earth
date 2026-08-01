@@ -158,7 +158,9 @@ export const gratitudeRouter = router({
       return {
         ok: true,
         peopleThisCycle: uniqueAfter,
-        perPersonShare: Math.round(computePerPersonShare(budget.effectiveBudget, uniqueAfter)),
+        perPersonShare: Math.round(
+          computePerPersonShare(budget.effectiveBudget, uniqueAfter, vars.fullPowerThreshold),
+        ),
         fullPowerRemaining: Math.max(0, vars.fullPowerThreshold - uniqueAfter),
       };
     }),
@@ -258,7 +260,17 @@ export const gratitudeRouter = router({
         effectiveBudget: effective,
         fullPowerThreshold: vars.fullPowerThreshold,
         fullPowerRemaining: Math.max(0, vars.fullPowerThreshold - peopleThisCycle),
-        perPersonShare: Math.round(computePerPersonShare(effective, Math.max(peopleThisCycle, 1))),
+        perPersonShare: Math.round(
+          computePerPersonShare(effective, peopleThisCycle, vars.fullPowerThreshold),
+        ),
+        // What the sender actually emits this cycle. Below the threshold the
+        // remainder is forfeited, so this is less than effectiveBudget.
+        budgetDeployed: Math.round(
+          computePerPersonShare(effective, peopleThisCycle, vars.fullPowerThreshold) * peopleThisCycle,
+        ),
+        budgetForfeited: Math.round(
+          effective - computePerPersonShare(effective, peopleThisCycle, vars.fullPowerThreshold) * peopleThisCycle,
+        ),
       },
       received: {
         peopleLastCycle,
@@ -273,6 +285,7 @@ export const gratitudeRouter = router({
       regen: {
         earnedFromGratitude,
         claimThreshold: vars.claimThreshold,
+        maxPayoutPerPerson: vars.maxPayoutPerPerson,
         claimEligible: earnedFromGratitude >= vars.claimThreshold,
         moreToClaim: Math.max(0, vars.claimThreshold - earnedFromGratitude),
         // True when a Hypha claim would actually go through right now.

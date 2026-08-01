@@ -13,5 +13,6 @@ export const VARIABLE_ROLE_MAP: Record<string, string[]> = {
   gratitudeRecipients: ["all"],
   streakCycles: ["steward", "sage"],
   regenDistributionPool: ["all"],
+  maxPayoutPerPerson: ["all"],
   claimThreshold: ["explorer", "co-creator"],
 };

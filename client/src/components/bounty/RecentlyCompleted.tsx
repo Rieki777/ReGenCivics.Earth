@@ -1,15 +1,17 @@
 /**
- * Recently-completed strip: who did what, what it earned, and a running
- * gratitude tally. Each row has a "Send gratitude" button that opens the
- * budget-aware GratitudeDrawer pre-filled with that doer and the bounty
- * reference, so an excited community can add on to what a task earned.
+ * Recently-completed strip: who did what, what it earned, and how many people
+ * acknowledged it. Each row carries a GratitudeButton tagged to that bounty.
+ *
+ * 2026-07-28: was the seasonal GratitudeDrawer, which spent down a per-season
+ * balance and minted a flat 5 $ReGen per send. That model is retired. An
+ * acknowledgment is now free and weightless at send time; what it earns the
+ * recipient is settled once per lunar cycle from a capped pool.
  */
-import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
-import { Heart, Leaf } from "lucide-react";
-import { GratitudeDrawer } from "@/components/game";
+import { Leaf } from "lucide-react";
+import { GratitudeButton } from "@/components/GratitudeButton";
 import { RewardAmount } from "./RewardAmount";
 import type { ValuationBreakdownLike } from "./RewardAmount";
 
@@ -29,8 +31,6 @@ interface CompletedRow {
 export function RecentlyCompleted() {
   const { isAuthenticated } = useAuth();
   const { data = [] } = trpc.bounties.recentCompleted.useQuery({ limit: 8 }, { staleTime: 30_000 });
-  const { data: budget } = trpc.game.myGratitudeBudget.useQuery(undefined, { enabled: isAuthenticated });
-  const [target, setTarget] = useState<{ id: number; name: string; bountyId: number } | null>(null);
 
   const rows = data as unknown as CompletedRow[];
   if (rows.length === 0) return null;
@@ -39,9 +39,7 @@ export function RecentlyCompleted() {
     <div>
       <div className="flex items-center justify-between gap-3 mb-4">
         <h2 className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>Recently completed</h2>
-        {isAuthenticated && budget ? (
-          <span className="text-xs text-white/60">{budget.remaining} of {budget.total} gratitude left this season</span>
-        ) : null}
+        <span className="text-xs text-white/60">One acknowledgment per person per cycle</span>
       </div>
       <div className="space-y-2">
         {rows.map((row, i) => {
@@ -73,23 +71,20 @@ export function RecentlyCompleted() {
                   ) : null}
                 </div>
               </div>
-              {isAuthenticated && row.doer && row.bounty ? (
-                <button
-                  type="button"
-                  onClick={() => setTarget({ id: row.doer!.userId, name: doerName, bountyId: row.bounty!.id })}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#7dd87d]/30 text-[#7dd87d] text-xs px-2.5 py-1.5 hover:bg-[#7dd87d]/10 transition-colors shrink-0"
-                >
-                  <Heart className="w-3 h-3" /> Thank
-                </button>
+              {isAuthenticated && row.doer?.handle && row.bounty ? (
+                <div className="shrink-0">
+                  <GratitudeButton
+                    recipientHandle={row.doer.handle}
+                    sourceType="bounty"
+                    sourceId={row.bounty.id}
+                    compact
+                  />
+                </div>
               ) : null}
             </div>
           );
         })}
       </div>
-
-      {target && target.id > 0 ? (
-        <GratitudeDrawer recipientId={target.id} recipientName={target.name} bountyId={target.bountyId} onClose={() => setTarget(null)} />
-      ) : null}
     </div>
   );
 }

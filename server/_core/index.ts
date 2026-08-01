@@ -1133,11 +1133,44 @@ async function startServer() {
     }
   });
 
+  // ── Gratitude cycle close cron endpoint ────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/gratitude-cycles
+  // A lunation ends at an arbitrary hour, so closing hourly keeps a cycle from
+  // sitting open for most of a day after its new moon. Idempotent: the status
+  // guard, uniq_dist, and the ledger idempotencyKey make a repeat run a no-op,
+  // so running this hourly AND inside the nightly batch is safe.
+  app.post("/api/cron/gratitude-cycles", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { getDb } = await import("../db");
+      const database = await getDb();
+      if (!database) return res.json({ skipped: true, reason: "no db" });
+      const { closeDueCycles } = await import("../lib/gratitude-cycles");
+      const result = await closeDueCycles(database);
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      log.error("cron gratitude-cycles failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Nightly batch cron endpoint ────────────────────────────────────────────
   // Called once per day by Railway cron: POST /api/cron/nightly-batch
-  // Runs the same steps as the admin-triggered runNightly procedure:
-  //   lunar cycles, contribution scores, trust scores, citizenship tiers,
-  //   gratitude multipliers, land project status.
+  // Runs a SUBSET of the admin-triggered batchJobs.runNightly procedure:
+  //   citizenship tiers, event status sweep, crowdpool claim expiry,
+  //   partner-progress hydration, and gratitude cycle close.
+  // It is not full parity with runNightly, and the comment that used to claim
+  // parity hid the fact that gratitude cycles never closed in production
+  // (audit 2026-07-28). Anything added to runNightly must be added here too,
+  // or it only ever runs when a human clicks the admin button.
   // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
   app.post("/api/cron/nightly-batch", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
@@ -1198,6 +1231,19 @@ async function startServer() {
         await hydrateCampaignPartnerLinks(database);
       } catch (e: any) { errors.push(`partnerHydration: ${e.message}`); }
 
+      // Gratitude lunar cycles: close every cycle whose new moon has passed,
+      // write acknowledgment weights, distribute the capped $ReGen pool, and
+      // open the current lunation. Idempotent. The dedicated hourly endpoint
+      // below normally gets there first; this is the safety net.
+      let gratitudeClosed = 0;
+      let gratitudeCredited = 0;
+      try {
+        const { closeDueCycles } = await import("../lib/gratitude-cycles");
+        const g = await closeDueCycles(database);
+        gratitudeClosed = g.closed;
+        gratitudeCredited = g.credited;
+      } catch (e: any) { errors.push(`gratitudeCycles: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`
@@ -1208,7 +1254,7 @@ async function startServer() {
           WHERE id = ${jobId}
         `);
       }
-      res.json({ ok: true, status, promotions, demotions, errors });
+      res.json({ ok: true, status, promotions, demotions, gratitudeClosed, gratitudeCredited, errors });
     } catch (err: any) {
       log.error("cron/nightly-batch", err);
       res.status(500).json({ error: err.message });
