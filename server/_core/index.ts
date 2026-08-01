@@ -58,6 +58,7 @@ import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
 import { registerPresenceRoutes } from "../routes/presence";
+import { registerShipCalendarRoutes } from "../routes/shipCalendarFeed";
 import { registerAnalyticsRoutes } from "../routes/analytics";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
@@ -642,6 +643,10 @@ async function startServer() {
   registerOidcRoutes(app);
   // Presence heartbeat and count
   registerPresenceRoutes(app);
+  // Outbound availability feed the rental channels subscribe to
+  // (GET /api/ship/calendar/:token/regen-ship.ics, guarded by SHIP_ICAL_TOKEN).
+  // Our calendar is the source of truth; Outdoorsy re-reads this every 2h.
+  registerShipCalendarRoutes(app);
   // First-party analytics ingest (POST /api/analytics/collect)
   registerAnalyticsRoutes(app);
 
