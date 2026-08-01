@@ -13,6 +13,16 @@ interface NeedsOffersFieldsProps {
   onOffersChange: (v: string) => void;
   /** "light" for cream/white form backgrounds, "dark" for glass panels. */
   variant?: "light" | "dark";
+  /**
+   * Label overrides. Every application form shares this component, but who
+   * "you" refers to changes with the form: an individual applying as a person,
+   * or someone answering on behalf of a whole community. Defaults keep the
+   * individual framing every existing caller already relies on.
+   */
+  needsLabel?: string;
+  offersLabel?: string;
+  needsPlaceholder?: string;
+  offersPlaceholder?: string;
 }
 
 export function NeedsOffersFields({
@@ -21,6 +31,10 @@ export function NeedsOffersFields({
   onNeedsChange,
   onOffersChange,
   variant = "light",
+  needsLabel = "What do you need? (optional)",
+  offersLabel = "What can you offer? (optional)",
+  needsPlaceholder = "Tools, skills, materials, hands. Specific asks find matches.",
+  offersPlaceholder = "Skills, time, tools, materials you'd share with the network.",
 }: NeedsOffersFieldsProps) {
   const label =
     variant === "dark" ? "block text-white/80 text-sm mb-1" : "block text-[#1a472a] text-sm font-medium mb-1";
@@ -33,22 +47,22 @@ export function NeedsOffersFields({
   return (
     <div className="space-y-4">
       <div>
-        <label className={label}>What do you need? (optional)</label>
+        <label className={label}>{needsLabel}</label>
         <textarea
           value={needsText}
           onChange={(e) => onNeedsChange(e.target.value.slice(0, 2000))}
           rows={2}
-          placeholder="Tools, skills, materials, hands. Specific asks find matches."
+          placeholder={needsPlaceholder}
           className={field}
         />
       </div>
       <div>
-        <label className={label}>What can you offer? (optional)</label>
+        <label className={label}>{offersLabel}</label>
         <textarea
           value={offersText}
           onChange={(e) => onOffersChange(e.target.value.slice(0, 2000))}
           rows={2}
-          placeholder="Skills, time, tools, materials you'd share with the network."
+          placeholder={offersPlaceholder}
           className={field}
         />
       </div>

@@ -466,11 +466,13 @@ export function AdminOverviewTab({
 
       {/* Season Overview */}
       {(() => {
-        const now = Date.now();
-        const SEASON_RANGES = [
-          { label: "Season 1", start: new Date("2024-01-01"), end: new Date("2024-06-30") },
-          { label: "Season 2", start: new Date("2024-07-01"), end: new Date("2024-12-31") },
-          { label: "Season 3", start: new Date("2025-01-01"), end: new Date("2025-12-31") },
+        // Count by the stored season tag (applications.season, migration 0219).
+        // Dates can't separate the cohorts: the Season 1 batch was seeded with
+        // submittedAt 2026-03-14, after real Season 2 applications began arriving.
+        const SEASONS = [
+          { label: "Season 1", season: 1 },
+          { label: "Season 2", season: 2 },
+          { label: "Season 3", season: 3 },
         ];
         return (
           <Card className="bg-white border-2 border-[#1a472a]/10">
@@ -482,11 +484,8 @@ export function AdminOverviewTab({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
-                {SEASON_RANGES.map((season) => {
-                  const count = (applications || []).filter((a: any) => {
-                    const d = new Date(a.submittedAt || a.createdAt);
-                    return d >= season.start && d <= season.end;
-                  }).length;
+                {SEASONS.map((season) => {
+                  const count = (applications || []).filter((a: any) => a.season === season.season).length;
                   return (
                     <div key={season.label} className="text-center p-3 rounded-lg bg-[#f0ebe3]">
                       <p className="text-2xl font-bold text-[#1a472a]">{count}</p>

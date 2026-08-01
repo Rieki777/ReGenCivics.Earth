@@ -10,6 +10,7 @@ import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
+import { currentIncubatorSeason } from "../../shared/incubatorSeason";
 
 export const applicationsRouter = router({
   // Create a new draft application
@@ -169,7 +170,12 @@ export const applicationsRouter = router({
       if (application.userId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
-      await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date(), stewardUserId: ctx.user.id });
+      await db.updateApplication(input.id, {
+        status: "submitted",
+        submittedAt: new Date(),
+        stewardUserId: ctx.user.id,
+        season: currentIncubatorSeason(),
+      });
 
       // Backfill map coordinates when the applicant submitted without dropping a
       // pin on /apply. The pin is optional, so a text-only location would leave
