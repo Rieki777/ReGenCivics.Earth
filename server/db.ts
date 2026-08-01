@@ -3103,20 +3103,26 @@ export async function markEventAttendance(data: {
 
   if (existing) return { attendance: existing, alreadyExisted: true };
 
+  // Attendance reward from the registry (was a 33 hardcoded in two files).
+  // Lazy import: game/index.ts imports getDb from this file, so a top-level
+  // import here would be a cycle.
+  const { getGameVariableOr } = await import("./game");
+  const attendanceReward = Math.round(await getGameVariableOr("events.attendance_reward_regen", 33));
+
   // Insert attendance record
   const [result] = await db.insert(eventAttendance).values({
     eventId: data.eventId,
     email: data.email,
     name: data.name ?? null,
     markedByAdminId: data.markedByAdminId ?? null,
-    tokensAwarded: 33,
+    tokensAwarded: attendanceReward,
   });
   const insertId = asMutationResult(result).insertId;
 
-  // Award 33 $ReGen tokens, insert into ledger first
+  // Award the $ReGen, insert into ledger first
   const [ledgerResult] = await db.insert(regenTokenLedger).values({
     email: data.email,
-    amount: 33,
+    amount: attendanceReward,
     reason: "event_attendance",
     eventId: data.eventId,
     notes: `Attended event #${data.eventId}`,

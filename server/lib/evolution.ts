@@ -22,7 +22,7 @@ import { sql, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import * as db from "../db";
 import { users, proposals, governanceExecutions } from "../../drizzle/schema";
-import { invalidateGameVariable } from "../game";
+import { invalidateGameVariable, getGameVariableOr } from "../game";
 import { executionPayloadSchema } from "./evolution-payload";
 
 const GOVERNANCE_ACTOR_OPEN_ID = "bot:governance-engine";
@@ -55,17 +55,7 @@ export type ExecutionPayload = VariableChangePayload | BoundsChangePayload | Fea
 // The tier is itself a community-governed game variable (Rung 1), so raising
 // it is an act of meta-governance the community performs, not a deploy.
 export async function getAutonomyTier(): Promise<number> {
-  const database = await getDb();
-  if (!database) return 1;
-  try {
-    const [rows] = await database.execute(
-      sql`SELECT value FROM game_variables WHERE \`key\` = 'evolution.max_autonomy_tier' LIMIT 1`
-    );
-    const v = Number((rows as unknown as any[])?.[0]?.value);
-    return Number.isFinite(v) ? Math.trunc(v) : 1;
-  } catch {
-    return 1;
-  }
+  return Math.trunc(await getGameVariableOr("evolution.max_autonomy_tier", 1));
 }
 
 /** Minimal glob match (mirrors scripts/check-protected-paths.mjs) so raise-time
@@ -95,15 +85,7 @@ function loadProtectedGlobs(): string[] | null {
 }
 
 async function readEvolutionVar(key: string, fallback: number): Promise<number> {
-  const database = await getDb();
-  if (!database) return fallback;
-  try {
-    const [rows] = await database.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`);
-    const v = Number((rows as unknown as any[])?.[0]?.value);
-    return Number.isFinite(v) ? v : fallback;
-  } catch {
-    return fallback;
-  }
+  return getGameVariableOr(key, fallback);
 }
 
 export async function getOrCreateGovernanceActor(): Promise<number | null> {

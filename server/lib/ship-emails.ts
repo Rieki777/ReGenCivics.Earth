@@ -79,11 +79,13 @@ export async function emailBookingConfirmed(to: string, booking: Booking): Promi
   await send(to, "Welcome aboard the ReGen Ship", html);
 }
 
-export async function emailQuestActionVerified(to: string, actionTitle: string, points: number): Promise<void> {
+export async function emailQuestActionVerified(to: string, actionTitle: string, points: number, creditedRegen: number): Promise<void> {
+  // Points (voyage/draw progress) and $ReGen (points x ship.regen_per_quest_point)
+  // are distinct quantities the moment the rate is tuned away from 1.
   const html =
     h("Verified") +
     p(`Your quest action is verified: ${actionTitle}.`) +
-    p(`That is ${points} points toward your voyage, and ${points} ReGen credited to you.`) +
+    p(`That is ${points} points toward your voyage, and ${creditedRegen} ReGen credited to you.`) +
     btn(`${SHIP_URL}/quest`, "See the leaderboard");
   await send(to, "A ReGen Ship quest action is verified", html);
 }

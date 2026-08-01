@@ -321,10 +321,13 @@ export const questCrewsRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "This completion is already attested." });
       }
 
-      // Rung-2 multiplier is 1.25x (ADR-42): the +25% rides as internal credit.
+      // Rung-2 multiplier defaults to 1.25x (ADR-42): the bonus fraction is
+      // a registry dial now, the +25% rides as internal credit.
       const { getMultiplayerQuest } = await import("@shared/multiplayerQuests");
+      const { getGameVariableOr } = await import("../game");
       const quest = getMultiplayerQuest(crew.questId);
-      const bonus = Math.round((quest?.reward.regen ?? 0) * 0.25);
+      const bonusFraction = await getGameVariableOr("quests.attested_bonus_fraction", 0.25);
+      const bonus = Math.round((quest?.reward.regen ?? 0) * bonusFraction);
       if (bonus > 0) {
         const { creditPrivateTokens } = await import("../db");
         await creditPrivateTokens({

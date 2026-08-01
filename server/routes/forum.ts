@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, sql, count, and, desc } from "drizzle-orm";
 import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory, forumPerspectives, notifications, forumSubscriptions, forumUserMutes } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
+import { getGameVariableOr, citizenshipTierRank } from "../game";
 import { assertSafeExternalUrl } from "../_core/ssrf";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
@@ -919,15 +920,13 @@ export const forumRouter = router({
     .mutation(async ({ ctx, input }) => {
       const dbd = await getDb();
       if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      // Tier gate: read required tier from game_variables
-      const [tierRows] = await dbd.execute(
-        sql`SELECT value FROM game_variables WHERE \`key\` = 'governance.sensing_min_citizen_tier' LIMIT 1`
-      );
-      const minTier = parseInt((tierRows as any)?.[0]?.value ?? "0", 10);
+      // Tier gate: read required tier from game_variables. citizenshipTier is
+      // an enum STRING — the old compare pitted 'co_creator' against a number.
+      const minTier = await getGameVariableOr("governance.sensing_min_citizen_tier", 0);
       const [profileRows] = await dbd.execute(
         sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
       );
-      const userTier = (profileRows as any)?.[0]?.citizenshipTier ?? 0;
+      const userTier = citizenshipTierRank((profileRows as any)?.[0]?.citizenshipTier);
       if (userTier < minTier) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You need a higher citizenship tier to enter Sensing." });
       }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getGameVariableOr } from "../game";
 
 /**
  * Check that the user holds Co-Creator tier or above.
@@ -87,13 +88,7 @@ export const orgRatingsRouter = router({
       const totalRatings = Number(countRow?.cnt ?? 0);
 
       // Fetch the min_raters threshold from game_variables (default 5)
-      const [thresholdRow] = await db
-        .execute(
-          sql`SELECT value FROM game_variables WHERE \`key\` = 'org_rating.min_raters' LIMIT 1`
-        )
-        .then((r: any) => r[0] ?? []);
-
-      const minRaters = Number(thresholdRow?.value ?? 5);
+      const minRaters = await getGameVariableOr("org_rating.min_raters", 5);
 
       if (totalRatings >= minRaters) {
         // Recalculate the organisation's regenerativeScore as the average of all overallScores

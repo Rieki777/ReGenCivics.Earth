@@ -222,17 +222,22 @@ async function rewardVerifiedCompletion(completionId: number) {
   if (!c || c.status !== "verified") return;
   const [action] = await d.select().from(shipQuestActions).where(eq(shipQuestActions.id, c.actionId)).limit(1);
   if (!action) return;
+  // The points→$ReGen conversion was an implicit 1:1; now a registry dial so
+  // ship quests can be repriced without editing every action row.
+  const { getGameVariableOr } = await import("../game");
+  const rate = await getGameVariableOr("ship.regen_per_quest_point", 1);
+  const credited = Math.round(action.points * rate);
   await creditPrivateTokens({
     userId: c.userId,
     tokenType: "regen",
-    amount: action.points,
+    amount: credited,
     source: SHIP_QUEST_SOURCE,
     sourceId: c.id,
     description: `ReGen Ship quest: ${action.title}`,
     idempotencyKey: `ship_quest:${c.id}`,
   });
   const [u] = await d.select().from(users).where(eq(users.id, c.userId)).limit(1);
-  if (u?.email) await emailQuestActionVerified(u.email, action.title, action.points);
+  if (u?.email) await emailQuestActionVerified(u.email, action.title, action.points, credited);
 
   // Threshold crossing: after includes this action, before excludes it.
   const after = await verifiedPointsForUser(c.userId);
