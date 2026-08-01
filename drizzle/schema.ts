@@ -1868,6 +1868,9 @@ export const gratitudeCycles = mysqlTable("gratitude_cycles", {
   status: varchar("status", { length: 16 }).default("open").notNull(),
   distributedAt: timestamp("distributedAt"),
   totalWeight: double("totalWeight"),
+  // What was actually minted at close. Lower than poolPerCycle whenever the
+  // per-person payout cap or INT flooring bit; the difference is never minted.
+  distributedTotal: int("distributedTotal"),
 }, (t) => ([
   uniqueIndex("uniq_cycle_number").on(t.cycleNumber),
   index("idx_gratitude_cycle_status").on(t.status),
@@ -5667,3 +5670,23 @@ export const governanceRelayDeliveries = mysqlTable("governanceRelayDeliveries",
   index("gov_relay_pending_idx").on(table.deliveredAt, table.lastAttemptAt),
 ]));
 export type GovernanceRelayDelivery = typeof governanceRelayDeliveries.$inferSelect;
+
+/**
+ * Marker links (ADR-46 production path): "fork F's marker M is on-chain
+ * proposal N". Real decoded governance logs carry only the numeric
+ * proposalId — never the title — so the fork registers this mapping when its
+ * founder pastes the Hypha proposal URL back into the proposal page. Unique
+ * per (fork, marker); re-linking upserts the id/url.
+ */
+export const governanceForkMarkerLinks = mysqlTable("governanceForkMarkerLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  forkId: int("forkId").notNull(),
+  marker: varchar("marker", { length: 80 }).notNull(),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 80 }).notNull(),
+  proposalUrl: varchar("proposalUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("gov_marker_link_once_idx").on(table.forkId, table.marker),
+  index("gov_marker_link_pid_idx").on(table.hyphaProposalId),
+]));
+export type GovernanceForkMarkerLink = typeof governanceForkMarkerLinks.$inferSelect;

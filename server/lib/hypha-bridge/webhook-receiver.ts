@@ -22,7 +22,7 @@ import { checkCitizenshipTiers } from "../citizenship";
 import type { QuestBridgeMetadata } from "./types";
 import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
 import { logger } from "../../_core/logger";
-import { flushForkRelays, maybeQueueForkRelay } from "./fork-relay";
+import { flushForkRelays, maybeQueueForkRelay, registerForkLinkRoute } from "./fork-relay";
 
 const log = logger("hypha-alchemy");
 
@@ -786,6 +786,10 @@ async function cascadeCrowdpoolPassed(bridgeRow: any, txHash: string | undefined
 }
 
 export function registerHyphaWebhookRoutes(app: Express) {
+  // Fork→hub marker links ride the same registration point (ADR-46): the
+  // relay can only match production log events through them.
+  registerForkLinkRoute(app);
+
   app.post("/api/webhooks/hypha-alchemy", async (req: Request, res: Response) => {
     const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
     if (await isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {

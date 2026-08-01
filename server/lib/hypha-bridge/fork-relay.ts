@@ -11,10 +11,16 @@
  * shared secret as `x-governance-hub-secret`.
  *
  * Delivery discipline:
- *  - BROADCAST: the hub does not know which fork owns a marker; every
- *    active fork gets the outcome, and the fork-side receiver discards
- *    markers that are not its own with an inert 200. (Fork receivers are
- *    idempotent by contract — the game-amora receiver replays cleanly.)
+ *  - MATCHING, two ways: (1) a `[gm:]` TITLE marker — but real decoded
+ *    governance logs carry only a numeric proposalId, never a title — so
+ *    (2) forks LINK their marker to the on-chain proposal id up front
+ *    (POST /api/webhooks/governance-fork-link, authenticated with the same
+ *    per-fork secret the relay signs deliveries with; the founder pastes
+ *    the Hypha proposal URL into their proposal page and the fork calls
+ *    home). Title-marked events BROADCAST to every active fork (the hub
+ *    doesn't know the owner; fork receivers discard foreign markers with an
+ *    inert 200 and are idempotent by contract). Linked events deliver to
+ *    exactly the fork(s) that registered the link.
  *  - AT-LEAST-ONCE: a delivery row exists until a 2xx acknowledges it.
  *    Retries back off exponentially (5 min doubling, capped at 6 h) and are
  *    flushed opportunistically on every incoming Alchemy webhook — the
@@ -25,8 +31,10 @@
  * The pure decision functions are exported for tests; only the enqueue/flush
  * pair touches the database.
  */
+import type { Express, Request, Response } from "express";
+import { timingSafeEqual } from "crypto";
 import { getDb } from "../../db";
-import { governanceForkRelays, governanceRelayDeliveries } from "../../../drizzle/schema";
+import { governanceForkRelays, governanceRelayDeliveries, governanceForkMarkerLinks } from "../../../drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { logger } from "../../_core/logger";
 
@@ -56,6 +64,18 @@ const BACKOFF_CAP_MS = 6 * 60 * 60 * 1000;
 export function extractGmMarker(title: string | undefined | null): string | null {
   const m = /\[gm:([a-z0-9-]+)\]/i.exec(String(title ?? ""));
   return m ? m[1] : null;
+}
+
+/**
+ * Normalize a link-request marker: accepts "[gm:x]" or bare "x", returns the
+ * bare marker, or null when the shape is wrong. Same character discipline as
+ * the title extractor so the two can never diverge.
+ */
+export function normalizeGmMarkerInput(input: unknown): string | null {
+  const s = String(input ?? "").trim();
+  const bracketed = extractGmMarker(s);
+  if (bracketed) return bracketed;
+  return /^[a-z0-9-]{1,64}$/i.test(s) ? s : null;
 }
 
 /**
@@ -95,27 +115,55 @@ export function buildDeliveryPayload(d: {
 }
 
 /**
- * Queue one delivery per active fork for a terminal gm-marked event.
- * Safe to call for EVERY event — non-terminal and unmarked events return
- * without touching the database.
+ * Queue deliveries for a terminal governance event. Safe to call for EVERY
+ * event — non-terminal and unmatchable events return without touching the
+ * database.
+ *
+ * Target resolution, in order:
+ *  1. `[gm:]` title marker → BROADCAST to every active fork (test/manual
+ *     path; real decoded logs never carry titles).
+ *  2. A registered marker link for the event's on-chain proposalId →
+ *     deliver to exactly the fork(s) that linked it. This is the production
+ *     path: the chain gives us only the numeric id.
  */
 export async function maybeQueueForkRelay(event: ForkRelayEvent): Promise<number> {
-  const marker = extractGmMarker(event.title);
-  if (!marker) return 0;
   const outcome = terminalOutcomeFor(event);
   if (!outcome) return 0;
   const db = await getDb();
   if (!db) return 0;
-  const forks = await db
-    .select()
-    .from(governanceForkRelays)
-    .where(eq(governanceForkRelays.active, true));
+
+  // (forkId, marker) pairs to enqueue.
+  const targets: Array<{ forkId: number; marker: string }> = [];
+  const titleMarker = extractGmMarker(event.title);
+  if (titleMarker) {
+    const forks = await db
+      .select()
+      .from(governanceForkRelays)
+      .where(eq(governanceForkRelays.active, true));
+    for (const fork of forks) targets.push({ forkId: (fork as any).id, marker: titleMarker });
+  } else if (event.proposalId) {
+    const links = await db
+      .select()
+      .from(governanceForkMarkerLinks)
+      .where(eq(governanceForkMarkerLinks.hyphaProposalId, String(event.proposalId)));
+    for (const link of links as any[]) {
+      // Only deliver to forks that are still active on the roster.
+      const [fork] = await db
+        .select()
+        .from(governanceForkRelays)
+        .where(and(eq(governanceForkRelays.id, link.forkId), eq(governanceForkRelays.active, true)))
+        .limit(1);
+      if (fork) targets.push({ forkId: link.forkId, marker: link.marker });
+    }
+  }
+  if (targets.length === 0) return 0;
+
   let queued = 0;
-  for (const fork of forks) {
+  for (const t of targets) {
     try {
       await db.insert(governanceRelayDeliveries).values({
-        forkId: (fork as any).id,
-        marker,
+        forkId: t.forkId,
+        marker: t.marker,
         outcome,
         txHash: event.txHash ?? null,
         hyphaProposalId: event.proposalId ?? null,
@@ -126,8 +174,55 @@ export async function maybeQueueForkRelay(event: ForkRelayEvent): Promise<number
       // Duplicate (forkId, marker, outcome): an Alchemy redelivery. Fine.
     }
   }
-  if (queued > 0) log.info(`fork relay: queued gm:${marker} ${outcome} for ${queued} fork(s)`);
+  if (queued > 0) log.info(`fork relay: queued ${outcome} for ${queued} fork(s)`);
   return queued;
+}
+
+/**
+ * The fork-facing link endpoint: "marker X is on-chain proposal N".
+ *
+ * A fork calls this after its founder pastes the Hypha proposal URL into
+ * their proposal page. Authenticated with the SAME per-fork secret the
+ * relay signs deliveries with (x-governance-hub-secret) — no new secret
+ * material. Upserts, so re-linking (corrected URL, retry after a network
+ * blip) is safe.
+ */
+export function registerForkLinkRoute(app: Express): void {
+  app.post("/api/webhooks/governance-fork-link", async (req: Request, res: Response) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(503).json({ error: "no database" });
+      const secret = String(req.header("x-governance-hub-secret") ?? "");
+      if (!secret) return res.status(401).json({ error: "missing x-governance-hub-secret" });
+
+      // Find the calling fork by its secret (constant-time compare per row).
+      const forks = await db.select().from(governanceForkRelays).where(eq(governanceForkRelays.active, true));
+      const secretBuf = Buffer.from(secret);
+      const fork = (forks as any[]).find((f) => {
+        const fBuf = Buffer.from(String(f.secret ?? ""));
+        return fBuf.length === secretBuf.length && timingSafeEqual(fBuf, secretBuf);
+      });
+      if (!fork) return res.status(401).json({ error: "unknown or inactive fork secret" });
+
+      const marker = normalizeGmMarkerInput(req.body?.marker);
+      const hyphaProposalId = String(req.body?.hyphaProposalId ?? "").trim();
+      const proposalUrl = String(req.body?.proposalUrl ?? "").slice(0, 500) || null;
+      if (!marker) return res.status(400).json({ error: "marker must be [gm:<id>] or a bare id" });
+      if (!/^\d{1,40}$/.test(hyphaProposalId)) {
+        return res.status(400).json({ error: "hyphaProposalId must be the numeric on-chain proposal id" });
+      }
+
+      await db
+        .insert(governanceForkMarkerLinks)
+        .values({ forkId: fork.id, marker, hyphaProposalId, proposalUrl })
+        .onDuplicateKeyUpdate({ set: { hyphaProposalId, proposalUrl } });
+      log.info(`fork relay: fork ${fork.id} linked gm:${marker} -> proposal ${hyphaProposalId}`);
+      return res.json({ ok: true, marker, hyphaProposalId });
+    } catch (err: any) {
+      log.error("fork link route error", err);
+      return res.status(500).json({ error: err?.message ?? "link failed" });
+    }
+  });
 }
 
 /**

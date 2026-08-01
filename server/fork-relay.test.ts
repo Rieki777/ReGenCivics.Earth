@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDeliveryPayload,
   extractGmMarker,
+  normalizeGmMarkerInput,
   retryEligible,
   terminalOutcomeFor,
 } from "./lib/hypha-bridge/fork-relay";
@@ -23,6 +24,22 @@ describe("gm marker extraction", () => {
     expect(extractGmMarker("gm:not-bracketed")).toBeNull();
     expect(extractGmMarker("[gm:has spaces]")).toBeNull();
     expect(extractGmMarker(undefined)).toBeNull();
+  });
+});
+
+describe("link-request marker normalization", () => {
+  it("accepts bracketed and bare markers, same character discipline", () => {
+    expect(normalizeGmMarkerInput("[gm:gmp-123-ab]")).toBe("gmp-123-ab");
+    expect(normalizeGmMarkerInput("gmp-123-ab")).toBe("gmp-123-ab");
+    expect(normalizeGmMarkerInput("  [GM:GMP-1]  ")).toBe("GMP-1");
+  });
+
+  it("rejects malformed input rather than guessing", () => {
+    expect(normalizeGmMarkerInput("[rc:abc12345]")).toBeNull();
+    expect(normalizeGmMarkerInput("has spaces")).toBeNull();
+    expect(normalizeGmMarkerInput("")).toBeNull();
+    expect(normalizeGmMarkerInput(null)).toBeNull();
+    expect(normalizeGmMarkerInput("a".repeat(65))).toBeNull();
   });
 });
 
