@@ -17,8 +17,8 @@ All of this was checked live in the Outdoorsy host dashboard, not assumed.
 |---|---|
 | Import accepts arbitrary URLs | Yes. "Add calendar" is a free-text **Calendar URL** + **Name** field. No platform dropdown. Tooltip says "any third-party calendar". |
 | Export URL | `https://printer.outdoorsy.com/calendars/543254/bookings.ics?token=0qhcYIVPSJhHa1lMeHHcfySTEXhg3vs3` |
-| Export contents | Valid `VCALENDAR`, `PRODID:-//Outdoorsy//Calendar//EN`, `X-WR-CALNAME:Outdoorsy Bookings`, and **zero VEVENTs**. |
-| Manual blocks are NOT exported | The whole of Aug 2026 shows Unavailable in the UI, and none of it appears in the .ics. The export carries **only real Outdoorsy bookings**. |
+| Export contents | Valid `VCALENDAR`, `PRODID:-//Outdoorsy//Calendar//EN`, `X-WR-CALNAME:Outdoorsy Bookings`, and **zero VEVENTs**. ~~Correct at the time; see the correction below.~~ |
+| ~~Manual blocks are NOT exported~~ | **FALSE. Corrected 2026-08-01, later the same day.** See the correction block under this table. |
 | Import refresh cadence | Every 2 hours, per Outdoorsy help docs, with a manual refresh control. |
 | Import is additive only | Imported blocks add unavailability. They never re-open a date blocked by hand. |
 | Booking approvals | Manual approval enabled for all trips (request-to-book). Confirmed. |
@@ -30,10 +30,41 @@ All of this was checked live in the Outdoorsy host dashboard, not assumed.
 | Security deposit | $1,500. Mileage 250mi then $0.35/mi. Generator unlimited. |
 | Listing status | Published, Delivery On. |
 
-**Consequence of the export finding:** there is no echo loop. Blocks we push into
-Outdoorsy will never come back to us as imported bookings. This is the single
-biggest thing that makes two-way iCal safe here, and it is verified rather than
-hoped for.
+### CORRECTION (2026-08-01, later the same day). The two rows above were wrong.
+
+The original claim was: "there is no echo loop. Blocks we push into Outdoorsy
+will never come back to us as imported bookings. This is the single biggest
+thing that makes two-way iCal safe here, and it is verified rather than hoped
+for." Running the inbound job against the live feed falsified it.
+
+**1. The export DOES carry manual blocks.** By the time the calendar had been
+hand-blocked to mirror production, the feed returned ten VEVENTs, every one of
+them a hand-set Unavailable range, not a booking:
+
+```
+SUMMARY:Unavailable - The ReGen Ship: 40ft Luxury Solar Diesel Pusher, Fully Loaded
+DESCRIPTION:Status: unavailable
+TRANSP:TRANSPARENT
+```
+
+The earlier "zero VEVENTs" reading was taken before those blocks existed in the
+form the exporter emits, so it was true and useless. A real booking and a manual
+block are the same shape in this feed. Nothing separates them.
+
+**2. The UIDs are minted per response.** Two fetches 43 seconds apart shared not
+one id, and every `CREATED` and `DTSTAMP` equalled the fetch time. The UID
+identifies the response, not the booking.
+
+Together these kill the section 6 design: upsert-by-UID would delete and
+recreate every row on every run, and a UID written into `platformBookingRef`
+would be meaningless on arrival. What replaced it is in **ADR-48**. Identity is
+the date range; an inbound range already unavailable here is treated as our own
+calendar echoing home and dropped; the job is off unless
+`OUTDOORSY_SYNC_ENABLED=true`.
+
+The echo loop is real, and the direction that matters is unaffected: outbound
+blocks still reach Outdoorsy, and imported blocks there are additive, so the
+feed can only ever close dates on the channel, never reopen them.
 
 ---
 
@@ -91,14 +122,17 @@ The data model already anticipates this. Nothing here is greenfield.
 | `shared/shipVoyages.ts` | `MAX_VOYAGE_WEEKS = 4` |
 
 Migrations are hand-written `drizzle/NNNN_*.sql` applied by
-`scripts/run-migration.ts`. Latest on disk is `0222_governance_fork_marker_links.sql`,
-so the new one is **0223**. Do not run `drizzle-kit generate`.
+`scripts/run-migration.ts`. ~~Latest on disk is `0222_governance_fork_marker_links.sql`,
+so the new one is **0223**.~~ **Corrected: 0223 was already taken by
+`0223_gratitude_payout_cap.sql`, so this shipped as `0224_ship_blackout_source.sql`.**
+Do not run `drizzle-kit generate`.
 
 ---
 
 ## 5. Phase 1 — Outbound feed (regencivics → Outdoorsy)
 
-**Status:** CODED (uncommitted, branch `ship-rite-truth`). Tests pass, serializer typechecks.
+**Status: SHIPPED AND LIVE (2026-08-01).** Mounted in `acb649c`, deployed, and
+verified against production. See section 13.
 
 **Files written 2026-08-01:**
 - `server/lib/ship-ical.ts` (new) — pure serializer + week-grid-to-blocks. No DB, no clock, no env.
@@ -164,7 +198,31 @@ from a personal Google Calendar before it ever touches Outdoorsy.
 
 ## 6. Phase 2 — Inbound sync (Outdoorsy → regencivics)
 
-**Status:** not started
+> **Status: SHIPPED but DISABLED (2026-08-01). Superseded by ADR-48.**
+>
+> The design below assumes stable UIDs and a bookings-only export. Both are
+> false (see the correction in section 1). What actually shipped:
+>
+> - Identity is `outdoorsy:<snappedStart>:<snappedEnd>`, not the VEVENT UID.
+> - An inbound range already unavailable here is counted `echoed` and dropped,
+>   using the same `enumerateVoyageWeeks` call that renders /ship/book. This
+>   replaces 6d's `platform_pending` linking; nothing writes `platformBookingRef`.
+> - The job returns immediately unless `OUTDOORSY_SYNC_ENABLED=true`. No Railway
+>   cron is registered. **Do not enable it yet**, and read section 8 first.
+>
+> Why it is off: a trial run reported `fetched=10 echoed=9 created=1`, and the
+> one create was `2027-03-29..2027-07-19` — the range blocked on Outdoorsy for
+> YEAR-TWO PRICING reasons, not availability. Importing it closed about fifteen
+> weeks that are genuinely bookable direct. That row and the ten
+> `platformBookingRef` values the trial wrote were both reverted.
+>
+> It becomes safe to enable once the Outdoorsy calendar carries only genuine
+> unavailability, which means resolving the section 8 pricing question first.
+>
+> Migration number is **0224**, not 0223: 0223 was taken by
+> `0223_gratitude_payout_cap.sql`.
+
+Original design follows, kept for the reasoning:
 
 ### 6a. Migration 0223
 
@@ -293,10 +351,24 @@ Rye to choose the number and apply it under Listings → Pricing → Edit.
 
 ## 9. Cutover order — do not reorder
 
-1. Ship Phase 1. Verify the feed by subscribing to it from a personal calendar.
-2. Ship Phase 2 with `OUTDOORSY_ICAL_URL` set. Run the cron once by hand and
-   confirm it reports `fetched: 0, created: 0` against the currently empty feed.
-3. Set the Outdoorsy price (§8).
+> **Steps 1 and 2 are done (2026-08-01). Step 2 did not go as written**: the feed
+> was not empty, it returned ten manual blocks, and the run is what uncovered
+> the two false assumptions in section 1. The inbound job is shipped but off.
+>
+> **The remaining order changed.** Pricing (step 3) now comes BEFORE anything
+> inbound, because the year-two pricing block is the specific thing the inbound
+> job cannot read correctly. Until 2027-04-05 onward is either priced and opened
+> or accepted as permanently blocked, `OUTDOORSY_SYNC_ENABLED` must stay unset.
+
+1. ~~Ship Phase 1.~~ **DONE.** Live at `/api/ship/calendar/<token>/regen-ship.ics`,
+   verified against production: 13 non-open weeks, both migration passages, the
+   leading and trailing bookends, no PII, wrong token 404s.
+2. ~~Ship Phase 2 and run the cron by hand.~~ **DONE, and it failed usefully.**
+   See section 6 and ADR-48. Job is off.
+3. Set the Outdoorsy price (§8). **Now a prerequisite, not step 3 of 6.**
+4. Only after 3: decide whether the year-two range stays blocked. If it does,
+   the inbound job stays off, because it will keep reading that block as a sold
+   week and closing direct inventory.
 4. Paste the outbound feed URL into Outdoorsy → Calendar → Add calendar, named
    "ReGen Civics — regencivics.earth". Hit the manual refresh.
 5. **Only then** clear the manual Unavailable blocks, using Calendar → Update
@@ -328,8 +400,9 @@ Rye to choose the number and apply it under Listings → Pricing → Edit.
 
 | Var | Value | Where |
 |---|---|---|
-| `SHIP_ICAL_TOKEN` | random 32 chars, e.g. `openssl rand -hex 16` | Railway |
-| `OUTDOORSY_ICAL_URL` | `https://printer.outdoorsy.com/calendars/543254/bookings.ics?token=0qhcYIVPSJhHa1lMeHHcfySTEXhg3vs3` | Railway |
+| `SHIP_ICAL_TOKEN` | random 32 chars, e.g. `openssl rand -hex 16` | Railway. **SET 2026-08-01.** |
+| `OUTDOORSY_ICAL_URL` | `https://printer.outdoorsy.com/calendars/543254/bookings.ics?token=0qhcYIVPSJhHa1lMeHHcfySTEXhg3vs3` | Railway. **SET 2026-08-01.** |
+| `OUTDOORSY_SYNC_ENABLED` | `true` to arm the inbound job. **Deliberately NOT set.** See ADR-48 and section 6. | Railway |
 | `CRON_SECRET` | already set | Railway |
 
 Treat the Outdoorsy URL as a secret. Anyone holding it can read the ship's
@@ -463,3 +536,54 @@ blocked. Boundaries exact.
   direct from April 2027. This is the one thing actively working against the flywheel
   right now.
 - Phase 2 (inbound sync) not started.
+
+---
+
+## 13. Session log — 2026-08-01, second session
+
+### Phase 1 is live
+
+The route existed but was never mounted, so the feed 404'd in production
+whatever token you gave it. Mounting it was five lines (`acb649c`). Typecheck
+and tests had never run against the real module graph; both were clean, and the
+two breakages the handoff predicted (decimal `multiplier` arriving as a string,
+the `VoyageWeek` import path) were non-issues.
+
+Verified against production rather than against the plan: the feed's 13
+non-open weeks match `ship.availability` exactly, one for one, including the
+2026-10-12/10-19 pair correctly merged into a single VEVENT. Eleven RFC 5545
+structural checks pass. No `ATTENDEE`, `ORGANIZER`, `DESCRIPTION`, `LOCATION`,
+`URL` or `mailto` anywhere in it. Wrong token returns 404, not 401.
+
+`SHIP_ICAL_TOKEN` and `OUTDOORSY_ICAL_URL` are set on the `ReGenCivics.Earth`
+Railway service.
+
+### Phase 2 is shipped and switched off
+
+The whole of section 6 rested on assumptions that running the code disproved.
+Details in the section 1 correction and ADR-48. Short version: the export
+carries manual blocks, its UIDs are regenerated per response, and a block set
+for pricing reasons is byte-identical to a sold week.
+
+The trial run wrote ten `platformBookingRef` values onto confirmed direct
+bookings and one blackout closing `2027-03-29..2027-07-19`. Both were reverted;
+production now holds exactly the one original manual blackout and zero
+`platformBookingRef` values, confirmed by query.
+
+### Two things found in passing
+
+- **`shared/**` was not in `vitest.config.ts`'s `include`.** A test written
+  anywhere under `shared/` ran zero times and the suite still reported green.
+  Fixed. Code both halves of the app depend on was the one place tests could
+  not reach.
+- **SUMMARY lines carried em-dashes.** A calendar summary is read by a human in
+  a calendar app, so STEERING 1.1 applies; the exemption covers JSDoc and logs
+  only. Now colons.
+
+### Still open
+
+- §8 pricing, unchanged and now blocking more than it was. Rye is setting the
+  rate by hand.
+- Whether to ever enable `OUTDOORSY_SYNC_ENABLED`. Depends entirely on §8.
+- Phase 3 (admin visibility) not started. `listBlackouts` returning `source`
+  and marking synced rows read-only is the useful half.
