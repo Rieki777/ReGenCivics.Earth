@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Sprout, Play, X } from "lucide-react";
+import { Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "regen-intro-seen";
@@ -97,9 +97,14 @@ export function RegenIntroGate() {
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a472a] via-[#1a472a]/5 to-transparent" />
             </div>
 
-            <div className="relative -mt-8 flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-[#1a472a] border-2 border-[#7dd87d]/40 shadow-xl flex items-center justify-center">
-                <Sprout className="w-8 h-8 text-[#7dd87d]" />
+            <div className="relative -mt-12 sm:-mt-14 flex justify-center">
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                <div className="absolute inset-0 rounded-full bg-[#1a472a] blur-md opacity-90" />
+                <img
+                  src="/images/logos/regen-civics-emblem.webp"
+                  alt="ReGen Civics"
+                  className="relative w-full h-full object-contain drop-shadow-xl"
+                />
               </div>
             </div>
 
