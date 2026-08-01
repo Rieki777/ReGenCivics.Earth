@@ -243,7 +243,13 @@ const SECTIONS: Array<{ title: string; intro?: string; fields: FieldDef[] }> = [
   {
     title: "What the game must accomplish",
     fields: [
-      { key: "gameGoals", label: "Rank what matters most", kind: "longtext", required: true, placeholder: "Governance, economics and tokenomics, legal structure, onboarding, contribution and recognition, resource transparency. In your order." },
+      {
+        key: "gameGoals", label: "Rank what matters most", kind: "longtext", required: true,
+        placeholder: "Put these in your order, most important first.",
+        // Listed as a hint as well as a placeholder: the placeholder vanishes on
+        // the first keystroke, and nobody remembers six domains from memory.
+        hint: "The six the game covers: governance and decisions • economics and tokenomics • legal structure • onboarding and rites of passage • contribution and recognition • resource and money transparency",
+      },
     ],
   },
   {
@@ -309,7 +315,7 @@ const SECTIONS: Array<{ title: string; intro?: string; fields: FieldDef[] }> = [
   },
   {
     title: "Integrations",
-    intro: "Provider names only. Keys get entered into your own game after handoff and never touch our systems.",
+    intro: "Provider names only. Keys get entered into your own game after handoff and never touch our systems. If you do not know yet, leave both blank: we help you pick, and most projects decide this after the build starts.",
     fields: [
       { key: "llmProvider", label: "Preferred AI provider", kind: "text", placeholder: "Anthropic, OpenAI..." },
       { key: "emailProvider", label: "Preferred email provider", kind: "text", placeholder: "Resend, Postmark..." },
@@ -705,6 +711,12 @@ export default function CustomGamesApply() {
               About 20 minutes with Sylva, ReGen's Game Guide. This talk is the raw material
               your game gets built from, and it's also a taste of the guide your community will get.
             </p>
+            <p className="text-[#1a472a]/70 max-w-2xl mx-auto mt-3 text-sm leading-relaxed">
+              Leave anything blank that you have not decided yet. Some of these
+              questions take a community months to answer, and a few of the later
+              sections are genuinely technical. Blanks are useful information, not
+              gaps, and we walk you through whatever is unclear on the intro call.
+            </p>
           </div>
 
           {/* Chat-first: Sylva leads; the form below is the live record. */}
@@ -927,12 +939,18 @@ export default function CustomGamesApply() {
               </div>
 
               <div className="mt-10">
+                {/* Village-scoped wording: on this form the person is answering
+                    for a whole land project, not for themselves. */}
                 <NeedsOffersFields
                   needsText={formData.needsText}
                   offersText={formData.offersText}
                   onNeedsChange={(v) => updateField("needsText", v)}
                   onOffersChange={(v) => updateField("offersText", v)}
                   variant="light"
+                  needsLabel="What does your village need? (optional)"
+                  offersLabel="What can your village offer? (optional)"
+                  needsPlaceholder="What the whole project is short of: tools, skills, materials, hands, expertise. Specific asks find matches."
+                  offersPlaceholder="What your community can share with other projects: harvests, skills, workshops, equipment, hosting, land access."
                 />
               </div>
 

@@ -139,21 +139,12 @@ export function AdminApplicationsTab({
   const updateStatus = trpc.applications.updateStatus.useMutation();
   const [bulkPending, setBulkPending] = useState(false);
 
-  // Season date ranges (approximate)
-  const SEASON_RANGES: Record<string, { start: Date; end: Date }> = {
-    "1": { start: new Date("2024-01-01"), end: new Date("2024-06-30") },
-    "2": { start: new Date("2024-07-01"), end: new Date("2024-12-31") },
-    "3": { start: new Date("2025-01-01"), end: new Date("2025-12-31") },
-  };
-
+  // Filter on the stored season tag (applications.season, migration 0219).
+  // Dates can't separate the cohorts: the Season 1 batch was seeded with
+  // submittedAt 2026-03-14 while Season 2 applications arrived from Feb 2026.
   function applySeasonFilter(apps: any[]): any[] {
     if (seasonFilter === "all") return apps;
-    const range = SEASON_RANGES[seasonFilter];
-    if (!range) return apps;
-    return apps.filter((a: any) => {
-      const d = new Date(a.submittedAt || a.createdAt);
-      return d >= range.start && d <= range.end;
-    });
+    return apps.filter((a: any) => a.season === Number(seasonFilter));
   }
 
   function toggleSelect(id: number, e: React.MouseEvent) {
@@ -314,6 +305,14 @@ export function AdminApplicationsTab({
                             <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
                             <p className="text-sm text-[#1a472a]/80">{app.location}</p>
                             <div className="flex flex-wrap gap-2 mt-2">
+                              {app.season != null && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-[#f0ebe3] border-[#1a472a]/20 text-[#1a472a]"
+                                >
+                                  Season {app.season}
+                                </Badge>
+                              )}
                               {app.projectSizeHectares && (
                                 <Badge
                                   variant="outline"

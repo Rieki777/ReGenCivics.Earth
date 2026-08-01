@@ -213,6 +213,46 @@ const LATEST_SHIPS: { title: string; body: string }[] = [
   },
 ];
 
+/**
+ * Retainers, offered after handoff and never required: the game is self-hosted
+ * and fully theirs whether or not they take one.
+ */
+const RETAINERS: {
+  name: string;
+  price: string;
+  per?: string;
+  body: string;
+  includes: string[];
+  featured?: boolean;
+}[] = [
+  {
+    name: "Hosting and upkeep",
+    price: "$20",
+    per: "per month",
+    body: "We host your site and keep it updated. You stop thinking about servers.",
+    includes: [],
+  },
+  {
+    name: "Fractional COO",
+    price: "$2,000",
+    per: "per month",
+    body: "Everything in the first tier, and we join your board and help you run the thing.",
+    includes: [
+      "A seat on your board",
+      "Coordination, role design, and governance implemented with you, not handed over as a document",
+      "Advising and hands-on help making the project succeed",
+      "Two sessions a month with your whole core team, across everything in regenerative organizing",
+    ],
+    featured: true,
+  },
+  {
+    name: "Custom",
+    price: "Let's talk",
+    body: "Want more hands-on engagement than that? Tell us what you need and we will scope it together.",
+    includes: [],
+  },
+];
+
 const PERSONAS: {
   label: string;
   shot: string;
@@ -434,7 +474,8 @@ export default function CustomGames() {
               </h1>
               <p className="text-lg md:text-xl text-white/85 leading-relaxed max-w-2xl mx-auto">
                 A complete coordination game for your community, built on the
-                same foundation as Amora, owned 100% by you.
+                same foundation as Amora, built on a decade and more of R&D,
+                owned 100% by you.
               </p>
             </ReadableScrim>
 
@@ -542,6 +583,25 @@ export default function CustomGames() {
                 arrives as a crisis. The game answers them on day one, in a
                 form your whole community can see and play.
               </p>
+              <p>
+                Notice what that does to the founders. Without a structure that
+                can actually hold new people, every person who joins adds weight
+                to the same two or three who carry all the risk. More members
+                should mean more capacity; instead it means more to hold, more to
+                explain, more to chase. That is the shape burnout arrives in, and
+                it sinks projects that were doing everything else right.
+              </p>
+              <p className="text-white text-xl font-medium" style={display}>
+                A game makes it a community endeavour in fact, not just in
+                intention.
+              </p>
+              <p>
+                Structure is what turns willing people into contributing people.
+                When the paths in, the decisions, and the recognition are all
+                written down and playable, the work distributes instead of
+                concentrating, and the people who started it get to stop being
+                the single point of failure.
+              </p>
             </div>
           </div>
         </AnimatedSection>
@@ -610,9 +670,9 @@ export default function CustomGames() {
                 ))}
               </div>
               <p className="mt-5 text-white/60 text-sm leading-relaxed">
-                This strip updates as the platform ships. ReGen Civics is the
-                builder shipping upgrades; Amora is client #1. Every game we
-                deliver starts from the newest foundation.
+                This strip updates as the platform ships. Every game we deliver
+                starts from the newest foundation, so upgrades we build after your
+                handoff are upgrades you can take.
               </p>
             </div>
           </div>
@@ -687,6 +747,54 @@ export default function CustomGames() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </AnimatedSection>
+
+        {/* ── 6b. IT CAN BE YOUR WHOLE WEBSITE, AND IT IS NOT A TEMPLATE ── */}
+        <AnimatedSection as="section" animation="slide-up" className="py-20 md:py-28 px-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
+              Two things people ask
+            </div>
+
+            <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+              It can be your{" "}
+              <span className="italic text-[#a8e6a8]">whole website</span>
+            </h2>
+            <div className="space-y-5 text-white/75 text-lg leading-relaxed mb-14">
+              <p>
+                Most land projects are paying for a website that tells people
+                about the project, and separately wishing they had somewhere
+                people could actually participate. This is both. If you do not
+                have a site yet, your game is your site: public pages, your
+                story, your offers, your brand, with the game behind the door.
+              </p>
+              <p>
+                If you already have a site you like, keep it. We cross-link the
+                two so the seams do not show, and visitors move between your
+                existing pages and the game without noticing a handoff.
+              </p>
+            </div>
+
+            <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+              And it is not a{" "}
+              <span className="italic text-[#a8e6a8]">template</span>
+            </h2>
+            <div className="space-y-5 text-white/75 text-lg leading-relaxed">
+              <p>
+                Every game is a custom build. It starts from the foundation we
+                have already proven, which is why it takes months instead of
+                years, but nothing about it is fixed. We add features that do not
+                exist yet when your project needs them, and we take out the ones
+                that do not serve you rather than leaving them to clutter the
+                place.
+              </p>
+              <p>
+                So the honest answer to "can it do X" is usually yes, and the
+                real question we ask back is whether X earns its place in your
+                community's game.
+              </p>
             </div>
           </div>
         </AnimatedSection>
@@ -812,20 +920,50 @@ export default function CustomGames() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-3xl border border-[#d4a574]/30 bg-[#d4a574]/5 p-8 md:p-10">
-              <h3 className="text-white font-bold text-xl mb-3" style={display}>
-                Optional full service
+            <div className="mt-10">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2" style={display}>
+                Then, if you want us to stay
               </h3>
-              <div className="text-3xl md:text-4xl font-bold text-[#d4a574] mb-3" style={display}>
-                $20 to $2,000 <span className="text-lg text-white/70 font-medium">per month</span>
-              </div>
-              <p className="text-white/75 leading-relaxed mb-3">
-                Fixed at contract based on what you ask us to carry: hosting
-                only at the low end, up through AI credits, updates, and
-                ongoing stewardship. Metered only past the average use agreed
-                at contract.
+              <p className="text-white/70 leading-relaxed mb-6">
+                Three retainers. Every one of them is optional: your game runs on
+                your own hosting whether or not you take one.
               </p>
-              <p className="text-[#d4a574] font-semibold">One number, no surprises.</p>
+
+              <div className="space-y-4">
+                {RETAINERS.map((tier) => (
+                  <div
+                    key={tier.name}
+                    className={`rounded-3xl border p-6 md:p-8 ${
+                      tier.featured
+                        ? "border-[#d4a574]/50 bg-[#d4a574]/10"
+                        : "border-[#d4a574]/25 bg-[#d4a574]/5"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+                      <h4 className="text-white font-bold text-lg" style={display}>
+                        {tier.name}
+                      </h4>
+                      <div className="text-2xl md:text-3xl font-bold text-[#d4a574]" style={display}>
+                        {tier.price}
+                        {tier.per && (
+                          <span className="text-base text-white/70 font-medium"> {tier.per}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-white/75 leading-relaxed">{tier.body}</p>
+                    {tier.includes.length > 0 && (
+                      <ul className="mt-4 space-y-2">
+                        {tier.includes.map((line) => (
+                          <li key={line} className="flex items-start gap-2.5 text-white/80 text-sm leading-relaxed">
+                            <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#d4a574]" />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <p className="mt-8 text-center text-white/60 text-sm leading-relaxed">
