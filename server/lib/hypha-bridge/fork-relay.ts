@@ -133,10 +133,17 @@ export async function maybeQueueForkRelay(event: ForkRelayEvent): Promise<number
 /**
  * Deliver everything owed and eligible. Called opportunistically after each
  * incoming Alchemy webhook; a failed fork keeps its row and its backoff.
+ *
+ * `deferred` counts owed rows that were NOT attempted (still inside their
+ * backoff window, or belonging to a paused fork) — without it, a caller
+ * cannot tell "queue empty" from "owed but waiting", and the admin flush
+ * button would report a stuck queue as clear.
  */
-export async function flushForkRelays(now: Date = new Date()): Promise<{ delivered: number; failed: number }> {
+export async function flushForkRelays(
+  now: Date = new Date(),
+): Promise<{ delivered: number; failed: number; deferred: number }> {
   const db = await getDb();
-  if (!db) return { delivered: 0, failed: 0 };
+  if (!db) return { delivered: 0, failed: 0, deferred: 0 };
   const pending = await db
     .select()
     .from(governanceRelayDeliveries)
@@ -144,14 +151,22 @@ export async function flushForkRelays(now: Date = new Date()): Promise<{ deliver
     .limit(100);
   let delivered = 0;
   let failed = 0;
+  let deferred = 0;
   for (const row of pending as any[]) {
-    if (!retryEligible(row.attempts, row.lastAttemptAt, now)) continue;
+    if (!retryEligible(row.attempts, row.lastAttemptAt, now)) {
+      deferred += 1;
+      continue;
+    }
     const [fork] = await db
       .select()
       .from(governanceForkRelays)
       .where(and(eq(governanceForkRelays.id, row.forkId), eq(governanceForkRelays.active, true)))
       .limit(1);
-    if (!fork) continue; // deactivated fork keeps its rows dormant, never errors
+    if (!fork) {
+      // deactivated fork keeps its rows dormant, never errors
+      deferred += 1;
+      continue;
+    }
     const payload = buildDeliveryPayload(row);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), RELAY_TIMEOUT_MS);
@@ -193,5 +208,5 @@ export async function flushForkRelays(now: Date = new Date()): Promise<{ deliver
       clearTimeout(timer);
     }
   }
-  return { delivered, failed };
+  return { delivered, failed, deferred };
 }

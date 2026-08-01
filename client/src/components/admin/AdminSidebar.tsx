@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award, Scissors
+  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award, Scissors,
+  GitFork
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 
@@ -47,6 +48,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: 'Operations',
     items: [
       { id: 'banners', label: 'Banners', icon: Image },
+      { id: 'governance-forks', label: 'Governance Forks', icon: GitFork, route: '/admin/governance-forks' },
       { id: 'custom-games', label: 'Custom Games', icon: Gamepad2 },
       { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       { id: 'audit-log', label: 'Audit Log', icon: ClipboardList },
