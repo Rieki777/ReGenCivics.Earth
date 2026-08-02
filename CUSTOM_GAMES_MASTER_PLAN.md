@@ -344,7 +344,7 @@ query clusters teach it several:
 |---|---|---|
 | Footer (default) | Game design by ReGen Civics | `/custom-games` |
 | Footer (alt) | Coordination game built with ReGen Civics | `/custom-games` |
-| About / story | The way this game handles contribution, recognition, and shared money is built on the *regenerative economics* practiced across the *ReGen Civics* incubator. | `/learn/regenerative-economics`, home |
+| About / story | The way this game handles contribution, recognition, and shared money is built on the *regenerative economics* practiced across the *ReGen Civics* incubator. | `/learn/regenerative-economics` (301 to `/learn/nine-forms-of-capital` until that article exists), home |
 | Guide onboarding | This game is part of the *ReGen Civics network of regenerative games*. | `/network` |
 
 Plain dofollow, no `rel=nofollow`. These are real deployments a client paid for and

@@ -974,19 +974,24 @@ async function startServer() {
   });
 
   // ── Learn hub slugs, reserved ahead of the pages ────────────────────────────
-  // The Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2, task C9) is still open,
-  // but the foundation credit already links to /learn/regenerative-economics
-  // from every custom game's about page, and those links live in other people's
-  // deployments where we cannot edit them later. So the slug resolves today:
-  // a 301 to the page that actually answers the query, which passes the link
-  // equity through and never shows a crawler a 404.
+  // The foundation credit links to /learn/regenerative-economics from every
+  // custom game's about page, and those links live in other people's
+  // deployments where we cannot edit them later. The Learn hub shipped six
+  // articles and that is not one of them, so the slug resolves by 301 to the
+  // page that does answer the query (nine forms of capital, the "new economics"
+  // cluster in LLM_DISCOVERABILITY_PLAN.md section 3). Equity passes through,
+  // and no crawler following a credit link ever sees a 404.
   //
-  // Delete an entry here the day its real Learn page ships.
+  // A real Learn article always wins: LEARN_SLUGS is checked first, so writing
+  // the article is all it takes to retire a redirect. Nobody has to remember to
+  // come back and delete the entry.
   const LEARN_SLUG_REDIRECTS: Record<string, string> = {
-    "regenerative-economics": "/bionomics",
+    "regenerative-economics": "/learn/nine-forms-of-capital",
   };
   app.get("/learn/:slug", (req, res, next) => {
-    const target = LEARN_SLUG_REDIRECTS[req.params.slug];
+    const slug = req.params.slug;
+    if ((LEARN_SLUGS as readonly string[]).includes(slug)) return next();
+    const target = LEARN_SLUG_REDIRECTS[slug];
     if (!target) return next();
     return res.redirect(301, target);
   });
