@@ -205,9 +205,6 @@ importers:
       pmtiles:
         specifier: ^4.4.1
         version: 4.4.1
-      prerender-node:
-        specifier: ^3.2.6
-        version: 3.8.3
       protomaps-leaflet:
         specifier: ^5.1.0
         version: 5.1.0
@@ -7753,9 +7750,6 @@ packages:
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
-
-  prerender-node@3.8.3:
-    resolution: {integrity: sha512-F33XduOW4PtCyzhxslXkjyk56ENfQ3GoPi9mrEoIG7vERDDqSP4r8gy3KljjAXibcNxMnDIO7qOjDMNUL0ai+Q==}
 
   prettier@3.8.3:
     resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
@@ -18293,8 +18287,6 @@ snapshots:
   preact@10.29.2: {}
 
   prelude-ls@1.2.1: {}
-
-  prerender-node@3.8.3: {}
 
   prettier@3.8.3: {}
 
