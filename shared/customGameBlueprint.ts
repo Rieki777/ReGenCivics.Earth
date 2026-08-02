@@ -21,8 +21,14 @@
  * Additive change 2026-07-17 (still v0.3, optional key only): `civilization`,
  * the civilization pattern modules from improvement 15. Stored 0.3 drafts and
  * blueprints stay valid; absent means defaults.
+ *
+ * Additive change 2026-08-01 (still v0.3, defaulted key only): `branding`,
+ * holding the foundation credit (master plan B3 #23). Defaulted rather than
+ * required, so every blueprint written before today parses unchanged and picks
+ * up the credit with the defaults on.
  */
 import { z } from "zod";
+import { CREDIT_VARIANT_IDS, DEFAULT_CREDIT_CONFIG, DEFAULT_VARIANT_BY_PLACEMENT } from "./foundationCredit";
 
 export const BLUEPRINT_VERSION = "0.3";
 
@@ -222,6 +228,63 @@ const seasonSchema = z.strictObject({
   end: z.string().max(30).default(""),
 });
 
+// ── Branding: the foundation credit (master plan B3 #23) ─────────────────────
+/**
+ * How this game credits ReGen Civics, and links back.
+ *
+ * Default on, and removable by the owner at any time after handoff: they bought
+ * 100% of the game (Decisions locked #3), so `enabled: false` is theirs to set
+ * and nothing here overrides it. The credit is worth keeping default-on because
+ * it is the referral flywheel: every delivered game becomes a real crawlable
+ * backlink, and regencivics.earth/network links back out to each game, so the
+ * network is two-way rather than a one-way footer.
+ *
+ * Anchor text, the variant table, and the anti-stuffing guard live in
+ * shared/foundationCredit.ts. This schema only records which variant a game
+ * picked and where it shows.
+ */
+const creditVariantId = z
+  .string()
+  .max(60)
+  .refine((v) => CREDIT_VARIANT_IDS.includes(v), {
+    message: "Unknown credit variant. Pick an id from CREDIT_VARIANTS in shared/foundationCredit.ts.",
+  });
+
+const foundationCreditSchema = z.strictObject({
+  /** Default on. The owner can turn it off, in the blueprint or in their game. */
+  enabled: z.boolean().default(true),
+  /** Which page placements render the credit. */
+  style: z.enum(["footer", "about", "both"]).default("footer"),
+  /** Whether their guide may name the network in its own voice at onboarding. */
+  guideMention: z.boolean().default(true),
+  footerVariant: creditVariantId.default(DEFAULT_VARIANT_BY_PLACEMENT.footer),
+  aboutVariant: creditVariantId.default(DEFAULT_VARIANT_BY_PLACEMENT.about),
+  guideVariant: creditVariantId.default(DEFAULT_VARIANT_BY_PLACEMENT.guide),
+});
+
+/**
+ * Zod 4 changed `.default()`: the value is returned as-is and is NOT re-parsed,
+ * so `.default({})` on an object schema yields a literal `{}` and none of the
+ * field defaults inside it fire. The whole-object defaults below are therefore
+ * spelled out, sourced from DEFAULT_CREDIT_CONFIG so the schema and the renderer
+ * cannot drift. (gameId is deliberately absent: it belongs to the generated
+ * game, not the blueprint, and this object must match the schema exactly.)
+ */
+const creditDefaults = {
+  enabled: DEFAULT_CREDIT_CONFIG.enabled,
+  style: DEFAULT_CREDIT_CONFIG.style,
+  guideMention: DEFAULT_CREDIT_CONFIG.guideMention,
+  footerVariant: DEFAULT_CREDIT_CONFIG.footerVariant,
+  aboutVariant: DEFAULT_CREDIT_CONFIG.aboutVariant,
+  guideVariant: DEFAULT_CREDIT_CONFIG.guideVariant,
+};
+
+const brandingSchema = z.strictObject({
+  foundationCredit: foundationCreditSchema.default(creditDefaults),
+});
+
+export type FoundationCreditBlueprint = z.infer<typeof foundationCreditSchema>;
+
 // ── The civilization pattern (improvement 15) ─────────────────────────────────
 /**
  * The parts we believe every regenerative game needs, each one a configurable
@@ -337,6 +400,8 @@ export const blueprintSchema = z.strictObject({
   formOutcomes: z.array(formOutcomeSchema).max(24).default([]),
   content: contentSchema,
   season: seasonSchema,
+  /** Foundation credit + link-back settings (B3 #23). Absent = credit on, footer placement. */
+  branding: brandingSchema.default({ foundationCredit: creditDefaults }),
   /** Civilization pattern modules (improvement 15). Absent = all defaults (only the ritual spine on). */
   civilization: civilizationSchema.optional(),
   integrations: integrationsSchema,
@@ -383,6 +448,9 @@ export const blueprintDraftSchema = z.strictObject({
   formOutcomes: z.array(formOutcomeSchema.partial()).max(24).optional(),
   content: contentSchema.partial().optional(),
   season: seasonSchema.partial().optional(),
+  branding: z.strictObject({
+    foundationCredit: foundationCreditSchema.partial().optional(),
+  }).optional(),
   civilization: civilizationSchema.partial().optional(),
   integrations: integrationsSchema.partial().optional(),
   deployment: z.strictObject({
