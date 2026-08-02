@@ -46,11 +46,18 @@ const glossaryEntries: GlossaryEntry[] = [
     category: "Core Concepts",
   },
   {
-    term: "8 Forms of Capital",
-    definition: "A framework recognizing eight types of wealth beyond money: Financial, Material, Living (ecological), Social, Intellectual, Experiential, Spiritual, and Cultural capital. Used in ReGen Civics to measure holistic value creation.",
+    term: "9 Forms of Capital",
+    definition: "A framework recognizing nine types of wealth beyond money: Financial, Material, Living (ecological), Social, Intellectual, Experiential, Spiritual, Cultural, and Health capital. The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital. ReGen Civics added the ninth, Health, covering body vitality, wellness, movement, rest, and care.",
     category: "Core Concepts",
-    relatedLink: "/calculator",
-    relatedLabel: "Contribution Calculator",
+    relatedLink: "/learn/nine-forms-of-capital",
+    relatedLabel: "Why we added a ninth",
+  },
+  {
+    term: "Health Capital",
+    definition: "The physical and emotional vitality a person holds, and the work that builds it in others: movement, rest, bodywork, nutrition, recovery, and care. The ninth form of capital, added by ReGen Civics because the standard eight have no place for it.",
+    category: "Core Concepts",
+    relatedLink: "/learn/nine-forms-of-capital",
+    relatedLabel: "The nine forms of capital",
   },
   {
     term: "HEIST Framework",
