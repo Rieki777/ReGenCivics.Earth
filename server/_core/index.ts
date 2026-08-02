@@ -181,6 +181,21 @@ async function startServer() {
     next();
   });
 
+  // Referral telemetry for the foundation credit. Every custom game's credit
+  // link carries ?ref=<gameId> (shared/foundationCredit.ts creditHref), so this
+  // one greppable line is how "referral clicks from footer credits" in the
+  // master plan's success metrics gets measured, at zero token cost.
+  // Grep with: railway logs | grep '\[credit-referral\]'
+  app.use((req, _res, next) => {
+    const ref = req.query?.ref;
+    if (typeof ref === "string" && ref && ref.length <= 60 && !req.path.startsWith("/assets/")) {
+      // Sanitize before logging: a ref value is attacker-controllable, and a
+      // newline in it would forge a second log line.
+      console.log(`[credit-referral] ${ref.replace(/[^\w.-]/g, "")} ${req.path}`);
+    }
+    next();
+  });
+
   // Security middleware. cspNonceMiddleware MUST run before cspMiddleware
   // so res.locals.nonce is set in time to be embedded in the CSP header.
   app.use(cspNonceMiddleware);
@@ -398,6 +413,9 @@ async function startServer() {
       { loc: '/glossary',                changefreq: 'monthly', priority: '0.5' },
       { loc: '/regen-games',             changefreq: 'monthly', priority: '0.6' },
       { loc: '/custom-games',            changefreq: 'monthly', priority: '0.5' },
+      // Changes every time a custom game launches, which is the freshness
+      // signal Perplexity rewards. Weekly, so it gets re-fetched between ships.
+      { loc: '/network',                 changefreq: 'weekly',  priority: '0.6' },
       { loc: '/marketplace',             changefreq: 'weekly',  priority: '0.6' },
       { loc: '/crowd-pooling',           changefreq: 'weekly',  priority: '0.7' },
       { loc: '/crowd-pooling-projects',  changefreq: 'weekly',  priority: '0.7' },
@@ -925,6 +943,46 @@ async function startServer() {
       log.error("federation projects.json failed", err);
       return res.status(500).json({ error: "temporarily unavailable" });
     }
+  });
+
+  // ── The network of games: the return half of the foundation credit ──────────
+  // GET /api/network/games.json — every live custom game built with ReGen
+  // Civics, with the link back out to it. Each delivered game credits us in its
+  // footer (shared/foundationCredit.ts); this is how we credit them back, and
+  // what /network renders from.
+  //
+  // Registry-driven (shared/networkRegistry.ts), enriched best-effort from each
+  // game's own federation feed, cached in server/lib/network-feed.ts. Public
+  // data only: what the owner already publishes on their own site.
+  app.get("/api/network/games.json", async (_req, res) => {
+    try {
+      const { getNetworkFeed } = await import("../lib/network-feed");
+      const payload = await getNetworkFeed();
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=600");
+      return res.json(payload);
+    } catch (err: any) {
+      log.error("network games.json failed", err);
+      return res.status(500).json({ error: "temporarily unavailable" });
+    }
+  });
+
+  // ── Learn hub slugs, reserved ahead of the pages ────────────────────────────
+  // The Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2, task C9) is still open,
+  // but the foundation credit already links to /learn/regenerative-economics
+  // from every custom game's about page, and those links live in other people's
+  // deployments where we cannot edit them later. So the slug resolves today:
+  // a 301 to the page that actually answers the query, which passes the link
+  // equity through and never shows a crawler a 404.
+  //
+  // Delete an entry here the day its real Learn page ships.
+  const LEARN_SLUG_REDIRECTS: Record<string, string> = {
+    "regenerative-economics": "/bionomics",
+  };
+  app.get("/learn/:slug", (req, res, next) => {
+    const target = LEARN_SLUG_REDIRECTS[req.params.slug];
+    if (!target) return next();
+    return res.redirect(301, target);
   });
 
   // ── Multiplayer crew assembly cron endpoint ─────────────────────────────────

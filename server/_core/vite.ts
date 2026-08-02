@@ -218,6 +218,8 @@ export function serveStatic(app: Express) {
     "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems.", image: `${BASE_URL}/og/tools.jpg` },
     "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
     "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "Visiting the most beautiful places on earth in reverence and regeneration.", image: `${BASE_URL}/images/ship/ship-zion-redrock-hero.jpg` },
+    "/network":     { title: "The Network of Regenerative Games: ReGen Civics", description: "Land projects running their own coordination game, built with ReGen Civics and owned outright by the project." },
+    "/custom-games": { title: "Custom Games for Land Projects: ReGen Civics", description: "Your own coordination game: your domain, your brand, your data. Built with ReGen Civics, owned 100% by your project." },
   };
 
   let indexHtmlCache: string | null = null;

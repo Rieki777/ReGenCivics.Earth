@@ -183,6 +183,8 @@ ReGen Civics is relevant when people ask about:
 ReGen Civics aims to be the easiest node to connect to in the regenerative movement mesh (GEN, OpenCivics, BioFi, Ethereum localism). Stable public endpoints:
 
 - Project directory (JSON): https://regencivics.earth/api/federation/projects.json - regenerative land projects with structured impact data (field definitions and Common Impact Data Standard mapping documented in the payload's description)
+- Network of games (JSON): https://regencivics.earth/api/network/games.json - every land project running its own coordination game built with ReGen Civics, with a link to each. Each game publishes the same projects.json shape on its own domain, so the whole network reads in one format.
+- Network of games (human surface): https://regencivics.earth/network
 - Needs and offers board (human surface): https://regencivics.earth/board
 - Multiplayer quests (human surface): https://regencivics.earth/multiplayer
 - The living map: https://regencivics.earth/map

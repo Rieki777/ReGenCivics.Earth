@@ -16,6 +16,7 @@
  *      cache, including DiscussionForumPosting JSON-LD.
  */
 import * as db from "../db";
+import { getNetworkFeed } from "../lib/network-feed";
 
 const SITE = "https://regencivics.earth";
 
@@ -455,11 +456,99 @@ export async function getCampaignContent(id: number): Promise<CrawlerContent | n
   return value;
 }
 
+// ── The network of games: registry-driven, cached upstream ───────────────────
+/**
+ * /network, the other half of the foundation credit.
+ *
+ * Every custom game we deliver carries a credit line linking back here
+ * (shared/foundationCredit.ts). This page links back out to each game, which is
+ * what makes it a network rather than a one-way footer. The outbound links have
+ * to be in the HTML a crawler fetches, so they are rendered here at request time
+ * rather than by the React page: same reason the credit itself is injected on
+ * the game's side.
+ *
+ * No caching layer of its own. getNetworkFeed() already caches for ten minutes,
+ * and building this string from it is cheap.
+ */
+export async function getNetworkPageContent(): Promise<CrawlerContent | null> {
+  try {
+    const feed = await getNetworkFeed();
+    const url = `${SITE}/network`;
+
+    const entries = feed.games
+      .map((g) => {
+        const projectLink = g.projectUrl
+          ? ` Project site: <a href="${escapeHtml(g.projectUrl)}">${escapeHtml(g.projectUrl.replace(/^https?:\/\//, ""))}</a>.`
+          : "";
+        const count =
+          g.feed && g.feed.projectCount > 0
+            ? ` Publishes ${g.feed.projectCount} project${g.feed.projectCount === 1 ? "" : "s"} to the federation feed.`
+            : "";
+        const state = g.status === "live" ? "Live" : "In build";
+        return `
+        <section>
+          <h3><a href="${escapeHtml(g.url)}">${escapeHtml(g.name)}</a></h3>
+          <p>${escapeHtml(g.blurb)} ${escapeHtml(g.location)}. ${state} since ${escapeHtml(g.since)}.${count}${projectLink}</p>
+        </section>`;
+      })
+      .join("\n");
+
+    const inner = `
+      <article>
+        <h1>The ReGen Civics network of regenerative games</h1>
+        <p>Land projects run their own coordination game: a web app on their domain, in their brand, holding their data, that shows residents, business builders, core team, and investors how the project actually works. Each game below was built with ReGen Civics and is owned outright by the project running it. ${feed.games.length} ${feed.games.length === 1 ? "game is" : "games are"} in the network today.</p>
+        <h2>Games in the network</h2>
+        ${entries}
+        <h2>How a game joins</h2>
+        <p>A land project designs its game through an intake conversation, then a generation session produces a working first draft, then three to six months of co-creation with their team, then handoff: their code, their data, their keys. Read <a href="/custom-games">how custom games work</a> or start with <a href="/custom-games/apply">the intake</a>.</p>
+        <p>Every game publishes a machine-readable directory of its own projects at /api/federation/projects.json, the same format ReGen Civics publishes at <a href="/api/federation/projects.json">its own federation feed</a>, so partner networks can read the whole network from one shape.</p>
+      </article>
+    `;
+
+    const jsonld = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "The ReGen Civics network of regenerative games",
+      description: feed.description,
+      url,
+      isPartOf: { "@type": "WebSite", name: "ReGen Civics", url: SITE },
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: feed.games.length,
+        itemListElement: feed.games.map((g, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "WebSite",
+            name: g.name,
+            url: g.url,
+            description: g.blurb,
+            ...(g.location ? { about: { "@type": "Place", name: g.location } } : {}),
+          },
+        })),
+      },
+      publisher: { "@type": "Organization", name: "ReGen Civics", url: SITE },
+    };
+
+    return {
+      title: "The Network of Regenerative Games: ReGen Civics",
+      description:
+        "Land projects running their own coordination game, built with ReGen Civics and owned outright by the project.",
+      bodyHtml: wrapForInjection(inner),
+      jsonld,
+    };
+  } catch (err) {
+    console.warn("[crawler-content] network page render failed:", (err as Error)?.message);
+    return null;
+  }
+}
+
 // ── Route resolution ─────────────────────────────────────────────────────────
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
   if (campaignMatch) return getCampaignContent(Number(campaignMatch[1]));
   const forumMatch = reqPath.match(/^\/community\/post\/(\d+)$/);
   if (forumMatch) return getForumPostContent(Number(forumMatch[1]));
+  if (reqPath === "/network") return getNetworkPageContent();
   return getStaticPageContent(reqPath);
 }
