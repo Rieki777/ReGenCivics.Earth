@@ -1873,9 +1873,6 @@ export const gratitudeCycles = mysqlTable("gratitude_cycles", {
   status: varchar("status", { length: 16 }).default("open").notNull(),
   distributedAt: timestamp("distributedAt"),
   totalWeight: double("totalWeight"),
-  // What was actually minted at close. Lower than poolPerCycle whenever the
-  // per-person payout cap or INT flooring bit; the difference is never minted.
-  distributedTotal: int("distributedTotal"),
 }, (t) => ([
   uniqueIndex("uniq_cycle_number").on(t.cycleNumber),
   index("idx_gratitude_cycle_status").on(t.status),
