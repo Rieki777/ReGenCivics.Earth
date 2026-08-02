@@ -45,7 +45,7 @@ The five gaps:
 - Refresh robots.txt: add `ClaudeBot`, `Applebot`, `Applebot-Extended`, `Meta-ExternalAgent`, `MistralAI-User`, `cohere-ai`; keep the existing allows. Policy decision (already implied by our current file): we welcome both training crawlers and search crawlers. We want to be in the training data. That stays.
 - Add IndexNow: ping on blog publish and sitemap change (small server hook).
 - Deduplicate the double llms-full.txt route registration (`server/_core/index.ts:471-474`, cosmetic).
-- Decide the prerender-node question: the middleware is wired but env-gated with a no-op hook (`server/_core/index.ts:116-136`). Recommendation: remove it and own the rendering ourselves (Layer 1) rather than paying for Prerender.io. Deterministic-first, per STEERING.
+- ~~Decide the prerender-node question: the middleware is wired but env-gated with a no-op hook (`server/_core/index.ts:116-136`).~~ **This reading was wrong, corrected 2026-08-01.** The middleware was not inert and the hook was not a no-op in the way that mattered: `PRERENDER_TOKEN` was set in Railway with a stale token, so prerender-node intercepted every crawler user agent and returned an empty 503. Full measurement in "Finding (2026-08-01)" below. The recommendation stood and is now done: middleware deleted, we own the rendering. Method note, since this bullet was written from the code path: a middleware's effect is measured by fetching as the affected user agent.
 
 ### Layer 1: Serve real HTML bodies (the big lever, 1-2 weeks)
 
