@@ -172,6 +172,8 @@ const QuestSuggestions = lazy(() => import("./pages/QuestSuggestions"));
 const UserForumProfile = lazy(() => import("./pages/UserForumProfile"));
 const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
+const Learn = lazy(() => import("./pages/Learn"));
+const LearnArticle = lazy(() => import("./pages/LearnArticle"));
 const FeatureSuggestions = lazy(() => import("./pages/FeatureSuggestions"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
@@ -382,6 +384,8 @@ function Router() {
       <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
       <Route path={"/accessibility"}><EB><Accessibility /></EB></Route>
       <Route path={"/glossary"}><EB><Glossary /></EB></Route>
+      <Route path={"/learn/:slug"}><EB><LearnArticle /></EB></Route>
+      <Route path={"/learn"}><EB><Learn /></EB></Route>
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>

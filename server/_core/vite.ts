@@ -210,6 +210,10 @@ export function serveStatic(app: Express) {
     "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
     "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },
     "/glossary":    { title: "Glossary: ReGen Civics", description: "Key terms and concepts in the ReGen Civics ecosystem." },
+    // Prefix match, so /learn/:slug inherits this when the crawler-content
+    // lookup fails. Normally crawler-content.ts overrides title + description
+    // per article from shared/learnContent.
+    "/learn":       { title: "Learn: Land, Community, Funding, Governance | ReGen Civics", description: "Practical answers on starting a community on your land, intentional community structures and funding, ecovillages, governance models, crowd pooling, and the nine forms of capital." },
     "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform.", image: `${BASE_URL}/og/features.jpg` },
     "/bionomics":   { title: "Bionomics: ReGen Civics", description: "A living economy modelled on ecosystems. How ReGen Civics builds bioregional value flows.", image: `${BASE_URL}/og/bionomics.jpg` },
     "/hymn-book":   { title: "Hymn Book: ReGen Civics", description: "Songs of the ReGenerative Renaissance. A growing collection of hymns from the movement.", image: `${BASE_URL}/og/hymn-book.jpg` },

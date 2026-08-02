@@ -54,6 +54,7 @@ import { buildGuidePersona, buildGuideContext, fetchGuidePreferences } from "../
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { LEARN_SLUGS } from "@shared/learnContent";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
@@ -411,6 +412,7 @@ async function startServer() {
       { loc: '/governance',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/tokenomics',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/glossary',                changefreq: 'monthly', priority: '0.5' },
+      { loc: '/learn',                   changefreq: 'weekly',  priority: '0.8' },
       { loc: '/regen-games',             changefreq: 'monthly', priority: '0.6' },
       { loc: '/custom-games',            changefreq: 'monthly', priority: '0.5' },
       // Changes every time a custom game launches, which is the freshness
@@ -487,6 +489,10 @@ async function startServer() {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
+      // Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2). Answer-first pages
+      // aimed at the query space the visibility panel showed us missing from.
+      // Each URL serves full prose + FAQPage JSON-LD via crawler-content.ts.
+      ...LEARN_SLUGS.map(slug => urlTag(`/learn/${slug}`, 'monthly', '0.8')),
       ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
       // Community posts included by decision (2026-07-15): real conversations
       // by practitioners are what answer engines cite. Each post URL serves

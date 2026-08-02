@@ -9,14 +9,25 @@
  * off-screen aria-hidden div injected before <div id="root">. Humans get the
  * React app; crawlers get the prose. Same HTML for everyone, so no cloaking.
  *
- * Two content sources:
+ * Three content sources:
  *   1. PAGE_CONTENT: hand-written prose for stable marketing/info routes.
  *      Keep in sync with the live page copy when pages change substantially.
- *   2. Forum posts: rendered from the DB at request time with a small TTL
- *      cache, including DiscussionForumPosting JSON-LD.
+ *   2. Learn hub articles: rendered from shared/learnContent, the same
+ *      module the React page reads, so the crawler HTML and the human page
+ *      cannot drift apart.
+ *   3. Forum posts and campaigns: rendered from the DB at request time with
+ *      a small TTL cache, including DiscussionForumPosting / Project JSON-LD.
  */
 import * as db from "../db";
 import { getNetworkFeed } from "../lib/network-feed";
+import {
+  LEARN_ARTICLES,
+  getLearnArticle,
+  parseInline,
+  stripInline,
+  type LearnArticle,
+  type LearnSection,
+} from "@shared/learnContent";
 
 const SITE = "https://regencivics.earth";
 
@@ -145,7 +156,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       <article>
         <h1>Bionomics: an economy modelled on living systems</h1>
         <p>Bionomics is our name for an economic system that works the way ecosystems work: value flows in cycles, waste becomes food, diversity creates resilience, and health compounds. In practice this means contribution scores, gratitude tokens, seasonal harvests, and bioregional value flows that reward work which heals land and community rather than extracts from them.</p>
-        <p>We measure success across nine forms of capital: financial, social, intellectual, material, living, cultural, spiritual, experiential, and influence. Money is one form of wealth among many, and our accounting reflects that. See <a href="/tokenomics">tokenomics</a> for the token mechanics and <a href="/glossary">the glossary</a> for the full vocabulary.</p>
+        <p>We measure success across nine forms of capital: financial, social, intellectual, material, living, cultural, spiritual, experiential, and health. The first eight are Ethan Roland and Gregory Landua's 8 Forms of Capital. The ninth, health capital, is ours: body vitality, wellness, movement, rest, and care, which the original eight have no place for. Money is one form of wealth among nine, and our accounting reflects that. See <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, <a href="/tokenomics">tokenomics</a> for the token mechanics, and <a href="/glossary">the glossary</a> for the full vocabulary.</p>
       </article>
     `,
   },
@@ -160,7 +171,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <p><strong>Bioregion:</strong> a geographic area defined by natural boundaries such as watersheds and ecosystems rather than political lines. Bioregionalism organizes economy and governance at this scale.</p>
         <p><strong>Regenerative finance (ReFi):</strong> financial systems designed to fund the restoration of ecosystems and communities, aligning returns with ecological and social health.</p>
         <p><strong>HEIST framework:</strong> Holistic Ecosystemic Impact and Sustainability Toolkit, our method for evaluating land projects across whole systems, interconnections, measurable outcomes, and long-term viability.</p>
-        <p><strong>Nine forms of capital:</strong> financial, social, intellectual, material, living, cultural, spiritual, experiential, and influence. A full accounting of the wealth a community holds and creates.</p>
+        <p><strong>Nine forms of capital:</strong> financial, social, intellectual, material, living, cultural, spiritual, experiential, and health. The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital (2011). ReGen Civics added health capital, meaning body vitality, wellness, movement, rest, and care. See <a href="/learn/nine-forms-of-capital">why we added a ninth</a>.</p>
         <p><strong>Crowd pooling (CCEC):</strong> community-centered economic cooperatives that let groups pool capital and collectively invest in regenerative projects they believe in.</p>
         <p><strong>Quest:</strong> a structured action producing measurable regenerative impact, completed by players, verified by peers, and rewarded in $ReGen tokens.</p>
         <p><strong>Gratitude economy:</strong> a system where thanks is tracked as social proof, raising the reputation and future earnings of contributors.</p>
@@ -180,7 +191,8 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         { "@type": "DefinedTerm", name: "Bioregion", description: "A geographic area defined by natural boundaries such as watersheds and ecosystems rather than political lines." },
         { "@type": "DefinedTerm", name: "Regenerative finance (ReFi)", description: "Financial systems designed to fund the restoration of ecosystems and communities." },
         { "@type": "DefinedTerm", name: "HEIST framework", description: "Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating regenerative land projects." },
-        { "@type": "DefinedTerm", name: "Nine forms of capital", description: "Financial, social, intellectual, material, living, cultural, spiritual, experiential, and influence capital." },
+        { "@type": "DefinedTerm", name: "Nine forms of capital", description: "Financial, social, intellectual, material, living, cultural, spiritual, experiential, and health capital. The first eight are Ethan Roland and Gregory Landua's 8 Forms of Capital; ReGen Civics added health capital, meaning body vitality, wellness, movement, rest, and care.", url: `${SITE}/learn/nine-forms-of-capital` },
+        { "@type": "DefinedTerm", name: "Health capital", description: "The physical and emotional vitality a person holds, and the work that builds it in others: movement, rest, bodywork, nutrition, recovery, and care. The ninth form of capital, added by ReGen Civics to the standard eight.", url: `${SITE}/learn/nine-forms-of-capital` },
         { "@type": "DefinedTerm", name: "Crowd pooling (CCEC)", description: "Community-centered economic cooperatives that pool capital to invest in regenerative projects." },
         { "@type": "DefinedTerm", name: "Quest", description: "A structured action producing measurable regenerative impact, verified by peers and rewarded in tokens." },
         { "@type": "DefinedTerm", name: "Gratitude economy", description: "A system where thanks is tracked as social proof, raising contributor reputation and earnings." },
@@ -296,6 +308,197 @@ export function getStaticPageContent(reqPath: string): CrawlerContent | null {
   const entry = PAGE_CONTENT[reqPath];
   if (!entry) return null;
   return { bodyHtml: wrapForInjection(entry.html), jsonld: entry.jsonld };
+}
+
+// ── Learn hub: rendered from the shared content module ───────────────────────
+// The React page (client/src/pages/LearnArticle.tsx) renders the same
+// LearnArticle objects. One content source, two renderers, so what GPTBot
+// fetches and what a human reads are the same words by construction.
+
+function inlineToHtml(text: string): string {
+  return parseInline(text)
+    .map((t) =>
+      t.type === "link"
+        ? `<a href="${escapeHtml(t.href)}">${escapeHtml(t.label)}</a>`
+        : escapeHtml(t.value),
+    )
+    .join("");
+}
+
+function sectionToHtml(s: LearnSection): string {
+  const paras = (s.paragraphs || []).map((p) => `<p>${inlineToHtml(p)}</p>`).join("\n");
+  const bullets = s.bullets?.length
+    ? `<ul>${s.bullets.map((b) => `<li>${inlineToHtml(b)}</li>`).join("")}</ul>`
+    : "";
+  const table = s.table
+    ? `<figure>
+        <table>
+          <caption>${escapeHtml(s.table.caption)}</caption>
+          <thead><tr>${s.table.columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>
+          <tbody>${s.table.rows
+            .map((r) => `<tr>${r.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`)
+            .join("")}</tbody>
+        </table>
+        <figcaption>Source: ${
+          s.table.sourceUrl
+            ? `<a href="${escapeHtml(s.table.sourceUrl)}">${escapeHtml(s.table.source)}</a>`
+            : escapeHtml(s.table.source)
+        }</figcaption>
+      </figure>`
+    : "";
+  const figure = s.figure
+    ? `<figure>
+        <p><strong>${escapeHtml(s.figure.value)}</strong> ${escapeHtml(s.figure.label)}</p>
+        <figcaption>Source: ${
+          s.figure.sourceUrl
+            ? `<a href="${escapeHtml(s.figure.sourceUrl)}">${escapeHtml(s.figure.source)}</a>`
+            : escapeHtml(s.figure.source)
+        }</figcaption>
+      </figure>`
+    : "";
+  return `<section>
+      <h2>${escapeHtml(s.heading)}</h2>
+      ${paras}
+      ${bullets}
+      ${table}
+      ${figure}
+    </section>`;
+}
+
+function learnArticleHtml(a: LearnArticle): string {
+  const related = a.related
+    .map((slug) => getLearnArticle(slug))
+    .filter((x): x is LearnArticle => Boolean(x));
+
+  return `
+    <article>
+      <h1>${escapeHtml(a.title)}</h1>
+      <p><strong>${escapeHtml(stripInline(a.answer))}</strong></p>
+      <p>By ${escapeHtml(a.author)}, ${escapeHtml(a.authorTitle)}.
+        Published <time datetime="${a.published}">${a.published}</time>.
+        Updated <time datetime="${a.updated}">${a.updated}</time>.</p>
+      ${a.sections.map(sectionToHtml).join("\n")}
+      <section>
+        <h2>Questions people ask</h2>
+        ${a.faqs.map((f) => `<h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p>`).join("\n")}
+      </section>
+      <section>
+        <h2>Next step</h2>
+        <ul>${a.nextSteps
+          .map(
+            (n) =>
+              `<li><a href="${escapeHtml(n.href)}">${escapeHtml(n.label)}</a>: ${escapeHtml(n.blurb)}</li>`,
+          )
+          .join("")}</ul>
+      </section>
+      ${
+        related.length
+          ? `<section><h2>Related</h2><ul>${related
+              .map((r) => `<li><a href="/learn/${r.slug}">${escapeHtml(r.title)}</a></li>`)
+              .join("")}</ul></section>`
+          : ""
+      }
+    </article>
+  `;
+}
+
+function learnArticleJsonLd(a: LearnArticle): object {
+  const url = `${SITE}/learn/${a.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${url}#article`,
+        headline: a.title,
+        description: stripInline(a.answer),
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        author: { "@type": "Person", name: a.author, jobTitle: a.authorTitle },
+        datePublished: a.published,
+        dateModified: a.updated,
+        publisher: {
+          "@type": "Organization",
+          name: "ReGen Civics",
+          url: SITE,
+        },
+        about: a.related.map((slug) => ({ "@type": "Thing", name: slug.replace(/-/g, " ") })),
+      },
+      {
+        // Anchored to this URL so it wins over the shell's site-wide FAQPage,
+        // which is scoped to the homepage in client/index.html.
+        "@type": "FAQPage",
+        "@id": `${url}#faq`,
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        name: a.title,
+        mainEntity: a.faqs.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: f.answer },
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${url}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "ReGen Civics", item: SITE },
+          { "@type": "ListItem", position: 2, name: "Learn", item: `${SITE}/learn` },
+          { "@type": "ListItem", position: 3, name: a.title, item: url },
+        ],
+      },
+    ],
+  };
+}
+
+function getLearnIndexContent(): CrawlerContent {
+  const inner = `
+    <article>
+      <h1>Learn: practical answers for land projects and communities</h1>
+      <p>Plain answers to the questions people ask before starting a community, funding a land project, or choosing how a group makes decisions. Written from what we run: a 13-week incubator for regenerative land projects, a fund that invests in them, and a game that tracks contribution across nine forms of capital.</p>
+      <ul>
+        ${LEARN_ARTICLES.map(
+          (a) =>
+            `<li><a href="/learn/${a.slug}">${escapeHtml(a.title)}</a>: ${escapeHtml(stripInline(a.answer))}</li>`,
+        ).join("\n")}
+      </ul>
+      <p>Start with <a href="/apply">the incubator</a>, <a href="/fund">the fund</a>, or <a href="/community">the community forum</a>.</p>
+    </article>
+  `;
+  return {
+    title: "Learn: Land, Community, Funding, Governance | ReGen Civics",
+    description:
+      "Practical answers on starting a community on your land, intentional community structures and funding, ecovillages, governance models, crowd pooling, and the nine forms of capital.",
+    bodyHtml: wrapForInjection(inner),
+    jsonld: {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "ReGen Civics Learn",
+      url: `${SITE}/learn`,
+      description:
+        "Answer-first guides for land stewards, community founders, and funders of regenerative projects.",
+      hasPart: LEARN_ARTICLES.map((a) => ({
+        "@type": "Article",
+        headline: a.title,
+        url: `${SITE}/learn/${a.slug}`,
+        description: stripInline(a.answer),
+        datePublished: a.published,
+        dateModified: a.updated,
+        author: { "@type": "Person", name: a.author },
+      })),
+    },
+  };
+}
+
+function getLearnContent(slug: string): CrawlerContent | null {
+  const article = getLearnArticle(slug);
+  if (!article) return null;
+  return {
+    title: `${article.metaTitle} | ReGen Civics`,
+    description: article.metaDescription,
+    bodyHtml: wrapForInjection(learnArticleHtml(article)),
+    jsonld: learnArticleJsonLd(article),
+  };
 }
 
 // ── Forum posts: DB-driven, cached ──────────────────────────────────────────
@@ -545,6 +748,9 @@ export async function getNetworkPageContent(): Promise<CrawlerContent | null> {
 
 // ── Route resolution ─────────────────────────────────────────────────────────
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
+  if (reqPath === "/learn") return getLearnIndexContent();
+  const learnMatch = reqPath.match(/^\/learn\/([a-z0-9-]+)$/);
+  if (learnMatch) return getLearnContent(learnMatch[1]);
   const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
   if (campaignMatch) return getCampaignContent(Number(campaignMatch[1]));
   const forumMatch = reqPath.match(/^\/community\/post\/(\d+)$/);
