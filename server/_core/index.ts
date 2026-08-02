@@ -76,8 +76,6 @@ import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
 import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
@@ -119,27 +117,32 @@ async function startServer() {
     }
   }));
 
-  // Prerender.io middleware: serves pre-rendered HTML to bots/crawlers (SEO)
-  // PRERENDER_TOKEN must be set in Railway env vars
-  if (process.env.PRERENDER_TOKEN) {
-    try {
-      const prerenderNode = _require("prerender-node");
-      prerenderNode.set("prerenderToken", process.env.PRERENDER_TOKEN);
-      // Don't prerender API routes, static assets, or health checks
-      prerenderNode.set("beforeRenderFn", (req: any, done: (err: any, cached: string | null) => void) => {
-        const path = req.path || "";
-        if (path.startsWith("/api/") || path.startsWith("/assets/") || path === "/health") {
-          done(null, null); // skip prerender
-        } else {
-          done(null, null); // continue normally
-        }
-      });
-      app.use(prerenderNode);
-      log.info("Prerender middleware active (token configured)");
-    } catch (e) {
-      log.warn("Prerender: prerender-node not installed yet. Run npm install.", { error: String(e) });
-    }
-  }
+  // Prerender.io middleware: REMOVED 2026-08-01, and it was serving 503s.
+  //
+  // This block ran whenever PRERENDER_TOKEN was set. The token in Railway was
+  // invalid, so prerender-node intercepted every request with a crawler user
+  // agent, proxied it to Prerender.io, got rejected, and returned an empty 503.
+  // Measured against production before removal: Googlebot, bingbot, GPTBot,
+  // PerplexityBot, facebookexternalhit, and Twitterbot all received
+  // `HTTP 503` + `x-prerender-reject-reason: invalid-x-prerender-token-provided`
+  // on `/`, `/fund`, `/custom-games`, and `/network`. Only crawlers absent from
+  // prerender-node's bot list (ClaudeBot, OAI-SearchBot) and normal browsers
+  // got a page. So search indexing, ChatGPT's Bing-fed citations, and every
+  // social link preview were broken, and the Layer 1 crawler content could not
+  // reach the crawlers it was written for.
+  //
+  // It fails silently by design: humans never see it, health checks never see
+  // it, and a 503 to a bot leaves no trace in any surface we watch. The AI
+  // crawler telemetry below logs the hit, not the status.
+  //
+  // The removal is the decision already on record: LLM_DISCOVERABILITY_PLAN.md
+  // Layer 0 says own the rendering ourselves rather than paying Prerender.io
+  // (deterministic-first, STEERING section 11), and we do. `crawler-content.ts`
+  // injects real HTML bodies at request time for every route that matters, and
+  // the blog and Learn hub carry full prose. Nothing here needed a third party.
+  //
+  // Do not reintroduce it. If server-side rendering for bots is ever wanted
+  // again, extend crawler-content.ts.
 
   // Attach a unique request ID for tracing (logged on every request, sent to Sentry)
   app.use((req: any, _res, next) => {
