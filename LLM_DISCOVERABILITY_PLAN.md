@@ -139,7 +139,7 @@ This layer moves the needle more than anything on-site. Order of operations:
 | C6 | Glossary content + DefinedTermSet JSON-LD on /glossary | CODED (per-term URLs still open) |
 | C7 | Blog RSS feed at /feed.xml + head link | CODED |
 | C8 | llms.txt auto-generation | OPEN (blog section already auto-appends at build) |
-| C9 | Learn hub template + first drafts for your review | OPEN (next sprint, 2 pages/week cadence) |
+| C9 | Learn hub template + first drafts for your review | CODED (6 pages shipped 2026-08-01, see execution note below) |
 | C10 | AI crawler logging middleware (`[ai-crawler]` lines in Railway logs) | CODED |
 | C11 | Bi-weekly query panel scheduled task (1st + 15th, 9am) | DONE |
 
@@ -154,9 +154,37 @@ routes and DB-driven content, nothing new at build time, and the blog
 prerender path stays untouched. When live page copy changes substantially,
 update the matching entry in `crawler-content.ts`.
 
+### Execution note (2026-08-01): Layer 2 first six pages
+
+Priority came from the first measured panel (`AI_VISIBILITY_LOG.md`, 2026-08-01),
+not from the query map above. The panel found 2 of 15 queries cited us, both of
+which already contained the brand name. So the first six pages target the exact
+queries that returned zero mention:
+
+| Page | Query it answers | Who owned it on 2026-08-01 |
+|---|---|---|
+| `/learn/start-a-community-on-your-land` | "I have land and want to start a community, where do I begin" | Quora, permies.com, Shareable |
+| `/learn/intentional-community-structures` | "intentional community funding options" | icmatch.org (near-total) |
+| `/learn/how-to-start-an-ecovillage` | "how to start an ecovillage" | ic.org, The Momentum |
+| `/learn/community-governance-models` | "community governance models for land projects" | Springer, Tandfonline |
+| `/learn/crowd-pooling` | "crowd pooling community investment land" | generic real-estate crowdfunding |
+| `/learn/nine-forms-of-capital` | "nine forms of capital regenerative" | nobody. Engines corrected it to eight forms |
+
+Architecture: content is data in `shared/learnContent.ts` plus one file per
+article under `shared/learn/`. Three consumers read the same objects, so copy
+cannot drift: the React page (`client/src/pages/LearnArticle.tsx`), the
+crawler-visible HTML (`server/_core/crawler-content.ts`), and the Article +
+FAQPage + BreadcrumbList JSON-LD. `shared/learnContent.test.ts` enforces the
+citation shape (40 to 60 word answer, sourced tables, author, dates, FAQs,
+next step, resolvable siblings, no em-dashes), so page 7 cannot ship malformed.
+
+The shell's site-wide FAQPage in `client/index.html` is now scoped to the
+homepage with `@id` + `url`. It appears on every route, so an unscoped second
+FAQPage would have competed with each article's own.
+
 ### Still open (next sprints)
 
-- C8 llms.txt full auto-generation, C9 Learn hub (2 pages/week), glossary per-term URLs, campaign/profile crawler HTML, Atom feed for community highlights
+- C8 llms.txt full auto-generation, C9 Learn hub pages 7+ (2 pages/week from the query map in section 4), glossary per-term URLs, public-profile crawler HTML, Atom feed for community highlights
 - Layer 4 entity work (R3, R4, R5) and webmaster consoles (R1) are Rye-side and can start any time
 
 ---
