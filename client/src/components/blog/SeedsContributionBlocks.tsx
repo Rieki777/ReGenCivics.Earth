@@ -14,10 +14,13 @@ import {
   GraduationCap,
   Sparkles,
   Palette,
+  HeartPulse,
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
 
+// The nine capitals of shared/capitals.ts, in the order this post reads them.
+// Health is ours, added to the standard eight; see /learn/nine-forms-of-capital.
 const FORMS_OF_CAPITAL: { icon: React.ElementType; name: string; desc: string }[] = [
   { icon: Users, name: 'Social capital', desc: 'relationships, networks, trust you built' },
   { icon: Wrench, name: 'Material capital', desc: 'tools, equipment, land improvements, physical infrastructure' },
@@ -27,10 +30,11 @@ const FORMS_OF_CAPITAL: { icon: React.ElementType; name: string; desc: string }[
   { icon: GraduationCap, name: 'Experiential capital', desc: 'knowledge passed on, mentorship, facilitation, training' },
   { icon: Sparkles, name: 'Spiritual capital', desc: 'ceremonies, spiritual practices, trauma work, deep healing, the intangible things that hold communities together' },
   { icon: Palette, name: 'Cultural capital', desc: 'art, music, stories, identity, meaning' },
+  { icon: HeartPulse, name: 'Health capital', desc: 'movement, bodywork, nutrition, recovery, the care that kept people able to work' },
 ];
 
-/** The eight forms of capital as an icon grid. */
-export function EightFormsOfCapital() {
+/** The nine forms of capital as an icon grid. */
+export function NineFormsOfCapital() {
   return (
     <div className="my-8 grid gap-3 sm:grid-cols-2">
       {FORMS_OF_CAPITAL.map(({ icon: Icon, name, desc }) => (

@@ -950,7 +950,7 @@ export default function Game() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-500 font-bold">4.</span>
-                        <span><strong>8 Forms of Capital:</strong> Consider the 8 forms of capital (financial, material, living, social, intellectual, experiential, spiritual, cultural) for a more holistic tracking of value contributed.</span>
+                        <span><strong>9 Forms of Capital:</strong> Consider the 9 forms of capital (financial, material, living, social, intellectual, experiential, spiritual, cultural, health) for a more holistic tracking of value contributed.</span>
                       </li>
                     </ul>
                   </div>
@@ -985,7 +985,7 @@ export default function Game() {
                         </div>
                         <div>
                           <h4 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Contribution Calculator</h4>
-                          <p className="text-sm text-[#1a472a]/75">Estimate your contribution value across all 8 forms of capital using our calculator!</p>
+                          <p className="text-sm text-[#1a472a]/75">Estimate your contribution value across all 9 forms of capital using our calculator!</p>
                         </div>
                       </div>
                       <ArrowRight className="w-6 h-6 text-[#4a7c59] group-hover:translate-x-2 transition-transform" />

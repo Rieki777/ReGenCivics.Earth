@@ -498,7 +498,7 @@ This is where the magic happens. When needs are clear and resources are mapped, 
 
 ## Why This Matters for ReGen Civics
 
-This needs-based approach is exactly what we are building at ReGen Civics. Our Contribution Calculator recognizes eight forms of capital. Our governance ensures every voice is heard. Our seasonal structure creates space for both doing and being.
+This needs-based approach is exactly what we are building at ReGen Civics. Our Contribution Calculator recognizes nine forms of capital. Our governance ensures every voice is heard. Our seasonal structure creates space for both doing and being.
 
 We are not just funding land projects. We are prototyping a new way of organizing human activity, one that starts with what people actually need and builds from there.
 
@@ -742,10 +742,10 @@ We look forward to learning about your project!`,
     id: '9',
     slug: 'how-to-use-contribution-calculator',
     title: 'How to Use the Contribution Calculators: Measure Your Full Value',
-    excerpt: 'Learn how to use our 8 Forms of Capital calculator to measure and communicate your complete contribution potential beyond just money.',
+    excerpt: 'Learn how to use our 9 Forms of Capital calculator to measure and communicate your complete contribution potential beyond just money.',
     content: `The Contribution Calculator helps you recognize and quantify all the ways you contribute value, not just financial capital.
 
-## Why 8 Forms of Capital?
+## Why 9 Forms of Capital?
 
 Traditional economics only recognizes financial capital. But humans contribute value in many forms:
 
@@ -757,6 +757,9 @@ Traditional economics only recognizes financial capital. But humans contribute v
 6. **Experiential Capital** - Wisdom from lived experience, practical know-how
 7. **Spiritual Capital** - Purpose, meaning, connection to something greater
 8. **Cultural Capital** - Traditions, stories, shared practices, artistic expression
+9. **Health Capital** - Movement, bodywork, nutrition, recovery, the care that keeps people able to work
+
+The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital. The ninth is ours, because the original eight have no place for the work of keeping bodies functional. [Why we added a ninth](/learn/nine-forms-of-capital).
 
 ## How to Use the Calculator
 
@@ -769,13 +772,13 @@ What project are you tracking your contributions for?
 
 **Step 2: Work Through Each Capital Type**
 
-For each of the 8 forms, you will:
+For each of the 9 forms, you will:
 - Describe what you bring
 - Estimate the impact (in some cases that aren't easy to quantify)
 
 **Step 3: Review Your Total Contribution**
 
-The calculator shows your complete contribution profile across all 8 forms. You might be surprised by how much value you bring beyond money!
+The calculator shows your complete contribution profile across all 9 forms. You might be surprised by how much value you bring beyond money!
 
 **Step 4: Download Your PDF**
 
@@ -1366,9 +1369,9 @@ This way we can collectively raise funds, donations, investments, etc. that reco
 
 We are not only talking about financial contributions (though they are the easiest to track!)
 
-We work with the eight forms of capital:
+We work with the nine forms of capital:
 
-[EIGHT_FORMS_OF_CAPITAL]
+[NINE_FORMS_OF_CAPITAL]
 
 If you gave any of these things to the regenerative mission ReGen Civics is serving without being fully compensated, that is the kind of contribution we want to account for.
 
@@ -1390,7 +1393,7 @@ The process runs through Hypha's DAO tools at [hypha.earth](https://app.hypha.ea
 
 ## How to start
 
-**Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: relationships, ecological work, and more. [Open the calculator here](/calculator).
+**Step 1: Count your contributions.** Use the 9 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: relationships, ecological work, and more. [Open the calculator here](/calculator).
 
 For all value you're claiming you need to provide proof of impact (what was delivered, if it's financial value you need to show how much you spent. For SEEDS you'll need to provide your SEEDS account, that 12 character account name, in your proposal for verification that you didn't sell or spend your Seeds that you bought).
 
@@ -1437,7 +1440,7 @@ $RCivics: equity in the ReGen Fund, the bridge foundation that connects regenera
     date: 'Mar 18, 2026',
     readTime: '7 min read',
     image: '/og/seeds-contributions.webp',
-    tags: ['Tokens', 'Contributions', 'SEEDS', 'Regenerative Economics', '8 Forms of Capital', 'Hypha', 'History'],
+    tags: ['Tokens', 'Contributions', 'SEEDS', 'Regenerative Economics', '9 Forms of Capital', 'Hypha', 'History'],
     featured: false,
     isVideo: false
   }

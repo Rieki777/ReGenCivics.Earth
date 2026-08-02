@@ -156,7 +156,7 @@ function renderInline(s) {
 const SPECIAL_MARKER_MARKDOWN = {
   "[CLAIM_SEEDS_BUTTON]":
     "**[Claim your $ReGen for the SEEDS you bought](/claim-seeds)** — if you purchased SEEDS and want to simply claim your $ReGen, price your purchase and claim it here.",
-  "[EIGHT_FORMS_OF_CAPITAL]": [
+  "[NINE_FORMS_OF_CAPITAL]": [
     "**Social capital:** relationships, networks, trust you built",
     "**Material capital:** tools, equipment, land improvements, physical infrastructure",
     "**Financial capital:** money or crypto invested or donated",
@@ -165,6 +165,7 @@ const SPECIAL_MARKER_MARKDOWN = {
     "**Experiential capital:** knowledge passed on, mentorship, facilitation, training",
     "**Spiritual capital:** ceremonies, spiritual practices, trauma work, deep healing, the intangible things that hold communities together",
     "**Cultural capital:** art, music, stories, identity, meaning",
+    "**Health capital:** movement, bodywork, nutrition, recovery, the care that kept people able to work",
   ].join("\n\n"),
   "[FRAUD_WARNING]":
     "**Zero tolerance for fraud.** Our ecosystem is rooted in trust. Without that we have nothing. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied, you'll lose your opportunity to claim again, and you'll be banned from participating in ReGen Civics.",
