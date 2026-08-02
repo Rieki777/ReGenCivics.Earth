@@ -8,8 +8,14 @@
  * deploy goes green (STEERING section 11, deterministic-first).
  *
  * Usage:
- *   node scripts/ping-indexnow.mjs /learn /learn/crowd-pooling
  *   node scripts/ping-indexnow.mjs --learn      # every Learn hub URL
+ *   node scripts/ping-indexnow.mjs /fund /glossary
+ *
+ * On Git Bash for Windows, prefix explicit paths with MSYS_NO_PATHCONV=1.
+ * MSYS rewrites any argument starting with "/" into a Windows path before node
+ * ever sees it, so the paths silently vanish from the filter and the script
+ * exits with its usage line. PowerShell and Linux shells need no prefix, and
+ * --learn is unaffected either way.
  *
  * The key is read from server/lib/indexnow.ts so there is exactly one copy
  * of it in the repo, and it is verified by the matching file in
