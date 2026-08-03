@@ -8,6 +8,7 @@ import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { resolveCrawlerContent, escapeHtml, type CrawlerContent } from "./crawler-content";
 import { LEARN_SLUGS } from "@shared/learnContent";
+import { matchesAppRoute } from "@shared/appRoutes";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -354,31 +355,47 @@ export function serveStatic(app: Express) {
       }
     }
 
-    // /learn/<slug> is the one route space with a closed, known set of valid
-    // values, so it is the one place we can answer honestly. Everything else
-    // in an SPA catch-all has to return 200 and let the router sort it out.
+    // ── Soft-404 handling, two layers ──────────────────────────────────────
     //
-    // Before this, /learn/anything-at-all returned 200 carrying the hub's
-    // title, the hub's description (ROUTE_META prefix-matches /learn) and a
-    // canonical pointing at itself. That is a soft 404: an unbounded space of
-    // fabricated URLs that each look like a real page to a crawler, which
-    // Google downranks for and which burns crawl budget on a site whose whole
-    // problem is getting crawled properly. Anyone could have linked
-    // /learn/<anything> and had us serve it as valid.
+    // An SPA catch-all answers 200 for everything by default, so until
+    // 2026-08-03 every invented URL looked like a real page to a crawler:
+    // /totally-made-up-route and /learn/buy-cheap-things both returned 200,
+    // each carrying whatever meta the nearest route prefix supplied and a
+    // canonical naming itself. Google downranks for that and spends crawl
+    // budget on pages that do not exist, on a site whose whole problem is
+    // getting crawled properly. Anyone could have linked any path at us and
+    // had it served as valid.
     //
-    // The redirect handler in index.ts runs first and 301s the reserved slugs,
-    // so anything still arriving here with a /learn/ prefix is genuinely
-    // unknown. Humans still get the app (LearnArticle redirects to /learn);
-    // crawlers get the status code that matches reality.
+    // Layer 1, shape: does the client router declare a route of this form?
+    // shared/appRoutes.ts is generated from App.tsx and kept honest by
+    // server/app-routes.test.ts, which fails if the two drift.
+    //
+    // Layer 2, identity: for a route space where we know the complete set of
+    // valid values, is this particular one real? /learn is the only such space
+    // today. /campaign/:id and /community/post/:id cannot be checked here
+    // because only the database knows, which is why the layers are separate:
+    // layer 1 would otherwise need a list of every id in the system.
+    //
+    // The reserved-slug redirect in index.ts runs before this and 301s
+    // /learn/regenerative-economics, so anything still arriving with a /learn/
+    // prefix is genuinely unknown.
+    //
+    // Humans always get the app in the body, so a mistyped URL still lands
+    // somewhere useful. Only the status code and the canonical change.
     const learnSlugMatch = reqPath.match(/^\/learn\/(.+)$/);
     const unknownLearnSlug =
       learnSlugMatch !== null && !LEARN_SLUGS.includes(learnSlugMatch[1]);
+    const unknownRoute = !matchesAppRoute(reqPath);
+    const isNotFound = unknownRoute || unknownLearnSlug;
 
-    // A missing page should not nominate itself as canonical. Point at the hub,
-    // which is the real page for this space.
+    // A page that does not exist must not nominate itself as canonical.
+    // Unknown Learn slugs point at the hub, which is the real page for that
+    // space; anything else points at the site root.
     const canonical = unknownLearnSlug
       ? `${BASE_URL}/learn`
-      : `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
+      : unknownRoute
+        ? BASE_URL
+        : `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
 
     // Dynamic OG images for content pages
     let ogImage = meta.image ?? DEFAULT_META.image;
@@ -436,7 +453,7 @@ export function serveStatic(app: Express) {
     res.setHeader("Cache-Control", "no-store, must-revalidate");
     // Real status for a page that does not exist, with the app still in the
     // body so a human who mistyped a Learn URL lands somewhere useful.
-    if (unknownLearnSlug) res.status(404);
+    if (isNotFound) res.status(404);
     res.send(withNonce);
   });
 }

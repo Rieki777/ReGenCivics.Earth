@@ -112,20 +112,26 @@ describe("unknown Learn slugs are a real 404, not a soft one", () => {
     expect(src).toContain('import { LEARN_SLUGS } from "@shared/learnContent"');
   });
 
-  it("sets a 404 status for one", () => {
-    expect(src).toContain("if (unknownLearnSlug) res.status(404)");
+  it("folds the unknown slug into the not-found decision", () => {
+    // Matched loosely on purpose. These assertions read vite.ts as text
+    // because the handler is a closure inside serveStatic and cannot be
+    // called directly; an exact-string match then breaks on a rename that
+    // changed no behaviour, which is what happened when isNotFound landed.
+    // Anchor on the identifiers, not on a whole line.
+    expect(src).toMatch(/const isNotFound\s*=[^;]*unknownLearnSlug/);
+    expect(src).toMatch(/if \(isNotFound\) res\.status\(404\)/);
   });
 
   it("does not let a missing page nominate itself as canonical", () => {
     // Before this, /learn/anything served canonical=/learn/anything, so every
     // fabricated URL advertised itself as the original.
-    expect(src).toMatch(/unknownLearnSlug\s*\?\s*`\$\{BASE_URL\}\/learn`/);
+    expect(src).toMatch(/unknownLearnSlug\s*\n?\s*\?\s*`\$\{BASE_URL\}\/learn`/);
   });
 
   it("still serves the app body, so a mistyped URL lands somewhere useful", () => {
     // The 404 is a status change only; res.send(withNonce) is unconditional.
     const sendIdx = src.indexOf("res.send(withNonce)");
-    const statusIdx = src.indexOf("if (unknownLearnSlug) res.status(404)");
+    const statusIdx = src.search(/if \(isNotFound\) res\.status\(404\)/);
     expect(statusIdx).toBeGreaterThan(-1);
     expect(sendIdx).toBeGreaterThan(statusIdx);
   });
