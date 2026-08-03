@@ -584,7 +584,7 @@ export function ContributionCalculator() {
           <p className="text-4xl md:text-5xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             {formatCurrency(totalValue)}
           </p>
-          <p className="text-sm text-[#1a472a]/80 mt-2">across 8 forms of capital</p>
+          <p className="text-sm text-[#1a472a]/80 mt-2">across 9 forms of capital</p>
         </div>
 
         {/* Capital Breakdown */}

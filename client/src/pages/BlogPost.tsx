@@ -23,7 +23,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
-import { EightFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
+import { NineFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
 import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
 import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 
@@ -418,7 +418,7 @@ export default function BlogPost() {
                     '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
                     '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
                     '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
-                    '[EIGHT_FORMS_OF_CAPITAL]': <EightFormsOfCapital />,
+                    '[NINE_FORMS_OF_CAPITAL]': <NineFormsOfCapital />,
                     '[FRAUD_WARNING]': <FraudWarningCallout />,
                     '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
                     '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,

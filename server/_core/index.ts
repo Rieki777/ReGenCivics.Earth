@@ -54,6 +54,7 @@ import { buildGuidePersona, buildGuideContext, fetchGuidePreferences } from "../
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { LEARN_SLUGS } from "@shared/learnContent";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
@@ -75,8 +76,6 @@ import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
 import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
@@ -118,27 +117,32 @@ async function startServer() {
     }
   }));
 
-  // Prerender.io middleware: serves pre-rendered HTML to bots/crawlers (SEO)
-  // PRERENDER_TOKEN must be set in Railway env vars
-  if (process.env.PRERENDER_TOKEN) {
-    try {
-      const prerenderNode = _require("prerender-node");
-      prerenderNode.set("prerenderToken", process.env.PRERENDER_TOKEN);
-      // Don't prerender API routes, static assets, or health checks
-      prerenderNode.set("beforeRenderFn", (req: any, done: (err: any, cached: string | null) => void) => {
-        const path = req.path || "";
-        if (path.startsWith("/api/") || path.startsWith("/assets/") || path === "/health") {
-          done(null, null); // skip prerender
-        } else {
-          done(null, null); // continue normally
-        }
-      });
-      app.use(prerenderNode);
-      log.info("Prerender middleware active (token configured)");
-    } catch (e) {
-      log.warn("Prerender: prerender-node not installed yet. Run npm install.", { error: String(e) });
-    }
-  }
+  // Prerender.io middleware: REMOVED 2026-08-01, and it was serving 503s.
+  //
+  // This block ran whenever PRERENDER_TOKEN was set. The token in Railway was
+  // invalid, so prerender-node intercepted every request with a crawler user
+  // agent, proxied it to Prerender.io, got rejected, and returned an empty 503.
+  // Measured against production before removal: Googlebot, bingbot, GPTBot,
+  // PerplexityBot, facebookexternalhit, and Twitterbot all received
+  // `HTTP 503` + `x-prerender-reject-reason: invalid-x-prerender-token-provided`
+  // on `/`, `/fund`, `/custom-games`, and `/network`. Only crawlers absent from
+  // prerender-node's bot list (ClaudeBot, OAI-SearchBot) and normal browsers
+  // got a page. So search indexing, ChatGPT's Bing-fed citations, and every
+  // social link preview were broken, and the Layer 1 crawler content could not
+  // reach the crawlers it was written for.
+  //
+  // It fails silently by design: humans never see it, health checks never see
+  // it, and a 503 to a bot leaves no trace in any surface we watch. The AI
+  // crawler telemetry below logs the hit, not the status.
+  //
+  // The removal is the decision already on record: LLM_DISCOVERABILITY_PLAN.md
+  // Layer 0 says own the rendering ourselves rather than paying Prerender.io
+  // (deterministic-first, STEERING section 11), and we do. `crawler-content.ts`
+  // injects real HTML bodies at request time for every route that matters, and
+  // the blog and Learn hub carry full prose. Nothing here needed a third party.
+  //
+  // Do not reintroduce it. If server-side rendering for bots is ever wanted
+  // again, extend crawler-content.ts.
 
   // Attach a unique request ID for tracing (logged on every request, sent to Sentry)
   app.use((req: any, _res, next) => {
@@ -177,6 +181,21 @@ async function startServer() {
     if (ua && !req.path.startsWith("/assets/") && req.path !== "/health") {
       const m = ua.match(AI_CRAWLER_RE);
       if (m) console.log(`[ai-crawler] ${m[1]} ${req.method} ${req.path}`);
+    }
+    next();
+  });
+
+  // Referral telemetry for the foundation credit. Every custom game's credit
+  // link carries ?ref=<gameId> (shared/foundationCredit.ts creditHref), so this
+  // one greppable line is how "referral clicks from footer credits" in the
+  // master plan's success metrics gets measured, at zero token cost.
+  // Grep with: railway logs | grep '\[credit-referral\]'
+  app.use((req, _res, next) => {
+    const ref = req.query?.ref;
+    if (typeof ref === "string" && ref && ref.length <= 60 && !req.path.startsWith("/assets/")) {
+      // Sanitize before logging: a ref value is attacker-controllable, and a
+      // newline in it would forge a second log line.
+      console.log(`[credit-referral] ${ref.replace(/[^\w.-]/g, "")} ${req.path}`);
     }
     next();
   });
@@ -396,8 +415,12 @@ async function startServer() {
       { loc: '/governance',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/tokenomics',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/glossary',                changefreq: 'monthly', priority: '0.5' },
+      { loc: '/learn',                   changefreq: 'weekly',  priority: '0.8' },
       { loc: '/regen-games',             changefreq: 'monthly', priority: '0.6' },
       { loc: '/custom-games',            changefreq: 'monthly', priority: '0.5' },
+      // Changes every time a custom game launches, which is the freshness
+      // signal Perplexity rewards. Weekly, so it gets re-fetched between ships.
+      { loc: '/network',                 changefreq: 'weekly',  priority: '0.6' },
       { loc: '/marketplace',             changefreq: 'weekly',  priority: '0.6' },
       { loc: '/crowd-pooling',           changefreq: 'weekly',  priority: '0.7' },
       { loc: '/crowd-pooling-projects',  changefreq: 'weekly',  priority: '0.7' },
@@ -469,6 +492,10 @@ async function startServer() {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
+      // Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2). Answer-first pages
+      // aimed at the query space the visibility panel showed us missing from.
+      // Each URL serves full prose + FAQPage JSON-LD via crawler-content.ts.
+      ...LEARN_SLUGS.map(slug => urlTag(`/learn/${slug}`, 'monthly', '0.8')),
       ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
       // Community posts included by decision (2026-07-15): real conversations
       // by practitioners are what answer engines cite. Each post URL serves
@@ -925,6 +952,51 @@ async function startServer() {
       log.error("federation projects.json failed", err);
       return res.status(500).json({ error: "temporarily unavailable" });
     }
+  });
+
+  // ── The network of games: the return half of the foundation credit ──────────
+  // GET /api/network/games.json — every live custom game built with ReGen
+  // Civics, with the link back out to it. Each delivered game credits us in its
+  // footer (shared/foundationCredit.ts); this is how we credit them back, and
+  // what /network renders from.
+  //
+  // Registry-driven (shared/networkRegistry.ts), enriched best-effort from each
+  // game's own federation feed, cached in server/lib/network-feed.ts. Public
+  // data only: what the owner already publishes on their own site.
+  app.get("/api/network/games.json", async (_req, res) => {
+    try {
+      const { getNetworkFeed } = await import("../lib/network-feed");
+      const payload = await getNetworkFeed();
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=600");
+      return res.json(payload);
+    } catch (err: any) {
+      log.error("network games.json failed", err);
+      return res.status(500).json({ error: "temporarily unavailable" });
+    }
+  });
+
+  // ── Learn hub slugs, reserved ahead of the pages ────────────────────────────
+  // The foundation credit links to /learn/regenerative-economics from every
+  // custom game's about page, and those links live in other people's
+  // deployments where we cannot edit them later. The Learn hub shipped six
+  // articles and that is not one of them, so the slug resolves by 301 to the
+  // page that does answer the query (nine forms of capital, the "new economics"
+  // cluster in LLM_DISCOVERABILITY_PLAN.md section 3). Equity passes through,
+  // and no crawler following a credit link ever sees a 404.
+  //
+  // A real Learn article always wins: LEARN_SLUGS is checked first, so writing
+  // the article is all it takes to retire a redirect. Nobody has to remember to
+  // come back and delete the entry.
+  const LEARN_SLUG_REDIRECTS: Record<string, string> = {
+    "regenerative-economics": "/learn/nine-forms-of-capital",
+  };
+  app.get("/learn/:slug", (req, res, next) => {
+    const slug = req.params.slug;
+    if ((LEARN_SLUGS as readonly string[]).includes(slug)) return next();
+    const target = LEARN_SLUG_REDIRECTS[slug];
+    if (!target) return next();
+    return res.redirect(301, target);
   });
 
   // ── Multiplayer crew assembly cron endpoint ─────────────────────────────────

@@ -1,6 +1,25 @@
 import '@testing-library/jest-dom';
 import { vi, beforeEach } from 'vitest';
 
+/**
+ * Give the suite the one secret it needs, the way CI already does.
+ *
+ * `ENV.cookieSecret` is `process.env.JWT_SECRET`, and anything that signs a
+ * token with it (harvest-email's confirm token, the OAuth state HMAC) throws
+ * `crypto.createHmac` "key must be of type string ... Received undefined" when
+ * it is unset. Vitest deliberately loads no `.env` — it must not, or the
+ * DB-backed suites would key their skipIfNoDb guard on the LIVE DATABASE_URL
+ * and run against production. So CI passes JWT_SECRET on the step and local
+ * runs got nothing, which left `pnpm test` red on every dev machine while CI
+ * was green. Four failures in harvest-email.test.ts became background noise
+ * that shipped-log entries learned to explain away, which is exactly how a
+ * real failure gets waved through.
+ *
+ * Set it here, not in the shell, so local and CI agree without anyone having
+ * to remember an env var. Never overwrite a value the environment supplied.
+ */
+process.env.JWT_SECRET ??= 'test-jwt-secret';
+
 // Only stub browser layout methods when running in a DOM environment.
 // This file is loaded as a global setupFile for both jsdom (client tests) and
 // Node (server tests); Element does not exist in the Node environment.

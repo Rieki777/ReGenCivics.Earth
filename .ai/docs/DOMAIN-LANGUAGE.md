@@ -91,6 +91,24 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 8. Experiential (lived experience, craft hours)
 9. Health (body vitality, wellness, rest)
 
+**Health capital**. The ninth form, and the one that is ours. It covers a person's physical
+and emotional vitality and the work that builds it in others: movement, rest, bodywork,
+nutrition, recovery, care. Forms 1 through 8 are Ethan Roland and Gregory Landua's
+*8 Forms of Capital* (2011, expanded in *Regenerative Enterprise*, 2013), used unchanged and
+credited. We added the ninth because the original eight have no place for it: Living means
+ecosystems, Social means relationships, Experiential means accumulated skill, Spiritual means
+meaning. None of them hold a bodyworker, a movement teacher, an herbalist, or a cook.
+
+**The ninth form is Health, never Influence.** Between 2026-07-03 and 2026-08-01, `llms.txt`,
+`llms-full.txt`, and the `/bionomics` + `/glossary` crawler content all listed the ninth as
+"Influence Capital", which appears nowhere in the code. The canonical list has always been
+`shared/capitals.ts` (`CAPITAL_TYPES`), which the calculator, the crowdpooling taxonomy, the
+Living Tree, and quest-to-capital mapping all import. The drifted copy was the machine-readable
+surface we publish specifically for LLMs, so the one file written for answer engines named a
+form of capital that does not exist in the product. Fixed 2026-08-01, and the reasoning now has a
+public page at `/learn/nine-forms-of-capital` so the model is citable rather than only asserted.
+Source of truth for any future edit: `shared/capitals.ts`.
+
 **Contribution Score**. A player's accumulated standing. Computed from the 9 roots + recency. Reads use TOTAL tokens (private + public).
 
 **Voice weight**. How much a vote counts. Computed from RGVoice (Game) or RCVoice (Fund).

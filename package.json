@@ -116,7 +116,6 @@
     "nanoid": "^5.1.11",
     "open-graph-scraper": "^6.11.0",
     "pmtiles": "^4.4.1",
-    "prerender-node": "^3.2.6",
     "protomaps-leaflet": "^5.1.0",
     "react": "^19.2.6",
     "react-day-picker": "^9.11.1",

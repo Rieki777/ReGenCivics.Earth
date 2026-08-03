@@ -45,7 +45,7 @@ The five gaps:
 - Refresh robots.txt: add `ClaudeBot`, `Applebot`, `Applebot-Extended`, `Meta-ExternalAgent`, `MistralAI-User`, `cohere-ai`; keep the existing allows. Policy decision (already implied by our current file): we welcome both training crawlers and search crawlers. We want to be in the training data. That stays.
 - Add IndexNow: ping on blog publish and sitemap change (small server hook).
 - Deduplicate the double llms-full.txt route registration (`server/_core/index.ts:471-474`, cosmetic).
-- Decide the prerender-node question: the middleware is wired but env-gated with a no-op hook (`server/_core/index.ts:116-136`). Recommendation: remove it and own the rendering ourselves (Layer 1) rather than paying for Prerender.io. Deterministic-first, per STEERING.
+- ~~Decide the prerender-node question: the middleware is wired but env-gated with a no-op hook (`server/_core/index.ts:116-136`).~~ **This reading was wrong, corrected 2026-08-01.** The middleware was not inert and the hook was not a no-op in the way that mattered: `PRERENDER_TOKEN` was set in Railway with a stale token, so prerender-node intercepted every crawler user agent and returned an empty 503. Full measurement in "Finding (2026-08-01)" below. The recommendation stood and is now done: middleware deleted, we own the rendering. Method note, since this bullet was written from the code path: a middleware's effect is measured by fetching as the affected user agent.
 
 ### Layer 1: Serve real HTML bodies (the big lever, 1-2 weeks)
 
@@ -124,7 +124,7 @@ This layer moves the needle more than anything on-site. Order of operations:
 | R3 | Create Wikidata items for ReGen Civics + Church of the Regenerative Earth | Account + human editing norms | wikidata.org (Claude can draft the full item contents) |
 | R4 | Submit directory listings (ic.org, GEN, ReFi maps) | Account signups, org representation | Claude drafts each listing text |
 | R5 | Outreach: podcasts, guest essays, press | Relationships, your voice | Claude drafts via regen-outreach-sequences |
-| R6 | Remove PRERENDER_TOKEN from Railway if present (we own rendering now) | Railway dashboard | Railway > ReGenCivics.Earth > Variables |
+| R6 | ~~Remove PRERENDER_TOKEN from Railway~~ RESOLVED IN CODE 2026-08-01: the middleware is deleted, so the variable is inert wherever it still sits. See the finding below. Unsetting it in Railway is now tidying, not a fix. | Done | Done |
 | R7 | ~~Approve the query-panel scheduled task~~ RESOLVED 2026-07-15: bi-weekly (1st and 15th), task created | Decision made by Rye | Done |
 
 ### CLAUDE CODE: already done or can be done without you
@@ -139,7 +139,7 @@ This layer moves the needle more than anything on-site. Order of operations:
 | C6 | Glossary content + DefinedTermSet JSON-LD on /glossary | CODED (per-term URLs still open) |
 | C7 | Blog RSS feed at /feed.xml + head link | CODED |
 | C8 | llms.txt auto-generation | OPEN (blog section already auto-appends at build) |
-| C9 | Learn hub template + first drafts for your review | OPEN (next sprint, 2 pages/week cadence) |
+| C9 | Learn hub template + first drafts for your review | CODED (6 pages shipped 2026-08-01, see execution note below) |
 | C10 | AI crawler logging middleware (`[ai-crawler]` lines in Railway logs) | CODED |
 | C11 | Bi-weekly query panel scheduled task (1st + 15th, 9am) | DONE |
 
@@ -154,9 +154,77 @@ routes and DB-driven content, nothing new at build time, and the blog
 prerender path stays untouched. When live page copy changes substantially,
 update the matching entry in `crawler-content.ts`.
 
+### Finding (2026-08-01): every crawler was being served an empty 503
+
+Verifying the Learn pages in production turned up the thing that had been
+undermining all of Layer 0 and Layer 1. regencivics.earth was answering
+crawlers with:
+
+```
+HTTP/1.1 503 Service Unavailable
+Content-Length: 0
+x-prerender-reject-reason: invalid-x-prerender-token-provided
+```
+
+while a Chrome user agent on the same URL got a normal 200. Measured against
+`/fund` on 2026-08-01: GPTBot 503, PerplexityBot 503, Googlebot 503,
+facebookexternalhit 503, Chrome 200.
+
+`prerender-node` was mounted whenever `PRERENDER_TOKEN` was set, and it
+intercepts by user agent ahead of all our own routing. The Railway token was
+stale, so it rejected everything it grabbed. What that cost us:
+
+- The crawler-visible HTML shipped 2026-07-15 was never reachable by the
+  crawlers it was written for. Sixteen routes of prose, the forum threads,
+  the JSON-LD: none of it could be fetched.
+- Googlebot was served 503s, so this was an indexing problem as well as an
+  answer-engine one.
+- Social link previews were broken.
+- **It explains the 2026-08-01 panel better than any content gap does.** The
+  baseline was not measuring thin content. It was measuring a site that
+  returned errors to the things doing the measuring.
+
+Fixed by deleting the middleware rather than by unsetting the variable
+(handoff item R6), so a leftover or re-added env var cannot put a third-party
+interceptor back in front of every bot request. The dependency is dropped and
+`.env.example` carries a do-not-re-add note where the variable used to be.
+
+**Read the 2026-08-01 baseline with this in mind.** It is still the honest
+"before" number, but it is a measurement of a broken serving path, not of the
+content. The 2026-08-15 panel is the first one where on-site work and
+measurement are in the same reality.
+
+### Execution note (2026-08-01): Layer 2 first six pages
+
+Priority came from the first measured panel (`AI_VISIBILITY_LOG.md`, 2026-08-01),
+not from the query map above. The panel found 2 of 15 queries cited us, both of
+which already contained the brand name. So the first six pages target the exact
+queries that returned zero mention:
+
+| Page | Query it answers | Who owned it on 2026-08-01 |
+|---|---|---|
+| `/learn/start-a-community-on-your-land` | "I have land and want to start a community, where do I begin" | Quora, permies.com, Shareable |
+| `/learn/intentional-community-structures` | "intentional community funding options" | icmatch.org (near-total) |
+| `/learn/how-to-start-an-ecovillage` | "how to start an ecovillage" | ic.org, The Momentum |
+| `/learn/community-governance-models` | "community governance models for land projects" | Springer, Tandfonline |
+| `/learn/crowd-pooling` | "crowd pooling community investment land" | generic real-estate crowdfunding |
+| `/learn/nine-forms-of-capital` | "nine forms of capital regenerative" | nobody. Engines corrected it to eight forms |
+
+Architecture: content is data in `shared/learnContent.ts` plus one file per
+article under `shared/learn/`. Three consumers read the same objects, so copy
+cannot drift: the React page (`client/src/pages/LearnArticle.tsx`), the
+crawler-visible HTML (`server/_core/crawler-content.ts`), and the Article +
+FAQPage + BreadcrumbList JSON-LD. `shared/learnContent.test.ts` enforces the
+citation shape (40 to 60 word answer, sourced tables, author, dates, FAQs,
+next step, resolvable siblings, no em-dashes), so page 7 cannot ship malformed.
+
+The shell's site-wide FAQPage in `client/index.html` is now scoped to the
+homepage with `@id` + `url`. It appears on every route, so an unscoped second
+FAQPage would have competed with each article's own.
+
 ### Still open (next sprints)
 
-- C8 llms.txt full auto-generation, C9 Learn hub (2 pages/week), glossary per-term URLs, campaign/profile crawler HTML, Atom feed for community highlights
+- C8 llms.txt full auto-generation, C9 Learn hub pages 7+ (2 pages/week from the query map in section 4), glossary per-term URLs, public-profile crawler HTML, Atom feed for community highlights
 - Layer 4 entity work (R3, R4, R5) and webmaster consoles (R1) are Rye-side and can start any time
 
 ---

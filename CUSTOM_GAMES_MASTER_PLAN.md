@@ -140,6 +140,17 @@ Their queued next steps: submit acknowledgment emails + a status pipeline (New �
 
   "season": { "name": "", "theme": "", "start": "", "end": "" },
 
+  "branding": {                            // the foundation credit (item 23)
+    "foundationCredit": {
+      "enabled": true,                     // default on, owner-removable post-handoff
+      "style": "footer",                   // footer | about | both
+      "guideMention": true,                // their guide may name the network once
+      "footerVariant": "footer-game-design",
+      "aboutVariant": "about-economics",
+      "guideVariant": "guide-network"      // ids from CREDIT_VARIANTS, shared/foundationCredit.ts
+    }
+  },
+
   "integrations": {                        // provider NAMES only, never keys
     "llmProvider": "", "emailProvider": "", "analytics": ""
   },
@@ -242,7 +253,7 @@ Goal: a new upstream repo with zero Amora content. Amora becomes downstream cons
 | 20 | **`CLAUDE.md` in every generated repo** so owners self-serve improvements with Claude Code. |
 | 21 | **Build Journey tracker:** generalize the `JourneyToLaunch` internal PM page into a client-facing progress page per engagement, so clients watch their game come alive across the 3-6 months. |
 | 22 | **Test Village:** fictional project generated from a blueprint; acceptance test (zero leakage) and clickable public demo. |
-| 23 | **Optional "Crafted with ReGen Civics" credit** in the footer, default on, owner-removable (they own 100%). The referral flywheel. |
+| 23 | **Foundation credit + the link network**, default on, owner-removable (they own 100%). BUILT 2026-08-01, see "The backlink system" below. |
 
 ---
 
@@ -286,7 +297,7 @@ Funnel unchanged: page CTA → Sylva (~20 min, framed as "talk to the kind of gu
 9. **"Latest from ReGen Civics" strip on the page:** a living mini-changelog of platform upgrades proving active development. ReGen Civics is the builder; Amora is client #1 benefiting from every ship.
 10. **Anti-abuse as foundation defaults**, inherited from the parallel session's work and applied to every public form and AI endpoint across all future games.
 11. **Prompt seeds:** guide system prompts live in seeds/config, so tuning a game's guide voice is content work, never code.
-12. **Optional "Crafted with ReGen Civics" footer credit**, default on, owner-removable. Every delivered game becomes a referral surface without compromising the 100%-ownership promise.
+12. **Foundation credit**, default on, owner-removable. Every delivered game becomes a referral surface without compromising the 100%-ownership promise. Built out 2026-08-01 as a two-way link network rather than one static line: see "The backlink system" below.
 13. **Attachments as one platform primitive** reused by proposals, intake, and the investor vault, instead of three upload implementations.
 
 (Rounds 1 and 2 improvements remain baked into the workstreams above.)
@@ -310,6 +321,54 @@ The modules and their config knobs (reference implementations in this repo, per 
 
 Two rules ride along as `z.literal` invariants so no configuration can turn them off: elder personas always carry a named human steward with veto, and player memory is always opt-in with the transparency surface first. Those are the pattern's ethics, and a fork inherits them with the code.
 
+## The backlink system (item 23, built 2026-08-01)
+
+Item 23 was one static footer line. Built out, it is a two-way link network: each
+delivered game links back to regencivics.earth, and regencivics.earth links out to
+each game. Three things make it work as a backlink rather than as decoration.
+
+**Server-rendered, not React-only.** Custom games are SPAs, and GPTBot, ClaudeBot,
+and PerplexityBot fetch HTML without running JavaScript. A footer that only exists
+after hydration is invisible to exactly the systems the credit is for: the same gap
+Layer 1 closed on regencivics.earth itself (`LLM_DISCOVERABILITY_PLAN.md` section
+3). So a game splices the credit into its HTML at request time as a `<noscript>`
+block plus an off-screen div, the identical technique
+`server/_core/crawler-content.ts` uses here, and its React footer renders the same
+text from the same source.
+
+**Anchor text rotates by placement.** One repeated brand-name anchor teaches an
+answer engine one fact. Four hand-written variants aimed at different Layer 2
+query clusters teach it several:
+
+| Placement | Line | Links to |
+|---|---|---|
+| Footer (default) | Game design by ReGen Civics | `/custom-games` |
+| Footer (alt) | Coordination game built with ReGen Civics | `/custom-games` |
+| About / story | The way this game handles contribution, recognition, and shared money is built on the *regenerative economics* practiced across the *ReGen Civics* incubator. | `/learn/regenerative-economics` (301 to `/learn/nine-forms-of-capital` until that article exists), home |
+| Guide onboarding | This game is part of the *ReGen Civics network of regenerative games*. | `/network` |
+
+Plain dofollow, no `rel=nofollow`. These are real deployments a client paid for and
+chose to keep, so the equity is honestly earned. It only stays honest if the anchors
+stay clean, so that is mechanical: `assertCleanAnchors()` caps each placement at one
+sentence and two links, rejects comma-separated keyword anchors, anchors over eight
+words, off-site hrefs, and em-dashes. It runs in the test suite and again inside the
+emitter, so a stuffed anchor cannot reach a client's game.
+
+**The return link.** `regencivics.earth/network` lists every live custom game and
+links out to it, rendered at request time from `shared/networkRegistry.ts` and
+enriched from each game's own `/api/federation/projects.json` (ADR-41), degrading to
+the registry when a game has no feed yet. A new entry there each time a game launches
+is also the freshness signal Perplexity rewards.
+
+Owner-removable, always: `data/foundation-credit.json`, `"enabled": false`, redeploy.
+They bought the whole game.
+
+Code: `shared/foundationCredit.ts` (variants, renderer, guard),
+`shared/networkRegistry.ts`, `blueprint.branding.foundationCredit`,
+`server/lib/network-feed.ts`, `client/src/pages/Network.tsx`,
+`scripts/emit-foundation-credit.ts` (the scaffold step and the crawl check),
+`GAME_GENERATION.md` section 3.
+
 ## Risks and guards
 
 | Risk | Guard |
@@ -328,7 +387,19 @@ Two rules ride along as `z.literal` invariants so no configuration can turn them
 - Page: CTA click-through, application starts, waitlist-to-application conversion.
 - Intake: completion rate, median time, blueprint completeness at submit.
 - Pipeline: intake → first playable draft in one session; scaffold under an hour; Amora migration zero-diff; Test Village zero-leakage.
-- Business: qualified applications per season, setup sales, full-service attach rate, referral clicks from footer credits.
+- Business: qualified applications per season, setup sales, full-service attach rate.
+- Backlink network (item 23), both with runnable evidence rather than a claim:
+  - **Referral clicks from the footer credit.** Every credit link carries
+    `?ref=<gameId>`, and the server logs one `[credit-referral] <ref> <path>` line
+    per hit. Count with `pnpm railway:logs | grep '\[credit-referral\]'`. Zero for a
+    live game means the credit is present but nobody is clicking; absent entirely
+    means it never shipped.
+  - **Crawlable at request time (curl no-JS check).** Every delivered game must pass
+    `npx tsx scripts/emit-foundation-credit.ts check https://<their-domain>` on its
+    home page and its about page before handoff. It fetches with a ClaudeBot user
+    agent, runs no JavaScript, and fails when the credit links are missing from the
+    returned HTML, when a link carries `rel=nofollow`, or (as a warning) when `?ref=`
+    is absent. A green typecheck proves nothing here; only the fetched bytes do.
 
 ## Sequencing
 

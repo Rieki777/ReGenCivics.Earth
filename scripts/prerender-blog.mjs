@@ -28,7 +28,7 @@
  * No new runtime deps.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -156,7 +156,7 @@ function renderInline(s) {
 const SPECIAL_MARKER_MARKDOWN = {
   "[CLAIM_SEEDS_BUTTON]":
     "**[Claim your $ReGen for the SEEDS you bought](/claim-seeds)** — if you purchased SEEDS and want to simply claim your $ReGen, price your purchase and claim it here.",
-  "[EIGHT_FORMS_OF_CAPITAL]": [
+  "[NINE_FORMS_OF_CAPITAL]": [
     "**Social capital:** relationships, networks, trust you built",
     "**Material capital:** tools, equipment, land improvements, physical infrastructure",
     "**Financial capital:** money or crypto invested or donated",
@@ -165,6 +165,7 @@ const SPECIAL_MARKER_MARKDOWN = {
     "**Experiential capital:** knowledge passed on, mentorship, facilitation, training",
     "**Spiritual capital:** ceremonies, spiritual practices, trauma work, deep healing, the intangible things that hold communities together",
     "**Cultural capital:** art, music, stories, identity, meaning",
+    "**Health capital:** movement, bodywork, nutrition, recovery, the care that kept people able to work",
   ].join("\n\n"),
   "[FRAUD_WARNING]":
     "**Zero tolerance for fraud.** Our ecosystem is rooted in trust. Without that we have nothing. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied, you'll lose your opportunity to claim again, and you'll be banned from participating in ReGen Civics.",
@@ -303,19 +304,30 @@ function buildPostHtml(shell, post) {
     },
   };
 
+  // Only the JSON-LD is genuinely new. Everything else in the head already
+  // exists in the shell, so it gets REPLACED, never appended.
+  //
+  // This used to append the whole block before </head>, which left the shell's
+  // homepage values in place ahead of the post's own. Every prerendered post
+  // shipped two <title>, two descriptions, two og:title/og:url, two
+  // twitter:title/description and two rel=canonical, and in each pair the
+  // first was the generic homepage value. A crawler taking the first (which is
+  // what happens for <title>, and what Google does with conflicting canonicals
+  // by ignoring them entirely) read every post as a duplicate of the homepage.
+  // Confirmed in production on 2026-08-03 across all 18 posts before this fix.
+  //
+  // Same replace-don't-append discipline as server/_core/vite.ts, which is why
+  // the request-time injected routes never had this problem.
   const head = `
-    <title>${escapeHtml(title)}</title>
-    <meta name="description" content="${escapeHtml(desc)}" />
-    <link rel="canonical" href="${url}" />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content="${escapeHtml(post.title)}" />
-    <meta property="og:description" content="${escapeHtml(desc)}" />
-    <meta property="og:url" content="${url}" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${escapeHtml(post.title)}" />
-    <meta name="twitter:description" content="${escapeHtml(desc)}" />
     <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
   `;
+
+  /** Replaces the content="..." of a single existing meta tag, matched by attribute. */
+  const setMeta = (html, attr, name, value) =>
+    html.replace(
+      new RegExp(`(<meta ${attr}="${name}" content=")[^"]*(")`, "i"),
+      `$1${escapeHtml(value)}$2`,
+    );
 
   // The prerendered article is hidden visually (hydration overwrites
   // it), but crawlers and LLMs see it before any JS runs.
@@ -336,8 +348,28 @@ function buildPostHtml(shell, post) {
     </div>
   `;
 
-  // Inject head additions before </head> and article before <div id="root">.
-  return shell
+  // Rewrite the shell's own head tags in place, then append only what the
+  // shell has no equivalent for, then the article before <div id="root">.
+  let html = shell
+    .replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(title)}</title>`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/i, `$1${url}$2`);
+
+  html = setMeta(html, "name", "description", desc);
+  html = setMeta(html, "property", "og:title", post.title);
+  html = setMeta(html, "property", "og:description", desc);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "name", "twitter:title", post.title);
+  html = setMeta(html, "name", "twitter:description", desc);
+  html = setMeta(html, "name", "twitter:url", url);
+
+  // og:type is "website" in the shell and has to become "article" here, so it
+  // is a replace too. The append below carries only the JSON-LD.
+  html = html.replace(
+    /(<meta property="og:type" content=")[^"]*(")/i,
+    `$1article$2`,
+  );
+
+  return html
     .replace(/<\/head>/i, `${head}</head>`)
     .replace(
       /<div id="root">/i,
@@ -460,4 +492,10 @@ function main() {
   ensureFeed(posts);
 }
 
-main();
+// Only run as a script. Importing this module (scripts/prerender-blog.test.ts
+// exercises buildPostHtml against a fixture shell) must not write to dist/.
+const invokedDirectly =
+  process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) main();
+
+export { buildPostHtml };

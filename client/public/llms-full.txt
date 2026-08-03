@@ -45,7 +45,14 @@ Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects:
 At the intersection of what you love, what you're good at, what the world needs, and what you can be paid for lies your regenerative ikigai. Our tools help individuals and projects find their unique contribution to the planetary restoration effort.
 
 ### Nine Forms of Capital
-We measure success beyond financial returns:
+We measure success beyond financial returns. The first eight are Ethan Roland
+and Gregory Landua's 8 Forms of Capital (2011, expanded in Regenerative
+Enterprise, 2013), used unchanged. The ninth, Health, was added by ReGen Civics
+because the original eight have no place for physical and emotional vitality:
+Living capital means ecosystems, Social means relationships, Experiential means
+accumulated skill. None of them hold the work of a bodyworker, movement teacher,
+herbalist, or cook. Full explanation, including how each capital is earned:
+https://regencivics.earth/learn/nine-forms-of-capital
 1. Financial: Traditional money and liquidity
 2. Social: Trust, relationships, and community bonds
 3. Intellectual: Knowledge, wisdom, and innovation
@@ -54,7 +61,7 @@ We measure success beyond financial returns:
 6. Cultural: Traditions, arts, and shared meaning
 7. Spiritual: Purpose, alignment, and inner development
 8. Experiential: Memories, skills, and lived wisdom
-9. Influence: Networks, reputation, and catalytic power
+9. Health: Body vitality, wellness, movement, rest, and care (added by ReGen Civics)
 
 ### Crowd Pooling (CCECs)
 Community-Centered Economic Cooperatives allow groups to pool capital and collectively invest in regenerative projects they believe in. This democratizes access to land-based investment and aligns financial returns with community values.

@@ -1912,7 +1912,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🧮</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Contribution Calculator</p>
-              <p className="text-white/60 text-xs mt-1">Estimate your contribution using the 8 forms of capital - save your contributions here</p>
+              <p className="text-white/60 text-xs mt-1">Estimate your contribution using the 9 forms of capital - save your contributions here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
