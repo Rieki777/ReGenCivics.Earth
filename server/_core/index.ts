@@ -78,6 +78,7 @@ import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { sendEmail } from "./email";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
+import { cronAuthOk } from "./cronAuth";
 import { isCacheAvailable } from "../cache";
 import { initCacheOnStartup, setupCacheShutdownHandlers } from "../cacheInit";
 import path from "path";
@@ -691,12 +692,7 @@ async function startServer() {
   app.post("/api/cron/outdoorsy-sync", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runOutdoorsySync } = await import("../jobs/outdoorsySync");
@@ -716,15 +712,12 @@ async function startServer() {
   app.post("/api/cron/governance-jobs", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
     // Timing-safe comparison so attackers can't probe the secret byte-by-byte
     // via response-time analysis. Length mismatch returns 401 fast (length is
-    // not the secret).
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    // not the secret). See cronAuth.ts for why the length must be measured in
+    // BYTES: measuring it in string units let a crafted header crash the
+    // process instead of getting a 401.
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runAllGovernanceJobs } = await import("../jobs/governanceJobs");
@@ -743,12 +736,7 @@ async function startServer() {
   app.post("/api/cron/harvest-generation", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runGeneration } = await import("../lib/harvest");
@@ -776,12 +764,7 @@ async function startServer() {
   app.post("/api/cron/harvest-digest", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runWeeklyDigest } = await import("../lib/harvest");
@@ -800,12 +783,7 @@ async function startServer() {
   app.post("/api/cron/admin-automations", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runDueAutomations } = await import("../routes/adminAutomations");
@@ -828,12 +806,7 @@ async function startServer() {
   app.post("/api/cron/coordination-pipeline", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runCoordinationPipeline } = await import("../jobs/coordinationPipeline");
@@ -856,12 +829,7 @@ async function startServer() {
   app.post("/api/cron/coordination-flywheel", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runCoordinationFlywheel } = await import("../jobs/coordinationFlywheel");
@@ -884,12 +852,7 @@ async function startServer() {
   app.post("/api/cron/tier-detector", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { detectTierProgressionForAllUsers } = await import("../lib/tierDetector");
@@ -1010,12 +973,7 @@ async function startServer() {
   app.post("/api/cron/quest-crew-assembly", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runQuestCrewAssemblyJob } = await import("../jobs/questCrewAssembly");
@@ -1035,12 +993,7 @@ async function startServer() {
   app.post("/api/cron/needs-offers-matcher", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher");
@@ -1061,12 +1014,7 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -1216,12 +1164,7 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
