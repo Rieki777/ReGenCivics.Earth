@@ -6,9 +6,62 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
-import { resolveCrawlerContent, type CrawlerContent } from "./crawler-content";
+import { resolveCrawlerContent, escapeHtml, type CrawlerContent } from "./crawler-content";
+import { LEARN_SLUGS } from "@shared/learnContent";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Rewrites the shell's head tags for one request.
+ *
+ * `title` and `description` are NOT always ours. For /community/post/:id and
+ * /campaign/:id they come from crawler-content.ts, which builds them from the
+ * forum post title and the campaign title, both of which are text any signed-in
+ * member can write. Until 2026-08-03 the title went into the <title> element
+ * with no escaping at all (the attributes got quote-escaping only), so a post
+ * titled
+ *
+ *     </title><link rel="canonical" href="https://spam.example/"><title>x
+ *
+ * closed the element early and injected an attacker-controlled canonical AHEAD
+ * of the real one. That is the exact shape of the blog bug fixed the same day:
+ * the first canonical is the one a crawler acts on, and conflicting canonicals
+ * get ignored entirely. A single forum post could have pointed a crawlable
+ * ReGen Civics URL at someone else's domain. The same hole took arbitrary
+ * <meta http-equiv="refresh"> and any other head markup.
+ *
+ * Everything interpolated here is escaped now, element text and attribute
+ * values alike. `canonical` and `ogImage` are server-built from BASE_URL and a
+ * matched numeric id, never from user text, but they get the same treatment so
+ * there is no "which of these is safe" question to get wrong later.
+ */
+export function injectMetaTags(
+  shell: string,
+  meta: { title: string; description: string; canonical: string; ogImage: string },
+): string {
+  const title = escapeHtml(meta.title);
+  const desc = escapeHtml(meta.description);
+  const canonical = escapeHtml(meta.canonical);
+  const ogImage = escapeHtml(meta.ogImage);
+
+  // Non-global replaces on purpose: the shell carries exactly one of each tag
+  // and a second one would be a shell bug, not something to paper over here.
+  // server/vite-meta.test.ts asserts the counts stay at one.
+  return shell
+    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/, `$1${desc}$2`)
+    // Open Graph
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${title}$2`)
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${desc}$2`)
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${canonical}$2`)
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${ogImage}$2`)
+    // Twitter Card
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${title}$2`)
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${desc}$2`)
+    .replace(/(<meta name="twitter:url" content=")[^"]*(")/, `$1${canonical}$2`)
+    .replace(/(<meta name="twitter:image" content=")[^"]*(")/, `$1${ogImage}$2`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${canonical}$2`);
+}
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -173,6 +226,8 @@ export function serveStatic(app: Express) {
     },
   }));
 
+  // (injectMetaTags lives at module scope, below, so it can be tested.)
+
   // ── Server-side meta tag injection ──────────────────────────────────────────
   // Google's crawler often sees the empty <div id="root"></div> SPA shell before
   // React hydrates. This catch-all handler injects per-route meta tags directly
@@ -299,7 +354,31 @@ export function serveStatic(app: Express) {
       }
     }
 
-    const canonical = `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
+    // /learn/<slug> is the one route space with a closed, known set of valid
+    // values, so it is the one place we can answer honestly. Everything else
+    // in an SPA catch-all has to return 200 and let the router sort it out.
+    //
+    // Before this, /learn/anything-at-all returned 200 carrying the hub's
+    // title, the hub's description (ROUTE_META prefix-matches /learn) and a
+    // canonical pointing at itself. That is a soft 404: an unbounded space of
+    // fabricated URLs that each look like a real page to a crawler, which
+    // Google downranks for and which burns crawl budget on a site whose whole
+    // problem is getting crawled properly. Anyone could have linked
+    // /learn/<anything> and had us serve it as valid.
+    //
+    // The redirect handler in index.ts runs first and 301s the reserved slugs,
+    // so anything still arriving here with a /learn/ prefix is genuinely
+    // unknown. Humans still get the app (LearnArticle redirects to /learn);
+    // crawlers get the status code that matches reality.
+    const learnSlugMatch = reqPath.match(/^\/learn\/(.+)$/);
+    const unknownLearnSlug =
+      learnSlugMatch !== null && !LEARN_SLUGS.includes(learnSlugMatch[1]);
+
+    // A missing page should not nominate itself as canonical. Point at the hub,
+    // which is the real page for this space.
+    const canonical = unknownLearnSlug
+      ? `${BASE_URL}/learn`
+      : `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
 
     // Dynamic OG images for content pages
     let ogImage = meta.image ?? DEFAULT_META.image;
@@ -323,35 +402,12 @@ export function serveStatic(app: Express) {
     if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
     if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
 
-    // Inject into the <head>, replace placeholder tags written into index.html
-    // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
-    const escapedTitle = meta.title.replace(/"/g, "&quot;");
-    const escapedDesc = meta.description.replace(/"/g, "&quot;");
-
-    const injected = indexHtmlCache
-      .replace(/<title>[^<]*<\/title>/, `<title>${meta.title}</title>`)
-      .replace(/(<meta name="description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      // Open Graph
-      .replace(/(<meta property="og:title" content=")[^"]*(")/,
-        `$1${escapedTitle}$2`)
-      .replace(/(<meta property="og:description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      .replace(/(<meta property="og:url" content=")[^"]*(")/,
-        `$1${canonical}$2`)
-      .replace(/(<meta property="og:image" content=")[^"]*(")/,
-        `$1${ogImage}$2`)
-      // Twitter Card
-      .replace(/(<meta name="twitter:title" content=")[^"]*(")/,
-        `$1${escapedTitle}$2`)
-      .replace(/(<meta name="twitter:description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      .replace(/(<meta name="twitter:url" content=")[^"]*(")/,
-        `$1${canonical}$2`)
-      .replace(/(<meta name="twitter:image" content=")[^"]*(")/,
-        `$1${ogImage}$2`)
-      .replace(/(<link rel="canonical" href=")[^"]*(")/,
-        `$1${canonical}$2`);
+    const injected = injectMetaTags(indexHtmlCache, {
+      title: meta.title,
+      description: meta.description,
+      canonical,
+      ogImage,
+    });
 
     // Inject crawler content: JSON-LD into <head>, prose before <div id="root">
     // (same placement as the blog prerender output).
@@ -378,6 +434,9 @@ export function serveStatic(app: Express) {
     // See note above about no-store: prevents 304 revalidation from
     // serving cached HTML with stale nonces alongside fresh CSP headers.
     res.setHeader("Cache-Control", "no-store, must-revalidate");
+    // Real status for a page that does not exist, with the app still in the
+    // body so a human who mistyped a Learn URL lands somewhere useful.
+    if (unknownLearnSlug) res.status(404);
     res.send(withNonce);
   });
 }
