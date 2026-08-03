@@ -297,6 +297,31 @@ async function closeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
   const changed = result?.[0]?.affectedRows ?? result?.affectedRows ?? result?.rowsAffected ?? 1;
   if (!changed) return 0;
 
+  // Past this point the cycle is latched to 'distributing', and closeDueCycles
+  // only ever selects 'open'. A throw here therefore used to make the cycle
+  // UNREACHABLE: its pool was never distributed, some recipients were paid and
+  // the rest never were, and the hourly cron reported {closed: 0} forever after
+  // so the alarm vanished within the hour. Nothing in the codebase wrote 'open'
+  // back, so only hand-written SQL could recover it.
+  //
+  // Handing it back is safe precisely because of the guarantees this function
+  // already relies on: uniq_dist stops a second distribution row and the ledger
+  // idempotencyKey stops a second credit, so a retry re-does only what did not
+  // finish. The error still propagates, so the caller still reports it.
+  try {
+    return await distributeCycle(db, cycle);
+  } catch (err) {
+    await db
+      .update(gratitudeCycles)
+      .set({ status: "open" })
+      .where(and(eq(gratitudeCycles.id, cycle.id), eq(gratitudeCycles.status, "distributing")))
+      .catch(() => { /* the retry is best-effort; the throw below is the alarm */ });
+    throw err;
+  }
+}
+
+/** The body of a close, separated so closeCycle can un-latch a failed run. */
+async function distributeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
   // 1. Per-sender: split effective budget across unique recipients and
   //    stamp the share onto each acknowledgment.
   const senders: Array<{ senderId: number; uniqueRecipients: number }> = await db
@@ -349,8 +374,17 @@ async function closeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
         poolShare: share.poolShare.toFixed(6),
         creditedAmount: share.creditedAmount,
       });
-    } catch {
-      continue; // uniq_dist hit: this recipient was already credited
+    } catch (err: any) {
+      // ONLY a duplicate is expected here, and it means a previous attempt
+      // already wrote this row. Everything else (a dropped connection, a bad
+      // value, a full disk) used to be swallowed identically: the recipient
+      // lost their payout, the loop moved on, and the cycle still closed 'ok'.
+      const duplicate = err?.code === "ER_DUP_ENTRY" || err?.errno === 1062;
+      if (!duplicate) throw err;
+      // Deliberately NOT `continue`. The earlier attempt may have inserted the
+      // row and then died before crediting, so skipping the credit here is
+      // what left a recipient permanently unpaid. The credit is idempotent by
+      // key, so re-running it either pays them or does nothing.
     }
     if (share.creditedAmount > 0) {
       await creditPrivateTokens({

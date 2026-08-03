@@ -783,10 +783,17 @@ function GameSimulator() {
   const budgetDeployed = perPerson * sim.gratitudeRecipients;
   const budgetForfeited = Math.max(0, effectiveBudget - budgetDeployed);
 
-  // What a cycle can actually mint: the pool, or the cap times the number of
-  // people receiving, whichever is smaller.
-  const cappedPayout = sim.maxPayoutPerPerson > 0
-    ? Math.min(sim.regenDistributionPool, sim.maxPayoutPerPerson * sim.gratitudeRecipients)
+  // The MOST ONE PERSON can take out of a cycle: the cap, or the whole pool
+  // if the cap is above it.
+  //
+  // This used to read `cap * sim.gratitudeRecipients` under the label "most
+  // the pool can mint this cycle", which was two mistakes in one number:
+  // gratitudeRecipients is how many people THIS simulated member acknowledges,
+  // so the figure changed per viewer, and a village-wide ceiling cannot be
+  // derived from one member's sending at all. The simulator has no village-wide
+  // recipient count, so it now reports the quantity it genuinely knows.
+  const maxOnePersonTakes = sim.maxPayoutPerPerson > 0
+    ? Math.min(sim.regenDistributionPool, sim.maxPayoutPerPerson)
     : sim.regenDistributionPool;
 
   const proposalParams = new URLSearchParams({
@@ -1113,12 +1120,12 @@ function GameSimulator() {
             }
           />
           <OutcomeRow
-            label="Most the pool can mint this cycle"
-            value={`${cappedPayout.toLocaleString()} $ReGen`}
+            label="Most any one person can receive"
+            value={`${maxOnePersonTakes.toLocaleString()} $ReGen`}
             detail={
               sim.maxPayoutPerPerson > 0
-                ? `${sim.gratitudeRecipients} recipients x ${sim.maxPayoutPerPerson.toLocaleString()} cap, held under the ${sim.regenDistributionPool.toLocaleString()} pool. Anything the cap holds back is never created.`
-                : `Cap disabled: the whole ${sim.regenDistributionPool.toLocaleString()} pool is distributed.`
+                ? `The ${sim.maxPayoutPerPerson.toLocaleString()} cap, held under the ${sim.regenDistributionPool.toLocaleString()} pool. However much gratitude one person is sent, this is the ceiling, and anything the cap holds back is never created.`
+                : `Cap disabled: one person can take the whole ${sim.regenDistributionPool.toLocaleString()} pool.`
             }
           />
           <OutcomeRow
