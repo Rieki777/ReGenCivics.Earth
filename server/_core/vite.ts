@@ -154,6 +154,17 @@ export function serveStatic(app: Express) {
     etag: true,
     extensions: false,
     index: false,
+    // `redirect: false` because the blog prerender writes real directories
+    // (dist/public/blog/<slug>/index.html). With the default `redirect: true`,
+    // express.static answers a request for a directory path with a 301 to the
+    // trailing-slash form, so every URL we publish for a blog post cost a
+    // crawler an extra hop: sitemap and llms.txt advertise /blog/<slug>, that
+    // 301'd to /blog/<slug>/, and the page served there declared its canonical
+    // as /blog/<slug> again. Measured on 2026-08-03 across 10 published URLs
+    // (/community, /blog, /map, /ship and 6 posts). With redirect off, the
+    // request falls through to the blog handler below, which matches both
+    // forms and serves 200 at the URL we actually advertise.
+    redirect: false,
     setHeaders(res, filePath) {
       // Don't cache HTML or service worker files, they must always reflect the latest deploy
       if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js")) {
