@@ -124,7 +124,8 @@ This layer moves the needle more than anything on-site. Order of operations:
 | R3 | Create Wikidata items for ReGen Civics + Church of the Regenerative Earth | Account + human editing norms | wikidata.org (Claude can draft the full item contents) |
 | R4 | Submit directory listings (ic.org, GEN, ReFi maps) | Account signups, org representation | Claude drafts each listing text |
 | R5 | Outreach: podcasts, guest essays, press | Relationships, your voice | Claude drafts via regen-outreach-sequences |
-| R6 | ~~Remove PRERENDER_TOKEN from Railway~~ RESOLVED IN CODE 2026-08-01: the middleware is deleted, so the variable is inert wherever it still sits. See the finding below. Unsetting it in Railway is now tidying, not a fix. | Done | Done |
+| R6 | ~~Remove PRERENDER_TOKEN from Railway~~ FULLY CLOSED 2026-08-03. Middleware deleted and dependency dropped 2026-08-01 (see the finding below), `PRERENDER_TOKEN` deleted from the ReGenCivics.Earth production service 2026-08-03, Prerender.io subscription cancelled by Rye the same day. Nothing reads it, nothing pays for it, and `.env.example` carries a do-not-re-add note. | Done | Done |
+| R8 | **Google Search Console: check what the 503s cost us.** Googlebot was served empty 503s on every HTML page for weeks (see the finding below). Open Coverage / Pages, look for URLs that moved to "Crawled - not indexed", "Discovered - not indexed", or dropped out entirely during that window, then use URL Inspection to request re-indexing for the ones that matter (home, /fund, /apply, /learn/*, the blog). This is the single highest-value recovery action and it needs your account. | Browser login | search.google.com/search-console |
 | R7 | ~~Approve the query-panel scheduled task~~ RESOLVED 2026-07-15: bi-weekly (1st and 15th), task created | Decision made by Rye | Done |
 
 ### CLAUDE CODE: already done or can be done without you
