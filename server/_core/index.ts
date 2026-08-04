@@ -1162,12 +1162,11 @@ async function startServer() {
   app.post("/api/cron/gratitude-cycles", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    // Same helper as every other cron endpoint. This one was written before
+    // that helper existed and merged cleanly around it, which is how a
+    // textual merge can leave a single endpoint still carrying a hole the
+    // rest of the file no longer has.
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { getDb } = await import("../db");
