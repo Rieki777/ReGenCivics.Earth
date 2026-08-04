@@ -45,8 +45,11 @@ export async function checkCitizenshipTiers(db: any): Promise<{ promotions: numb
     SELECT pp.userId, pp.citizenshipTier, pp.contributionScore,
       pp.graceStartedAt, pp.seasonsCompleted,
       (SELECT COUNT(*) FROM quest_completions qc WHERE qc.userId = pp.userId) as questsCount,
-      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.senderId = pp.userId) as gratitudeSent,
-      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.receiverId = pp.userId) as gratitudeReceived,
+      -- Lunar-cycle model (ADR-30). These used to read gratitude_transactions,
+      -- the retired seasonal table, so post-cutover nobody accrued the counts
+      -- that promote them and every budget quietly flattened to Explorer.
+      (SELECT COUNT(DISTINCT gl.recipientId) FROM gratitudeLog gl WHERE gl.senderId = pp.userId) as gratitudeSent,
+      (SELECT COUNT(DISTINCT gl.senderId) FROM gratitudeLog gl WHERE gl.recipientId = pp.userId) as gratitudeReceived,
       (SELECT COUNT(*) FROM game_endorsements ge
        WHERE ge.endorsedType = 'player' AND ge.endorsedId = pp.userId
        AND ge.endorserType = 'project' AND ge.status = 'active') as projectEndorsements,

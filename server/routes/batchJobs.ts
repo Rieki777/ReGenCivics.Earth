@@ -260,50 +260,6 @@ export { checkCitizenshipTiers };
 
 // ─── Step 5: Update Gratitude Multipliers ──────────────────────────────────
 
-async function updateGratitudeMultipliers(db: any): Promise<number> {
-  const vars = await getGameVariables([
-    "gratitude.trust_graph.received_weight",
-    "gratitude.trust_graph.max_bonus",
-    "gratitude.multiplier.explorer",
-    "gratitude.multiplier.co_creator",
-    "gratitude.multiplier.steward",
-    "gratitude.multiplier.sage",
-  ]);
-
-  const tierMultipliers: Record<string, number> = {
-    explorer: vars["gratitude.multiplier.explorer"] ?? 1.0,
-    co_creator: vars["gratitude.multiplier.co_creator"] ?? 1.2,
-    steward: vars["gratitude.multiplier.steward"] ?? 1.5,
-    sage: vars["gratitude.multiplier.sage"] ?? 2.0,
-  };
-
-  const receivedWeight = vars["gratitude.trust_graph.received_weight"] ?? 0.1;
-  const maxBonus = vars["gratitude.trust_graph.max_bonus"] ?? 0.5;
-
-  // For each player, calculate gratitude multiplier = tierBase + min(receivedPrev * weight, maxBonus)
-  const [players] = await db.execute(sql`
-    SELECT pp.userId, pp.citizenshipTier,
-      (SELECT COUNT(*) FROM gratitude_transactions gt
-       WHERE gt.receiverId = pp.userId) as gratitudeReceived
-    FROM player_profiles pp
-    WHERE pp.userId IS NOT NULL
-  `);
-
-  let processed = 0;
-  for (const p of (players as any[])) {
-    const tierBase = tierMultipliers[p.citizenshipTier ?? "explorer"] ?? 1.0;
-    const bonus = Math.min((p.gratitudeReceived ?? 0) * receivedWeight, maxBonus);
-    const multiplier = tierBase + bonus;
-    await db.execute(sql`
-      UPDATE player_profiles SET trustScore = ${Math.min(multiplier, 2.0)} WHERE userId = ${p.userId}
-    `);
-    processed++;
-  }
-  return processed;
-}
-
-// ─── Step 6: Land Project Status Progression ───────────────────────────────
-
 async function checkLandProjectStatus(db: any): Promise<number> {
   const vars = await getGameVariables([
     "project.accepted_endorsements",
@@ -866,10 +822,10 @@ export const batchJobsRouter = router({
       demotions = tierResult.demotions;
     } catch (e: any) { errors.push(`Step 4 (tiers): ${e.message}`); }
 
-    try {
-      // Step 5: Gratitude multipliers
-      await updateGratitudeMultipliers(db);
-    } catch (e: any) { errors.push(`Step 5 (gratitude): ${e.message}`); }
+    // Step 5 removed 2026-07-28: updateGratitudeMultipliers read the retired
+    // gratitude_transactions table and wrote gratitude.multiplier.*, which the
+    // lunar cycle engine deliberately does not read (it uses
+    // gratitude.budget_multiplier.*). It was dead work that threw silently.
 
     try {
       // Step 6: Land project status

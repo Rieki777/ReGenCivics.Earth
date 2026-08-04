@@ -29,16 +29,20 @@ export const VARIABLE_EXPLAINERS: Record<string, VariableExplainer> = {
     learnMore: "/tokenomics#harvest",
   },
   gratitudeBudget: {
-    why: "How many gratitude points each player can spend per lunar cycle on thanking other players.",
+    why: "How many gratitude points each player gets per lunar cycle to give away. It resets every cycle and never carries over.",
   },
   gratitudeRecipients: {
-    why: "How many distinct players a single sender can thank in one cycle.",
+    why: "How many distinct players a sender acknowledges in one cycle. Below the full-power threshold the unused part of their budget is forfeited, not saved.",
   },
   streakCycles: {
     why: "Consecutive cycles of activity. Builds a small streak bonus on top of the base gratitude budget.",
   },
   regenDistributionPool: {
-    why: "Total $ReGen tokens distributed in the cycle for game-side activity rewards.",
+    why: "The ceiling on $ReGen the cycle can mint for gratitude. Recipients split it in proportion to the weighted gratitude they received.",
+    learnMore: "/tokenomics#regen",
+  },
+  maxPayoutPerPerson: {
+    why: "The most $ReGen one person can be credited from a single cycle, however much gratitude they were sent. This is what stops a small group acknowledging only each other from taking the whole pool: with a 1,000 cap, a two-person cycle mints 2,000 and the rest is never created. Set to 0 to remove the cap.",
     learnMore: "/tokenomics#regen",
   },
   claimThreshold: {

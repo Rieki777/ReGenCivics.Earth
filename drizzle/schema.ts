@@ -1873,6 +1873,14 @@ export const gratitudeCycles = mysqlTable("gratitude_cycles", {
   status: varchar("status", { length: 16 }).default("open").notNull(),
   distributedAt: timestamp("distributedAt"),
   totalWeight: double("totalWeight"),
+  // Created by drizzle/0223. Declared here because Drizzle SILENTLY DROPS an
+  // unknown key from .set() rather than failing: without this line closeCycle
+  // still passes distributedTotal, the UPDATE omits it, tsc stays quiet
+  // (gratitude-cycles.ts types its db as any) and the drift check is
+  // one-directional by design, so every gate passes while the column is NULL
+  // on every row forever. It was deleted on main as a phantom column while
+  // the migration that creates it was in flight on a branch.
+  distributedTotal: int("distributedTotal"),
 }, (t) => ([
   uniqueIndex("uniq_cycle_number").on(t.cycleNumber),
   index("idx_gratitude_cycle_status").on(t.status),

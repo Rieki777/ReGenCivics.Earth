@@ -204,101 +204,17 @@ export const gameRouter = router({
     }),
 
   // ─── Gratitude ────────────────────────────────────────────────────────
-
-  sendGratitude: protectedProcedure
-    .input(z.object({
-      receiverId: z.number().optional(),
-      // When set, this is a top-up on a completed bounty: the receiver defaults
-      // to the bounty's paid worker and the ledger credit is tagged to the bounty.
-      bountyId: z.number().int().positive().optional(),
-      amount: z.number().min(1).max(5),
-      message: z.string().min(1).max(280),
-    }).refine((d) => d.receiverId != null || d.bountyId != null, { message: "receiverId or bountyId is required" }))
-    .mutation(async ({ ctx, input }) => {
-      const season = await getCurrentSeason();
-      if (!season) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No active season" });
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
-
-      // Resolve the receiver. A bounty gift targets the paid worker (the shipper
-      // for a contribution, else the doer), never the proposer.
-      let receiverId = input.receiverId ?? null;
-      if (input.bountyId != null) {
-        const workerRows = await db.execute(sql`
-          SELECT userId FROM bounty_roles
-          WHERE bountyId = ${input.bountyId} AND role IN ('doer','shipper')
-            AND payStatus = 'paid' AND userId IS NOT NULL
-          ORDER BY (role = 'shipper') DESC LIMIT 1
-        `).then((r: any) => r[0] ?? []);
-        const worker = workerRows[0];
-        if (!worker) throw new TRPCError({ code: "NOT_FOUND", message: "This bounty has no paid worker to thank yet" });
-        receiverId = Number(worker.userId);
-      }
-      if (receiverId == null) throw new TRPCError({ code: "BAD_REQUEST", message: "No recipient" });
-      if (receiverId === ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "Cannot send gratitude to yourself" });
-
-      // Check budget
-      const budgetRows = await db.execute(sql`SELECT spent, totalBudget FROM gratitude_budgets WHERE userId = ${ctx.user.id} AND seasonId = ${season.id}`).then((r: any) => r[0] ?? []);
-      const budget = budgetRows[0];
-      if (!budget) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No gratitude budget for this season" });
-      if (budget.spent + input.amount > budget.totalBudget) throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient gratitude budget" });
-
-      // Check daily limit
-      const todayCount = await db.execute(sql`
-        SELECT COUNT(*) as cnt FROM gratitude_transactions
-        WHERE senderId = ${ctx.user.id} AND receiverId = ${receiverId}
-        AND createdAt > DATE_SUB(NOW(), INTERVAL 1 DAY)
-      `).then((r: any) => (r[0]?.[0]?.cnt ?? 0));
-      if (Number(todayCount) > 0) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "You can send gratitude to this person once per day" });
-
-      // Record transaction
-      const insertResult: any = await db.execute(sql`INSERT INTO gratitude_transactions (senderId, receiverId, amount, message, seasonId) VALUES (${ctx.user.id}, ${receiverId}, ${input.amount}, ${input.message}, ${season.id})`);
-      await db.execute(sql`UPDATE gratitude_budgets SET spent = spent + ${input.amount} WHERE userId = ${ctx.user.id} AND seasonId = ${season.id}`);
-
-      const gratitudeId = insertResult?.insertId ?? insertResult?.[0]?.insertId ?? null;
-
-      // Score events
-      try {
-        await recordScoreEvent(receiverId, "gratitude_received", "scoring.weights.gratitude_received", "gratitude", ctx.user.id);
-        await recordScoreEvent(ctx.user.id, "gratitude_sent", "scoring.weights.gratitude_sent", "gratitude", receiverId);
-      } catch { /* non-fatal */ }
-
-      // Private ledger credit: $ReGen +5 to the recipient. Replaces the
-      // old governanceTokenLedger write now that user_token_ledger is
-      // the single source of truth (2026-04-24 supersede). A bounty gift is
-      // tagged 'gratitude_bounty' with sourceRef bounty:{id} so the board can
-      // tally gratitude per bounty.
-      try {
-        const { governanceTenants } = await import("../../drizzle/schema");
-        const { eq: eqDrizzle } = await import("drizzle-orm");
-        const tenants = await db.select({ id: governanceTenants.id }).from(governanceTenants).where(eqDrizzle(governanceTenants.slug, "platform")).limit(1);
-        const tenantId = tenants[0]?.id ?? 1;
-        const { creditPrivateTokens } = await import("../db");
-        await creditPrivateTokens({
-          userId: receiverId,
-          tokenType: "regen",
-          amount: 5,
-          source: input.bountyId != null ? "gratitude_bounty" : "harvest",
-          sourceId: gratitudeId ?? null,
-          sourceRef: input.bountyId != null ? `bounty:${input.bountyId}` : (gratitudeId ? `gratitude:${gratitudeId}` : "gratitude"),
-          tenantId,
-          description: input.bountyId != null ? "Gratitude on a bounty" : "Gratitude received",
-        });
-      } catch { /* non-fatal */ }
-
-      return { ok: true, receiverId };
-    }),
-
-  myGratitudeBudget: protectedProcedure.query(async ({ ctx }) => {
-    const season = await getCurrentSeason();
-    if (!season) return { total: 0, spent: 0, remaining: 0 };
-    const db = await getDb();
-    if (!db) return { total: 0, spent: 0, remaining: 0 };
-    const rows = await db.execute(sql`SELECT totalBudget, spent FROM gratitude_budgets WHERE userId = ${ctx.user.id} AND seasonId = ${season.id}`).then((r: any) => r[0] ?? []);
-    const budget = rows[0];
-    if (!budget) return { total: 5, spent: 0, remaining: 5 }; // Default for new players
-    return { total: budget.totalBudget, spent: budget.spent, remaining: budget.totalBudget - budget.spent };
-  }),
+  //
+  // Removed 2026-07-28. `sendGratitude` and `myGratitudeBudget` implemented
+  // the retired seasonal model: a spend-down balance in gratitude_budgets,
+  // an `amount` per send in gratitude_transactions, and an immediate flat
+  // +5 $ReGen minted to the recipient on every send.
+  //
+  // That contradicts the lunar model (ADR-30, GRATITUDE_SYSTEM_SPEC.md),
+  // where gratitude is a signal that never enters the ledger and $ReGen is
+  // distributed once per cycle from a capped pool. Both were live at the
+  // same time and reachable from the bounty board. Use gratitudeRouter
+  // (server/routes/gratitude.ts) instead.
 
   // ─── Flags (Admin) ────────────────────────────────────────────────────
 
