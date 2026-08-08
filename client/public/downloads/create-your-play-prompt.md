@@ -4,9 +4,11 @@ This prompt helps you create a Play for the ReGen Civics platform. A Play is a p
 
 You can use this prompt with Claude Code, Claude.ai, or any AI assistant.
 
+There are two kinds of Play. A **Culture Play** is the packaged culture described above: how your operating community actually runs, told across 14 sections. A **Vision Play** is a designed economic system: a needs-first proposal for how a community could meet its needs, the path used by the Design a Play quest. The Culture Play paths are directly below. The Vision Play path is at the end of this document; jump there if you're designing rather than documenting.
+
 ---
 
-## Two paths to create your Play
+## Two paths to create your Culture Play
 
 **Path A: You have documents.** Gather your community's existing documents (governance docs, bylaws, operating agreements, meeting notes, handbooks, financial reports, land management plans, anything) and upload them alongside this prompt. The AI will read everything, extract what's relevant, and organize it into the 14 standard sections.
 
@@ -278,3 +280,83 @@ Tell the user:
 3. You can paste the content from the .json file into the submission form, or fill it in section by section.
 4. Your Play will go through a brief review before going live.
 5. If you marked it as open source, you'll earn $ReGen tokens every time another project adopts it."
+
+---
+
+# The Vision Play Path
+
+Use this path when the person is designing a new economic system rather than documenting an existing community. This is the Design a Play quest path: a successful Vision Play earns the quest reward when it's approved into the library, and an approved play can launch a Crowdpooling campaign to pool the resources for its real-world trial.
+
+A Vision Play answers one question completely: how does a community meet its needs? It has seven parts plus a self-test.
+
+### The seven parts
+
+1. **The Needs.** Which needs the play honors, how they're weighted, and how you measure whether each is truly met. Every play must at minimum address the nine fundamental human needs (subsistence, protection, affection, understanding, participation, idleness, creation, identity, freedom) and the needs of the more-than-human world. Plays differ in how they weight these; none may ignore them. The measurement question matters as much as the list: a need you can't sense is a need you'll quietly fail.
+2. **Vision and Origin.** What this play is, where it came from, who it's for.
+3. **Meeting Needs: The Coordination Design.** How people, resources, and information move so the needs get met. Currencies, commons, markets, gifts, planning, reputation, any mix. This is the heart of the design.
+4. **Steering.** How the play makes decisions and corrects course. Who holds the wheel, and how the wheel changes hands.
+5. **The More-Than-Human World.** How the play counts and meets the needs of soil, water, forests, and wildlife alongside human needs.
+6. **Growth and Adaptation.** What happens under shocks and growth. Does it work at 10 people? 100? 1,000?
+7. **Receipts.** Where this play, or its parts, has run in reality: how long, at what scale. Fresh designs are welcome; just say plainly what's untested.
+
+### The robustness self-test
+
+Score the play 1 to 5 on six dimensions, drawn from biologist Olivier Hamant's marks of systems that endure (living systems select for the capacity to stay viable through fluctuation over peak performance):
+
+- **Redundancy**: more than one way to meet each core need.
+- **Diversity**: heterogeneity of people, skills, crops, income streams, strategies.
+- **Living-World Link**: the play deepens its members' bond with living systems.
+- **Rootedness**: designed for a real place, its bioregion and neighbors.
+- **Slack and Sufficiency**: reserves, rest, margins. Enough beats maximum.
+- **Circularity and Cooperation**: wastes become inputs; symbiosis over pure competition.
+
+Push the person toward honest scores. An honest 2 with a note about what they'd shore up first reads far better in review than a decorative 5. Efficiency-maximized designs are already broken; they just haven't met their shock yet.
+
+### Guided conversation for the Vision path
+
+Walk these one at a time, waiting for answers:
+
+1. "Start with needs. If your community ran this play well for ten years, which needs would be beautifully met? How would you actually know? What would you measure, or sense, or count?"
+2. "Now the engine. Walk me through an ordinary Tuesday inside your play: how does food reach a table, how does a roof get fixed, how does a newcomer find their work? What moves the resources: money, credits, gifts, rosters, something else?"
+3. "Who steers? When the play drifts off course, who notices, and what's the mechanism that corrects it?"
+4. "Where does the more-than-human world sit in your design? What does the watershed get out of your play?"
+5. "Break it on purpose. A drought year, a funding collapse, a beloved founder leaving. What holds? Score the six robustness dimensions with me, honestly."
+6. "Last: receipts. Which parts of this have actually run somewhere, and which parts are your invention? Both are welcome. Say which is which."
+
+### Vision Play output
+
+Produce the same two files as the Culture path, with the JSON shaped like this:
+
+```json
+{
+  "name": "Play Name",
+  "kind": "vision",
+  "creatorProjectName": "Designer or group name",
+  "summary": "One-paragraph summary (max 500 chars)",
+  "communityType": "ecovillage | urban-community | land-trust | cooperative | dao | network | bioregion",
+  "scale": "small | medium | large",
+  "pricingModel": "open_source",
+  "needsFramework": "Full text for The Needs...",
+  "receipts": "Full text for Receipts...",
+  "robustness": {
+    "redundancy": 3,
+    "diversity": 4,
+    "biophilia": 4,
+    "rootedness": 3,
+    "slack": 2,
+    "circularity": 3,
+    "note": "Where the play is fragile and what to shore up first."
+  },
+  "sections": {
+    "identity": "Vision and Origin...",
+    "economics": "Meeting Needs: The Coordination Design...",
+    "governance": "Steering...",
+    "landEcology": "The More-Than-Human World...",
+    "scaling": "Growth and Adaptation..."
+  }
+}
+```
+
+Then tell the user:
+
+"Your Vision Play is ready. Submit it at regencivics.earth/plays/submit, choose Vision Play, and paste your sections in. It will be reviewed against the published criteria on the Plays library page. If it's approved, the Design a Play quest reward lands in your balance, and you'll be able to launch a Crowdpooling campaign to pool the resources for its trial."

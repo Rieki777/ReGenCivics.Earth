@@ -16,6 +16,7 @@ export const playsRouter = router({
       categorySlug: z.string().optional(),
       pricingModel: z.string().optional(),
       scale: z.string().optional(),
+      kind: z.enum(["vision", "culture"]).optional(),
       sort: z.enum(["views", "newest", "alpha"]).default("views"),
       page: z.number().default(1),
       limit: z.number().max(50).default(20),
@@ -35,6 +36,7 @@ export const playsRouter = router({
       let whereExtra = sql``;
       if (input?.pricingModel) whereExtra = sql`${whereExtra} AND p.pricingModel = ${input.pricingModel}`;
       if (input?.scale) whereExtra = sql`${whereExtra} AND p.scale = ${input.scale}`;
+      if (input?.kind) whereExtra = sql`${whereExtra} AND p.kind = ${input.kind}`;
 
       if (input?.categorySlug) {
         const [plays] = await db.execute<any>(sql`
@@ -150,6 +152,20 @@ export const playsRouter = router({
       sectionExternalRelations: z.string().optional(),
       sectionScaling: z.string().optional(),
       categoryIds: z.array(z.number()).optional(),
+      // Vision Plays: a designed economic system (needs-first proposal from
+      // the Design a Play quest). 'culture' stays the 14-section default.
+      kind: z.enum(["vision", "culture"]).optional(),
+      needsFramework: z.string().max(20000).optional(),
+      receipts: z.string().max(10000).optional(),
+      robustness: z.object({
+        redundancy: z.number().min(1).max(5),
+        diversity: z.number().min(1).max(5),
+        biophilia: z.number().min(1).max(5),
+        rootedness: z.number().min(1).max(5),
+        slack: z.number().min(1).max(5),
+        circularity: z.number().min(1).max(5),
+        note: z.string().max(2000).optional(),
+      }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -157,8 +173,8 @@ export const playsRouter = router({
       const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
       await db.execute(sql`
-        INSERT INTO plays (name, slug, summary, creatorProjectName, websiteUrl, coverImageUrl, pricingModel, priceRegenTokens, externalPaymentUrl, externalPriceLabel, scale, communityType, sectionIdentity, sectionGovernance, sectionEconomics, sectionLegal, sectionRoles, sectionSeasons, sectionLandEcology, sectionAgreements, sectionConflict, sectionHealth, sectionEducation, sectionCulture, sectionExternalRelations, sectionScaling, submittedBy, status)
-        VALUES (${input.name}, ${slug}, ${input.summary ?? null}, ${input.creatorProjectName ?? null}, ${input.websiteUrl ?? null}, ${input.coverImageUrl ?? null}, ${input.pricingModel ?? "free"}, ${input.priceRegenTokens ?? null}, ${input.externalPaymentUrl ?? null}, ${input.externalPriceLabel ?? null}, ${input.scale ?? null}, ${input.communityType ?? null}, ${input.sectionIdentity ?? null}, ${input.sectionGovernance ?? null}, ${input.sectionEconomics ?? null}, ${input.sectionLegal ?? null}, ${input.sectionRoles ?? null}, ${input.sectionSeasons ?? null}, ${input.sectionLandEcology ?? null}, ${input.sectionAgreements ?? null}, ${input.sectionConflict ?? null}, ${input.sectionHealth ?? null}, ${input.sectionEducation ?? null}, ${input.sectionCulture ?? null}, ${input.sectionExternalRelations ?? null}, ${input.sectionScaling ?? null}, ${ctx.user.id}, 'pending')
+        INSERT INTO plays (name, slug, summary, creatorProjectName, websiteUrl, coverImageUrl, pricingModel, priceRegenTokens, externalPaymentUrl, externalPriceLabel, scale, communityType, kind, needsFramework, receipts, robustness, sectionIdentity, sectionGovernance, sectionEconomics, sectionLegal, sectionRoles, sectionSeasons, sectionLandEcology, sectionAgreements, sectionConflict, sectionHealth, sectionEducation, sectionCulture, sectionExternalRelations, sectionScaling, submittedBy, status)
+        VALUES (${input.name}, ${slug}, ${input.summary ?? null}, ${input.creatorProjectName ?? null}, ${input.websiteUrl ?? null}, ${input.coverImageUrl ?? null}, ${input.pricingModel ?? "free"}, ${input.priceRegenTokens ?? null}, ${input.externalPaymentUrl ?? null}, ${input.externalPriceLabel ?? null}, ${input.scale ?? null}, ${input.communityType ?? null}, ${input.kind ?? "culture"}, ${input.needsFramework ?? null}, ${input.receipts ?? null}, ${input.robustness ? JSON.stringify(input.robustness) : null}, ${input.sectionIdentity ?? null}, ${input.sectionGovernance ?? null}, ${input.sectionEconomics ?? null}, ${input.sectionLegal ?? null}, ${input.sectionRoles ?? null}, ${input.sectionSeasons ?? null}, ${input.sectionLandEcology ?? null}, ${input.sectionAgreements ?? null}, ${input.sectionConflict ?? null}, ${input.sectionHealth ?? null}, ${input.sectionEducation ?? null}, ${input.sectionCulture ?? null}, ${input.sectionExternalRelations ?? null}, ${input.sectionScaling ?? null}, ${ctx.user.id}, 'pending')
       `);
 
       // Map categories if provided
@@ -240,6 +256,46 @@ export const playsRouter = router({
       }
 
       return { success: true };
+    }),
+
+  // Turn an approved play into a draft Crowdpooling campaign: the trial
+  // bridge (envisioned -> in trial). Creator or admin only; one campaign per
+  // play. The draft opens in /campaign/:id/manage where items and targets
+  // get filled before it goes through the normal campaign review flow.
+  launchCampaign: protectedProcedure
+    .input(z.object({ playId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+
+      const [rows] = await db.execute(sql`SELECT * FROM plays WHERE id = ${input.playId} LIMIT 1`);
+      const play = (rows as unknown as any[])?.[0];
+      if (!play) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const role = (ctx.user as any)?.role;
+      const isOwner = play.submittedBy === ctx.user.id || play.creatorUserId === ctx.user.id;
+      const isAdmin = role === "admin" || role === "superadmin";
+      if (!isOwner && !isAdmin) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the play's creator can launch its campaign" });
+      }
+      if (play.status !== "approved") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The play needs to be approved before it can pool resources" });
+      }
+      if (play.campaignId) return { campaignId: play.campaignId as number, existing: true };
+
+      const description = [
+        play.summary,
+        `This campaign pools the resources to trial "${play.name}" from the Plays library.`,
+      ].filter(Boolean).join("\n\n");
+
+      const [result] = await db.execute(sql`
+        INSERT INTO campaigns (userId, status, durationDays, title, description, projectName, vision, governanceModel, regenerativePractices, websiteUrl, projectImageUrl)
+        VALUES (${ctx.user.id}, 'draft', 90, ${play.name}, ${description}, ${play.creatorProjectName ?? play.name}, ${play.needsFramework ?? null}, ${play.sectionGovernance ?? null}, ${play.sectionLandEcology ?? null}, ${play.websiteUrl ?? null}, ${play.coverImageUrl ?? null})
+      `);
+      const campaignId = (result as any)?.insertId;
+      if (!campaignId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Campaign insert failed" });
+      await db.execute(sql`UPDATE plays SET campaignId = ${campaignId} WHERE id = ${play.id}`);
+      return { campaignId: campaignId as number, existing: false };
     }),
 
   // Endorse a play
@@ -337,17 +393,70 @@ ${input.content}`,
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+
+      const [rows] = await db.execute(sql`SELECT id, name, kind, status, submittedBy FROM plays WHERE id = ${input.playId} LIMIT 1`);
+      const play = (rows as unknown as any[])?.[0];
+      if (!play) throw new TRPCError({ code: "NOT_FOUND" });
+
       await db.execute(sql`
         UPDATE plays SET status = ${input.action === "approve" ? "approved" : "rejected"}, approvedBy = ${ctx.user.id}
         WHERE id = ${input.playId}
       `);
+
+      // Design a Play quest reward: the first approval of a vision play pays
+      // the submitter. Amounts come from game variables so the mechanics page
+      // and the engine share one source of truth. The idempotencyKey makes a
+      // double payout physically impossible at the DB layer even if
+      // moderation races or a play is re-approved after a reject.
+      if (input.action === "approve" && play.kind === "vision" && play.status !== "approved" && play.submittedBy) {
+        try {
+          const { creditPrivateTokens } = await import("../db/tokens");
+          const { getGameVariable } = await import("../game");
+          let regenReward = 2222;
+          let rgvoiceReward = 1;
+          try { regenReward = await getGameVariable("plays.submission_reward_regen"); } catch { /* variable missing; keep seeded fallback */ }
+          try { rgvoiceReward = await getGameVariable("plays.submission_reward_rgvoice"); } catch { /* variable missing; keep seeded fallback */ }
+          if (regenReward > 0) {
+            await creditPrivateTokens({
+              userId: play.submittedBy,
+              tokenType: "regen",
+              amount: regenReward,
+              source: "play_submission",
+              sourceRef: `play:${play.id}`,
+              idempotencyKey: `play_submission:regen:${play.id}`,
+              description: `Play "${play.name}" approved into the library`,
+            });
+          }
+          if (rgvoiceReward > 0) {
+            await creditPrivateTokens({
+              userId: play.submittedBy,
+              tokenType: "rgvoice",
+              amount: rgvoiceReward,
+              source: "play_submission",
+              sourceRef: `play:${play.id}`,
+              idempotencyKey: `play_submission:rgvoice:${play.id}`,
+              description: `Play "${play.name}" approved into the library`,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to credit play submission reward (non-fatal):", err);
+        }
+      }
+
       return { success: true };
     }),
 });
 
 function parsePlayRow(row: any) {
+  // mysql2 may hand JSON columns back as objects or strings depending on
+  // the driver path; normalize so the client always sees an object or null.
+  let robustness = row.robustness ?? null;
+  if (typeof robustness === "string") {
+    try { robustness = JSON.parse(robustness); } catch { robustness = null; }
+  }
   return {
     ...row,
+    robustness,
     categories: (row.categoryNames || "").split(",").map((name: string, i: number) => ({
       name,
       slug: (row.categorySlugs || "").split(",")[i],

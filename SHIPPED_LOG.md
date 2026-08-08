@@ -13,6 +13,17 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-08-08 (plays): Vision Plays, the robustness test, the Design a Play quest, and the crowdpooling bridge
+
+- **The "What Steers Civilization" article shipped to the blog** with the new reusable article-quest block: `[PLAY_QUEST_CTA]` renders a quest card looked up by post slug in `data/articleQuests.ts`, so every future article ends with a quest by adding one data entry. TGS 229 (Currie) supplies the old game's steering diagnosis, TGS 230 (Hamant) supplies the design criterion, and two video-card markers plus `[STEERING_EMOTIONS]` render them (`components/blog/PlaysArticleBlocks.tsx`).
+- **Plays now come in two kinds.** A Vision Play is a designed economic system: needs-first sections, a declared needs framework with a baseline floor (the nine fundamental human needs plus the more-than-human world), receipts, and a six-dimension robustness self-test after Hamant (`data/playVision.ts`). Culture Plays keep the original 14 sections. Cards and detail pages read the lifecycle Envisioned → In Trial → Practiced; the library page publishes Play criteria v1.0 and the rubric; the submit wizard grew the vision path and the score sliders; the downloadable create-your-play prompt grew the Vision Play path.
+- **The Design a Play quest pays on approval.** Approving a vision play in moderation credits the submitter 2222 $ReGen + 1 RGVoice from `game_variables` (`plays.submission_reward_*`), guarded by ledger idempotencyKey so a double payout is physically impossible. Migration 0225 (columns landed on first run; its variables INSERT needed the real `game_variables` column names, completed via `scripts/complete-0225.ts`).
+- **The crowdpooling bridge is live in code.** `plays.launchCampaign` turns an approved play into a prefilled draft campaign (title, summary, needs, governance, land sections) at `/campaign/:id/manage`, and `plays.campaignId` links them; a launched campaign reads as In Trial. Village projects each finish the incubator by uploading their play and opening its pool.
+- **Six reference plays seeded on prod** (`scripts/seed-vision-plays.ts`, idempotent): ReGen Civics (the dogfood play the original spec asked for), Mondragón, Kibbutz, Doughnut City, Rooted Commons approved; the Gift Lineage seeded `pending` on purpose until the elders bless the framing. Article discussion thread: `/community/post/654`.
+- Source: Cowork session 2026-08-08; commits d0fee3c + the article commit on `ship-rite-truth`, merged to `main`.
+
+Carryover: register Design a Play in the quest-pages UI so it lives in player progression, not just the article footer; map play needs to the crowdpooling taxonomy; local Windows `tsc` is red with pre-existing zod/type-resolution noise while Railway's Linux build is green, worth a dev-env fix so the gate means something on this machine again.
+
 ## 2026-08-01 (ci): The red job on main was a phantom column, and it was breaking gratitude in production
 
 - **`schema.ts` declared a `gratitude_cycles` column that exists in no database.** `distributedTotal` arrived in 8de890e alongside the governance relay work, carrying a comment describing what it would hold and no migration to create it. The CI baseline lacks it, the live database lacks it, and nothing in the repo reads or writes it: `closeCycle` persists `status`, `distributedAt`, and `totalWeight`, then stops.

@@ -4051,6 +4051,18 @@ export const plays = mysqlTable("plays", {
   externalPriceLabel: varchar("externalPriceLabel", { length: 100 }),
   scale: mysqlEnum("scale", ["small", "medium", "large"]).default("medium"),
   communityType: varchar("communityType", { length: 100 }),
+  // Vision Plays (0225): 'vision' = a designed economic system, the
+  // needs-first proposal from the Design a Play quest; 'culture' = the
+  // original 14-section packaged culture from an operating community.
+  // Lifecycle reads: envisioned (vision, no adoptions) -> in trial
+  // (vision with adoptions) -> practiced (culture).
+  kind: mysqlEnum("kind", ["vision", "culture"]).default("culture").notNull(),
+  needsFramework: text("needsFramework"),
+  receipts: text("receipts"),
+  robustness: json("robustness"),
+  // The Crowdpooling campaign this play launched (plays.launchCampaign).
+  // A set campaignId is the strongest "in trial" signal a vision play has.
+  campaignId: int("campaignId"),
   sectionIdentity: text("sectionIdentity"),
   sectionGovernance: text("sectionGovernance"),
   sectionEconomics: text("sectionEconomics"),

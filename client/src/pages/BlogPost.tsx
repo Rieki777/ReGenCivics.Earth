@@ -25,6 +25,7 @@ import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
 import { NineFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
 import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
+import { WatchTgsCurrie, WatchTgsHamant, SteeringEmotions, ArticleQuestCTA } from "@/components/blog/PlaysArticleBlocks";
 import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 
 export default function BlogPost() {
@@ -424,6 +425,10 @@ export default function BlogPost() {
                     '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
                     '[SHIP_PULLQUOTE]': <ShipPullQuote />,
                     '[SHIP_CTA]': <ShipArticleCTA />,
+                    '[WATCH_TGS_CURRIE]': <WatchTgsCurrie />,
+                    '[WATCH_TGS_HAMANT]': <WatchTgsHamant />,
+                    '[STEERING_EMOTIONS]': <SteeringEmotions />,
+                    '[PLAY_QUEST_CTA]': <ArticleQuestCTA />,
                   };
 
                   const hasMarkers = Object.keys(SPECIAL_MARKERS).some(

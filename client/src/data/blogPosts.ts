@@ -23,6 +23,90 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    id: 'what-steers-civilization',
+    slug: 'what-steers-civilization',
+    title: 'What Steers Civilization',
+    excerpt: 'Trillions of dollars steer the evolution of civilization with one instruction: price go up. One of the best commodity traders alive just explained the machine from the inside. So we\'re ending this article with a quest: design the game that replaces it.',
+    content: `Every vehicle has a steering wheel. Civilization's is made of markets.
+
+Futures markets, commodities desks, stock exchanges, prediction markets: trillions of dollars moving every day, aligning the incentives of millions of organizations and billions of people. All of that steering power answers to a single instruction. Price go up.
+
+We handed the most powerful coordination machine in history one goal and no others. Nothing in it steers toward clean rivers, strong communities, or children who inherit a living world, except by accident, when those things happen to be profitable. That's why so many people feel trapped. We're passengers in a vehicle whose wheel is locked toward whatever pays, even as it rolls toward cliffs everyone aboard can see.
+
+So here's the question underneath this whole article: how do we build a new steering mechanism for the vehicle we call civilization?
+
+## The two hands on the wheel
+
+Wall Street keeps a live dashboard of its own soul. It's called the [Fear & Greed Index](https://www.cnn.com/markets/fear-and-greed), and it distills the mood of the entire market into one dial swinging between two emotions.
+
+Sit with that for a second. The machine steering our species measures itself on exactly two feelings. Now let us ask you what we keep asking ourselves: are fear and greed the two best emotions to be governed by?
+
+The nonprofit world, for all its good intent, answers with its own pair. Guilt and shame. Terrible stories, pulled heartstrings, a donation to make the feeling stop. Add it up and most organized human effort on Earth runs on four fuels: fear, greed, guilt, and shame. Love and joy never got a seat in the cockpit.
+
+[STEERING_EMOTIONS]
+
+## Listen to the best player in the game
+
+[WATCH_TGS_CURRIE]
+
+Jeff Currie ran global commodities research at Goldman Sachs for nearly three decades. He is one of the most respected commodity strategists alive, and in [this conversation with Nate Hagens](https://youtu.be/ij1_uxiXmm8), he describes, with total fluency, how the machine actually reads the world: which buffers are running dry, where scarcity is priced, how complacency swings to panic and back. He is describing the steering system of civilization from inside the cockpit, and he is describing it accurately.
+
+Listen closely and the lens itself comes into view. At one point he explains that when a low-income earner receives a fiscal transfer, his demand for corn goes up. Translate that out of market language: when people who were hungry finally get money, they eat, and their eating registers in the machine as a price disturbance. Hungry people getting to eat is, to the lens, a supply problem. The lens is working exactly as designed. The lens is the problem.
+
+## Scarcity is a worldview
+
+The episode is titled "Why Abundance Is an Illusion," and inside the machine, that title is true. The machine makes money from scarcity, so it learns, over time, to make scarcity. The purest money it ever designed, Bitcoin, is prized precisely because it is engineered to be scarce. Wars keep happening in part because the machine pays people handsomely for their results. A worldview that profits from scarcity will keep manufacturing scarcity until there is nothing left to make scarce. That logic terminates itself, and takes its passengers with it.
+
+Look with ecological eyes and the illusion flips. We ran the numbers on a single tree species once: the American chestnut, three to four billion trees feeding the eastern forests of this continent, out-producing what our industrial systems manage on the same land. [The full story is here](/blog/great-american-chestnut-abundance). The Earth is extravagant. Scarcity is the machine's worldview, and the machine has mistaken its worldview for the world.
+
+## When the game breaks, it doubles down
+
+By the end of the interview, Currie arrives at his prescription: the state has to step in and hold the system up.
+
+Watch what happened there. One of the game's grandmasters senses that the game can no longer coordinate what we need, and his instinct is to fuse the game to state power so it can keep running. There's an old name for an economy where property and power fuse at the top, and it's feudalism. We already played that one. Even capitalism's own story about itself, the story where markets carry humanity forward into progress, breaks down at that move. The game's defenders end up arguing that the game can only survive on life support from the very state it promised to outgrow.
+
+## The paradox at the end
+
+Near the close, Currie says his most important goal is a beautiful world for his children, a safe and incredible place for them to live.
+
+Same goal as ours. Word for word.
+
+And here is what we would say across the table, with real respect: the games he plays this masterfully are the games producing the world he wants to protect his children from. Nobody in this story is a villain. A brilliant navigator is reading a flawless map of a country that is burning. When the deepest wish of the game's best players can't be purchased anywhere inside the game, the game is over as a story. What remains is machinery, still steering.
+
+## We need new games
+
+Strip capitalism down to its function and it's a coordination game: a way for millions of strangers to decide what gets made, who does what, and how needs get met. It is one design. It is insufficient. Its own grandmasters can feel it.
+
+And nobody knows what replaces it. That's the honest part. Which means the work of this moment is building infrastructure for the people who want to design new economic systems and trial them for real: many games, run on real land, with real needs, until we learn what actually works. Scroll the comments under that interview and you can watch the demand surface, thousands of people saying some version of the same thing: this worldview is a game I no longer want my life spent inside.
+
+Supplying those new games is what ReGen Civics exists to do. We are a fund and a game. The Fund speaks the old game's language so that capital can cross the bridge. The Game grows the new ones. And a candidate system, one whole vision for how a community meets its needs, is what we call a Play.
+
+## The test every new game has to pass
+
+[WATCH_TGS_HAMANT]
+
+In [the very next episode](https://youtu.be/Kzzr15cEg3o), Nate sits down with Olivier Hamant, a French biologist who studies how living systems endure. His finding, drawn from life's 3.8 billion years of research and development: life selects for robustness, the capacity to stay alive and viable through fluctuation, over peak performance. Systems optimized for maximum efficiency are already broken; they just haven't met their shock yet. The systems that last carry redundancy, diversity, deep links to the living world, and roots in a particular place. They keep slack. They run on cooperation and circularity. They accept being a little suboptimal on purpose, because suboptimal today is alive tomorrow.
+
+That is the rating system for new games. Any Play worth trialing should be able to look those criteria in the eye, so we turned them into a six-part robustness test that every Play in [our library](/plays) carries, scored in the open.
+
+## Your move
+
+A Play is a vision for how a community meets its needs. Which needs it honors and how it weighs them. How it measures whether they're truly met. How it coordinates people and resources to meet them. And how it counts the needs of the more-than-human world alongside our own.
+
+So much of a human life is spent inside its economic reality. Change the play a community runs, and you change what a life inside it can be. We're open-sourcing the search for the plays worth running: a public library where anyone can study them, land projects can adopt them, and the best ones earn their place through trials instead of theory.
+
+And a play on our shelf doesn't stay theory. An approved play can launch a Crowdpooling campaign on the spot, pooling the land, labor, expertise, and funds its trial needs. The village projects moving through our incubator will each finish the season by uploading their play and opening its pool. Envisioned, then in trial, then practiced. That's the pipeline.
+
+That library needs designers. Here's the quest.
+
+[PLAY_QUEST_CTA]`,
+    author: 'ReGen Civics Team',
+    date: '2026-08-08',
+    readTime: '7 min read',
+    image: '/images/governance/two-tokens-bridge.webp',
+    tags: ['Story', 'Plays', 'New Games'],
+  },
+  {
     id: 'keeper-of-the-fleet',
     slug: 'keeper-of-the-fleet',
     title: 'The Keeper of the Fleet',
