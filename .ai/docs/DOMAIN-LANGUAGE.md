@@ -270,5 +270,29 @@ Source of truth for any future edit: `shared/capitals.ts`.
 - **Agent contract**: `second-brain/contract.json` plus its AGENT GUIDE section: the machine-readable rules for how any agent reads and writes vault memory (ADR-40).
 - **Supersession**: marking an idea or position replaced (`superseded_by`) while retaining it as history. Agents never delete worldview content.
 
+### Module library (integration program, 2026-08-14)
+
+The catalog of game-amora modules that connect a village to an outside service. Every entry is
+first-party connector code in the platform repo; no vendor code runs in a village's server.
+Program state: `regen-integration` worktree, `INTEGRATION_LEDGER.md`.
+
+- **Module listing**: one catalog entry: a module plus its tier, vendor record, dataClass, and the
+  domain it provides. Accepted against a contract version; a new version is a re-acceptance, never
+  a silent rewrite.
+- **Included** (tier): part of the platform. Built, billed and supported by us; no pill in the
+  catalog. Credential: none, or the village's own upstream account.
+- **Connected** (tier): the village buys it from the vendor, we wire it up. Vendor supports the
+  service, we support the connector. Credential: a `SECRET_KEYS` entry the village holds and can
+  see as source + last4. The default tier for third parties.
+- **Managed** (tier): one bill, from us; vendor behind a private escalation. Credential:
+  platform-held, env-only, never shown to the village (ADR-49). Hard cap two concurrent listings,
+  the second a transition slot. Carries a data-return obligation on exit.
+- **Domain driver**: a vendor module implementing the five mandatory methods (`read`, `write`,
+  `health`, `exportMember`, `forgetMember`) behind a platform-owned domain spine. A vendor is
+  never a source of truth; at most one non-off driver per domain.
+- **Vendor lapse**: a module that is ON and paid for whose vendor is not answering. Always 503
+  with a structured body naming the responsible party; never 404, which is reserved for "this
+  village does not run this" and would tell a village its feature was deleted.
+
 ### Governance fork relay (gm-marker)
 The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain vote outcomes to forks of the village platform. A **gm-marker** is `[gm:<id>]` — the fork-side mechanics proposal's identity. Real chain events carry only the numeric on-chain proposalId, so a **marker link** (`governanceForkMarkerLinks`, registered by the fork via `governance-fork-link` when its founder pastes the Hypha proposal URL back) is what lets the relay match production events; title markers still match test/manual events and BROADCAST, linked ids deliver targeted. Distinct from our own `[rc:<bridgeKey>]` bridge markers: `rc` means this repo's bridge rows, `gm` means a fork's game-mechanics proposal. Never mint either shape by hand outside the owning module.
