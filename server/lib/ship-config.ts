@@ -32,7 +32,7 @@ export const TRIAL_OFFERING_NIGHTLY_USD = 150;
  */
 export const TRIAL_TOTAL_NIGHTLY_USD = TRIAL_RENTAL_NIGHTLY_USD + TRIAL_OFFERING_NIGHTLY_USD; // 300
 
-/** One voyage is a single 7-night tank cycle (Mon 3pm board to Sun 11am return). */
+/** One voyage is a single 7-night tank cycle (board Mon 5pm, return the following Mon 11am). */
 export const VOYAGE_NIGHTS = 7;
 
 // Per-voyage totals (the numbers a guest actually sees; the site is per-voyage).
