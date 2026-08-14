@@ -27,7 +27,7 @@ import {
 import { SignalControl, SignalReadout } from "@/components/assembly/SignalControl";
 import { ProsConsPanel } from "@/components/assembly/ProsConsPanel";
 import { MoveToDecideButton, MinorLaneRow, LastCallSection, RestingStrip } from "@/components/assembly/LifecycleControls";
-import { EvolutionEngineSection, HyphaLinkRow } from "@/components/assembly/EvolutionEngine";
+import { EvolutionEngineSection, HyphaLinkRow, ExampleBadge, ExampleNote } from "@/components/assembly/EvolutionEngine";
 
 const HYPHA_DHO_URL = "https://app.hypha.earth/en/dho/regen-games/";
 const HYPHA_MEMBERS_URL = "https://app.hypha.earth/en/dho/regen-games/members/";
@@ -73,7 +73,9 @@ export default function Assembly() {
   const formingAll = (formingQuery.data as any[]) ?? [];
   const forming = formingAll.filter((p) => !p.lastCallStartedAt && !p.restingSince);
   const resting = formingAll.filter((p) => !!p.restingSince);
-  const deciding = (decidingQuery.data as any[]) ?? [];
+  const deciding = [...((decidingQuery.data as any[]) ?? [])].sort(
+    (a, b) => (b.isExample ? 1 : 0) - (a.isExample ? 1 : 0),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
@@ -163,10 +165,13 @@ export default function Assembly() {
         ) : (
           <ul className="space-y-3">
             {forming.map((p: any) => (
-              <li key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <li key={p.id} className={`p-4 rounded-xl border ${p.isExample ? "bg-[#7dd87d]/[0.06] border-dashed border-[#7dd87d]/30" : "bg-white/5 border-white/10"}`}>
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-[220px] safe-prose">
-                    <p className="text-white text-sm font-semibold">{p.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {p.isExample && <ExampleBadge />}
+                      <p className="text-white text-sm font-semibold">{p.title}</p>
+                    </div>
                     {p.aim && (
                       <p className="text-[#7dd87d]/90 text-[11px] mt-0.5">This serves the Game by {p.aim}</p>
                     )}
@@ -181,6 +186,12 @@ export default function Assembly() {
                         </Link>
                       )}
                     </div>
+                    {p.isExample && (
+                      <ExampleNote>
+                        A walkthrough proposal, still gathering signals. This is where an idea lives
+                        while the community weighs in. It stays here and never moves on.
+                      </ExampleNote>
+                    )}
                   </div>
                   <SignalReadout signal={p.signal} />
                 </div>
@@ -189,12 +200,17 @@ export default function Assembly() {
                   synthesis={p.synthesis}
                   isOwner={!!p.isOwner}
                   isAuthenticated={isAuthenticated}
+                  isExample={!!p.isExample}
                 />
-                <div className="mt-3">
-                  <SignalControl proposalId={p.id} signal={p.signal} />
-                </div>
-                <MinorLaneRow proposal={p} />
-                <MoveToDecideButton proposal={p} />
+                {!p.isExample && (
+                  <>
+                    <div className="mt-3">
+                      <SignalControl proposalId={p.id} signal={p.signal} />
+                    </div>
+                    <MinorLaneRow proposal={p} />
+                    <MoveToDecideButton proposal={p} />
+                  </>
+                )}
               </li>
             ))}
           </ul>
@@ -220,10 +236,13 @@ export default function Assembly() {
         ) : (
           <ul className="space-y-2">
             {deciding.map((p: any) => (
-              <li key={p.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
+              <li key={p.id} className={`p-3 rounded-xl border ${p.isExample ? "bg-[#7dd87d]/[0.06] border-dashed border-[#7dd87d]/30" : "bg-white/5 border-white/10"}`}>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0 safe-prose">
-                    <p className="text-white text-sm font-semibold">{p.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {p.isExample && <ExampleBadge />}
+                      <p className="text-white text-sm font-semibold">{p.title}</p>
+                    </div>
                     <p className="text-white/70 text-[11px] capitalize">{String(p.category ?? "").replace(/_/g, " ")}</p>
                   </div>
                   <a
@@ -235,7 +254,14 @@ export default function Assembly() {
                     Vote on Hypha <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-                <HyphaLinkRow proposal={p} currentUserId={user?.id ?? null} isAdmin={isAdmin} />
+                {p.isExample ? (
+                  <ExampleNote>
+                    A walkthrough proposal at the binding vote. Real proposals send the community to
+                    Hypha to vote on Base. This one is a stand-in and carries no live vote.
+                  </ExampleNote>
+                ) : (
+                  <HyphaLinkRow proposal={p} currentUserId={user?.id ?? null} isAdmin={isAdmin} />
+                )}
               </li>
             ))}
           </ul>
@@ -252,11 +278,14 @@ export default function Assembly() {
         {((recordQuery.data as any[]) ?? []).length > 0 && (
           <ul className="space-y-2 mb-4">
             {((recordQuery.data as any[]) ?? []).map((p: any) => (
-              <li key={`prop-${p.id}`} className="p-3 rounded-xl bg-white/5 border border-white/10">
+              <li key={`prop-${p.id}`} className={`p-3 rounded-xl border ${p.isExample ? "bg-[#7dd87d]/[0.06] border-dashed border-[#7dd87d]/30" : "bg-white/5 border-white/10"}`}>
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${p.status === "declined" ? "text-red-400" : "text-emerald-400"}`} />
                   <div className="flex-1 min-w-0 safe-prose">
-                    <p className="text-white text-sm font-semibold">{p.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {p.isExample && <ExampleBadge />}
+                      <p className="text-white text-sm font-semibold">{p.title}</p>
+                    </div>
                     {p.aim && <p className="text-white/60 text-[11px] mt-0.5">This serves the Game by {p.aim}</p>}
                     <div className="flex items-center gap-2 mt-2 text-[10px] text-white/70 flex-wrap">
                       <span className={`capitalize font-semibold ${p.status === "declined" ? "text-red-300" : "text-emerald-300"}`}>{p.status}</span>
@@ -278,6 +307,12 @@ export default function Assembly() {
                           : `Execution ${p.execution.status}`}
                         {p.execution.executedAt && ` · ${new Date(p.execution.executedAt).toLocaleDateString()}`}
                       </p>
+                    )}
+                    {p.isExample && (
+                      <ExampleNote>
+                        A walkthrough of a finished decision. The Record keeps the full trail of
+                        every real change: the conversation, the vote, and what the machine did.
+                      </ExampleNote>
                     )}
                   </div>
                 </div>
