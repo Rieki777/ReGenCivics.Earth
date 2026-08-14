@@ -496,16 +496,69 @@ function buildBlueprintDraft(f: FormData): BlueprintDraft {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Answers arriving in the query string, as sent by the platform deck
+ * (docs/PLATFORM_DECK.html). Parameter names are the FormData keys verbatim,
+ * so a value only needs coercing to the right primitive. Anything unknown,
+ * or any string where the type wants a union, is dropped rather than trusted.
+ */
+const NUMBER_PREFILL_KEYS = ["acreage", "teamSize", "hoursPerWeek"] as const;
+const ENUM_PREFILL_VALUES: Partial<Record<keyof FormData, readonly string[]>> = {
+  applicantRole: ["founder", "investor", "core-team"],
+  landStatus: ["owned", "leased", "committed", "seeking"],
+  hosting: ["self-hosted", "regen-full-service"],
+  technicalComfort: ["low", "medium", "high"],
+};
+
+function prefillFromQuery(): Partial<FormData> {
+  if (typeof window === "undefined") return {};
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(window.location.search);
+  } catch {
+    return {};
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, raw] of params.entries()) {
+    if (!(key in INITIAL_FORM_DATA)) continue;
+    const field = key as keyof FormData;
+    const value = raw.trim();
+    if (!value) continue;
+
+    if (field === "budgetConfirmed") {
+      out[field] = value === "1" || value === "true";
+      continue;
+    }
+    if ((NUMBER_PREFILL_KEYS as readonly string[]).includes(field)) {
+      const n = Number(value);
+      if (Number.isFinite(n) && n >= 0) out[field] = n;
+      continue;
+    }
+    const allowed = ENUM_PREFILL_VALUES[field];
+    if (allowed) {
+      if (allowed.includes(value)) out[field] = value;
+      continue;
+    }
+    out[field] = value.slice(0, 4000);
+  }
+  return out as Partial<FormData>;
+}
+
 export default function CustomGamesApply() {
+  // Deck answers win over a stale local draft: someone arriving on a prefilled
+  // link means the link to be what they see.
+  const [prefill] = useState(prefillFromQuery);
   const [formData, setFormData] = useState<FormData>(() => {
     const draft = loadDraft();
-    return draft ? { ...INITIAL_FORM_DATA, ...draft } : INITIAL_FORM_DATA;
+    return { ...INITIAL_FORM_DATA, ...(draft ?? {}), ...prefill };
   });
   const [draftRestored, setDraftRestored] = useState(() => {
     const draft = loadDraft();
     return draft !== null && hasAnyContent(draft);
   });
-  const [mode, setMode] = useState<"talk" | "review">("talk");
+  const [mode, setMode] = useState<"talk" | "review">(
+    Object.keys(prefill).length ? "review" : "talk",
+  );
   const [fromSylva, setFromSylva] = useState(false);
   const [transcript, setTranscript] = useState<CompanionTurn[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
