@@ -153,9 +153,11 @@ export const newsletterRouter = router({
 });
 
 export const videoSuggestionsRouter = router({
-  // Get all approved suggestions for voting
+  // Suggestions for the public voting board.
+  // Public projection: no submitterEmail, no voterEmails (a JSON array of
+  // every voter's address, which this returned to anonymous callers).
   list: publicProcedure.query(async () => {
-    return db.getAllVideoSuggestions();
+    return db.getPublicVideoSuggestions();
   }),
 
   // Submit a new video suggestion

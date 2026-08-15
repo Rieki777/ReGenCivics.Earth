@@ -232,7 +232,7 @@ export const gameRouter = router({
         INSERT IGNORE INTO game_flags (flaggerType, flaggerId, flaggedType, flaggedId, reason, description)
         VALUES ('player', ${ctx.user.id}, ${input.flaggedType}, ${input.flaggedId}, ${input.reason}, ${input.description ?? null})
       `);
-      await logActivityEvent("flag_submitted", "player", ctx.user.id, input.flaggedType, input.flaggedId, { reason: input.reason }, "admin_only");
+      await logActivityEvent("flag_submitted", "player", ctx.user.id, input.flaggedType, input.flaggedId, { reason: input.reason }, "admin");
       return { ok: true };
     }),
 

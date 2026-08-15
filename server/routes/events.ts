@@ -8,8 +8,9 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "../
 import { z } from "zod";
 import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
-import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions } from "../../drizzle/schema";
+import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
 import { newsletterSubscribers, recordings } from "../../drizzle/schema";
+import { pickPublic } from "../lib/public-projection";
 import { and, asc, desc, eq, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
@@ -186,18 +187,72 @@ async function promoteFromWaitlist(eventId: number) {
   }).catch(err => console.error("[promoteFromWaitlist] email error:", err));
 }
 
+/**
+ * Public columns of an `events` row.
+ *
+ * Never leaves the server on a public read:
+ *  - `checkinToken`. This one is not just disclosure. `events.checkin` below
+ *    accepts (token, any email) and both writes `event_attendance` and mints
+ *    a `regen_token_ledger` credit, so a token read off a public list was a
+ *    mint anyone could run. The column is absent from every public response.
+ *  - `reminderCustomSubject` / `reminderCustomBody`. Unsent internal drafts.
+ *
+ * The two meeting-room URLs are handled differently, because the Schedule
+ * page's Join button and the event detail page genuinely render them. They
+ * are returned to signed-in members and NULLED for anonymous callers, so an
+ * unlisted room link is not published to the open web while the button keeps
+ * working for the people it is for. The keys stay present so the client
+ * shape does not change; the check-in token gets no such courtesy.
+ *
+ * Admin surfaces read whole rows through `events.adminList` and the other
+ * adminProcedures in this router, so nothing in /admin depends on this.
+ */
+const PUBLIC_EVENT_FIELDS = [
+  "id",
+  "title",
+  "description",
+  "type",
+  "startTime",
+  "endTime",
+  "timezone",
+  "youtubeUrl",
+  "recordingId",
+  "status",
+  "season",
+  "episodeNumber",
+  "maxAttendees",
+  "forumThreadId",
+  "guestSpeakerName",
+  "guestSpeakerBio",
+  "guestSpeakerTopic",
+  "createdAt",
+  "updatedAt",
+] as const satisfies ReadonlyArray<keyof Event>;
+
+export type PublicEvent = Pick<Event, (typeof PUBLIC_EVENT_FIELDS)[number]> & {
+  zoomUrl: string | null;
+  riversideRoomUrl: string | null;
+};
+
+export const toPublicEvent = (event: Event, includeRoomLinks: boolean): PublicEvent => ({
+  ...pickPublic(event, PUBLIC_EVENT_FIELDS),
+  zoomUrl: includeRoomLinks ? event.zoomUrl : null,
+  riversideRoomUrl: includeRoomLinks ? event.riversideRoomUrl : null,
+});
+
 // ─────────────────────────────────────────────────────────────
 // Router
 // ─────────────────────────────────────────────────────────────
 export const eventsRouter = router({
 
   // ── Public: list upcoming events for the Schedule page ────
+  // Public projection: no check-in token, no meeting-room URLs.
   list: publicProcedure
     .input(z.object({
       includeCompleted: z.boolean().default(false),
       limit: z.number().min(1).max(100).default(50),
     }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) return [];
 
@@ -210,9 +265,10 @@ export const eventsRouter = router({
         .orderBy(asc(events.startTime))
         .limit(input?.limit ?? 50);
 
-      return input?.includeCompleted
+      const visible = input?.includeCompleted
         ? all
         : all.filter(e => e.status !== "cancelled" && e.status !== "completed");
+      return visible.map(e => toPublicEvent(e, !!ctx.user));
     }),
 
   // ── Public: signup counts for all upcoming events (#8 social proof) ──
@@ -362,17 +418,19 @@ export const eventsRouter = router({
     }),
 
   // ── Public: get all events for a season (#21, series landing page) ──
+  // Public projection: no check-in token, no meeting-room URLs.
   getBySeason: publicProcedure
     .input(z.object({ season: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) return [];
       await ensureEventsSeed();
-      return database
+      const rows = await database
         .select()
         .from(events)
         .where(eq(events.season, input.season))
         .orderBy(asc(events.startTime));
+      return rows.map(e => toPublicEvent(e, !!ctx.user));
     }),
 
   // ── Public: submit an agenda suggestion (#9) ───────────────
@@ -869,7 +927,7 @@ export const eventsRouter = router({
   // ── #19. Public: get single event by ID ──────────────────
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -895,7 +953,9 @@ export const eventsRouter = router({
         if (rec) recording = rec;
       }
 
-      return { ...event, signupCount: Number(count), recording };
+      // Public projection: the spread here used to carry checkinToken and the
+      // reminder drafts onto the event detail page.
+      return { ...toPublicEvent(event, !!ctx.user), signupCount: Number(count), recording };
     }),
 
   // ── #16. Public: self-service check-in ───────────────────

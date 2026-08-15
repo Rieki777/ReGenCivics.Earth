@@ -338,6 +338,7 @@ export {
   getVideoSuggestionById,
   getAllVideoSuggestions,
   getApprovedVideoSuggestions,
+  getPublicVideoSuggestions,
   updateVideoSuggestion,
   deleteVideoSuggestion,
 } from "./db/videoSuggestions";

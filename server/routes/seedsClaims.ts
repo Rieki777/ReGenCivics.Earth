@@ -35,6 +35,20 @@ const ethereumAddressSchema = z
 
 const emailSchema = z.string().email("Invalid email format");
 
+/**
+ * What `lookup` may say about an existing claim.
+ *
+ * The lookup key is a SEEDS account name, which is public on-chain, so
+ * anyone can type someone else's. Everything else on the row (email,
+ * baseWalletAddress, the claimed amounts, disputeReason, evidenceUrls,
+ * adminNotes, reviewedBy) belongs to the claimant and the reviewers.
+ */
+export const PUBLIC_SEEDS_CLAIM_COLUMNS = {
+  id: seedsClaims.id,
+  status: seedsClaims.status,
+  createdAt: seedsClaims.createdAt,
+} as const;
+
 export const seedsClaimsRouter = router({
   /**
    * PUBLIC: Look up SEEDS account and check for existing claim
@@ -69,9 +83,16 @@ export const seedsClaimsRouter = router({
         usdValue: c.usdValue,
       }));
 
-      // Check for existing claim
+      // Check for existing claim.
+      //
+      // The lookup key is a SEEDS account name, which is public on-chain, so
+      // anyone can type someone else's. The claim row holds the claimant's
+      // email, their Base wallet, their dispute text and the admin review
+      // trail, and returning the row handed all of that to whoever guessed
+      // the name. The claim page reads nothing off this object; all it ever
+      // needs is that a claim exists and where it stands.
       const existingClaim = await db
-        .select()
+        .select(PUBLIC_SEEDS_CLAIM_COLUMNS)
         .from(seedsClaims)
         .where(eq(seedsClaims.seedsAccount, input.seedsAccount))
         .limit(1);
