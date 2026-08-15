@@ -84,7 +84,10 @@ Standing guards (Addendum 1 §5):
 | V — mobile-first QA (round 2, R14) | live deployment (build `5f3cf0b`) | audit-only (scratch schema dropped, nothing pushed) | reported 2026-08-15 ~02:20 EDT | AUDIT: 16 routes × 3 viewports + 390×664 URL-bar pass; 21/21 detector validation | **REPORTED — 4 HIGH / 5 MED (1 retracted by coordinator) / 4 LOW.** HIGH: `/login` Sign In covered by the tab bar at first paint (tap → Gratitude); `/map` removes all in-app nav; map iframe overflows 2× with off-screen close controls; CTAs on 3 more routes tap-stolen (19 thefts/13 routes). Report adopted at `round2-qa/LANE_V_REPORT_2026-08-15.md`; 99 screenshots in scratchpad `lane-v/`. 14 could-not-measure (safe-area insets read 0 on WebKit-Windows; no CPU throttling in WebKit; non-included store tiers never rendered) | 5f3cf0b | 2026-08-15 (final report) |
 | F1 — mobile shell + public pages (fix) | game-amora | `wt-fix-mobile` / `wt/fix-mobile-shell` | dispatched 2026-08-15 ~02:40 EDT (**4th handle** of the F2/F3/F4/F1 block) | MobileTabBar/Fab, Layout spacer, index.css, public page files (Login/Register/Quests/Feed/forms/etc.) | dispatched; **HIGH** (V-H1/H4 root cause) + V-M7/M8/L13, L-M5/L3/L4, alt-detector conflict; lands LAST | ≥5f3cf0b | at dispatch |
 | F2 — map shell escape (fix) | game-amora | `wt-fix-map` / `wt/fix-map-shell` | reported + landed 2026-08-15 ~04:30 EDT | `LivingMap.tsx` ONLY (+59/−4) | **LANDED on main `9632450`** (fast-forward; cherry = 1, single file, branch CI green). V-H2 closed: "Back to the village" control, fixed, 190×44, `max(safe-area-top, 44px)` clearing the artifact's 35px vitals strip, reuses the shell's single `exitApp` path so button/back-gesture/artifact-exit cannot disagree; WebKit proof at 390×844, 390×664, 1280×800 + deep-link hash contract preserved. 11 gates green, 1131/0/0. **DONE**: CI green ×2 (31890257763 main, 31889379897 branch), live `/health` → build `9632450` | 9632450 | 2026-08-15 10:37 EDT (live probe) |
-| F3 — store surface (fix) | game-amora | `wt-fix-store` / `wt/fix-store-surface` | dispatched ~02:40 EDT (**2nd handle**) | `Admin.tsx` store region + sidebar labels | dispatched; L-M4/M6, V-M6/M8-store | ≥5f3cf0b | at dispatch |
+| F3 — store surface (fix) | game-amora | `wt-fix-store` / `wt/fix-store-surface` | reported + landed 2026-08-15 ~11:40 EDT | `Admin.tsx` only (+106/−44, 3 commits) | **LANDED on main `efdf7da`** (fast-forward; cherry = 3, single file, branch CI 31891724084 green). L-M4 contrast 20/183 → 0/183 failures (measured; e.g. `always on` 2.49→7.23), L-M6 search named, V-M6 360px overflow 20px → 0 (lifecycle row min-content root cause), V-M8 toggles ≥44; all 28 Admin.tsx `d.error` sites → `refusal()` (skips falsy, trims — a bare `??` would have blanked toasts on empty bodies). 4 suite runs 1131/0/0, no pre-edit baseline (mutex held; accepted). CI + live probe in flight | efdf7da | 11:40 EDT (report) |
+| I — images (round 3) | game-amora + Railway volume | `wt-images` / `wt/images-webp` | dispatched 2026-08-15 ~11:30 EDT | 14 posters (optimize → volume upload, identical filenames), repo raster sweep → WebP, client-side upload prep helper, `check-image-budget.mjs` ratchet + CI wiring | dispatched; lands after F1 (page files); PR flow | ≥9632450 | at dispatch |
+| D — builder pathway + intake (round 3) | game-amora | `wt-builder` / `wt/builder-pathway` | dispatched ~11:30 EDT | START_HERE.md, module-facts.mjs, check-doc-links.mjs, HOW_TO_START_A_SESSION, store card (after F3 — unblocked), PR template, module-intake workflow, CODEOWNERS, REVIEW_CHECKLIST + validator security checks, review-agent workflow (key-gated, skips without), DD_ASSISTANT.md, contract v1.1 in game-amora with clause-status appendix | dispatched; PR flow | ≥9632450 | at dispatch |
+| P — $ReGen builders' pool (round 3) | hub (`regen-pool` / `wt/pool`) + game-amora (`wt-pool` / `wt/module-pool`) | two worktrees | dispatched ~11:30 EDT | hub: design ADR, cycle statement job, statement tables + export, public counts page, `pool.regen_per_cycle`; game-amora: `shared/modulePool.ts` derived `poolStatus`, `builtBy.payout`, payload projection, federation byte-identical proof | dispatched; game-amora branch lands before D; PR flow | hub 0b705f8 / ga ≥9632450 | at dispatch |
 | F4 — server hygiene (fix) | game-amora | `wt-fix-server` / `wt/fix-server-hygiene` | reported 2026-08-15 ~04:10 EDT | index.ts header/route-shell zones, seeds, Mint page, + 16 client `d.error` sites (R16) | **REPORTED, HELD** at `278df75` (2 commits, 4 files, clean; 70 files / 1143 tests / 0 skipped; +12-case hygiene e2e). L-M1 VERIFIED (5 headers, x-powered-by gone, frame-ancestors self, map iframe proven; HSTS deliberately unset → Rye 10); L-M2 seed→null (live rows → Rye 11); L-M3 VERIFIED; L-L5 VERIFIED (319 sites; 3 credential-verification families correctly excluded) — **consequence sweep in progress per R16**; L-L1 robots+sitemap VERIFIED, soft-404 DEFERRED (reason recorded); L-L6 no change (opacity comment added). **Sweep DONE at `3cb6331`** (3 commits, rebased on F2 `9632450`, 70/1143/0, gates green): 15 files / 24 sites + 5 branches → `d.message ?? d.error ?? fallback`; `ExampleRefusal.tsx` deliberately skipped (409 `example_immutable`, no message — a `??` that can never fire reads like a case that can); **found + fixed a real bug its own L5 change created** (`OnchainCard.tsx` guarded the wallet flow on `!ch.message`; after L5 the 401 carries `message:"Sign in first"` so a signed-out member's wallet would have been asked to SIGN the words "Sign in first" — guard now reads `chRes.ok`); S9 item confirmed untouched by diff. **Awaits F3 + F1 landing, then one more rebase + cold gates** | 3cb6331 | 2026-08-15 ~11:00 EDT (report) |
 | H — hub side of Managed | hub | not created | NOT dispatched | shared vendor account, per-fork roster, billing line item, entity block wiring | queued (§4 item 9) | — | — |
 | O — Orbit | — | — | FROZEN at stage 1 (anonymous vendor) | nothing; `provides` field lands as data with Lane C so Orbit never migrates a registry entry | frozen | — | — |
@@ -169,6 +172,7 @@ Open counsel questions and what each blocks:
 2. DPA counterparty structure (CORE as controller/processor posture) — **blocks CORE signing the DPA** (stage 3 exit).
 3. Managed billing: resale vs agency — **blocks the invoice template**, default agency until counsel says otherwise.
 4. **UBIT**: margin on resold third-party software modules sold to villages that are not church members — 508(c)(1)(A) is still 501(c)(3)-described and still UBIT-subject; answer may be "yes, report on 990-T," may mean a different entity — **blocks the FIRST INVOICE only. Building and piloting proceed; billing does not.** Do not guess; do not let a lane guess.
+   4b (added 2026-08-15, R20): the $ReGen builders' pool pays individual builders in a token valued at $0.10 — payouts over $600/yr per person are 1099-reportable (NEC or MISC?); and does a grant-shaped payout to non-members touch the same UBIT analysis or is it plainly an expense? Same accountant, one more line.
    4a (added 2026-08-15, R13): the developer marketplace adds one line to the same ask — if CORE ever takes a margin or listing fee on third-party DEVELOPER modules (not just SaaS vendors), same analysis? V1 avoids it entirely (developers bill forks directly, Connected economics); this gates only a future platform-billed rail.
 
 ---
@@ -271,6 +275,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-15 ~11:45 EDT · **Rye ruled round 3 (R18–R22); Lanes I, D, P dispatched; F3 LANDED on main `efdf7da`.** Rye's answers: all ten store decisions ruled (rev-share 0% with the $ReGen pool as the primary incentive; no payment processing; no fee; automate the SLA where possible; anyone can be a builder — coordinator holds one carve-out: paid/member-pii listings still need a signable counterparty; price to members; automate withdrawal where possible; 8/9/10 yes) and all seven new ones (test account yes; PR-only intake + Claude-assisted DD; branch protection yes; security invariant yes; WebP standard + ratchet yes; client-side upload optimization; pathway yes). New design: the $ReGen builders' pool (R20 defaults; R22 Rye confirmed $ReGen is the hub's Game token). Dispatched: Lane I (posters → volume, WebP sweep, upload helper, image ratchet), Lane D (START_HERE + facts script + link check + intake workflow + CODEOWNERS + review checklist/validator security + review-agent + contract v1.1), Lane P (hub pool design/build + game-amora `poolStatus`/payout). F3 verified (cherry 3, Admin.tsx only, CI green) and landed; F1 next, then F4; then I/D/P by PR (R21). Still on Rye: create the test admin account + choose the token-handling mode (blocks the live run); set branch protection.
 - 2026-08-15 ~11:00 EDT · **F2 DONE (live at 9632450); F4 sweep complete at `3cb6331`, waiting on F3 + F1 to land first; F3 interim: all four store defects VERIFIED (contrast 20→0 failures, 360px overflow gone, toggles ≥44, search named), told to take all 28 `d.error` sites in Admin.tsx (F1 does not touch that file); Rye opened a separate session for the S9 flake — item 22 withdrawn from F4.** F4's sweep surfaced a real bug its own change created (OnchainCard wallet-sign guard) — fixed, lesson in §9. Rye asked for round-3 review before dispatch; coordinator delivered the ten store decisions + seven new ones + three blocking questions (test admin account; PR-only intake + branch protection; client-side vs sharp upload optimization). Awaiting answers.
 - 2026-08-15 ~04:30 EDT · **Lane F2 LANDED on main `9632450`** (fast-forward; cherry = 1; `LivingMap.tsx` only; branch CI run 31889379897 green after one S9-flake re-run — mechanism found and routed to F4 as item 22). V-H2 CLOSED with a WebKit proof at three viewports and the deep-link hash contract intact. R17 ratifies landing on `/` for consistency across all three exit triggers. F3, F1, F4 messaged with the new base and the flake note. CI + live probe running.
 - 2026-08-15 ~04:10 EDT · **Lane F4 REPORTED and HELD (R16).** All items verified on a local production build at `f9624d9`/`278df75`: five security headers on every response, `x-powered-by` gone, `frame-ancestors 'self'` with the map iframe proven still loading; geolocation denied after a zero-hit grep; HSTS deliberately unset with a test asserting it stays unset (→ Rye 10); quest seed → null and the 14 real files located in a gitignored uploads volume (→ Rye 11); `/admin/mint` gated on session; robots.txt + sitemap.xml generated per request from the footer nav; 319 401-bodies unified with three verification families excluded. F4's own handoff flagged the 57 `d.error` renderers → the coordinator held the landing and routed the sweep (16 files to F4, 5 to F1/F3); land order now F2 → F3 → F1 → F4.
@@ -333,6 +338,64 @@ docs-only and do not touch main.
 - **R9** (2026-08-14): Migration allocation A=0078, C=0079, S=0080 confirmed by 4-way scan (remote
   refs via `git log --all`, primary disk, all-30-worktree disk including scratchpads) at 28dace2.
   Never renumber: the ledger keys on filename and a rename replays the file.
+- **R18** (2026-08-15): **Rye ruled the store's ten decisions** (his words in brackets):
+  1 rev-share 0% [yes; the $ReGen distribution is the primary incentive; paid modules may add
+  direct payment]; 2 CORE processes no third-party payments [yes]; 3 no listing fee [none];
+  4 review SLA [asked "can we automate?" → yes, partly: automated first response within
+  minutes naming the blocking stage (validator + gates + a Claude review pass on the PR);
+  human judgement stages within ten working days]; 5 who may be a vendor [**"Anyone can be a
+  vendor - no legal entity required"** — implemented as: BUILDERS of free modules need a name +
+  contact only; ONE CARVE-OUT the coordinator holds unless overruled: a listing that is paid or
+  `member-pii` still needs a signable counterparty because a DPA cannot be signed by nobody —
+  law, not policy; contract clause 1 becomes tiered in v1.1]; 6 price shown to members too
+  [yes — in-app only; federated documents still carry nothing]; 7 withdrawal owes 90 days +
+  data return + withdrawn-forever [asked "automatically?" → notice, banner, countdown and
+  day-90 block are automatable now from `withdrawn.since`; the data return needs a
+  village-level driver export — design item; contract keeps the promise, code follows];
+  8 change of control reviewable + announced [yes]; 9 published numeric quality bar [yes;
+  needs the probe, queue 5]; 10 reserved takeover power narrow and named [yes — coordinator
+  names three triggers for the contract: confirmed malicious code; unpatched critical
+  vulnerability past its SLA; builder unreachable 90 days with a live security issue].
+- **R19** (2026-08-15): **Rye ruled the seven new decisions**: N1 test account [yes — Rye
+  creates it; token-handling mode still to choose]; N2 PR-only intake [yes, "along with
+  support from claude to do DD and testing" → a review-agent GitHub Action + DD assistant];
+  N3 branch protection [yes — settings handed to Rye; coordinator switches to PR landings with
+  merge commits so lane SHAs survive]; N4 security-review invariant [yes → contract clause 13];
+  N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
+  friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
+  less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R21** (2026-08-15): **Landing mechanics after N3.** The three in-flight fix lanes
+  (F3, F1, F4) land by fast-forward as briefed — the exact tested SHA reaches main, which is
+  the stronger evidence. Round-3 lanes (I, D, P) and everything after land by PR with a MERGE
+  commit (`gh pr merge --merge`) so lane SHAs survive and CI is a required check rather than a
+  post-push read; branch protection itself is Rye's console setting (settings handed to him:
+  require PR, require CI status checks, 0 required approvals for now, code-owner review OFF
+  until a second maintainer exists — else the account that opens PRs cannot approve them and
+  every landing blocks on Rye; admins may bypass).
+- **R22** (2026-08-15): Rye confirmed (his words) "$ReGen exists as the main 'Game' token of
+  regencivics.earth and the distributor of the custom games" — the builders' pool is a native
+  use of the hub's own token; Lane P told to reuse the hub's existing $ReGen distribution
+  mechanics, cycle and human-execution conventions rather than invent parallel ones.
+- **R20** (2026-08-15): **The $ReGen builders' pool** (Rye's design, his words: "ReGen Civics
+  pays $ReGen monthly (every lunar cycle) to the most used modules ... similar to the gratitude
+  module ... this is the default and only goes away if the builder chooses to have their module
+  paid ... we hope this would encourage all builders to just use the $ReGen distribution").
+  Coordinator's defaults for the design lane, each overrulable: (a) payer = ReGen Civics/CORE
+  from treasury, on-chain $ReGen on Base — the hub's existing invariant "read-only Base
+  queries, no wallet, no signing" HOLDS: the hub COMPUTES a signed distribution statement +
+  public page each lunar cycle; a human/treasury EXECUTES the transfer (value moves by a human
+  act, as everywhere else); (b) eligible = third-party (`builtBy` ≠ platform), FREE (no
+  `pricing`), merged and not withdrawn, at lifecycle ≥ members in a village; paid modules are
+  excluded by construction (pricing ⇒ opted out), platform-built and core modules excluded
+  (else the pool pays CORE itself); (c) usage metric v1 = number of KNOWN villages running it
+  (the hub's roster of real communities × the module ids those villages already publish at
+  members+ in `/api/platform/info` — consented, read-only, no new telemetry, gaming-resistant
+  because fake forks are not on the roster); v2 activity-weighted via an opt-in relay summary
+  (counts, never people); (d) share = plain proportional to usage share of a hub setting
+  `pool.regen_per_cycle`, with a dust floor; (e) builder payout identity = optional
+  `builtBy.payout {chain:"base", address}` in the registry entry; missing address accrues
+  unpaid and the statement says so; (f) counsel line added to §3c: builder payouts over
+  $600/yr per person are 1099-reportable — same accountant ask, one more line.
 - **R17** (2026-08-15): F2's deviation RATIFIED — the map escape control always lands on `/`
   rather than "the previous in-app location" as briefed, because the shell's `exitApp` +
   `popstate` contract already replaces the map's history marker with `/`, all three exit
@@ -409,6 +472,16 @@ docs-only and do not touch main.
   anchor stale. Re-measure at dispatch, always.
 - A background agent dies with the machine's sleep; a committed ledger and an on-disk worktree
   survive. Write state before starting anything long.
+- **A control that cannot fail loudly is not a control** (Lane F3, 2026-08-15): under
+  Playwright WebKit, `page.route` interception fired zero handlers while the request still
+  went out, so the "control payload" run reported a clean result it had never applied;
+  Chromium was unaffected, which made it plausible. Fix: patch the page's own `fetch` and hard-
+  assert the control reached the DOM (`control landed: true`). Any injected control needs a
+  positive assertion that it was injected.
+- **`||` and `??` are not interchangeable in a sweep** (Lane F3): the `d.error || "..."` sites
+  used a falsy fallback; a mechanical `d.message ?? d.error` returns `""` for an empty-string
+  body — a blank toast where the call site's own words used to be. Read the operator you are
+  replacing, not just the field.
 - **A contract change's sweep covers every READER of the field, not the reported sites**
   (Lane F4, 2026-08-15): the coordinator routed the 57 `d.error` renderers; F4 also swept
   every client read of `.message` on a response body and found `OnchainCard.tsx` using
@@ -460,6 +533,8 @@ what only Rye can do; every item has a default so nothing blocks.
 | 4 | Read the stage-5 gate table finding: **Saberra does not clear Managed on today's evidence** (7/12 rows empty; their cap "never blocks"; no hard-delete endpoint). No decision needed yet — stage 5 exists to negotiate exactly these terms — but the tier expectation should not harden until the table fills | Rye (awareness) | 2 | hold Managed as the *sought* tier; the letter asks for what would clear it | stage-5 table fills after their reply |
 | ~~5~~ | ~~Contract publish vs private~~ **DONE 2026-08-14: publish on a URL** (R11; publication itself is queue item 10) | — | — | — | — |
 | 7 | **Per-user daily token ceiling** (Lane A's question, spec decision 7): measured mean is 7,465 tokens per organize question, max 9,542 | Rye | 5 | keep measure-only now; when enforcement comes, ~150k tokens/user/day (≈20 questions) binds almost nobody while capping a runaway | number recorded; enforcement is its own later task |
+| 12 | **Create the test admin account** (you said yes) and pick how a lane authenticates: (a) authorize minting its token from the server secret via the Railway CLI — no password crosses chat, **recommended**; or (b) paste the account's JWT here. Then the $0.10 live run dispatches the same hour, and Lanes L/V get signed-in coverage on future runs | Rye | **1** | register on live, promote to admin, name it something obvious like `integration-qa`, then choose (a) | the live-run lane reports 10 questions, `assistant_usage` rows, the citation screenshot |
+| 13 | **Branch protection on `main`** (Amora-Game): Settings → Branches → Add rule `main`: require a pull request before merging (required approvals **0** for now); require status checks to pass (`ci`); do NOT enable "require review from Code Owners" until a second maintainer exists; allow admins to bypass. Same for ReGenCivics.Earth if wanted | Rye (GitHub console) | 3 | set as above; the coordinator already lands round-3 work by PR (R21) | rule visible; a direct push to main is refused |
 | 10 | **HSTS**: Lane F4 verified `http://amora.regencivics.earth` 301s to https but cannot enumerate the Railway-generated hostname or any other attached domain from here; a wrong `max-age` is irreversible, so it is unset. Needs the Railway domain inventory | Rye (Railway console) | 4 | confirm every hostname is TLS-terminated, then set HSTS conditionally on `x-forwarded-proto === "https"` (avoids poisoning localhost); a lane can wire it once the list is known | header set on the deployed site |
 | 11 | **14 quest images on LIVE**: the seed fix (`imageUrl: null`) stops fresh forks emitting 404s, but live rows were written by a one-shot backfill (`runOnce("quest-posters-2026-08-10")`) that never repeats. The 14 files exist (1.63 MB) in `game-amora/data/uploads/` on this machine, gitignored; they cannot ship in `dist/` (would overrun the 6000 KB budget by ~1.2 MB — CI's own error text says "uploads volume instead") | Rye | 4 | **copy the 14 files into the Railway uploads volume** (keeps the posters) — else clear `image_url` on the 14 live rows (cards fall back to the designed gradient) | `/quests` on live emits zero 404s |
 | 9 | **The store decision table** — 10 rows in `docs/integration-program-research/STORE_DESIGN.md` §7 (in game-amora at `da46358`). The four headline defaults: rev-share **0% in v1** (Salesforce is the honest comparison — we cannot technically enforce a share either); **CORE never processes payments pending counsel** (UBIT + 1099-NEC at the $600 threshold, not $20k); **no listing fee**; **ten working days to a first response naming the blocking stage** (Apple's ~2% appeal-reinstatement rate is the cautionary tale — the rejection message must do the work). Six more rows: vendor identity, price visibility, withdrawal terms, change of control, quality bar, reserved takeover power | Rye | 3 | accept all ten defaults; every one is reversible by a later ruling | rulings recorded in §8; none guessed into code meanwhile |
