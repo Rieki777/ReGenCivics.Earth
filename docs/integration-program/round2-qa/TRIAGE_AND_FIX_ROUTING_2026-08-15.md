@@ -90,8 +90,9 @@ Owns: `server/index.ts` header/route-shell zones only (no module/catalog/integra
 4. **L-L5**: unify 401 body shape to `{error:"auth_required", ...}` where the four variants
    live, WITHOUT changing status codes; grep client for any code that branches on the old
    strings first.
-5. **L-L6**: replace the hand-written gate at `server/index.ts:8976` with the framework's
-   `requireModule("network")` ordering fix, preserving the 404 status.
+5. ~~**L-L6**~~ **RETRACTED** (Lane L self-review): the gate at 8976 is deliberately stricter
+   (members-rank floor) — do NOT replace it. Folds into item 4 as a body-shape note only,
+   preserving status and condition, and only if opacity is not lost. F4 messaged.
 6. **L-M2** (14 quest images): find why the seed references `/api/uploads/quest-NN-*.webp` that
    no build produces — either ship the assets (if they exist in any worktree/asset store) or
    change the seed to `image: null` so cards use the designed gradient without 7 console 404s.

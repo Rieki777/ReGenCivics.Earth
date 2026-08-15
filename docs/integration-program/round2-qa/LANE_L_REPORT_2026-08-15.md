@@ -24,7 +24,7 @@ a founder account exists only on local scratch schema `amora_lanel`. No live wri
 | L3 | Heading-level skips: `/prosperity`, `/housing`, `/opportunities` (h1→h3), `/co-creators-guide` (h2→h4) |
 | L4 | `/library` "out on loan" span at 4.39:1 |
 | L5 | 401 bodies have four incompatible shapes (`Unauthorized` / `Sign in first` / `auth_required`+module / `Sign in to see your messages`) |
-| L6 | Hand-written second copy of the module gate at `server/index.ts:8976` (`/api/network/published` mounted above its own `requireModule`, returns `Not found` instead of `module_disabled`) |
+| ~~L6~~ | **RETRACTED by Lane L on self-review (2026-08-15):** the gate at `server/index.ts:8976` is a deliberately STRICTER gate (members-rank floor: `preview` must never publish a village's needs and offers to peers or the open internet), not duplicated logic that can drift. The same floor is applied at `/api/platform/info` (~8510) and `village.json` (~17223) and is the mechanism behind the CLEAN federated-docs verdict. Only the body-shape inconsistency survives, as a note under L5. Also corrected: the vendor-gate mount loop is at 5664 (not 5663), whose comment reads "A no-op today: nothing is above `included`" — stronger confirmation that the 503 path is unreachable by design |
 | L7 | Migration 0077 absent from this SHA (76 files 0076→0078) — cross-worktree allocation, not a lost file |
 
 ## Round-2 focus verdicts (all CLEAN or by-design)
