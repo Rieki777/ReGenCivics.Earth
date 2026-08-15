@@ -165,6 +165,17 @@ const trpcClient = trpc.createClient({
   ],
 });
 
+// ── Crawler prose cleanup ───────────────────────────────────────────────────
+// The server injects an off-screen, aria-hidden copy of each key page's prose
+// before #root so no-JS crawlers get real content (server/_core/crawler-content.ts,
+// scripts/prerender-blog.mjs). Once React mounts, the visible page carries the
+// same content with its own <h1>, so the injected copy is a duplicate h1 and a
+// duplicate heading outline in the DOM. Drop it here: the initial HTML that
+// bots fetch is unchanged, and humans (and DOM-based a11y audits) see one outline.
+for (const id of ["__crawler_content__", "__prerendered_blog_post__"]) {
+  document.getElementById(id)?.remove();
+}
+
 // Error recovery for installed PWA users: if React fails to mount,
 // clear caches and reload so they don't get stuck on a broken screen.
 try {
