@@ -25,9 +25,9 @@ ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
 
 ## 3 · What waits on Rye
 
-Ledger §10: ADR-49 ruling (priority 1, default approve), counsel questions §3c, Saberra
-commercial ask, possibly tenant access for stage 0, contract publish-vs-private, the eight
-diagnostic sentences (not yet due).
+Ledger §10. ADR-49 is RESOLVED (Rye approved it 2026-08-14, ruling R10 — Managed-plane code is
+authorized). Still open: counsel questions §3c, Saberra commercial ask, possibly tenant access
+for stage 0, contract publish-vs-private, the eight diagnostic sentences (not yet due).
 
 ## 4 · Re-measure at open (do not inherit)
 

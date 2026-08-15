@@ -139,7 +139,7 @@ confirmed from disk.
 | Key | Held by | Plane | Rotation owner | lastSuccessAt | lastFailureAt | ADR authorising platform-hold |
 |---|---|---|---|---|---|---|
 | `PLATFORM_ASSISTANT_KEY` | platform | fork deployment env only; never in `SECRET_KEYS`; never returned, not even masked | Rye | not instrumented (integration_health lands in C1) | — | shipped precedent (pre-dates ADR log for game-amora); cited in ADR-49 |
-| Saberra platform key (name TBD by Lane S build) | platform (proposed) | env-only, PLATFORM_ASSISTANT_KEY posture | Rye | — | — | **ADR-49 (PROPOSED — Rye has not ruled)** |
+| Saberra platform key (name TBD by Lane S build) | platform | env-only, PLATFORM_ASSISTANT_KEY posture | Rye | — | — | ADR-49 (**Accepted** 2026-08-14) |
 | Village-held keys (Connected/Included) | village | `SECRET_KEYS`: write-only to browser, read by server, masked to last4, admin-beats-env | village admin | — | — | n/a — never platform-held |
 
 ---
@@ -168,7 +168,7 @@ Open counsel questions and what each blocks:
 |---|---|---|---|
 | 1 | Lane A (memory foundation) — merges first | — | dispatched |
 | 2 | Lane C phase C1 (catalog, tier metadata, 503 lapse, dynamic secret slots, registry-driven cards, tier stamped at enable, **+ integration_health + correlation-id driver wrapper + liveness-window field** — promoted, §8-R6) | rebases on 1 at merge | dispatched |
-| 3 | Hub ADR-49 (Managed credential) — precedes any Managed credential code | Rye's ruling | DRAFTED this session; on Rye's list at priority 1 |
+| 3 | Hub ADR-49 (Managed credential) — precedes any Managed credential code | — | **ACCEPTED by Rye 2026-08-14.** Managed-plane code is authorized |
 | 4 | Lane C phase C2 (forgetMember/exportMember driver registry) — gates the first paid listing | 2, 3 | in Lane C brief; C2 code that touches the Managed plane waits on 3 |
 | 5 | Incident log (`integration_calls`) + liveness probe — ahead of the first Connected listing | 2 | queued, own dispatch |
 | 6 | Diagnostic path (reader, four outcomes, two answer tiers, no-model fallback, escape hatch via feedback relay) | 1, 2, 5 | queued; the eight sentences on Rye's list |
@@ -225,7 +225,7 @@ docs-only and do not touch main.
 
 | # | Blocker | On whom | Since | Blocks |
 |---|---|---|---|---|
-| B1 | ADR-49 ruling (Managed credential exception) | Rye | 2026-08-14 | Managed-credential code (C2 Managed plane, Lane S build, Lane H); NOT C1, NOT Lane A, NOT Lane S stages 0–5 |
+| ~~B1~~ | ~~ADR-49 ruling~~ **RESOLVED 2026-08-14: Rye approved.** Managed-plane code in C2, Lane S build, and Lane H are no longer ADR-blocked (Lane S build still waits on its stage gates and C1/C2; Lane H still waits on §3c Q1–3 for signatures) | — | — | — |
 | B2 | Contracting entity Q1–Q3 (§3c) | Rye + counsel | 2026-08-14 | CORE signing anything (Saberra DPA, vendor agreement) |
 | B3 | UBIT (§3c Q4) | Rye's accountant/counsel | 2026-08-14 | the first invoice only |
 | B4 | Saberra commercial terms (today's price, after-price, per-village floor, model+caching, measured cost per /ask) | Rye to ask; Lane S stage 1 drafts the ask | 2026-08-14 | whether Lane S build is worth scheduling |
@@ -241,6 +241,7 @@ docs-only and do not touch main.
 - 2026-08-14 · §0 state measured: hub 55cff89, game-amora 28dace2, 30 worktrees, 4-way migration scan → 0078/0079/0080 free. Proof: scan output in transcript.
 - 2026-08-14 · ADR-49 appended to `.ai/docs/DECISIONS.md` as PROPOSED; six terms registered in DOMAIN-LANGUAGE.md.
 - 2026-08-14 · Lanes A, C, S dispatched as background agents (opus), briefs amended per §8-R5/R6.
+- 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption.
 
 ---
 
@@ -286,6 +287,10 @@ docs-only and do not touch main.
 - **R9** (2026-08-14): Migration allocation A=0078, C=0079, S=0080 confirmed by 4-way scan (remote
   refs via `git log --all`, primary disk, all-30-worktree disk including scratchpads) at 28dace2.
   Never renumber: the ledger keys on filename and a rename replays the file.
+- **R10** (2026-08-14): **Rye approved ADR-49** (his words in-session: "approve ADR-49"). The
+  Managed credential plane — platform-owned, env-only, never in `SECRET_KEYS`, never returned,
+  in-product disclosure per listing, cap two with a transition slot, data-return on exit — is now
+  settled policy. Do not reopen without new evidence.
 
 ---
 
@@ -312,7 +317,7 @@ what only Rye can do; every item has a default so nothing blocks.
 
 | # | Item | Owner | Priority | Default | Done when |
 |---|---|---|---|---|---|
-| 1 | Rule on **ADR-49** (platform-held env-only Managed credential; scoped exception to CUSTOM_GAMES_MASTER_PLAN locked decision 1) | Rye | 1 | **Approve.** It generalises the shipped `PLATFORM_ASSISTANT_KEY` posture; disclosure ships in-product; nothing at rest in any DB | ADR-49 status flips Accepted (or Rejected + Managed tier redesigned) |
+| ~~1~~ | ~~Rule on ADR-49~~ **DONE 2026-08-14: approved.** | — | — | — | status flipped Accepted in DECISIONS.md |
 | 2 | Send counsel the **§3c questions** (entity standing, DPA posture, agency-vs-resale, **UBIT**) | Rye | 2 | Ask accountant/counsel this week; Q4 blocks only the first invoice | written answers land in §3c |
 | 3 | Send Saberra the **commercial-terms ask** (Lane S stage 1 drafts it: today's Amora price, after-price, per-village floor, model + caching, measured cost per /ask) | Rye sends | 2 | send when Lane S hands the draft | numbers recorded in §3a |
 | 4 | **Saberra tenant access** for stage 0 if Lane S cannot find a credential in env/config | Rye | 3 (only if asked) | provide the tenant API credential or run the two GETs himself | stage 0 numbers exist |
