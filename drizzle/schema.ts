@@ -5726,3 +5726,91 @@ export const governanceForkMarkerLinks = mysqlTable("governanceForkMarkerLinks",
   index("gov_marker_link_pid_idx").on(table.hyphaProposalId),
 ]));
 export type GovernanceForkMarkerLink = typeof governanceForkMarkerLinks.$inferSelect;
+
+/* ════════════════════════════════════════════════════════════════════
+ * THE $ReGen BUILDERS' POOL (ADR-50)
+ *
+ * ReGen Civics distributes a pool of $ReGen each lunar cycle across the
+ * free third-party modules villages are actually running. A module with a
+ * price is excluded by construction: its builder is paid by those villages.
+ *
+ * These tables hold STATEMENTS and never transactions. The hub computes
+ * what is owed; a human executes the transfers through Hypha from the
+ * treasury. server/blockchain.ts stays read-only, no wallet, no signing.
+ * Migration: 0227_module_builders_pool.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const modulePoolStatements = mysqlTable("modulePoolStatements", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Whole lunations since the Meeus reference (shared/lunar.ts). The SAME
+   *  numbering every village fork uses for its gratitude cycles. */
+  cycleNumber: int("cycleNumber").notNull(),
+  cycleStartsAt: timestamp("cycleStartsAt").notNull(),
+  cycleEndsAt: timestamp("cycleEndsAt").notNull(),
+  status: mysqlEnum("status", ["open", "computing", "computed", "executed"]).default("open").notNull(),
+  poolAmount: int("poolAmount").default(0).notNull(),
+  carryIn: int("carryIn").default(0).notNull(),
+  paid: int("paid").default(0).notNull(),
+  accrued: int("accrued").default(0).notNull(),
+  /** Dust and sub-floor shares: never minted, never rolled.
+   *  poolAmount + carryIn = paid + accrued + unallocated, always. */
+  unallocated: int("unallocated").default(0).notNull(),
+  /** sha256 of statementSnapshotInput(...), so anybody can recheck the inputs. */
+  snapshotHash: varchar("snapshotHash", { length: 64 }),
+  /** How each roster village answered: ok / carried / absent. */
+  roster: json("roster"),
+  computedAt: timestamp("computedAt"),
+  executedAt: timestamp("executedAt"),
+  executedBy: varchar("executedBy", { length: 120 }),
+  /** Hashes a human pasted back. Recorded, not verified on chain in v1. */
+  executionNote: text("executionNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("module_pool_cycle_once").on(table.cycleNumber),
+]));
+export type ModulePoolStatement = typeof modulePoolStatements.$inferSelect;
+
+export const modulePoolShares = mysqlTable("modulePoolShares", {
+  id: int("id").autoincrement().primaryKey(),
+  statementId: int("statementId").notNull(),
+  moduleId: varchar("moduleId", { length: 80 }).notNull(),
+  /** Frozen as the registry read that cycle: a statement is history. */
+  builtBy: varchar("builtBy", { length: 200 }),
+  /** The builder's ReGen Civics handle. A lookup key, never a wallet address. */
+  builtByAccount: varchar("builtByAccount", { length: 40 }),
+  userId: int("userId"),
+  address: varchar("address", { length: 60 }),
+  villages: int("villages").default(0).notNull(),
+  rawShare: decimal("rawShare", { precision: 18, scale: 6 }).default("0").notNull(),
+  amount: int("amount").default(0).notNull(),
+  state: mysqlEnum("state", ["payable", "no-account", "no-address", "unusable-address", "below-floor"]).notNull(),
+  /** Which cycle this accrual started waiting in, for the three-cycle lapse. */
+  accruedSinceCycle: int("accruedSinceCycle"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("module_pool_share_once").on(table.statementId, table.moduleId),
+  index("module_pool_share_state_idx").on(table.state, table.accruedSinceCycle),
+]));
+export type ModulePoolShare = typeof modulePoolShares.$inferSelect;
+
+/**
+ * The last answer each roster village gave.
+ *
+ * A village down on statement night is not a village that turned its modules
+ * off. It contributes this snapshot ONCE, flagged; the next failure
+ * contributes nothing until it answers again. `carriedForCycle` is what makes
+ * "once" mean once.
+ */
+export const modulePoolVillageSnapshots = mysqlTable("modulePoolVillageSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The NETWORK_GAMES id from shared/networkRegistry.ts. */
+  villageId: varchar("villageId", { length: 80 }).notNull(),
+  instanceId: varchar("instanceId", { length: 80 }),
+  /** Module ids serving at members or above. Counts only, never people. */
+  modules: json("modules"),
+  fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+  carriedForCycle: int("carriedForCycle"),
+}, (table) => ([
+  uniqueIndex("module_pool_village_once").on(table.villageId),
+]));
+export type ModulePoolVillageSnapshot = typeof modulePoolVillageSnapshots.$inferSelect;

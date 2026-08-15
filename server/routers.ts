@@ -28,6 +28,7 @@ import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
 import { governanceForksRouter } from "./routes/governanceForks";
+import { modulePoolRouter } from "./routes/modulePool";
 import { governanceRouter } from "./routes/governance";
 import { assemblyRouter } from "./routes/assembly";
 import { walletRouter } from "./routes/wallet";
@@ -184,6 +185,10 @@ export const appRouter = router({
   // Governance fork relay roster (ADR-46: the hub relays on-chain outcomes
   // to registered village-platform forks)
   governanceForks: governanceForksRouter,
+
+  // The $ReGen builders' pool (ADR-50: free third-party modules are paid from
+  // a pool each lunar cycle; the hub writes a statement, a human executes it)
+  modulePool: modulePoolRouter,
 
   // Governance pipeline (Stage 1: forum readiness + promotion patterns)
   governance: governanceRouter,

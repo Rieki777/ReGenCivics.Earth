@@ -202,6 +202,17 @@ export const MECHANICS_VARIABLE_FALLBACKS: Record<string, number> = {
   "hymnSubmissionWinnerReward": 3333,
   // SEEDS -> $ReGen claim rate ($ReGen per $1 USD)
   "seeds.regen_per_usd": SEEDS_REGEN_PER_USD,
+  // The $ReGen builders' pool (ADR-50): what ReGen Civics distributes each
+  // lunar cycle across the free third-party modules villages are running.
+  //
+  // Defaults to 0, which pays nobody. That is deliberate and is not a
+  // placeholder: the amount is a money decision and it is Rye's, so the
+  // machinery ships inert and starts paying the cycle after somebody sets this
+  // in the admin UI. A default that guessed at the number would start moving
+  // real value on a shipped-by-accident deploy. The design doc proposes 5,000
+  // (docs/MODULE_POOL_DESIGN.md, decision D1), which is half of
+  // gratitude.pool_per_cycle.
+  "pool.regen_per_cycle": 0,
 };
 
 export const MECHANICS_VARIABLE_KEYS = Object.keys(MECHANICS_VARIABLE_FALLBACKS);

@@ -727,6 +727,34 @@ async function startServer() {
     }
   });
 
+  // ── Builders' pool cron endpoint (ADR-50) ──────────────────────────────────
+  // Called DAILY by Railway cron: POST /api/cron/module-pool-statement
+  // (Bearer CRON_SECRET). Writes the cycle statement for the lunar cycle that
+  // has just closed, if it has not been written already.
+  //
+  // Daily rather than monthly on purpose: a lunation is 29.53 days and no cron
+  // expression lands on a new moon, so the job asks whether an unsettled closed
+  // cycle exists and does nothing on the ~28 days it does not. `count: 0` with
+  // a `skipped` detail is the normal answer, not a failure.
+  //
+  // It computes and records. It moves nothing: the statement is a document a
+  // human executes through Hypha from the treasury, and server/blockchain.ts
+  // stays read-only, no wallet, no signing.
+  app.post("/api/cron/module-pool-statement", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runModulePoolStatement } = await import("../jobs/moduleBuildersPool");
+      const report = await runModulePoolStatement();
+      return res.json({ ok: true, report });
+    } catch (err: any) {
+      log.error("cron module-pool-statement failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Harvest generation cron endpoint ───────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/harvest-generation (Bearer
   // CRON_SECRET). Scores transitions and drafts the eager channel for up to
