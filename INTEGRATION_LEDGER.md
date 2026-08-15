@@ -255,10 +255,18 @@ installed).
 gates per CLAUDE.md + regen-ship-gate:
 
 ```
-pnpm gate        # truncation audit + typecheck
-pnpm test        # + pnpm test:integration when server logic changed
-pnpm build       # anything affecting the bundle
+pnpm gate                                  # truncation audit + typecheck
+node scripts/check-migration-numbers.mjs   # BLOCKING in CI, omitted by CLAUDE.md (Lane P, 2026-08-15)
+node scripts/check-env-example.mjs         # BLOCKING in CI, omitted by CLAUDE.md (Lane P, 2026-08-15)
+pnpm test                                  # + pnpm test:integration when server logic changed
+pnpm build                                 # anything affecting the bundle
+pnpm audit --audit-level moderate          # ADVISORY (`|| true`) — never blocks
 ```
+
+CORRECTION 2026-08-15 (Lane P read `.github/workflows/` directly): the hub has **no
+bundle-budget gate** — that belongs to game-amora only; the coordinator's memory that "bundle
+budget and dependency audit both block" was wrong for the hub. Every hub lane enumerates the
+workflow's `run:` steps itself.
 
 Plus `/ship` (GOLDEN_RULE) before any push to main; push to main auto-deploys via Railway — poll
 `pnpm railway:deploys` to SUCCESS afterwards. Coordinator's own commits on `wt/integration` are
