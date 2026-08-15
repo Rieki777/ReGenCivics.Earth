@@ -174,7 +174,8 @@ Open counsel questions and what each blocks:
 | 6 | Diagnostic path (reader, four outcomes, two answer tiers, no-model fallback, escape hatch via feedback relay) | 1, 2, 5 | queued; the eight sentences on Rye's list |
 | 7 | Lane S stages 0–5 (not code, not blocked) | — | dispatched |
 | 8 | Lane S build | 2 (C1+C2), 3, 4; and stage gates §3a rule 7 | queued |
-| 9 | Lane H: hub side of Managed (shared vendor account, per-fork roster, billing line item, entity block) | 3; §3c Q1–3 for signatures | queued |
+| 9 | Lane H: hub side of Managed (shared vendor account, per-fork roster, billing line item, entity block) | ~~3~~ (ADR-49 accepted); §3c Q1–3 for signatures | queued |
+| 10 | Publish MODULE_LIBRARY_CONTRACT v1.0 on a public URL (hub page; version-stamped, since listings are accepted against a version) — Rye ruled publish, R11 | 2, 5 (clauses 9–12 must be mechanically true first) | queued |
 
 Merge order inside game-amora: **A first**, C rebases and reconciles `server/index.ts` by hunk, S
 last. Before any merge: `git cherry main <branch>`, never `--stat A...B`.
@@ -226,11 +227,11 @@ docs-only and do not touch main.
 | # | Blocker | On whom | Since | Blocks |
 |---|---|---|---|---|
 | ~~B1~~ | ~~ADR-49 ruling~~ **RESOLVED 2026-08-14: Rye approved.** Managed-plane code in C2, Lane S build, and Lane H are no longer ADR-blocked (Lane S build still waits on its stage gates and C1/C2; Lane H still waits on §3c Q1–3 for signatures) | — | — | — |
+| ~~B6~~ | ~~Contract publish-vs-private~~ **RESOLVED 2026-08-14: Rye ruled contracts are published on a URL** (R11). The sequencing constraint survives as queue item 10: nothing publishes until C1 + the incident log land, because clauses 9–12 describe machinery that does not exist yet | — | — | — |
 | B2 | Contracting entity Q1–Q3 (§3c) | Rye + counsel | 2026-08-14 | CORE signing anything (Saberra DPA, vendor agreement) |
 | B3 | UBIT (§3c Q4) | Rye's accountant/counsel | 2026-08-14 | the first invoice only |
 | B4 | Saberra commercial terms (today's price, after-price, per-village floor, model+caching, measured cost per /ask) | Rye to ask; Lane S stage 1 drafts the ask | 2026-08-14 | whether Lane S build is worth scheduling |
 | B5 | Saberra tenant credential/API access for stage 0 (`GET /backup`, `GET /stats`) | Lane S searches env/config first; escalates to Rye only if absent | 2026-08-14 | Lane S stage 0 numbers |
-| B6 | Contract publish-vs-private | Rye | 2026-08-14 | nothing until C1 + item 5 land (clauses 9–12 describe unbuilt machinery); then sending to any second vendor |
 
 ---
 
@@ -241,7 +242,8 @@ docs-only and do not touch main.
 - 2026-08-14 · §0 state measured: hub 55cff89, game-amora 28dace2, 30 worktrees, 4-way migration scan → 0078/0079/0080 free. Proof: scan output in transcript.
 - 2026-08-14 · ADR-49 appended to `.ai/docs/DECISIONS.md` as PROPOSED; six terms registered in DOMAIN-LANGUAGE.md.
 - 2026-08-14 · Lanes A, C, S dispatched as background agents (opus), briefs amended per §8-R5/R6.
-- 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption.
+- 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
+- 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log).
 
 ---
 
@@ -291,6 +293,11 @@ docs-only and do not touch main.
   Managed credential plane — platform-owned, env-only, never in `SECRET_KEYS`, never returned,
   in-product disclosure per listing, cap two with a transition slot, data-return on exit — is now
   settled policy. Do not reopen without new evidence.
+- **R11** (2026-08-14): **Rye ruled the contract is published on a URL** (his words: "contracts
+  are published on a url"), converting the negotiating position into a standard. Sequencing
+  constraint preserved as queue item 10: publication waits for C1 + the incident log, because
+  clauses 9–12 promise machinery that does not exist yet; and the published page is
+  version-stamped, since listings are accepted against a contract version.
 
 ---
 
@@ -321,5 +328,5 @@ what only Rye can do; every item has a default so nothing blocks.
 | 2 | Send counsel the **§3c questions** (entity standing, DPA posture, agency-vs-resale, **UBIT**) | Rye | 2 | Ask accountant/counsel this week; Q4 blocks only the first invoice | written answers land in §3c |
 | 3 | Send Saberra the **commercial-terms ask** (Lane S stage 1 drafts it: today's Amora price, after-price, per-village floor, model + caching, measured cost per /ask) | Rye sends | 2 | send when Lane S hands the draft | numbers recorded in §3a |
 | 4 | **Saberra tenant access** for stage 0 if Lane S cannot find a credential in env/config | Rye | 3 (only if asked) | provide the tenant API credential or run the two GETs himself | stage 0 numbers exist |
-| 5 | **Contract publish vs private** | Rye | 4 | publish on a URL — it converts a negotiating position into a standard — but only after C1 + incident log land | decision recorded; page ships or not |
+| ~~5~~ | ~~Contract publish vs private~~ **DONE 2026-08-14: publish on a URL** (R11; publication itself is queue item 10) | — | — | — | — |
 | 6 | The **eight diagnostic sentences** (4 outcomes × 2 tiers) | Rye approves; a lane drafts | 5 (not yet due) | lane drafts at queue item 6; Rye yes/no's | copy in repo passing check-voice |
