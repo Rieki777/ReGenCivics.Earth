@@ -25,7 +25,7 @@
  *   npx tsx scripts/seed-assembly-examples.ts --remove   # remove all demos
  *   npx tsx scripts/seed-assembly-examples.ts --dry-run  # show, write nothing
  *
- * Requires DATABASE_URL. Requires migration 0175 (proposals.isExample) applied.
+ * Requires DATABASE_URL. Requires migration 0226 (proposals.isExample) applied.
  */
 
 import * as mysql from "mysql2/promise";
@@ -233,14 +233,14 @@ async function insertThread(
   const [res] = (await conn.execute(
     `INSERT INTO forumPosts (categoryId, authorId, title, content, createdAt)
      VALUES (?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-    [categoryId, users.guide, title, `[EXAMPLE thread — a demonstration for the Assembly page]\n\n${body}`, agedDays],
+    [categoryId, users.guide, title, `[EXAMPLE thread: a demonstration for the Assembly page]\n\n${body}`, agedDays],
   )) as any;
   const postId = res.insertId as number;
   for (const r of replies) {
     await conn.execute(
       `INSERT INTO forumReplies (postId, authorId, content, createdAt)
        VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-      [postId, users[r.by], `[EXAMPLE comment — fictional]\n\n${r.body}`, Math.max(0, agedDays - 1)],
+      [postId, users[r.by], `[EXAMPLE comment: fictional]\n\n${r.body}`, Math.max(0, agedDays - 1)],
     );
   }
   return postId;
@@ -295,9 +295,14 @@ async function seed(conn: mysql.Connection) {
   )) as any;
   const decidingId = decidingRes.insertId as number;
   const bridgeKey = `demo-dec-${decidingId}`.slice(0, 16);
+  // Status 'on_chain_detected', not 'handoff_sent': the hourly
+  // reconcileHyphaBridges job re-checks every handoff_sent bridge older than an
+  // hour against Base, so a permanent demo row there would burn an RPC call
+  // every hour forever chasing a marker that will never appear on chain. This
+  // status also keeps it out of the webhook's candidate list.
   await conn.execute(
     `INSERT INTO hyphaBridges (bridgeKey, source, sourceId, targetDhoSlug, formKind, initiatorUserId, payload, status)
-     VALUES (?, 'other', ?, 'regen-games', 'propose_contribution', ?, ?, 'handoff_sent')`,
+     VALUES (?, 'other', ?, 'regen-games', 'propose_contribution', ?, ?, 'on_chain_detected')`,
     [bridgeKey, String(decidingId), users.guide, JSON.stringify({ example: true, title: DECIDING.title })],
   );
   await conn.execute(`UPDATE proposals SET hyphaBridgeKey = ? WHERE id = ?`, [bridgeKey, decidingId]);
@@ -342,10 +347,11 @@ async function seed(conn: mysql.Connection) {
     [
       evoId,
       JSON.stringify({ kind: "feature", ...EVOLUTION.spec, example: true }),
+      // No prUrl: the panel renders it as a "the code under review" link, and a
+      // demonstration must not hand anyone a dead GitHub URL. The launch-window
+      // timestamp is what makes the card read like a real in-flight ship.
       JSON.stringify({
         example: true,
-        prUrl: "https://github.com/Rieki777/regen-civics/pull/0",
-        prNumber: 0,
         launchWindowStartedAt: new Date(Date.now() - 8 * 3600_000).toISOString(),
       }),
     ],

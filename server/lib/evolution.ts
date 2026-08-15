@@ -529,8 +529,17 @@ export async function advanceLaunchWindows(): Promise<{ merged: number; waiting:
 export async function pauseShip(executionId: number, userId: number, reason: string): Promise<{ ok: boolean; error?: string }> {
   const database = await getDb();
   if (!database) return { ok: false, error: "Database unavailable" };
-  const [rows] = await database.execute(sql`SELECT status FROM governance_executions WHERE id = ${executionId} LIMIT 1`);
-  const status = (rows as unknown as any[])?.[0]?.status;
+  const [rows] = await database.execute(
+    sql`SELECT e.status, p.isExample FROM governance_executions e
+        JOIN proposals p ON p.id = e.proposalId
+        WHERE e.id = ${executionId} LIMIT 1`
+  );
+  const row = (rows as unknown as any[])?.[0];
+  // A demonstration ship is a fixed stand-in. The panel hides the control for
+  // examples; this refuses a direct call so the demo cannot be knocked out of
+  // shape.
+  if (row?.isExample) return { ok: false, error: "This is a demonstration ship and cannot be paused." };
+  const status = row?.status;
   if (status !== "shipping") return { ok: false, error: `Execution is ${status}, not shipping.` };
   await setExecutionDetail(executionId, { paused: true, pausedBy: userId, pauseReason: reason, pausedAt: new Date().toISOString() }, "paused");
   return { ok: true };
@@ -540,8 +549,16 @@ export async function pauseShip(executionId: number, userId: number, reason: str
 export async function rollbackShip(executionId: number, userId: number, reason: string): Promise<{ ok: boolean; revertUrl?: string; error?: string }> {
   const database = await getDb();
   if (!database) return { ok: false, error: "Database unavailable" };
-  const [rows] = await database.execute(sql`SELECT status, detail FROM governance_executions WHERE id = ${executionId} LIMIT 1`);
+  const [rows] = await database.execute(
+    sql`SELECT e.status, e.detail, p.isExample FROM governance_executions e
+        JOIN proposals p ON p.id = e.proposalId
+        WHERE e.id = ${executionId} LIMIT 1`
+  );
   const row = (rows as unknown as any[])?.[0];
+  // A demonstration ship never reaches 'shipped', so this is belt and braces.
+  // It stays because a rollback opens a real revert on GitHub, and that is the
+  // last place to discover a demo row leaked through.
+  if (row?.isExample) return { ok: false, error: "This is a demonstration ship and cannot be rolled back." };
   if (!row || row.status !== "shipped") return { ok: false, error: "Only a shipped execution can be rolled back." };
   const detail = typeof row.detail === "string" ? JSON.parse(row.detail) : (row.detail ?? {});
   if (!detail.commitSha) return { ok: false, error: "No commit SHA recorded for this execution." };
@@ -564,8 +581,14 @@ export async function checkCircuitBreaker(): Promise<{ tripped: boolean; consecu
   const database = await getDb();
   if (!database) return { tripped: false, consecutive: 0 };
   const threshold = await readEvolutionVar("evolution.circuit_breaker_failures", 2);
+  // Demonstration rows are excluded: the breaker drops the autonomy tier for
+  // the whole community, so a seeded example must never be able to count
+  // toward tripping it.
   const [rows] = await database.execute(
-    sql`SELECT status FROM governance_executions WHERE kind = 'feature' AND status IN ('shipped','failed','rolled_back') ORDER BY id DESC LIMIT ${threshold}`
+    sql`SELECT e.status FROM governance_executions e
+        JOIN proposals p ON p.id = e.proposalId
+        WHERE e.kind = 'feature' AND e.status IN ('shipped','failed','rolled_back') AND p.isExample = 0
+        ORDER BY e.id DESC LIMIT ${threshold}`
   );
   const recent = (rows as unknown as any[]).map((r) => String(r.status));
   const consecutive = recent.length >= threshold && recent.every((s) => s === "failed" || s === "rolled_back") ? recent.length : 0;
@@ -593,6 +616,10 @@ async function announceShip(proposalId: number): Promise<void> {
     if (!database) return;
     const props = await database.select().from(proposals).where(eq(proposals.id, proposalId)).limit(1);
     if (props.length === 0) return;
+    // Never announce a demonstration. This mails every governance subscriber,
+    // so an example reaching here would tell the whole community the game
+    // evolved when nothing did.
+    if (props[0].isExample) return;
     await database.execute(sql`UPDATE proposals SET status = 'implemented' WHERE id = ${proposalId}`);
     const { notifyGovernanceSubscribers } = await import("../jobs/assemblyNotify");
     void notifyGovernanceSubscribers(
