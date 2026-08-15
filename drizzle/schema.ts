@@ -3233,6 +3233,10 @@ export const proposals = mysqlTable("proposals", {
   hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 32 }),
   executionPayload: json("executionPayload"),
   objectionLog: json("objectionLog"),
+  // Seeded teaching example (0226). When 1, this proposal is a demonstration:
+  // it renders at its lifecycle stage but is blocked from advancing or firing
+  // any side effect. Seeded/removed by scripts/seed-assembly-examples.ts.
+  isExample: tinyint("isExample").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

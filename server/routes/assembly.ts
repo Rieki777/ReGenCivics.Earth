@@ -326,6 +326,7 @@ export const assemblyRouter = router({
         aim: p.aim,
         lane: p.lane,
         category: p.category,
+        isExample: !!p.isExample,
         forumThreadId: p.forumThreadId,
         createdAt: p.createdAt,
         lastCallStartedAt: p.lastCallStartedAt,
@@ -359,7 +360,9 @@ export const assemblyRouter = router({
       };
     });
 
-    cards.sort((a, b) => b.signal.netPoints - a.signal.netPoints);
+    // Pin demonstration cards to the top so they read as the guided example,
+    // then rank the rest by support.
+    cards.sort((a, b) => (b.isExample ? 1 : 0) - (a.isExample ? 1 : 0) || b.signal.netPoints - a.signal.netPoints);
     return cards;
   }),
 
@@ -516,12 +519,15 @@ export const assemblyRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
       const props = await db
-        .select({ authorId: proposals.authorId, status: proposals.status, hyphaBridgeKey: proposals.hyphaBridgeKey })
+        .select({ authorId: proposals.authorId, status: proposals.status, hyphaBridgeKey: proposals.hyphaBridgeKey, isExample: proposals.isExample })
         .from(proposals)
         .where(eq(proposals.id, input.proposalId))
         .limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
       const p = props[0];
+      if (p.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its Hypha vote is a stand-in and cannot be linked." });
+      }
       const isAdmin = ctx.user.role === "admin" || ctx.user.role === "superadmin";
       if (p.authorId !== ctx.user.id && !isAdmin) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposer or an admin can link the Hypha proposal." });
@@ -567,22 +573,26 @@ export const assemblyRouter = router({
         ? await db.select().from(governanceExecutions).where(inArray(governanceExecutions.proposalId, ids))
         : [];
       const execMap = new Map(execRows.map((e) => [e.proposalId, e]));
-      return rows.map((p) => {
-        const exec = execMap.get(p.id) ?? null;
-        return {
-          id: p.id,
-          title: p.title,
-          aim: p.aim,
-          status: p.status,
-          lane: p.lane,
-          forumThreadId: p.forumThreadId,
-          hyphaBridgeKey: p.hyphaBridgeKey,
-          updatedAt: p.updatedAt,
-          execution: exec
-            ? { kind: exec.kind, status: exec.status, detail: exec.detail, executedAt: exec.executedAt }
-            : null,
-        };
-      });
+      return rows
+        .map((p) => {
+          const exec = execMap.get(p.id) ?? null;
+          return {
+            id: p.id,
+            title: p.title,
+            aim: p.aim,
+            status: p.status,
+            lane: p.lane,
+            isExample: !!p.isExample,
+            forumThreadId: p.forumThreadId,
+            hyphaBridgeKey: p.hyphaBridgeKey,
+            updatedAt: p.updatedAt,
+            execution: exec
+              ? { kind: exec.kind, status: exec.status, detail: exec.detail, executedAt: exec.executedAt }
+              : null,
+          };
+        })
+        // Demonstration first, then the real record in recency order.
+        .sort((a, b) => (b.isExample ? 1 : 0) - (a.isExample ? 1 : 0));
     }),
 
   /** The Evolution Engine's dashboard: the autonomy tier, the two dials, and
@@ -603,19 +613,34 @@ export const assemblyRouter = router({
       .where(sql`${governanceExecutions.kind} = 'feature' AND ${governanceExecutions.status} IN ('pending','shipping','paused','shipped')`)
       .orderBy(sql`${governanceExecutions.id} DESC`)
       .limit(25);
+    // Which of these belong to demonstration proposals, so the UI can label
+    // them and no one mistakes the stand-in ship for a live one.
+    const flightProposalIds = inFlight.map((e) => e.proposalId);
+    const exampleIds = new Set<number>();
+    if (flightProposalIds.length) {
+      const exRows = await db
+        .select({ id: proposals.id })
+        .from(proposals)
+        .where(sql`${inArray(proposals.id, flightProposalIds)} AND ${proposals.isExample} = 1`);
+      for (const r of exRows) exampleIds.add(r.id);
+    }
     return {
       tier: Math.trunc(tier),
       launchWindowHours,
       circuitBreakerFailures,
       launchRequireApproval: launchRequireApproval >= 1,
-      inFlight: inFlight.map((e) => ({
-        id: e.id,
-        proposalId: e.proposalId,
-        status: e.status,
-        detail: e.detail,
-        createdAt: e.createdAt,
-        executedAt: e.executedAt,
-      })),
+      inFlight: inFlight
+        .map((e) => ({
+          id: e.id,
+          proposalId: e.proposalId,
+          status: e.status,
+          detail: e.detail,
+          isExample: exampleIds.has(e.proposalId),
+          createdAt: e.createdAt,
+          executedAt: e.executedAt,
+        }))
+        // Demonstration ship first.
+        .sort((a, b) => (b.isExample ? 1 : 0) - (a.isExample ? 1 : 0)),
     };
   }),
 
@@ -659,6 +684,9 @@ export const assemblyRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
       const { proposal, gates } = await checkAdvanceGates(input.proposalId);
+      if (proposal.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. It stays in Forming to show how the stage works." });
+      }
       if (proposal.authorId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposal owner can move it to Decide." });
       }
@@ -720,6 +748,9 @@ export const assemblyRouter = router({
       const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
       const p = props[0];
+      if (p.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal and cannot change stage." });
+      }
       if (!p.lastCallStartedAt || p.status !== "signaling") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not in last call." });
       }
@@ -744,6 +775,9 @@ export const assemblyRouter = router({
       const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
       const p = props[0];
+      if (p.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal and cannot change lane." });
+      }
       if (p.lane !== "minor" || p.status !== "signaling") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not in the minor lane." });
       }
@@ -763,7 +797,10 @@ export const assemblyRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      await db.execute(sql`UPDATE proposals SET restingSince = NULL WHERE id = ${input.proposalId} AND restingSince IS NOT NULL`);
+      // An example never rests (markResting filters it out), so this matches
+      // nothing today. The clause keeps the rule uniform: no write touches a
+      // demonstration row.
+      await db.execute(sql`UPDATE proposals SET restingSince = NULL WHERE id = ${input.proposalId} AND restingSince IS NOT NULL AND isExample = 0`);
       return { ok: true };
     }),
 
@@ -778,6 +815,9 @@ export const assemblyRouter = router({
       const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
       const p = props[0];
+      if (p.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. It never launches a real vote on Hypha." });
+      }
       if (p.status !== "threshold_reached") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not ready to launch." });
       }
@@ -807,16 +847,16 @@ export const assemblyRouter = router({
     if (!db) return { unsignaled: [], readyToMove: [], minorPending: [], inLastCall: [] };
     const [unsignaledRows] = await db.execute(
       sql`SELECT p.id, p.title FROM proposals p
-          WHERE p.status = 'signaling' AND p.restingSince IS NULL
+          WHERE p.status = 'signaling' AND p.restingSince IS NULL AND p.isExample = 0
             AND NOT EXISTS (SELECT 1 FROM proposal_signals s WHERE s.proposalId = p.id AND s.userId = ${ctx.user.id})
           ORDER BY p.createdAt DESC LIMIT 10`
     );
     const [minorRows] = await db.execute(
-      sql`SELECT id, title, createdAt FROM proposals WHERE status = 'signaling' AND lane = 'minor' ORDER BY createdAt ASC LIMIT 10`
+      sql`SELECT id, title, createdAt FROM proposals WHERE status = 'signaling' AND lane = 'minor' AND isExample = 0 ORDER BY createdAt ASC LIMIT 10`
     );
     const [mineReady] = await db.execute(
       sql`SELECT id, title, status, readyToLaunchAt FROM proposals
-          WHERE authorId = ${ctx.user.id} AND status IN ('signaling', 'threshold_reached') ORDER BY createdAt DESC LIMIT 10`
+          WHERE authorId = ${ctx.user.id} AND status IN ('signaling', 'threshold_reached') AND isExample = 0 ORDER BY createdAt DESC LIMIT 10`
     );
     const quietDays = await readGameVariable("governance.minor_lane_quiet_days", 7);
     return {
@@ -857,8 +897,11 @@ export const assemblyRouter = router({
         }
       }
 
-      const target = await db.select({ id: proposals.id, status: proposals.status }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      const target = await db.select({ id: proposals.id, status: proposals.status, isExample: proposals.isExample }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (target.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      if (target[0].isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its signals are a fixed example." });
+      }
       if (target[0].status !== "signaling") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Signals are open while a proposal is forming." });
       }
@@ -910,6 +953,9 @@ export const assemblyRouter = router({
       const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
       const proposal = props[0];
+      if (proposal.isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its synthesis is a fixed example." });
+      }
 
       const existing = await db.select().from(proposalSynthesis).where(eq(proposalSynthesis.proposalId, input.proposalId)).limit(1);
       const prior = existing[0] ?? null;
@@ -1056,8 +1102,11 @@ export const assemblyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const props = await db.select({ authorId: proposals.authorId }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      const props = await db.select({ authorId: proposals.authorId, isExample: proposals.isExample }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      if (props[0].isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its objection is a fixed example." });
+      }
       if (props[0].authorId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposal owner can mark the objection addressed." });
       }

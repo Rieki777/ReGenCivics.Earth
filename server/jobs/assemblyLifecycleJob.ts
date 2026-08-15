@@ -37,7 +37,7 @@ export async function expireLastCall(): Promise<JobReport> {
     const hours = await readVar("governance.last_call_hours", 48);
     const [due] = await db.execute(
       sql`SELECT id, title, aim FROM proposals
-          WHERE status = 'signaling' AND lastCallStartedAt IS NOT NULL
+          WHERE status = 'signaling' AND lastCallStartedAt IS NOT NULL AND isExample = 0
             AND lastCallStartedAt < DATE_SUB(NOW(), INTERVAL ${hours} HOUR)
           LIMIT 25`
     );
@@ -65,7 +65,7 @@ export async function passQuietMinorLane(): Promise<JobReport> {
     const [result] = await db.execute(
       sql`UPDATE proposals
           SET status = 'passed'
-          WHERE status = 'signaling' AND lane = 'minor'
+          WHERE status = 'signaling' AND lane = 'minor' AND isExample = 0
             AND createdAt < DATE_SUB(NOW(), INTERVAL ${quietDays} DAY)
             AND (objectionLog IS NULL OR JSON_LENGTH(objectionLog) = 0)
           LIMIT 25`
@@ -84,7 +84,7 @@ export async function markResting(): Promise<JobReport> {
     const [result] = await db.execute(
       sql`UPDATE proposals p
           SET p.restingSince = NOW()
-          WHERE p.status = 'signaling' AND p.restingSince IS NULL AND p.lastCallStartedAt IS NULL
+          WHERE p.status = 'signaling' AND p.restingSince IS NULL AND p.lastCallStartedAt IS NULL AND p.isExample = 0
             AND p.createdAt < DATE_SUB(NOW(), INTERVAL ${restDays} DAY)
             AND NOT EXISTS (
               SELECT 1 FROM proposal_signals s

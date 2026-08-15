@@ -47,11 +47,17 @@ export async function applyRatificationOutcome(
   if (!db) return { ok: false, error: "DB unavailable" };
 
   const props = await db
-    .select({ status: proposals.status })
+    .select({ status: proposals.status, isExample: proposals.isExample })
     .from(proposals)
     .where(eq(proposals.id, proposalId))
     .limit(1);
   if (props.length === 0) return { ok: false, error: "Proposal not found" };
+  // A demonstration proposal is seeded at in_governance, the one status this
+  // function accepts. Refuse it here so the single shared path covers both
+  // callers: the admin relay and the on-chain webhook cascade.
+  if (props[0].isExample) {
+    return { ok: false, error: "This is a demonstration proposal. It carries no binding vote to confirm." };
+  }
   if (props[0].status !== "in_governance") {
     return { ok: false, error: `This proposal is ${props[0].status}; only a proposal at a binding vote can be confirmed.` };
   }

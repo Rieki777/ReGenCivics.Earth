@@ -209,7 +209,8 @@ async function sendDigestEmails(
             SUM(CASE WHEN status = 'threshold_reached' THEN 1 ELSE 0 END) AS readyToLaunch,
             SUM(CASE WHEN status = 'in_governance' THEN 1 ELSE 0 END) AS deciding,
             SUM(CASE WHEN status IN ('passed', 'implemented') AND updatedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS passedThisWeek
-          FROM proposals`);
+          FROM proposals
+          WHERE isExample = 0`);
         const c: any = (counts as any)?.[0] ?? {};
         const parts: string[] = [];
         if (Number(c.newForming) > 0) parts.push(`${c.newForming} new forming`);

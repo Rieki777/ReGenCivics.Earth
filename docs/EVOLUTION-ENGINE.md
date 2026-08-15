@@ -71,6 +71,7 @@ outcome (`confirmedBy`), and — for variable changes — a `proposalId` column 
 | The one-paste link that arms the machine path: the proposer pastes the Hypha proposal URL after launching, storing the on-chain id (the log carries only the numeric id, never our title marker) | `assembly.recordHyphaProposal` |
 | Admin relay of the Hypha outcome — now the FALLBACK for unlinked bridges or webhook downtime; same shared path, idempotent against the machine | `assembly.confirmRatification` → `server/lib/ratification.ts` |
 | Public status: tier, window, breaker, in-flight ships | `assembly.evolutionStatus` |
+| Demonstration proposals: `proposals.isExample` (0226) marks a seeded teaching row. It renders at its lifecycle stage on `/assembly` so a first-time visitor sees the whole flow, and every advancement and side-effect point refuses it: dispatch, launch windows, pause, rollback, the circuit breaker, the ship announcement, ratification (both the admin relay and the webhook cascade), signals in both signalling systems, and the lifecycle cron. Seeded and removed by `scripts/seed-assembly-examples.ts` | `server/lib/evolution.ts`, `server/lib/ratification.ts`, `server/routes/assembly.ts`, `server/routes/proposals.ts` |
 | Tests: 24 across `server/evolution.test.ts` (live-DB, end to end) and `server/evolution-guard.test.ts` (pure) | |
 
 Autonomy tiers: **0** humans apply by hand · **1** (default) variable and

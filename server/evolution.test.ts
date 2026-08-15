@@ -244,6 +244,36 @@ describe("dispatchExecution (ratification dispatcher, Rung 1)", () => {
 
     await database!.delete(proposals).where(eq(proposals.id, pid));
   });
+
+  it.skipIf(skipIfNoDb)("refuses a demonstration proposal and touches nothing", async () => {
+    // A seeded example (0226) carries a payload that would otherwise apply
+    // cleanly. The isExample guard must stop it before the variable moves or
+    // an execution row is written, so a demo row on the Assembly page can
+    // never reach real game state.
+    const database = await getDb();
+    const [ins] = await database!.execute(
+      sql`INSERT INTO proposals (authorId, title, category, status, aim, executionPayload, isExample)
+          VALUES (${testUserId}, 'Evolution suite test: demonstration row', 'game_variable', 'passed',
+                  'Prove an example never executes',
+                  ${JSON.stringify({ kind: "variable_change", variableKey: TEST_VAR_KEY, newValue: 9 })}, 1)`
+    );
+    const pid = Number((ins as any).insertId);
+    const valueBefore = Number((await fetchTestVar()).value);
+
+    const r = await dispatchExecution(pid);
+    expect(r.status).toBe("skipped");
+    expect(r.detail).toMatch(/Demonstration/);
+
+    // The valid payload did not apply, and nothing was recorded.
+    expect(Number((await fetchTestVar()).value)).toBe(valueBefore);
+    const execs = await database!
+      .select()
+      .from(governanceExecutions)
+      .where(eq(governanceExecutions.proposalId, pid));
+    expect(execs.length).toBe(0);
+
+    await database!.delete(proposals).where(eq(proposals.id, pid));
+  });
 });
 
 describe("bounds_change (the community widens its own sandbox)", () => {

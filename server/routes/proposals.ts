@@ -27,6 +27,17 @@ export async function requireCoCreatorPlus(db: any, userId: number) {
   }
 }
 
+/** Refuse a write against a seeded demonstration proposal (0226). Examples
+ * render everywhere so people can see each stage, and they must never move. */
+async function refuseIfExample(db: any, proposalId: number) {
+  const [row] = await db.execute(
+    sql`SELECT isExample FROM proposals WHERE id = ${proposalId} LIMIT 1`
+  ).then((r: any) => r[0] ?? []);
+  if (row?.isExample) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its signals are a fixed example." });
+  }
+}
+
 export const proposalsRouter = router({
   // ─── List proposals (public) ───────────────────────────────────────────
 
@@ -116,6 +127,12 @@ export const proposalsRouter = router({
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await requireCoCreatorPlus(db, ctx.user.id);
 
+      // A seeded demonstration proposal takes no votes. This is the older
+      // signalVoteCount system (distinct from the Assembly's proposal_signals),
+      // and without this check a member could push an example past the
+      // threshold and flip it to threshold_reached.
+      await refuseIfExample(db, input.proposalId);
+
       // INSERT IGNORE: silently skip if the user already voted
       await db.execute(sql`
         INSERT IGNORE INTO proposal_votes (proposalId, userId)
@@ -156,6 +173,8 @@ export const proposalsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
+      await refuseIfExample(db, input.proposalId);
+
       await db.execute(sql`
         DELETE FROM proposal_votes
         WHERE proposalId = ${input.proposalId} AND userId = ${ctx.user.id}
@@ -179,6 +198,8 @@ export const proposalsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+
+      await refuseIfExample(db, input.proposalId);
 
       // Verify the current user is the proposal author or an admin
       const [proposal] = await db.execute(sql`

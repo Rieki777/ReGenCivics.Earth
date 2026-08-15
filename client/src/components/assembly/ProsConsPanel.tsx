@@ -36,9 +36,11 @@ interface Props {
   synthesis: SynthesisData | null;
   isOwner: boolean;
   isAuthenticated: boolean;
+  /** A demonstration proposal: its synthesis is fixed, so hide the refresh. */
+  isExample?: boolean;
 }
 
-export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated }: Props) {
+export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated, isExample }: Props) {
   const utils = trpc.useUtils();
   const [addressing, setAddressing] = useState(false);
   const [replyUrl, setReplyUrl] = useState("");
@@ -80,7 +82,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated 
           {synthesis?.lastSyncedAt && (
             <span className="text-white/60 text-[10px]">synced {timeAgoShort(synthesis.lastSyncedAt)}</span>
           )}
-          {isAuthenticated && (
+          {isAuthenticated && !isExample && (
             <button
               type="button"
               onClick={() => refresh.mutate({ proposalId })}

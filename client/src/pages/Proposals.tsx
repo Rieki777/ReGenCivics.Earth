@@ -297,23 +297,36 @@ export default function Proposals() {
                 const status = getStatusStyle(p.status);
                 return (
                   <AnimatedSection key={p.id} delay={i * 0.03}>
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-white/20 transition-colors">
+                    <div className={`rounded-xl p-5 transition-colors border ${p.isExample ? "bg-[#7dd87d]/[0.06] border-dashed border-[#7dd87d]/30" : "bg-white/5 border-white/10 hover:border-white/20"}`}>
                       <div className="flex gap-3">
-                        {/* Vote button */}
-                        <button
-                          onClick={() => handleVote(p.id)}
-                          className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${
-                            hasVoted ? "text-[#7dd87d]" : "text-white/60 hover:text-[#7dd87d]"
-                          }`}
-                          aria-label={hasVoted ? "Remove vote" : "Signal vote"}
-                        >
-                          <ChevronUp className="w-5 h-5" />
-                          <span className="text-sm font-bold">{p.signalVoteCount ?? 0}</span>
-                        </button>
+                        {/* Vote button. A demonstration proposal takes no votes,
+                            so it shows the count without an action. */}
+                        {p.isExample ? (
+                          <div className="flex flex-col items-center gap-0.5 min-w-[44px] pt-1 text-white/40">
+                            <ChevronUp className="w-5 h-5" />
+                            <span className="text-sm font-bold">{p.signalVoteCount ?? 0}</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleVote(p.id)}
+                            className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${
+                              hasVoted ? "text-[#7dd87d]" : "text-white/60 hover:text-[#7dd87d]"
+                            }`}
+                            aria-label={hasVoted ? "Remove vote" : "Signal vote"}
+                          >
+                            <ChevronUp className="w-5 h-5" />
+                            <span className="text-sm font-bold">{p.signalVoteCount ?? 0}</span>
+                          </button>
+                        )}
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {p.isExample && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] text-[10px] font-bold uppercase tracking-wide">
+                                Example
+                              </span>
+                            )}
                             <h3 className="font-bold text-white text-sm">{p.title}</h3>
                             <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded-full border ${status.color}`}>
                               {status.label}
