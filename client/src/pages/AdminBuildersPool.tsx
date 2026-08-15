@@ -33,7 +33,7 @@ const WHY: Record<string, string> = {
 };
 
 export default function AdminBuildersPool() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isAdmin = !!user && (user.role === "admin" || user.role === "superadmin");
   const [note, setNote] = useState("");
 
