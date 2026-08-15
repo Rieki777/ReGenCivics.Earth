@@ -14,7 +14,7 @@
  *      from that elder; an @handle mention in a reply brings the named elder in.
  *      "Once" is structural, so a branch ends at the elder's answer.
  */
-import { and, asc, desc, eq, gt, inArray, isNotNull, notInArray } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, like, not, notInArray } from "drizzle-orm";
 import * as db from "../db";
 import { getDb } from "../db";
 import { forumCategories, forumPosts, forumReplies, shipQuestActions } from "../../drizzle/schema";
@@ -110,6 +110,9 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
       and(
         gt(forumPosts.createdAt, earliestCutoff),
         eq(forumPosts.isLocked, 0),
+        // Assembly walkthrough threads are fictional teaching content; elders
+        // must not engage with them (same marker seed-assembly-examples.ts writes)
+        not(like(forumPosts.content, "[EXAMPLE%")),
         notInArray(forumPosts.authorId, botUserIds),
         excludedCatIds.length ? notInArray(forumPosts.categoryId, excludedCatIds) : undefined,
         shipQuestPostIds.length ? notInArray(forumPosts.id, shipQuestPostIds) : undefined,
@@ -208,7 +211,7 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
   const recentReplies = await database
     .select({ id: forumReplies.id, postId: forumReplies.postId, parentReplyId: forumReplies.parentReplyId, content: forumReplies.content, authorId: forumReplies.authorId })
     .from(forumReplies)
-    .where(and(gt(forumReplies.createdAt, earliestCutoff), notInArray(forumReplies.authorId, botUserIds)))
+    .where(and(gt(forumReplies.createdAt, earliestCutoff), notInArray(forumReplies.authorId, botUserIds), not(like(forumReplies.content, "[EXAMPLE%"))))
     .orderBy(desc(forumReplies.createdAt))
     .limit(WINDOW);
 

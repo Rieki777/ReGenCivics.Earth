@@ -291,6 +291,8 @@ export function serveStatic(app: Express) {
     "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "Visiting the most beautiful places on earth in reverence and regeneration.", image: `${BASE_URL}/images/ship/ship-zion-redrock-hero.jpg` },
     "/network":     { title: "The Network of Regenerative Games: ReGen Civics", description: "Land projects running their own coordination game, built with ReGen Civics and owned outright by the project." },
     "/custom-games": { title: "Custom Games for Land Projects: ReGen Civics", description: "Your own coordination game: your domain, your brand, your data. Built with ReGen Civics, owned 100% by your project." },
+    "/custom-games/apply": { title: "Design Your Game: Custom Games Application | ReGen Civics", description: "Start your project's coordination game: a guided intake that turns your community's vision, people, and economy into a working game design." },
+    "/assembly":    { title: "Assembly | ReGen Civics", description: "The Game's community-governed space. Raise proposals, signal where you stand, and help decide what advances to an on-chain vote. Home of the Evolution Engine." },
   };
 
   let indexHtmlCache: string | null = null;

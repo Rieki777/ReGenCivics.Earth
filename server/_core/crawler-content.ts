@@ -200,6 +200,24 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       ],
     },
   },
+  "/assembly": {
+    html: `
+      <article>
+        <h1>The Assembly: community governance for the Game</h1>
+        <p>The Assembly is the community-governed space of the ReGen Civics Game. Anyone in the community can raise a proposal, signal where they stand, and help decide what advances to an on-chain vote on <a href="/governance">Hypha on Base</a>. The Fund is governed separately; this page governs the Game.</p>
+        <h2>How a proposal moves</h2>
+        <ul>
+          <li>Forming: the idea gathers signals and a synthesized read of the forum conversation.</li>
+          <li>Last call: a final window for late objections before the vote opens.</li>
+          <li>Deciding: the binding vote runs on Hypha on Base.</li>
+          <li>Record: the full trail of every ratified change stays public: the conversation, the vote, and what changed.</li>
+        </ul>
+        <h2>The Evolution Engine</h2>
+        <p>The Game grows by the hands of the people playing it. When a proposal passes, our own automation can take it from there: build it, ship it, and let the Game evolve. Every machine-built change waits 24 hours in the open before going live, any Steward can pause it in that window, a person signs off on each ship while the system earns trust, and two failed ships in a row pull the machine back a level automatically. The community votes on how much room the machine gets.</p>
+        <p>Walkthrough proposals marked Example show each stage with realistic content. Real decisions live alongside them and in the <a href="/community">community forum</a>. Read <a href="/governance">how governance works</a> or see the <a href="/tokenomics">token model</a> behind voting voice.</p>
+      </article>
+    `,
+  },
   "/apply": {
     html: `
       <article>

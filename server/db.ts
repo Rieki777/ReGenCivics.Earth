@@ -2937,6 +2937,10 @@ export async function getRecentForumPostsForDigest(): Promise<{ id: number; titl
         not(like(forumPosts.title, 'Test%')),
         not(like(forumPosts.title, '%Vitest%')),
         not(like(forumPosts.title, '%[test]%')),
+        // Exclude Assembly walkthrough threads (seed-assembly-examples.ts marks
+        // every demo body with this prefix); they are fictional teaching content
+        // and must not reach subscriber digests as real community activity
+        not(like(forumPosts.content, '[EXAMPLE%')),
       )
     )
     .orderBy(desc(forumPosts.replyCount))
