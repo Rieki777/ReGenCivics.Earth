@@ -58,9 +58,11 @@ export function TableOfContents() {
   return (
     <div className="hidden lg:block fixed right-8 top-32 w-72 max-h-[calc(100vh-200px)] overflow-y-auto z-40">
       <div className="bg-[#1a472a]/90 backdrop-blur-sm rounded-xl border border-[#7dd87d]/30 p-5 sticky top-32">
-        <h3 className="text-sm font-bold text-[#7dd87d] mb-4 uppercase tracking-wide">
+        {/* h2: this sidebar renders ahead of the page h1, so an h3 read as a
+            level skip on any page that opens with it. */}
+        <h2 className="text-sm font-bold text-[#7dd87d] mb-4 uppercase tracking-wide">
           On This Page
-        </h3>
+        </h2>
         
         <nav className="space-y-2">
           {sections.map((section) => (

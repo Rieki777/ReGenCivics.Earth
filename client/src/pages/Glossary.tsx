@@ -351,9 +351,11 @@ export default function Glossary() {
                 <div className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-[#7dd87d]/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-white font-bold text-base mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                      {/* h2: each term is a top-level section of the glossary,
+                          and nothing sits between it and the page h1. */}
+                      <h2 className="text-white font-bold text-base mb-1" style={{ fontFamily: "var(--font-display)" }}>
                         {entry.term}
-                      </h3>
+                      </h2>
                       <span className="text-[#7dd87d] text-[10px] uppercase tracking-wider font-bold">
                         {entry.category}
                       </span>

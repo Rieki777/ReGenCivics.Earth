@@ -1263,7 +1263,8 @@ export default function Opportunity() {
                     { title: "Competitive Landscape", items: ["BlackRock launched natural capital fund", "Brookfield raised $15B for transition investing", "Window for pioneering coordination infrastructure narrows"] },
                   ].map((section, i) => (
                     <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10">
-                      <h4 className="font-bold text-[#ffd700] text-sm mb-2">{section.title}</h4>
+                      {/* h3: these sit directly under the section h2 above. */}
+                      <h3 className="font-bold text-[#ffd700] text-sm mb-2">{section.title}</h3>
                       <div className="space-y-1">
                         {section.items.map((item, j) => (
                           <p key={j} className="text-xs text-white/60 flex items-start gap-2">
@@ -1276,7 +1277,7 @@ export default function Opportunity() {
                   ))}
                 </div>
                 <div className="bg-[#ffd700]/10 rounded-xl p-4 border border-[#ffd700]/20">
-                  <h4 className="font-bold text-[#ffd700] text-sm mb-2">Early Investor Advantages</h4>
+                  <h3 className="font-bold text-[#ffd700] text-sm mb-2">Early Investor Advantages</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
                     {[
                       "Lower entry valuation (1 CHF = 1 $RCivics in early years)",
@@ -1413,7 +1414,8 @@ export default function Opportunity() {
                 { q: "If token liquidity markets don't develop:", a: "We have multiple liquidity pathways: exchange listings (primary plan), annual tender offers (fund buys back at NAV), increased redemption caps, or strategic buyer for entire fund. Token markets are the preferred mechanism but not the only mechanism. Investors should assume limited liquidity and invest with long-term horizon regardless." },
               ].map((item, i) => (
                 <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10 mb-3">
-                  <h4 className="font-bold text-amber-400 text-sm mb-2">{item.q}</h4>
+                  {/* h3: first level inside the "What Could Go Wrong?" h2. */}
+                  <h3 className="font-bold text-amber-400 text-sm mb-2">{item.q}</h3>
                   <p className="text-xs text-white/70 leading-relaxed">{item.a}</p>
                 </div>
               ))}
@@ -1586,9 +1588,10 @@ export default function Opportunity() {
 
               {/* Regeneration is our foundation */}
               <div className="mt-6 bg-[#0d2818]/70 border border-[#7dd87d]/30 rounded-2xl p-5 md:p-6">
-                <h4 className="text-base md:text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
+                {/* h3: first level inside the "Risk Factors & Mitigation" h2. */}
+                <h3 className="text-base md:text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
                   Regeneration is our foundation
-                </h4>
+                </h3>
                 <p className="text-white/85 text-sm md:text-base leading-relaxed">
                   Every month we hold a project, we are doing the work. Planting fruiting trees,
                   healing soil, building infrastructure, making the land more abundant and more

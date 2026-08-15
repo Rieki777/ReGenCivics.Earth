@@ -305,12 +305,14 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                     />
                   </div>
 
-                  <h3
+                  {/* h2, not h3: this card grid is the only content between the
+                      page h1 above and the footer, so an h3 here skipped a level. */}
+                  <h2
                     className="text-base md:text-lg font-bold text-white mb-1"
                     style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.9)' }}
                   >
                     {card.title}
-                  </h3>
+                  </h2>
                   <p className="text-white/70 text-[10px] md:text-xs font-semibold uppercase tracking-wider mb-2" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.9)' }}>
                     {card.tagline}
                   </p>

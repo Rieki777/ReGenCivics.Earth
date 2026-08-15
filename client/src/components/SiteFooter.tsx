@@ -2,6 +2,12 @@
  * SiteFooter - Shared footer component for all pages.
  * Includes: copyright, social links, legal links, Manage Cookies, and email preferences.
  * Mobile-first layout matching the enchanted forest theme.
+ *
+ * Section headings are h2, not h3. The footer mounts on every page, including
+ * ones whose body has no h2 at all (the /custom-games/apply chat view is one),
+ * and an h3 there jumped straight from the page h1 to level 3. h2 is the level
+ * these actually are: top-level footer sections. Sizes come from the utility
+ * classes, so the tag level carries no visual weight either way.
  */
 
 import { Link } from "wouter";
@@ -85,7 +91,7 @@ export default function SiteFooter() {
         {/* Footer CTA grid: Suggest + Gratitude */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#7dd87d]/15 to-[#4a7c59]/10 border border-[#7dd87d]/30 text-center">
-            <h3 className="text-[#7dd87d] text-lg font-semibold mb-1">Help shape this platform</h3>
+            <h2 className="text-[#7dd87d] text-lg font-semibold mb-1">Help shape this platform</h2>
             <p className="text-white/70 text-sm mb-3">
               Propose features, report bugs, vote on what ships next.
             </p>
@@ -98,7 +104,7 @@ export default function SiteFooter() {
           </div>
           <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#d4a574]/15 to-[#4a7c59]/10 border border-[#d4a574]/30 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <h3 className="text-[#d4a574] text-lg font-semibold">Send gratitude</h3>
+              <h2 className="text-[#d4a574] text-lg font-semibold">Send gratitude</h2>
               <span className="group relative inline-flex">
                 <Info className="w-4 h-4 text-[#d4a574]/70 cursor-help" tabIndex={0} aria-label="What gratitude is" />
                 <span
@@ -127,12 +133,12 @@ export default function SiteFooter() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm">
           {/* Explore */}
           <div>
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Explore
-            </h3>
+            </h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/fund" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -159,12 +165,12 @@ export default function SiteFooter() {
 
           {/* Participate */}
           <div>
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Participate
-            </h3>
+            </h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/seasons" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -191,12 +197,12 @@ export default function SiteFooter() {
 
           {/* Game */}
           <div>
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Game
-            </h3>
+            </h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/game" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -228,12 +234,12 @@ export default function SiteFooter() {
 
           {/* Learn */}
           <div>
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Learn
-            </h3>
+            </h2>
             <ul className="space-y-2">
               <li><Link href="/blog" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Blog</Link></li>
               <li><Link href="/glossary" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Glossary</Link></li>
@@ -245,12 +251,12 @@ export default function SiteFooter() {
 
           {/* Legal */}
           <div>
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Legal
-            </h3>
+            </h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/privacy-policy" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -277,12 +283,12 @@ export default function SiteFooter() {
 
           {/* Subscribe + Preferences */}
           <div className="col-span-2 md:col-span-1">
-            <h3
+            <h2
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Stay in the Loop
-            </h3>
+            </h2>
             <NewsletterSignupInline className="mb-4" />
             <ul className="space-y-2">
               <li>

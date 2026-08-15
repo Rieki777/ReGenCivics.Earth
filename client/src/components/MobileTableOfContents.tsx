@@ -128,7 +128,9 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
           <div className="absolute bottom-0 left-0 right-0 bg-[#1a472a] rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-[#1a472a] border-b border-[#7dd87d]/20 px-4 py-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Jump to Section</h3>
+              {/* h2 to match TableOfContents: this drawer renders ahead of the
+                  page h1, so an h3 read as a level skip. */}
+              <h2 className="text-lg font-bold text-white">Jump to Section</h2>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"

@@ -626,9 +626,10 @@ function LiquidityPoolVisual() {
 
   return (
     <div className="bg-[#0d2818]/60 rounded-2xl border border-[#7dd87d]/20 p-6">
-      <h4 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
+      {/* h3: renders directly under the "Liquidity Pools and Token Swaps" h2. */}
+      <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
         How Liquidity Pools Work
-      </h4>
+      </h3>
       <div className="flex items-center gap-3 mb-6 p-4 bg-[#1a472a]/40 rounded-xl">
         <Droplets className="w-5 h-5 text-[#4a9f9f] flex-shrink-0" />
         <p className="text-white/75 text-sm">{steps[step].label}</p>
@@ -687,9 +688,10 @@ function ReturnsFlowDiagram() {
 
   return (
     <div ref={ref} className="bg-[#0d2818]/60 rounded-2xl border border-[#7dd87d]/20 p-6">
-      <h4 className="text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
+      {/* h3: renders directly under the "How Returns Flow" h2. */}
+      <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
         Distribution Breakdown
-      </h4>
+      </h3>
       <p className="text-white/60 text-sm mb-6">
         Portfolio Distributions go to <strong className="text-[#7dd87d]">$RCivics holders</strong>. Management fees split 50% Council / 50% all RCVoice holders.
       </p>
@@ -1018,7 +1020,7 @@ export default function Tokenomics() {
                 <div className="bg-[#1a472a]/40 rounded-2xl border border-[#7dd87d]/20 p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <RefreshCw className="w-5 h-5 text-[#7dd87d]" />
-                    <h4 className="font-bold text-white">Network Circulation</h4>
+                    <h3 className="font-bold text-white">Network Circulation</h3>
                   </div>
                   <p className="text-white/70 text-sm leading-relaxed safe-prose">
                     Land projects use their funds to pay alliance organisations for services wherever possible - legal support, ecological design, technology, financial modelling, organisational development. Every payment within the network strengthens the whole.
@@ -1027,7 +1029,7 @@ export default function Tokenomics() {
                 <div className="bg-[#1a472a]/40 rounded-2xl border border-[#d4a574]/20 p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <Zap className="w-5 h-5 text-[#d4a574]" />
-                    <h4 className="font-bold text-white">Shared Abundance</h4>
+                    <h3 className="font-bold text-white">Shared Abundance</h3>
                   </div>
                   <p className="text-white/70 text-sm leading-relaxed safe-prose">
                     ReGen Civics distributes returns directly to its members. Profits are shared proportionally among investors, land projects, alliance organisations, and players. Every surplus generated from fees, yields, or contributions flows back to the people who created it.
@@ -1036,7 +1038,7 @@ export default function Tokenomics() {
                 <div className="bg-[#1a472a]/40 rounded-2xl border border-[#4a9f9f]/20 p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <TreeDeciduous className="w-5 h-5 text-[#4a9f9f]" />
-                    <h4 className="font-bold text-white">Backed by Regeneration</h4>
+                    <h3 className="font-bold text-white">Backed by Regeneration</h3>
                   </div>
                   <p className="text-white/70 text-sm leading-relaxed safe-prose">
                     As we regenerate land and communities, the assets backing $RCivics increase in value. A food forest producing abundant yields is worth more than degraded farmland. Regeneration is the return.
@@ -1083,9 +1085,9 @@ export default function Tokenomics() {
             <div className="grid md:grid-cols-2 gap-6">
               <LiquidityPoolVisual />
               <div className="bg-[#0d2818]/60 rounded-2xl border border-[#7dd87d]/20 p-6">
-                <h4 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
+                <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
                   What a Token Swap Means
-                </h4>
+                </h3>
                 <div className="space-y-4">
                   {[
                     { icon: ArrowLeftRight, color: "#7dd87d", title: "Equal Value Exchange", desc: "Two organisations swap equity or value-backed tokens of equal value. Both now hold a stake in each other." },
