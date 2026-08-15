@@ -27,7 +27,6 @@ import { NETWORK_GAMES, type NetworkGame } from "@shared/networkRegistry";
 import { MODULE_BUILDERS, moduleBuildersById } from "@shared/moduleBuilders";
 import { cycleBoundsByNumber, lastClosedCycle } from "@shared/lunar";
 import {
-  POOL_ACCRUAL_CYCLES,
   POOL_DUST_FLOOR,
   computeStatement,
   statementSnapshotInput,
@@ -249,21 +248,32 @@ export async function resolveIdentities(
 }
 
 /**
- * What earlier cycles left owing.
+ * What the previous cycle left owing, carried into this one.
  *
- * Only shares that are still inside the accrual window carry. Anything that has
- * waited longer than POOL_ACCRUAL_CYCLES has lapsed to the treasury and is not
- * counted again; it stays in its own statement as history.
+ * WHAT THIS IS AND IS NOT. It is the sum of the previous statement's unpayable
+ * lines, added to this cycle's pool and RE-SPLIT by this cycle's usage. It is
+ * not an escrow held for the builder who earned it. A builder who links an
+ * address keeps earning from the cycles after they do, and the amount their
+ * silence contributed goes back to the pool the modules are sharing.
+ *
+ * Per-builder escrow with a lapse after three cycles is proposed in the design
+ * doc (D6) and is deliberately NOT built here. It needs a claim path, a way to
+ * pay somebody for a cycle whose statement a human already executed, and a
+ * decision about what happens when a module changes hands. Each of those is a
+ * question for Rye, and guessing at all three inside a first version would put
+ * a wrong answer in a table that money is later reconciled against.
+ *
+ * `accruedSinceCycle` on the share row records when a line first went unpaid,
+ * so the escrow rule can be built later against real history rather than
+ * starting from nothing.
  */
 export async function carryInFor(cycleNumber: number, db: any): Promise<number> {
-  const oldest = cycleNumber - POOL_ACCRUAL_CYCLES;
   const rows: any = await db.execute(sql`
     SELECT COALESCE(SUM(s.amount), 0) AS total
     FROM modulePoolShares s
     JOIN modulePoolStatements st ON st.id = s.statementId
     WHERE s.state IN ('no-account','no-address','unusable-address')
       AND st.cycleNumber = ${cycleNumber - 1}
-      AND COALESCE(s.accruedSinceCycle, st.cycleNumber) > ${oldest}
   `);
   const row = rows?.[0]?.[0] ?? rows?.rows?.[0] ?? null;
   return Number(row?.total ?? 0);

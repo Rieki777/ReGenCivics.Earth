@@ -25,7 +25,7 @@ import { getDb } from "../db";
 import { modulePoolShares, modulePoolStatements } from "../../drizzle/schema";
 import { MODULE_BUILDERS } from "@shared/moduleBuilders";
 import { cycleBoundsByNumber } from "@shared/lunar";
-import { POOL_ACCRUAL_CYCLES, POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement } from "@shared/modulePool";
+import { POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement } from "@shared/modulePool";
 
 /** One statement's public face: module ids, counts, amounts. No people, no villages. */
 function publicView(statement: any, shares: any[]) {
@@ -94,7 +94,6 @@ export const modulePoolRouter = router({
   /** How the pool works, as data, so the page never hardcodes a rule. */
   terms: publicProcedure.query(() => ({
     dustFloor: POOL_DUST_FLOOR,
-    accrualCycles: POOL_ACCRUAL_CYCLES,
     /** Modules the pool is able to pay at all. Ids and credits, nothing else. */
     payableModules: MODULE_BUILDERS.map((b) => ({
       moduleId: b.moduleId,

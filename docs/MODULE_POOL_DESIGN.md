@@ -192,13 +192,25 @@ and nothing accumulates anywhere.
 **An unpaid builder's share is a different thing from a remainder, and is the one
 thing that does roll.** Flooring dust and sub-floor shares are arithmetic leftovers
 that belong to nobody. A share computed for a named builder who has no ReGen
-Civics account or no linked Base address belongs to somebody: it was earned, the
-statement names who earned it, and the only thing missing is somewhere to send it.
-That amount is carried into the next cycle **on top of** the pool, for up to three
-cycles (D6), and the statement prints the carry-in it received and the carry-out
-it produced so consecutive statements chain by addition.
+Civics account or no linked Base address was earned by somebody, and the statement
+names who. That amount is carried into the NEXT cycle's pool, on top of it, and
+the statement prints the carry-in it received and the accrual it produced so
+consecutive statements chain by addition.
 
-The distinction in one line: **remainders evaporate, accruals wait.**
+**What v1 does NOT do, said plainly: it is not an escrow.** The carried amount
+joins the next cycle's pool and is re-split by that cycle's usage. A builder who
+links an address in month three earns fully from month three onward; they do not
+receive the specific amounts their silence contributed in months one and two.
+
+Holding a share for a named builder until they claim it is what D6 proposes, and
+it is deliberately not built. It needs a claim path, a way to pay somebody for a
+cycle whose statement a human already executed, and an answer for what happens
+when a module changes hands. Those are three decisions for Rye, and guessing at
+all three inside a first version would put a wrong answer into a table that money
+is later reconciled against. `modulePoolShares.accruedSinceCycle` records when a
+line first went unpaid, so the escrow rule can be built later against real history.
+
+The distinction in one line: **remainders evaporate, accruals go back in the pot.**
 
 Two properties worth stating:
 
@@ -373,7 +385,7 @@ load-bearing on the code shape except D7.
 | D3 | **Minimum cycles listed before eligibility** | one full cycle | A module that appeared mid-cycle has not been used for a cycle. It also removes the incentive to switch something on the day before settlement. |
 | D4 | **Does Amora's own village count?** | yes | It is a real village with real members running real modules. Excluding it would mean the metric ignores the only live deployment. |
 | D5 | **Dust floor** | 1 $ReGen | Below this a transfer can cost more than it carries. |
-| D6 | **Unclaimed shares: roll or lapse?** | roll 3 cycles, then lapse to treasury | Three cycles is about 88 days: long enough for a builder to notice a statement naming them and open an account, short enough that the carry does not become a permanent liability nobody can reconcile. Note this DIVERGES from the gratitude pool, where nothing rolls at all (section 6). The divergence is deliberate, and if Rye would rather have one rule everywhere, "nothing rolls" is the simpler system and the change is small. |
+| D6 | **Unclaimed shares: roll, escrow, or lapse?** | **BUILT: rolls into the next cycle's pool and is re-split.** Not an escrow. | The built behaviour needs no decision and cannot go wrong: nothing is lost, nothing is owed to anybody in perpetuity, and every cycle's numbers close. What is NOT built is holding a share for the builder who earned it until they claim it, which is the version that most rewards a builder for showing up late. It needs three answers first: how does a builder claim, how do you pay for a cycle a human already executed and signed off, and who owns the accrual when a module changes hands. If Rye wants the escrow, those are the questions; if not, v1 is already coherent and the row can be closed. |
 | D7 | **The orphan lunar clock** (section 5) | left in place, untouched | `server/lib/lunar.ts` has no callers and an epoch 6.79 hours off the one everything real uses. Deleting dead code is not this lane's call, and it holds a `moonPhase` helper somebody may have intended to use. My recommendation is to delete it: a second file named `lunar` that silently disagrees is a trap that only ever fires as a distribution dispute. |
 | D8 | **Zero-priced listings** | eligible | Charging nothing is not charging. If Rye wants "declares any pricing record at all ⇒ out", it is a one-line change and one test. |
 | D9 | **Who executes the statement** | Rye, or whoever holds the treasury | There is no code path; this is a name on a checklist. |

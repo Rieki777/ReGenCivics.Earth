@@ -19,8 +19,18 @@
 /** Below this, a transfer can cost the treasury more than it carries. */
 export const POOL_DUST_FLOOR = 1;
 
-/** How many cycles an unpayable share waits before it lapses to the treasury. */
-export const POOL_ACCRUAL_CYCLES = 3;
+/**
+ * PROPOSED, and not enforced anywhere yet (design doc D6).
+ *
+ * The v1 behaviour is simpler and is what the job actually does: an unpayable
+ * share rolls into the next cycle's pool and is re-split by that cycle's usage.
+ * There is no per-builder escrow, so there is nothing for a timer to expire.
+ *
+ * Kept as a named number so the proposal has one home, and deliberately not
+ * read by the job or published by the router: a rule the code does not enforce
+ * must not be served to anybody as though it were the rule.
+ */
+export const PROPOSED_ACCRUAL_CYCLES = 3;
 
 /**
  * Why a share is not being paid out this cycle.
