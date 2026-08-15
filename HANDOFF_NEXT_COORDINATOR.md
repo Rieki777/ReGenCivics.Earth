@@ -28,6 +28,30 @@ since 08-03 (queue 32) — ignore them, do not treat as red. Hub worktree `.env`
 PRODUCTION `DATABASE_URL` behind a BOM — never run DB suites in a hub worktree without checking
 which host it names.
 
+**UPDATE 2026-08-15 ~19:50 EDT — NOTHING IS IN FLIGHT.** game-amora main = `68f832e` (live, verified);
+hub main = `cbec306` (HS PR 2; PR 1's projections verified live at 19:07 EDT, PR 2's deploy was
+being polled at handoff — re-probe `GET /api/trpc/activityFeed.list` and expect NO `actorId` key).
+Every lane of rounds 1–3, the cost programme, the round-2 fix set (+V2 closing proof), and the two
+hub security PRs is merged. Lane worktrees are dormant on disk (all pushed; `wt-store-pool-strings`,
+`wt-cost`, `wt-batch`, `wt-quests-cta`, `wt-store360`, `wt-images`, `wt-builder*`, `wt-fix-*`,
+`wt-liveqa*`, `regen-pool`, `regen-pii-fix`) — safe to prune with `git worktree remove` once
+their branches are confirmed merged (`git branch -r --merged origin/main`).
+
+**Rye's open actions at handoff (sorted):** 1. rotate hub event check-in tokens + counts-only
+ledger audit (item 18 — DUE, the fix is live); 2. send the Saberra stage-1 letter (that session
+delivers it); 3. counsel §3c; 4. review-agent `ANTHROPIC_API_KEY`; 5. pool amount / escrow /
+orphan clock; 6. HSTS domain inventory; 7. `buildRedirectUrl` gate (item 19); 8. per-user token
+ceiling; 9. branch protection if not applied.
+
+**Ready queue (nothing dispatched):** 5 incident log + liveness probe; 6 diagnostic path (needs
+Rye's eight sentences); 9 Lane H; 10 publish the contract URL (after 5); 20 store perf; 24
+`.invalid` health snapshot; 25/31 assistant enum + shelf lever; 28 GameMechanics z-70 bar; 32 hub
+broken workflows; 33 two upload sites; 34 `loop.e2e:1015` race; 38–40 hub pre-existing defects
+(localFood INSERT case bug, ToolDetail white-screen, whole-row helpers); ContributorCard
+`suggestedTier` fallback (HS PR 2 note). Lane S build gated on B4/B5/B7.
+
+(Older in-flight notes below are historical.)
+
 **In flight (background agents die with the session — check worktrees, never re-dispatch over
 pushed work):**
 - **HS** — hub security. Worktree `C:/Users/taren/Downloads/regen-pii-fix`, branch `wt/pii-fix`.
