@@ -384,6 +384,7 @@ export default function Community() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
           <Input
             placeholder="Search posts and topics..."
+            aria-label="Search posts and topics"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"

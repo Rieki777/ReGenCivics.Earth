@@ -525,6 +525,7 @@ function LPDispatch() {
             <input
               type="text"
               placeholder="Your name (optional)"
+              aria-label="Your name (optional)"
               value={name}
               onChange={e => setName(e.target.value)}
               className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/50"
@@ -532,6 +533,7 @@ function LPDispatch() {
             <input
               type="email"
               placeholder="your@email.com"
+              aria-label="Email address for the LP Dispatch"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required

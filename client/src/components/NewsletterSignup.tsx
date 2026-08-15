@@ -84,6 +84,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="your@email.com"
+          aria-label="Email address for the ReGen Civics newsletter"
           required
           className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-[#7dd87d]/50 text-sm"
           style={{ fontFamily: "var(--font-body)" }}

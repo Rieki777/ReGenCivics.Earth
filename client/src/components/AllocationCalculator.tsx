@@ -173,7 +173,7 @@ export default function AllocationCalculator() {
                   Hypothetical Portfolio Value (NAV)
                 </p>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger aria-label="What Hypothetical Portfolio Value (NAV) means">
                     <Info className="w-3.5 h-3.5 text-white/60" />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -213,7 +213,7 @@ export default function AllocationCalculator() {
                     Estimated Cumulative Cash Distributions (Net to You)
                   </p>
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger aria-label="How estimated cumulative cash distributions are calculated">
                       <Info className="w-3.5 h-3.5 text-white/60" />
                     </TooltipTrigger>
                     <TooltipContent>
@@ -270,6 +270,9 @@ export default function AllocationCalculator() {
                   </p>
                 </div>
                 <button
+                  role="switch"
+                  aria-checked={earmarking}
+                  aria-label="Earmark to a specific land project"
                   onClick={() => setEarmarking(!earmarking)}
                   className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
                     earmarking ? "bg-[#7dd87d]" : "bg-white/20"

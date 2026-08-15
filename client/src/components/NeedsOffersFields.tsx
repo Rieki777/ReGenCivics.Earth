@@ -6,6 +6,8 @@
  * Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
  */
 
+import { useId } from "react";
+
 interface NeedsOffersFieldsProps {
   needsText: string;
   offersText: string;
@@ -36,6 +38,11 @@ export function NeedsOffersFields({
   needsPlaceholder = "Tools, skills, materials, hands. Specific asks find matches.",
   offersPlaceholder = "Skills, time, tools, materials you'd share with the network.",
 }: NeedsOffersFieldsProps) {
+  // Five forms render this component, so the label/control ids have to be
+  // unique per instance rather than hard-coded.
+  const uid = useId();
+  const needsId = `needs-${uid}`;
+  const offersId = `offers-${uid}`;
   const label =
     variant === "dark" ? "block text-white/80 text-sm mb-1" : "block text-[#1a472a] text-sm font-medium mb-1";
   const hint = variant === "dark" ? "text-white/60 text-xs" : "text-[#1a472a]/75 text-xs";
@@ -47,8 +54,9 @@ export function NeedsOffersFields({
   return (
     <div className="space-y-4">
       <div>
-        <label className={label}>{needsLabel}</label>
+        <label htmlFor={needsId} className={label}>{needsLabel}</label>
         <textarea
+          id={needsId}
           value={needsText}
           onChange={(e) => onNeedsChange(e.target.value.slice(0, 2000))}
           rows={2}
@@ -57,8 +65,9 @@ export function NeedsOffersFields({
         />
       </div>
       <div>
-        <label className={label}>{offersLabel}</label>
+        <label htmlFor={offersId} className={label}>{offersLabel}</label>
         <textarea
+          id={offersId}
           value={offersText}
           onChange={(e) => onOffersChange(e.target.value.slice(0, 2000))}
           rows={2}
