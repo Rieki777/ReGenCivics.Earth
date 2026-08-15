@@ -19,10 +19,14 @@ ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
 - **Lane A** — **LANDED on main `8e02dd0`** 2026-08-14, 11 gates green, 1010/0/0. If the CI-run
   result on that SHA is not yet in the ledger changelog, read it first (`gh run list --commit`).
   A live acceptance run (screenshot + real-village numbers) is on Rye's list, needs his key.
-- **Lane C** (library platform C1, amended: + integration_health + correlation id + liveness
-  field) — cuts `wt-library` / `wt/module-library` from `28dace2`. Migration 0079. Told to
-  rebase onto main `8e02dd0` at its landing turn and about the email-config empty-value defect
-  in its zone (queue item 11).
+- **Lane C** — **DONE, observed live**: main `d14b160`, CI green ×2, live build marker matches.
+  C1 (amended) + C2 both landed. Its contract-enforcement gap list is adopted at
+  `docs/integration-program/CONTRACT_ENFORCEMENT_GAPS_2026-08-14.md` and sources the queue.
+
+**The opening round is CLOSED.** Nothing is dispatched right now. Next actionable queue items:
+5 (incident log + probe), 6 (diagnostic path, needs the eight sentences from Rye), the 11+13
+small-fixes dispatch, 9 (Lane H), 10 (contract page, after 5). Lane S build stays gated on
+Rye's letter and Saberra's answers (B4/B5/B7).
 - **Lane S** — DONE for this phase, reported 2026-08-14 20:21. Stages 1–5 drafted and adopted at
   `docs/integration-program/lane-s/`; stage 0 BLOCKED: no tenant credential has ever been issued
   (B5, only Rye can obtain; the stage-1 letter carries the ask). Findings: no hard-delete
