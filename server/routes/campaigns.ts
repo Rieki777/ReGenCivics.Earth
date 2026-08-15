@@ -14,6 +14,9 @@ import {
   CrowdPoolingProject,
 } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
+import { canSeeFullRecord, isAdminUser, pickPublic } from "../lib/public-projection";
+import type { TrpcContext } from "../_core/context";
+import type { Campaign } from "../../drizzle/schema";
 import { sanitizeInput, sanitizeRichText } from "../_core/security";
 import { designCompanionTurn } from "../lib/crowdpool-coach";
 import { getGameVariable, recordScoreEvent, logActivityEvent } from "../game";
@@ -22,6 +25,51 @@ import { generateImage } from "../_core/imageGeneration";
 import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
+
+/**
+ * Statuses a campaign is not published in. A draft is a project still
+ * writing its pitch; pending_review and rejected are the review queue.
+ * None of the three is the creator's public statement.
+ */
+const UNPUBLISHED_CAMPAIGN_STATUSES: ReadonlyArray<string> = ["draft", "pending_review", "rejected"];
+
+/** The creator, admins, and anyone at all once it is published. */
+export function canSeeCampaign(user: TrpcContext["user"] | undefined, campaign: Campaign): boolean {
+  if (!UNPUBLISHED_CAMPAIGN_STATUSES.includes(campaign.status)) return true;
+  return canSeeFullRecord(user, campaign.userId);
+}
+
+/**
+ * Public columns of a `campaigns` row: everything the pitch is made of.
+ *
+ * Withheld: `adminNotes`, `reviewedBy` and `reviewedAt`, the review trail.
+ * `adminNotes` is where reviewers write what they actually think of a
+ * project, and it rode out on every campaign card in the gallery.
+ *
+ * `userId` stays: the client compares it to decide whether to show the
+ * creator their own manage controls.
+ */
+export const PUBLIC_CAMPAIGN_FIELDS = [
+  "id", "userId", "status", "durationDays", "startedAt",
+  "title", "description", "projectName", "location", "applicationId",
+  "financialTarget", "currency",
+  "vision", "landStatus", "landSize", "currentPhase", "timeline",
+  "legalStructure", "governanceModel", "membershipModel", "housingPlans",
+  "foodSystems", "waterSystems", "energySystems", "educationPrograms",
+  "communityEngagement", "impactMetrics", "challenges",
+  "teamSize", "teamDescription", "regenerativePractices",
+  "websiteUrl", "videoUrl", "projectImageUrl", "daoLink",
+  "totalValue", "landValue", "equipmentValue", "rolesValue", "resourcesValue",
+  "pledgedTotal", "pledgedLand", "pledgedEquipment", "pledgedRoles",
+  "pledgedResources", "pledgedFinancial",
+  "createdAt", "updatedAt", "publishedAt", "completedAt",
+  "generatedImageUrl", "isDemo", "forumPostId", "seasonId",
+] as const satisfies ReadonlyArray<keyof Campaign>;
+
+/** Admins keep the review trail; everyone else gets the projection. */
+export function toPublicCampaign(campaign: Campaign, user: TrpcContext["user"] | undefined) {
+  return isAdminUser(user) ? campaign : pickPublic(campaign, PUBLIC_CAMPAIGN_FIELDS);
+}
 
 /** Game variable with a fallback: crowdpool config may not be seeded yet. */
 async function getGameVariableOr(key: string, fallback: number): Promise<number> {
@@ -211,14 +259,17 @@ export const campaignsRouter = router({
       search: z.string().optional(),
       sort: z.enum(['most-funded', 'ending-soon', 'newest', 'most-contributors']).optional(),
     }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const campaignList = await db.listCampaigns(input?.status, input?.search);
+      // Unpublished campaigns are the creator's own. Asking for
+      // status=draft used to return every project's unfinished pitch.
+      const allowed = campaignList.filter((c) => canSeeCampaign(ctx.user, c));
       // Batch-fetch all images in one query (eliminates N+1)
-      const imagesMap = await db.getCampaignImagesForMany(campaignList.map(c => c.id));
-      const rows = campaignList.map((c) => {
+      const imagesMap = await db.getCampaignImagesForMany(allowed.map(c => c.id));
+      const rows = allowed.map((c) => {
         const images = imagesMap[c.id] ?? [];
         const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
-        return { ...c, coverImage, imageCount: images.length };
+        return { ...toPublicCampaign(c, ctx.user), coverImage, imageCount: images.length };
       });
 
       // isDemo rides along via select-all; sorting happens here so every
@@ -275,6 +326,9 @@ export const campaignsRouter = router({
     .query(async ({ input, ctx }) => {
       const campaign = await db.getCampaignById(input.id);
       if (!campaign) return null;
+      // Enumerable id: without this, every draft and rejected pitch was
+      // readable by anyone counting upwards.
+      if (!canSeeCampaign(ctx.user, campaign)) return null;
 
       // Get campaign items and images
       const items = await db.getCampaignItems(input.id);
@@ -302,7 +356,7 @@ export const campaignsRouter = router({
       }
 
       return {
-        ...campaign,
+        ...toPublicCampaign(campaign, ctx.user),
         items,
         images,
         coverImage,
@@ -980,9 +1034,14 @@ export const campaignsRouter = router({
   }),
 
   // Get campaigns owned by user
+  // Owning a campaign is not the same as being its reviewer: the creator
+  // gets their own pitch back, not adminNotes about it. Nothing in the
+  // client has ever rendered that column outside the seeds-claims admin tab.
   myCampaigns: protectedProcedure.query(async ({ ctx }) => {
     const allCampaigns = await db.listCampaigns();
-    return allCampaigns.filter(c => c.userId === ctx.user.id);
+    return allCampaigns
+      .filter(c => c.userId === ctx.user.id)
+      .map(c => toPublicCampaign(c, ctx.user));
   }),
 
   // Update campaign status (owner only)
