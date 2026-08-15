@@ -30,6 +30,11 @@ const linked = (address: string | null = ADDR): PoolIdentity => ({ userId: 7, ad
 
 describe("lunar cycle numbers", () => {
   it("uses the Meeus reference and the mean synodic month, matching the village forks", () => {
+    // shared/lunar.ts is the gratitude system's clock and the natural key for
+    // gratitude_cycles.cycleNumber. The pool reuses it rather than starting a
+    // third calendar, so a pool cycle number names the same lunation a village
+    // means by it. game-amora's shared/lunar.ts is a verbatim port of this file
+    // and these two constants are the whole of the agreement.
     expect(SYNODIC_MONTH_DAYS).toBe(29.53058867);
     expect(REFERENCE_NEW_MOON_MS).toBe(Date.UTC(2000, 0, 6, 18, 14, 0));
   });
@@ -52,16 +57,21 @@ describe("lunar cycle numbers", () => {
     expect(closed.endsAt.getTime()).toBeLessThan(now.getTime());
   });
 
-  it("stays 6.79 hours away from the hub's other lunar epoch, which is why this file exists", () => {
+  it("pins how far the OTHER, unused lunar clock in this repo sits from this one", () => {
     /*
-     * Pinned deliberately. server/lib/lunar.ts anchors on 2025-01-29 12:36 UTC
-     * and this file on Meeus; they are not a whole number of lunations apart,
-     * so their boundaries differ. If somebody reconciles the two clocks
-     * (ADR-50 D7) this test fails and points at the reason.
+     * server/lib/lunar.ts is a second lunar implementation anchored on
+     * 2025-01-29 12:36 UTC. It has no callers anywhere in the repository, and
+     * its epoch is NOT a whole number of lunations from the Meeus reference, so
+     * anything that imported it would compute cycle boundaries 6.79 hours away
+     * from every village and from gratitude.
+     *
+     * This test does not depend on that file. It states the size of the trap,
+     * so the number is written down somewhere before somebody reaches for the
+     * more conveniently named module (ADR-50, decision D7).
      */
-    const other = new Date("2025-01-29T12:36:00Z").getTime();
-    const lunations = (other - REFERENCE_NEW_MOON_MS) / (SYNODIC_MONTH_DAYS * 86400_000);
-    const offsetHours = ((lunations - Math.round(lunations)) * SYNODIC_MONTH_DAYS * 24);
+    const orphanEpoch = new Date("2025-01-29T12:36:00Z").getTime();
+    const lunations = (orphanEpoch - REFERENCE_NEW_MOON_MS) / (SYNODIC_MONTH_DAYS * 86400_000);
+    const offsetHours = (lunations - Math.round(lunations)) * SYNODIC_MONTH_DAYS * 24;
     expect(offsetHours).toBeCloseTo(6.787, 2);
   });
 });

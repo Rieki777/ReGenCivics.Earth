@@ -211,6 +211,7 @@ const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
 const CustomGamesApply = lazy(() => import("./pages/CustomGamesApply"));
 const Network = lazy(() => import("./pages/Network"));
+const BuildersPool = lazy(() => import("./pages/BuildersPool"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
@@ -413,6 +414,7 @@ function Router() {
       {/* The return half of the foundation credit: every custom game links back
           to regencivics.earth, and this page links back out to every game. */}
       <Route path={"/network"}><EB><Network /></EB></Route>
+      <Route path={"/builders-pool"}><EB><BuildersPool /></EB></Route>
       <Route path={"/federation"}><Redirect to="/network" /></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
       {/* Final fallback route (also serves /404; the earlier explicit /404 route handles direct hits) */}

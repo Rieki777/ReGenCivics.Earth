@@ -123,39 +123,36 @@ and public, and that the statement publishes per-module counts so an anomaly is
 visible to everyone before value moves. The human who executes the statement is
 the check, which is the same posture the whole payout path takes.
 
-## 5. The cycle boundary, and a real disagreement between two clocks
+## 5. The cycle boundary
 
-**Ruling: pool cycles key on the Meeus reference new moon, 2000-01-06 18:14 UTC,
-with the mean synodic month of 29.53058867 days.** A pool cycle number therefore
-means the same lunation as a `game-amora` gratitude cycle number.
+**The pool reuses `shared/lunar.ts`, the clock the gratitude system already runs
+on**: the mean synodic month of 29.53058867 days anchored to the Meeus reference
+new moon, 2000-01-06 18:14 UTC. Its `cycleNumber` is already the natural key for
+`gratitude_cycles.cycleNumber`, and `game-amora` `shared/lunar.ts` is a verbatim
+port of it, so one cycle number names the same lunation in the hub, in every
+village, and in a pool statement. No third calendar, and no new constants.
 
-Do not invent a third calendar. There are already two, and they disagree.
+The pool needed two functions that file did not have, and they are added to it
+rather than kept anywhere else: `cycleBoundsByNumber` (the inverse of the
+existing `cycleBoundsFor`) and `lastClosedCycle`. Nothing existing changed.
 
-| Clock | File | Epoch | Has a cycle NUMBER? |
-|---|---|---|---|
-| hub | `server/lib/lunar.ts` | 2025-01-29 12:36 UTC | no |
-| village | `game-amora` `shared/lunar.ts` | 2000-01-06 18:14 UTC (Meeus) | yes |
+### The trap next door
 
-Both use the same synodic month, so both produce stable 29.53-day cycles, but the
-epochs are **6.79 hours apart** and are not an integer number of lunations from
-each other. Measured, not assumed: the two epochs are 310.0096 lunations apart,
-and the current cycle starts at `2026-08-13T07:45Z` on the village clock against
-`2026-08-13T14:32Z` on the hub clock.
+There is a SECOND lunar implementation in this repository, `server/lib/lunar.ts`,
+anchored on 2025-01-29 12:36 UTC. **It has no callers anywhere**, which is the
+only reason it has never caused a problem.
 
-`game-amora` `shared/lunar.ts` opens by describing itself as a "VERBATIM PORT of
-regen-civics `shared/lunar.ts`" and warns, correctly, that two codebases
-disagreeing about which lunation an event belongs to is "the kind of divergence
-you discover months later in a distribution dispute". The file it claims to be a
-port of does not exist in this repository. The hub has `server/lib/lunar.ts`
-instead, with a different epoch and no cycle number at all.
+Its epoch is not a whole number of lunations from the Meeus reference: measured,
+the two are 310.0096 lunations apart, which puts their boundaries **6.79 hours**
+out of step. Anything that imported it, reaching for the more conveniently named
+module, would silently disagree with gratitude and with every village about which
+lunation an event belongs to. `game-amora` `shared/lunar.ts` names that exact
+failure in its own header: "the kind of divergence you discover months later in a
+distribution dispute."
 
-So the hub gains `shared/lunar.ts`: the counterpart file, carrying the Meeus
-constants and the cycle-number math, which makes the fork's claim true and gives
-hub statements a cycle id that a village can match. `server/lib/lunar.ts` is left
-byte-identical and keeps its own epoch, because gratitude cycles and the
-`/api/cron` clock already run on it and moving them is a separate change with its
-own blast radius. Reconciling the two is a decision for Rye (section 10, D7), not
-something to do quietly inside a payout feature.
+I have not deleted it, because deleting a file is not this lane's call and it
+carries a `moonPhase` helper somebody may have meant to use. The number is pinned
+in a test so it is written down, and D7 asks Rye whether it should go.
 
 A cycle is settled after its `endsAt`. The job runs on the first tick after a new
 moon and settles the cycle that just closed, never the one in progress.
@@ -377,7 +374,7 @@ load-bearing on the code shape except D7.
 | D4 | **Does Amora's own village count?** | yes | It is a real village with real members running real modules. Excluding it would mean the metric ignores the only live deployment. |
 | D5 | **Dust floor** | 1 $ReGen | Below this a transfer can cost more than it carries. |
 | D6 | **Unclaimed shares: roll or lapse?** | roll 3 cycles, then lapse to treasury | Three cycles is about 88 days: long enough for a builder to notice a statement naming them and open an account, short enough that the carry does not become a permanent liability nobody can reconcile. Note this DIVERGES from the gratitude pool, where nothing rolls at all (section 6). The divergence is deliberate, and if Rye would rather have one rule everywhere, "nothing rolls" is the simpler system and the change is small. |
-| D7 | **The two lunar clocks** (section 5) | pool uses Meeus; `server/lib/lunar.ts` untouched | Reconciling them properly means moving the hub's gratitude/cron clock by 6.79 hours, which is a change to a live system for a reason unrelated to this feature. Worth doing, separately. |
+| D7 | **The orphan lunar clock** (section 5) | left in place, untouched | `server/lib/lunar.ts` has no callers and an epoch 6.79 hours off the one everything real uses. Deleting dead code is not this lane's call, and it holds a `moonPhase` helper somebody may have intended to use. My recommendation is to delete it: a second file named `lunar` that silently disagrees is a trap that only ever fires as a distribution dispute. |
 | D8 | **Zero-priced listings** | eligible | Charging nothing is not charging. If Rye wants "declares any pricing record at all ⇒ out", it is a one-line change and one test. |
 | D9 | **Who executes the statement** | Rye, or whoever holds the treasury | There is no code path; this is a name on a checklist. |
 
