@@ -20,8 +20,12 @@ ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
   `28dace2`. Migration 0078. Merges first.
 - **Lane C** (library platform C1, amended: + integration_health + correlation id + liveness
   field) — cuts `wt-library` / `wt/module-library` from `28dace2`. Migration 0079.
-- **Lane S** (Saberra stages 0–5, no code) — stage 0 data audit can end the lane and that is a
-  successful outcome. Migration 0080 reserved for build stage.
+- **Lane S** — DONE for this phase, reported 2026-08-14 20:21. Stages 1–5 drafted and adopted at
+  `docs/integration-program/lane-s/`; stage 0 BLOCKED: no tenant credential has ever been issued
+  (B5, only Rye can obtain; the stage-1 letter carries the ask). Findings: no hard-delete
+  endpoint exists (B7); Managed gate fails 7/12 rows today; sandbox tenant already live. Do NOT
+  re-dispatch stages 0–5; the next Lane S action is running the pre-committed audit plan the day
+  the credential lands. Migration 0080 still reserved for the build stage.
 
 ## 3 · What waits on Rye
 

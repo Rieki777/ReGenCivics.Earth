@@ -75,7 +75,7 @@ Standing guards (Addendum 1 §5):
 | Coordinator | hub | `regen-integration` / `wt/integration` | this session | ledger, handoff, decision list, `docs/integration-program/`, ADR-49 + DOMAIN-LANGUAGE entries | active | 55cff89 | 2026-08-14 19:53 |
 | A — memory foundation | game-amora | `wt-memory` / `wt/memory-foundation` (to be created by lane) | dispatched 2026-08-14 (background agent, opus) | `server/lib/assistant.ts`, `villageReaders.ts`, `villageBrain.ts`, `knowledge.ts`, new usage-writer lib, migration **0078**, index.ts zones: wiring 1047–1062-equivalent, job block after recording-rss, five callAssistant sites, organize body, raw synthesis path (all re-located by content at 28dace2) | dispatched | 28dace2 (base) | at dispatch |
 | C — module library platform | game-amora | `wt-library` / `wt/module-library` (to be created by lane) | dispatched 2026-08-14 (background agent, opus) | `shared/modules.ts`, `server/lib/modules.ts`, `server/lib/secrets.ts`, catalog + Integrations UI, migration **0079**, index.ts zones: secrets boot block OUTSIDE Lane A's wiring range, admin integrations routes | dispatched | 28dace2 (base) | at dispatch |
-| S — Saberra listing | game-amora (stages 0–5 are not code) | none yet (build stage will use `wt-signals` / `wt/saberra-signals`) | dispatched 2026-08-14 (background agent, opus) | stages 0–5 artifacts; later: the driver file, registry entry `signals`, `signals.read` capability, migration **0080** | dispatched (stages 0–5 only) | n/a | at dispatch |
+| S — Saberra listing | game-amora (stages 0–5 are not code) | none yet (build stage will use `wt-signals` / `wt/saberra-signals`) | reported 2026-08-14 20:21 | stages 0–5 artifacts (DRAFTED, adopted at `docs/integration-program/lane-s/`); later: the driver file, registry entry `signals`, `signals.read` capability, migration **0080** | **stages 1–5 drafted; stage 0 BLOCKED on tenant credential (B5, letter ready)** | artifacts verified on disk | 2026-08-14 20:21 (final report) |
 | H — hub side of Managed | hub | not created | NOT dispatched | shared vendor account, per-fork roster, billing line item, entity block wiring | queued (§4 item 9) | — | — |
 | O — Orbit | — | — | FROZEN at stage 1 (anonymous vendor) | nothing; `provides` field lands as data with Lane C so Orbit never migrates a registry entry | frozen | — | — |
 
@@ -120,7 +120,7 @@ confirmed from disk.
 | Named human + email | Rye knows the people; **not in writing** | NONE FOUND |
 | Product URL | BLANK — stage 1 (their API/docs URLs exist in package; exact product URL owed) | `orbitdao.io` ASSUMED, unconfirmed (`orbitdao.com` is a parked HugeDomains listing — never write it anywhere) |
 | Terms URL / status page | BLANK / BLANK | BLANK / BLANK |
-| Current stage | **0 (data audit) — dispatched 2026-08-14** | **1 — FROZEN** |
+| Current stage | **0 — BLOCKED: no tenant credential has ever been issued** (their doc 07:19 lists it under "what we would need to give you"; confirmed by exhaustive local search 2026-08-14). Stage 1–5 artifact DRAFTS exist at `docs/integration-program/lane-s/`. Audit gates A/B/C pre-committed before data exists. **Stage-5 finding: does NOT clear Managed on today's evidence** (7 of 12 gate rows empty; their cap "never blocks" by their own docs). **No hard-delete endpoint exists at all** — largest vendor-side ask, blocks stage 3/4 exits. Sandbox tenant already live (cheapens stage 4) | **1 — FROZEN** |
 | Artifact satisfying last exit gate | none yet (stage 0 exit = the numbers report) | none |
 | Tier sought | Managed (slot 1 of 2) | Connected if ever listed; never Managed |
 | Who bills | CORE bills village; Saberra invoices CORE | village direct (no reseller terms exist) |
@@ -230,8 +230,9 @@ docs-only and do not touch main.
 | ~~B6~~ | ~~Contract publish-vs-private~~ **RESOLVED 2026-08-14: Rye ruled contracts are published on a URL** (R11). The sequencing constraint survives as queue item 10: nothing publishes until C1 + the incident log land, because clauses 9–12 describe machinery that does not exist yet | — | — | — |
 | B2 | Contracting entity Q1–Q3 (§3c) | Rye + counsel | 2026-08-14 | CORE signing anything (Saberra DPA, vendor agreement) |
 | B3 | UBIT (§3c Q4) | Rye's accountant/counsel | 2026-08-14 | the first invoice only |
-| B4 | Saberra commercial terms (today's price, after-price, per-village floor, model+caching, measured cost per /ask) | Rye to ask; Lane S stage 1 drafts the ask | 2026-08-14 | whether Lane S build is worth scheduling |
-| B5 | Saberra tenant credential/API access for stage 0 (`GET /backup`, `GET /stats`) | Lane S searches env/config first; escalates to Rye only if absent | 2026-08-14 | Lane S stage 0 numbers |
+| B4 | Saberra commercial terms — **the ask is DRAFTED and ready to send**: `docs/integration-program/lane-s/STAGE1_DILIGENCE_REQUEST_LETTER.md` | **Rye sends it** | 2026-08-14 | whether Lane S build is worth scheduling |
+| B5 | Saberra tenant credential — **CONFIRMED never issued** (their doc 07:19; exhaustive local search negative: 5 .env files, 32 worktrees, Railway, Windows env, MCP auth stores, mailbox). Ask: `SERA_API_SECRET` bearer for `GET /backup` + `GET /stats` at `amora-api.saberra.com`, read-scoped if they can mint it | **Rye obtains from Saberra** (folded into the stage-1 letter) | 2026-08-14 | every stage-0 number; the go/no-go on the whole listing |
+| B7 | **Saberra has no hard-delete endpoint** — deletion appears nowhere in their API docs; Sera can archive/merge only inside a conversation, which is not callable as a contract. Contract term 2 and stage-3/4 exit gates are unmeetable until they build it | Saberra (asked via the stage-1 letter) | 2026-08-14 | stage 3 exit, stage 4 `forgetMember` proof, any go-live |
 
 ---
 
@@ -243,7 +244,8 @@ docs-only and do not touch main.
 - 2026-08-14 · ADR-49 appended to `.ai/docs/DECISIONS.md` as PROPOSED; six terms registered in DOMAIN-LANGUAGE.md.
 - 2026-08-14 · Lanes A, C, S dispatched as background agents (opus), briefs amended per §8-R5/R6.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
-- 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log).
+- 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
+- 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total.
 
 ---
 
@@ -326,7 +328,7 @@ what only Rye can do; every item has a default so nothing blocks.
 |---|---|---|---|---|---|
 | ~~1~~ | ~~Rule on ADR-49~~ **DONE 2026-08-14: approved.** | — | — | — | status flipped Accepted in DECISIONS.md |
 | 2 | Send counsel the **§3c questions** (entity standing, DPA posture, agency-vs-resale, **UBIT**) | Rye | 2 | Ask accountant/counsel this week; Q4 blocks only the first invoice | written answers land in §3c |
-| 3 | Send Saberra the **commercial-terms ask** (Lane S stage 1 drafts it: today's Amora price, after-price, per-village floor, model + caching, measured cost per /ask) | Rye sends | 2 | send when Lane S hands the draft | numbers recorded in §3a |
-| 4 | **Saberra tenant access** for stage 0 if Lane S cannot find a credential in env/config | Rye | 3 (only if asked) | provide the tenant API credential or run the two GETs himself | stage 0 numbers exist |
+| 3 | **Send the stage-1 letter to Saberra** — it is ready at `docs/integration-program/lane-s/STAGE1_DILIGENCE_REQUEST_LETTER.md` and carries BOTH asks: the tenant credential (`SERA_API_SECRET`, read-scoped, for the stage-0 audit their own doc 07:19 acknowledged owing) and the commercial numbers | Rye sends | **1** | send as-is; every stage-0 number and the go/no-go waits on it | credential in hand + numbers recorded in §3a |
+| 4 | Read the stage-5 gate table finding: **Saberra does not clear Managed on today's evidence** (7/12 rows empty; their cap "never blocks"; no hard-delete endpoint). No decision needed yet — stage 5 exists to negotiate exactly these terms — but the tier expectation should not harden until the table fills | Rye (awareness) | 2 | hold Managed as the *sought* tier; the letter asks for what would clear it | stage-5 table fills after their reply |
 | ~~5~~ | ~~Contract publish vs private~~ **DONE 2026-08-14: publish on a URL** (R11; publication itself is queue item 10) | — | — | — | — |
 | 6 | The **eight diagnostic sentences** (4 outcomes × 2 tiers) | Rye approves; a lane drafts | 5 (not yet due) | lane drafts at queue item 6; Rye yes/no's | copy in repo passing check-voice |
