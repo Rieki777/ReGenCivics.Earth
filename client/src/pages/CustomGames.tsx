@@ -181,6 +181,11 @@ const AMORA_SHOTS: { name: string; caption: string; wide?: boolean }[] = [
     wide: true,
   },
   {
+    name: "amora-map-desktop",
+    caption:
+      "The living map, where every building on it traces back to a funded build or a claimed quest",
+  },
+  {
     name: "amora-quests-desktop",
     caption: "The quest board, where the work of the village becomes visible",
   },
@@ -196,6 +201,8 @@ const AMORA_SHOTS: { name: string; caption: string; wide?: boolean }[] = [
     name: "amora-setup-wizard-desktop",
     caption: "The Setup Wizard, where admins reshape the game themselves",
   },
+  // amora-profile-desktop: the member profile page is behind login on Amora,
+  // so it needs a signed-in capture. Slot returns once that file exists.
 ];
 
 const LATEST_SHIPS: { title: string; body: string }[] = [
