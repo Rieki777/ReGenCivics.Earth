@@ -23,10 +23,17 @@ ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
   C1 (amended) + C2 both landed. Its contract-enforcement gap list is adopted at
   `docs/integration-program/CONTRACT_ENFORCEMENT_GAPS_2026-08-14.md` and sources the queue.
 
-**The opening round is CLOSED.** Nothing is dispatched right now. Next actionable queue items:
-5 (incident log + probe), 6 (diagnostic path, needs the eight sentences from Rye), the 11+13
-small-fixes dispatch, 9 (Lane H), 10 (contract page, after 5). Lane S build stays gated on
-Rye's letter and Saberra's answers (B4/B5/B7).
+**Round 1 CLOSED; round 2 IN FLIGHT (2026-08-15, rulings R13/R14).** Running: Lane Q (eight-defect
+fixes, lands first) and Lane M (store research→design→build with developer monetization,
+mobile-first UI). Queued: Lanes L (live QA) + V (mobile-first Safari QA via Playwright WebKit)
+— dispatch both when M+Q are observed live; briefs staged at
+`docs/integration-program/LANE_L_AND_V_LIVE_QA_BRIEFS.md`. The Saberra letter is with the
+"Saberra-Amora game integration" session for review + delivery to Rye. If resuming cold with
+lanes dead: their worktrees are `wt-qa-fixes` and `wt-store` in Desktop/Amora — check
+committed/pushed state before re-dispatching; never re-dispatch over pushed work. Still on
+Rye: counsel §3c, sending the letter after that session delivers it, live acceptance run.
+Other queue: 5 (incident log + probe — collides with M's surfaces, hold until M lands),
+6 (diagnostic path), 9 (Lane H), 10 (contract page, after 5). Lane S build gated on B4/B5/B7.
 - **Lane S** — DONE for this phase, reported 2026-08-14 20:21. Stages 1–5 drafted and adopted at
   `docs/integration-program/lane-s/`; stage 0 BLOCKED: no tenant credential has ever been issued
   (B5, only Rye can obtain; the stage-1 letter carries the ask). Findings: no hard-delete

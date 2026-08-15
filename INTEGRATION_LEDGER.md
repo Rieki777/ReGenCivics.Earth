@@ -80,7 +80,8 @@ Standing guards (Addendum 1 §5):
 | S — Saberra listing | game-amora (stages 0–5 are not code) | none yet (build stage will use `wt-signals` / `wt/saberra-signals`) | reported 2026-08-14 20:21 | stages 0–5 artifacts (DRAFTED, adopted at `docs/integration-program/lane-s/`); later: the driver file, registry entry `signals`, `signals.read` capability, migration **0080** | **stages 1–5 drafted; stage 0 BLOCKED on tenant credential (B5, letter ready)** | artifacts verified on disk | 2026-08-14 20:21 (final report) |
 | M — module store (round 2) | game-amora | `wt-store` / `wt/module-store` | dispatched 2026-08-15 (background agent, opus) | `shared/modules.ts` (pricing/withdrawn fields), catalog/store UI (`Admin.tsx`, `ProjectHistory.tsx`), `scripts/validate-module.mjs`, `docs/modules/BUILDING_A_MODULE.md`, research+design docs, migration **0081** if needed; index.ts: modules/catalog payloads + admin-integrations zone + new store routes | dispatched (research → design → build); lands after Q | ≥ d14b160 (base) | at dispatch |
 | Q — QA-fault fixes (round 2) | game-amora | `wt-qa-fixes` / `wt/qa-fixes` | dispatched 2026-08-15 (background agent, opus) | eight confirmed defects: email-config clear, sectionCitation wiring, mid-loop usage row, orgUpdatedAt scope, fenceForPrompt ×3, five Maia hardcodes, orphan-capability filter, forum decide-meta guard; index.ts zones per defect only | dispatched; **lands before M** | ≥ d14b160 (base) | at dispatch |
-| L — full live test (round 2) | live deployment | n/a (fix worktree if needed) | **NOT DISPATCHED** — fires when M+Q are observed live | four QA dimensions against amora.regencivics.earth incl. new store surfaces; then fix findings | queued behind M+Q | — | — |
+| L — full live test (round 2) | live deployment | n/a (fix worktree if needed) | **NOT DISPATCHED** — fires when M+Q are observed live | four QA dimensions against amora.regencivics.earth incl. new store surfaces; then fix findings. Brief staged: `docs/integration-program/LANE_L_AND_V_LIVE_QA_BRIEFS.md` | queued behind M+Q | — | — |
+| V — mobile-first QA (round 2, Rye's addition) | live deployment | n/a (fix worktree `wt-liveqa` shared with L if needed) | **NOT DISPATCHED** — fires with L | mobile-first Safari-shaped QA via Playwright WebKit at iPhone profiles (390×844 DPR3 touch, 375, 360): journeys, touch targets ≥44px, 100vh/safe-area/fixed-bar hazards, store one-handed, mobile perf; real-viewport screenshots. Brief staged in the same file | queued behind M+Q | — | — |
 | H — hub side of Managed | hub | not created | NOT dispatched | shared vendor account, per-fork roster, billing line item, entity block wiring | queued (§4 item 9) | — | — |
 | O — Orbit | — | — | FROZEN at stage 1 (anonymous vendor) | nothing; `provides` field lands as data with Lane C so Orbit never migrates a registry entry | frozen | — | — |
 
@@ -186,7 +187,8 @@ Open counsel questions and what each blocks:
 | 13 | Wire `sectionCitation` provenance rendering: one-line change in `knowledge.ts` (was Lane A's file, lane closed), written out in `server/lib/moduleDocProvenance.ts`'s header + ARCHITECTURE checklist | own small dispatch, with item 11 | **folded into Lane Q** (round 2) with item 11 |
 | 14 | **Lane Q** (round 2): the eight-defect fix list (incl. items 11+13, orgUpdatedAt, fencing, Maia strings, capability filter, forgery guard, mid-loop usage) | — | dispatched 2026-08-15; lands first |
 | 15 | **Lane M** (round 2): store research → design → build (catalog UX, pricing data, withdrawn state, member-pii driver gate, builder guide + validate-module script) | Q lands first; Rye decisions for rev-share/payment rails stay design-only | dispatched 2026-08-15 |
-| 16 | **Lane L** (round 2): full live QA of the deployed village incl. new store surfaces, then fix findings | M+Q observed live | queued, auto-dispatch on M+Q DONE |
+| 16 | **Lane L** (round 2): full live QA of the deployed village incl. new store surfaces, then fix findings | M+Q observed live | queued, auto-dispatch on M+Q DONE; brief staged |
+| 17 | **Lane V** (round 2, R14): mobile-first Safari-shaped live QA (Playwright WebKit, iPhone profiles), then fix findings | M+Q observed live | queued, dispatches with L; brief staged |
 | 12 | Usage-capture gap (named by Lane A, deliberate per spec ordering): a loop that exhausts the day budget MID-flight returns 503 and records no usage row (writer sits after the ok-guard); currently console.warn only. Revisit when billing reads `assistant_usage` | after item 5 | queued |
 
 Merge order inside game-amora: **A first**, C rebases and reconciles `server/index.ts` by hunk, S
@@ -309,6 +311,15 @@ docs-only and do not touch main.
 - **R9** (2026-08-14): Migration allocation A=0078, C=0079, S=0080 confirmed by 4-way scan (remote
   refs via `git log --all`, primary disk, all-30-worktree disk including scratchpads) at 28dace2.
   Never renumber: the ledger keys on filename and a rename replays the file.
+- **R14** (2026-08-15): **Rye added a mobile-first QA lane** (his words: "ensuring we have
+  another QA lane that's mobile first - as most of our audience will be mobile on safari").
+  Lane V is a first-class lane beside Lane L, not a viewport pass inside it. Engine ruling:
+  Playwright WebKit at iPhone device profiles — the Safari engine, the closest true-to-audience
+  runtime on this machine; what WebKit cannot reproduce (real iOS chrome, dynamic URL bar,
+  software keyboard) is counted in the could-not-measure list, never silently skipped. Both
+  briefs staged at `docs/integration-program/LANE_L_AND_V_LIVE_QA_BRIEFS.md` with a production
+  write discipline: read/render QA only against live; write-path QA against a local build of
+  the same SHA.
 - **R13** (2026-08-15): **Rye opened round 2 with a developer-monetization mandate** (his words:
   study app-store best practices, improve the module store, "developers should be able to charge
   a price for other forks to use their modules", "fully functional and beautiful", then fix all
