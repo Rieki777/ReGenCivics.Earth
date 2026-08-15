@@ -23,6 +23,18 @@ ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
   C1 (amended) + C2 both landed. Its contract-enforcement gap list is adopted at
   `docs/integration-program/CONTRACT_ENFORCEMENT_GAPS_2026-08-14.md` and sources the queue.
 
+**STATE AT 2026-08-15 ~11:50 EDT.** Round-2 fix lanes: F2 DONE (live), F3 LANDED (`efdf7da`,
+CI/live read pending), F1 in flight (lands next, HIGH mobile root cause), F4 complete at
+`3cb6331` and holding for last (rebases over F1). Round 3 dispatched (rulings R18–R22): Lane I
+(images → WebP + posters to the Railway volume + upload helper + image ratchet), Lane D
+(START_HERE + module-facts + doc-link check + intake workflow + CODEOWNERS + review checklist
++ review-agent + contract v1.1 in game-amora), Lane P ($ReGen builders' pool: hub design/build
++ game-amora `poolStatus`/payout). Round-3 lanes land by PR with MERGE commits (R21). Rye's
+separate session owns the S9 flake fix (queue 22) — land its branch when it reports. Waiting
+on Rye: the test admin account + token mode (blocks the $0.10 live run, decision item 12) and
+branch protection (item 13). Handles at dispatch, in order: fix block F2/F3/F4/F1; round 3
+I/D/P. Do NOT re-dispatch over a worktree with dirty files — inspect first (see §9).
+
 **Round 1 CLOSED; round 2 IN FLIGHT (2026-08-15, rulings R13/R14).** Running: Lane Q (eight-defect
 fixes, lands first) and Lane M (store research→design→build with developer monetization,
 mobile-first UI). Queued: Lanes L (live QA) + V (mobile-first Safari QA via Playwright WebKit)
