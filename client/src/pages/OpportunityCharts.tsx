@@ -6,6 +6,12 @@
  * without expanding any of them, so we lazy-load this whole module from
  * Opportunity.tsx via React.lazy and only fetch recharts when a chart
  * actually renders.
+ *
+ * Every <Pie> here passes rootTabIndex={-1}. Recharts 2.15 defaults it to 0,
+ * which puts a <g class="recharts-pie"> in the tab order with no accessible
+ * name and nothing to do once focused. Both donuts sit beside a text list
+ * carrying the same numbers, so the data is already reachable without the
+ * chart; taking the graphic out of the tab order removes a dead stop.
  */
 
 import {
@@ -35,6 +41,7 @@ export function AllocationDonut({ data }: { data: AllocationDatum[] }) {
           outerRadius={90}
           dataKey="value"
           isAnimationActive
+          rootTabIndex={-1}
         >
           {data.map((entry, i) => (
             <Cell key={i} fill={entry.color} />
@@ -78,6 +85,7 @@ export function GPGovernancePie() {
         outerRadius={75}
         dataKey="value"
         isAnimationActive
+        rootTabIndex={-1}
       >
         {GP_GOVERNANCE_DATA.map((entry, i) => (
           <Cell key={i} fill={entry.color} />
