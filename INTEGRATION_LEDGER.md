@@ -154,6 +154,7 @@ confirmed from disk.
 |---|---|---|---|---|---|---|
 | `PLATFORM_ASSISTANT_KEY` | platform | fork deployment env only; never in `SECRET_KEYS`; never returned, not even masked | Rye | not instrumented (integration_health lands in C1) | — | shipped precedent (pre-dates ADR log for game-amora); cited in ADR-49 |
 | Saberra platform key (name TBD by Lane S build) | platform | env-only, PLATFORM_ASSISTANT_KEY posture | Rye | — | — | ADR-49 (**Accepted** 2026-08-14) |
+| Test admin `integration-qa` (live village) | platform (coordinator-created, R23) | user row `user-1786809208124-iuzo2`, role founder; **no stored password**; lanes mint ≤24h JWTs from `AUTH_TOKEN_SECRET` at call time: `railway variables -s "Amora Game" --json \| node docs/integration-program/tools/mint-test-token.mjs` (secret never on disk) | coordinator | verified 2026-08-15 (profile 200, admin 200, wrong-secret 401) | — | R23; standing test identity for Lanes L/V/R; NOTE queue 24 (its `.invalid` email counts in health snapshots until excluded) |
 | Village-held keys (Connected/Included) | village | `SECRET_KEYS`: write-only to browser, read by server, masked to last4, admin-beats-env | village admin | — | — | n/a — never platform-held |
 
 ---
