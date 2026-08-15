@@ -205,7 +205,7 @@ Open counsel questions and what each blocks:
 | 19 | Map prototype internal overflow (V-H3: 790px doc in 390px frame, off-screen ✕ controls, 38px CTA) — routed to the map owner ("SWARM COORDINATOR" session) by message; not fixed by QA lanes | map lane | **BLOCKER B8** on the map lane; open |
 | 22 | **CI flake mechanism found by F2**: `GET /api/admin/audit` returns only the last 200 events; `loop.e2e.test.ts` S9 (~1008) sits late in a 64-test order-dependent file, so its mint row can fall outside the window; unchanged re-runs pass | **Rye's separate session** ("Fix flaky S9 audit assertion in loop.e2e.test.ts") | withdrawn from F4 (confirmed untouched by diff); coordinator lands that session's branch when it reports |
 | 24 | `server/lib/health.ts` excludes only `%anonymized.invalid` from `members_total`; the standing test account `integration-qa@amora.invalid` will be counted as a real member in every frozen snapshot (never recomputed). Fix: exclude any `.invalid` TLD (RFC 2606) — small server change; land before the next cycle close | next server lane | queued, small |
-| 29 | **Intake classifier false positive** (D's own workflow): fix PR requested from D (`wt/intake-classifier-fix`) — must land BEFORE or alongside P's PR, else P shows `intake: FAILURE` for a non-fault | D | in progress |
+| ~~29~~ | ~~Intake classifier false positive~~ **DONE — PR #7 merged → main `58902fa`**: classifier extracted from YAML to `scripts/intake-classify.mjs` (13 assertions, clean case first), reads only `<-- VIOLATION` lines, version mismatch is a warning, uncheckables prefixed `[not checked]`. The YAML wiring proves out on the next module PR (intake triggers on pull_request only) — P's PR is that proof | — | closed |
 | 30 | `MODULE_LIBRARY_CONTRACT_VERSION` "1.0" → "1.1" in `shared/modules.ts` | P (owns the file) | routed 2026-08-15 |
 | 27 | Admin sign-in form (`Admin.tsx:671-686`): no `autocomplete`, no accessible names (placeholder only), password-reveal button unlabelled with no explicit hit area — F3 has landed, so this is unowned; small a11y fix | next client lane | queued (from F1) |
 | 28 | `GameMechanics.tsx:814` renders a `fixed bottom-0 z-[70]` proposal bar that covers the entire mobile tab bar whenever a change is staged — pre-existing, outside F1's routes | next mobile lane | queued (from F1) |
@@ -536,13 +536,14 @@ docs-only and do not touch main.
   copy fixes LIVE (rows already carry the paths); the seed at `imageUrl: null` is what keeps a
   FRESH fork from inheriting 14 dead paths (its volume is empty). Different halves of one
   finding; neither replaces the other.
-- **A gate must classify on markers, never on prose** (Lane D's intake workflow, caught at
-  merge of PR #6): the blocking-stage classifier grepped the bare string `clause 14`; the
-  validator's own informational line ("`pool` is not a registry field yet, so it cannot bite")
-  contained it, and the workflow failed its own PR. It would have failed every module PR after
-  it. Rule: a gate decides on structured output (exit code, `<-- VIOLATION` marker), and every
-  informational line is written so it cannot pattern-match a block. Prove both directions:
-  a clean tree passes, a violating fixture blocks.
+- **A gate must classify on markers, never on prose — and it must live where it can be tested**
+  (Lane D's intake workflow, caught at merge of PR #6, fixed in #7): the blocking-stage
+  classifier grepped the bare string `clause 14`; an informational validator line contained it,
+  and the workflow failed its own PR. D's deeper diagnosis: the classifier lived in YAML, so it
+  only ran when a PR ran it — it shipped a proof that violations block and NO proof that a clean
+  tree passes, and the same author wrote both the gate and its measurement. Rule: decide on
+  structured output; extract gate logic to a script with a test whose FIRST case is the clean
+  path; prove both directions.
 - **Release only the lock you acquired** (Lane F4, self-caught): a mutex helper that runs
   `rmdir .test-lock` unconditionally after a timed-out poll tries to delete another lane's
   lock; F4's survived only because K2 writes a marker file inside the directory. Track
