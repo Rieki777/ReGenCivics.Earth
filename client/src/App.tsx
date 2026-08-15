@@ -134,6 +134,7 @@ const AdminVoiceRules = lazy(() => import("./pages/AdminVoiceRules"));
 const AdminCalls = lazy(() => import("./pages/AdminCalls"));
 const AdminFunding = lazy(() => import("./pages/AdminFunding"));
 const AdminGovernanceForks = lazy(() => import("./pages/AdminGovernanceForks"));
+const AdminBuildersPool = lazy(() => import("./pages/AdminBuildersPool"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 const CrowdPooling = lazy(() => import("./pages/CrowdPooling"));
 const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
@@ -211,6 +212,7 @@ const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
 const CustomGamesApply = lazy(() => import("./pages/CustomGamesApply"));
 const Network = lazy(() => import("./pages/Network"));
+const BuildersPool = lazy(() => import("./pages/BuildersPool"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
@@ -340,6 +342,7 @@ function Router() {
       <Route path={"/admin/calls"}><EB><AdminCalls /></EB></Route>
       <Route path={"/admin/funding"}><EB><AdminFunding /></EB></Route>
       <Route path={"/admin/governance-forks"}><EB><AdminGovernanceForks /></EB></Route>
+      <Route path={"/admin/builders-pool"}><EB><AdminBuildersPool /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
@@ -413,6 +416,7 @@ function Router() {
       {/* The return half of the foundation credit: every custom game links back
           to regencivics.earth, and this page links back out to every game. */}
       <Route path={"/network"}><EB><Network /></EB></Route>
+      <Route path={"/builders-pool"}><EB><BuildersPool /></EB></Route>
       <Route path={"/federation"}><Redirect to="/network" /></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
       {/* Final fallback route (also serves /404; the earlier explicit /404 route handles direct hits) */}

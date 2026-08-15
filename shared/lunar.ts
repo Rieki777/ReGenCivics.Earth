@@ -63,3 +63,23 @@ export function daysRemainingInCycle(date: Date): number {
   const { endsAt } = cycleBoundsFor(date);
   return Math.max(0, Math.ceil((endsAt.getTime() - date.getTime()) / (24 * 60 * 60 * 1000)));
 }
+
+/** The lunation with a specific cycle number. The inverse of `cycleBoundsFor`. */
+export function cycleBoundsByNumber(cycleNumber: number): LunarCycleBounds {
+  return {
+    cycleNumber,
+    startsAt: new Date(REFERENCE_NEW_MOON_MS + cycleNumber * SYNODIC_MONTH_MS),
+    endsAt: new Date(REFERENCE_NEW_MOON_MS + (cycleNumber + 1) * SYNODIC_MONTH_MS),
+  };
+}
+
+/**
+ * The most recent lunation that has fully CLOSED as of `now`.
+ *
+ * A cycle is settled after it ends, never during. The builders' pool statement
+ * job (ADR-50) asks for this by name, and asking by name is what keeps it from
+ * settling a cycle that is still running.
+ */
+export function lastClosedCycle(now: Date = new Date()): LunarCycleBounds {
+  return cycleBoundsByNumber(cycleBoundsFor(now).cycleNumber - 1);
+}
