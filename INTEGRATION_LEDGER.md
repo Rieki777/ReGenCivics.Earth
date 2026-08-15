@@ -223,8 +223,10 @@ last. Before any merge: `git cherry main <branch>`, never `--stat A...B`.
 
 ## §5 Gate sets — verbatim, SHA-stamped. Re-read at session open.
 
-**game-amora** — read from `.github/workflows/ci.yml` blob `ac1b1e9` at `28dace2`, 2026-08-14.
-Eleven, in CI order, run cold:
+**game-amora** — read from `.github/workflows/ci.yml` at `28dace2` (blob `ac1b1e9`), 2026-08-14;
+**GREW on 2026-08-15 at `e18b380` (Lane D, PR #6): a Doc link guard step before the build.**
+**Twelve** now, in CI order, run cold (Lane I's `check-image-budget.mjs` will make it thirteen
+when it lands — every lane must enumerate `ci.yml`'s `run:` steps, never trust this count):
 
 ```
 pnpm check
@@ -233,6 +235,7 @@ node scripts/check-brand-refs.mjs
 node scripts/check-voice.mjs
 node scripts/check-auth-fetch.mjs
 node scripts/check-artifact-budget.mjs
+node scripts/check-doc-links.mjs          # NEW at e18b380 — every relative path in the builder docs resolves
 pnpm build
 pnpm test
 pnpm audit --prod --audit-level high
@@ -524,6 +527,15 @@ docs-only and do not touch main.
   anchor stale. Re-measure at dispatch, always.
 - A background agent dies with the machine's sleep; a committed ledger and an on-disk worktree
   survive. Write state before starting anything long.
+- **The gate set grows under you — enumerate `ci.yml`, never trust the brief's count** (F4,
+  2026-08-15, applied correctly): its brief said eleven; Lane D's merge had just added a twelfth
+  (doc-link guard). F4 listed every `run:` step in the file it was about to be judged by and ran
+  the new one. The ledger's §5 now says so in its own header, and Lane I's image ratchet will
+  make it thirteen.
+- **The seed fix and the volume copy are both needed** (F4, clarifying the record): Lane I's
+  copy fixes LIVE (rows already carry the paths); the seed at `imageUrl: null` is what keeps a
+  FRESH fork from inheriting 14 dead paths (its volume is empty). Different halves of one
+  finding; neither replaces the other.
 - **A gate must classify on markers, never on prose** (Lane D's intake workflow, caught at
   merge of PR #6): the blocking-stage classifier grepped the bare string `clause 14`; the
   validator's own informational line ("`pool` is not a registry field yet, so it cannot bite")
