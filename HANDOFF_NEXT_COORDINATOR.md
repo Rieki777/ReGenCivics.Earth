@@ -29,8 +29,8 @@ PRODUCTION `DATABASE_URL` behind a BOM — never run DB suites in a hub worktree
 which host it names.
 
 **UPDATE 2026-08-15 ~19:50 EDT — NOTHING IS IN FLIGHT.** game-amora main = `68f832e` (live, verified);
-hub main = `cbec306` (HS PR 2; PR 1's projections verified live at 19:07 EDT, PR 2's deploy was
-being polled at handoff — re-probe `GET /api/trpc/activityFeed.list` and expect NO `actorId` key).
+hub main = `cbec306` (HS PR 2; PR 1's projections verified live at 19:07 EDT, PR 2's at 19:38 EDT —
+both security PRs DONE).
 Every lane of rounds 1–3, the cost programme, the round-2 fix set (+V2 closing proof), and the two
 hub security PRs is merged. Lane worktrees are dormant on disk (all pushed; `wt-store-pool-strings`,
 `wt-cost`, `wt-batch`, `wt-quests-cta`, `wt-store360`, `wt-images`, `wt-builder*`, `wt-fix-*`,
