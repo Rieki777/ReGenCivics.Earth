@@ -1,0 +1,181 @@
+{
+  "started": "2026-08-15T15:59:37.414Z",
+  "finished": "2026-08-15T16:00:23.531Z",
+  "results": [
+    {
+      "n": 1,
+      "question": "What did we decide about quiet hours?",
+      "status": 200,
+      "ms": 6553,
+      "reply": "Your decision log is empty: no decisions have been recorded yet. This is worth fixing now, before you forget what you've already agreed on. Was there a quiet-hours conversation at a meeting? If so, the next step is to log it (who decided, when, what exactly, and when to review it). If you're trying to remember whether a decision was made or what it was, that's a sign to calendar a conversation and",
+      "readers": [
+        "record.decisions"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Membership Design & Internal Economics > Failure modes",
+        "Sociocracy / Consent-Based Governance > Core patterns",
+        "Sociocracy / Consent-Based Governance > Failure modes"
+      ]
+    },
+    {
+      "n": 2,
+      "question": "What did we decide about membership?",
+      "status": 200,
+      "ms": 3880,
+      "reply": "Your decision record is empty—no membership decisions have been logged yet. Before members start arriving, the Shared Shelf recommends writing *before* you recruit: a vision/values doc, a membership agreement (stages, duration, fees, labor expectation, acceptance rules, exit terms, refunds), and a visit protocol. Have you started that work, or is this where you want to begin?",
+      "readers": [
+        "record.decisions"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Membership Design & Internal Economics > Failure modes",
+        "Membership Design & Internal Economics > In practice",
+        "Decentralized & Distributed Governance > Core patterns",
+        "Membership Design & Internal Economics"
+      ]
+    },
+    {
+      "n": 3,
+      "question": "Which roles did we create, and who held them?",
+      "status": 200,
+      "ms": 4405,
+      "reply": "Amora has four permission roles in the database, but the roles table doesn't store assignment history directly—only who holds them now. To see who held each role and when they joined, I'd need to check your org_role_assignments table or personnel records. Can I instead show you who holds each seat right now (Founders Circle, Steward Circle, Treasury, Trained Practitioners), or do you need a histor",
+      "readers": [
+        "roles.all"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Membership Design & Internal Economics > Failure modes",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > Endpoints",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > Improvements over the 2020 slide concept"
+      ]
+    },
+    {
+      "n": 4,
+      "question": "Which seats did we leave vacant?",
+      "status": 200,
+      "ms": 4482,
+      "reply": "All four foundational seats are empty: Founders Circle, Steward Circle, Trained Practitioners, and Treasury. Without holders in any of these roles, Amora has no one accountable to any circle, no stewards to coordinate, no practitioners vetted, and no one managing resources. This is the clearest governance gap to fill first. Would you like to see the purpose and seat count for each, or start by dis",
+      "readers": [
+        "seats.vacant"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Module: Events (0059) — the village calendar > Data model",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > v1 (ship first, useful alone)",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > Mechanics",
+        "Module: Events (0059) — the village calendar > The admin surface",
+        "Module: Events (0059) — the village calendar > The one thing to not get wrong"
+      ]
+    },
+    {
+      "n": 5,
+      "question": "What circles did we set up?",
+      "status": 200,
+      "ms": 4789,
+      "reply": "You have 11 circles. Four are active now (General Coordinating Circle, Development Circle, Finance & Business Circle, Community Circle); seven are forming. The structure looks like you're building a tiered system: a General Circle coordinating five functional domains (building/village, business/finance, community life, culture/arts, education), with Development Circle feeding Architecture Circle u",
+      "readers": [
+        "circles.all"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Sociocracy / Consent-Based Governance > Failure modes",
+        "Sociocracy / Consent-Based Governance > Core patterns",
+        "Sociocracy / Consent-Based Governance > In practice",
+        "Membership Design & Internal Economics"
+      ]
+    },
+    {
+      "n": 6,
+      "question": "How many members did we end up with?",
+      "status": 200,
+      "ms": 4358,
+      "reply": "You have 2 members, and neither is holding a role yet. Amora is still in the formation stage—the shared shelf suggests the earliest step is getting 2–5 people trained in facilitation (or consent-based decision-making), then formalizing a governance structure. With two people, you could run one circle with consent decisions rather than the full multi-circle apparatus.",
+      "readers": [
+        "members.summary"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Module: Events (0059) — the village calendar > Data model",
+        "Regenerative Organizing & Love-Based Coordination > In practice",
+        "Regenerative Organizing & Love-Based Coordination > When NOT to use this",
+        "Module: Events (0059) — the village calendar > The admin surface",
+        "Sociocracy / Consent-Based Governance > In practice",
+        "Sociocracy / Consent-Based Governance > When NOT to use this"
+      ]
+    },
+    {
+      "n": 7,
+      "question": "What quests did we put in the library?",
+      "status": 200,
+      "ms": 4254,
+      "reply": "You have 14 quests across 8 circles: Arts & Culture (3), Governance (2), Land Stewardship (2), Community Development (2), Education, Wellness, Technology, and Tourism & Retreat each have one. Thirteen are Open; Trail Builder & Maintainer is Seasonal. All have gratitude set to null, so they're not currently wired to reward Gratitude tokens — they're available for members to commit to, but no recogn",
+      "readers": [
+        "quests.library"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Module design: Stays / Accommodation Payments (slide 32) — module id `stays` > Open questions",
+        "Module design: Village Material Library (slide 33) — flagship tool-lending commons with item provenance, health decay, credit escrow, and a steward-run Library Pool > Improvements over the 2020 slide concept",
+        "Module design: Village Material Library (slide 33) — flagship tool-lending commons with item provenance, health decay, credit escrow, and a steward-run Library Pool > Open questions",
+        "Module design: Village Material Library (slide 33) — flagship tool-lending commons with item provenance, health decay, credit escrow, and a steward-run Library Pool > Game variables",
+        "Module design: Stays / Accommodation Payments (slide 32) — module id `stays` > v2 (the full slide vision)"
+      ]
+    },
+    {
+      "n": 8,
+      "question": "Which badges did we define?",
+      "status": 200,
+      "ms": 4068,
+      "reply": "Amora has one badge defined so far: **Cartographer** (granted). It recognizes someone who shapes the living map of the land and decides when that shape becomes the one everyone sees. This is a governance-level badge—if it carries capabilities like map editing or publication authority, that should be listed in the admin side. Are you building out more badges, or auditing what you have?",
+      "readers": [
+        "badges.all"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Module design: badges > badge_awards — current state, one row per (badge, user)",
+        "Module design: badges > badge_events — append-only provenance journal (ledger discipline)",
+        "Module design: badges > Improvements over the 2020 slide concept",
+        "Regenerative Organizing & Love-Based Coordination > In practice"
+      ]
+    },
+    {
+      "n": 9,
+      "question": "What did we decide about our legal structure?",
+      "status": 200,
+      "ms": 4263,
+      "reply": "Your decision record is empty—no legal-structure decisions are logged yet. Have you had a formal governance meeting where this was discussed, or is it still in planning? If you'd like to run a decision now, or review what structures might fit Amora's mission, I can walk you through the options from the shared shelf.",
+      "readers": [
+        "record.decisions"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Membership Design & Internal Economics > Failure modes",
+        "Legal Structures for Regenerative Land Projects > Core patterns",
+        "Legal Structures for Regenerative Land Projects > In practice",
+        "Legal Structures for Regenerative Land Projects > When NOT to use this"
+      ]
+    },
+    {
+      "n": 10,
+      "question": "What gaps did the concierge find in what we told people?",
+      "status": 200,
+      "ms": 5050,
+      "reply": "No gaps recorded yet. The concierge log is empty—either no one has asked a question that landed as unmatched, or you haven't enabled the concierge to track them. When someone reaches out and there's no seat or circle that can answer, that question gets flagged here. It's your clearest signal for which role is missing or which circle purpose needs clarifying. Once the pattern shows up, we can talk ",
+      "readers": [
+        "concierge.gaps"
+      ],
+      "ownRecord": [],
+      "references": [
+        "Membership Design & Internal Economics > Failure modes",
+        "Membership Design & Internal Economics > In practice",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > Publishing the land (0063 / artifact D8)",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge",
+        "Module design: Village Map (slide 28) — interactive sociocratic map + coordination concierge > New tables (Drizzle/MySQL; JSON-file twins first, since data/ is still authoritative — `data/circles.json`, `data/contact-requests.json`, `data/concierge-queries.json`, each with a seed in `server/seeds/` + `ensureDataFiles()` entries)"
+      ]
+    }
+  ]
+}
