@@ -18,8 +18,10 @@ not a viewport pass inside Lane L.
 - Report format: severity-ranked findings (HIGH broken/data-losing, MED degraded/confusing,
   LOW cosmetic); an explicit list of every category checked and found CLEAN; a count of what
   could NOT be measured and why — that last line is the most important in the report.
-- Tooling lies to brief in: the Browser-pane resize silently stays desktop (drive Playwright
-  directly for real viewports); a hidden browser pane reports successful clicks that never
+- Tooling lies to brief in: **Playwright `networkidle` never fires on this app** (the pulse
+  endpoint and notification poller keep the connection busy) — use `domcontentloaded` + a fixed
+  ~3.5s settle and write results incrementally per viewport; the Browser-pane resize silently
+  stays desktop (drive Playwright directly for real viewports); a hidden browser pane reports successful clicks that never
   fired (verify state via injected JS, not click success); an empty grep/scan is not a negative
   until the same pipeline proves it returns matches on a known-present case; a contrast checker
   that cannot parse a color reports it as passing — count unmeasured nodes.

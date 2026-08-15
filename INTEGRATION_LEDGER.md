@@ -386,6 +386,12 @@ docs-only and do not touch main.
   anchor stale. Re-measure at dispatch, always.
 - A background agent dies with the machine's sleep; a committed ledger and an on-disk worktree
   survive. Write state before starting anything long.
+- **`networkidle` never fires on this app** (Lane V, 2026-08-15): `/api/game/pulse` and the
+  notification poller keep the connection busy, so any Playwright navigation awaiting
+  `networkidle` burns its full timeout on every route (Lane L saw the same on `/map`). Use
+  `domcontentloaded` + a fixed settle (~3.5s), write results incrementally per viewport so a
+  stall can never cost a whole run, and never read a missing results file as a clean pass.
+  Put this in every future live-QA brief.
 - **Verify the recipient before messaging a lane** (coordinator, 2026-08-15, self-caught via
   Lane Q's report): two mid-flight guidance messages (mobile-first design input; the research
   relay) were sent to Lane Q's handle believing it was Lane M — two same-block dispatches
