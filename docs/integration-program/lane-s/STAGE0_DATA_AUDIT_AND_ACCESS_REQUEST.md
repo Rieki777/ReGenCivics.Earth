@@ -31,13 +31,26 @@ No body leaks past the 401. This is correct behaviour and is worth recording as 
 positive on their access control, against the `/health` routing-table disclosure already in the
 review's corrections list.
 
-**No Amora tenant credential exists on this machine.** Searched, all negative:
+**No Amora tenant credential exists on this machine.** Searched. The searches below are the ones
+that provably completed; the coverage limits are stated after them, because two of the first
+searches I ran produced hollow negatives and I am not going to rest a gate on those.
+
+Name-based, over every environment file:
 
 - `game-amora/.env`, `game-amora/.env.remote-backup`, `gov-overflow/.env`,
   `regen-civics-clean/.env`, `regen-integration/.env` — variable names enumerated in full; no
   `SABERRA` / `SERA` / `NOTION` / tenant-token-shaped key in any of them.
 - All 32 worktrees from `git -C game-amora worktree list`; 24 carry a `.env`; none matches
   `SABERRA|SERA|NOTION|TENANT|MEMORY`.
+
+**Shape-based, which closes the "stored under a name I did not guess" gap.** The tenant secret is
+32 random bytes hex (doc 03:7), so I searched all 29 environment files for `[0-9a-f]{64}` regardless
+of variable name. Exactly one hit across all 24 worktree files: `AUTH_TOKEN_SECRET`, the platform's
+own. The two regen `.env` files carry three each, all under names already enumerated above and none
+Saberra. No unaccounted 32-byte hex value exists in any environment file on this machine.
+
+Other stores:
+
 - Railway `production` / `Amora Game` service: 25 variables, none matching
   `SABERRA|SERA|NOTION|MEMORY`.
 - Windows process and user environment: no match.
@@ -46,6 +59,17 @@ review's corrections list.
 - `amora-game-integration.zip`: 9 files, all documentation, no credential.
 - Mailbox search (`saberra OR sera`, all folders): 8 threads, all scheduling or unrelated. No
   provisioning mail, no API secret.
+- Content search of `Desktop` (two levels) and `Downloads` (three levels) for `SERA_API_SECRET` and
+  `amora-api.saberra`: the only hits are our own planning and review documents.
+
+**Coverage limit, stated honestly.** A full recursive content search of the Amora repo tree never
+reliably completed. One attempt was killed, one scanned zero files while reporting success, and the
+first indexed search returned one file when a later bounded search proved at least seven contain the
+string. So: a secret pasted into some file deep inside a worktree, outside an environment file,
+would not have been found. That gap is narrow — a credential has to live somewhere it can be read at
+call time, and every such place is enumerated above — but it is not zero, and the strongest evidence
+here is documentary rather than forensic: doc 07:19 lists the secret under what they still need to
+give us.
 
 This is consistent with their own document: doc 07:19 lists "a tenant API secret for the Amora Sera
 API" under **what we would need to give you**. It has never been issued. Nobody withheld it; the

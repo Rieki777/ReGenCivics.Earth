@@ -245,7 +245,8 @@ docs-only and do not touch main.
 - 2026-08-14 · Lanes A, C, S dispatched as background agents (opus), briefs amended per §8-R5/R6.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
-- 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total.
+- 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-14 ~21:40 · **CORRECTION (Lane S, self-caught): three of its credential searches were hollow negatives** (rg exit 127 read as no-matches; a find that scanned 0 files; a partial indexed Grep). The lane re-ran with a shape-based search (`[0-9a-f]{64}` over all 29 env files, pipeline proven on a known-present pattern first). **Conclusion unchanged** — no Saberra credential anywhere reachable-at-call-time; one narrow residual gap (a secret pasted deep in a worktree outside env files) now stated in the artifact instead of papered over. Stage-0 artifact re-adopted; paid lesson added to §9.
 
 ---
 
@@ -316,6 +317,12 @@ docs-only and do not touch main.
   anchor stale. Re-measure at dispatch, always.
 - A background agent dies with the machine's sleep; a committed ledger and an on-disk worktree
   survive. Write state before starting anything long.
+- **A search's silence is not a negative** (Lane S, 2026-08-14, self-caught): `rg` missing from
+  PATH died at exit 127 and its empty output read as "no matches"; a `find` that scanned zero
+  files returned exit 0; an indexed Grep returned 1 file when a bounded search proved at least 7
+  contain the string. Rule: before trusting any negative, prove the same pipeline returns matches
+  on a known-present pattern, and prefer shape-based searches (the credential's format) over
+  name-based ones (the variable you guessed).
 
 ---
 
