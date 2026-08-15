@@ -391,6 +391,19 @@ async function markSeekingCrew(userId: number): Promise<void> {
   else await d.insert(shipQuestAvailability).values({ userId, blockedWeeks: [], seekingCrew: 1 });
 }
 
+/**
+ * Round a planting coordinate before it goes public.
+ *
+ * Three decimals is about 110 m. That removes the "exact patch of ground a
+ * named person stood on" precision without putting a visible lattice on the
+ * map: ShipMap allows zoom up to 15 (`shipMapConfig.ts`), where 0.01° is
+ * roughly 230 px and markers would visibly snap to a grid, while 0.001° is
+ * about 23 px and reads as ordinary scatter. At the default zoom of 6 both
+ * are sub-pixel.
+ */
+export const coarsenSeedCoordinate = (v: number | null): number | null =>
+  v == null ? null : Math.round(v * 1000) / 1000;
+
 export const shipRouter = router({
   // What is live (concierge, offering/gift forms, platform listing, tracker).
   featureFlags: publicProcedure.query(() => shipFeatureFlags()),
@@ -1564,9 +1577,39 @@ export const shipRouter = router({
         return { ok: true };
       }),
 
+    /**
+     * Verified seed plantings, public projection.
+     *
+     * Withheld: `userId` and `bookingId`, which tie a planting to a named
+     * crew member and to the voyage they paid for, and `notes`, which is
+     * the planter writing to the crew, not to the web.
+     *
+     * Coordinates are coarsened (see `coarsenSeedCoordinate`). A map of
+     * where seeds went is the point; the exact patch of ground a named
+     * person stood on, on a known date, is not. Rounding happens after the
+     * read, so the stored precision is untouched.
+     */
     listVerified: publicProcedure.query(async () => {
       const d = await db();
-      return d.select().from(shipSeedPlantings).where(eq(shipSeedPlantings.isVerified, true)).orderBy(desc(shipSeedPlantings.plantedAt)).limit(500);
+      const rows = await d
+        .select({
+          id: shipSeedPlantings.id,
+          locationId: shipSeedPlantings.locationId,
+          lat: shipSeedPlantings.lat,
+          lng: shipSeedPlantings.lng,
+          species: shipSeedPlantings.species,
+          photoUrl: shipSeedPlantings.photoUrl,
+          plantedAt: shipSeedPlantings.plantedAt,
+        })
+        .from(shipSeedPlantings)
+        .where(eq(shipSeedPlantings.isVerified, true))
+        .orderBy(desc(shipSeedPlantings.plantedAt))
+        .limit(500);
+      return rows.map((r) => ({
+        ...r,
+        lat: coarsenSeedCoordinate(r.lat),
+        lng: coarsenSeedCoordinate(r.lng),
+      }));
     }),
   }),
 

@@ -66,6 +66,83 @@ function tinyToBool(v: number | null | undefined): boolean {
   return v === 1;
 }
 
+/**
+ * Public columns of a published `toolsLibraryEntries` row. Withheld:
+ * `contributorUserId`, the internal id of the member who contributed the
+ * tool. The contributor is already credited by the claim this entry hangs
+ * off; the id adds nothing to the page and links the row to an account.
+ */
+export const PUBLIC_TOOLS_LIBRARY_COLUMNS = {
+  id: toolsLibraryEntries.id,
+  claimId: toolsLibraryEntries.claimId,
+  toolName: toolsLibraryEntries.toolName,
+  toolDescription: toolsLibraryEntries.toolDescription,
+  toolType: toolsLibraryEntries.toolType,
+  capitalForm: toolsLibraryEntries.capitalForm,
+  accessLink: toolsLibraryEntries.accessLink,
+  usageNotes: toolsLibraryEntries.usageNotes,
+  status: toolsLibraryEntries.status,
+  createdAt: toolsLibraryEntries.createdAt,
+} as const;
+
+/**
+ * Public columns of a `proposalParties` row. `notes` is the organisers'
+ * working column and stays server-side.
+ */
+export const PUBLIC_PROPOSAL_PARTY_COLUMNS = {
+  id: proposalParties.id,
+  title: proposalParties.title,
+  scheduledAt: proposalParties.scheduledAt,
+  season: proposalParties.season,
+  videoLink: proposalParties.videoLink,
+  recordingLink: proposalParties.recordingLink,
+  status: proposalParties.status,
+  createdAt: proposalParties.createdAt,
+} as const;
+
+/**
+ * Public columns of a published `historicalClaims` row.
+ *
+ * A published contributor profile is public by design: the display name,
+ * what they contributed, the evidence they offered and the tier they were
+ * finally recognised at. What is NOT public is the review that got them
+ * there. Withheld: `reviewerId, reviewedAt, reviewDecision, reviewNote,
+ * suggestedTier, suggestedTierUsd, suggestedTierTokens, contributorOverride,
+ * overrideReason, adjustedTier, adjustedTierUsd, adjustedTierTokens,
+ * improvementSuggestion, improvementPostedToForum, improvementForumPostId,
+ * currentStep, userId, proposalPartyId`.
+ *
+ * The tier columns matter more than they look: `suggestedTier` next to
+ * `adjustedTier` next to `overrideReason` reconstructs an argument about
+ * how much someone's life's work was worth, including the part where a
+ * reviewer disagreed with them.
+ */
+export const PUBLIC_CLAIM_COLUMNS = {
+  id: historicalClaims.id,
+  claimType: historicalClaims.claimType,
+  displayName: historicalClaims.displayName,
+  orgDescription: historicalClaims.orgDescription,
+  formsOfCapital: historicalClaims.formsOfCapital,
+  duration: historicalClaims.duration,
+  reach: historicalClaims.reach,
+  tangibleOutputs: historicalClaims.tangibleOutputs,
+  description: historicalClaims.description,
+  evidenceLinks: historicalClaims.evidenceLinks,
+  whatsAlive: historicalClaims.whatsAlive,
+  routeToToolsLibrary: historicalClaims.routeToToolsLibrary,
+  routeToLocalScale: historicalClaims.routeToLocalScale,
+  routeToGovernance: historicalClaims.routeToGovernance,
+  routeToMentoring: historicalClaims.routeToMentoring,
+  routeToFundPathway: historicalClaims.routeToFundPathway,
+  status: historicalClaims.status,
+  finalTier: historicalClaims.finalTier,
+  finalTierUsd: historicalClaims.finalTierUsd,
+  finalTierTokens: historicalClaims.finalTierTokens,
+  ratifiedAt: historicalClaims.ratifiedAt,
+  createdAt: historicalClaims.createdAt,
+  publishedAt: historicalClaims.publishedAt,
+} as const;
+
 function serializeClaim(row: any) {
   if (!row) return null;
   return {
@@ -369,7 +446,7 @@ export const claimsRouter = router({
       if (input?.tier) conditions.push(eq(historicalClaims.finalTier, input.tier));
       if (input?.claimType) conditions.push(eq(historicalClaims.claimType, input.claimType));
       const rows = await drizzle
-        .select()
+        .select(PUBLIC_CLAIM_COLUMNS)
         .from(historicalClaims)
         .where(and(...conditions))
         .orderBy(desc(historicalClaims.publishedAt))
@@ -384,13 +461,13 @@ export const claimsRouter = router({
       const drizzle = await getDb();
       if (!drizzle) return null;
       const rows = await drizzle
-        .select()
+        .select(PUBLIC_CLAIM_COLUMNS)
         .from(historicalClaims)
         .where(and(eq(historicalClaims.id, input.id), eq(historicalClaims.status, "published")))
         .limit(1);
       if (rows.length === 0) return null;
       const tools = await drizzle
-        .select()
+        .select(PUBLIC_TOOLS_LIBRARY_COLUMNS)
         .from(toolsLibraryEntries)
         .where(and(eq(toolsLibraryEntries.claimId, input.id), eq(toolsLibraryEntries.status, "published")));
       return { ...serializeClaim(rows[0]), tools };
@@ -410,18 +487,28 @@ export const claimsRouter = router({
       if (input?.toolType) conditions.push(eq(toolsLibraryEntries.toolType, input.toolType as any));
       if (input?.capitalForm) conditions.push(eq(toolsLibraryEntries.capitalForm, input.capitalForm));
       return drizzle
-        .select()
+        .select(PUBLIC_TOOLS_LIBRARY_COLUMNS)
         .from(toolsLibraryEntries)
         .where(and(...conditions))
         .orderBy(desc(toolsLibraryEntries.createdAt))
         .limit(input?.limit ?? 60);
     }),
 
-  /** Public: list upcoming and past proposal parties. */
+  /**
+   * Public: list upcoming and past proposal parties.
+   *
+   * `notes` is withheld. It is the organisers' working column (who is
+   * chairing, what still needs deciding), written on an adminProcedure and
+   * never meant for the page. The schedule, the video and the recording are
+   * the announcement.
+   */
   listProposalParties: publicProcedure.query(async () => {
     const drizzle = await getDb();
     if (!drizzle) return [];
-    return drizzle.select().from(proposalParties).orderBy(desc(proposalParties.scheduledAt));
+    return drizzle
+      .select(PUBLIC_PROPOSAL_PARTY_COLUMNS)
+      .from(proposalParties)
+      .orderBy(desc(proposalParties.scheduledAt));
   }),
 
   /** Admin: create a proposal party. */

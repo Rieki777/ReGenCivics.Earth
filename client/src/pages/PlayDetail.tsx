@@ -240,9 +240,9 @@ export default function PlayDetail() {
   const robustness = (play.robustness ?? null) as RobustnessScores | null;
   const userId = (user as any)?.id;
   const userRole = (user as any)?.role;
-  const isOwner =
-    userId != null &&
-    (play.submittedBy === userId || play.creatorUserId === userId);
+  // Answered by the server: getBySlug no longer publishes submittedBy or
+  // creatorUserId, so ownership is decided where the ids live.
+  const isOwner = userId != null && (play as any).isOwner === true;
   const isAdmin = userRole === "admin" || userRole === "superadmin";
   const canLaunchCampaign =
     isVision &&

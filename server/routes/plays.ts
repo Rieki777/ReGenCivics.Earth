@@ -9,6 +9,35 @@ import { sql, eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
 
+/**
+ * Public columns of a `plays` row, aliased `p` in every query below.
+ *
+ * Withheld: `creatorUserId`, `submittedBy` and `approvedBy`, the internal
+ * ids that name the member who authored a play, the member who submitted it
+ * and the admin who cleared it. `creatorProjectName` stays, because that is
+ * the credit the creator chose to publish.
+ *
+ * `externalPaymentUrl` stays too. It is the buy link a paid play exists to
+ * offer, and the new status filter is what keeps an unapproved play's link
+ * out of reach.
+ *
+ * sql.raw is safe here: a compile-time constant of column identifiers.
+ */
+export const PUBLIC_PLAY_FIELDS = [
+  "id", "name", "slug", "creatorProjectName", "summary", "coverImageUrl",
+  "websiteUrl", "pricingModel", "priceRegenTokens", "externalPaymentUrl",
+  "externalPriceLabel", "scale", "communityType", "kind", "needsFramework",
+  "receipts", "robustness", "campaignId",
+  "sectionIdentity", "sectionGovernance", "sectionEconomics", "sectionLegal",
+  "sectionRoles", "sectionSeasons", "sectionLandEcology", "sectionAgreements",
+  "sectionConflict", "sectionHealth", "sectionEducation", "sectionCulture",
+  "sectionExternalRelations", "sectionScaling",
+  "status", "totalViews", "totalAdoptions", "forumThreadId",
+  "createdAt", "updatedAt",
+] as const;
+
+const PUBLIC_PLAY_COLUMNS = sql.raw(PUBLIC_PLAY_FIELDS.map((f) => `p.${f}`).join(", "));
+
 export const playsRouter = router({
   // List approved plays with filters
   list: publicProcedure
@@ -40,7 +69,7 @@ export const playsRouter = router({
 
       if (input?.categorySlug) {
         const [plays] = await db.execute<any>(sql`
-          SELECT p.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+          SELECT ${PUBLIC_PLAY_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
           FROM plays p
           JOIN play_category_map m ON m.playId = p.id
           JOIN play_categories c ON c.id = m.categoryId
@@ -54,7 +83,7 @@ export const playsRouter = router({
       }
 
       const [plays] = await db.execute<any>(sql`
-        SELECT p.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_PLAY_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
         FROM plays p
         LEFT JOIN play_category_map m ON m.playId = p.id
         LEFT JOIN play_categories c ON c.id = m.categoryId
@@ -66,33 +95,54 @@ export const playsRouter = router({
       return (plays as unknown as unknown as any[]).map(parsePlayRow);
     }),
 
-  // Get single play by slug
+  // Get single play by slug (public projection).
+  // The status filter is new: without it a guessed slug read a pending or
+  // rejected submission, including its unpublished payment link.
   getBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
       const [rows] = await db.execute(sql`
-        SELECT p.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_PLAY_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
         FROM plays p
         LEFT JOIN play_category_map m ON m.playId = p.id
         LEFT JOIN play_categories c ON c.id = m.categoryId
-        WHERE p.slug = ${input.slug}
+        WHERE p.slug = ${input.slug} AND p.status = 'approved'
         GROUP BY p.id
         LIMIT 1
       `);
       const play = (rows as unknown as unknown as any[])[0];
       if (!play) return null;
 
-      // Get endorsements
+      // The page needs to know whether the viewer owns this play, to show
+      // the Launch campaign button. It used to work that out client-side
+      // from `submittedBy` / `creatorUserId`, which meant publishing both
+      // ids to everyone. Answer the question on the server instead and
+      // send back only the answer. The mutation re-checks ownership
+      // (plays.ts submitPlay/launchCampaign), so this is display only.
+      let isOwner = false;
+      if (ctx.user) {
+        const [ownerRows] = await db.execute<any>(sql`
+          SELECT submittedBy, creatorUserId FROM plays WHERE id = ${play.id} LIMIT 1
+        `);
+        const owner = (ownerRows as unknown as any[])[0];
+        isOwner =
+          !!owner &&
+          (owner.submittedBy === ctx.user.id || owner.creatorUserId === ctx.user.id);
+      }
+
+      // Get endorsements. Named columns: `e.*` carried the endorser's userId,
+      // which pairs a named member with a play they back.
       const [endorsements] = await db.execute(sql`
-        SELECT e.*, u.name as userName FROM play_endorsements e
+        SELECT e.id, e.playId, e.comment, e.createdAt, u.name as userName
+        FROM play_endorsements e
         LEFT JOIN users u ON u.id = e.userId
         WHERE e.playId = ${play.id}
         ORDER BY e.createdAt DESC LIMIT 20
       `);
 
-      return { ...parsePlayRow(play), endorsements: endorsements as unknown as any[] };
+      return { ...parsePlayRow(play), isOwner, endorsements: endorsements as unknown as any[] };
     }),
 
   // All categories with play counts

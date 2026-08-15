@@ -6,6 +6,30 @@ import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 
 /**
+ * Public columns of an `organisation_ratings` row. `raterId` is withheld:
+ * a rating is community signal about an organisation, not a published
+ * statement by a named member. `note` stays, it is the content.
+ *
+ * sql.raw is safe here: a compile-time constant of column identifiers.
+ */
+export const PUBLIC_ORG_RATING_FIELDS = [
+  "id",
+  "organisationId",
+  "soilScore",
+  "biodiversityScore",
+  "waterScore",
+  "chemicalFreeScore",
+  "communityScore",
+  "workerWellbeingScore",
+  "overallScore",
+  "note",
+  "seasonId",
+  "createdAt",
+] as const;
+
+const PUBLIC_ORG_RATING_COLUMNS = sql.raw(PUBLIC_ORG_RATING_FIELDS.join(", "));
+
+/**
  * Check that the user holds Co-Creator tier or above.
  * Throws FORBIDDEN if the user is an explorer or has no profile.
  */
@@ -108,7 +132,12 @@ export const orgRatingsRouter = router({
       return { ok: true, overallScore, totalRatings };
     }),
 
-  // Get all ratings for an organisation (public)
+  // Get all ratings for an organisation (public projection).
+  //
+  // `raterId` is withheld. The scores and the note are what the page is for,
+  // but the rater's identity turns a rating into "this named member said
+  // this about this organisation", which is not what anyone agreed to when
+  // they filled the form. Ratings are shown and averaged, not attributed.
   getForOrg: publicProcedure
     .input(z.object({ organisationId: z.number() }))
     .query(async ({ input }) => {
@@ -116,7 +145,7 @@ export const orgRatingsRouter = router({
       if (!db) return [];
       return db
         .execute(
-          sql`SELECT * FROM organisation_ratings WHERE organisationId = ${input.organisationId} ORDER BY createdAt DESC`
+          sql`SELECT ${PUBLIC_ORG_RATING_COLUMNS} FROM organisation_ratings WHERE organisationId = ${input.organisationId} ORDER BY createdAt DESC`
         )
         .then((r: any) => r[0] ?? []);
     }),

@@ -7,8 +7,43 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, or, desc, sql, count, notInArray } from "drizzle-orm";
 import { govProposals, govComments, govVotes, users } from "../../drizzle/schema";
+import { isAdminUser } from "../lib/public-projection";
+import type { TrpcContext } from "../_core/context";
+
+/**
+ * Statuses a proposal is not published in.
+ *
+ * A draft is the author still writing. A withdrawn proposal is the author
+ * taking it back. `body` is the whole argument, so returning either to
+ * anyone who asks publishes text its author has not published, and in the
+ * withdrawn case has actively retracted.
+ */
+export const UNPUBLISHED_PROPOSAL_STATUSES = ["draft", "withdrawn"] as const;
+
+/**
+ * What a vote looks like to anyone who is not an admin: the stance and its
+ * reason, with no way to attribute either. See `listVotes` below for why.
+ */
+export const PUBLIC_GOV_VOTE_COLUMNS = {
+  id: govVotes.id,
+  proposalId: govVotes.proposalId,
+  stance: govVotes.stance,
+  reason: govVotes.reason,
+  createdAt: govVotes.createdAt,
+} as const;
+
+/**
+ * Restrict a proposal query to what this caller may see: everything for an
+ * admin, published statuses plus the caller's own rows for a signed-in
+ * member, published statuses only for anonymous.
+ */
+function visibleProposalsFilter(user: TrpcContext["user"] | undefined) {
+  if (isAdminUser(user)) return undefined;
+  const published = notInArray(govProposals.status, [...UNPUBLISHED_PROPOSAL_STATUSES]);
+  return user ? or(published, eq(govProposals.authorId, user.id)) : published;
+}
 
 export const govProposalsRouter = router({
   /** List proposals for a tenant, filtered by status. */
@@ -19,12 +54,15 @@ export const govProposalsRouter = router({
       limit: z.number().int().min(1).max(100).default(20),
       offset: z.number().int().min(0).default(0),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
       const conditions = [];
       if (input.tenantId) conditions.push(eq(govProposals.tenantId, input.tenantId));
       if (input.status) conditions.push(eq(govProposals.status, input.status));
+      // Asking for status=draft no longer hands back everyone's drafts.
+      const visible = visibleProposalsFilter(ctx.user);
+      if (visible) conditions.push(visible);
       const where = conditions.length > 0 ? and(...conditions) : undefined;
       return db.select().from(govProposals).where(where).orderBy(desc(govProposals.createdAt)).limit(input.limit).offset(input.offset);
     }),
@@ -32,10 +70,17 @@ export const govProposalsRouter = router({
   /** Get a single proposal by ID. */
   getById: publicProcedure
     .input(z.object({ id: z.number().int().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
-      const rows = await db.select().from(govProposals).where(eq(govProposals.id, input.id)).limit(1);
+      // Same visibility rule as list: the id is enumerable, so without this
+      // every draft body was one request away.
+      const visible = visibleProposalsFilter(ctx.user);
+      const rows = await db
+        .select()
+        .from(govProposals)
+        .where(visible ? and(eq(govProposals.id, input.id), visible) : eq(govProposals.id, input.id))
+        .limit(1);
       if (rows.length === 0) return null;
       const proposal = rows[0];
       // Enrich with author name
@@ -200,13 +245,36 @@ export const govProposalsRouter = router({
       }));
     }),
 
-  /** List votes for a proposal. */
+  /**
+   * List votes for a proposal, unattributed.
+   *
+   * Withheld: `voterId` (who voted), `delegatedFromId` (who delegated to
+   * them, which exposes a second person per row) and `weight` (which
+   * combined with the tally lets you work backwards to individuals). The
+   * stance and its reason stay: in a consent process the objection text is
+   * the thing the group has to answer, and it can be answered without
+   * knowing whose it is.
+   *
+   * This follows the hub's stated posture rather than inventing one.
+   * ADR-27 keeps the binding vote on Hypha and deprecates `proposal_votes`
+   * precisely so ReGen Civics "never becomes a shadow voting system", and
+   * ADR-28 locks the on-platform sensing signal to aggregate-only, "never a
+   * vote". `govProposals.getById` already publishes a tally, not a roll
+   * call. Admins still get the full rows.
+   */
   listVotes: publicProcedure
     .input(z.object({ proposalId: z.number().int().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      return db.select().from(govVotes).where(eq(govVotes.proposalId, input.proposalId)).orderBy(govVotes.createdAt);
+      if (isAdminUser(ctx.user)) {
+        return db.select().from(govVotes).where(eq(govVotes.proposalId, input.proposalId)).orderBy(govVotes.createdAt);
+      }
+      return db
+        .select(PUBLIC_GOV_VOTE_COLUMNS)
+        .from(govVotes)
+        .where(eq(govVotes.proposalId, input.proposalId))
+        .orderBy(govVotes.createdAt);
     }),
 
   /** Withdraw a proposal (author only, any status before ratified). */
