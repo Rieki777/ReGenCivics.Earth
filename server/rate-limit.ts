@@ -12,6 +12,51 @@ import { redisRateLimit, isCacheAvailable } from "./cache";
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
 const MAX_SUBMISSIONS_PER_WINDOW = 7;
 
+/**
+ * Per-action limits. The default of 7 per 15 minutes fits one-shot form
+ * submissions, but a conversation is many small turns: the Gardener's land
+ * application runs 15 to 30 turns, the First Mate's intake about 10, and a
+ * talk with an Elder has no fixed length. Without these overrides every
+ * conversational character died mid-sentence at turn 8. Caps stay tight
+ * enough to stop scripted abuse (a human turn takes 10+ seconds anyway).
+ */
+const ACTION_LIMITS: Record<string, number> = {
+  companion_turn: 60,        // one full application conversation, with room to wander
+  companion_transcribe: 60,  // one STT call per spoken answer tracks turn volume
+  companion_tts: 120,        // one hosted synthesis per spoken reply; capped text + server cache bound the spend
+  design_companion: 60,      // crowdpool campaign design coaching is many small turns
+
+  elder_chat: 40,
+  ship_concierge_chat: 40,
+  ship_shipwright: 20,
+  // The Galley remixer is high-frequency: a market haul is many items logged in a
+  // row, and remixing, rolling, and asking the Cook are the whole point. The
+  // one-shot default of 7 would block a crew mid-haul. Caps stay tight enough to
+  // stop scripted abuse.
+  ship_galley_item: 60,   // logging a full market haul, one item at a time
+  ship_galley_remix: 60,  // remix + Roll the Tide, tapped repeatedly
+  ship_galley_cook: 30,   // LLM-backed, so a touch tighter
+  ship_galley_haul: 15,
+  ship_galley_publish: 15,
+
+  // Free Voyage Giveaway public entry layer. Entry is idempotent (one email = one
+  // entry), so a slightly higher cap tolerates shared networks without letting a
+  // script farm the list. verify/tag/bonus act on an existing entry via its token.
+  ship_giveaway_enter: 12,
+  ship_giveaway_verify: 20,
+  ship_giveaway_tag: 20,
+  ship_giveaway_bonus: 20,
+
+  // Funding application engine. Each run is one complex-tier LLM call, so the
+  // cap bounds spend and stops an accidental regenerate loop. Admin-only and
+  // deliberate work, so 10 per 15 minutes is well above a real working session.
+  funding_generate: 10,
+};
+
+function maxForAction(action: string): number {
+  return ACTION_LIMITS[action] ?? MAX_SUBMISSIONS_PER_WINDOW;
+}
+
 // ── In-memory fallback (single-process only) ─────────────────────────────────
 interface RateLimitEntry {
   timestamps: number[];
@@ -32,7 +77,8 @@ setInterval(() => {
 }, 10 * 60 * 1000);
 
 function memoryRateLimit(
-  key: string
+  key: string,
+  max: number = MAX_SUBMISSIONS_PER_WINDOW
 ): { allowed: boolean; count: number; resetAt: number } {
   const now = Date.now();
   let entry = memoryStore.get(key);
@@ -46,7 +92,7 @@ function memoryRateLimit(
   );
 
   const count = entry.timestamps.length;
-  const allowed = count < MAX_SUBMISSIONS_PER_WINDOW;
+  const allowed = count < max;
   const oldestTs = entry.timestamps[0] ?? now;
   const resetAt = oldestTs + RATE_LIMIT_WINDOW_MS;
 
@@ -81,6 +127,7 @@ export async function checkRateLimit(
 ): Promise<void> {
   const ip = getClientIp(ctx.req);
   const key = `ratelimit:${ip}:${action}`;
+  const max = maxForAction(action);
 
   let allowed: boolean;
   let resetAt: number;
@@ -88,11 +135,11 @@ export async function checkRateLimit(
   if (isCacheAvailable()) {
     ({ allowed, resetAt } = await redisRateLimit(
       key,
-      MAX_SUBMISSIONS_PER_WINDOW,
+      max,
       RATE_LIMIT_WINDOW_MS
     ));
   } else {
-    ({ allowed, resetAt } = memoryRateLimit(key));
+    ({ allowed, resetAt } = memoryRateLimit(key, max));
   }
 
   if (!allowed) {
@@ -102,7 +149,7 @@ export async function checkRateLimit(
     );
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
-      message: `You've reached the maximum number of submissions (${MAX_SUBMISSIONS_PER_WINDOW} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
+      message: `You've reached the maximum number of submissions (${max} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
 }

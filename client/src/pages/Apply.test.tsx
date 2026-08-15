@@ -30,10 +30,22 @@ vi.mock('@/lib/trpc', () => ({
         useQuery: () => ({ data: null }),
       },
     },
+    // The Gardener chat-first flow: flags gate whether the companion renders.
+    // companion: false drops the page into classic form mode for these tests.
+    companion: {
+      flags: {
+        useQuery: () => ({ data: { companion: false } }),
+      },
+    },
     useUtils: () => ({
       applications: { invalidate: vi.fn() },
     }),
   },
+}));
+
+// The Gardener conversation UI has its own trpc surface; not under test here.
+vi.mock('@/components/companion', () => ({
+  FormCompanion: () => null,
 }));
 
 vi.mock('@/_core/hooks/useAuth', () => ({

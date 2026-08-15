@@ -85,6 +85,7 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
       <div id="live-announcer" aria-live="polite" role="status" className="sr-only" />
       {confetti && <SeasonalConfettiOverlay />}
       <div
+        // tap-audit-ok: whole-page fade-in wrapper; its hit-box IS the page content
         className={cn(
           "transition-opacity duration-150",
           mounted ? "opacity-100" : "opacity-0",

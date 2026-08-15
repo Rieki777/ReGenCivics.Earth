@@ -13,7 +13,13 @@ import os
 import base64
 from pathlib import Path
 
+# API key comes from the environment only. Set GEMINI_KEY (or GEMINI_API_KEY)
+# in your shell or .env before running (see .env.example). Never hardcode it here.
 API_KEY = os.environ.get("GEMINI_KEY") or os.environ.get("GEMINI_API_KEY")
+if not API_KEY:
+    raise SystemExit(
+        "Missing API key. Set GEMINI_KEY (or GEMINI_API_KEY) in your environment before running."
+    )
 
 PROMPT = """
 Fantasy illustration in storybook style titled 'Bridging Worlds.'

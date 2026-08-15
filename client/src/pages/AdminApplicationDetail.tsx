@@ -158,7 +158,7 @@ export default function AdminApplicationDetail() {
               <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
                 {application.projectName}
               </h1>
-              <div className="flex items-center gap-4 text-[#1a472a]/70">
+              <div className="flex items-center gap-4 text-[#1a472a]/75">
                 <span>{application.location}</span>
                 <span>•</span>
                 <span className="capitalize">{application.projectType.replace("_", " ")}</span>
@@ -316,6 +316,39 @@ export default function AdminApplicationDetail() {
                 </div>
               )}
             </Card>
+
+            {/* Conversation with the Gardener (chat-first /apply). Richer
+                signal than the extracted fields: how the applicant actually
+                talked about their project. */}
+            {application.companionTranscript && (() => {
+              let turns: Array<{ role: string; content: string }> = [];
+              try {
+                const parsed = JSON.parse(application.companionTranscript);
+                if (Array.isArray(parsed)) turns = parsed;
+              } catch { /* unreadable transcript, skip */ }
+              if (turns.length === 0) return null;
+              return (
+                <Card className="p-6 bg-white">
+                  <details>
+                    <summary className="cursor-pointer text-2xl font-bold text-[#1a472a]">
+                      Conversation with the Gardener
+                      <span className="ml-2 text-sm font-normal text-[#1a472a]/75">{turns.length} turns</span>
+                    </summary>
+                    <div className="mt-4 space-y-2 max-h-[32rem] overflow-y-auto">
+                      {turns.map((t, i) => (
+                        <div key={i} className={t.role === "user" ? "text-right" : ""}>
+                          <span className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[85%] text-left ${
+                            t.role === "user" ? "bg-[#2f5d3a] text-white" : "bg-[#f0ebe3] text-[#1a472a]"
+                          }`}>
+                            {String(t.content)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </Card>
+              );
+            })()}
 
             {/* Previous Reviews */}
             {reviews && reviews.length > 0 && (

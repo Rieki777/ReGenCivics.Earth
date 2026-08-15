@@ -180,6 +180,7 @@ export const adminRouter = router({
 
       const result = await invokeLLM({
         maxTokens: 2000,
+        task: "complex",
         messages: [
           { role: "system", content: system },
           { role: "user", content: userMsg },
@@ -231,15 +232,12 @@ export const adminRouter = router({
     }),
 
   // Get notification preferences (admin only)
-  getNotificationPreferences: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  getNotificationPreferences: adminProcedure.query(async () => {
     return db.getNotificationPreferences();
   }),
 
   // Update notification preferences (admin only)
-  updateNotificationPreferences: protectedProcedure
+  updateNotificationPreferences: adminProcedure
     .input(z.object({
       // Toggle fields (tinyint: 0 or 1)
       applicationSubmissions: z.number().min(0).max(1).optional(),
@@ -260,10 +258,7 @@ export const adminRouter = router({
       campaignEmails: z.string().nullable().optional(),
       newsletterEmails: z.string().nullable().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateNotificationPreferences(input);
       return { success: true };
     }),
@@ -639,12 +634,11 @@ export const imageStudioRouter = router({
 
 // ─── Scheduled Emails ─────────────────────────────────────────────────────────
 export const scheduledEmailsRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+  list: adminProcedure.query(async () => {
     return await db.getScheduledEmails();
   }),
 
-  schedule: protectedProcedure
+  schedule: adminProcedure
     .input(z.object({
       recipientEmail: z.string().email(),
       recipientName: z.string().optional(),
@@ -653,8 +647,7 @@ export const scheduledEmailsRouter = router({
       inquiryType: z.string().optional(),
       scheduledFor: z.string(), // ISO datetime string
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       return await db.createScheduledEmail({
         recipientEmail: input.recipientEmail,
         recipientName: input.recipientName,
@@ -665,10 +658,9 @@ export const scheduledEmailsRouter = router({
       });
     }),
 
-  cancel: protectedProcedure
+  cancel: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       await db.updateScheduledEmailStatus(input.id, 'cancelled');
     }),
 });

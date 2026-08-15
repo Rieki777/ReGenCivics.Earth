@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles, Heart,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles, Heart, StickyNote,
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -61,7 +61,10 @@ export function WizardRadialMenu() {
   const [location] = useLocation();
   const tint = useSeasonTint();
   const { isPlaying, togglePlay } = useAudio();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  // Admin-only capture shortcut. This is the surviving path after every FAB
+  // gesture failed on iOS Safari: a plain menu row is a plain tap target.
+  const canCapture = user?.role === "admin" || user?.role === "superadmin";
   const pageTools = usePageTools();
 
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -186,6 +189,16 @@ export function WizardRadialMenu() {
     Icon: Heart,
   };
 
+  // Add note: opens the Harvest capture composer (HarvestCaptureModal listens
+  // for this event site-wide). Admin-only, and placed LAST so it lands closest
+  // to the trigger — the first thing under Rye's thumb.
+  const captureAction: Action = {
+    key: "capture",
+    label: "Add note",
+    event: "open-harvest-capture",
+    Icon: StickyNote,
+  };
+
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the
   // thumb. Gratitude lands nearest the trigger — the game's easiest action.
@@ -199,6 +212,8 @@ export function WizardRadialMenu() {
     questsAction,
     bountiesAction,
     gratitudeAction,
+    // Closest to the thumb for admins; absent for everyone else.
+    ...(canCapture ? [captureAction] : []),
   ];
 
   // Springy easing so the rows feel like they pop up from the Flower.
@@ -223,8 +238,18 @@ export function WizardRadialMenu() {
           env(safe-area-inset-bottom); placing the FAB bottom at safe-area +
           3.5rem dips its lower edge a few px into the bar. Tabs render z-50;
           we render z-[60] so the trigger stays on top. */}
+      {/* pointer-events-none on this container is load-bearing. The closed
+          menu rows stay mounted (opacity-0) so the open/close transition can
+          run, which makes this fixed box ~600px tall even when nothing is
+          visible. Without pointer-events-none the box itself catches every
+          tap that falls through the disabled rows, killing everything under
+          the bottom-right of the screen on phones (profile tabs, gratitude
+          toggles). Interactive children re-enable with pointer-events-auto.
+          stopPropagation still fires for bubbled child clicks, which is all
+          it was ever for (keeping the document close handler from eating
+          the trigger tap). */}
       <div
-        className="fixed right-4 z-[60] md:hidden flex flex-col items-end"
+        className="fixed right-4 z-[60] md:hidden flex flex-col items-end pointer-events-none"
         style={{
           bottom: "calc(env(safe-area-inset-bottom, 0px) + 3.5rem)",
         }}
@@ -328,7 +353,7 @@ export function WizardRadialMenu() {
         <button
           ref={triggerRef}
           onClick={handleTriggerClick}
-          className={`relative w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
+          className={`pointer-events-auto relative w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
             open ? "scale-105" : ""
           }`}
           style={{

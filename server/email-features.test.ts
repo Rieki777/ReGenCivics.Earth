@@ -5,7 +5,7 @@ import type { TrpcContext } from "./_core/context";
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createAdminContext(): TrpcContext {
-  const user: AuthenticatedUser = {
+  const user = {
     id: 1,
     openId: "admin-user",
     email: "admin@example.com",
@@ -15,10 +15,11 @@ function createAdminContext(): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
-  };
+  } as unknown as AuthenticatedUser;
 
   return {
     user,
+    authMethod: "legacy",
     req: {
       protocol: "https",
       headers: {},
@@ -26,13 +27,14 @@ function createAdminContext(): TrpcContext {
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 
 function createPublicContext(): TrpcContext {
   return {
     user: null,
+    authMethod: null,
     req: {
       protocol: "https",
       headers: {},
@@ -40,7 +42,7 @@ function createPublicContext(): TrpcContext {
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 
@@ -53,19 +55,7 @@ describe("email features", () => {
       expect(Array.isArray(templates)).toBe(true);
     });
 
-    it("sendTestEmail should require valid email and template", async () => {
-      const ctx = createAdminContext();
-      const caller = appRouter.createCaller(ctx);
-      
-      // Should reject invalid email
-      await expect(
-        caller.email.sendTestEmail({
-          email: "not-an-email",
-          template: "newsletterWelcome",
-          recipientName: "Test",
-        })
-      ).rejects.toThrow();
-    });
+    // sendTestEmail was removed from the email router; its test went with it.
   });
 
   describe("newsletter procedures", () => {

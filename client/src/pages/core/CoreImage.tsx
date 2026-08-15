@@ -11,6 +11,10 @@ type Props = {
   fallback: ReactNode;
   sizes?: string;
   className?: string;
+  /** Style for the wrapper box. Use this (not imgStyle) for outer spacing like
+   * margins: the <img> sits in an overflow-hidden aspect box, so a margin on it
+   * just shifts the image and exposes the LQIP as a band on one edge. */
+  style?: React.CSSProperties;
   imgClassName?: string;
   imgStyle?: React.CSSProperties;
   /** LCP images (e.g. the home hero) load eagerly with high priority. */
@@ -23,7 +27,7 @@ type Props = {
  * an asset exists (empty manifest), and if the network fetch fails at runtime,
  * it renders `fallback` so the page never shows a broken image or raw alt text.
  */
-export default function CoreImage({ id, fallback, sizes, className, imgClassName, imgStyle, priority }: Props) {
+export default function CoreImage({ id, fallback, sizes, className, style, imgClassName, imgStyle, priority }: Props) {
   const [failed, setFailed] = useState(false);
   const entry = ASSETS[id];
   const asset = CORE_ASSETS[id];
@@ -39,6 +43,7 @@ export default function CoreImage({ id, fallback, sizes, className, imgClassName
         width: "100%",
         aspectRatio: `${asset.aspect[0]} / ${asset.aspect[1]}`,
         backgroundImage: entry.lqip ? `url(${entry.lqip})` : undefined,
+        ...style,
       }}
     >
       <img

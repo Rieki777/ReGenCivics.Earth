@@ -235,7 +235,7 @@ export function MarkdownToolbar({ textareaRef, value, onChange, compact = false 
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-0.5 flex-wrap">
         <div
-          className={`inline-flex items-center gap-0.5 rounded-lg border border-[#e8e4de] bg-[#f8f5f0] px-1 py-0.5 ${
+          className={`inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-[#e8e4de] bg-[#f8f5f0] px-1 py-0.5 ${
             compact ? '' : 'mb-1.5'
           }`}
         >
@@ -247,7 +247,7 @@ export function MarkdownToolbar({ textareaRef, value, onChange, compact = false 
                   <button
                     type="button"
                     onClick={() => handleAction(action)}
-                    className="p-1.5 rounded-md text-[#1a472a]/80 hover:text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                    className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-md text-[#1a472a]/80 hover:text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                     aria-label={action.label}
                   >
                     <Icon className={compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} />

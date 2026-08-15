@@ -14,7 +14,7 @@ import { TaoSpinner } from '@/components/TaoSpinner';
 import { PageTransition } from '@/components/PageTransition';
 import { FlowerOfLifeIcon } from '@/components/FlowerOfLifeIcon';
 import { formatDistanceToNow } from 'date-fns';
-import { typeGlyph } from '@/components/NotificationBell';
+import { typeGlyph, resolveNotificationLink } from '@/components/NotificationBell';
 
 const FILTERS: { key: string; label: string; types?: string[] }[] = [
   { key: 'all', label: 'All' },
@@ -110,7 +110,8 @@ export default function Notifications() {
                   key={item.id}
                   onClick={() => {
                     if (!item.isRead) markRead.mutate({ id: item.id });
-                    if (item.link) navigate(item.link);
+                    const target = resolveNotificationLink(item);
+                    if (target) navigate(target);
                   }}
                   className={`w-full text-left p-4 border-b border-[#7dd87d]/10 hover:bg-[#f0f7f0] transition-colors ${
                     !item.isRead ? 'bg-[#f0f7f0]/50' : ''
@@ -124,8 +125,8 @@ export default function Notifications() {
                       <h3 className={`text-sm ${!item.isRead ? 'font-semibold' : ''} text-[#1a472a]`}>
                         {item.groupCount > 1 ? `${item.groupCount} new: ${item.title}` : item.title}
                       </h3>
-                      {item.body && <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{item.body}</p>}
-                      <p className="text-xs text-[#1a472a]/60 mt-1">
+                      {item.body && <p className="text-xs text-[#1a472a]/75 mt-1 line-clamp-2">{item.body}</p>}
+                      <p className="text-xs text-[#1a472a]/75 mt-1">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                       </p>
                     </div>

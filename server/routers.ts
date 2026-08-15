@@ -12,9 +12,14 @@ import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRoute
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
 import { forumFeedRouter } from "./routes/forumFeed";
 import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRouter, siteTourRouter } from "./routes/players";
+import { questCrewsRouter } from "./routes/questCrews";
+import { mapLayersRouter } from "./routes/mapLayers";
+import { needsOffersRouter } from "./routes/needsOffers";
+import { companionMemoryRouter } from "./routes/companionMemory";
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
+import { customGameApplicationsRouter } from "./routes/customGameApplications";
 import { bioregionsRouter, userBioregionsRouter, bloomsRouter } from "./routes/geo";
 import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
@@ -22,6 +27,7 @@ import { eventsRouter } from "./routes/events";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
+import { governanceForksRouter } from "./routes/governanceForks";
 import { governanceRouter } from "./routes/governance";
 import { assemblyRouter } from "./routes/assembly";
 import { walletRouter } from "./routes/wallet";
@@ -45,12 +51,21 @@ import { playerPathsRouter } from "./routes/playerPaths";
 import { analyticsRouter } from "./routes/analytics";
 import { adminActionsRouter } from "./routes/adminActions";
 import { adminAutomationsRouter } from "./routes/adminAutomations";
+import { adminFundingRouter } from "./routes/adminFunding";
 import { roleHoldersRouter } from "./routes/roleHolders";
 import { rolesRouter } from "./routes/roles";
 import { bountiesRouter } from "./routes/bounties";
 import { churchRolesRouter } from "./routes/churchRoles";
 import { churchDonationsRouter } from "./routes/churchDonations";
 import { elderChatRouter } from "./routes/elderChat";
+import { shipRouter } from "./routes/ship";
+import { shipGiveawayRouter } from "./routes/ship-giveaway";
+import { companionRouter } from "./routes/companion";
+import { guideRouter } from "./routes/guide";
+import { quickNotesRouter } from "./routes/quick-notes";
+import { harvestRouter } from "./routes/harvest";
+import { callIntelligenceRouter } from "./routes/callIntelligence";
+import { videoTutorRouter } from "./routes/videoTutor";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -106,6 +121,10 @@ export const appRouter = router({
   playerPaths: playerPathsRouter,
   quests: questsRouter,
   quest: questRouter,
+  questCrews: questCrewsRouter,
+  mapLayers: mapLayersRouter,
+  needsOffers: needsOffersRouter,
+  companionMemory: companionMemoryRouter,
   siteTour: siteTourRouter,
 
   // Admin
@@ -113,6 +132,7 @@ export const appRouter = router({
   adminAI: adminAIRouter,
   adminActions: adminActionsRouter,
   adminAutomations: adminAutomationsRouter,
+  adminFunding: adminFundingRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,
@@ -134,6 +154,7 @@ export const appRouter = router({
   knowledgeMap: knowledgeMapRouter,
   translate: translateRouter,
   customGameInquiries: customGameInquiriesRouter,
+  customGameApplications: customGameApplicationsRouter,
   blog: blogRouter,
   rssFeed: rssFeedRouter,
 
@@ -159,6 +180,10 @@ export const appRouter = router({
 
   // Hypha Bridge (every ReGen Civics -> Hypha handoff goes through here)
   hyphaBridge: hyphaBridgeRouter,
+
+  // Governance fork relay roster (ADR-46: the hub relays on-chain outcomes
+  // to registered village-platform forks)
+  governanceForks: governanceForksRouter,
 
   // Governance pipeline (Stage 1: forum readiness + promotion patterns)
   governance: governanceRouter,
@@ -209,6 +234,21 @@ export const appRouter = router({
   churchDonations: churchDonationsRouter,
   // CORE: Ask Anastasia elder chat (retrieval-grounded)
   elderChat: elderChatRouter,
+  // CORE: The ReGen Ship (bookings, treasure map, quest, concierge, fleet).
+  // The physical manifest (ex-shipManifest) is now merged into ship.inventory.* as a nested tree.
+  ship: shipRouter,
+  shipGiveaway: shipGiveawayRouter,
+  companion: companionRouter,
+  guide: guideRouter,
+  // Video Tutor: context-aware Q&A over any YouTube video on the site
+  videoTutor: videoTutorRouter,
+
+  // The Harvest (Phase 1): Rye's private capture inbox, owner-gated
+  quickNotes: quickNotesRouter,
+  // The Harvest (Phase 2): the feed, Develop, provenance, owner-gated
+  harvest: harvestRouter,
+  // Call intelligence (Stage 7): team ops suggestions from community calls
+  callIntelligence: callIntelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

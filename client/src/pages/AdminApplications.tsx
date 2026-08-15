@@ -64,7 +64,7 @@ export default function AdminApplications() {
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
-          <p className="text-[#1a472a]/70 mb-6">
+          <p className="text-[#1a472a]/75 mb-6">
             You need to be logged in as an admin to access this page.
           </p>
           <Button
@@ -83,7 +83,7 @@ export default function AdminApplications() {
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Access Denied</h2>
-          <p className="text-[#1a472a]/70 mb-6">
+          <p className="text-[#1a472a]/75 mb-6">
             You don't have permission to access this page.
           </p>
           <Button
@@ -134,7 +134,7 @@ export default function AdminApplications() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-[#1a472a]/70 mb-3">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-[#1a472a]/75 mb-3">
               <span>{app.location}</span>
               <span className="hidden md:inline">•</span>
               <span className="capitalize">
@@ -193,7 +193,7 @@ export default function AdminApplications() {
               Back to Dashboard
             </Button>
           </div>
-          <p className="text-[#1a472a]/70 text-sm md:text-base">
+          <p className="text-[#1a472a]/75 text-sm md:text-base">
             Review and manage project applications
           </p>
         </div>
@@ -245,7 +245,7 @@ export default function AdminApplications() {
               {filterByStatus(status).length === 0 ? (
                 <Card className="p-12 text-center bg-white">
                   <FileText className="w-16 h-16 text-[#1a472a]/75 mx-auto mb-4" />
-                  <p className="text-[#1a472a]/70">
+                  <p className="text-[#1a472a]/75">
                     No applications with this status
                   </p>
                 </Card>

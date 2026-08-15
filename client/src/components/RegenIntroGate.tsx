@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Sprout, Play, X } from "lucide-react";
+import { Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "regen-intro-seen";
@@ -78,38 +78,68 @@ export function RegenIntroGate() {
             </div>
           </div>
         ) : (
-          <div className="p-6 md:p-10 text-center">
-            <Sprout className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" />
-            <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-2"
-              style={{ fontFamily: "var(--font-display, system-ui)" }}
-            >
-              Welcome to ReGen Civics
-            </h2>
-            <p className="text-[#7dd87d] text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] mb-3">
-              ReGen is short for Regeneration
-            </p>
-            <p className="text-white/75 text-sm md:text-base max-w-md mx-auto mb-2">
-              We're a fund and a game for healing land and community.
-            </p>
-            <p className="text-white/70 text-sm max-w-md mx-auto mb-8">
-              Here's a short video that was shared with us. We think they did a beautiful job sharing what the word "regeneration" means. Or jump right on in if you already know the word.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={dismiss}
-                className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-bold"
+          <div>
+            <div className="relative h-52 sm:h-64 md:h-72 w-full overflow-hidden">
+              <picture>
+                <source
+                  media="(max-width: 640px)"
+                  srcSet="/images/backgrounds/community-hero-mobile.webp"
+                />
+                <img
+                  src="/images/backgrounds/community-hero.webp"
+                  alt="A sunlit path opening into a living, tree-grown gathering circle"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </picture>
+              {/* top scrim so the close button stays legible over bright sky */}
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#0d2818]/70 to-transparent" />
+              {/* bottom fade merges the photo into the card surface */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1a472a] via-[#1a472a]/5 to-transparent" />
+            </div>
+
+            <div className="relative -mt-12 sm:-mt-14 flex justify-center">
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                <div className="absolute inset-0 rounded-full bg-[#1a472a] blur-md opacity-90" />
+                <img
+                  src="/images/logos/regen-civics-emblem.webp"
+                  alt="ReGen Civics"
+                  className="relative w-full h-full object-contain drop-shadow-xl"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 md:px-10 pb-6 md:pb-10 pt-3 text-center">
+              <h2
+                className="text-2xl md:text-3xl font-bold text-white mb-2"
+                style={{ fontFamily: "var(--font-display, system-ui)" }}
               >
-                Skip, I'm ready
-              </Button>
-              <Button
-                onClick={() => setShowVideo(true)}
-                variant="outline"
-                className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#7dd87d]"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                What is Regeneration?
-              </Button>
+                Welcome to ReGen Civics
+              </h2>
+              <p className="text-[#7dd87d] text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] mb-3">
+                ReGen is short for Regeneration
+              </p>
+              <p className="text-white/75 text-sm md:text-base max-w-md mx-auto mb-2">
+                We're a fund and a game for healing land and community.
+              </p>
+              <p className="text-white/70 text-sm max-w-md mx-auto mb-8">
+                Here's a short video that was shared with us. We think they did a beautiful job sharing what the word "regeneration" means. Or jump right on in if you already know the word.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  onClick={dismiss}
+                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-bold"
+                >
+                  Skip, I'm ready
+                </Button>
+                <Button
+                  onClick={() => setShowVideo(true)}
+                  variant="outline"
+                  className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#7dd87d]"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  What is Regeneration?
+                </Button>
+              </div>
             </div>
           </div>
         )}

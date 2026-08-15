@@ -154,7 +154,7 @@ function TokenInfoCard({
         <CollapsibleContent className="mt-4">
           <ul className="space-y-2">
             {features.map((feature, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+              <li key={index} className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                 <Sparkles className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
                 <span>{feature}</span>
               </li>
@@ -656,7 +656,7 @@ export default function Game() {
                       <p className="text-sm text-[#1a472a]/80">Transforming the Stories That No Longer Serve Us</p>
                     </div>
                   </div>
-                  <p className="text-sm text-[#1a472a]/70 mb-4 text-left">
+                  <p className="text-sm text-[#1a472a]/75 mb-4 text-left">
                     Begin your journey by burning the stories that no longer serve you. Create a 2-3 minute video sharing who you are and why you're here.
                   </p>
                   <div className="flex items-center gap-2 mb-4">
@@ -686,7 +686,7 @@ export default function Game() {
               Join the{" "}
               <span className="text-[#7dd87d]">Movement</span>
             </h2>
-            <p className="text-lg text-[#1a472a]/70 max-w-3xl mx-auto">
+            <p className="text-lg text-[#1a472a]/75 max-w-3xl mx-auto">
               There are many ways to participate in the ReGen Civics ecosystem. Find the path that resonates with you.
             </p>
           </AnimatedSection>
@@ -700,7 +700,7 @@ export default function Game() {
               <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
                 Create with Alliances
               </h3>
-              <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
+              <p className="text-[#1a472a]/75 text-sm mb-4 text-center">
                 Collaborate with alliance organisations and land projects to co-create regenerative infrastructure, remotely or in person.
               </p>
               <Link href="/connect?path=create_with_regens">
@@ -718,7 +718,7 @@ export default function Game() {
               <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
                 Join a Community
               </h3>
-              <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
+              <p className="text-[#1a472a]/75 text-sm mb-4 text-center">
                 Join a regenerative land project and experience community living firsthand.
               </p>
               <Link href="/connect?path=live">
@@ -736,7 +736,7 @@ export default function Game() {
               <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
                 Join Our Team
               </h3>
-              <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
+              <p className="text-[#1a472a]/75 text-sm mb-4 text-center">
                 Apply for a role in ReGen Civics and help shape the ReGenerative Renaissance.
               </p>
               <Link href="/team">
@@ -881,42 +881,42 @@ export default function Game() {
                       <Wrench className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Tools & Software</h5>
-                        <p className="text-xs text-[#1a472a]/70">Created tools, apps, or software that the network can use</p>
+                        <p className="text-xs text-[#1a472a]/75">Created tools, apps, or software that the network can use</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Map className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Maps & Processes</h5>
-                        <p className="text-xs text-[#1a472a]/70">Created maps, frameworks, or processes that help regenerative projects succeed</p>
+                        <p className="text-xs text-[#1a472a]/75">Created maps, frameworks, or processes that help regenerative projects succeed</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <BookOpen className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Educational Content</h5>
-                        <p className="text-xs text-[#1a472a]/70">Developed courses, guides, or educational materials for the community</p>
+                        <p className="text-xs text-[#1a472a]/75">Developed courses, guides, or educational materials for the community</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Users className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Community Building</h5>
-                        <p className="text-xs text-[#1a472a]/70">Organized events, facilitated groups, or grew the community</p>
+                        <p className="text-xs text-[#1a472a]/75">Organized events, facilitated groups, or grew the community</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Lightbulb className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Strategic Guidance</h5>
-                        <p className="text-xs text-[#1a472a]/70">Provided consulting, mentorship, or strategic direction</p>
+                        <p className="text-xs text-[#1a472a]/75">Provided consulting, mentorship, or strategic direction</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <FileCheck className="w-6 h-6 text-[#4a7c59] flex-shrink-0 mt-1" />
                       <div>
                         <h5 className="font-bold text-[#1a472a] text-sm mb-1">Documentation</h5>
-                        <p className="text-xs text-[#1a472a]/70">Created governance docs, legal frameworks, or operational guides</p>
+                        <p className="text-xs text-[#1a472a]/75">Created governance docs, legal frameworks, or operational guides</p>
                       </div>
                     </div>
                   </div>
@@ -950,16 +950,16 @@ export default function Game() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-500 font-bold">4.</span>
-                        <span><strong>8 Forms of Capital:</strong> Consider the 8 forms of capital (financial, material, living, social, intellectual, experiential, spiritual, cultural) for a more holistic tracking of value contributed.</span>
+                        <span><strong>9 Forms of Capital:</strong> Consider the 9 forms of capital (financial, material, living, social, intellectual, experiential, spiritual, cultural, health) for a more holistic tracking of value contributed.</span>
                       </li>
                     </ul>
                   </div>
                   <div className="bg-[#f0f7f0] p-4 rounded-xl border border-[#7dd87d]/30">
                     <h5 className="font-bold text-[#1a472a] mb-2">Submit to the ReGen Game Space</h5>
-                    <p className="text-sm text-[#1a472a]/70 mb-3">
+                    <p className="text-sm text-[#1a472a]/75 mb-3">
                       Once you've calculated your contribution value, create a proposal in the ReGen Game Space explaining your contribution, the value calculation method, and supporting evidence.
                     </p>
-                    <p className="text-sm text-[#1a472a]/70 mb-3 italic bg-amber-50 p-2 rounded border border-amber-200">
+                    <p className="text-sm text-[#1a472a]/75 mb-3 italic bg-amber-50 p-2 rounded border border-amber-200">
                       All proposals will ultimately be decided by the Voice holders in the space.
                     </p>
                     <a 
@@ -985,7 +985,7 @@ export default function Game() {
                         </div>
                         <div>
                           <h4 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Contribution Calculator</h4>
-                          <p className="text-sm text-[#1a472a]/70">Estimate your contribution value across all 8 forms of capital using our calculator!</p>
+                          <p className="text-sm text-[#1a472a]/75">Estimate your contribution value across all 9 forms of capital using our calculator!</p>
                         </div>
                       </div>
                       <ArrowRight className="w-6 h-6 text-[#4a7c59] group-hover:translate-x-2 transition-transform" />
@@ -1161,28 +1161,28 @@ export default function Game() {
                       <Heart className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Heal Ourselves</h4>
-                        <p className="text-sm text-[#1a472a]/70">Our bodies, families, communities, bioregions, and Earth across all layers: physical, mental, emotional, spiritual.</p>
+                        <p className="text-sm text-[#1a472a]/75">Our bodies, families, communities, bioregions, and Earth across all layers: physical, mental, emotional, spiritual.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <BookOpen className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h4>
-                        <p className="text-sm text-[#1a472a]/70">Share our journey and insights with communities. This is the VALUE we add in exchange for tokens.</p>
+                        <p className="text-sm text-[#1a472a]/75">Share our journey and insights with communities. This is the VALUE we add in exchange for tokens.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Vote className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Distribute Ownership & Governance</h4>
-                        <p className="text-sm text-[#1a472a]/70">More quests = more tokens = greater Voice impact. Our game is owned and governed by Players and Allies.</p>
+                        <p className="text-sm text-[#1a472a]/75">More quests = more tokens = greater Voice impact. Our game is owned and governed by Players and Allies.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Sparkles className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Co-Create a Beautiful Game</h4>
-                        <p className="text-sm text-[#1a472a]/70">Constantly redesigned by all of us to help experience life in loving, connected, and regenerative ways.</p>
+                        <p className="text-sm text-[#1a472a]/75">Constantly redesigned by all of us to help experience life in loving, connected, and regenerative ways.</p>
                       </div>
                     </div>
                   </div>
@@ -1191,7 +1191,7 @@ export default function Game() {
             </div>
             
             <div className="text-center">
-              <p className="text-[#1a472a]/70 italic">
+              <p className="text-[#1a472a]/75 italic">
                 "To focus on regeneration & healing is to focus on growing our shared potential."
               </p>
             </div>
@@ -1283,7 +1283,7 @@ export default function Game() {
               Why{" "}
               <span className="text-[#7dd87d]">Games?</span>
             </h2>
-            <p className="text-lg text-[#1a472a]/70 max-w-3xl mx-auto">
+            <p className="text-lg text-[#1a472a]/75 max-w-3xl mx-auto">
               Capitalism, Nation States, Companies... all just Games. For systemic change, we need better Games that are actually designed to meet our needs.
             </p>
           </AnimatedSection>
@@ -1335,7 +1335,7 @@ export default function Game() {
                         <Lightbulb className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Faster Learning</h4>
-                      <p className="text-xs text-[#1a472a]/70 mb-2">Play accelerates skill acquisition</p>
+                      <p className="text-xs text-[#1a472a]/75 mb-2">Play accelerates skill acquisition</p>
                       <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3574776/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#1a472a] hover:underline">
                         Research &rarr;
                       </a>
@@ -1345,7 +1345,7 @@ export default function Game() {
                         <Sparkles className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Creative Solutions</h4>
-                      <p className="text-xs text-[#1a472a]/70 mb-2">Play opens up innovative thinking</p>
+                      <p className="text-xs text-[#1a472a]/75 mb-2">Play opens up innovative thinking</p>
                       <a href="https://pubmed.ncbi.nlm.nih.gov/38889248/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#558b2f] hover:underline">
                         Research &rarr;
                       </a>
@@ -1355,7 +1355,7 @@ export default function Game() {
                         <Users className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Stronger Bonds</h4>
-                      <p className="text-xs text-[#1a472a]/70 mb-2">Games build relationships faster</p>
+                      <p className="text-xs text-[#1a472a]/75 mb-2">Games build relationships faster</p>
                       <a href="https://www.sciencedirect.com/science/article/abs/pii/S0747563214003227" target="_blank" rel="noopener noreferrer" className="text-xs text-[#00796b] hover:underline">
                         Research &rarr;
                       </a>
@@ -1365,7 +1365,7 @@ export default function Game() {
                         <Zap className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Adaptability</h4>
-                      <p className="text-xs text-[#1a472a]/70 mb-2">Play enables faster adaptation</p>
+                      <p className="text-xs text-[#1a472a]/75 mb-2">Play enables faster adaptation</p>
                       <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4928743/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#388e3c] hover:underline">
                         Research &rarr;
                       </a>
@@ -1421,7 +1421,7 @@ export default function Game() {
                     Quest Design Philosophy
                     {questDesignOpen ? <ChevronUp className="w-6 h-6 inline ml-2 text-[#7dd87d]" /> : <ChevronDown className="w-6 h-6 inline ml-2 text-[#7dd87d] animate-bounce" />}
                   </h2>
-                  <p className="text-[#1a472a]/70 max-w-2xl mx-auto">
+                  <p className="text-[#1a472a]/75 max-w-2xl mx-auto">
                     Quests are designed to provide the greatest regenerative impact with the lowest effort, time, and resources.
                   </p>
                 </div>
@@ -1435,7 +1435,7 @@ export default function Game() {
                   <h3 className="font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                     Maximum Impact
                   </h3>
-                  <p className="text-sm text-[#1a472a]/70">
+                  <p className="text-sm text-[#1a472a]/75">
                     Healing, growth, connection, and regeneration through direct experience
                   </p>
                 </div>
@@ -1444,7 +1444,7 @@ export default function Game() {
                   <h3 className="font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                     Minimum Effort
                   </h3>
-                  <p className="text-sm text-[#1a472a]/70">
+                  <p className="text-sm text-[#1a472a]/75">
                     Low time, resources, and capital requirements to participate
                   </p>
                 </div>
@@ -1472,7 +1472,7 @@ export default function Game() {
                 </ul>
               </div>
               
-              <p className="text-[#1a472a]/70 text-sm italic text-center">
+              <p className="text-[#1a472a]/75 text-sm italic text-center">
                 "At first glance, the titles of these Quests may not make sense to you, but we hope this changes after you experience them."
               </p>
             </div>
@@ -1639,7 +1639,7 @@ export default function Game() {
               >
                 Understanding Tokens
               </h2>
-              <p className="text-[#1a472a]/70 max-w-2xl mx-auto">
+              <p className="text-[#1a472a]/75 max-w-2xl mx-auto">
                 Two types of tokens, two different purposes. Here's what each one does and how you earn it.
               </p>
             </AnimatedSection>
@@ -1669,19 +1669,19 @@ export default function Game() {
                       RVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable. It stays tied to your own participation and cannot be bought or sold.
                     </p>
                     <ul className="space-y-2">
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
                         <span>Complete quests to earn RVoice tokens</span>
                       </li>
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
                         <span>Vote on proposals and game decisions</span>
                       </li>
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
                         <span>Delegate your voting power to a trusted player</span>
                       </li>
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
                         <span>Not tradable. Earned through direct experience only.</span>
                       </li>
@@ -1714,15 +1714,15 @@ export default function Game() {
                       The ReGen Token represents a share of the regenerative economy. It is earned through verified contributions to land projects, the community, and the Game. It can be used to participate in fund distributions as the ecosystem grows.
                     </p>
                     <ul className="space-y-2">
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
                         <span>Earned per quest completed</span>
                       </li>
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
                         <span>Submit contribution proposals to claim historical tokens</span>
                       </li>
-                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
                         <span>Tradable with other players when secondary markets are available</span>
                       </li>

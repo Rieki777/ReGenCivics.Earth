@@ -171,7 +171,7 @@ export function AdminModerationTab({
               );
             })}
             {pathInquiries.length === 0 && (
-              <div className="p-8 text-center text-[#1a472a]/70">
+              <div className="p-8 text-center text-[#1a472a]/75">
                 <TabIcon className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p>No {activeSubTab} inquiries yet</p>
               </div>
@@ -223,7 +223,7 @@ export function AdminModerationTab({
                             {inquiry.pathType?.replace(/_/g, " ") || "General"}
                           </Badge>
                           {inquiry.message && (
-                            <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
+                            <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                               {inquiry.message}
                             </p>
                           )}
@@ -247,7 +247,7 @@ export function AdminModerationTab({
                           {ageOther.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                           {ageOther.label}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
+                        <ChevronRight className="w-4 h-4 text-[#1a472a]/75" />
                       </div>
                     </div>
                   </div>
@@ -271,7 +271,7 @@ export function AdminModerationTab({
                   <div className="space-y-6 py-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">
                           Email
                         </p>
                         <a
@@ -282,7 +282,7 @@ export function AdminModerationTab({
                         </a>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">
                           Submitted
                         </p>
                         <p className="text-[#1a472a]">
@@ -292,7 +292,7 @@ export function AdminModerationTab({
                     </div>
                     {inquiry.message && (
                       <div>
-                        <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">
+                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">
                           Message
                         </p>
                         <div className="bg-[#f0ebe3] rounded-lg p-4">
@@ -340,7 +340,7 @@ export function AdminModerationTab({
             );
           })}
           {(!filteredOther || filteredOther.length === 0) && (
-            <div className="p-8 text-center text-[#1a472a]/70">
+            <div className="p-8 text-center text-[#1a472a]/75">
               <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p>No inquiries yet</p>
             </div>

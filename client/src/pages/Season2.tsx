@@ -88,7 +88,7 @@ function Countdown() {
             >
               {String(c.value).padStart(2, "0")}
             </div>
-            <div className="text-white/55 text-[0.65rem] uppercase tracking-[0.15em] mt-1">
+            <div className="text-white/60 text-[0.65rem] uppercase tracking-[0.15em] mt-1">
               {c.label}
             </div>
           </div>
@@ -660,7 +660,7 @@ export default function Season2() {
               }}
               className="w-full rounded-2xl border border-[#7dd87d]/15"
             />
-            <figcaption className="mt-3 text-center text-white/55 text-sm">
+            <figcaption className="mt-3 text-center text-white/60 text-sm">
               The Season One cohort. More ReGen projects join each season.
             </figcaption>
           </figure>
@@ -982,7 +982,7 @@ export default function Season2() {
             alliance ecosystems with their own unique tokens.
           </p>
 
-          <p className="mt-6 text-sm text-white/55 leading-relaxed">
+          <p className="mt-6 text-sm text-white/60 leading-relaxed">
             The token swap describes alignment, not a financial return or
             investment promise. Token values can move and may be illiquid.
             Read the full{" "}

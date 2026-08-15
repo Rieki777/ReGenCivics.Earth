@@ -45,13 +45,13 @@ function Kpi({ icon: Icon, label, value, sub, attention, onClick }: {
 }) {
   const body = (
     <>
-      <div className="flex items-center gap-1.5 text-[#1a472a]/60 mb-1">
+      <div className="flex items-center gap-1.5 text-[#1a472a]/75 mb-1">
         <Icon className="w-4 h-4 flex-shrink-0" />
         <span className="text-[11px] font-semibold uppercase tracking-wide truncate">{label}</span>
         {onClick && <ChevronRight className="w-3.5 h-3.5 ml-auto flex-shrink-0 text-[#1a472a]/30" />}
       </div>
       <div className="text-2xl font-bold text-[#1a472a] tabular-nums leading-none">{value.toLocaleString()}</div>
-      {sub && <div className={`text-xs mt-1 truncate ${attention ? "text-amber-700 font-semibold" : "text-[#1a472a]/55"}`}>{sub}</div>}
+      {sub && <div className={`text-xs mt-1 truncate ${attention ? "text-amber-700 font-semibold" : "text-[#1a472a]/75"}`}>{sub}</div>}
     </>
   );
   const base = `rounded-2xl border p-4 min-w-0 text-left ${attention ? "border-amber-400/50 bg-amber-50" : "border-[#1a472a]/12 bg-white"}`;
@@ -124,7 +124,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
 
       {/* This week (what changed since last check-in) */}
       {snap?.weekly && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#1a472a]/70 px-1">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#1a472a]/75 px-1">
           <span className="font-bold text-[#1a472a]">This week</span>
           <span>+{snap.weekly.newApplications} applications</span>
           <span>+{(snap.weekly.newForumPosts + snap.weekly.newForumReplies).toLocaleString()} forum activity</span>
@@ -153,7 +153,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
             <Sparkles className="w-4 h-4 text-[#1a472a]" />
             <h3 className="text-[#1a472a] font-bold text-sm">Patterns worth automating</h3>
           </div>
-          <p className="text-[#1a472a]/60 text-xs mb-3">Your assistants noticed you do these often. Tap to have one set it up.</p>
+          <p className="text-[#1a472a]/75 text-xs mb-3">Your assistants noticed you do these often. Tap to have one set it up.</p>
           <div className="flex flex-wrap gap-2">
             {automations.data!.map((a) => (
               <button
@@ -163,7 +163,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
                 className="inline-flex items-center gap-2 rounded-full border border-[#1a472a]/20 bg-white hover:bg-[#1a472a]/5 text-[#1a472a] text-xs font-semibold px-3 py-2 min-h-[40px] transition-colors"
               >
                 <span className="truncate max-w-[60vw]">{a.label}</span>
-                <span className="text-[#1a472a]/45 tabular-nums">×{a.count}</span>
+                <span className="text-[#1a472a]/75 tabular-nums">×{a.count}</span>
               </button>
             ))}
           </div>
@@ -175,7 +175,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
 
       {/* Briefing */}
       {brief.isPending && (
-        <div className="rounded-2xl border border-[#1a472a]/12 bg-white p-8 text-center text-[#1a472a]/60">
+        <div className="rounded-2xl border border-[#1a472a]/12 bg-white p-8 text-center text-[#1a472a]/75">
           <Loader2 className="w-7 h-7 mx-auto mb-3 animate-spin text-[#7dd87d]" />
           <p className="font-medium">Your leadership team is reviewing the numbers…</p>
         </div>

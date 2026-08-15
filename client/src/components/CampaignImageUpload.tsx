@@ -227,6 +227,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           multiple
           accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={(e) => handleFiles(e.target.files)}
+          // tap-audit-ok: invisible file input over its own dropzone, taps are the point
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isUploading || imageCount >= maxImages}
         />
@@ -234,7 +235,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="w-8 h-8 animate-spin text-[#7dd87d]" />
-              <p className="text-sm text-[#1a472a]/70">Uploading your photo...</p>
+              <p className="text-sm text-[#1a472a]/75">Uploading your photo...</p>
             </div>
           ) : imageCount >= maxImages ? (
             <div className="flex flex-col items-center gap-2">
@@ -244,7 +245,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           ) : (
             <>
               <ImagePlus className="w-8 h-8 mx-auto text-[#4a7c59] mb-2" />
-              <p className="text-sm text-[#1a472a]/70">
+              <p className="text-sm text-[#1a472a]/75">
                 Drop images here or tap to browse
               </p>
               <p className="text-xs text-[#1a472a]/80 mt-1">
@@ -296,6 +297,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                       <Star className="w-3 h-3 fill-current" /> Cover
                     </span>
                   ) : (
+                    /* touch-ok: thumbnail overlay control, small by design, expander gives the 44px hit area */
                     <button
                       onClick={() => handleSetCover(img.id)}
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/80 text-[#1a472a] p-1.5 rounded-full hover:bg-white"
@@ -306,7 +308,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                     </button>
                   )}
 
-                  {/* Delete button */}
+                  {/* Delete button. touch-ok: thumbnail overlay control, expander gives the 44px hit area */}
                   <button
                     onClick={() => handleDelete(img.id)}
                     className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-red-500/80 text-white p-1.5 rounded-full hover:bg-red-600"

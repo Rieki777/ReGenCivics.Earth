@@ -87,7 +87,7 @@ export function AdminGovernancePanel() {
               {stats.topHolders.map((holder: any, i: number) => (
                 <div key={i} className="flex items-center justify-between py-1.5 border-b border-[#1a472a]/5 last:border-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#1a472a]/70 w-5">{i + 1}</span>
+                    <span className="text-xs text-[#1a472a]/75 w-5">{i + 1}</span>
                     <div>
                       <p className="text-sm font-medium text-[#1a472a]">{holder.displayName || "Unnamed"}</p>
                       {holder.walletAddress && (

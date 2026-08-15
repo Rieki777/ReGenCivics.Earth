@@ -77,10 +77,10 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
       <div className="flex items-center gap-2 flex-wrap">
         <Sparkles className="w-3.5 h-3.5 text-[#7dd87d]" />
         <span className="text-white/80 text-xs font-semibold">The conversation, synthesized</span>
-        <span className="text-white/45 text-[10px]">by ReGen Guide, from the forum thread</span>
+        <span className="text-white/60 text-[10px]">by ReGen Guide, from the forum thread</span>
         <span className="ml-auto flex items-center gap-2">
           {synthesis?.lastSyncedAt && (
-            <span className="text-white/50 text-[10px]">synced {timeAgoShort(synthesis.lastSyncedAt)}</span>
+            <span className="text-white/60 text-[10px]">synced {timeAgoShort(synthesis.lastSyncedAt)}</span>
           )}
           {isAuthenticated && !isExample && (
             <button
@@ -98,7 +98,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
       </div>
 
       {!synthesis ? (
-        <p className="text-white/55 text-xs mt-2">
+        <p className="text-white/60 text-xs mt-2">
           {isAuthenticated
             ? "No synthesis yet. Refresh to have the Guide read the conversation and lay out the pros, cons, and strongest objection."
             : "No synthesis yet. Signed-in members can generate one from the conversation."}
@@ -120,7 +120,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                       <span>{p.point}</span>
                     </li>
                   ))}
-                  {pros.length === 0 && <li className="text-white/45 text-xs">Nothing yet</li>}
+                  {pros.length === 0 && <li className="text-white/60 text-xs">Nothing yet</li>}
                 </ul>
               </div>
               <div>
@@ -132,7 +132,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                       <span>{c.point}</span>
                     </li>
                   ))}
-                  {cons.length === 0 && <li className="text-white/45 text-xs">Nothing yet</li>}
+                  {cons.length === 0 && <li className="text-white/60 text-xs">Nothing yet</li>}
                 </ul>
               </div>
             </div>
@@ -162,7 +162,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                           value={replyUrl}
                           onChange={(e) => setReplyUrl(e.target.value)}
                           placeholder="/community/post/123 (the reply that resolves it)"
-                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/40"
+                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
                         />
                         <input
                           type="text"
@@ -170,7 +170,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                           onChange={(e) => setNote(e.target.value)}
                           maxLength={300}
                           placeholder="How it was addressed (optional)"
-                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/40"
+                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
                         />
                         <div className="flex gap-3">
                           <button
@@ -202,7 +202,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
           )}
 
           {synthesis.changelog?.text && (
-            <p className="text-white/45 text-[10px] mt-2">
+            <p className="text-white/60 text-[10px] mt-2">
               Last sync: {synthesis.changelog.text}
               {synthesis.changelog.reopenedObjection && " (the objection re-opened)"}
             </p>

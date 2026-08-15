@@ -68,7 +68,7 @@ export default function ProposalsPage() {
         <GlassCard className="text-center py-12">
           <Vote className="w-10 h-10 text-[#7dd87d]/40 mx-auto mb-3" />
           <p className="text-white/65 text-sm mb-2">No proposals yet.</p>
-          <p className="text-white/45 text-xs">Start a conversation in the forum, then promote it here.</p>
+          <p className="text-white/60 text-xs">Start a conversation in the forum, then promote it here.</p>
         </GlassCard>
       ) : (
         <div className="space-y-3">

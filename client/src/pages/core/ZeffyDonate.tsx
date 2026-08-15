@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 
 /**
@@ -14,6 +14,26 @@ import { trpc } from "@/lib/trpc";
 export default function ZeffyDonate() {
   const enabledQuery = trpc.churchDonations.zeffyEnabled.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const [loaded, setLoaded] = useState(false);
+
+  // Warm the connection to Zeffy up front (DNS + TLS) so the embedded iframe
+  // starts painting sooner. Runs on mount, before the embed URL resolves, and
+  // again to add the exact embed origin once known.
+  const embedOrigin = (() => {
+    try { return enabledQuery.data?.embedUrl ? new URL(enabledQuery.data.embedUrl).origin : null; }
+    catch { return null; }
+  })();
+  useEffect(() => {
+    const origins = Array.from(new Set(["https://www.zeffy.com", ...(embedOrigin ? [embedOrigin] : [])]));
+    const links = origins.map((href) => {
+      const l = document.createElement("link");
+      l.rel = "preconnect";
+      l.href = href;
+      l.crossOrigin = "";
+      document.head.appendChild(l);
+      return l;
+    });
+    return () => links.forEach((l) => l.remove());
+  }, [embedOrigin]);
 
   if (enabledQuery.isLoading) {
     return (

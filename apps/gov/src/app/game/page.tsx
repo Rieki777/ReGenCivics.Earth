@@ -98,7 +98,7 @@ export default function GameHomePage() {
           <GlassCard className="text-center py-12">
             <Sprout className="w-10 h-10 text-[#7dd87d]/40 mx-auto mb-3" />
             <p className="text-white/75 text-sm mb-2">The first Proposal Parties start at the June Solstice.</p>
-            <p className="text-white/50 text-xs">Claim your contributions now. We'll notify you when the parties begin.</p>
+            <p className="text-white/60 text-xs">Claim your contributions now. We'll notify you when the parties begin.</p>
           </GlassCard>
         ) : (
           <div className="grid md:grid-cols-2 gap-3">

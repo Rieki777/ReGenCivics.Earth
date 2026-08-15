@@ -51,12 +51,28 @@ Times TO ask (use `AskUserQuestion`, max 4 questions, mark recommended option `(
 Three gates from `/CLAUDE.md`:
 
 ```bash
-python3 scripts/audit-truncation.py    # gate 1: zero truncated source files
+pnpm gate                                           # gates 1 + 3, on any platform
 rg -g '*.css' '<className-you-added>' client/src/   # gate 2: any new className must have CSS
-pnpm typecheck                                       # gate 3: exit 0
 ```
 
+`pnpm gate` (scripts/gate.mjs) runs the truncation audit and the typecheck, and
+locates a working Python itself. By hand it is `py scripts/audit-truncation.py`
+on Windows / `python3 …` on the cowork VM, plus `pnpm check`.
+
+Until 2026-07-16 this block read `python3 …` + `pnpm typecheck`. `typecheck` was
+a script that had never existed (the real one is `check`), and on Windows
+`python3` is a Store stub that exits 0 *without running the audit*. Both were
+copied into 30+ prompt docs from here, and both failed silently for three months
+because each session quietly substituted a working command instead of fixing the
+source. Third trap for the list below: **a gate you must translate before running
+is a gate that eventually gets skipped.**
+
 Plus, for any FIXES_TO_MAKE row marked DONE / VERIFIED, the Evidence column must contain file:line, grep result, screenshot path, or script output line. No evidence = stays `CODED`.
+
+Two traps when the gate involves tests:
+
+- **The DB-backed suites need a real `DATABASE_URL`**, or `skipIfNoDb` skips them and vitest still reports green. "4 passed" can mean "4 skipped the part you changed". Check the skip count, not just the exit code. Also unset `NODE_ENV` first (`NODE_ENV= pnpm vitest ...`).
+- **They run against the shared dev database, so they flake when two sessions run at once.** They create and delete real rows. On 2026-07-16 two contribution tests failed mid-session and passed on a clean re-run with no code change in between. Before believing a DB-suite failure, re-run it alone; before believing a pass, make sure it wasn't skipped.
 
 This exists because on 2026-04-18 an audit of commit `b06b7aa` found 5 of 13 fixes marked "resolved" were false (className added, CSS missing) and 15 source files on disk were truncated mid-statement. Don't ship that pattern again.
 
@@ -122,6 +138,8 @@ From working-style memory:
 ## 9. Commit + push protocol
 
 - Commit per logical batch with descriptive messages. Don't pile every fix into one commit.
+- **Commit by pathspec, not by index: `git commit -m "..." -- path/one path/two`.** "Targeted `git add`" is NOT enough protection when a concurrent session is running. The index is shared: another session can stage its own files at any moment, and `git commit` then sweeps them into your commit no matter how careful your own `git add` was. This is not hypothetical, it happened on 2026-07-16: a db.ts refactor commit silently swallowed 12 unrelated files (webp assets, CustomGames.tsx, a docs manifest) that the other session had staged. Caught before the push; the fix was `git reset --soft HEAD~1` then re-commit with a pathspec, which also leaves the other session's staged files exactly as they were.
+- Always print `git show --stat --oneline HEAD` after committing and confirm the file list is only yours. Do it before pushing, while `reset --soft` is still cheap.
 - Cowork VM cannot push. Always end with the unpushed commit list (sha + subject) and the Windows push command for Rye.
 - After commit, run `git fetch origin && git log origin/main..main --oneline` to verify what's actually unpushed (Rye pushes between turns; local view goes stale).
 - Per `~/.claude/memories/rye-working-style.md`: unpushed list goes in chronological order, oldest first, in the Claude Code handoff prompt.
@@ -160,6 +178,20 @@ Default to the tool. If the whole task is deterministic, there is no agent, just
 The coordination engine already follows this: the YouTube poll, role reconciliation, stale-claim sweep, upload, and publish writes are deterministic crons and server code at zero token cost; only the transcript-understanding step spends tokens.
 
 Full reasoning and the decision checklist: the `regen-deterministic-first` skill.
+
+---
+
+## 12. Mobile touch standard
+
+iPhone Safari is the primary platform. Every user-facing surface (main site, Ship, CORE, and every Custom Games spinoff cloned from the template) meets one bar. Adopted 2026-07-18 after the ecosystem migration; full rationale and phase history in `MOBILE_FIRST_MASTER_PLAN.md`.
+
+- **44px minimum touch targets on touch devices.** Anything tappable (buttons, links, menu rows, list options, chips, close controls, map pins) is at least 44x44 for a coarse pointer. This is Apple HIG 44pt / WCAG 2.5.5.
+- **Size by input capability, not viewport width.** Use Tailwind `pointer-coarse:` min-h/min-w floors on the element (`pointer-coarse:min-h-11`, plus `pointer-coarse:min-w-11` on icon-only controls). This catches iPads and touch laptops at desktop widths, which a `max-width` media query never will. Never widen or heighten with plain `h-`/`w-` when a caller might override it; floors are `min-*` so overrides and multi-line content stay safe. Desktop pointer density is left exactly as designed.
+- **Small visual, big tap zone when needed.** Where a control must stay visually small (toggle, tiny remove X), keep the visual and grow only the hit area: a `pointer-coarse:after` inset overlay or `pointer-coarse:-m-*` negative margins. The base components already do this.
+- **16px input font on mobile.** Text-entry controls render 16px under 767px so iOS never zooms on focus. Base Input/Textarea/Select handle this; raw fields must carry `text-base md:text-sm`.
+- **Modals are the base Dialog.** `DialogContent` is the only modal shell. It provides the bottom sheet, visualViewport keyboard lift, safe-area padding, portal, focus trap, and Esc. Do not hand-roll a `fixed inset-0` overlay; gate 1c and code review reject new ones.
+- **Zoom is never blocked.** `maximum-scale=1` is banned in every viewport tag in every codebase we own.
+- **Enforced by gate 1c.** `scripts/audit-touch-targets.py` runs inside `pnpm gate` and fails interactive elements that cap below 44px without a floor or a reviewed `touch-ok` comment. It complements gate 1b (`audit-tap-blockers.py`, invisible tap occlusion). Neither replaces a real iPhone pass on load-bearing UI changes (section 4): hit-testing on device is the only thing that catches what static analysis cannot.
 
 ---
 

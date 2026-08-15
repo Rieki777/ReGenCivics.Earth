@@ -205,7 +205,7 @@ export function FileUploadInput({
                 <button
                   type="button"
                   onClick={() => removeFile(file.id)}
-                  className="p-1 hover:bg-red-100 rounded transition-colors text-red-600"
+                  className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-red-100 rounded transition-colors text-red-600"
                 >
                   <X className="w-4 h-4" />
                 </button>

@@ -1,6 +1,8 @@
 # Gratitude System Spec
 
-Written 2026-04-03. Canonical reference for the ReGen Civics gratitude mechanic. Supersedes all prior gratitude descriptions in CITIZENSHIP_TIERS_SPEC.md and SEEDS_VISION_IMPLEMENTATION_SPEC.md.
+Written 2026-04-03. Revised 2026-07-28 after a full code audit (GRATITUDE_AUDIT_2026-07-28.md).
+Canonical reference for the ReGen Civics gratitude mechanic. Supersedes all prior gratitude
+descriptions in CITIZENSHIP_TIERS_SPEC.md and SEEDS_VISION_IMPLEMENTATION_SPEC.md.
 
 ---
 
@@ -8,9 +10,11 @@ Written 2026-04-03. Canonical reference for the ReGen Civics gratitude mechanic.
 
 Every lunar cycle (~29.5 days, new moon to new moon), each player receives a gratitude budget based on their citizenship tier. The budget is a pool of gratitude points that must be distributed to other players by acknowledging them. Unspent gratitude resets at the start of the next cycle. There is no pot or treasury involved in gratitude itself. Gratitude is a signal, not a currency transfer.
 
-When you acknowledge someone, your total budget is split equally among all the **unique people** you've acknowledged that cycle. Acknowledge 10 people with a 300 budget = 30 each. Acknowledge 20 = 15 each. Acknowledge 5 = 60 each. The system recalculates proportionally every time you add a new recipient. Acknowledging the same person multiple times in a cycle does not count as an additional recipient. One person = one acknowledgment per cycle.
+When you acknowledge someone, your budget is divided by **the number of unique people you have acknowledged, or the full-power threshold, whichever is larger**. With a 300 budget and a threshold of 10: acknowledge 10 people and each gets 30; acknowledge 20 and each gets 15; acknowledge 5 and each still gets 30, with the remaining 150 forfeited. Acknowledging the same person again in a cycle does not add a recipient. One person = one acknowledgment per cycle.
 
-**The sweet spot is 10 recipients.** Each of the first 10 acknowledgments is a "full power" send, meaning each recipient gets the maximum per-person share (budget / 10). After 10, each additional acknowledgment dilutes everyone's share. Below 10, you're leaving impact on the table because unspent signals just reset.
+**The sweet spot is 10 recipients.** Each of the first 10 acknowledgments carries a full-power share (budget / 10). Past 10, every extra acknowledgment dilutes everyone. Below 10, the unused part of your budget is genuinely lost: it is not concentrated on the people you did thank, and it does not carry over.
+
+> Corrected 2026-07-28. Until then the divisor was the recipient count alone, so thanking 5 people gave them 60 each and the sender still emitted their whole budget. Recipient count changed only concentration, never total influence, which made this paragraph false and "use it or lose it" untrue. `computePerPersonShare` now divides by `max(n, threshold)`.
 
 Every acknowledgment includes a required message explaining why you're grateful. This message is visible on the recipient's profile as part of their Gratitude Journal.
 
@@ -42,23 +46,33 @@ Base budget is 100 for all tiers. Multiplier scales it. This keeps the base simp
 
 All variables are editable in the admin panel and visible on the Game Mechanics page.
 
+These are the keys the code actually reads. Earlier drafts of this spec listed
+`gratitude.multiplier.*` and `gratitude.regen_distribution.*`, which the cycle engine has
+never read: `gratitude.multiplier.*` belongs to the legacy trust-graph weighting and holds
+different values (1.0 / 1.2 / 1.5 / 2.0). Editing those changed nothing.
+
 ```
 gratitude.base_budget = 100
-gratitude.cycle_duration_days = 29.5
 gratitude.full_power_threshold = 10
 gratitude.streak_bonus_per_cycle = 0.03
 gratitude.streak_bonus_max = 0.30
 
-gratitude.multiplier.explorer = 1.0
-gratitude.multiplier.co_creator = 2.0
-gratitude.multiplier.steward = 3.0
-gratitude.multiplier.sage = 5.0
+gratitude.budget_multiplier.explorer = 1.0
+gratitude.budget_multiplier.co_creator = 2.0
+gratitude.budget_multiplier.steward = 3.0
+gratitude.budget_multiplier.sage = 5.0
 
-gratitude.regen_distribution.enabled = true
-gratitude.regen_distribution.pool_per_cycle = 10000
-gratitude.regen_distribution.claim_threshold = 333
-gratitude.regen_distribution.min_recipients_for_full_power = 10
+gratitude.pool_per_cycle = 10000
+gratitude.max_payout_per_person = 1000
+gratitude.claim_threshold = 1000
 ```
+
+**`gratitude.max_payout_per_person`** (added 2026-07-28) is the ceiling on what any one
+person can be credited from a single cycle. The pool is a ceiling on issuance, not a promise
+to issue: with a 10,000 pool and a 1,000 cap, a cycle where only two people are acknowledged
+mints 2,000 and the other 8,000 is never created. Nothing rolls forward. This is what stops a
+small group acknowledging only each other from taking a whole cycle's pool. Set it to 0 to
+disable the cap.
 
 ---
 
@@ -70,14 +84,17 @@ At the end of each lunar cycle, an internal batch job runs:
 2. Calculate each player's share of the $ReGen distribution pool proportionally to gratitude received.
 3. Credit internal $ReGen balances (not on-chain).
 4. Players accumulate $ReGen from gratitude over time.
-5. When a player's accumulated gratitude-earned $ReGen reaches the claim threshold (333), they can make a formal claim on Hypha DAO to receive it on-chain.
+5. When a player's accumulated gratitude-earned $ReGen reaches the claim threshold (1000, aligned with the live `governance.claim_threshold_regen` gate), they can make a formal claim on Hypha DAO to receive it on-chain.
 
 **Why the threshold:** Claiming on Hypha is a governance action with overhead. Setting a minimum reduces burden on the community until the process can be automated.
 
 **Formula:**
 ```
-playerShare = (gratitudeReceivedThisCycle / totalGratitudeReceivedAllPlayers) * poolPerCycle
+rawShare    = (weightReceivedThisCycle / totalWeightAllPlayers) * poolPerCycle
+credited    = min(floor(rawShare), maxPayoutPerPerson)
 ```
+The difference between `rawShare` and `credited` is never minted. `gratitude_cycles.distributedTotal`
+records what a cycle actually issued.
 
 Gratitude received is weighted by the sender's effective budget split. A Sage who acknowledges 10 people sends 50 per person. An Explorer who acknowledges 10 sends 10 per person. The Sage's acknowledgment carries 5x the weight in the distribution calculation.
 

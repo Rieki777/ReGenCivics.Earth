@@ -7,11 +7,13 @@ import { TRPCError } from "@trpc/server";
 import { eq, sql, count, and, desc } from "drizzle-orm";
 import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory, forumPerspectives, notifications, forumSubscriptions, forumUserMutes } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
+import { getGameVariableOr, citizenshipTierRank } from "../game";
 import { assertSafeExternalUrl } from "../_core/ssrf";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
 import { maybePostVideoSummary } from "../lib/videoSummary";
+import { pingIndexNow } from "../lib/indexnow";
 import {
   handleForumPostCreated,
   handleForumPostEdited,
@@ -536,6 +538,10 @@ export const forumRouter = router({
         title: cleanTitle,
         content: cleanContent,
       }).catch((err) => console.error(`[forum.createPost] notify fan-out failed for ${postId}`, err));
+      // Fire-and-forget IndexNow ping so Bing (and via Bing, ChatGPT search)
+      // discovers the new thread within hours. Community posts are public
+      // and in the sitemap by decision (2026-07-15).
+      pingIndexNow([`/community/post/${postId}`]);
       // Fire-and-forget image generation -- don't block mutation response
       generateImage({
         contentType: "forum",
@@ -602,6 +608,13 @@ export const forumRouter = router({
         authorId: ctx.user.id,
         content: cleanContent,
       }).catch((err) => console.error(`[forum.createReply] notify fan-out failed for ${replyId}`, err));
+      // Item 16: if this thread is a Free Passage Quest thread, posting proof
+      // here awards the action (auto) or opens it for crew approval. Dynamic
+      // import avoids a load-time cycle with the ship router; fire-and-forget so
+      // it never blocks the reply.
+      void import("./ship")
+        .then((m) => m.awardQuestFromForumReply(ctx.user.id, input.postId, replyId))
+        .catch((err) => console.error(`[forum.createReply] quest award failed for reply ${replyId}`, err));
       return { id: replyId };
     }),
 
@@ -907,15 +920,13 @@ export const forumRouter = router({
     .mutation(async ({ ctx, input }) => {
       const dbd = await getDb();
       if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      // Tier gate: read required tier from game_variables
-      const [tierRows] = await dbd.execute(
-        sql`SELECT value FROM game_variables WHERE \`key\` = 'governance.sensing_min_citizen_tier' LIMIT 1`
-      );
-      const minTier = parseInt((tierRows as any)?.[0]?.value ?? "0", 10);
+      // Tier gate: read required tier from game_variables. citizenshipTier is
+      // an enum STRING — the old compare pitted 'co_creator' against a number.
+      const minTier = await getGameVariableOr("governance.sensing_min_citizen_tier", 0);
       const [profileRows] = await dbd.execute(
         sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
       );
-      const userTier = (profileRows as any)?.[0]?.citizenshipTier ?? 0;
+      const userTier = citizenshipTierRank((profileRows as any)?.[0]?.citizenshipTier);
       if (userTier < minTier) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You need a higher citizenship tier to enter Sensing." });
       }
@@ -1157,33 +1168,24 @@ export const moderationRouter = router({
     }),
 
   // List moderators (admin only)
-  moderators: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== 'admin') {
-      throw new TRPCError({ code: 'FORBIDDEN' });
-    }
+  moderators: adminProcedure.query(async () => {
     const mods = await db.listForumModerators();
     const usersMap = await db.getUsersByIds(mods.map(m => m.userId));
     return mods.map((m) => ({ ...m, userName: usersMap[m.userId]?.name || 'Unknown', userEmail: usersMap[m.userId]?.email || '' }));
   }),
 
   // Add moderator (admin only)
-  addModerator: protectedProcedure
+  addModerator: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN' });
-      }
       await db.addForumModerator(input.userId, ctx.user.id);
       return { success: true };
     }),
 
   // Remove moderator (admin only)
-  removeModerator: protectedProcedure
+  removeModerator: adminProcedure
     .input(z.object({ userId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN' });
-      }
+    .mutation(async ({ input }) => {
       await db.removeForumModerator(input.userId);
       return { success: true };
     }),

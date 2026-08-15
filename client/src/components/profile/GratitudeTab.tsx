@@ -362,10 +362,15 @@ export function GratitudeTab({ userId }: { userId?: number }) {
           {o && <PowerMeter sent={o.sends.peopleThisCycle} threshold={o.sends.fullPowerThreshold} />}
           {o && (
             <p className="text-xs text-[#f0ebe3]/70 mt-2">
-              <span className="text-[#7dd87d] font-bold">{o.sends.perPersonShare} $ReGen each</span>
+              <span className="text-[#7dd87d] font-bold">{o.sends.perPersonShare} gratitude each</span>
               {o.sends.fullPowerRemaining > 0
-                ? ` · ${o.sends.fullPowerRemaining} full-power sends left`
-                : " · full power reached"}
+                ? ` · ${o.sends.fullPowerRemaining} more to deploy your whole budget`
+                : " · full budget deployed"}
+            </p>
+          )}
+          {o && o.sends.budgetForfeited > 0 && (
+            <p className="text-xs text-[#f0ebe3]/50 mt-1">
+              {o.sends.budgetForfeited} of {o.sends.effectiveBudget} unspent, and it does not carry over
             </p>
           )}
           {o && o.streak.cycles > 0 && (

@@ -25,6 +25,7 @@ interface QuestDetails {
   resources?: { title: string; url: string }[];
   tips?: string[];
   videoUrl?: string; // YouTube video URL for the quest tutorial
+  imageUrl?: string; // Absolute lead-art URL, forwarded to the Hypha bridge on submit
 }
 
 // PDF guide slugs for static files in public/quest-guides/
@@ -730,7 +731,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                   <Send className="w-4 h-4" />
                   Ready to Submit?
                 </h4>
-                <p className="text-xs text-[#1a472a]/70 mt-1">Submit your completed quest in the Game Space to earn tokens</p>
+                <p className="text-xs text-[#1a472a]/75 mt-1">Submit your completed quest in the Game Space to earn tokens</p>
               </div>
               <a
                 href="https://app.hypha.earth/en/dho/regen-games/agreements"
@@ -784,6 +785,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               questDescription={quest.description}
               questDeliverable={quest.deliverable}
               regenReward={quest.rewards.regen}
+              leadImageUrl={quest.imageUrl}
             />
           </div>
         </div>

@@ -23,6 +23,255 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    id: 'what-steers-civilization',
+    slug: 'what-steers-civilization',
+    title: 'What Steers Civilization',
+    excerpt: 'Trillions of dollars steer the evolution of civilization with one instruction: price go up. One of the best commodity traders alive just explained the machine from the inside. So we\'re ending this article with a quest: design the game that replaces it.',
+    content: `Every vehicle has a steering wheel. Civilization's is made of markets.
+
+Futures markets, commodities desks, stock exchanges, prediction markets: trillions of dollars moving every day, aligning the incentives of millions of organizations and billions of people. All of that steering power answers to a single instruction. Price go up.
+
+We handed the most powerful coordination machine in history one goal and no others. Nothing in it steers toward clean rivers, strong communities, or children who inherit a living world, except by accident, when those things happen to be profitable. That's why so many people feel trapped. We're passengers in a vehicle whose wheel is locked toward whatever pays, even as it rolls toward cliffs everyone aboard can see.
+
+So here's the question underneath this whole article: how do we build a new steering mechanism for the vehicle we call civilization?
+
+## The two hands on the wheel
+
+Wall Street keeps a live dashboard of its own soul. It's called the [Fear & Greed Index](https://www.cnn.com/markets/fear-and-greed), and it distills the mood of the entire market into one dial swinging between two emotions.
+
+Sit with that for a second. The machine steering our species measures itself on exactly two feelings. Now let us ask you what we keep asking ourselves: are fear and greed the two best emotions to be governed by?
+
+The nonprofit world, for all its good intent, answers with its own pair. Guilt and shame. Terrible stories, pulled heartstrings, a donation to make the feeling stop. Add it up and most organized human effort on Earth runs on four fuels: fear, greed, guilt, and shame. Love and joy never got a seat in the cockpit.
+
+[STEERING_EMOTIONS]
+
+## Listen to the best player in the game
+
+[WATCH_TGS_CURRIE]
+
+Jeff Currie ran global commodities research at Goldman Sachs for nearly three decades. He is one of the most respected commodity strategists alive, and in [this conversation with Nate Hagens](https://youtu.be/ij1_uxiXmm8), he describes, with total fluency, how the machine actually reads the world: which buffers are running dry, where scarcity is priced, how complacency swings to panic and back. He is describing the steering system of civilization from inside the cockpit, and he is describing it accurately.
+
+Listen closely and the lens itself comes into view. At one point he explains that when a low-income earner receives a fiscal transfer, his demand for corn goes up. Translate that out of market language: when people who were hungry finally get money, they eat, and their eating registers in the machine as a price disturbance. Hungry people getting to eat is, to the lens, a supply problem. The lens is working exactly as designed. The lens is the problem.
+
+## Scarcity is a worldview
+
+The episode is titled "Why Abundance Is an Illusion," and inside the machine, that title is true. The machine makes money from scarcity, so it learns, over time, to make scarcity. The purest money it ever designed, Bitcoin, is prized precisely because it is engineered to be scarce. Wars keep happening in part because the machine pays people handsomely for their results. A worldview that profits from scarcity will keep manufacturing scarcity until there is nothing left to make scarce. That logic terminates itself, and takes its passengers with it.
+
+Look with ecological eyes and the illusion flips. We ran the numbers on a single tree species once: the American chestnut, three to four billion trees feeding the eastern forests of this continent, out-producing what our industrial systems manage on the same land. [The full story is here](/blog/great-american-chestnut-abundance). The Earth is extravagant. Scarcity is the machine's worldview, and the machine has mistaken its worldview for the world.
+
+## When the game breaks, it doubles down
+
+By the end of the interview, Currie arrives at his prescription: the state has to step in and hold the system up.
+
+Watch what happened there. One of the game's grandmasters senses that the game can no longer coordinate what we need, and his instinct is to fuse the game to state power so it can keep running. There's an old name for an economy where property and power fuse at the top, and it's feudalism. We already played that one. Even capitalism's own story about itself, the story where markets carry humanity forward into progress, breaks down at that move. The game's defenders end up arguing that the game can only survive on life support from the very state it promised to outgrow.
+
+## The paradox at the end
+
+Near the close, Currie says his most important goal is a beautiful world for his children, a safe and incredible place for them to live.
+
+Same goal as ours. Word for word.
+
+And here is what we would say across the table, with real respect: the games he plays this masterfully are the games producing the world he wants to protect his children from. Nobody in this story is a villain. A brilliant navigator is reading a flawless map of a country that is burning. When the deepest wish of the game's best players can't be purchased anywhere inside the game, the game is over as a story. What remains is machinery, still steering.
+
+## We need new games
+
+Strip capitalism down to its function and it's a coordination game: a way for millions of strangers to decide what gets made, who does what, and how needs get met. It is one design. It is insufficient. Its own grandmasters can feel it.
+
+And nobody knows what replaces it. That's the honest part. Which means the work of this moment is building infrastructure for the people who want to design new economic systems and trial them for real: many games, run on real land, with real needs, until we learn what actually works. Scroll the comments under that interview and you can watch the demand surface, thousands of people saying some version of the same thing: this worldview is a game I no longer want my life spent inside.
+
+Supplying those new games is what ReGen Civics exists to do. We are a fund and a game. The Fund speaks the old game's language so that capital can cross the bridge. The Game grows the new ones. And a candidate system, one whole vision for how a community meets its needs, is what we call a Play.
+
+## The test every new game has to pass
+
+[WATCH_TGS_HAMANT]
+
+In [the very next episode](https://youtu.be/Kzzr15cEg3o), Nate sits down with Olivier Hamant, a French biologist who studies how living systems endure. His finding, drawn from life's 3.8 billion years of research and development: life selects for robustness, the capacity to stay alive and viable through fluctuation, over peak performance. Systems optimized for maximum efficiency are already broken; they just haven't met their shock yet. The systems that last carry redundancy, diversity, deep links to the living world, and roots in a particular place. They keep slack. They run on cooperation and circularity. They accept being a little suboptimal on purpose, because suboptimal today is alive tomorrow.
+
+That is the rating system for new games. Any Play worth trialing should be able to look those criteria in the eye, so we turned them into a six-part robustness test that every Play in [our library](/plays) carries, scored in the open.
+
+## Your move
+
+A Play is a vision for how a community meets its needs. Which needs it honors and how it weighs them. How it measures whether they're truly met. How it coordinates people and resources to meet them. And how it counts the needs of the more-than-human world alongside our own.
+
+So much of a human life is spent inside its economic reality. Change the play a community runs, and you change what a life inside it can be. We're open-sourcing the search for the plays worth running: a public library where anyone can study them, land projects can adopt them, and the best ones earn their place through trials instead of theory.
+
+And a play on our shelf doesn't stay theory. An approved play can launch a Crowdpooling campaign on the spot, pooling the land, labor, expertise, and funds its trial needs. The village projects moving through our incubator will each finish the season by uploading their play and opening its pool. Envisioned, then in trial, then practiced. That's the pipeline.
+
+That library needs designers. Here's the quest.
+
+[PLAY_QUEST_CTA]`,
+    author: 'ReGen Civics Team',
+    date: '2026-08-08',
+    readTime: '7 min read',
+    image: '/images/governance/two-tokens-bridge.webp',
+    tags: ['Story', 'Plays', 'New Games'],
+  },
+  {
+    id: 'keeper-of-the-fleet',
+    slug: 'keeper-of-the-fleet',
+    title: 'The Keeper of the Fleet',
+    excerpt: 'Between every voyage, someone holds the ship. The Keeper is the steward who resets her, hands the keys to each new crew, and keeps her healthy for the next family. This is the role, in full.',
+    content: `Between every voyage, someone holds the ship.
+
+The crews come and go. They board on a Monday, sail their week through Cascadia, plant their seeds, and hand her back the following Monday. In the quiet hours between one crew and the next, the ReGen Ship is held by a Keeper. The Keeper is why the next family walks into a clean, full, ready ship and feels, from the first step, that she has been cared for.
+
+This is the role, in full, so you know what you would be saying yes to.
+
+![A ship keeper tending the vintage motorhome between voyages at a forest homestead](${cdnImg('https://assets.regencivics.earth/generated/blog/keeper-of-the-fleet-2026-07-14T17-39-37.png', 1200)})
+
+## The turnover
+
+The heart of the role is the turnover. A voyage ends Monday at eleven, and the next one boards Monday at five. That window, Monday late morning into the afternoon, is yours. We set it on a weekday on purpose, so the services that close on weekends, propane fills and the like, are open before the next crew boards.
+
+In that window you reset her completely. Dump and rinse the tanks. Fill fresh water, ideally from a spring. Deep clean the galley, the bathrooms, the bedrooms, and the living room. Launder and fold the linens and towels. Restock the pantry commons and the cleaning materials, using only the soaps and body-safe products the ship sails under. Check that the adventure gear is aboard and sound. Top up propane. Walk her outside and in. When you are done, she looks and feels the way you would want to find her if you were the one arriving.
+
+The pay is a flat two hundred dollars per turnover. It is honest pay for a real morning of work, and it is also something more than pay, which is the next part.
+
+## The handing of the keys
+
+Every first-time crew begins with a two-hour orientation, and you run it. You walk the whole ship with them, hands on, and teach her systems: the slides, the leveling, the water doctrine, the spring pump, the generator, the driving. You cover the pre-sail checklist together and run it once, side by side.
+
+No captain sails her without the handing of the keys. We mean that literally: a booking cannot become an active voyage until you mark the orientation complete. You are the person who decides that a crew is ready to captain a forty-foot ship, and that judgment protects them, protects everyone on the road, and protects her. It is the cheapest insurance we have, and it is a ceremony, not a form.
+
+## Counting her treasures
+
+The platform coverage protects the vehicle. What protects the e-bike, the paddleboard, the Starlink, the walking staff, and the treasure chest is you and the crew, walking the gear manifest together. At boarding you count her treasures with the captain, item by item, condition noted. At return the captain runs it again. If something comes home worn, damaged, or missing, it surfaces for review with the boarding notes beside it. Ten minutes, twice a voyage, and nothing precious quietly disappears.
+
+## Keeping her healthy
+
+You also hold her long-term health. Every voyage leaves a maintenance log, and you read across it, so the ship has a continuous history instead of a series of forgotten small things. When a crew has a problem, they can ask the Shipwright, her maintainer companion, and you are one of the two people, with Rye, who approve what a resolved case teaches the next crew. Bad advice never compounds on its own, because a human who knows her signs off first. And when something is unsafe, propane, brakes, steering, a burning smell, you are the hotline. The crews are told, plainly and often: if anything feels unsafe, stop and call your Keeper.
+
+## Who this is for
+
+A Keeper is practical, steady, and kind. You do not need to be a mechanic, though comfort around systems helps. You need to care about a thing being done right, to enjoy handing someone a ship that is ready, and to hold the trust that comes with the keys. You are close to the anchorage, or willing to be there on turnover mornings. You treat the ship the way you would treat a spring you drink from.
+
+If that is you, raise your flag. Apply to keep her, and let us talk.`,
+    author: 'CORE Team',
+    date: '2026-07-14',
+    readTime: '5 min read',
+    image: cdnImg('https://assets.regencivics.earth/generated/blog/keeper-of-the-fleet-2026-07-14T17-39-37.png', 1200),
+    tags: ['ReGen Ship', 'The Fleet', 'Roles'],
+  },
+  {
+    id: 'more-than-one-honeymoon',
+    slug: 'more-than-one-honeymoon',
+    title: "You're Allowed to Have More Than One Honeymoon",
+    excerpt: 'You are allowed to take a week, put your love at the center of it, and go. The old ritual was a full moon of honey and healing. You should get to take that journey as many times as your love needs it.',
+    content: `Consider this a permission slip.
+
+Maybe you've been married twenty years. Maybe you met three months ago and can't stop grinning. Maybe you're somewhere in the long middle, where love is real and steady and a little buried under logistics. Wherever you are, the permission is the same: you're allowed to have more than one honeymoon. You're allowed to take a week, put your love at the center of it, and go.
+
+## The old story of the honeymoon
+
+The old story goes like this. Before a couple stepped into the next season of their lives, they would feast on honey for a full cycle of the moon. Honey for a whole moon. And the honey of that world was collected from thousands of flowering plants across wild, diverse land, carrying a depth of nourishment our supermarket jars can only gesture at. A moon of honey was a moon of medicine. The couple was preparing their bodies, their hearts, and their union to bring new life into the world in the healthiest state they could reach.
+
+Etymologists argue about where the word really comes from, and that's fine. What matters is what the ritual points at: the season after you choose each other is for becoming healthy together. Somewhere along the way we shrank that into a one-time vacation, taken once, right after the wedding, mostly spent recovering from the wedding.
+
+We think you should get to take that journey as many times as your love needs it.
+
+![A couple resting by a campfire under Cascadia dusk](/images/ship/ship-campfire-dusk.jpg)
+
+## A honeymoon that heals more than the two of you
+
+The ReGen Ship is a regenerative pirate ship, complete with your treasure chest of SEEDS. She is also a 40-foot land yacht with real wood and stone inside, spring water in her tanks, organic everything, and a living room big enough for morning yoga when the rain comes. Everything aboard was chosen for your health: no off-gassing plastics, filtered showers, the only soaps and body products aboard are ones we'd put on a newborn. She was built for a couple.
+
+Here's what a week aboard looks like. The ship's concierge draws you a treasure map through Cascadia: springs to drink from, waterfalls to swim under, food forests to harvest, land projects to serve. You plant seeds from the treasure chest everywhere you go. You eat local fruit and save the seeds. You put your hands in soil next to the person you love, building something that will outlive you both. And when you sail home to her anchorage, you plant your saved seeds in the healing hole and watch a food forest grow from every crew that ever sailed.
+
+This is the part we've come to trust: healing together heals the relationship. When two people spend a week caring for their own bodies, for each other, for a piece of land, and for a community, old wounds between them start to close on their own. Love grows in the direction of what you tend. Couples who are struggling and want to deepen, this journey is for you too. Not a last resort. A place to fall back in.
+
+Because healing was never only about us. It reaches the community around us and the more-than-human world that holds us. The land heals your love while your love heals the land. That's the exchange. That's the whole design.
+
+## Bring the kids. Bring the crew.
+
+The Love Voyage leads, and she doesn't sail for couples alone. Two bedrooms and two bathrooms mean a family fits beautifully: parents in the love nest, kids in the second room. Four voyagers is her comfortable full house, five when three of them are children. Friend crews of four are equally welcome, four people who want a week of springs, summits, and shared meals. However your love is shaped, there's a voyage for it.
+
+## Why a church runs this
+
+The ReGen Ship is a program of the Church of the Regenerative Earth, and this article is the reason why. The church exists to regenerate the Earth and to spread love-based civilization. A vessel whose whole purpose is to grow love between people while they heal land and community sits exactly at the heart of that. This is what our ministry looks like: a couple asleep under Cascadia stars, a chest of seeds getting lighter, a food forest getting older.
+
+## When is your next honeymoon?
+
+Her trial year is now: one-week voyages at $300 a night, half her full $600 rate (the full rate returns in April 2027, so early crews get the sweetest deal). And if you want to sail free, the Free Passage Quest is open to everyone; qualify by August 16 and you are in the drawing for a free voyage, and more free voyages are drawn as the year books up. Winners pick their own dates.
+
+Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, tenth one. You're allowed.
+
+[SHIP_CTA]`,
+    author: 'CORE Team',
+    date: '2026-07-10',
+    readTime: '4 min read',
+    image: '/images/ship/ship-campfire-dusk.jpg',
+    tags: ['Story', 'ReGen Ship', 'Love Voyage'],
+    featured: true,
+    isVideo: false,
+  },
+  {
+    id: 'the-regen-ship',
+    slug: 'the-regen-ship',
+    title: 'The ReGen Ship: A Pirate Ship, a Chest of Seeds, and a Voyage You Can Win',
+    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points by August 16 and you are in the drawing for a free voyage. Winners pick their own dates, and more free voyages unlock as the year books up, up to six.',
+    content: `The ReGen Ship has raised her flag.
+
+She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
+
+You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
+
+![Feet resting over a canyon river at a Cascadia overlook](/images/ship/ship-canyon-overlook.jpg)
+
+## The chest is a chest of seeds
+
+Everywhere you go, you plant. The treasure chest holds seeds chosen to turn pine plantations back into the food forests they once were, the great abundance this land knew before. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole. A food forest grows from every crew that ever sailed.
+
+![A wooden treasure chest overflowing with seeds and chestnuts](/images/ship/ship-seed-chest.jpg)
+
+If you want the fuller story of why this matters, read [The Great American Chestnut Abundance](/blog/great-american-chestnut-abundance).
+
+![A thriving food forest replacing a pine plantation](/images/ship/ship-food-forest-abundance.jpg)
+
+## She is the flagship of the ReGen Fleet
+
+The ReGen Fleet is a caravan of ships that moves from land project to land project. Where it lands, it builds natural homes, plants food forests, heals waterways, and turns pine plantations back into the abundance they once were. And we host music festivals, dances, and regular communal campfires, and so many other ways to bring community and love together. Then it moves on and does it again. The model is inspired by the large RV caravans that travel New Zealand together, a rolling community that shows up, sets up, and shares a place for a while. We point that same spirit at regeneration.
+
+![A caravan of ships gathered together at a land project](/images/ship/ship-fleet-caravan.jpg)
+
+Ten percent of every voyage buys the ship herself into community ownership over time, a model that repeats for every future ship. As a ship joins the fleet, that 10% goes to work buying out the owner and every existing token holder, through open purchases on the open market. The owner is the dominant token holder, so the owner effectively sets the market rate. Community ownership grows by buying in at a fair price, voyage by voyage, and the person who brought the ship is made whole for her full value.
+
+![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
+
+## The first free voyage is drawn August 16. You can be in it.
+
+Her first crews are not chosen. They are earned. The Free Passage Quest is open to everyone, and here is the part worth reading closely, because it is designed so that all of our interests point the same direction.
+
+![A hand drawing a folded name from the seed chest](/images/ship/ship-free-voyage-draw.jpg)
+
+Here is how it works, and it is built so that all of our interests point the same direction.
+
+[SHIP_QUEST_STEPS]
+
+The first free voyage is drawn on August 16, from everyone who has qualified by then. After that, the free voyages grow with the bookings: more are drawn at 40%, 60%, 75%, 85%, and 95% of the first year booked, up to six at a fully booked year. Winners pick their own dates. Drag the ladder to see how it grows.
+
+[SHIP_FREE_VOYAGE_LADDER]
+
+Every draw is weighted by points, and every crew in the draw has a shot at every draw. Your points are your raffle tickets, so every point above 150 raises your odds. A crew can win once. You can also enter by nomination: if the ReGen Civics and CORE teams approve you, you are in the draw with no quest required.
+
+[SHIP_PULLQUOTE]
+
+## Why it works this way
+
+![Community gathered around a table and campfire at a land project at golden hour](/images/ship/ship-community-share.jpg)
+
+This is the whole idea. Reach 150 points and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
+
+So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sets sail this summer, the first free voyage is drawn August 16, and the more the fleet sails, the more of us sail free.
+
+[SHIP_CTA]`,
+    author: 'CORE Team',
+    date: '2026-07-10',
+    readTime: '6 min read',
+    image: '/images/ship/ship-forest-camp-guitar.jpg',
+    tags: ['Story', 'ReGen Ship', 'Quest'],
+    isVideo: false,
+  },
+  {
     id: 'food-producers-first',
     slug: 'food-producers-first',
     title: 'Why Food Producers First',
@@ -333,7 +582,7 @@ This is where the magic happens. When needs are clear and resources are mapped, 
 
 ## Why This Matters for ReGen Civics
 
-This needs-based approach is exactly what we are building at ReGen Civics. Our Contribution Calculator recognizes eight forms of capital. Our governance ensures every voice is heard. Our seasonal structure creates space for both doing and being.
+This needs-based approach is exactly what we are building at ReGen Civics. Our Contribution Calculator recognizes nine forms of capital. Our governance ensures every voice is heard. Our seasonal structure creates space for both doing and being.
 
 We are not just funding land projects. We are prototyping a new way of organizing human activity, one that starts with what people actually need and builds from there.
 
@@ -577,10 +826,10 @@ We look forward to learning about your project!`,
     id: '9',
     slug: 'how-to-use-contribution-calculator',
     title: 'How to Use the Contribution Calculators: Measure Your Full Value',
-    excerpt: 'Learn how to use our 8 Forms of Capital calculator to measure and communicate your complete contribution potential beyond just money.',
+    excerpt: 'Learn how to use our 9 Forms of Capital calculator to measure and communicate your complete contribution potential beyond just money.',
     content: `The Contribution Calculator helps you recognize and quantify all the ways you contribute value, not just financial capital.
 
-## Why 8 Forms of Capital?
+## Why 9 Forms of Capital?
 
 Traditional economics only recognizes financial capital. But humans contribute value in many forms:
 
@@ -592,6 +841,9 @@ Traditional economics only recognizes financial capital. But humans contribute v
 6. **Experiential Capital** - Wisdom from lived experience, practical know-how
 7. **Spiritual Capital** - Purpose, meaning, connection to something greater
 8. **Cultural Capital** - Traditions, stories, shared practices, artistic expression
+9. **Health Capital** - Movement, bodywork, nutrition, recovery, the care that keeps people able to work
+
+The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital. The ninth is ours, because the original eight have no place for the work of keeping bodies functional. [Why we added a ninth](/learn/nine-forms-of-capital).
 
 ## How to Use the Calculator
 
@@ -604,13 +856,13 @@ What project are you tracking your contributions for?
 
 **Step 2: Work Through Each Capital Type**
 
-For each of the 8 forms, you will:
+For each of the 9 forms, you will:
 - Describe what you bring
 - Estimate the impact (in some cases that aren't easy to quantify)
 
 **Step 3: Review Your Total Contribution**
 
-The calculator shows your complete contribution profile across all 8 forms. You might be surprised by how much value you bring beyond money!
+The calculator shows your complete contribution profile across all 9 forms. You might be surprised by how much value you bring beyond money!
 
 **Step 4: Download Your PDF**
 
@@ -1201,9 +1453,9 @@ This way we can collectively raise funds, donations, investments, etc. that reco
 
 We are not only talking about financial contributions (though they are the easiest to track!)
 
-We work with the eight forms of capital:
+We work with the nine forms of capital:
 
-[EIGHT_FORMS_OF_CAPITAL]
+[NINE_FORMS_OF_CAPITAL]
 
 If you gave any of these things to the regenerative mission ReGen Civics is serving without being fully compensated, that is the kind of contribution we want to account for.
 
@@ -1225,7 +1477,7 @@ The process runs through Hypha's DAO tools at [hypha.earth](https://app.hypha.ea
 
 ## How to start
 
-**Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: relationships, ecological work, and more. [Open the calculator here](/calculator).
+**Step 1: Count your contributions.** Use the 9 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: relationships, ecological work, and more. [Open the calculator here](/calculator).
 
 For all value you're claiming you need to provide proof of impact (what was delivered, if it's financial value you need to show how much you spent. For SEEDS you'll need to provide your SEEDS account, that 12 character account name, in your proposal for verification that you didn't sell or spend your Seeds that you bought).
 
@@ -1272,7 +1524,7 @@ $RCivics: equity in the ReGen Fund, the bridge foundation that connects regenera
     date: 'Mar 18, 2026',
     readTime: '7 min read',
     image: '/og/seeds-contributions.webp',
-    tags: ['Tokens', 'Contributions', 'SEEDS', 'Regenerative Economics', '8 Forms of Capital', 'Hypha', 'History'],
+    tags: ['Tokens', 'Contributions', 'SEEDS', 'Regenerative Economics', '9 Forms of Capital', 'Hypha', 'History'],
     featured: false,
     isVideo: false
   }

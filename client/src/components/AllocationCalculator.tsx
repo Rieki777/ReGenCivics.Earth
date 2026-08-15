@@ -155,7 +155,7 @@ export default function AllocationCalculator() {
                   style={scenarioIdx === idx ? { backgroundColor: s.color } : undefined}
                 >
                   <div className="text-sm">{s.label}</div>
-                  <div className={`text-xs font-normal ${scenarioIdx === idx ? "text-[#1a472a]/70" : "text-white/70"}`}>
+                  <div className={`text-xs font-normal ${scenarioIdx === idx ? "text-[#1a472a]/75" : "text-white/70"}`}>
                     ~{(s.netIRR * 100).toFixed(0)}% net IRR
                   </div>
                 </button>

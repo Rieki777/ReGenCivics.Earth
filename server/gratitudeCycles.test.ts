@@ -46,23 +46,38 @@ describe("computeEffectiveBudget", () => {
 });
 
 describe("computePerPersonShare", () => {
-  it("splits the budget equally across unique recipients", () => {
-    // Spec: 300 budget → 10 people = 30 each, 20 = 15, 5 = 60.
-    expect(computePerPersonShare(300, 10)).toBe(30);
-    expect(computePerPersonShare(300, 20)).toBe(15);
-    expect(computePerPersonShare(300, 5)).toBe(60);
+  const T = 10; // full-power threshold
+
+  it("gives a full share at and past the threshold, diluting beyond it", () => {
+    expect(computePerPersonShare(300, 10, T)).toBe(30);
+    expect(computePerPersonShare(300, 20, T)).toBe(15);
+    expect(computePerPersonShare(300, 30, T)).toBe(10);
   });
 
-  it("returns the whole budget when nobody has been acknowledged yet", () => {
-    expect(computePerPersonShare(300, 0)).toBe(300);
+  it("forfeits the remainder below the threshold instead of concentrating it", () => {
+    // The old rule divided by n, so 5 recipients got 60 each and the sender
+    // still emitted the whole 300. Use it or lose it means 30 each and 150 gone.
+    expect(computePerPersonShare(300, 5, T)).toBe(30);
+    expect(computePerPersonShare(300, 5, T) * 5).toBe(150);
+    expect(computePerPersonShare(300, 1, T)).toBe(30);
+  });
+
+  it("emits nothing when nobody has been acknowledged", () => {
+    expect(computePerPersonShare(300, 0, T)).toBe(0);
+  });
+
+  it("treats a zero or negative threshold as one", () => {
+    expect(computePerPersonShare(300, 3, 0)).toBe(100);
   });
 });
 
 describe("computePoolShares", () => {
+  const NO_CAP = 0;
+
   it("distributes the pool proportionally to weight received", () => {
     // Sage sends 50/person, Explorer sends 10/person (spec §Distribution).
     const weights = new Map([[1, 50], [2, 10]]);
-    const { totalWeight, shares } = computePoolShares(weights, 6000);
+    const { totalWeight, shares } = computePoolShares(weights, 6000, NO_CAP);
     expect(totalWeight).toBe(60);
     const byUser = new Map(shares.map((s) => [s.userId, s]));
     expect(byUser.get(1)!.poolShare).toBeCloseTo(5000);
@@ -71,15 +86,49 @@ describe("computePoolShares", () => {
 
   it("floors credited amounts and never over-mints the pool", () => {
     const weights = new Map([[1, 1], [2, 1], [3, 1]]);
-    const { shares } = computePoolShares(weights, 100);
-    const credited = shares.reduce((sum, s) => sum + s.creditedAmount, 0);
+    const { shares, distributed } = computePoolShares(weights, 100, NO_CAP);
     for (const s of shares) expect(s.creditedAmount).toBe(33);
-    expect(credited).toBeLessThanOrEqual(100);
+    expect(distributed).toBe(99);
+    expect(distributed).toBeLessThanOrEqual(100);
   });
 
   it("returns no shares when nothing was received", () => {
-    expect(computePoolShares(new Map(), 10000).shares).toEqual([]);
-    expect(computePoolShares(new Map([[1, 0]]), 10000).shares).toEqual([]);
+    expect(computePoolShares(new Map(), 10000, NO_CAP).shares).toEqual([]);
+    expect(computePoolShares(new Map([[1, 0]]), 10000, NO_CAP).shares).toEqual([]);
+  });
+
+  it("caps what any one person can be credited in a cycle", () => {
+    // Rye's collusion case: two people acknowledge only each other, so a
+    // 10,000 pool would have paid them 5,000 apiece. With a 1,000 cap the
+    // cycle mints 2,000 and the other 8,000 is never created.
+    const weights = new Map([[1, 30], [2, 30]]);
+    const { shares, distributed } = computePoolShares(weights, 10000, 1000);
+    for (const s of shares) {
+      expect(s.creditedAmount).toBe(1000);
+      expect(s.capped).toBe(true);
+      expect(s.poolShare).toBeCloseTo(5000); // the uncapped entitlement is still recorded
+    }
+    expect(distributed).toBe(2000);
+  });
+
+  it("leaves everyone under the cap untouched", () => {
+    const weights = new Map([[1, 1], [2, 1]]);
+    const { shares, distributed } = computePoolShares(weights, 1000, 1000);
+    for (const s of shares) {
+      expect(s.creditedAmount).toBe(500);
+      expect(s.capped).toBe(false);
+    }
+    expect(distributed).toBe(1000);
+  });
+
+  it("caps only the whales in a mixed cycle, and does not redistribute", () => {
+    const weights = new Map([[1, 90], [2, 5], [3, 5]]);
+    const { shares, distributed } = computePoolShares(weights, 10000, 1000);
+    const byUser = new Map(shares.map((s) => [s.userId, s]));
+    expect(byUser.get(1)!.creditedAmount).toBe(1000); // would have been 9000
+    expect(byUser.get(2)!.creditedAmount).toBe(500);
+    expect(byUser.get(3)!.creditedAmount).toBe(500);
+    expect(distributed).toBe(2000); // the freed 8000 is not handed to anyone
   });
 });
 

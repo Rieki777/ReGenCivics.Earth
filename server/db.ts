@@ -1,27 +1,14 @@
-import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, not, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertUser, playerProfiles, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignUpdates, CampaignUpdate, campaignFollowers, InsertCampaignFollower, userFollows, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-/**
- * mysql2 INSERT/UPDATE/DELETE result shape. drizzle wraps it but the
- * runtime object is the same. Centralizing the type lets us drop most
- * `(result as any).insertId` / `.affectedRows` casts.
- */
-type MysqlMutationResult = {
-  insertId: number;
-  affectedRows: number;
-  warningStatus?: number;
-};
-function asMutationResult(r: unknown): MysqlMutationResult {
-  // drizzle returns [ResultSetHeader, FieldPacket[]] for some shapes and
-  // a single ResultSetHeader for others. Normalise.
-  if (Array.isArray(r)) return r[0] as MysqlMutationResult;
-  return r as MysqlMutationResult;
-}
+// Moved to server/db/_shared.ts so the extracted domain modules can use it
+// too. Imported (not re-exported) because it stays internal to server/db/.
+import { asMutationResult } from "./db/_shared";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -273,579 +260,126 @@ export async function updateUserHandle(userId: number, handle: string): Promise<
 // ============================================
 // Application Queries
 // ============================================
-
-export async function createApplication(data: InsertApplication) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(applications).values(data);
-  return result[0].insertId;
-}
-
-export async function updateApplication(id: number, data: Partial<InsertApplication>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(applications).set(data).where(eq(applications.id, id));
-}
-
-export async function getApplicationById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select()
-    .from(applications)
-    .where(eq(applications.id, id))
-    .limit(1);
-  
-  if (result.length === 0) return undefined;
-  
-  // Get user email separately
-  const app = result[0];
-  const userResult = await db.select({ email: users.email })
-    .from(users)
-    .where(eq(users.id, app.userId))
-    .limit(1);
-  
-  return {
-    ...app,
-    contactEmail: userResult.length > 0 ? userResult[0].email : null,
-  };
-}
-
-export async function getApplicationsByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db.select().from(applications)
-    .where(and(eq(applications.userId, userId), eq(applications.adminSeeded, 0)))
-    .orderBy(desc(applications.createdAt));
-}
-
-export async function getAllApplications() {
-  const db = await getDb();
-  if (!db) return [];
-
-  // Exclude drafts from the admin review queue
-  return db.select().from(applications)
-    .where(ne(applications.status, "draft"))
-    .orderBy(desc(applications.submittedAt));
-}
-
-export async function getDraftApplications() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db.select().from(applications)
-    .where(eq(applications.status, "draft"))
-    .orderBy(desc(applications.updatedAt));
-}
-
-export async function deleteStaleApplicationDrafts(olderThanDays = 30): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
-
-  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-  const result = await db.delete(applications)
-    .where(and(eq(applications.status, "draft"), lt(applications.updatedAt, cutoff)));
-  return asMutationResult(result).affectedRows ?? 0;
-}
-
-export async function getApplicationsByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(applications)
-    .where(eq(applications.status, status as any))
-    .orderBy(desc(applications.submittedAt));
-}
+// Extracted to server/db/applications.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createApplication,
+  updateApplication,
+  getApplicationById,
+  getApplicationsByUserId,
+  getAllApplications,
+  getDraftApplications,
+  deleteStaleApplicationDrafts,
+  getApplicationsByStatus,
+} from "./db/applications";
 
 // ============================================
-// Review Queries
+// Review Queries (reviews + reviewer roster)
 // ============================================
-
-export async function createReview(data: InsertReview) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(reviews).values(data);
-  return result[0].insertId;
-}
-
-export async function getReviewsByApplicationId(applicationId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviews)
-    .where(eq(reviews.applicationId, applicationId))
-    .orderBy(desc(reviews.createdAt));
-}
-
-export async function updateReview(id: number, data: Partial<InsertReview>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(reviews).set(data).where(eq(reviews.id, id));
-}
+// Extracted to server/db/reviews.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createReview,
+  getReviewsByApplicationId,
+  updateReview,
+  createReviewerEmail,
+  getReviewerEmailById,
+  getAllReviewerEmails,
+  getActiveReviewerEmails,
+  updateReviewerEmail,
+  deleteReviewerEmail,
+} from "./db/reviews";
 
 // ============================================
-// Investor Inquiry Queries
+// Inquiry Queries (investor + general catch-all routing form)
 // ============================================
-
-import { InsertInvestorInquiry, investorInquiries } from "../drizzle/schema";
-
-export async function createInvestorInquiry(data: InsertInvestorInquiry) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(investorInquiries).values(data);
-  return result[0].insertId;
-}
-
-export async function getInvestorInquiryById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(investorInquiries).where(eq(investorInquiries.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllInvestorInquiries() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(investorInquiries)
-    .orderBy(desc(investorInquiries.createdAt));
-}
-
-export async function getInvestorInquiriesByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(investorInquiries)
-    .where(eq(investorInquiries.status, status as any))
-    .orderBy(desc(investorInquiries.createdAt));
-}
-
-export async function updateInvestorInquiry(id: number, data: Partial<InsertInvestorInquiry>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(investorInquiries).set(data).where(eq(investorInquiries.id, id));
-}
-
-
-// ============================================
-// General Inquiry Queries (Catch-all Routing Form)
-// ============================================
-
-import { InsertGeneralInquiry, generalInquiries } from "../drizzle/schema";
-
-export async function createGeneralInquiry(data: InsertGeneralInquiry) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(generalInquiries).values(data);
-  return result[0].insertId;
-}
-
-export async function getGeneralInquiryById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(generalInquiries).where(eq(generalInquiries.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllGeneralInquiries() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function getGeneralInquiriesByPath(pathType: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .where(eq(generalInquiries.pathType, pathType as any))
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function getGeneralInquiriesByStatus(status: string) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(generalInquiries)
-    .where(eq(generalInquiries.status, status as any))
-    .orderBy(desc(generalInquiries.createdAt));
-}
-
-export async function updateGeneralInquiry(id: number, data: Partial<InsertGeneralInquiry>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(generalInquiries).set(data).where(eq(generalInquiries.id, id));
-}
-
-
-// ============================================
-// Reviewer Email Queries
-// ============================================
-
-import { InsertReviewerEmail, reviewerEmails } from "../drizzle/schema";
-
-export async function createReviewerEmail(data: InsertReviewerEmail) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(reviewerEmails).values(data);
-  return result[0].insertId;
-}
-
-export async function getReviewerEmailById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(reviewerEmails).where(eq(reviewerEmails.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllReviewerEmails() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviewerEmails)
-    .orderBy(desc(reviewerEmails.createdAt));
-}
-
-export async function getActiveReviewerEmails() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(reviewerEmails)
-    .where(eq(reviewerEmails.isActive, 1))
-    .orderBy(desc(reviewerEmails.createdAt));
-}
-
-export async function updateReviewerEmail(id: number, data: Partial<InsertReviewerEmail>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(reviewerEmails).set(data).where(eq(reviewerEmails.id, id));
-}
-
-export async function deleteReviewerEmail(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.delete(reviewerEmails).where(eq(reviewerEmails.id, id));
-}
+// Extracted to server/db/inquiries.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createInvestorInquiry,
+  getInvestorInquiryById,
+  getAllInvestorInquiries,
+  getInvestorInquiriesByStatus,
+  updateInvestorInquiry,
+  getInvestorInquiryByUserId,
+  createGeneralInquiry,
+  getGeneralInquiryById,
+  getAllGeneralInquiries,
+  getGeneralInquiriesByPath,
+  getGeneralInquiriesByStatus,
+  updateGeneralInquiry,
+} from "./db/inquiries";
 
 
 // ============================================
 // Newsletter Subscriber Queries
 // ============================================
-
-import { InsertNewsletterSubscriber, newsletterSubscribers } from "../drizzle/schema";
-
-export async function createNewsletterSubscriber(data: InsertNewsletterSubscriber) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Check if email already exists
-  const existing = await db.select().from(newsletterSubscribers)
-    .where(eq(newsletterSubscribers.email, data.email))
-    .limit(1);
-  
-  if (existing.length > 0) {
-    // Update existing subscriber to active if they were inactive
-    if (existing[0].isActive === 0) {
-      await db.update(newsletterSubscribers)
-        .set({ isActive: 1, source: data.source })
-        .where(eq(newsletterSubscribers.id, existing[0].id));
-    }
-    return existing[0].id;
-  }
-  
-  const result = await db.insert(newsletterSubscribers).values(data);
-  return result[0].insertId;
-}
-
-export async function getNewsletterSubscriberByEmail(email: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(newsletterSubscribers)
-    .where(eq(newsletterSubscribers.email, email))
-    .limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllNewsletterSubscribers() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(newsletterSubscribers)
-    .orderBy(desc(newsletterSubscribers.createdAt));
-}
-
-export async function getActiveNewsletterSubscribers() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(newsletterSubscribers)
-    .where(eq(newsletterSubscribers.isActive, 1))
-    .orderBy(desc(newsletterSubscribers.createdAt));
-}
-
-export async function getRecordingSubscribers(): Promise<{ email: string; name: string | null }[]> {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({
-    email: newsletterSubscribers.email,
-    name: newsletterSubscribers.name,
-  }).from(newsletterSubscribers)
-    .where(and(
-      eq(newsletterSubscribers.isActive, 1),
-      eq(newsletterSubscribers.notifyRecordings, 1),
-    ));
-}
-
-export async function unsubscribeNewsletter(email: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.update(newsletterSubscribers)
-    .set({ isActive: 0 })
-    .where(eq(newsletterSubscribers.email, email));
-}
-
-export async function activateNewsletterSubscriber(email: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.update(newsletterSubscribers)
-    .set({ isActive: 1 })
-    .where(eq(newsletterSubscribers.email, email));
-}
+// Extracted to server/db/newsletter.ts (foundation audit Phase 2, first
+// domain out of the god module). Re-exported so existing imports of "./db"
+// keep working. Follow this pattern for the remaining domains.
+export {
+  createNewsletterSubscriber,
+  getNewsletterSubscriberByEmail,
+  getAllNewsletterSubscribers,
+  getActiveNewsletterSubscribers,
+  getRecordingSubscribers,
+  unsubscribeNewsletter,
+  activateNewsletterSubscriber,
+} from "./db/newsletter";
 
 
 // ============================================
 // Video Suggestions Queries
 // ============================================
-
-import { InsertVideoSuggestion, videoSuggestions } from "../drizzle/schema";
-
-export async function createVideoSuggestion(data: InsertVideoSuggestion) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(videoSuggestions).values(data);
-  return result[0].insertId;
-}
-
-export async function getVideoSuggestionById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(videoSuggestions).where(eq(videoSuggestions.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllVideoSuggestions() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(videoSuggestions)
-    .orderBy(desc(videoSuggestions.voteCount));
-}
-
-export async function getApprovedVideoSuggestions() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(videoSuggestions)
-    .where(eq(videoSuggestions.status, "approved"))
-    .orderBy(desc(videoSuggestions.voteCount));
-}
-
-export async function updateVideoSuggestion(id: number, data: Partial<InsertVideoSuggestion>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(videoSuggestions).set(data).where(eq(videoSuggestions.id, id));
-}
-
-export async function deleteVideoSuggestion(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.delete(videoSuggestions).where(eq(videoSuggestions.id, id));
-}
+// Extracted to server/db/videoSuggestions.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createVideoSuggestion,
+  getVideoSuggestionById,
+  getAllVideoSuggestions,
+  getApprovedVideoSuggestions,
+  updateVideoSuggestion,
+  deleteVideoSuggestion,
+} from "./db/videoSuggestions";
 
 
 // ============================================
 // Player Profile Queries
 // ============================================
+// Extracted to server/db/playerProfiles.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working. Only the profile
+// CRUD moved; the many other queries that read the playerProfiles table
+// (tokens, contribution scores, tiers) belong to their own domains.
+//
+// getPlayerProfileByUserId is imported as well as re-exported: db.ts calls it
+// internally in four places, and `export ... from` alone creates no local
+// binding.
+import { getPlayerProfileByUserId } from "./db/playerProfiles";
 
-import { InsertPlayerProfile, playerProfiles } from "../drizzle/schema";
-
-export async function createPlayerProfile(data: InsertPlayerProfile) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(playerProfiles).values(data);
-  return result[0].insertId;
-}
-
-export async function getPlayerProfileById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(playerProfiles).where(eq(playerProfiles.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getPlayerProfileByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  const result = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-/**
- * Batch lookup of player profiles by userId. Returns a Record keyed by
- * userId so callers can do `map[userId]` without a second pass. Used by
- * forum listing to avoid the per-author N+1 select.
- */
-export async function getPlayerProfilesByUserIds(
-  userIds: number[],
-): Promise<Record<number, typeof playerProfiles.$inferSelect>> {
-  if (userIds.length === 0) return {};
-  const db = await getDb();
-  if (!db) return {};
-  const unique = Array.from(new Set(userIds));
-  const rows = await db.select().from(playerProfiles).where(inArray(playerProfiles.userId, unique));
-  return Object.fromEntries(rows.map((p) => [p.userId, p]));
-}
-
-export async function getPlayerProfileByBaseAccount(baseAccountName: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  
-  const result = await db.select().from(playerProfiles)
-    .where(eq(playerProfiles.baseAccountName, baseAccountName))
-    .limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAllPlayerProfiles() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(playerProfiles)
-    .where(eq(playerProfiles.isActive, 1))
-    .orderBy(desc(playerProfiles.createdAt));
-}
-
-export async function getVerifiedPlayerProfiles() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select().from(playerProfiles)
-    .where(and(eq(playerProfiles.isVerified, 1), eq(playerProfiles.isActive, 1)))
-    .orderBy(desc(playerProfiles.totalContributionValue));
-}
-
-export async function updatePlayerProfile(id: number, data: Partial<InsertPlayerProfile>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.update(playerProfiles).set(data).where(eq(playerProfiles.id, id));
-
-  // Reverse sync: push shared display fields to userProfiles so both tables
-  // stay consistent regardless of which form saves. Mirrors the same field
-  // set as the forward sync in upsertUserProfile (0169, Phase 2B) — keep the
-  // two lists in lockstep or the tables drift.
-  const syncToUser: Record<string, string | number | undefined> = {};
-  if (data.avatarUrl !== undefined) syncToUser.avatarUrl = data.avatarUrl ?? undefined;
-  if (data.displayName !== undefined) syncToUser.displayName = data.displayName;
-  if (data.bio !== undefined) syncToUser.bio = data.bio ?? undefined;
-  if (data.bannerUrl !== undefined) syncToUser.bannerUrl = data.bannerUrl ?? undefined;
-  if (data.website !== undefined) syncToUser.website = data.website ?? undefined;
-  if (data.forumLocation !== undefined) syncToUser.location = data.forumLocation ?? undefined;
-  if (data.preferredLanguage !== undefined) syncToUser.preferredLanguage = data.preferredLanguage ?? undefined;
-  if (data.onboardingComplete !== undefined) syncToUser.onboardingComplete = data.onboardingComplete;
-  if (Object.keys(syncToUser).length > 0) {
-    try {
-      const [pp] = await db.select({ userId: playerProfiles.userId })
-        .from(playerProfiles).where(eq(playerProfiles.id, id)).limit(1);
-      if (pp?.userId) {
-        const existing = await getUserProfile(pp.userId);
-        if (existing) {
-          await db.update(userProfiles).set(syncToUser).where(eq(userProfiles.userId, pp.userId));
-        }
-      }
-    } catch (_e) {
-      console.warn("Failed to sync playerProfile fields to userProfiles:", _e);
-    }
-  }
-}
-
-export async function deletePlayerProfile(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Soft delete by setting isActive to 0
-  await db.update(playerProfiles).set({ isActive: 0 }).where(eq(playerProfiles.id, id));
-}
+export {
+  createPlayerProfile,
+  getPlayerProfileById,
+  getPlayerProfileByUserId,
+  getPlayerProfilesByUserIds,
+  getPlayerProfileByBaseAccount,
+  getAllPlayerProfiles,
+  getVerifiedPlayerProfiles,
+  updatePlayerProfile,
+  deletePlayerProfile,
+} from "./db/playerProfiles";
 
 
 // ============================================
 // Player Contributions Queries
 // ============================================
-import { InsertPlayerContribution, playerContributions } from "../drizzle/schema";
-
-export async function createPlayerContribution(data: InsertPlayerContribution) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(playerContributions).values(data);
-  return result.insertId;
-}
-
-export async function getPlayerContributionsByProfileId(profileId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db
-    .select()
-    .from(playerContributions)
-    .where(eq(playerContributions.profileId, profileId))
-    .orderBy(playerContributions.createdAt);
-}
-
-export async function deletePlayerContribution(id: number, userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db
-    .delete(playerContributions)
-    .where(and(eq(playerContributions.id, id), eq(playerContributions.userId, userId)));
-}
-
-export async function updatePlayerContributionStatus(
-  id: number,
-  status: "pending" | "verified" | "rejected"
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db
-    .update(playerContributions)
-    .set({ status, verifiedAt: status === "verified" ? new Date() : null })
-    .where(eq(playerContributions.id, id));
-}
+// Extracted to server/db/playerContributions.ts (foundation audit Phase 2).
+// Re-exported so existing imports of "./db" keep working.
+export {
+  createPlayerContribution,
+  getPlayerContributionsByProfileId,
+  deletePlayerContribution,
+  updatePlayerContributionStatus,
+} from "./db/playerContributions";
 
 
 // ============================================
@@ -1305,6 +839,9 @@ export async function createCampaign(userId: number, data: {
   durationDays?: number;
   items: Array<{
     category: 'land' | 'equipment' | 'role' | 'resource';
+    kind?: 'item' | 'role' | 'shift' | 'loan' | 'knowledge' | 'crypto' | 'financial_link';
+    capitalType?: 'intellectual' | 'social' | 'material' | 'financial' | 'living' | 'cultural' | 'spiritual' | 'experiential' | 'health';
+    quantityWanted?: number;
     hectares?: number;
     region?: string;
     features?: string[];
@@ -1394,6 +931,10 @@ export async function createCampaign(userId: number, data: {
     await db.insert(campaignItems).values({
       campaignId,
       category: item.category,
+      // Needs registry taxonomy: wizard sends kind + capitalType; legacy callers get sane defaults.
+      kind: item.kind ?? (item.category === 'role' ? 'role' : 'item'),
+      capitalType: item.capitalType ?? (item.category === 'land' ? 'living' : item.category === 'role' ? 'experiential' : 'material'),
+      quantityWanted: item.quantityWanted ?? item.equipmentQuantity ?? item.resourceQuantity ?? 1,
       hectares: item.hectares,
       region: item.region,
       features: item.features ? JSON.stringify(item.features) : null,
@@ -1700,11 +1241,113 @@ export async function updateCampaignStatus(
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(campaigns).set({
     status,
     updatedAt: new Date(),
   }).where(eq(campaigns.id, campaignId));
+}
+
+
+// ============================================
+// Crowdpooling: needs, followers, updates
+// (CROWDPOOLING_PLATFORM_SPEC.md Part C)
+// ============================================
+
+export async function getCampaignItemById(id: number): Promise<CampaignItem | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(campaignItems).where(eq(campaignItems.id, id)).limit(1);
+  return result[0] || null;
+}
+
+/**
+ * Real contributor count for a campaign: distinct emails across every
+ * contribution that made it past review (accepted, fulfilled, or thanked).
+ * Replaces the hardcoded 0 on campaigns.getById.
+ */
+export async function getCampaignContributorsCount(campaignId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db
+    .select({ c: sql<number>`COUNT(DISTINCT ${campaignContributions.contributorEmail})` })
+    .from(campaignContributions)
+    .where(and(
+      eq(campaignContributions.campaignId, campaignId),
+      inArray(campaignContributions.status, ['accepted', 'fulfilled', 'thanked']),
+    ));
+  return Number(result[0]?.c ?? 0);
+}
+
+/**
+ * Email-only follower upsert. The unique key on (campaignId, email) makes a
+ * duplicate a silent no-op: subscribeByEmail must never reveal whether an
+ * email is already on the list.
+ */
+export async function upsertCampaignFollower(data: InsertCampaignFollower): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(campaignFollowers)
+    .values(data)
+    .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+}
+
+/** Account holders following a campaign via the polymorphic user_follows table. */
+export async function getCampaignFollowerUserIds(campaignId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({ userId: userFollows.userId }).from(userFollows)
+    .where(and(
+      eq(userFollows.targetType, 'campaign'),
+      eq(userFollows.targetId, String(campaignId)),
+    ));
+  return rows.map(r => r.userId);
+}
+
+/**
+ * Create a numbered journal entry. updateNumber is max+1 per campaign,
+ * computed here so the procedure layer stays thin.
+ */
+export async function createCampaignUpdate(data: {
+  campaignId: number;
+  authorId: number;
+  title: string;
+  body: string;
+  imageUrls?: string[];
+}): Promise<{ id: number; updateNumber: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [maxRow] = await db
+    .select({ maxNumber: sql<number>`COALESCE(MAX(${campaignUpdates.updateNumber}), 0)` })
+    .from(campaignUpdates)
+    .where(eq(campaignUpdates.campaignId, data.campaignId));
+  const updateNumber = Number(maxRow?.maxNumber ?? 0) + 1;
+
+  const result = await db.insert(campaignUpdates).values({
+    campaignId: data.campaignId,
+    authorId: data.authorId,
+    updateNumber,
+    title: data.title,
+    body: data.body,
+    imageUrls: data.imageUrls ?? null,
+    publishedAt: new Date(),
+  });
+
+  return { id: result[0].insertId, updateNumber };
+}
+
+export async function listCampaignUpdates(campaignId: number): Promise<CampaignUpdate[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(campaignUpdates)
+    .where(eq(campaignUpdates.campaignId, campaignId))
+    .orderBy(desc(campaignUpdates.updateNumber));
 }
 
 
@@ -1875,12 +1518,16 @@ function legacyNotificationLink(type: string, campaignId?: number | null): strin
     case 'new_contribution':
       return '/profile?tab=contributions';
     case 'campaign_milestone':
-      return campaignId ? `/campaigns/${campaignId}` : '/crowdpooling';
+      // Router paths are /campaign/:id (singular) and /crowd-pooling
+      // (hyphenated); the old plural/unhyphenated forms 404ed.
+      return campaignId ? `/campaign/${campaignId}` : '/crowd-pooling';
     case 'quest_complete':
       return '/quest';
     case 'claim_complete':
     case 'claim_failed':
-      return '/profile';
+      // These are about tokens moving to the user's wallet; the
+      // Contributions tab is where balances and claim state live.
+      return '/profile?tab=contributions';
     default:
       return null;
   }
@@ -2329,6 +1976,15 @@ export async function getForumPost(id: number) {
     // Increment view count
     await db.update(forumPosts).set({ viewCount: row.viewCount + 1 }).where(eq(forumPosts.id, id));
   }
+  return row || null;
+}
+
+// Read-only fetch for the crawler content injector: no view-count increment,
+// so bot traffic never inflates community stats.
+export async function getForumPostSnapshot(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(forumPosts).where(eq(forumPosts.id, id)).limit(1);
   return row || null;
 }
 
@@ -3147,12 +2803,8 @@ export async function ensureEntityForumThread(
   return asMutationResult(result).insertId ?? null;
 }
 
-export async function getInvestorInquiryByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select().from(investorInquiries).where(eq(investorInquiries.userId, userId)).orderBy(desc(investorInquiries.createdAt)).limit(1);
-  return rows[0] ?? null;
-}
+// getInvestorInquiryByUserId lives in server/db/inquiries.ts with the rest of
+// the domain; it is re-exported above.
 
 export async function searchApplications(query: string) {
   const db = await getDb();
@@ -3451,20 +3103,26 @@ export async function markEventAttendance(data: {
 
   if (existing) return { attendance: existing, alreadyExisted: true };
 
+  // Attendance reward from the registry (was a 33 hardcoded in two files).
+  // Lazy import: game/index.ts imports getDb from this file, so a top-level
+  // import here would be a cycle.
+  const { getGameVariableOr } = await import("./game");
+  const attendanceReward = Math.round(await getGameVariableOr("events.attendance_reward_regen", 33));
+
   // Insert attendance record
   const [result] = await db.insert(eventAttendance).values({
     eventId: data.eventId,
     email: data.email,
     name: data.name ?? null,
     markedByAdminId: data.markedByAdminId ?? null,
-    tokensAwarded: 33,
+    tokensAwarded: attendanceReward,
   });
   const insertId = asMutationResult(result).insertId;
 
-  // Award 33 $ReGen tokens, insert into ledger first
+  // Award the $ReGen, insert into ledger first
   const [ledgerResult] = await db.insert(regenTokenLedger).values({
     email: data.email,
-    amount: 33,
+    amount: attendanceReward,
     reason: "event_attendance",
     eventId: data.eventId,
     notes: `Attended event #${data.eventId}`,

@@ -9,9 +9,10 @@ import { forumPosts, campaigns as campaignsTable } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { ENV } from "../_core/env";
 import { nanoid } from "nanoid";
-import { storagePut, storageStream } from "../storage";
+import { storagePut, storageStream, storageStreamRange } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
+import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
 import type { Express } from "express";
 import sharp from "sharp";
@@ -125,8 +126,11 @@ export const chatRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "chat_ask");
+      // Worldview Pack (the Mycelium): same fail-soft grounding as the
+      // streaming Guide endpoint; "" when no pack has been uploaded.
+      const worldviewPreamble = await getGuideWorldviewPreamble().catch(() => "");
       const llmMessages = [
-        { role: "system" as const, content: CHAT_SYSTEM_PROMPT },
+        { role: "system" as const, content: CHAT_SYSTEM_PROMPT + worldviewPreamble },
         ...input.messages.map(m => ({
           role: m.role as "user" | "assistant",
           content: m.content,
@@ -154,6 +158,30 @@ const imageCache = new LRUCache<string, Buffer>({
 // shared with any future proxy that needs the same gate.
 
 export function registerImageOptimization(app: Express) {
+  // Same-origin, range-capable proxy for the ship treasure-map basemap. The
+  // 2GB PMTiles archive lives in R2 at ship/basemap.pmtiles; R2's custom domain
+  // does not serve that sub-path, so protomaps-leaflet reads it from here via
+  // HTTP range requests. Streamed straight from R2 with the Range header passed
+  // through (206 + Content-Range), no re-encode, long cache.
+  app.get('/api/ship/basemap.pmtiles', async (req, res) => {
+    try {
+      const range = typeof req.headers.range === 'string' ? req.headers.range : undefined;
+      const { body, contentType, contentLength, contentRange, statusCode } = await storageStreamRange('ship/basemap.pmtiles', range);
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', contentType || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      if (contentRange) res.setHeader('Content-Range', contentRange);
+      if (contentLength != null) res.setHeader('Content-Length', String(contentLength));
+      res.status(statusCode);
+      body.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
+      body.pipe(res);
+    } catch (err: any) {
+      const notFound = err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404;
+      res.status(notFound ? 404 : 502).json({ error: notFound ? 'basemap not uploaded yet' : 'basemap proxy error' });
+    }
+  });
+
   app.get('/api/img', async (req, res) => {
     try {
       const { url, w, h, q } = req.query as Record<string, string>;
@@ -234,32 +262,22 @@ export function registerImageOptimization(app: Express) {
         parsedUrl.hostname === 'assets.regencivics.earth' &&
         /^\/?core\/[^/]+\.webp$/i.test(parsedUrl.pathname)
       ) {
-        const webpKey = parsedUrl.pathname.replace(/^\/+/, '');
-        const readKey = async (key: string): Promise<Buffer | null> => {
-          try {
-            const { body } = await storageStream(key);
-            const chunks: Buffer[] = [];
-            for await (const chunk of body) {
-              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-            }
-            return Buffer.concat(chunks);
-          } catch {
-            return null;
-          }
-        };
-        let out: Buffer | null = null;
-        let ct = 'image/webp';
-        if ((req.headers.accept || '').includes('image/avif')) {
-          out = await readKey(webpKey.replace(/\.webp$/i, '.avif'));
-          if (out) ct = 'image/avif';
-        }
-        if (!out) out = buffer; // the .webp we already fetched above
+        // Serve the pre-made WebP straight from R2 (already fetched above), and
+        // deliberately NOT the .avif sibling. The pre-made AVIFs fail to decode
+        // in WebKit/Safari: the top rows drop out and the transparent gap reveals
+        // the blurred LQIP underneath, so every CORE illustration rendered with a
+        // dark band across its top on iPhone. WebP is universally supported and
+        // renders these cleanly on every engine; server-side "is this WebKit"
+        // sniffing is too unreliable (iOS Chrome, in-app browsers, desktop Safari
+        // all differ) to keep AVIF for only the browsers that can decode it, and
+        // the payload delta on these few immutable, year-cached illustrations is
+        // negligible next to correctness on iOS.
         res.set({
-          'Content-Type': ct,
+          'Content-Type': 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable',
           'Vary': 'Accept',
         });
-        return res.send(out);
+        return res.send(buffer);
       }
 
       const accept = req.headers.accept || '';

@@ -254,7 +254,7 @@ export function AdminImageStudio() {
             <CheckCircle className="w-4 h-4 text-[#7dd87d]" />
             Image applied successfully
           </div>
-          <div className="font-mono text-xs text-[#1a472a]/70 break-all flex items-center gap-2 flex-wrap">
+          <div className="font-mono text-xs text-[#1a472a]/75 break-all flex items-center gap-2 flex-wrap">
             <span className="break-all">{result.publicUrl}</span>
             <div className="flex items-center gap-1 flex-shrink-0">
               <a href={result.publicUrl} target="_blank" rel="noopener noreferrer">

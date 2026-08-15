@@ -23,13 +23,39 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
-import { EightFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
+import { NineFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
+import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
+import { WatchTgsCurrie, WatchTgsHamant, SteeringEmotions, ArticleQuestCTA } from "@/components/blog/PlaysArticleBlocks";
 import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
   const [, setLocation] = useLocation();
-  const post = getBlogPost(params.slug || '');
+  const staticPost = getBlogPost(params.slug || '');
+
+  // Composed articles published through The Harvest (Phase 5) live in the DB.
+  // The static list stays canonical for pre-existing posts; when the slug is
+  // not in it, this query serves the published article (or the hidden preview
+  // when the private ?preview=<token> URL is used).
+  const previewToken = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("preview") ?? undefined
+    : undefined;
+  const dbArticle = trpc.blog.getPublished.useQuery(
+    { slug: params.slug || '', ...(previewToken ? { previewToken } : {}) },
+    { enabled: !!params.slug && !staticPost, staleTime: 60_000, retry: false }
+  );
+  const post = staticPost ?? (dbArticle.data ? {
+    id: dbArticle.data.slug,
+    slug: dbArticle.data.slug,
+    title: dbArticle.data.title,
+    excerpt: dbArticle.data.excerpt ?? '',
+    content: (dbArticle.data.heroImageUrl ? `![${dbArticle.data.heroImageAlt ?? dbArticle.data.title}](${dbArticle.data.heroImageUrl})\n\n` : '') + dbArticle.data.content,
+    author: dbArticle.data.author,
+    date: dbArticle.data.publishedAt ? new Date(dbArticle.data.publishedAt).toISOString().slice(0, 10) : new Date(dbArticle.data.createdAt).toISOString().slice(0, 10),
+    readTime: `${Math.max(1, Math.round(dbArticle.data.content.split(/\s+/).length / 220))} min read`,
+    image: dbArticle.data.heroImageUrl ?? '',
+    tags: Array.isArray(dbArticle.data.tags) ? (dbArticle.data.tags as string[]) : [],
+  } : undefined);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -88,6 +114,14 @@ export default function BlogPost() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!post && dbArticle.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center">
+        <p className="text-white/70">Loading...</p>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -150,7 +184,7 @@ export default function BlogPost() {
           sits directly below it. The flower-of-life command menu is a separate
           global element (bottom-right) and is intentionally left untouched. */}
       <div
-        className="fixed right-4 z-40 flex flex-col items-end gap-3"
+        className="fixed right-4 z-40 flex flex-col items-end gap-3 pointer-events-none"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 73px)" }}
       >
         <ShareButton
@@ -160,7 +194,7 @@ export default function BlogPost() {
           url={pageUrl}
           variant="solid"
           label="Share"
-          className="shadow-lg"
+          className="shadow-lg pointer-events-auto"
         />
         {/* Reading-progress ring — mobile only (desktop uses the TOC panel). */}
         <ReadingProgressRing progress={scrollProgress} className="md:hidden" />
@@ -385,8 +419,16 @@ export default function BlogPost() {
                     '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
                     '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
                     '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
-                    '[EIGHT_FORMS_OF_CAPITAL]': <EightFormsOfCapital />,
+                    '[NINE_FORMS_OF_CAPITAL]': <NineFormsOfCapital />,
                     '[FRAUD_WARNING]': <FraudWarningCallout />,
+                    '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
+                    '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
+                    '[SHIP_PULLQUOTE]': <ShipPullQuote />,
+                    '[SHIP_CTA]': <ShipArticleCTA />,
+                    '[WATCH_TGS_CURRIE]': <WatchTgsCurrie />,
+                    '[WATCH_TGS_HAMANT]': <WatchTgsHamant />,
+                    '[STEERING_EMOTIONS]': <SteeringEmotions />,
+                    '[PLAY_QUEST_CTA]': <ArticleQuestCTA />,
                   };
 
                   const hasMarkers = Object.keys(SPECIAL_MARKERS).some(
@@ -407,6 +449,11 @@ export default function BlogPost() {
                     em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
                     code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
                     pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                    img: ({src, alt}: {src?: string; alt?: string}) => <img src={src} alt={alt ?? ''} loading="lazy" className="w-full rounded-2xl my-8 shadow-lg" />,
+                    table: ({children}: {children?: React.ReactNode}) => <div className="overflow-x-auto my-6"><table className="w-full text-sm border-collapse">{children}</table></div>,
+                    thead: ({children}: {children?: React.ReactNode}) => <thead className="bg-[#7dd87d]/15">{children}</thead>,
+                    th: ({children}: {children?: React.ReactNode}) => <th className="text-left font-semibold px-3 py-2 border-b border-[#7dd87d]/30">{children}</th>,
+                    td: ({children}: {children?: React.ReactNode}) => <td className="px-3 py-2 border-b border-white/10">{children}</td>,
                   };
 
                   if (!hasMarkers) {

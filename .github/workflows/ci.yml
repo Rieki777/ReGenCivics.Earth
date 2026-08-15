@@ -28,6 +28,25 @@ jobs:
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
 
+      # Vault tripwire (Mycelium review R3): the second-brain vault is Rye's
+      # private memory and lives gitignored inside the repo folder. This fails
+      # the build the day a careless .gitignore edit lets it into a commit.
+      - name: Vault tripwire (second-brain/ must never be committed)
+        run: |
+          if git ls-files -- 'second-brain/*' | grep -q .; then
+            echo "::error::second-brain/ paths are committed. The vault is private; revert the commit and fix .gitignore."
+            git ls-files -- 'second-brain/*' | head -20
+            exit 1
+          fi
+
+      # Foundation guards (audit Phase 1): unique migration numbers and a
+      # complete .env.example. Cheap, fail fast.
+      - name: Migration number guard
+        run: node scripts/check-migration-numbers.mjs
+
+      - name: Env example completeness
+        run: node scripts/check-env-example.mjs
+
       # Non-blocking CVE check. Reports findings but does not fail the
       # build, since transitive deps occasionally land moderate CVEs we
       # don't control. Treat as a watchdog signal, follow up out-of-band.
@@ -37,9 +56,14 @@ jobs:
       - name: Unit tests
         run: pnpm test
         env:
-          # Tests use in-memory mocks — no real DB needed
+          # No DATABASE_URL here on purpose: DB-backed suites key their
+          # skipIfNoDb guard on it. A fake URL makes them run against a dead
+          # socket and fail with connection errors (this kept main's CI red
+          # for weeks). The DB-backed suites run against the real dev DB in
+          # the local ship gate (`pnpm test:all`); wiring them into GitHub CI
+          # needs a fresh-schema build decision (see the note on the disabled
+          # integration job below).
           JWT_SECRET: ci-test-secret
-          DATABASE_URL: mysql://test:test@localhost:3306/test
 
       - name: Build
         run: pnpm build
@@ -55,6 +79,65 @@ jobs:
           name: dist-public
           path: dist/public
           retention-days: 1
+
+  # ── Integration tests against a real MySQL ──
+  # The DB-backed suites (evolution, ratification, forum, applications, ...) gate
+  # every push against a real database built from scratch.
+  #
+  # The fresh schema comes from drizzle/ci-baseline.sql, not from the numbered
+  # migrations: 36 of those fail on an empty MySQL across five root causes and
+  # are frozen as history rather than repaired (ADR-37). run-migration.ts still
+  # runs afterward, so migrations added since the baseline are exercised here.
+  #
+  # mysql:9.4 matches the production server version. Do not drift to mysql:8
+  # without checking the baseline still loads.
+  integration:
+    name: Integration (real MySQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:9.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci
+          MYSQL_DATABASE: regen_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql://root:ci@127.0.0.1:3306/regen_ci
+      JWT_SECRET: ci-test-secret
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build fresh schema from the CI baseline
+        run: npx tsx scripts/load-ci-baseline.ts
+
+      - name: Apply migrations added since the baseline
+        run: npx tsx scripts/run-migration.ts --all
+
+      - name: Fail if the baseline has drifted from the live schema
+        run: npx tsx scripts/check-schema-drift.ts
+
+      - name: Integration tests
+        run: pnpm test:all
 
   # ── Evolution Engine machine gates (ASSEMBLY_PAGE_SPEC.md section 7.3) ──
   # Runs ONLY for PRs whose head branch is assembly/<proposalId>: the branches
@@ -109,6 +192,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     timeout-minutes: 10
+    # Advisory, not blocking (audit Phase 1: honest gates). LHCI 'collect' has
+    # been failing on main for weeks and turning every run red, which trains
+    # reviewers to ignore red. It still runs and uploads reports; it just no
+    # longer fails the workflow. Re-block once the collect step is reliable.
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v5
@@ -119,8 +207,10 @@ jobs:
           name: dist-public
           path: dist/public
 
+      # -s = SPA fallback: serve index.html for client routes (/fund, /apply,
+      # /community) instead of 404, so Lighthouse can actually load them.
       - name: Serve static build
-        run: npx --yes serve dist/public --listen 3000 &
+        run: npx --yes serve -s dist/public --listen 3000 &
 
       - name: Wait for server
         run: npx --yes wait-on http://localhost:3000 --timeout 30000

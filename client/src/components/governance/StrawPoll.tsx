@@ -53,7 +53,7 @@ export function StrawPoll({ strawPollId, onPromote }: Props) {
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className="w-3.5 h-3.5 text-[#7dd87d]" />
         <span className="text-white text-xs font-bold">Straw poll</span>
-        <span className="text-[10px] uppercase tracking-wider text-white/45 px-2 py-0.5 rounded-full bg-white/10">
+        <span className="text-[10px] uppercase tracking-wider text-white/60 px-2 py-0.5 rounded-full bg-white/10">
           non-binding
         </span>
         {closed && <span className="text-[10px] text-white/70 ml-auto">closed</span>}
@@ -87,7 +87,7 @@ export function StrawPoll({ strawPollId, onPromote }: Props) {
         })}
       </div>
 
-      <p className="text-white/45 text-[10px] mt-2">{data.total} total votes</p>
+      <p className="text-white/60 text-[10px] mt-2">{data.total} total votes</p>
 
       {data.readyToPromote && (
         <button

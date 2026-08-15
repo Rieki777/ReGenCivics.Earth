@@ -21,6 +21,7 @@ const BLOG_HIGHLIGHTS = [
   { title: "Your SEEDS Contributions Live On", slug: "your-seeds-contributions-live-on" },
   { title: "Your Space Is Waiting: How to Claim Your Land Project or Organisation", slug: "claim-your-land-project-or-organisation" },
   { title: "How to Set Up Your Player Profile: Connect to the Game", slug: "how-to-set-up-player-profile" },
+  { title: "You're Allowed to Have More Than One Honeymoon", slug: "more-than-one-honeymoon" },
 ];
 
 // Site sections to rotate through in the "have you seen this?" block.
@@ -90,7 +91,7 @@ export async function runDigestJob() {
 
       const prompt = `You are the ReGen Civics community curator. Review the following forum threads from the past week and write a short digest for the community. For each of the 3-5 most valuable threads, write: the thread title, a 2-sentence summary of what was discussed, and why it matters to regenerative work. Keep the tone warm, human, and forward-looking. No em-dashes. Plain language throughout.\n\n${threadData}`;
 
-      const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 800 });
+      const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 800, task: "light" });
       digestContent = (response as any).choices?.[0]?.message?.content ?? "";
     }
 
@@ -107,6 +108,24 @@ export async function runDigestJob() {
     console.log("[DigestJob] Digest generated and saved.");
 
     await sendDigestEmails(threads.slice(0, 5), weekNum);
+
+    // Steward weekly digest: per active campaign, nudge the steward on open
+    // needs, claims to deliver, new followers, and pending reviews. Piggybacks
+    // this weekly slot so it fires at most once a week. Its own try/catch keeps
+    // a failure here from touching the community digest above.
+    try {
+      const { getDb } = await import("../db");
+      const { sendStewardWeeklyDigest } = await import("./stewardDigestJob");
+      const dbc = await getDb();
+      if (dbc) {
+        const r = await sendStewardWeeklyDigest(dbc);
+        console.log(
+          `[DigestJob] Steward digests: ${r.sent} sent, ${r.skippedQuiet} quiet, ${r.skippedFrequency} opted out (of ${r.campaigns} active).`,
+        );
+      }
+    } catch (err) {
+      console.error("[DigestJob] steward digest failed", err);
+    }
   } catch (e) {
     console.error("[DigestJob] Error:", e);
     try { const Sentry = await import("@sentry/node"); Sentry.captureException(e, { tags: { job: "digest" } }); } catch {}

@@ -274,7 +274,7 @@ export default function CampaignAnalytics() {
                   })}
                 </div>
               ) : (
-                <div className="py-8 text-center text-[#4a7c59]/60">
+                <div className="py-8 text-center text-[#1a472a]/75">
                   No device data yet
                 </div>
               )}
@@ -317,7 +317,7 @@ export default function CampaignAnalytics() {
                   })}
                 </div>
               ) : (
-                <div className="py-8 text-center text-[#4a7c59]/60">
+                <div className="py-8 text-center text-[#1a472a]/75">
                   No traffic source data yet
                 </div>
               )}

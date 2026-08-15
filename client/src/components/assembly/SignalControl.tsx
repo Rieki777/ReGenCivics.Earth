@@ -167,7 +167,7 @@ export function SignalControl({ proposalId, signal }: SignalControlProps) {
               value={moveNote}
               onChange={(e) => setMoveNote(e.target.value)}
               maxLength={500}
-              className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-white/40"
+              className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-white/60"
               placeholder="One line is plenty"
             />
             <button

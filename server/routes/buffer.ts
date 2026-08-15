@@ -11,7 +11,8 @@ const BUFFER_BASE = "https://api.bufferapp.com/1";
 async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = await sdk.authenticateRequest(req);
-    if (!user || user.role !== "admin") {
+    // Same rule as adminProcedure: superadmin implies admin.
+    if (!user || (user.role !== "admin" && user.role !== "superadmin")) {
       res.status(403).json({ error: "Admin access required" });
       return;
     }

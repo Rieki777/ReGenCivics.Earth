@@ -46,13 +46,17 @@ client/public/images/
 
 ---
 
-## R2 Data Loss (2026-03-31)
+## R2 "Data Loss" (2026-03-31) — RESOLVED 2026-07-15, was not data loss
 
-Most objects in the R2 bucket are returning 404. Out of 17 keys tested, only 4 blur placeholder WebPs still exist. All full-size backgrounds, JPGs, and PNGs are missing.
+**Update 2026-07-15:** This was misdiagnosed. The objects were never lost. They were sitting in the `regen-civics-assets` bucket the whole time and were unreachable because of a Cloudflare zone URL Rewrite rule.
 
-This means every `assets.regencivics.earth` URL in the codebase is broken except for a handful of blur placeholders.
+Root cause: a URL Rewrite (Transform) rule named "R2 Assets Path Rewrite" on the `regencivics.earth` zone matched `http.host eq "assets.regencivics.earth"` and rewrote every path to `concat("/regen-civics-assets", http.request.uri.path)`, prepending the bucket name to the key. So `assets.regencivics.earth/<key>` was looked up in R2 as `regen-civics-assets/<key>`, which did not exist for normally-stored objects. Only a set of legacy objects that happened to be stored under a doubled `regen-civics-assets/` prefix resolved, which is why a handful of keys appeared to "survive" while everything else 404'd.
 
-### Images that need to be re-uploaded or replaced
+Fix: copied the legacy prefixed objects down to bare keys, deleted the rewrite rule, and removed the redundant prefixed duplicates. `assets.regencivics.earth/<key>` now maps directly to R2 key `<key>`. Use the bucket's Public Development URL (`https://pub-d072540ca4004f09a1f07636184fdd73.r2.dev/<key>`) to check what is actually in the bucket, bypassing the zone.
+
+The list below is kept for history. Most of these URLs should resolve again now that the rule is gone; verify with `scripts/audit-cdn-images.sh` before treating anything as missing.
+
+### Images that were reported missing (historical)
 
 **Page backgrounds (highest priority):**
 - `play-desktop.webp` -- Play page background, save to `client/public/images/backgrounds/`

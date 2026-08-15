@@ -107,7 +107,7 @@ function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: 
           const isCurrent = match.id === postId;
           return (
             <span key={stage} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-[#4a7c59]/30 text-xs">→</span>}
+              {i > 0 && <span className="text-[#1a472a]/75 text-xs">→</span>}
               {isCurrent ? (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1a472a] text-[#7dd87d]">
                   {STAGE_LABELS[stage]}
@@ -596,7 +596,7 @@ export default function CommunityPost() {
                     className={`flex items-center gap-1 p-1 transition-colors ${
                       subscription && !subscription.muted
                         ? 'text-[#4a7c59] hover:text-[#1a472a]'
-                        : 'text-[#1a472a]/50 hover:text-[#4a7c59]'
+                        : 'text-[#1a472a]/75 hover:text-[#4a7c59]'
                     }`}
                     title={subscription && !subscription.muted ? 'Following this thread. Tap to mute.' : 'Get notified about new replies'}
                     aria-label={subscription && !subscription.muted ? 'Mute this thread' : 'Follow this thread'}
@@ -650,7 +650,7 @@ export default function CommunityPost() {
                 {canDeletePost && !editingPost && (
                   <button
                     onClick={() => { setEditTitle(decodeEntities(post.title)); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
-                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
+                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
                     title="Edit post"
                     aria-label="Edit post"
                   >
@@ -660,7 +660,7 @@ export default function CommunityPost() {
                 {canDeletePost && (
                   <button
                     onClick={() => setDeleteTarget({ type: 'post', id: post.id })}
-                    className="text-red-400 hover:text-red-600 p-1 transition-colors"
+                    className="text-red-400 hover:text-red-600 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
                     title="Delete post"
                     aria-label="Delete post"
                   >
@@ -713,7 +713,7 @@ export default function CommunityPost() {
                     Translated to {language.toUpperCase()}
                     <button
                       onClick={() => setTranslatedPost(null)}
-                      className="ml-2 text-[#1a472a]/70 hover:text-[#1a472a] underline"
+                      className="ml-2 text-[#1a472a]/75 hover:text-[#1a472a] underline"
                     >
                       Show original
                     </button>
@@ -747,7 +747,7 @@ export default function CommunityPost() {
               {isAuthenticated && (
                 <div className="flex items-center justify-end gap-4 mt-1 flex-wrap">
                   {inGovernance && perspectiveVoices > 0 && (
-                    <span className="text-[11px] text-[#4a7c59]/80">
+                    <span className="text-[11px] text-[#1a472a]/75">
                       {perspectiveVoices === 1 ? "1 person has" : `${perspectiveVoices} people have`} weighed in
                     </span>
                   )}
@@ -769,7 +769,7 @@ export default function CommunityPost() {
                         <button
                           type="button"
                           onClick={() => setConfirmingSensing(false)}
-                          className="text-[#4a7c59]/80 hover:text-[#4a7c59] transition-colors"
+                          className="text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
                         >
                           Not yet
                         </button>
@@ -847,7 +847,7 @@ export default function CommunityPost() {
                 <button
                   onClick={handleTranslatePost}
                   disabled={translatingPost}
-                  className="flex items-center gap-1.5 text-sm text-[#4a7c59]/60 hover:text-[#4a7c59] transition-colors ml-auto"
+                  className="flex items-center gap-1.5 text-sm text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors ml-auto"
                 >
                   {translatingPost ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -884,7 +884,7 @@ export default function CommunityPost() {
                 </span>
               ))}
             </div>
-            <p className="text-[#4a7c59]/60 text-[10px] mt-2">
+            <p className="text-[#1a472a]/75 text-[10px] mt-2">
               {entityOrgName} endorses these quests for their applicants and community members.
             </p>
           </div>
@@ -971,7 +971,7 @@ export default function CommunityPost() {
                           )}
                           <span className="text-[#1a472a]/75 text-[10px]">{timeAgo(reply.createdAt)}</span>
                         </div>
-                        <div className="text-[#1a472a]/70 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
+                        <div className="text-[#1a472a]/75 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
                           {translatedReplies[reply.id] ? (
                             <div>
                               <div className="mb-1 px-1.5 py-0.5 bg-[#f0f7f0] rounded text-[10px] text-[#4a7c59] inline-flex items-center gap-1">
@@ -1094,7 +1094,7 @@ export default function CommunityPost() {
                             <button
                               onClick={() => handleTranslateReply(reply.id, reply.content)}
                               disabled={translatingReplyId === reply.id}
-                              className="text-[#4a7c59]/40 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors ml-auto"
+                              className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors ml-auto"
                             >
                               {translatingReplyId === reply.id ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />

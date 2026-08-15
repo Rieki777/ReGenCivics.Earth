@@ -62,11 +62,11 @@ export function TierSuggestionScreen({ draft, setDraft, next, back }: ScreenProp
         <div className="text-white/75 text-sm mb-4">{suggestion.tierDef.description}</div>
         <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/10">
           <div>
-            <div className="text-white/50 text-[11px] uppercase tracking-wide">USD equivalent</div>
+            <div className="text-white/60 text-[11px] uppercase tracking-wide">USD equivalent</div>
             <div className="text-white text-lg font-semibold">${suggestion.usdValue.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-white/50 text-[11px] uppercase tracking-wide">$ReGen tokens</div>
+            <div className="text-white/60 text-[11px] uppercase tracking-wide">$ReGen tokens</div>
             <div className="text-white text-lg font-semibold">{suggestion.tokenAmount.toLocaleString()}</div>
           </div>
         </div>

@@ -1,0 +1,700 @@
+/**
+ * harvest router: The Harvest feed at /admin-create (Phase 2).
+ *
+ * Everything is ownerProcedure (Rye's private creation pipeline, never
+ * adminProcedure) and every query filters by owner_id from the session.
+ * Develop is the primary verb: it drafts immediately for the channels Rye
+ * picked. The generation worker handles hourly transitions; regenerate
+ * redrafts one item (and never counts as a voice edit); editItem preserves
+ * ai_body so Phase 3 can learn from the (ai_body, body) pair.
+ */
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { ownerProcedure, rateLimited, router } from "../_core/trpc";
+import { getDb } from "../db";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { creationItems, harvestIdeas, harvestRuns, sourceIndex } from "../../drizzle/schema";
+import { draftChannel, upsertDraft, runGeneration, HARVEST_CHANNELS, RIPENESS_THRESHOLD, type HarvestChannel } from "../lib/harvest";
+
+const channelEnum = z.enum(HARVEST_CHANNELS);
+
+function isMissingTableError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /ER_NO_SUCH_TABLE|doesn't exist|no such table/i.test(msg);
+}
+
+async function requireDb() {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  return db;
+}
+
+async function getOwnedIdea(ownerId: number, ideaId: number) {
+  const db = await requireDb();
+  const [idea] = await db
+    .select()
+    .from(harvestIdeas)
+    .where(and(eq(harvestIdeas.ownerId, ownerId), eq(harvestIdeas.id, ideaId)))
+    .limit(1);
+  if (!idea) throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });
+  return idea;
+}
+
+async function getOwnedItem(ownerId: number, itemId: number) {
+  const db = await requireDb();
+  const [item] = await db
+    .select()
+    .from(creationItems)
+    .where(and(eq(creationItems.ownerId, ownerId), eq(creationItems.id, itemId)))
+    .limit(1);
+  if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Item not found" });
+  return item;
+}
+
+export const harvestRouter = router({
+  /** The feed: ripe ideas (with why-now + score components) and drafts. */
+  listFeed: ownerProcedure
+    .input(z.object({ tier: z.enum(["ideas", "drafts", "all"]).default("all") }).optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const db = await requireDb();
+        const tier = input?.tier ?? "all";
+        const now = new Date();
+
+        const ideas = tier === "drafts" ? [] : (await db
+          .select()
+          .from(harvestIdeas)
+          .where(and(eq(harvestIdeas.ownerId, ctx.user.id), eq(harvestIdeas.status, "ripe")))
+          .orderBy(desc(harvestIdeas.ripeness))
+          .limit(60))
+          .filter((i) => !i.snoozedUntil || i.snoozedUntil < now);
+
+        // Ordered by creation, not last touch. Sorting by updatedAt meant a
+        // card jumped to the top the moment you saved an edit, which reads as
+        // the draft you were working on disappearing.
+        const drafts = tier === "ideas" ? [] : await db
+          .select()
+          .from(creationItems)
+          .where(eq(creationItems.ownerId, ctx.user.id))
+          .orderBy(desc(creationItems.createdAt))
+          .limit(120);
+
+        // MAX per kind rather than a window over the newest rows. Generation
+        // runs hourly, so a LIMIT 40 was pure generation and pushed bridge,
+        // seed, and digest out of view: the status line said "never" for jobs
+        // that had in fact run days earlier.
+        const runRows = await db
+          .select({ kind: harvestRuns.kind, last: sql<string | null>`MAX(${harvestRuns.ranAt})` })
+          .from(harvestRuns)
+          .groupBy(harvestRuns.kind);
+        const lastOf = (kind: string): Date | null => {
+          const hit = runRows.find((r) => r.kind === kind)?.last;
+          return hit ? new Date(hit) : null;
+        };
+        const lastGeneration = lastOf("generation");
+        const bridgeRun = lastOf("bridge");
+        const seedRun = lastOf("seed");
+        const lastBridge = bridgeRun && seedRun
+          ? (bridgeRun > seedRun ? bridgeRun : seedRun)
+          : (bridgeRun ?? seedRun);
+        const lastDigest = lastOf("digest");
+        const [latestRun] = await db
+          .select({ stats: harvestRuns.stats })
+          .from(harvestRuns)
+          .orderBy(desc(harvestRuns.ranAt))
+          .limit(1);
+
+        let lastSend: Date | null = null;
+        try {
+          const { harvestEmailSends } = await import("../../drizzle/schema");
+          const [send] = await db.select({ createdAt: harvestEmailSends.createdAt })
+            .from(harvestEmailSends)
+            .where(and(eq(harvestEmailSends.ownerId, ctx.user.id), eq(harvestEmailSends.status, "sent")))
+            .orderBy(desc(harvestEmailSends.createdAt))
+            .limit(1);
+          lastSend = send?.createdAt ?? null;
+        } catch {
+          // Send table not migrated yet; the status line just omits it.
+        }
+
+        return {
+          ready: true,
+          threshold: RIPENESS_THRESHOLD,
+          ideas,
+          drafts,
+          status: {
+            lastGeneration,
+            lastBridge,
+            lastDigest,
+            lastSend,
+            generationStale: lastGeneration ? Date.now() - lastGeneration.getTime() > 2 * 60 * 60 * 1000 : true,
+            lastStats: latestRun?.stats ?? null,
+          },
+        };
+      } catch (err) {
+        if (isMissingTableError(err)) {
+          return { ready: false, threshold: RIPENESS_THRESHOLD, ideas: [], drafts: [], status: { lastGeneration: null, lastBridge: null, lastDigest: null, lastSend: null, generationStale: true, lastStats: null } };
+        }
+        throw err;
+      }
+    }),
+
+  /** Develop: immediate generation for one idea across chosen channels. */
+  develop: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({
+      ideaId: z.number().int().positive(),
+      channels: z.array(channelEnum).min(1).max(6),
+      angle: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const idea = await getOwnedIdea(ctx.user.id, input.ideaId);
+      const db = await requireDb();
+      const created: number[] = [];
+      for (const channel of input.channels) {
+        const { body } = await draftChannel(idea, channel as HarvestChannel, { angle: input.angle });
+        const itemId = await upsertDraft(idea, channel as HarvestChannel, body, input.angle);
+        if (itemId) created.push(itemId);
+      }
+      await db.update(harvestIdeas)
+        .set({ status: "developed", draftedAt: new Date() })
+        .where(eq(harvestIdeas.id, idea.id));
+      const rows = created.length > 0
+        ? await db.select().from(creationItems).where(inArray(creationItems.id, created))
+        : [];
+      return { items: rows };
+    }),
+
+  /** Redraft one item with an optional nudge. Never counts as a voice edit. */
+  regenerate: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({ itemId: z.number().int().positive(), nudge: z.string().max(300).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      if (item.status === "shipped") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This item already shipped; regenerating it would rewrite history." });
+      }
+      const db = await requireDb();
+      const [idea] = item.ideaId
+        ? await db.select().from(harvestIdeas).where(and(eq(harvestIdeas.ownerId, ctx.user.id), eq(harvestIdeas.id, item.ideaId))).limit(1)
+        : [];
+      if (!idea) throw new TRPCError({ code: "NOT_FOUND", message: "The idea behind this item is gone" });
+      const { body } = await draftChannel(idea, item.channel as HarvestChannel, { angle: item.angle ?? undefined, nudge: input.nudge });
+      // A regeneration resets the pair: ai_body and body move together and
+      // status returns to ready (it was never an edit).
+      await db.update(creationItems)
+        .set({ aiBody: body, body, status: "ready" })
+        .where(eq(creationItems.id, item.id));
+      return { ...item, aiBody: body, body, status: "ready" as const };
+    }),
+
+  /**
+   * Save an in-place edit. ai_body stays untouched, and the (ai_body, body)
+   * pair feeds the learning loop with Rye's one-tap style/content call
+   * (default content, the safer choice). Learning runs fire-and-forget; a
+   * save never waits on a model.
+   */
+  editItem: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 60 }))
+    .input(z.object({
+      itemId: z.number().int().positive(),
+      body: z.string().min(1).max(60000),
+      editKind: z.enum(["style", "content"]).default("content"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const db = await requireDb();
+      await db.update(creationItems)
+        .set({ body: input.body, status: item.status === "shipped" ? "shipped" : "edited" })
+        .where(eq(creationItems.id, item.id));
+
+      // Edited text is unchecked text. Any surface carrying this draft loses
+      // its fact-check verdict until it is verified again, so an edit can
+      // never inherit an earlier pass.
+      const { publicationTargets } = await import("../../drizzle/schema");
+      await db.update(publicationTargets)
+        .set({ verificationStatus: "unverified", verificationFlags: null, verifiedAt: null })
+        .where(eq(publicationTargets.itemId, item.id));
+
+      if (item.aiBody && item.aiBody !== input.body) {
+        const { processEdit } = await import("../lib/voice-learning");
+        void processEdit({
+          ownerId: ctx.user.id,
+          itemId: item.id,
+          channel: item.channel,
+          aiVersion: item.aiBody,
+          editedVersion: input.body,
+          editKind: input.editKind,
+        }).catch(() => undefined);
+      }
+      return { ok: true };
+    }),
+
+  /** The learned rules, weightiest first (the Voice rules screen's read). */
+  listRules: ownerProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    const { voiceRules } = await import("../../drizzle/schema");
+    try {
+      const rows = await db.select().from(voiceRules)
+        .where(eq(voiceRules.ownerId, ctx.user.id))
+        .orderBy(desc(voiceRules.weight))
+        .limit(200);
+      return { rules: rows };
+    } catch (err) {
+      if (isMissingTableError(err)) return { rules: [] };
+      throw err;
+    }
+  }),
+
+  /** Edit or demote one learned rule. Hard rules are not rows; they cannot be touched here. */
+  updateRule: ownerProcedure
+    .input(z.object({
+      ruleId: z.number().int().positive(),
+      rule: z.string().min(8).max(400).optional(),
+      weight: z.number().min(0.1).max(100).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { voiceRules } = await import("../../drizzle/schema");
+      const set: Record<string, unknown> = {};
+      if (input.rule !== undefined) {
+        const { validateCandidateRule } = await import("../lib/voice-learning");
+        // Category unchanged; validate the new text against the same screens.
+        const [row] = await db.select().from(voiceRules)
+          .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Rule not found" });
+        const problem = validateCandidateRule(row.category, input.rule);
+        if (problem) throw new TRPCError({ code: "BAD_REQUEST", message: `That edit would break the guardrails: ${problem}` });
+        set.rule = input.rule;
+      }
+      if (input.weight !== undefined) set.weight = input.weight;
+      if (Object.keys(set).length === 0) return { ok: true };
+      await db.update(voiceRules)
+        .set(set)
+        .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId)));
+      return { ok: true };
+    }),
+
+  deleteRule: ownerProcedure
+    .input(z.object({ ruleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { voiceRules } = await import("../../drizzle/schema");
+      await db.delete(voiceRules)
+        .where(and(eq(voiceRules.ownerId, ctx.user.id), eq(voiceRules.id, input.ruleId)));
+      return { ok: true };
+    }),
+
+  /** Mark shipped; optionally capture the final posted text (cleanest voice signal). */
+  markPosted: ownerProcedure
+    .input(z.object({
+      itemId: z.number().int().positive(),
+      postedText: z.string().max(60000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const db = await requireDb();
+      await db.update(creationItems)
+        .set({ status: "shipped", postedAt: new Date(), postedText: input.postedText ?? null })
+        .where(eq(creationItems.id, item.id));
+      return { ok: true };
+    }),
+
+  /** Hide an idea for N days. */
+  snooze: ownerProcedure
+    .input(z.object({ ideaId: z.number().int().positive(), days: z.number().int().min(1).max(90).default(7) }))
+    .mutation(async ({ ctx, input }) => {
+      const idea = await getOwnedIdea(ctx.user.id, input.ideaId);
+      const db = await requireDb();
+      const until = new Date(Date.now() + input.days * 24 * 60 * 60 * 1000);
+      await db.update(harvestIdeas)
+        .set({ status: "snoozed", snoozedUntil: until })
+        .where(eq(harvestIdeas.id, idea.id));
+      return { ok: true, until };
+    }),
+
+  /** Suppress an idea permanently (a negative signal into ripeness). */
+  notThis: ownerProcedure
+    .input(z.object({ ideaId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const idea = await getOwnedIdea(ctx.user.id, input.ideaId);
+      const db = await requireDb();
+      await db.update(harvestIdeas)
+        .set({ status: "suppressed" })
+        .where(eq(harvestIdeas.id, idea.id));
+      return { ok: true };
+    }),
+
+  /** A standing steer note that future drafting for this idea always sees. */
+  steer: ownerProcedure
+    .input(z.object({ ideaId: z.number().int().positive(), text: z.string().min(1).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const idea = await getOwnedIdea(ctx.user.id, input.ideaId);
+      const db = await requireDb();
+      await db.update(harvestIdeas)
+        .set({ steer: input.text })
+        .where(eq(harvestIdeas.id, idea.id));
+      return { ok: true };
+    }),
+
+  /** Provenance: the raw source rows, merged link tree, and related refs. */
+  getSource: ownerProcedure
+    .input(z.object({ itemId: z.number().int().positive().optional(), ideaId: z.number().int().positive().optional() }))
+    .query(async ({ ctx, input }) => {
+      const db = await requireDb();
+      let refs: string[] = [];
+      let ideaTitle = "";
+      if (input.itemId) {
+        const item = await getOwnedItem(ctx.user.id, input.itemId);
+        refs = Array.isArray(item.sourceRefs) ? (item.sourceRefs as unknown[]).filter((r): r is string => typeof r === "string") : [];
+        if (item.ideaId) {
+          const [idea] = await db.select({ title: harvestIdeas.title }).from(harvestIdeas)
+            .where(and(eq(harvestIdeas.ownerId, ctx.user.id), eq(harvestIdeas.id, item.ideaId))).limit(1);
+          ideaTitle = idea?.title ?? "";
+        }
+      } else if (input.ideaId) {
+        const idea = await getOwnedIdea(ctx.user.id, input.ideaId);
+        refs = Array.isArray(idea.sourceRefs) ? (idea.sourceRefs as unknown[]).filter((r): r is string => typeof r === "string") : [];
+        ideaTitle = idea.title;
+      } else {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "itemId or ideaId required" });
+      }
+
+      // Split refs: sm-*/uuid rows live in source_index; note refs (path-like)
+      // are vault-local and render as jump links only.
+      const rowRefs = refs.filter((r) => !r.includes("/"));
+      const noteRefs = refs.filter((r) => r.includes("/"));
+      const rows = rowRefs.length > 0
+        ? await db.select().from(sourceIndex)
+            .where(and(eq(sourceIndex.ownerId, ctx.user.id), inArray(sourceIndex.refId, rowRefs.slice(0, 50))))
+        : [];
+
+      const linkTree = Array.from(new Set(rows.flatMap((r) => (Array.isArray(r.links) ? (r.links as unknown[]).filter((l): l is string => typeof l === "string") : []))));
+      return { ideaTitle, sources: rows, linkTree, noteRefs };
+    }),
+
+  /** Manual Refresh: run one generation pass now. */
+  refresh: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 3 }))
+    .mutation(async () => {
+      const stats = await runGeneration();
+      return { ok: true, stats };
+    }),
+
+  /**
+   * Compose to Publish (Phase 5): one idea in, a Publication out. Drafts
+   * every surface grounded in retrieved sources; nothing publishes here.
+   */
+  compose: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 3 }))
+    .input(z.object({
+      text: z.string().min(10).max(20000),
+      extraSourceRefs: z.array(z.string().max(191)).max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { composePublication } = await import("../lib/publications");
+      return composePublication(ctx.user.id, input);
+    }),
+
+  /** Preview what a compose would draw from, before committing to the drafts. */
+  composePreview: ownerProcedure
+    .input(z.object({ text: z.string().min(10).max(20000) }))
+    .mutation(async ({ ctx, input }) => {
+      const { findRelatedMaterial } = await import("../lib/publications");
+      return findRelatedMaterial(ctx.user.id, input.text);
+    }),
+
+  listPublications: ownerProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    const { publications } = await import("../../drizzle/schema");
+    try {
+      return await db.select().from(publications)
+        .where(eq(publications.ownerId, ctx.user.id))
+        .orderBy(desc(publications.createdAt))
+        .limit(20);
+    } catch (err) {
+      if (isMissingTableError(err)) return [];
+      throw err;
+    }
+  }),
+
+  /**
+   * Published surfaces still waiting on their weekly note. The whole analytics
+   * surface: what went out, and where an honest sentence is still missing.
+   */
+  notesDue: ownerProcedure.query(async ({ ctx }) => {
+    const { listTargetsAwaitingNote } = await import("../lib/publications");
+    try {
+      return await listTargetsAwaitingNote(ctx.user.id);
+    } catch (err) {
+      if (isMissingTableError(err)) return [];
+      throw err;
+    }
+  }),
+
+  publicationReview: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const { getPublicationReview } = await import("../lib/publications");
+      const review = await getPublicationReview(ctx.user.id, input.publicationId);
+      if (!review) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      return review;
+    }),
+
+  /**
+   * Fact-check one drafted surface against the material it was composed from
+   * plus the canon facts. The voice grader covers how a draft reads; this
+   * covers whether it is true. Fails closed: a checker error leaves the row
+   * 'unverified' rather than letting it through.
+   */
+  verifyTarget: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 20 }))
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select().from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const [target] = await db.select().from(publicationTargets)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        )).limit(1);
+      if (!target?.itemId) throw new TRPCError({ code: "NOT_FOUND", message: "No draft on this surface to verify" });
+
+      const [item] = await db.select({ body: creationItems.body }).from(creationItems)
+        .where(and(eq(creationItems.ownerId, ctx.user.id), eq(creationItems.id, target.itemId))).limit(1);
+      if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+
+      // The source material is what Rye composed from, snapshotted on the idea.
+      const [idea] = pub.ideaId
+        ? await db.select({ summary: harvestIdeas.summary }).from(harvestIdeas)
+            .where(eq(harvestIdeas.id, pub.ideaId)).limit(1)
+        : [];
+
+      const { verifyDraft } = await import("../lib/content-verify");
+      const result = await verifyDraft({
+        body: item.body ?? "",
+        firstComment: target.firstComment,
+        sourceText: idea?.summary ?? "",
+      });
+
+      await db.update(publicationTargets)
+        .set({ verificationStatus: result.status, verificationFlags: result.flags, verifiedAt: new Date() })
+        .where(eq(publicationTargets.id, target.id));
+      return result;
+    }),
+
+  /**
+   * The first comment (where the link lives) and the weekly note (whether it
+   * landed). Editing the first comment resets verification, because it is
+   * published text; the weekly note is written after the fact and never is.
+   */
+  updateTargetFields: ownerProcedure
+    .input(z.object({
+      publicationId: z.number().int().positive(),
+      surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]),
+      firstComment: z.string().max(3000).optional(),
+      weeklyNote: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const patch: Record<string, unknown> = {};
+      if (input.firstComment !== undefined) {
+        patch.firstComment = input.firstComment;
+        patch.verificationStatus = "unverified";
+        patch.verificationFlags = null;
+        patch.verifiedAt = null;
+      }
+      if (input.weeklyNote !== undefined) patch.weeklyNote = input.weeklyNote;
+      if (Object.keys(patch).length === 0) return { ok: true };
+
+      await db.update(publicationTargets).set(patch)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        ));
+      return { ok: true };
+    }),
+
+  /**
+   * Approve one surface. Publishing still needs the explicit publish call.
+   * Refuses while a block-level fact flag is unresolved: a draft that
+   * contradicts its sources or the canon never reaches 'approved', however
+   * well it reads.
+   */
+  approveTarget: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+
+      const [target] = await db.select({ flags: publicationTargets.verificationFlags })
+        .from(publicationTargets)
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+        )).limit(1);
+      const { hasBlockingFlags } = await import("../lib/content-verify");
+      if (target && hasBlockingFlags(target.flags)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "This draft has unresolved block-level fact flags. Fix the copy, then re-verify.",
+        });
+      }
+
+      await db.update(publicationTargets)
+        .set({ status: "approved" })
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+          inArray(publicationTargets.status, ["draft", "failed", "approved"]),
+        ));
+      return { ok: true };
+    }),
+
+  /**
+   * Undo an approval that was a mistake. Only ever moves 'approved' back to
+   * 'draft': something already published stays published, because unpublishing
+   * is a different and louder action.
+   *
+   * The verification verdict is left alone on purpose. Un-approving does not
+   * change a word of the copy, so re-running the fact-checker would just burn
+   * a call to reach the same answer.
+   */
+  unapproveTarget: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive(), surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications, publicationTargets } = await import("../../drizzle/schema");
+      const [pub] = await db.select({ id: publications.id }).from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      await db.update(publicationTargets)
+        .set({ status: "draft" })
+        .where(and(
+          eq(publicationTargets.publicationId, input.publicationId),
+          eq(publicationTargets.surface, input.surface),
+          eq(publicationTargets.status, "approved"),
+        ));
+      return { ok: true };
+    }),
+
+  /** Publish one approved surface (idempotent; each surface gates itself). */
+  publishTarget: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({
+      publicationId: z.number().int().positive(),
+      surface: z.enum(["site", "linkedin", "facebook", "instagram", "threads_x", "email"]),
+      makePublic: z.boolean().optional(),
+      profileId: z.string().max(64).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { publishTarget } = await import("../lib/publications");
+      try {
+        return await publishTarget(ctx.user.id, input.publicationId, input.surface, { makePublic: input.makePublic, profileId: input.profileId });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Publish refused" });
+      }
+    }),
+
+  /** Generate 2 image options for a slot, each with alt text. */
+  generateImages: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 4 }))
+    .input(z.object({ publicationId: z.number().int().positive(), slot: z.enum(["hero", "inline"]), angleHint: z.string().max(200).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publications } = await import("../../drizzle/schema");
+      const [pub] = await db.select().from(publications)
+        .where(and(eq(publications.ownerId, ctx.user.id), eq(publications.id, input.publicationId))).limit(1);
+      if (!pub) throw new TRPCError({ code: "NOT_FOUND", message: "Publication not found" });
+      const { generateImageOptions } = await import("../lib/publications");
+      const created = await generateImageOptions(ctx.user.id, input.publicationId, input.slot, pub.title, input.angleHint);
+      return { created };
+    }),
+
+  /** Pick one image per slot; the choice trains the visual profile later. */
+  chooseImage: ownerProcedure
+    .input(z.object({ imageId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publicationImages } = await import("../../drizzle/schema");
+      const [image] = await db.select().from(publicationImages)
+        .where(and(eq(publicationImages.ownerId, ctx.user.id), eq(publicationImages.id, input.imageId))).limit(1);
+      if (!image) throw new TRPCError({ code: "NOT_FOUND", message: "Image not found" });
+      await db.update(publicationImages).set({ chosen: 0 })
+        .where(and(eq(publicationImages.publicationId, image.publicationId), eq(publicationImages.slot, image.slot)));
+      await db.update(publicationImages).set({ chosen: 1 }).where(eq(publicationImages.id, image.id));
+      return { ok: true };
+    }),
+
+  /** The unpublish window: pull a published article back to preview. */
+  unpublishArticle: ownerProcedure
+    .input(z.object({ publicationId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const { publishedArticles, publicationTargets } = await import("../../drizzle/schema");
+      const [article] = await db.select().from(publishedArticles)
+        .where(and(eq(publishedArticles.ownerId, ctx.user.id), eq(publishedArticles.publicationId, input.publicationId))).limit(1);
+      if (!article) throw new TRPCError({ code: "NOT_FOUND", message: "No article for this publication" });
+      await db.update(publishedArticles).set({ status: "unpublished" }).where(eq(publishedArticles.id, article.id));
+      await db.update(publicationTargets).set({ status: "approved" })
+        .where(and(eq(publicationTargets.publicationId, input.publicationId), eq(publicationTargets.surface, "site")));
+      return { ok: true };
+    }),
+
+  /**
+   * Email send, step 1 of 2: the preview. Returns the rendered email, the
+   * live recipient count, and a signed confirm token bound to the exact body
+   * hash. Refuses raw drafts (only status 'edited' qualifies).
+   */
+  sendPreview: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({ itemId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const { buildSendPreview } = await import("../lib/harvest-email");
+      try {
+        return await buildSendPreview({ id: item.id, channel: item.channel, status: item.status, body: item.body });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Preview failed" });
+      }
+    }),
+
+  /**
+   * Email send, step 2 of 2: the confirmed send. Requires the preview's
+   * token back; hash mismatch, caps, and idempotency are enforced in
+   * server/lib/harvest-email.ts against the durable audit table.
+   */
+  confirmSend: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
+    .input(z.object({
+      itemId: z.number().int().positive(),
+      confirmToken: z.string().min(20).max(2000),
+      idempotencyKey: z.string().min(8).max(64),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await getOwnedItem(ctx.user.id, input.itemId);
+      const { confirmAndSend } = await import("../lib/harvest-email");
+      try {
+        return await confirmAndSend({
+          ownerId: ctx.user.id,
+          item: { id: item.id, channel: item.channel, status: item.status, body: item.body, aiBody: item.aiBody },
+          confirmToken: input.confirmToken,
+          idempotencyKey: input.idempotencyKey,
+        });
+      } catch (err) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: err instanceof Error ? err.message : "Send refused" });
+      }
+    }),
+});

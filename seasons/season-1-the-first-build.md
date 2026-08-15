@@ -630,6 +630,7 @@
 - Help first-time raisers write a clear aim line and pick the right lane
 - Close Record loops: confirm outcomes, chase impact updates, keep the provenance trail whole
 - Watch the last-call strip and make sure objections get a fair hearing
+- After a proposer launches their vote on Hypha, check that they pasted the Hypha proposal link back into the Assembly. That link is how the outcome applies itself when the vote closes. If it is missing, ask for it, or an admin has to relay the result by hand.
 
 **Seed:** Proposals shepherded through the pipeline (target: every forming proposal has a synthesis and a signal count above the readiness floor).
 **Harvest:** Ratified decisions with complete Record trails and impact updates.

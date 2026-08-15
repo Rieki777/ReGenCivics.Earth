@@ -115,7 +115,7 @@ export default function VouchSection({ playerId, isOwnProfile }: VouchSectionPro
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white p-1"
+                className="text-white/70 hover:text-white p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -131,7 +131,7 @@ export default function VouchSection({ playerId, isOwnProfile }: VouchSectionPro
               maxLength={200}
               rows={4}
               placeholder="We worked together on the Cascadia Commons harvest, and they followed through on everything they said they would."
-              className="w-full bg-white/5 border border-white/15 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 resize-y"
+              className="w-full bg-white/5 border border-white/15 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/60 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 resize-y"
             />
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-white/70">{note.length} / 200</span>

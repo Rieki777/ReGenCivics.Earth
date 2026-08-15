@@ -40,8 +40,11 @@ const DEFAULT_EXPIRE_DAYS = 14;
 const NUDGE_MARKER = "[flywheel-nudge]";
 // How fast a claim must land to read as a fast-claim signal, and how many
 // bounties a (circle, scopeTier) needs before the factor is allowed to move.
-const FAST_CLAIM_DAYS = 2;
-const MIN_SAMPLE = 3;
+// Registry-tunable (bounty.learning.fast_claim_days / .min_sample, seeded
+// 0221) — these two were the only learning dials that skipped the variable
+// treatment their siblings got.
+export const DEFAULT_FAST_CLAIM_DAYS = 2;
+export const DEFAULT_MIN_SAMPLE = 3;
 
 export interface StaleClaimsReport {
   nudged: number;
@@ -108,7 +111,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
         type: "mention",
         title: `Released: ${title.slice(0, 180)}`,
         body: `${NUDGE_MARKER} Your claim sat for over ${expireDays} days, so the role is back in the open pool for someone else. You can still re-claim it any time.`,
-        link: `/bounties#bounty-${r.bountyId}`,
+        link: `/bounties/${r.bountyId}`,
       });
       await db
         .update(bountyRoles)
@@ -118,7 +121,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
       continue;
     }
 
-    const linkPath = `/bounties#bounty-${r.bountyId}`;
+    const linkPath = `/bounties/${r.bountyId}`;
     const existing = await db
       .select({ id: notifications.id })
       .from(notifications)
@@ -387,12 +390,13 @@ export async function runDemandPrecedentAgent(): Promise<DemandPrecedentReport> 
 
   const windowDays = await getDays("bounty.learning.window_days", DEFAULT_LEARNING.windowDays);
   const unclaimedDays = await getDays("bounty.learning.unclaimed_days", DEFAULT_LEARNING.unclaimedDays);
+  const fastClaimDays = await getDays("bounty.learning.fast_claim_days", DEFAULT_FAST_CLAIM_DAYS);
   const learning = {
     raiseSensitivity: await getNum("bounty.learning.raise_sensitivity", DEFAULT_LEARNING.raiseSensitivity),
     lowerSensitivity: await getNum("bounty.learning.lower_sensitivity", DEFAULT_LEARNING.lowerSensitivity),
     factorMin: await getNum("bounty.learning.factor_min", DEFAULT_LEARNING.factorMin),
     factorMax: await getNum("bounty.learning.factor_max", DEFAULT_LEARNING.factorMax),
-    minSample: MIN_SAMPLE,
+    minSample: await getNum("bounty.learning.min_sample", DEFAULT_MIN_SAMPLE),
   };
 
   // Auto-flag hard-to-fill bounties: still-unfilled doer role, open past the
@@ -462,7 +466,7 @@ export async function runDemandPrecedentAgent(): Promise<DemandPrecedentReport> 
 
     // Fast-claim signal: of the ones that got claimed, how many landed quickly.
     const claimed = g.filter((r) => r.claimLagDays != null);
-    const fastClaims = claimed.filter((r) => (r.claimLagDays as number) <= FAST_CLAIM_DAYS).length;
+    const fastClaims = claimed.filter((r) => (r.claimLagDays as number) <= fastClaimDays).length;
     const fastClaimSignal = claimed.length ? fastClaims / claimed.length : 0;
 
     const signals: DemandSignals = { sampleSize: g.length, unclaimedRate, fastClaimSignal };

@@ -255,7 +255,7 @@ export function QuestBadges() {
                   <button
                     onClick={loadBadges}
                     disabled={isLoading}
-                    className="p-1 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
+                    className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
                     title="Refresh badges"
                     aria-label="Refresh badges"
                   >
@@ -263,7 +263,7 @@ export function QuestBadges() {
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                    className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-white/20 rounded-full transition-colors"
                     aria-label="Close badges"
                   >
                     <X className="w-6 h-6" />

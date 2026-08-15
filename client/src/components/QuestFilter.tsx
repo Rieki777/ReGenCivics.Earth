@@ -81,7 +81,7 @@ export function QuestFilter({ onFilterChange, activeFilters }: QuestFilterProps)
         className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${
           hasActiveFilters
             ? "bg-[#7dd87d]/20 border-[#7dd87d] text-[#1a472a]"
-            : "bg-white border-[#1a472a]/20 text-[#1a472a]/70 hover:border-[#1a472a]/40"
+            : "bg-white border-[#1a472a]/20 text-[#1a472a]/75 hover:border-[#1a472a]/40"
         }`}
       >
         <Filter className="w-4 h-4" />

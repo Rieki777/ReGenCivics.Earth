@@ -525,7 +525,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
       {/* Link URL panel */}
       {linkPanelOpen && (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-white/5">
-          <Link2 className="w-4 h-4 text-white/50 flex-shrink-0" />
+          <Link2 className="w-4 h-4 text-white/60 flex-shrink-0" />
           <input
             type="url"
             value={linkUrl}
@@ -536,7 +536,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
             }}
             placeholder="https://..."
             autoFocus
-            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/40 focus:outline-none"
+            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/60 focus:outline-none"
           />
           <button
             type="button"
@@ -557,7 +557,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
           <button
             type="button"
             onClick={() => setLinkPanelOpen(false)}
-            className="text-white/40 hover:text-white/60 transition-colors"
+            className="text-white/60 hover:text-white/60 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -593,7 +593,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
           style={{ top: mentionPos.top, left: mentionPos.left }}
         >
           <div className="px-3 py-1.5 border-b border-white/10">
-            <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wider">Mention someone</p>
+            <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider">Mention someone</p>
           </div>
           {mentionResults.map((u, i) => (
             <button
@@ -613,7 +613,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
               )}
               <span className="min-w-0">
                 <span className="text-sm font-medium block truncate">{u.name}</span>
-                <span className="text-[11px] text-white/40 block leading-none">@{u.handle}</span>
+                <span className="text-[11px] text-white/60 block leading-none">@{u.handle}</span>
               </span>
             </button>
           ))}
@@ -627,7 +627,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
           style={{ top: slashPos.top, left: slashPos.left }}
         >
           <div className="px-3 py-1.5 border-b border-white/10">
-            <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wider">Insert block</p>
+            <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider">Insert block</p>
           </div>
           {slashFiltered.map((cmd, i) => (
             <button
@@ -645,7 +645,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
               <span className="flex-shrink-0 text-white/60">{cmd.icon}</span>
               <span>
                 <span className="text-sm font-medium">{cmd.label}</span>
-                <span className="text-[11px] text-white/40 block leading-none mt-0.5">{cmd.description}</span>
+                <span className="text-[11px] text-white/60 block leading-none mt-0.5">{cmd.description}</span>
               </span>
             </button>
           ))}

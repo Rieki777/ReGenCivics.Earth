@@ -15,14 +15,14 @@ export function RecentFavoritesTab() {
           <Star className="w-3 h-3" /> Favorites
         </h3>
         {favorites.length === 0 ? (
-          <p className="text-[11px] text-white/50 pl-4">No favorites yet. Star a recent page below.</p>
+          <p className="text-[11px] text-white/60 pl-4">No favorites yet. Star a recent page below.</p>
         ) : (
           <ul className="space-y-0.5">
             {favorites.map(fav => (
               <li key={fav.path} className="flex items-center gap-1.5">
                 <button
                   onClick={() => toggle(fav.path, fav.title)}
-                  className="text-yellow-400 hover:text-yellow-300 p-1 flex-shrink-0"
+                  className="text-yellow-400 hover:text-yellow-300 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center flex-shrink-0"
                   aria-label={`Remove ${fav.title} from favorites`}
                 >
                   <Star className="w-3 h-3 fill-current" />
@@ -45,14 +45,14 @@ export function RecentFavoritesTab() {
           <Clock className="w-3 h-3" /> Recent
         </h3>
         {recentPages.length === 0 ? (
-          <p className="text-[11px] text-white/50 pl-4">No recent pages yet.</p>
+          <p className="text-[11px] text-white/60 pl-4">No recent pages yet.</p>
         ) : (
           <ul className="space-y-0.5">
             {recentPages.map(page => (
               <li key={page.path} className="flex items-center gap-1.5">
                 <button
                   onClick={() => toggle(page.path, page.title)}
-                  className={`p-1 flex-shrink-0 transition-colors ${
+                  className={`p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center flex-shrink-0 transition-colors ${
                     isFavorite(page.path)
                       ? 'text-yellow-400 hover:text-yellow-300'
                       : 'text-white/20 hover:text-yellow-400'

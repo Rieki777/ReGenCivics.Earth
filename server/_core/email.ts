@@ -6,6 +6,7 @@
 
 import { Resend } from 'resend';
 import { logger } from './logger';
+import { signTrackedUrl } from '../emailTracking';
 
 const log = logger('email');
 
@@ -185,11 +186,15 @@ function addTrackingPixel(html: string, emailLogId?: number): string {
 function wrapLinksWithTracking(html: string, emailLogId?: number): string {
   if (!emailLogId) return html;
   
-  // Replace href links with tracked versions (except mailto and tel links)
+  // Replace href links with tracked versions (except mailto and tel links).
+  // Each link is HMAC-signed so the click endpoint can verify the destination
+  // was stamped by us (open-redirect guard, see server/emailTracking.ts).
   return html.replace(
     /href="(https?:\/\/[^"]+)"/g,
     (match, url) => {
-      const trackedUrl = `${BASE_URL}/api/track/click/${emailLogId}?url=${encodeURIComponent(url)}`;
+      const sig = signTrackedUrl(emailLogId, url);
+      const sigParam = sig ? `&sig=${sig}` : "";
+      const trackedUrl = `${BASE_URL}/api/track/click/${emailLogId}?url=${encodeURIComponent(url)}${sigParam}`;
       return `href="${trackedUrl}"`;
     }
   );

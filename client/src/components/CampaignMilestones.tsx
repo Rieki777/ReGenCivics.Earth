@@ -234,7 +234,7 @@ export function CampaignMilestones({ campaign, contributions, currency }: Campai
                   {milestone.label}
                 </p>
                 {milestone.subtext && (
-                  <p className={`text-xs mt-0.5 ${milestone.past ? "text-[#1a472a]/80" : "text-[#1a472a]/35"}`}>
+                  <p className={`text-xs mt-0.5 ${milestone.past ? "text-[#1a472a]/80" : "text-[#1a472a]/75"}`}>
                     {milestone.subtext}
                   </p>
                 )}

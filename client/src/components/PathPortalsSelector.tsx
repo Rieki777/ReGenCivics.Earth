@@ -117,6 +117,7 @@ function Portal({ portal, declared, active, shimmerDelay, shimmered, onClick }: 
           ? `${portal.label} path${active ? " (currently filtered)" : ""}`
           : `Add ${portal.label} path`
       }
+      // tap-audit-ok: the button itself shimmer-fades in; early taps hit the button
       className={
         `group relative flex flex-col items-center justify-center ` +
         `aspect-square rounded-2xl p-4 ` +
@@ -152,7 +153,7 @@ function Portal({ portal, declared, active, shimmerDelay, shimmered, onClick }: 
         {portal.label}
       </div>
       {!declared && (
-        <div className="text-[10px] text-white/50 mt-0.5">tap to add</div>
+        <div className="text-[10px] text-white/60 mt-0.5">tap to add</div>
       )}
     </button>
   );

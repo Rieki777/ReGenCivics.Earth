@@ -35,6 +35,28 @@ export default function Home() {
         </div>
       </section>
 
+      <section style={{ paddingTop: 52, paddingBottom: 52 }}>
+        <div className="wrap">
+          <details className="disclosure">
+            <summary>Why a church?</summary>
+            <div className="disclosure-body">
+              <p>
+                A church, in its oldest meaning, is not a building. It is a gathered community of people
+                aligned in a shared spiritual purpose. That is what we are: people who believe the Earth
+                is alive, that we are one with her, and that healing her is healing ourselves.
+              </p>
+              <p>
+                Our church is anti-dogmatic and poly-religious. We ask no one to adopt a single worldview
+                or to leave the traditions they already hold. We gather around a shared mission, not a
+                shared doctrine, because, like every living system, we believe a community's resilience
+                grows from its diversity.
+              </p>
+              <Link href="/faith" className="btn btn-ghost" style={{ marginTop: 8 }}>See what we believe</Link>
+            </div>
+          </details>
+        </div>
+      </section>
+
       <section className="band-soft">
         <div className="wrap center">
           <p className="verse">
@@ -89,12 +111,6 @@ export default function Home() {
 
       <section className="band-parch">
         <div className="wrap">
-          <CoreImage
-            id="home-temple-grove"
-            className="section-media"
-            sizes="(max-width: 860px) 100vw, 1080px"
-            fallback={null}
-          />
           <p className="eyebrow center">What we hold</p>
           <h2 className="center">Three principles of life</h2>
           <div className="stack reveal" style={{ marginTop: 34, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
@@ -120,6 +136,13 @@ export default function Home() {
               </div>
             </div>
           </div>
+          <CoreImage
+            id="home-temple-grove"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            style={{ marginTop: 34 }}
+          />
           <div className="center" style={{ marginTop: 30 }}>
             <Link href="/faith" className="btn btn-ghost">Read our full faith</Link>
           </div>
@@ -135,7 +158,7 @@ export default function Home() {
             className="section-media"
             sizes="(max-width: 860px) 100vw, 1080px"
             fallback={null}
-            imgStyle={{ marginTop: 28 }}
+            style={{ marginTop: 28 }}
           />
           <div className="grid grid-3 reveal" style={{ marginTop: 34 }}>
             <div className="card"><span className="icon" aria-hidden="true">🌿</span><h3>Online gatherings</h3><p>We meet regularly to pray, sing, learn, and tend the community across the distance between us.</p></div>

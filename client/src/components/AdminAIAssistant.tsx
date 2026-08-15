@@ -11,14 +11,16 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bot, X, Send, Sparkles, Loader2,
-  Navigation, Mail, Search, User, Minimize2, Maximize2
+  Navigation, Mail, Search, User, Minimize2, Maximize2, StickyNote
 } from "lucide-react";
+import { HarvestNoteComposer } from "./HarvestNoteComposer";
 
 export interface AdminAIContext {
   activeTab?: string;
@@ -93,6 +95,29 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const chatMutation = trpc.adminAI.chat.useMutation();
   const executeMutation = trpc.adminActions.execute.useMutation();
   const undoMutation = trpc.adminActions.undo.useMutation();
+
+  // Harvest capture (Phase 1). Capture now lives as a dedicated "Add note" item
+  // in the mobile radial menu (WizardRadialMenu → HarvestCaptureModal), because
+  // no FAB gesture survived iOS Safari — double-tap zoomed, long-press selected
+  // text. The FAB is back to a plain single tap that opens the assistant. On the
+  // admin page desktop, the in-panel StickyNote toggle still switches to note
+  // mode. canCapture gates only that toggle. Save stays owner-only server-side.
+  const [mode, setMode] = useState<"assistant" | "note">("assistant");
+  const { user } = useAuth();
+  const canCapture = user?.role === "admin" || user?.role === "superadmin";
+
+  const harvestStatus = trpc.quickNotes.status.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    enabled: canCapture,
+  });
+
+  const openAssistant = useCallback(() => {
+    setMode("assistant");
+    setMinimized(false);
+    setOpen(true);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -216,7 +241,9 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={openAssistant}
+        data-testid="admin-fab"
+        style={{ touchAction: "manipulation" }}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
         title="Open AI Assistant"
       >
@@ -226,7 +253,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     );
   }
 
-  const panelHeight = minimized ? "auto" : "min(520px, calc(100vh - 120px))";
+  const panelHeight = minimized || mode === "note" ? "auto" : "min(520px, calc(100vh - 120px))";
 
   return (
     <div
@@ -240,17 +267,34 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#7dd87d] rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm leading-none">ReGen AI Assistant</p>
+          <p className="text-white font-semibold text-sm leading-none">
+            {mode === "note" ? "Add note" : "ReGen AI Assistant"}
+          </p>
           <p className="text-[#7dd87d]/70 text-xs mt-0.5 truncate">
-            {context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
+            {mode === "note"
+              ? "Voice or text, straight to your inbox"
+              : context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
           </p>
         </div>
+        {canCapture && (
+          /* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */
+          <button
+            onClick={() => { setMode(m => (m === "note" ? "assistant" : "note")); setMinimized(false); }}
+            aria-label={mode === "note" ? "Switch to assistant" : "Add a note"}
+            title={mode === "note" ? "Switch to assistant" : "Add a note"}
+            className={`p-1 rounded transition-colors ${mode === "note" ? "text-[#7dd87d]" : "text-white/60 hover:text-white"}`}
+          >
+            {mode === "note" ? <Bot className="w-4 h-4" /> : <StickyNote className="w-4 h-4" />}
+          </button>
+        )}
+        {/* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */}
         <button
           onClick={() => setMinimized(m => !m)}
           className="text-white/60 hover:text-white p-1 rounded transition-colors"
         >
           {minimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
         </button>
+        {/* touch-ok: compact admin-only header, the ::after expander gives the 44px hit area */}
         <button
           onClick={() => setOpen(false)}
           aria-label="Close AI assistant"
@@ -260,7 +304,11 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
         </button>
       </div>
 
-      {!minimized && (
+      {!minimized && mode === "note" && (
+        <HarvestNoteComposer voiceEnabled={Boolean(harvestStatus.data?.voice)} />
+      )}
+
+      {!minimized && mode === "assistant" && (
         <>
           {/* Messages area */}
           <ScrollArea className="flex-1 overflow-auto">
@@ -280,7 +328,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       <button
                         key={s}
                         onClick={() => sendMessage(s)}
-                        className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/8 border border-[#1a472a]/20 text-[#1a472a]/70 hover:bg-[#7dd87d]/20 hover:text-[#1a472a] hover:border-[#7dd87d]/50 transition-colors"
+                        className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/8 border border-[#1a472a]/20 text-[#1a472a]/75 hover:bg-[#7dd87d]/20 hover:text-[#1a472a] hover:border-[#7dd87d]/50 transition-colors"
                       >
                         {s}
                       </button>

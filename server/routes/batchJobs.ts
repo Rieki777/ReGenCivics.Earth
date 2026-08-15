@@ -8,9 +8,14 @@ import { adminProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { sql } from "drizzle-orm";
+import { sql, and, eq, isNull, isNotNull, lte, gt } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
+import { extractPartnerFunding, type PartnerFunding, type PartnerKey } from "../lib/partner-funding-parse";
+import { shipGiveawayEntries } from "../../drizzle/schema";
+import { ENV } from "../_core/env";
+import { emailVerifyGiveawayEntry } from "../lib/ship-emails";
+import { GIVEAWAY_BONUS, REFERRAL_CREDIT_CAP, normalizeBonus } from "@shared/shipGiveaway";
 
 // ─── Step 1: Advance Lunar Cycles ──────────────────────────────────────────
 
@@ -247,177 +252,13 @@ function binaryCountLT(sorted: number[], target: number): number {
 }
 
 // ─── Step 4: Citizenship Tier Checks + Grace Period ────────────────────────
-
-export async function checkCitizenshipTiers(db: any): Promise<{ promotions: number; demotions: number }> {
-  let promotions = 0;
-  let demotions = 0;
-
-  // Load all tier requirements from Game Variables
-  const vars = await getGameVariables([
-    // Co-Creator requirements
-    "citizenship.co_creator.min_percentile",
-    "citizenship.co_creator.min_fire_quest",
-    "citizenship.co_creator.min_rites",
-    "citizenship.co_creator.min_gratitude_sent",
-    "citizenship.co_creator.min_seasons",
-    // Steward requirements
-    "citizenship.steward.min_percentile",
-    "citizenship.steward.min_epic_quests",
-    "citizenship.steward.min_endorsements_project",
-    "citizenship.steward.min_gratitude_received",
-    "citizenship.steward.min_seasons",
-    // Sage requirements
-    "citizenship.sage.min_percentile",
-    "citizenship.sage.min_seasons",
-    "citizenship.sage.min_contributions",
-    "citizenship.sage.min_endorsements_total",
-    // Grace period
-    "citizenship.grace_period_days",
-  ]);
-
-  const graceDays = vars["citizenship.grace_period_days"] ?? 30;
-
-  const [players] = await db.execute(sql`
-    SELECT pp.userId, pp.citizenshipTier, pp.contributionScore,
-      pp.graceStartedAt, pp.seasonsCompleted,
-      (SELECT COUNT(*) FROM quest_completions qc WHERE qc.userId = pp.userId) as questsCount,
-      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.senderId = pp.userId) as gratitudeSent,
-      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.receiverId = pp.userId) as gratitudeReceived,
-      (SELECT COUNT(*) FROM game_endorsements ge
-       WHERE ge.endorsedType = 'player' AND ge.endorsedId = pp.userId
-       AND ge.endorserType = 'project' AND ge.status = 'active') as projectEndorsements,
-      (SELECT COUNT(*) FROM game_endorsements ge
-       WHERE ge.endorsedType = 'player' AND ge.endorsedId = pp.userId
-       AND ge.status = 'active') as totalEndorsements
-    FROM player_profiles pp
-    WHERE pp.userId IS NOT NULL
-  `);
-
-  for (const p of (players as any[])) {
-    const current = p.citizenshipTier ?? "explorer";
-    let qualifiesFor = "explorer";
-
-    // Check Sage
-    if (
-      (p.contributionScore ?? 0) >= (vars["citizenship.sage.min_percentile"] ?? 90) &&
-      (p.seasonsCompleted ?? 0) >= (vars["citizenship.sage.min_seasons"] ?? 6) &&
-      (p.questsCount ?? 0) >= (vars["citizenship.sage.min_contributions"] ?? 100) &&
-      (p.totalEndorsements ?? 0) >= (vars["citizenship.sage.min_endorsements_total"] ?? 10)
-    ) {
-      qualifiesFor = "sage";
-    }
-    // Check Steward
-    else if (
-      (p.contributionScore ?? 0) >= (vars["citizenship.steward.min_percentile"] ?? 50) &&
-      (p.seasonsCompleted ?? 0) >= (vars["citizenship.steward.min_seasons"] ?? 3) &&
-      (p.projectEndorsements ?? 0) >= (vars["citizenship.steward.min_endorsements_project"] ?? 1) &&
-      (p.gratitudeReceived ?? 0) >= (vars["citizenship.steward.min_gratitude_received"] ?? 10)
-    ) {
-      qualifiesFor = "steward";
-    }
-    // Check Co-Creator
-    else if (
-      (p.contributionScore ?? 0) >= (vars["citizenship.co_creator.min_percentile"] ?? 15) &&
-      (p.gratitudeSent ?? 0) >= (vars["citizenship.co_creator.min_gratitude_sent"] ?? 5) &&
-      (p.seasonsCompleted ?? 0) >= (vars["citizenship.co_creator.min_seasons"] ?? 2)
-    ) {
-      qualifiesFor = "co_creator";
-    }
-
-    const tierOrder = ["explorer", "co_creator", "steward", "sage"];
-    const currentIdx = tierOrder.indexOf(current);
-    const qualIdx = tierOrder.indexOf(qualifiesFor);
-
-    if (qualIdx > currentIdx) {
-      // Promote
-      await db.execute(sql`
-        UPDATE player_profiles SET citizenshipTier = ${qualifiesFor}, citizenshipTierUpdatedAt = NOW(), graceStartedAt = NULL
-        WHERE userId = ${p.userId}
-      `);
-      await db.execute(sql`
-        INSERT INTO citizenship_tier_history (userId, fromTier, toTier, reason, createdAt)
-        VALUES (${p.userId}, ${current}, ${qualifiesFor}, 'automatic', NOW())
-      `);
-      promotions++;
-    } else if (qualIdx < currentIdx) {
-      // Grace period or demote
-      if (!p.graceStartedAt) {
-        // Start grace period
-        await db.execute(sql`
-          UPDATE player_profiles SET graceStartedAt = NOW() WHERE userId = ${p.userId}
-        `);
-      } else {
-        const graceStart = new Date(p.graceStartedAt);
-        const daysSinceGrace = (Date.now() - graceStart.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceGrace >= graceDays) {
-          // Grace expired, demote
-          await db.execute(sql`
-            UPDATE player_profiles SET citizenshipTier = ${qualifiesFor}, citizenshipTierUpdatedAt = NOW(), graceStartedAt = NULL
-            WHERE userId = ${p.userId}
-          `);
-          await db.execute(sql`
-            INSERT INTO citizenship_tier_history (userId, fromTier, toTier, reason, createdAt)
-            VALUES (${p.userId}, ${current}, ${qualifiesFor}, 'grace_period_expired', NOW())
-          `);
-          demotions++;
-        }
-      }
-    } else if (qualIdx >= currentIdx && p.graceStartedAt) {
-      // Requirements met again, clear grace
-      await db.execute(sql`
-        UPDATE player_profiles SET graceStartedAt = NULL WHERE userId = ${p.userId}
-      `);
-    }
-  }
-
-  return { promotions, demotions };
-}
+// Extracted to lib/citizenship.ts (audit Phase 2): the Hypha bridge webhook
+// receiver and the _core cron endpoint also call it, and lib must never
+// import from routes. Imported + re-exported so existing callers keep working.
+import { checkCitizenshipTiers } from "../lib/citizenship";
+export { checkCitizenshipTiers };
 
 // ─── Step 5: Update Gratitude Multipliers ──────────────────────────────────
-
-async function updateGratitudeMultipliers(db: any): Promise<number> {
-  const vars = await getGameVariables([
-    "gratitude.trust_graph.received_weight",
-    "gratitude.trust_graph.max_bonus",
-    "gratitude.multiplier.explorer",
-    "gratitude.multiplier.co_creator",
-    "gratitude.multiplier.steward",
-    "gratitude.multiplier.sage",
-  ]);
-
-  const tierMultipliers: Record<string, number> = {
-    explorer: vars["gratitude.multiplier.explorer"] ?? 1.0,
-    co_creator: vars["gratitude.multiplier.co_creator"] ?? 1.2,
-    steward: vars["gratitude.multiplier.steward"] ?? 1.5,
-    sage: vars["gratitude.multiplier.sage"] ?? 2.0,
-  };
-
-  const receivedWeight = vars["gratitude.trust_graph.received_weight"] ?? 0.1;
-  const maxBonus = vars["gratitude.trust_graph.max_bonus"] ?? 0.5;
-
-  // For each player, calculate gratitude multiplier = tierBase + min(receivedPrev * weight, maxBonus)
-  const [players] = await db.execute(sql`
-    SELECT pp.userId, pp.citizenshipTier,
-      (SELECT COUNT(*) FROM gratitude_transactions gt
-       WHERE gt.receiverId = pp.userId) as gratitudeReceived
-    FROM player_profiles pp
-    WHERE pp.userId IS NOT NULL
-  `);
-
-  let processed = 0;
-  for (const p of (players as any[])) {
-    const tierBase = tierMultipliers[p.citizenshipTier ?? "explorer"] ?? 1.0;
-    const bonus = Math.min((p.gratitudeReceived ?? 0) * receivedWeight, maxBonus);
-    const multiplier = tierBase + bonus;
-    await db.execute(sql`
-      UPDATE player_profiles SET trustScore = ${Math.min(multiplier, 2.0)} WHERE userId = ${p.userId}
-    `);
-    processed++;
-  }
-  return processed;
-}
-
-// ─── Step 6: Land Project Status Progression ───────────────────────────────
 
 async function checkLandProjectStatus(db: any): Promise<number> {
   const vars = await getGameVariables([
@@ -572,6 +413,364 @@ async function cancelStaleClaimBridges(
   return { cancelled, refunded };
 }
 
+// ─── Step 9: Crowdpool claim expiry sweep + reminders ──────────────────────
+//
+// Two passes over accepted claims (CROWDPOOLING_PLATFORM_SPEC.md Part C):
+//
+// 1. Expiry: accepted contributions past claimExpiresAt flip to 'expired'
+//    and release their reserved slots on the need (quantityClaimed floors
+//    at 0). Contributor and steward both get an in-app note.
+// 2. Reminders: claims expiring within crowdpool.reminder_days_before_expiry
+//    days, plus shift claims starting within 7 days and within 1 day. Deduped
+//    via notifications.dedupeKey (claimrem:{contributionId}:{bucket}) so
+//    reruns are no-ops.
+//
+// No token credits anywhere in this job: crowdpooling never mints platform
+// tokens (locked decision).
+
+/** Game variable with a fallback: crowdpool config may not be seeded yet. */
+async function getGameVariableOr(key: string, fallback: number): Promise<number> {
+  try {
+    return await getGameVariable(key);
+  } catch {
+    return fallback;
+  }
+}
+
+export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number; reminders: number }> {
+  const { createUserNotification } = await import("../db");
+  const { insertNotification } = await import("../lib/forum-notify");
+
+  let expired = 0;
+  let reminders = 0;
+
+  // Pass 1: expire overdue claims and release their slots.
+  const [overdueRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.campaignItemId, cc.userId, cc.quantityPledged,
+           cc.title, c.userId AS ownerId, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.claimExpiresAt IS NOT NULL
+      AND cc.claimExpiresAt < NOW()
+  `);
+
+  for (const claim of ((overdueRows as any[]) ?? [])) {
+    // Status guard in the WHERE keeps a concurrent sweep from double-releasing.
+    const [result] = await db.execute(sql`
+      UPDATE campaign_contributions SET status = 'expired', updatedAt = NOW()
+      WHERE id = ${claim.id} AND status = 'accepted'
+    `);
+    if (((result as any)?.affectedRows ?? 0) === 0) continue;
+
+    if (claim.campaignItemId) {
+      await db.execute(sql`
+        UPDATE campaign_items
+        SET quantityClaimed = GREATEST(quantityClaimed - ${claim.quantityPledged}, 0)
+        WHERE id = ${claim.campaignItemId}
+      `);
+    }
+    expired++;
+
+    // Tell both sides. Best-effort: a notification failure never stops the sweep.
+    try {
+      if (claim.userId) {
+        await createUserNotification({
+          userId: claim.userId,
+          type: 'system',
+          title: 'Your claim expired',
+          message: `Your claim "${claim.title}" on ${claim.campaignTitle} passed its delivery window, so the need is open again. You can claim it again any time.`,
+          campaignId: claim.campaignId,
+          contributionId: claim.id,
+          link: `/campaign/${claim.campaignId}`,
+        });
+      }
+      await createUserNotification({
+        userId: claim.ownerId,
+        type: 'system',
+        title: 'A claim expired',
+        message: `The claim "${claim.title}" on ${claim.campaignTitle} expired, so its slots are open again.`,
+        campaignId: claim.campaignId,
+        contributionId: claim.id,
+        link: `/campaign/${claim.campaignId}`,
+      });
+    } catch (err) {
+      console.warn('[crowdpool-sweep] expiry notification failed:', err);
+    }
+  }
+
+  // Pass 2a: claims approaching their expiry window.
+  const reminderDays = await getGameVariableOr('crowdpool.reminder_days_before_expiry', 2);
+  const [expiringRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.userId IS NOT NULL
+      AND cc.claimExpiresAt IS NOT NULL
+      AND cc.claimExpiresAt > NOW()
+      AND cc.claimExpiresAt < DATE_ADD(NOW(), INTERVAL ${reminderDays} DAY)
+  `);
+  for (const claim of ((expiringRows as any[]) ?? [])) {
+    const wrote = await insertNotification({
+      userId: claim.userId,
+      type: 'system',
+      title: 'Your claim window is closing',
+      body: `"${claim.title}" on ${claim.campaignTitle} needs to be delivered soon, or the claim will expire and the need opens back up.`,
+      link: `/campaign/${claim.campaignId}`,
+      dedupeKey: `claimrem:${claim.id}:expiry`,
+    });
+    if (wrote) reminders++;
+  }
+
+  // Pass 2b: shifts starting within 7 days and within 1 day.
+  const [shiftRows] = await db.execute(sql`
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, ci.shiftStartsAt, c.title AS campaignTitle
+    FROM campaign_contributions cc
+    JOIN campaign_items ci ON ci.id = cc.campaignItemId
+    JOIN campaigns c ON c.id = cc.campaignId
+    WHERE cc.status = 'accepted'
+      AND cc.userId IS NOT NULL
+      AND ci.kind = 'shift'
+      AND ci.shiftStartsAt IS NOT NULL
+      AND ci.shiftStartsAt > NOW()
+      AND ci.shiftStartsAt < DATE_ADD(NOW(), INTERVAL 7 DAY)
+  `);
+  for (const claim of ((shiftRows as any[]) ?? [])) {
+    const startsAt = new Date(claim.shiftStartsAt);
+    const withinOneDay = startsAt.getTime() - Date.now() <= 24 * 60 * 60 * 1000;
+    const bucket = withinOneDay ? 'shift1' : 'shift7';
+    const wrote = await insertNotification({
+      userId: claim.userId,
+      type: 'system',
+      title: withinOneDay ? 'Your shift is tomorrow' : 'Your shift is coming up',
+      body: `"${claim.title}" at ${claim.campaignTitle} starts ${startsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`,
+      link: `/campaign/${claim.campaignId}`,
+      dedupeKey: `claimrem:${claim.id}:${bucket}`,
+    });
+    if (wrote) reminders++;
+  }
+
+  return { expired, reminders };
+}
+
+// ─── Step 10: Partner-progress hydration ───────────────────────────────────
+//
+// Ma Earth (gifts + matching) and GoSteward (loans) are recommended funders,
+// not partners: money never touches us. Their campaign_partner_links rows carry
+// cached raised / contributor / percent numbers that the campaign detail page
+// shows read-only, "as of {lastFetchedAt}". This job refreshes those numbers.
+//
+// For every link on an active or funded campaign it fetches the funder's public
+// page and reads the numbers with server/lib/partner-funding-parse. Defensive by
+// design: each fetch has a 10s timeout, at most `concurrency` run at once, and a
+// fetch error, a non-200, or a page it cannot parse leaves that row's cached
+// values AND lastFetchedAt exactly as they were. It never zeroes a number it
+// could not read, so a funder that blocks bots or hides its totals behind
+// client-side rendering simply keeps its last good cache.
+//
+// The db access and the fetch are injectable so the orchestration is unit
+// tested without a live database or network (server/partner-hydration.test.ts).
+
+/** Minimal shape of the response the job needs; matches global fetch(). */
+export type FetchLike = (
+  url: string,
+  init?: any,
+) => Promise<{ ok: boolean; status?: number; text: () => Promise<string> }>;
+
+interface PartnerLinkRow {
+  id: number;
+  partner: string;
+  url: string;
+}
+
+export interface HydratePartnerOptions {
+  fetchImpl?: FetchLike;
+  concurrency?: number;
+  timeoutMs?: number;
+  /** Load the links to refresh. Injectable for tests. */
+  loadLinks?: (db: any) => Promise<PartnerLinkRow[]>;
+  /** Persist parsed numbers for one link. Injectable for tests. */
+  writeUpdate?: (db: any, id: number, funding: PartnerFunding) => Promise<void>;
+}
+
+// A plain identifier: some funder edges block obvious bots, in which case the
+// job degrades to stale cache, which is acceptable.
+const PARTNER_FETCH_UA =
+  "Mozilla/5.0 (compatible; RegenCivicsBot/1.0; +https://regencivics.earth)";
+
+async function defaultLoadLinks(db: any): Promise<PartnerLinkRow[]> {
+  const [rows] = await db.execute(sql`
+    SELECT pl.id, pl.partner, pl.url
+    FROM campaign_partner_links pl
+    JOIN campaigns c ON c.id = pl.campaignId
+    WHERE c.status IN ('active', 'funded')
+      AND pl.partner IN ('maearth', 'gosteward')
+      AND pl.url IS NOT NULL AND pl.url <> ''
+  `);
+  return ((rows as any[]) ?? []).map((r) => ({
+    id: Number(r.id),
+    partner: String(r.partner),
+    url: String(r.url),
+  }));
+}
+
+async function defaultWriteUpdate(db: any, id: number, funding: PartnerFunding): Promise<void> {
+  // COALESCE keeps the existing cached value when a field parsed to null, so a
+  // partial read never clobbers a previously good number. lastFetchedAt only
+  // moves here, on a real parse, so the "as of {date}" line stays honest.
+  await db.execute(sql`
+    UPDATE campaign_partner_links
+    SET cachedRaised = COALESCE(${funding.raised}, cachedRaised),
+        cachedContributorCount = COALESCE(${funding.contributorCount}, cachedContributorCount),
+        cachedPercent = COALESCE(${funding.percent}, cachedPercent),
+        lastFetchedAt = NOW()
+    WHERE id = ${id}
+  `);
+}
+
+async function fetchPartnerHtml(
+  url: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: { "user-agent": PARTNER_FETCH_UA, accept: "text/html,application/xhtml+xml" },
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function hydrateCampaignPartnerLinks(
+  db: any,
+  opts: HydratePartnerOptions = {},
+): Promise<{ checked: number; updated: number; stale: number; failed: number }> {
+  const fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike | undefined);
+  const concurrency = Math.max(1, opts.concurrency ?? 5);
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+  const loadLinks = opts.loadLinks ?? defaultLoadLinks;
+  const writeUpdate = opts.writeUpdate ?? defaultWriteUpdate;
+
+  if (!fetchImpl) return { checked: 0, updated: 0, stale: 0, failed: 0 };
+
+  const links = await loadLinks(db);
+  let checked = 0;
+  let updated = 0;
+  let stale = 0; // fetched fine, nothing parseable -> left untouched
+  let failed = 0; // fetch error / non-200 / write error -> left untouched
+
+  for (let i = 0; i < links.length; i += concurrency) {
+    const batch = links.slice(i, i + concurrency);
+    checked += batch.length;
+    const outcomes = await Promise.all(
+      batch.map(async (link): Promise<"updated" | "stale" | "failed"> => {
+        let html: string | null;
+        try {
+          html = await fetchPartnerHtml(link.url, fetchImpl, timeoutMs);
+        } catch {
+          return "failed"; // network, abort, or timeout: leave cache + lastFetchedAt
+        }
+        if (html == null) return "failed"; // non-200
+        const partner: PartnerKey = link.partner === "gosteward" ? "gosteward" : "maearth";
+        const funding = extractPartnerFunding(html, partner);
+        if (!funding) return "stale"; // parsed nothing: degrade to last good cache
+        try {
+          await writeUpdate(db, link.id, funding);
+          return "updated";
+        } catch (err) {
+          console.warn(`[partner-hydration] write failed for link ${link.id}:`, err);
+          return "failed";
+        }
+      }),
+    );
+    for (const o of outcomes) {
+      if (o === "updated") updated++;
+      else if (o === "stale") stale++;
+      else failed++;
+    }
+  }
+
+  return { checked, updated, stale, failed };
+}
+
+// ─── Free Voyage Giveaway: unverified sweep + referral-credit recompute ──────
+// Deterministic, zero LLM (STEERING section 11), idempotent. Resends the
+// verification email once between day 3 and day 7, expires still-unconfirmed
+// entries at day 7 (they never held draw weight), and recomputes referral credits
+// from confirmed referrals as a safety net over the live crediting in
+// shipGiveaway.verify. Runs daily from the in-process scheduler and on demand via
+// batchJobsRouter.runGiveawaySweep. No "raffle"/"tickets" wording reaches a user.
+export async function expireGiveawayEntries(
+  db: any,
+): Promise<{ expired: number; resent: number; recomputed: number }> {
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const cutoff3 = new Date(now - 3 * DAY);
+  const cutoff7 = new Date(now - 7 * DAY);
+
+  // 1. Resend verification once, between day 3 and day 7, while still unconfirmed.
+  const toResend = await db
+    .select()
+    .from(shipGiveawayEntries)
+    .where(
+      and(
+        isNull(shipGiveawayEntries.verifiedAt),
+        isNull(shipGiveawayEntries.verifyResentAt),
+        lte(shipGiveawayEntries.createdAt, cutoff3),
+        gt(shipGiveawayEntries.createdAt, cutoff7),
+      ),
+    );
+  let resent = 0;
+  for (const e of toResend) {
+    await emailVerifyGiveawayEntry(e.email, { verifyUrl: `${ENV.appUrl}/ship/giveaway?verify=${e.verifyToken}` });
+    await db.update(shipGiveawayEntries).set({ verifyResentAt: new Date() }).where(eq(shipGiveawayEntries.id, e.id));
+    resent++;
+  }
+
+  // 2. Expire (delete) unverified entries older than 7 days. Unverified entries
+  //    have no draw weight, so removing them is clean and frees the email + code.
+  const stale = await db
+    .select({ id: shipGiveawayEntries.id })
+    .from(shipGiveawayEntries)
+    .where(and(isNull(shipGiveawayEntries.verifiedAt), lte(shipGiveawayEntries.createdAt, cutoff7)));
+  let expired = 0;
+  if (stale.length) {
+    await db.delete(shipGiveawayEntries).where(and(isNull(shipGiveawayEntries.verifiedAt), lte(shipGiveawayEntries.createdAt, cutoff7)));
+    expired = stale.length;
+  }
+
+  // 3. Recompute referral credit from confirmed referrals:
+  //    credit = min(confirmed * perReferral, cap). Only writes when it changed.
+  const counts = await db
+    .select({ code: shipGiveawayEntries.referredBy, c: sql<number>`COUNT(*)` })
+    .from(shipGiveawayEntries)
+    .where(and(isNotNull(shipGiveawayEntries.verifiedAt), isNotNull(shipGiveawayEntries.referredBy)))
+    .groupBy(shipGiveawayEntries.referredBy);
+  let recomputed = 0;
+  for (const row of counts) {
+    if (!row.code) continue;
+    const target = Math.min(Number(row.c) * GIVEAWAY_BONUS.perReferral, REFERRAL_CREDIT_CAP);
+    const [referrer] = await db.select().from(shipGiveawayEntries).where(eq(shipGiveawayEntries.referralCode, row.code)).limit(1);
+    if (!referrer) continue;
+    const bonus = normalizeBonus(referrer.bonusTickets);
+    if (bonus.referrals !== target) {
+      bonus.referrals = target;
+      await db.update(shipGiveawayEntries).set({ bonusTickets: bonus }).where(eq(shipGiveawayEntries.id, referrer.id));
+      recomputed++;
+    }
+  }
+
+  return { expired, resent, recomputed };
+}
+
 // ─── Main Router ───────────────────────────────────────────────────────────
 
 export const batchJobsRouter = router({
@@ -623,10 +822,10 @@ export const batchJobsRouter = router({
       demotions = tierResult.demotions;
     } catch (e: any) { errors.push(`Step 4 (tiers): ${e.message}`); }
 
-    try {
-      // Step 5: Gratitude multipliers
-      await updateGratitudeMultipliers(db);
-    } catch (e: any) { errors.push(`Step 5 (gratitude): ${e.message}`); }
+    // Step 5 removed 2026-07-28: updateGratitudeMultipliers read the retired
+    // gratitude_transactions table and wrote gratitude.multiplier.*, which the
+    // lunar cycle engine deliberately does not read (it uses
+    // gratitude.budget_multiplier.*). It was dead work that threw silently.
 
     try {
       // Step 6: Land project status
@@ -656,6 +855,27 @@ export const batchJobsRouter = router({
       gratitudeCredited = result.credited;
     } catch (e: any) { errors.push(`Step 8 (gratitude cycles): ${e.message}`); }
 
+    let crowdpoolClaimsExpired = 0;
+    let crowdpoolReminders = 0;
+    try {
+      // Step 9: Crowdpool claim expiry sweep + reminders. Releases reserved
+      // slots on needs whose claims blew their delivery window.
+      const result = await expireCrowdpoolClaims(db);
+      crowdpoolClaimsExpired = result.expired;
+      crowdpoolReminders = result.reminders;
+    } catch (e: any) { errors.push(`Step 9 (crowdpool claims): ${e.message}`); }
+
+    let partnerLinksChecked = 0;
+    let partnerLinksUpdated = 0;
+    try {
+      // Step 10: Partner-progress hydration. Refresh cached Ma Earth / GoSteward
+      // numbers on active + funded campaigns. Fetch or parse failures leave the
+      // stale cache untouched (never zeroed).
+      const result = await hydrateCampaignPartnerLinks(db);
+      partnerLinksChecked = result.checked;
+      partnerLinksUpdated = result.updated;
+    } catch (e: any) { errors.push(`Step 10 (partner hydration): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -669,7 +889,15 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, partnerLinksChecked, partnerLinksUpdated };
+  }),
+
+  // Manual trigger for the Free Voyage Giveaway sweep (admin-only). The same work
+  // runs daily from the in-process scheduler; this is for an ad-hoc run.
+  runGiveawaySweep: adminProcedure.mutation(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+    return expireGiveawayEntries(db);
   }),
 
   // Manual trigger for the stale-claim cleanup (admin-only). Useful for

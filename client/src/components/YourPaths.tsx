@@ -184,12 +184,12 @@ function PathBlock({ data }: PathBlockProps) {
             <div className="text-xs text-white/60 inline-flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#7dd87d]" />
               {earnedTierLabel} earned
-              {d ? <span className="text-white/40"> · {d}</span> : null}
+              {d ? <span className="text-white/60"> · {d}</span> : null}
             </div>
           </div>
         </div>
         {data.unclaimedBonusAmount > 0 && (
-          <div className="text-xs text-white/50 mb-1">
+          <div className="text-xs text-white/60 mb-1">
             +{data.unclaimedBonusAmount} RGVoice added to your balance. Claim it with your other tokens from your token totals once you reach the claim threshold.
           </div>
         )}

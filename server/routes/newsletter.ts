@@ -210,17 +210,14 @@ export const videoSuggestionsRouter = router({
     }),
 
   // Admin: Update suggestion status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["pending", "approved", "in_production", "completed", "rejected"]),
       completedVideoUrl: z.string().optional(),
       completedBlogSlug: z.string().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updateVideoSuggestion(input.id, {
         status: input.status,
         completedVideoUrl: input.completedVideoUrl || null,
@@ -230,12 +227,9 @@ export const videoSuggestionsRouter = router({
     }),
 
   // Admin: Delete a suggestion
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.deleteVideoSuggestion(input.id);
       return { success: true };
     }),
@@ -243,7 +237,7 @@ export const videoSuggestionsRouter = router({
 
 export const emailRouter = router({
   // Send email directly via Resend
-  sendDirect: protectedProcedure
+  sendDirect: adminProcedure
     .input(z.object({
       to: z.string().email(),
       recipientName: z.string(),
@@ -252,11 +246,7 @@ export const emailRouter = router({
       customBody: z.string().optional(),
       inquiryType: z.enum(["investor", "alliance", "project", "general"]).optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .mutation(async ({ input }) => {
       const { sendEmail, emailTemplates } = await import("../_core/email");
 
       let emailContent: { subject: string; html: string };
@@ -373,7 +363,7 @@ export const emailRouter = router({
     }),
 
   // Send email via mailto (generates mailto link with template)
-  generateMailto: protectedProcedure
+  generateMailto: adminProcedure
     .input(z.object({
       to: z.string().email(),
       recipientName: z.string(),
@@ -382,11 +372,7 @@ export const emailRouter = router({
       customBody: z.string().optional(),
       inquiryType: z.enum(["investor", "alliance", "project", "general"]).optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .mutation(async ({ input }) => {
       const calendlyLink = "https://calendly.com/rieki-cordon/30min";
       const templates: Record<string, { subject: string; body: string }> = {
         follow_up: {
@@ -438,7 +424,7 @@ export const emailRouter = router({
     }),
 
   // Log email sent (for tracking purposes)
-  logSent: protectedProcedure
+  logSent: adminProcedure
     .input(z.object({
       recipientEmail: z.string().email(),
       recipientName: z.string(),
@@ -446,11 +432,7 @@ export const emailRouter = router({
       inquiryType: z.string().optional(),
       inquiryId: z.number().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .mutation(async ({ input }) => {
       // Log to notification system
       await notifyOwner({
         title: `Email Logged: ${input.templateType}`,
@@ -461,35 +443,24 @@ export const emailRouter = router({
     }),
 
   // Get email logs for analytics
-  getLogs: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
-
+  getLogs: adminProcedure.query(async () => {
     return await db.getAllEmailLogs();
   }),
 
   // Get email logs for a specific contact by email address
-  getLogsForEmail: protectedProcedure
+  getLogsForEmail: adminProcedure
     .input(z.object({ email: z.string().email() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .query(async ({ input }) => {
       return await db.getEmailLogsByEmail(input.email);
     }),
 
   // Send test email
-  sendTest: protectedProcedure
+  sendTest: adminProcedure
     .input(z.object({
       email: z.string().email(),
       template: z.string(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .mutation(async ({ input }) => {
       const { sendEmail, emailTemplates } = await import("../_core/email");
 
       // Get template content based on template ID
@@ -556,15 +527,11 @@ export const emailRouter = router({
     }),
 
   // Get email template preview
-  getPreview: protectedProcedure
+  getPreview: adminProcedure
     .input(z.object({
       template: z.string(),
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .query(async ({ input }) => {
       const { emailTemplates } = await import("../_core/email");
 
       // Generate preview with sample data
@@ -660,15 +627,12 @@ export const emailRouter = router({
     }),
 
   // Get all custom templates from database
-  getCustomTemplates: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
+  getCustomTemplates: adminProcedure.query(async () => {
     return await db.getAllCustomTemplates();
   }),
 
   // Save or update a custom template
-  saveCustomTemplate: protectedProcedure
+  saveCustomTemplate: adminProcedure
     .input(z.object({
       templateKey: z.string(),
       customSubject: z.string().nullable().optional(),
@@ -676,9 +640,6 @@ export const emailRouter = router({
       isActive: z.number().min(0).max(1).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
       await db.upsertCustomTemplate({
         ...input,
         lastEditedBy: ctx.user.name || ctx.user.email || "Admin",
@@ -687,18 +648,15 @@ export const emailRouter = router({
     }),
 
   // Delete a custom template (revert to default)
-  deleteCustomTemplate: protectedProcedure
+  deleteCustomTemplate: adminProcedure
     .input(z.object({ templateKey: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.deleteCustomTemplate(input.templateKey);
       return { success: true };
     }),
 
   // Send bulk emails to multiple recipients
-  sendBulk: protectedProcedure
+  sendBulk: adminProcedure
     .input(z.object({
       recipients: z.array(z.object({
         email: z.string().email(),
@@ -709,11 +667,7 @@ export const emailRouter = router({
       customBody: z.string().optional(),
       mergeFields: z.record(z.string(), z.string()).optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .mutation(async ({ input }) => {
       const { sendEmail, emailTemplates: templates } = await import("../_core/email");
       const results: { email: string; success: boolean; error?: string }[] = [];
 

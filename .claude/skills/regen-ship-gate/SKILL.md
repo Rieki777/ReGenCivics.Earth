@@ -11,7 +11,7 @@ Three failure modes have shipped broken work to `regencivics.earth`:
 
 1. **File truncation.** On 2026-04-18, 15 source files including `client/src/App.tsx`, `server/routes/events.ts`, and 12 page components were found cut off mid-statement on disk with NUL-byte padding at the end. The build would have failed on next `pnpm dev`. None of these were caught before the previous session claimed "DONE."
 2. **className / keyframes mismatch.** Commit b06b7aa marked 13 fixes "resolved." Audit found 5 of those were false: JSX got `className="ink-reveal"` and `animation: shimmer 2s` attributes, but the `.ink-reveal` rule and `@keyframes shimmer` definition were never added to any stylesheet. The render was a no-op.
-3. **Completion claims without typecheck.** Multiple sessions have closed out without running `pnpm typecheck` or `pnpm build`. TypeScript errors shipped.
+3. **Completion claims without typecheck.** Multiple sessions have closed out without running `pnpm gate` or `pnpm build`. TypeScript errors shipped.
 
 This skill blocks all three before anything is marked VERIFIED.
 
@@ -24,8 +24,10 @@ This skill blocks all three before anything is marked VERIFIED.
 Run from repo root:
 
 ```bash
-python3 scripts/audit-truncation.py
+pnpm gate   # runs this audit + the typecheck, and finds a working Python itself
 ```
+
+Or the audit alone: `py scripts/audit-truncation.py` on Windows, `python3 scripts/audit-truncation.py` on the cowork VM.
 
 Exit code 0 means clean. Non-zero means one or more files are truncated.
 
@@ -41,8 +43,8 @@ Signal 4 specifically catches the pattern that shipped `MobileMoreMenu.tsx` trun
 If truncations found, restore from HEAD before continuing:
 
 ```bash
-python3 scripts/audit-truncation.py --fix
-python3 scripts/audit-truncation.py   # re-run to confirm 0
+py scripts/audit-truncation.py --fix   # `python3` on the cowork VM
+py scripts/audit-truncation.py         # re-run to confirm 0
 ```
 
 Then re-apply whatever changes the restore overwrote. Do not skip this step. Do not rationalize that "the ones I edited are fine."
@@ -66,7 +68,7 @@ Same check for Tailwind arbitrary values if you introduced a token like `animati
 ### Gate 3 — Typecheck
 
 ```bash
-pnpm typecheck
+pnpm check       # `pnpm typecheck` is an alias for the same thing
 # or: npx tsc --noEmit -p tsconfig.json
 ```
 
@@ -104,7 +106,7 @@ The `regen-fixes-handoff` skill requires a Handoff Breakdown table. Every CLAUDE
 - `path/to/file.tsx:LINE` with the exact change
 - Grep result proving the referenced symbol exists in its stylesheet/token/route file
 - Screenshot path in `docs/screenshots/`
-- Script output line (`pnpm typecheck` exit 0, `audit-truncation.py` exit 0)
+- Script output line (`pnpm gate` exit 0, `audit-truncation.py` exit 0)
 
 **Not acceptable:**
 - "Should work now"
@@ -135,10 +137,16 @@ All of these mean: run the gates.
 
 ```bash
 # From repo root, before any "VERIFIED" claim:
-python3 scripts/audit-truncation.py   # gate 1
+pnpm gate                                           # gates 1 + 3, any platform
 rg -g '*.css' '<className-you-added>' client/src/   # gate 2, per change
-pnpm typecheck                                         # gate 3
-node scripts/audit-links.mjs           # gate 4, when routes/links/anchors changed
+node scripts/audit-links.mjs                        # gate 4, when routes/links/anchors changed
 ```
+
+`pnpm gate` exists because the hand-written form of these commands was wrong here
+for three months: `pnpm typecheck` named a script that never existed, and on
+Windows `python3` is a Store stub that exits 0 without running the audit. Both
+failed silently, because each session substituted a working command by hand
+instead of fixing the source. If you find yourself translating a gate command
+before running it, fix the doc — that is how a gate rots into decoration.
 
 Four checks. Less than two minutes. Prevents the patterns that shipped 15 truncated files, 5 no-op CSS references, and dead route links to production.

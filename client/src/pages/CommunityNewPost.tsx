@@ -258,7 +258,7 @@ export default function CommunityNewPost() {
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {catsLoading ? (
-                  <SelectItem value="loading" disabled className="text-[#1a472a]/60">Loading topics...</SelectItem>
+                  <SelectItem value="loading" disabled className="text-[#1a472a]/75">Loading topics...</SelectItem>
                 ) : categories?.map(cat => (
                   <SelectItem key={cat.id} value={String(cat.id)} className="text-[#1a472a] focus:bg-[#7dd87d]/15 focus:text-[#1a472a]">
                     <span className="flex items-center gap-2">

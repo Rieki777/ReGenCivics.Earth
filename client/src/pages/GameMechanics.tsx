@@ -234,6 +234,7 @@ interface SimState {
   gratitudeRecipients: number;
   streakCycles: number;
   regenDistributionPool: number;
+  maxPayoutPerPerson: number;
   claimThreshold: number;
 }
 
@@ -253,6 +254,7 @@ function initialSimState(): SimState {
     gratitudeRecipients: 10,
     streakCycles: 0,
     regenDistributionPool: 10000,
+    maxPayoutPerPerson: 1000,
     claimThreshold: 1000,
   };
 }
@@ -595,11 +597,15 @@ function GameSimulator() {
       // Sim math works in fractions; percentage rows may store points (15 = 15%).
       compostingDecay: asFraction(varNum(vars, "composting.decay_rate", 0.15)),
       harvestPoolSize: varNum(vars, "harvest.pool_size", 50000),
-      gratitudeBudget: varNum(vars, "gratitude.budget_base", 100),
+      // Key is gratitude.base_budget (seeded in 0173). This read
+      // gratitude.budget_base, which does not exist, so the slider silently
+      // sat on its hardcoded default and never reflected the live variable.
+      gratitudeBudget: varNum(vars, "gratitude.base_budget", 100),
       // Simulation scenario inputs, not game variables.
       gratitudeRecipients: 10,
       streakCycles: 0,
       regenDistributionPool: varNum(vars, "gratitude.pool_per_cycle", 10000),
+      maxPayoutPerPerson: varNum(vars, "gratitude.max_payout_per_person", 1000),
       claimThreshold: varNum(vars, "governance.claim_threshold_regen", 1000),
     }),
     [vars],
@@ -765,14 +771,30 @@ function GameSimulator() {
   const streakBonus = Math.min(sim.streakCycles * 0.03, 0.30);
   const effectiveBudget = Math.round(sim.gratitudeBudget * tierMultiplier * (1 + streakBonus));
 
-  // Per-person share based on recipients
+  // Per-person share, mirroring computePerPersonShare on the server: the
+  // divisor is max(recipients, threshold), so acknowledging fewer than the
+  // threshold forfeits the remainder instead of concentrating it.
+  const fullPowerThreshold = varNum(vars, "gratitude.full_power_threshold", 10);
   const perPerson = sim.gratitudeRecipients > 0
-    ? Math.round(effectiveBudget / sim.gratitudeRecipients)
-    : effectiveBudget;
+    ? Math.round(effectiveBudget / Math.max(sim.gratitudeRecipients, fullPowerThreshold))
+    : 0;
+  const fullPowerShare = Math.round(effectiveBudget / fullPowerThreshold);
+  const isFullPower = sim.gratitudeRecipients >= fullPowerThreshold;
+  const budgetDeployed = perPerson * sim.gratitudeRecipients;
+  const budgetForfeited = Math.max(0, effectiveBudget - budgetDeployed);
 
-  // Full power: first 10 recipients get max share (budget / 10)
-  const fullPowerShare = Math.round(effectiveBudget / 10);
-  const isFullPower = sim.gratitudeRecipients <= 10;
+  // The MOST ONE PERSON can take out of a cycle: the cap, or the whole pool
+  // if the cap is above it.
+  //
+  // This used to read `cap * sim.gratitudeRecipients` under the label "most
+  // the pool can mint this cycle", which was two mistakes in one number:
+  // gratitudeRecipients is how many people THIS simulated member acknowledges,
+  // so the figure changed per viewer, and a village-wide ceiling cannot be
+  // derived from one member's sending at all. The simulator has no village-wide
+  // recipient count, so it now reports the quantity it genuinely knows.
+  const maxOnePersonTakes = sim.maxPayoutPerPerson > 0
+    ? Math.min(sim.regenDistributionPool, sim.maxPayoutPerPerson)
+    : sim.regenDistributionPool;
 
   const proposalParams = new URLSearchParams({
     category: "game_variable",
@@ -795,7 +817,7 @@ function GameSimulator() {
         <button
           onClick={() => setCompareMode((s) => !s)}
           title="Toggle side-by-side display of baseline vs your proposed value on every slider"
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs border transition-colors ${
             compareMode
               ? "bg-[#7dd87d]/20 border-[#7dd87d]/50 text-[#7dd87d]"
               : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
@@ -807,7 +829,7 @@ function GameSimulator() {
           onClick={undo}
           disabled={history.length === 0}
           title="Step back one slider move"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Undo2 className="w-3.5 h-3.5" /> Undo
         </button>
@@ -815,14 +837,14 @@ function GameSimulator() {
           onClick={reset}
           disabled={changeCount === 0}
           title="Reset every slider back to its current live value"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" /> Reset
         </button>
         <button
           onClick={copyPermalink}
           title="Copy a shareable URL that loads this exact simulator state"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
         >
           <Link2 className="w-3.5 h-3.5" /> Copy link
         </button>
@@ -830,14 +852,14 @@ function GameSimulator() {
           onClick={copyAsForumPost}
           disabled={changeCount === 0}
           title="Copy a markdown block ready to paste into a forum thread or Hypha proposal"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Copy className="w-3.5 h-3.5" /> Copy as forum post
         </button>
         <button
           onClick={() => setShowHistory((s) => !s)}
           title="Review or revert any earlier slider move this session"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
         >
           History ({history.length})
         </button>
@@ -889,7 +911,7 @@ function GameSimulator() {
               );
             })}
           </ol>
-          <p className="text-[10px] text-white/45 mt-2 px-2">
+          <p className="text-[10px] text-white/60 mt-2 px-2">
             Reverting rolls your simulator back to exactly that state and trims the history after it.
           </p>
         </div>
@@ -982,9 +1004,9 @@ function GameSimulator() {
           />
           <SliderRow
             label="Gratitude Base Budget (per cycle)"
-            help={varHelp(vars, "gratitude.budget_base")}
+            help={varHelp(vars, "gratitude.base_budget")}
             value={sim.gratitudeBudget}
-            {...varBounds(vars, "gratitude.budget_base", 50, 200)}
+            {...varBounds(vars, "gratitude.base_budget", 50, 200)}
             step={10}
             onChange={update("gratitudeBudget")}
             trajectory={trajectories.gratitudeBudget}
@@ -994,7 +1016,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="People Acknowledged (this cycle)"
-            help="How many different people you send gratitude to this cycle. The first 10 get your full impact. After 10, your impact per person starts diluting."
+            help="How many different people you acknowledge this cycle. Your budget is divided by this number or by the full-power threshold, whichever is larger. Acknowledge fewer than the threshold and the rest of your budget is forfeited."
             value={sim.gratitudeRecipients}
             min={1}
             max={30}
@@ -1029,6 +1051,19 @@ function GameSimulator() {
             trajectory={trajectories.regenDistributionPool}
             baseline={baseline.regenDistributionPool}
             ghost={ghostMap.regenDistributionPool}
+            compare={compareMode}
+          />
+          <SliderRow
+            label="Max Payout per Person (per cycle)"
+            help={varHelp(vars, "gratitude.max_payout_per_person")}
+            value={sim.maxPayoutPerPerson}
+            {...varBounds(vars, "gratitude.max_payout_per_person", 0, 10000)}
+            step={100}
+            unit="$"
+            onChange={update("maxPayoutPerPerson")}
+            trajectory={trajectories.maxPayoutPerPerson}
+            baseline={baseline.maxPayoutPerPerson}
+            ghost={ghostMap.maxPayoutPerPerson}
             compare={compareMode}
           />
           <SliderRow
@@ -1076,12 +1111,27 @@ function GameSimulator() {
           <OutcomeRow
             label={`Acknowledging ${sim.gratitudeRecipients} ${sim.gratitudeRecipients === 1 ? "person" : "people"}`}
             value={`${perPerson} per person`}
-            detail={isFullPower ? `Full power: each of ${sim.gratitudeRecipients} gets ${perPerson}` : `Diluting: over 10 recipients (${fullPowerShare} at full power)`}
+            detail={
+              sim.gratitudeRecipients < fullPowerThreshold
+                ? `${budgetDeployed} of ${effectiveBudget} deployed, ${budgetForfeited} forfeited (below the ${fullPowerThreshold}-person threshold)`
+                : isFullPower && sim.gratitudeRecipients === fullPowerThreshold
+                  ? `Full power: each of ${sim.gratitudeRecipients} gets ${perPerson}`
+                  : `Diluting: past ${fullPowerThreshold} recipients (${fullPowerShare} at full power)`
+            }
+          />
+          <OutcomeRow
+            label="Most any one person can receive"
+            value={`${maxOnePersonTakes.toLocaleString()} $ReGen`}
+            detail={
+              sim.maxPayoutPerPerson > 0
+                ? `The ${sim.maxPayoutPerPerson.toLocaleString()} cap, held under the ${sim.regenDistributionPool.toLocaleString()} pool. However much gratitude one person is sent, this is the ceiling, and anything the cap holds back is never created.`
+                : `Cap disabled: one person can take the whole ${sim.regenDistributionPool.toLocaleString()} pool.`
+            }
           />
           <OutcomeRow
             label="$ReGen from gratitude (if avg recipient)"
-            value={`~${Math.round(sim.regenDistributionPool / 50)} per cycle`}
-            detail={`Pool of ${sim.regenDistributionPool.toLocaleString()} split proportionally. Claim at ${sim.claimThreshold}+.`}
+            value={`~${Math.min(sim.maxPayoutPerPerson > 0 ? sim.maxPayoutPerPerson : Infinity, Math.round(sim.regenDistributionPool / 50))} per cycle`}
+            detail={`Pool of ${sim.regenDistributionPool.toLocaleString()} split proportionally, capped per person. Claim at ${sim.claimThreshold}+.`}
           />
         </CardContent>
       </Card>
@@ -1286,7 +1336,7 @@ function MiniSectionSimulator({
                 >
                   {changed ? (
                     <>
-                      <span className="text-white/40 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
+                      <span className="text-white/60 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
                       {current}{v.unit ?? ""}
                     </>
                   ) : (
@@ -1330,7 +1380,7 @@ function MiniSectionSimulator({
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Why do you want to change these values?"
           rows={2}
-          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/40 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
+          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/60 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
         />
       </div>
 
@@ -1482,7 +1532,7 @@ function BountyValuationSection() {
       {/* Learned demand factors */}
       <div>
         <h3 className="text-white/90 font-semibold mb-1">What the engine has learned</h3>
-        <p className="text-white/50 text-xs mb-3 max-w-2xl">
+        <p className="text-white/60 text-xs mb-3 max-w-2xl">
           Demand factors per circle and size. Above 1 means that kind of bounty kept going unclaimed, so the reward
           rose. Precedent is the median of what similar work has actually paid.
         </p>
@@ -1492,7 +1542,7 @@ function BountyValuationSection() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/50 text-left border-b border-white/10">
+                <tr className="text-white/60 text-left border-b border-white/10">
                   <th className="py-2 pr-4 font-medium">Circle</th>
                   <th className="py-2 pr-4 font-medium">Size</th>
                   <th className="py-2 pr-4 font-medium">Demand</th>
@@ -1507,7 +1557,7 @@ function BountyValuationSection() {
                     <td className="py-2 pr-4 text-white/70 capitalize">{d.scopeTier}</td>
                     <td className="py-2 pr-4 font-mono text-[#7dd87d]">{Number(d.factor).toFixed(2)}x</td>
                     <td className="py-2 pr-4 font-mono text-white/70">{d.precedentMedian != null ? `${fmtNum(d.precedentMedian)} $ReGen` : "—"}</td>
-                    <td className="py-2 text-white/50">{d.sampleSize}</td>
+                    <td className="py-2 text-white/60">{d.sampleSize}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1523,7 +1573,7 @@ function BountyValuationSection() {
           <p className="text-white/70 text-sm">
             <span className="font-mono text-[#7dd87d]">{fmtNum(info.committed)}</span> committed of{" "}
             <span className="font-mono">{fmtNum(info.seasonBudget)}</span> $ReGen
-            <span className="text-white/50"> ({fmtNum(Math.max(0, info.seasonBudget - info.committed))} available)</span>
+            <span className="text-white/60"> ({fmtNum(Math.max(0, info.seasonBudget - info.committed))} available)</span>
           </p>
         ) : (
           <p className="text-white/60 text-sm">
@@ -1587,7 +1637,7 @@ function BountyValuationSection() {
             </p>
           </div>
         ) : (
-          <p className="text-white/40 text-sm">Computing…</p>
+          <p className="text-white/60 text-sm">Computing…</p>
         )}
       </div>
     </div>

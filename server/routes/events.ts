@@ -12,6 +12,7 @@ import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggesti
 import { newsletterSubscribers, recordings } from "../../drizzle/schema";
 import { and, asc, desc, eq, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyNewEvent } from "../_core/notify";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
@@ -932,9 +933,13 @@ export const eventsRouter = router({
         return { success: true, alreadyCheckedIn: true, tokensAwarded: 0, eventTitle: event.title };
       }
 
+      // Same variable the admin mark-attendance path reads — the reward was
+      // a 33 hardcoded independently in both files.
+      const attendanceReward = Math.round(await getGameVariableOr("events.attendance_reward_regen", 33));
+
       const [ledgerResult] = await database.insert(regenTokenLedger).values({
         email: input.email,
-        amount: 33,
+        amount: attendanceReward,
         reason: "event_attendance",
         eventId: event.id,
         notes: `Self check-in: ${event.title}`,
@@ -945,11 +950,11 @@ export const eventsRouter = router({
         eventId: event.id,
         email: input.email,
         markedByAdminId: null,
-        tokensAwarded: 33,
+        tokensAwarded: attendanceReward,
         tokenLedgerEntryId: ledgerEntryId,
       });
 
-      return { success: true, alreadyCheckedIn: false, tokensAwarded: 33, eventTitle: event.title };
+      return { success: true, alreadyCheckedIn: false, tokensAwarded: attendanceReward, eventTitle: event.title };
     }),
 
   // ── #18. Public: unsubscribe from event reminders ────────

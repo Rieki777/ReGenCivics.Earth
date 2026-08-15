@@ -1,4 +1,4 @@
-import { bigint, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, char, date, decimal, index, int, json, mediumtext, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -117,10 +117,28 @@ export const applications = mysqlTable("applications", {
   websiteUrl: varchar("websiteUrl", { length: 512 }),
   videoUrl: varchar("videoUrl", { length: 512 }),
   documentsUrl: text("documentsUrl"), // JSON array of S3 URLs
+
+  // ReGen Ship quest referral attribution (Free Passage Quest action #3).
+  // Set from /apply?ref=<handle>. When this application reaches a shortlisted
+  // status, the matching ship_quest_completions row auto-verifies. Nullable so
+  // ordinary applications are unaffected.
+  shipReferralHandle: varchar("shipReferralHandle", { length: 40 }),
+  shipReferralUserId: int("shipReferralUserId"),
   additionalNotes: text("additionalNotes"),
+
+  // Conversation record from the Gardener (the /apply Conversational Companion).
+  // JSON array of { role: "user" | "assistant", content } turns, saved with the
+  // draft so reviewers can read how the applicant talked about their project.
+  // MEDIUMTEXT in the database (migration 0188); nullable, typed apps unaffected.
+  companionTranscript: text("companionTranscript"),
   
   // Metadata
   submittedAt: timestamp("submittedAt"),
+  // Incubator season cohort (1, 2, ...). Stamped at submit time from
+  // shared/incubatorSeason.ts; migration 0219 backfilled existing rows.
+  // The admin season filter reads this tag, never dates (the Season 1
+  // batch was seeded with submittedAt later than real Season 2 apps).
+  season: int("season").default(2),
   adminSeeded: tinyint("adminSeeded").default(0).notNull(),
   stewardUserId: int("stewardUserId"),
 
@@ -137,6 +155,16 @@ export const applications = mysqlTable("applications", {
   // for steward_earned to fire on the land_project path.
   seasonsCompleted: int("seasonsCompleted").default(0).notNull(),
   gameLaunchedAt: timestamp("gameLaunchedAt"),
+
+  // Optional needs/offers capture (Phase B2): mirrored to project_needs /
+  // player_offers on submit, tagged source "incubator_application".
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+
+  // The ReGen impact schema (Phase C1): validated against shared/impact.ts
+  // impactDataSchema on every write; admin-edited, publicly summarized only
+  // through publicImpactSummary().
+  impactData: json("impact_data"),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -267,7 +295,9 @@ export const investorInquiries = mysqlTable("investor_inquiries", {
     "video_call"
   ]).default("email").notNull(),
   newsletterOptIn: int("newsletterOptIn").default(0).notNull(),
-  
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -543,6 +573,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal", "newsletter"]).default("monthly").notNull(),
   // User notification preferences (JSON: { communityUpdates, questAnnouncements })
   notificationPrefs: json("notificationPrefs"),
+
+  // Consent-based player memory opt-in (Phase D2, improvement 13). Default
+  // OFF; the Guide writes and reads journey facts only when this is 1.
+  companionMemoryOptIn: tinyint("companionMemoryOptIn").default(0).notNull(),
 
   // Forum profile fields folded in from userProfiles (0169, Phase 2B). The
   // forum reads these from playerProfiles now; userProfiles keeps its
@@ -1070,6 +1104,12 @@ export const campaigns = mysqlTable("campaigns", {
   reviewedBy: int("reviewedBy"), // Admin who reviewed
   reviewedAt: timestamp("reviewedAt"),
   generatedImageUrl: varchar("generatedImageUrl", { length: 512 }), // AI-generated card image
+
+  // Crowdpooling flags (0205). isDemo labels seeded example campaigns: they
+  // render with the Example badge and never count in the gallery impact strip.
+  isDemo: tinyint("isDemo").default(0).notNull(),
+  forumPostId: int("forumPostId"), // Campaign discussion thread
+  seasonId: int("seasonId"), // Which season this campaign belongs to
 });
 
 export type Campaign = typeof campaigns.$inferSelect;
@@ -1118,7 +1158,48 @@ export const campaignItems = mysqlTable("campaign_items", {
   // Common fields
   estimatedValue: int("estimatedValue").default(0).notNull(),
   pledgedValue: int("pledgedValue").default(0).notNull(), // How much has been pledged for this item
-  
+
+  // Needs registry (0202, CROWDPOOLING_PLATFORM_SPEC.md Part B Migration A).
+  // kind is what shape the need takes. 'crypto' is trackable money on-platform
+  // (decision 7); fiat renders only as 'financial_link' partner CTAs.
+  kind: mysqlEnum("kind", [
+    "item",
+    "role",
+    "shift",
+    "loan",
+    "knowledge",
+    "crypto",
+    "financial_link",
+  ]).default("item").notNull(),
+  // Which of the 9 capitals this need feeds (decision 8). NULL for legacy roles
+  // until a steward sets it.
+  capitalType: mysqlEnum("capitalType", [
+    "intellectual",
+    "social",
+    "material",
+    "financial",
+    "living",
+    "cultural",
+    "spiritual",
+    "experiential",
+    "health",
+  ]),
+  // Slot tracking: accepted claims reserve quantityClaimed (ghost progress),
+  // delivery confirms quantityDelivered (solid progress, decision 4).
+  quantityWanted: int("quantityWanted").default(1).notNull(),
+  quantityClaimed: int("quantityClaimed").default(0).notNull(),
+  quantityDelivered: int("quantityDelivered").default(0).notNull(),
+  needDeadline: timestamp("needDeadline"),
+  // Shift needs: the dated work-party window
+  shiftStartsAt: timestamp("shiftStartsAt"),
+  shiftEndsAt: timestamp("shiftEndsAt"),
+  // Loan needs: the custody window (project is custodian, never P2P)
+  loanWindowStart: timestamp("loanWindowStart"),
+  loanWindowEnd: timestamp("loanWindowEnd"),
+  groupClaimable: tinyint("groupClaimable").default(0).notNull(), // Partial claims allowed
+  priorityPinned: tinyint("priorityPinned").default(0).notNull(), // Sorts first in the registry
+  imageUrl: varchar("imageUrl", { length: 512 }),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1144,13 +1225,15 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   contributorPhone: varchar("contributorPhone", { length: 50 }),
   contributorBio: text("contributorBio"), // Short bio about the contributor
   
-  // Contribution Type
+  // Contribution Type (0203). 'financial' means crypto pledges only, decision 7:
+  // fiat routes to partner links and never touches us.
   contributionType: mysqlEnum("contributionType", [
     "land",
     "equipment",
     "role",
     "resource",
-    "financial"
+    "financial",
+    "knowledge"
   ]).notNull(),
   
   // Contribution Details (varies by type)
@@ -1186,19 +1269,35 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   // Value
   estimatedValue: int("estimatedValue").default(0).notNull(), // Estimated value in campaign currency
   
-  // Status
+  // Status (0203). accepted reserves quantity (ghost progress), fulfilled is
+  // the payoff moment (decision 4), thanked closes the loop, expired is
+  // terminal and set by the nightly sweep.
   status: mysqlEnum("status", [
     "pending",      // Submitted, awaiting campaign owner review
     "accepted",     // Accepted by campaign owner
     "rejected",     // Rejected by campaign owner
     "withdrawn",    // Withdrawn by contributor
-    "fulfilled"     // Contribution has been delivered/completed
+    "fulfilled",    // Contribution has been delivered/completed
+    "expired",      // Claim window passed, quantity released (nightly sweep)
+    "thanked"       // Steward attached an impact note/photo after fulfillment
   ]).default("pending").notNull(),
-  
+
   // Communication
   contributorNotes: text("contributorNotes"), // Notes from contributor
   ownerNotes: text("ownerNotes"), // Notes from campaign owner
-  
+
+  // Claims upgrade (0203, CROWDPOOLING_PLATFORM_SPEC.md Part B Migration B)
+  quantityPledged: int("quantityPledged").default(1).notNull(), // Slots claimed on the need
+  claimExpiresAt: timestamp("claimExpiresAt"), // From crowdpool.claim_expiry_days_* by need kind
+  acknowledgedAt: timestamp("acknowledgedAt"), // When the steward sent thanks
+  acknowledgedNote: text("acknowledgedNote"), // Required for the thanked status
+  acknowledgedImageUrl: varchar("acknowledgedImageUrl", { length: 512 }),
+  referredBy: varchar("referredBy", { length: 16 }), // Share token from ?ref=
+  isAnonymous: tinyint("isAnonymous").default(0).notNull(), // Renders as "A contributor" publicly
+  hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 16 }), // Set by formalizeOnHypha
+  hyphaConfirmedAt: timestamp("hyphaConfirmedAt"), // Stamped by cascadeCrowdpoolPassed when the DHO proposal passes on chain
+  playerContributionId: int("playerContributionId"), // Living Tree row created on fulfilled
+
   // Metadata
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
   reviewedAt: timestamp("reviewedAt"),
@@ -1209,6 +1308,68 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
 
 export type CampaignContribution = typeof campaignContributions.$inferSelect;
 export type InsertCampaignContribution = typeof campaignContributions.$inferInsert;
+
+/**
+ * Campaign Updates (0204). The numbered public journal: short letters from the
+ * land. updateNumber auto-increments per campaign in the procedure layer.
+ * Publishing fans out campaign_update notifications to followers.
+ */
+export const campaignUpdates = mysqlTable("campaign_updates", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  authorId: int("authorId").notNull(),
+  updateNumber: int("updateNumber").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  imageUrls: json("imageUrls"),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("campaign_updates_campaign_idx").on(t.campaignId),
+]));
+export type CampaignUpdate = typeof campaignUpdates.$inferSelect;
+export type InsertCampaignUpdate = typeof campaignUpdates.$inferInsert;
+
+/**
+ * Campaign Partner Links (0204). Ma Earth / GoSteward / grant CTAs with
+ * nightly-hydrated cached numbers. Money never touches us (decisions 2 + 7):
+ * these are read-only display links, contributors complete on the partner site.
+ */
+export const campaignPartnerLinks = mysqlTable("campaign_partner_links", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  partner: mysqlEnum("partner", ["maearth", "gosteward", "grant", "other"]).notNull(),
+  label: varchar("label", { length: 255 }),
+  url: varchar("url", { length: 512 }).notNull(),
+  cachedRaised: int("cachedRaised"),
+  cachedContributorCount: int("cachedContributorCount"),
+  cachedPercent: int("cachedPercent"),
+  lastFetchedAt: timestamp("lastFetchedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("campaign_partner_links_campaign_idx").on(t.campaignId),
+]));
+export type CampaignPartnerLink = typeof campaignPartnerLinks.$inferSelect;
+export type InsertCampaignPartnerLink = typeof campaignPartnerLinks.$inferInsert;
+
+/**
+ * Campaign Followers (0205). Email-only followers from the GetNotified form,
+ * no account required. Account holders follow via user_follows with
+ * targetType 'campaign'. unsubscribeToken goes into every email.
+ * The unique key doubles as the campaignId lookup index (leftmost prefix).
+ */
+export const campaignFollowers = mysqlTable("campaign_followers", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  unsubscribeToken: varchar("unsubscribeToken", { length: 32 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("campaign_followers_campaign_email_uq").on(t.campaignId, t.email),
+]));
+export type CampaignFollower = typeof campaignFollowers.$inferSelect;
+export type InsertCampaignFollower = typeof campaignFollowers.$inferInsert;
 
 /**
  * Campaign Images table
@@ -1712,6 +1873,14 @@ export const gratitudeCycles = mysqlTable("gratitude_cycles", {
   status: varchar("status", { length: 16 }).default("open").notNull(),
   distributedAt: timestamp("distributedAt"),
   totalWeight: double("totalWeight"),
+  // Created by drizzle/0223. Declared here because Drizzle SILENTLY DROPS an
+  // unknown key from .set() rather than failing: without this line closeCycle
+  // still passes distributedTotal, the UPDATE omits it, tsc stays quiet
+  // (gratitude-cycles.ts types its db as any) and the drift check is
+  // one-directional by design, so every gate passes while the column is NULL
+  // on every row forever. It was deleted on main as a phantom column while
+  // the migration that creates it was in flight on a branch.
+  distributedTotal: int("distributedTotal"),
 }, (t) => ([
   uniqueIndex("uniq_cycle_number").on(t.cycleNumber),
   index("idx_gratitude_cycle_status").on(t.status),
@@ -2126,6 +2295,30 @@ export const customGameInquiries = mysqlTable("custom_game_inquiries", {
 export type CustomGameInquiry = typeof customGameInquiries.$inferSelect;
 export type InsertCustomGameInquiry = typeof customGameInquiries.$inferInsert;
 
+// ─── Custom Game Applications (Sylva intake on /custom-games/apply) ───────────
+// One row per Custom Games application. blueprintDraft is the progressive
+// blueprint.json v0.3 (shared/customGameBlueprint.ts); transcript is the full
+// Sylva conversation (MEDIUMTEXT in SQL; a 60-turn talk can pass 64KB). score
+// is the auto-qualification score computed at submit.
+export const customGameApplications = mysqlTable("custom_game_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  applicantName: varchar("applicant_name", { length: 255 }).notNull(),
+  applicantEmail: varchar("applicant_email", { length: 255 }).notNull(),
+  applicantRole: varchar("applicant_role", { length: 50 }).notNull(),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["draft", "submitted", "reviewing", "in_conversation", "accepted", "declined"]).default("submitted").notNull(),
+  blueprintDraft: json("blueprint_draft"),
+  transcript: text("transcript"),
+  score: int("score").default(0).notNull(),
+  internalNotes: text("internal_notes"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CustomGameApplication = typeof customGameApplications.$inferSelect;
+export type InsertCustomGameApplication = typeof customGameApplications.$inferInsert;
+
 // ─── Alliance Organisations ────────────────────────────────────────────────────
 // Registry of alliance partner organisations. Mirrors the hardcoded list in
 // Connect.tsx but stored in DB so they can have forum threads, status, etc.
@@ -2410,6 +2603,29 @@ export const recordings = mysqlTable("recordings", {
 
 export type Recording = typeof recordings.$inferSelect;
 export type InsertRecording = typeof recordings.$inferInsert;
+
+/**
+ * Community-call intelligence (Stage 7). One cached extraction pass per
+ * recording emits typed insights: wisdom/idea flow to the vault and feed;
+ * decision/commitment/role_change/strategic_move surface in /admin/calls as
+ * SUGGESTIONS (accept/dismiss, never auto-tasks). speaker keeps attribution;
+ * the voice learning loop never trains on call material.
+ */
+export const callInsights = mysqlTable("call_insights", {
+  id: int("id").autoincrement().primaryKey(),
+  recordingId: int("recording_id").notNull(),
+  kind: mysqlEnum("kind", ["wisdom", "idea", "decision", "commitment", "role_change", "strategic_move"]).notNull(),
+  content: varchar("content", { length: 1000 }).notNull(),
+  speaker: varchar("speaker", { length: 120 }),
+  timestampSecs: int("timestamp_secs"),
+  status: mysqlEnum("status", ["suggested", "accepted", "dismissed"]).default("suggested").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  recordingIdx: index("call_insights_recording_idx").on(t.recordingId, t.kind),
+  statusIdx: index("call_insights_status_idx").on(t.status, t.kind, t.createdAt),
+}));
+export type CallInsight = typeof callInsights.$inferSelect;
 
 /**
  * roleHolders: closes Gap A in the Movement Coordination Engine spec.
@@ -2728,6 +2944,7 @@ export const notifications = mysqlTable("notifications", {
     "new_contribution",
     "claim_complete",
     "claim_failed",
+    "campaign_update",
   ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
@@ -2799,12 +3016,13 @@ export const forumPostReads = mysqlTable("forum_post_reads", {
 ]));
 export type ForumPostRead = typeof forumPostReads.$inferSelect;
 
-// One polymorphic follow table (0168): users, categories, bioregions, tags.
-// targetId is VARCHAR so tag slugs and numeric ids share one column.
+// One polymorphic follow table (0168): users, categories, bioregions, tags,
+// and campaigns (0205). targetId is VARCHAR so tag slugs and numeric ids
+// share one column.
 export const userFollows = mysqlTable("user_follows", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag"]).notNull(),
+  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag", "campaign"]).notNull(),
   targetId: varchar("targetId", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ([
@@ -3015,7 +3233,7 @@ export const proposals = mysqlTable("proposals", {
   hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 32 }),
   executionPayload: json("executionPayload"),
   objectionLog: json("objectionLog"),
-  // Seeded teaching example (0175). When 1, this proposal is a demonstration:
+  // Seeded teaching example (0226). When 1, this proposal is a demonstration:
   // it renders at its lifecycle stage but is blocked from advancing or firing
   // any side effect. Seeded/removed by scripts/seed-assembly-examples.ts.
   isExample: tinyint("isExample").default(0).notNull(),
@@ -3127,6 +3345,8 @@ export const localFoodApplications = mysqlTable("local_food_applications", {
   regenerativePractices: text("regenerativePractices"),
   websiteUrl: varchar("websiteUrl", { length: 500 }),
   localScaleProfileUrl: varchar("localScaleProfileUrl", { length: 500 }),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
   status: mysqlEnum("status", ["submitted", "under_review", "approved", "active", "declined"]).default("submitted"),
   communityRatingsCount: int("communityRatingsCount").default(0),
   regenerativeScore: double("regenerativeScore"),
@@ -3835,6 +4055,18 @@ export const plays = mysqlTable("plays", {
   externalPriceLabel: varchar("externalPriceLabel", { length: 100 }),
   scale: mysqlEnum("scale", ["small", "medium", "large"]).default("medium"),
   communityType: varchar("communityType", { length: 100 }),
+  // Vision Plays (0225): 'vision' = a designed economic system, the
+  // needs-first proposal from the Design a Play quest; 'culture' = the
+  // original 14-section packaged culture from an operating community.
+  // Lifecycle reads: envisioned (vision, no adoptions) -> in trial
+  // (vision with adoptions) -> practiced (culture).
+  kind: mysqlEnum("kind", ["vision", "culture"]).default("culture").notNull(),
+  needsFramework: text("needsFramework"),
+  receipts: text("receipts"),
+  robustness: json("robustness"),
+  // The Crowdpooling campaign this play launched (plays.launchCampaign).
+  // A set campaignId is the strongest "in trial" signal a vision play has.
+  campaignId: int("campaignId"),
   sectionIdentity: text("sectionIdentity"),
   sectionGovernance: text("sectionGovernance"),
   sectionEconomics: text("sectionEconomics"),
@@ -4112,6 +4344,10 @@ export const churchDonations = mysqlTable("church_donations", {
   currency: varchar("currency", { length: 8 }).notNull().default("usd"),
   giftInterval: mysqlEnum("giftInterval", ["one_time", "monthly"]).notNull().default("one_time"),
   status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).notNull().default("pending"),
+  // Program tag (e.g. regen_ship_gift) + optional crew profile ref so ship-gift
+  // revenue is segmentable by crew in Reconciliation/Transparency.
+  program: varchar("program", { length: 64 }),
+  crewProfileId: int("crewProfileId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
@@ -4178,3 +4414,1315 @@ export const elderCorpusChunks = mysqlTable("elder_corpus_chunks", {
   index("elder_corpus_elder_idx").on(table.elder, table.chunkIndex),
 ]));
 export type ElderCorpusChunk = typeof elderCorpusChunks.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ReGen Ship (CORE program). The regenerative pirate ship + ReGen Fleet.
+// See CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md and ADR entries for
+// ReGen Ship. Loose-FK convention: nullable int columns reference other tables
+// by id without an enforced constraint, matching the rest of this schema.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Treasure-map locations: land projects, springs, waterfalls, food forests,
+// seed sites, boondocks, event venues. Verified rows render on the public map.
+export const shipLocations = mysqlTable("ship_locations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  type: mysqlEnum("type", [
+    "land_project", "spring", "waterfall", "lake", "geology",
+    "forest", "food_forest", "seed_site", "boondock", "event_venue",
+    "commercial_boondock",
+  ]).notNull(),
+  // Provenance (ADR-35). NULL for hand-suggested crew pins. Bulk imports stamp
+  // where each pin came from and under what license; the detail drawer shows it.
+  source: varchar("source", { length: 40 }),
+  sourceUrl: varchar("sourceUrl", { length: 512 }),
+  sourceLicense: varchar("sourceLicense", { length: 40 }),
+  externalId: varchar("externalId", { length: 128 }),
+  lat: double("lat").notNull(),
+  lng: double("lng").notNull(),
+  bioregion: varchar("bioregion", { length: 64 }).notNull().default("cascadia"),
+  region: varchar("region", { length: 64 }),
+  description: text("description"),
+  websiteUrl: varchar("websiteUrl", { length: 512 }),
+  imageUrl: varchar("imageUrl", { length: 512 }),
+  // Field-verifiable columns (boondocks + springs). maxRigLengthFt drives the
+  // "fits 40 ft" filter; waterQualityUrl links spring test results.
+  maxRigLengthFt: int("maxRigLengthFt"),
+  accessNotes: text("accessNotes"),
+  waterQualityUrl: varchar("waterQualityUrl", { length: 512 }),
+  lastVerifiedAt: timestamp("lastVerifiedAt"),
+  verifiedCount: int("verifiedCount").notNull().default(0),
+  isVerified: boolean("isVerified").notNull().default(false),
+  addedByUserId: int("addedByUserId"),
+  linkedEventId: int("linkedEventId"),
+  linkedApplicationId: int("linkedApplicationId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_locations_type_idx").on(table.type),
+  index("ship_locations_verified_idx").on(table.isVerified),
+  index("ship_locations_bioregion_idx").on(table.bioregion),
+  index("ship_locations_source_idx").on(table.source),
+  uniqueIndex("ship_locations_source_external_idx").on(table.source, table.externalId),
+]));
+export type ShipLocation = typeof shipLocations.$inferSelect;
+export type InsertShipLocation = typeof shipLocations.$inferInsert;
+
+// Field-verification flags: a crew reports a problem with a pin (gate locked,
+// spring dry, rig no longer fits). Feeds the admin queue. See ADR-35.
+export const shipLocationFlags = mysqlTable("ship_location_flags", {
+  id: int("id").autoincrement().primaryKey(),
+  locationId: int("locationId").notNull(),
+  userId: int("userId"),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedByUserId: int("resolvedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_location_flags_location_idx").on(table.locationId),
+  index("ship_location_flags_open_idx").on(table.resolvedAt),
+]));
+export type ShipLocationFlag = typeof shipLocationFlags.$inferSelect;
+
+// Voyage bookings. Our calendar is the source of truth; the platform rental is
+// a separate legal charge. Dates are YYYY-MM-DD strings for easy comparison.
+export const shipBookings = mysqlTable("ship_bookings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  guests: int("guests").notNull().default(1),
+  /** How many of the crew are children (the fifth berth opens only for a family). */
+  children: int("children").notNull().default(0),
+  status: mysqlEnum("status", [
+    "requested", "approved", "platform_pending", "confirmed",
+    "active", "completed", "cancelled",
+  ]).notNull().default("requested"),
+  /** Keeper-run orientation gate: set when the 2-hour walkthrough is complete. */
+  orientationCompletedAt: timestamp("orientationCompletedAt"),
+  orientationKeeperId: int("orientationKeeperId"),
+  /** Crew roles for this voyage: { captain, navigator, quartermaster, bosun, seedKeeper }. */
+  crewRoles: json("crewRoles"),
+  /** Pre-sail checklist completions, one per drive: [{ at, byName }]. */
+  preSailLog: json("preSailLog"),
+  /** Public slug for the Homecoming recap page, minted when the voyage completes. */
+  publicSlug: varchar("publicSlug", { length: 80 }),
+  /** Crew can hide the whole Homecoming page. */
+  homecomingHidden: boolean("homecomingHidden").notNull().default(false),
+  platformBookingRef: varchar("platformBookingRef", { length: 255 }),
+  dietCommitmentAt: timestamp("dietCommitmentAt"),
+  waterDoctrineCommitmentAt: timestamp("waterDoctrineCommitmentAt"),
+  /** Voyage Covenant acceptance, recorded at booking with the version accepted
+   *  (see shared/shipTerms.ts SHIP_TERMS_VERSION) so old acceptances stay auditable. */
+  agreementAcceptedAt: timestamp("agreementAcceptedAt"),
+  agreementVersion: varchar("agreementVersion", { length: 16 }),
+  offeringDonationId: int("offeringDonationId"),
+  referredByUserId: int("referredByUserId"),
+  isWinnerVoyage: boolean("isWinnerVoyage").notNull().default(false),
+  isGifted: boolean("isGifted").notNull().default(false),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_bookings_status_idx").on(table.status),
+  index("ship_bookings_start_idx").on(table.startDate),
+  index("ship_bookings_user_idx").on(table.userId),
+]));
+export type ShipBooking = typeof shipBookings.$inferSelect;
+export type InsertShipBooking = typeof shipBookings.$inferInsert;
+
+// Admin-managed date ranges the ship is unavailable (maintenance, holds, the
+// platform's own bookings mirrored in).
+export const shipBlackoutDates = mysqlTable("ship_blackout_dates", {
+  id: int("id").autoincrement().primaryKey(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  reason: varchar("reason", { length: 255 }),
+  // Who wrote this row: "manual" for the admin panel, "outdoorsy" for the
+  // inbound sync. The outbound iCal feed must exclude the synced ones or we
+  // hand the channel its own bookings back as blocks (migration 0224).
+  source: varchar("source", { length: 24 }).notNull().default("manual"),
+  /** The channel's own VEVENT UID. Unique, and NULL on every hand-written row. */
+  externalUid: varchar("externalUid", { length: 255 }),
+  externalUpdatedAt: timestamp("externalUpdatedAt"),
+  syncedAt: timestamp("syncedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_blackout_start_idx").on(table.startDate),
+  unique("ship_blackout_external_uid_idx").on(table.externalUid),
+  index("ship_blackout_source_idx").on(table.source),
+]));
+export type ShipBlackoutDate = typeof shipBlackoutDates.$inferSelect;
+
+// Seasonal pricing multipliers over date ranges (peak +25%, shoulder -20%, etc).
+export const shipPricingWindows = mysqlTable("ship_pricing_windows", {
+  id: int("id").autoincrement().primaryKey(),
+  startDate: date("startDate", { mode: "string" }).notNull(),
+  endDate: date("endDate", { mode: "string" }).notNull(),
+  multiplier: decimal("multiplier", { precision: 4, scale: 2 }).notNull().default("1.00"),
+  label: varchar("label", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_pricing_start_idx").on(table.startDate),
+]));
+export type ShipPricingWindow = typeof shipPricingWindows.$inferSelect;
+
+// The Free Passage Quest checklist definitions (seeded, admin-editable order).
+export const shipQuestActions = mysqlTable("ship_quest_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 120 }).notNull().unique(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  points: int("points").notNull().default(0),
+  isRequired: boolean("isRequired").notNull().default(true),
+  proofType: mysqlEnum("proofType", [
+    "link", "photo", "referral_shortlisted", "game_quest", "forum",
+  ]).notNull().default("link"),
+  // References quest_completions.questId (a varchar slug like "quest-3"), e.g.
+  // the existing Food Foresting quest, for auto-verification.
+  linkedQuestId: varchar("linkedQuestId", { length: 100 }),
+  forumPostId: int("forumPostId"),
+  // Item 16: how the action verifies. "auto" awards on a forum post (writing
+  // quests) or a system event; "crew" awards when the reviewer approves.
+  verificationType: mysqlEnum("verificationType", ["auto", "crew"]).notNull().default("crew"),
+  // How many times one player can complete this action (item 14b / item 11).
+  maxSubmissions: int("maxSubmissions").notNull().default(1),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_quest_actions_sort_idx").on(table.sortOrder),
+]));
+export type ShipQuestAction = typeof shipQuestActions.$inferSelect;
+
+// A player's submission/completion of a quest action. Unique per (user, action).
+export const shipQuestCompletions = mysqlTable("ship_quest_completions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  actionId: int("actionId").notNull(),
+  proofUrl: varchar("proofUrl", { length: 512 }),
+  note: text("note"),
+  status: mysqlEnum("status", ["pending", "verified", "rejected"]).notNull().default("pending"),
+  verifiedByUserId: int("verifiedByUserId"),
+  verifiedAt: timestamp("verifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("ship_quest_completion_uq").on(table.userId, table.actionId),
+  index("ship_quest_completion_user_idx").on(table.userId),
+  index("ship_quest_completion_status_idx").on(table.status),
+]));
+export type ShipQuestCompletion = typeof shipQuestCompletions.$inferSelect;
+
+// Item 13: crew pooling. A qualified player (150+ points) can pool with others
+// into a crew (cap 4, or 5 for a family), matched by overlapping open weeks.
+export const shipQuestCrews = mysqlTable("ship_quest_crews", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  isFamily: tinyint("isFamily").notNull().default(0),
+  status: mysqlEnum("status", ["forming", "matched", "drawn"]).notNull().default("forming"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("ship_quest_crews_creator_idx").on(t.createdByUserId),
+]));
+export type ShipQuestCrew = typeof shipQuestCrews.$inferSelect;
+
+export const shipQuestCrewMembers = mysqlTable("ship_quest_crew_members", {
+  id: int("id").autoincrement().primaryKey(),
+  crewId: int("crewId").notNull(),
+  userId: int("userId").notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("ship_quest_crew_member_user_uq").on(t.userId),
+  index("ship_quest_crew_member_crew_idx").on(t.crewId),
+]));
+export type ShipQuestCrewMember = typeof shipQuestCrewMembers.$inferSelect;
+
+// Per-player availability: the weeks they cannot sail + whether they want matching.
+export const shipQuestAvailability = mysqlTable("ship_quest_availability", {
+  userId: int("userId").primaryKey(),
+  blockedWeeks: json("blockedWeeks"),
+  seekingCrew: tinyint("seekingCrew").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ShipQuestAvailability = typeof shipQuestAvailability.$inferSelect;
+
+// Nomination track: anyone can nominate anyone (including self) for a bonus slot.
+export const shipNominations = mysqlTable("ship_nominations", {
+  id: int("id").autoincrement().primaryKey(),
+  nominatorUserId: int("nominatorUserId"),
+  nomineeName: varchar("nomineeName", { length: 200 }).notNull(),
+  nomineeContact: varchar("nomineeContact", { length: 320 }),
+  reason: text("reason").notNull(),
+  isSelfNomination: boolean("isSelfNomination").notNull().default(false),
+  status: mysqlEnum("status", ["submitted", "shortlisted", "selected", "approved_for_draw"]).notNull().default("submitted"),
+  // Set once the nominee has an account: an approved nomination becomes a live,
+  // winnable draw entry only when the nominee is reachable.
+  nomineeUserId: int("nomineeUserId"),
+  inviteEmailSentAt: timestamp("inviteEmailSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_nominations_status_idx").on(table.status),
+]));
+export type ShipNomination = typeof shipNominations.$inferSelect;
+
+// Crew profile: the sponsorable card a crew fills in on entering the draw
+// (threshold reached or nomination approved). Linked to a user or a nomination.
+export const shipCrewProfiles = mysqlTable("ship_crew_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  nominationId: int("nominationId"),
+  displayName: varchar("displayName", { length: 200 }).notNull(),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  bio: text("bio"),
+  intent: text("intent"),
+  videoUrl: varchar("videoUrl", { length: 512 }),
+  isPublic: boolean("isPublic").notNull().default(false),
+  sponsorGoalCents: int("sponsorGoalCents").notNull().default(210000),
+  sponsoredCents: int("sponsoredCents").notNull().default(0),
+  status: mysqlEnum("status", ["draft", "published", "sponsored", "sailed"]).notNull().default("draft"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("ship_crew_user_uq").on(table.userId),
+  unique("ship_crew_nomination_uq").on(table.nominationId),
+  index("ship_crew_status_idx").on(table.status),
+  index("ship_crew_public_idx").on(table.isPublic),
+]));
+export type ShipCrewProfile = typeof shipCrewProfiles.$inferSelect;
+export type InsertShipCrewProfile = typeof shipCrewProfiles.$inferInsert;
+
+// Audit log of each free-voyage drawing: the eligible set, weights, seed, roll,
+// and winner. A drawing is weighted-random by tickets; storing the seed + audit
+// makes every draw reproducible and checkable.
+export const shipGiveawayDrawings = mysqlTable("ship_giveaway_drawings", {
+  id: int("id").autoincrement().primaryKey(),
+  drawnByUserId: int("drawnByUserId"),
+  seed: bigint("seed", { mode: "number" }).notNull(),
+  totalTickets: int("totalTickets").notNull(),
+  roll: decimal("roll", { precision: 20, scale: 4 }).notNull(),
+  eligibleCount: int("eligibleCount").notNull().default(0),
+  winnerUserId: int("winnerUserId"),
+  winnerNominationId: int("winnerNominationId"),
+  winnerLabel: varchar("winnerLabel", { length: 200 }),
+  // Set when a public entry (ship_giveaway_entries) wins: lets a prior public
+  // winner be excluded from later draws and be notified at their entry email.
+  winnerEntryId: int("winnerEntryId"),
+  // The threshold-ticket cap chosen at draw time (null = uncapped). Recorded so
+  // the counsel decision and the exact weights used are on the audit row.
+  thresholdCap: int("thresholdCap"),
+  audit: json("audit"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_giveaway_created_idx").on(table.createdAt),
+]));
+export type ShipGiveawayDrawing = typeof shipGiveawayDrawings.$inferSelect;
+
+// The public entry layer for the Free Voyage Giveaway. A zero-effort base entry
+// (email only) for the public sweepstakes; verified entries feed the SAME draw as
+// quest threshold entrants and approved nominations. bonusTickets holds the
+// credited bonus entries; referrals is capped at 40 (the referral credit ceiling)
+// and the draw weight of an entry is 1 + referrals + nomination + quest + ig + yt
+// (publicEntryTickets in server/lib/ship-logic.ts). funnelTag routes the entrant
+// to the right post-campaign list. No "raffle"/"tickets" wording ever reaches a
+// public surface; those are internal names only.
+export const shipGiveawayEntries = mysqlTable("ship_giveaway_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  userId: int("userId"),
+  verifiedAt: timestamp("verifiedAt"),
+  verifyToken: varchar("verifyToken", { length: 64 }).notNull(),
+  verifyEmailSentAt: timestamp("verifyEmailSentAt"),
+  verifyResentAt: timestamp("verifyResentAt"),
+  welcomeEmailSentAt: timestamp("welcomeEmailSentAt"),
+  funnelTag: mysqlEnum("funnelTag", ["land", "voyage", "support", "curious"]),
+  referralCode: varchar("referralCode", { length: 16 }).notNull(),
+  referredBy: varchar("referredBy", { length: 16 }),
+  bonusTickets: json("bonusTickets").$type<{ referrals: number; nomination: number; quest: number; ig: number; yt: number }>(),
+  nominationText: text("nominationText"),
+  nominationId: int("nominationId"),
+  src: varchar("src", { length: 80 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("ship_giveaway_entry_email_uq").on(table.email),
+  unique("ship_giveaway_entry_code_uq").on(table.referralCode),
+  unique("ship_giveaway_entry_token_uq").on(table.verifyToken),
+  index("ship_giveaway_entry_referredby_idx").on(table.referredBy),
+  index("ship_giveaway_entry_verified_idx").on(table.verifiedAt),
+  index("ship_giveaway_entry_user_idx").on(table.userId),
+]));
+export type ShipGiveawayEntry = typeof shipGiveawayEntries.$inferSelect;
+export type InsertShipGiveawayEntry = typeof shipGiveawayEntries.$inferInsert;
+
+// Ship Keeper role applications ($200 per turnover).
+export const shipKeeperApplications = mysqlTable("ship_keeper_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  location: varchar("location", { length: 255 }),
+  experience: text("experience"),
+  availability: text("availability"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+  status: mysqlEnum("status", ["submitted", "interviewing", "accepted", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_keeper_status_idx").on(table.status),
+]));
+export type ShipKeeperApplication = typeof shipKeeperApplications.$inferSelect;
+
+// Raise-your-flag: RV owners applying to add a ship to the ReGen Fleet.
+export const shipFleetApplications = mysqlTable("ship_fleet_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerName: varchar("ownerName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  rvYearMakeModel: varchar("rvYearMakeModel", { length: 255 }),
+  location: varchar("location", { length: 255 }),
+  message: text("message"),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+  // The Flagkeeper's qualification story (0197): why regeneration matters to
+  // them, their vision for the fleet, and the full conversation record.
+  whyRegeneration: text("whyRegeneration"),
+  fleetVision: text("fleetVision"),
+  companionTranscript: text("companionTranscript"),
+  status: mysqlEnum("status", ["submitted", "in_conversation", "joined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_fleet_status_idx").on(table.status),
+]));
+export type ShipFleetApplication = typeof shipFleetApplications.$inferSelect;
+
+// Winter Anchorage: land projects applying to host the ship off-season.
+export const shipWinterHostApplications = mysqlTable("ship_winter_host_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  projectName: varchar("projectName", { length: 200 }).notNull(),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  location: varchar("location", { length: 255 }),
+  powerHookup: boolean("powerHookup").notNull().default(false),
+  freezeProtectionPlan: text("freezeProtectionPlan"),
+  siteDescription: text("siteDescription"),
+  proposedShare: varchar("proposedShare", { length: 120 }),
+  needsText: text("needsText"),
+  offersText: text("offersText"),
+  status: mysqlEnum("status", ["submitted", "in_conversation", "accepted", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_winter_host_status_idx").on(table.status),
+]));
+export type ShipWinterHostApplication = typeof shipWinterHostApplications.$inferSelect;
+
+// The dataset door: a project or network offers a dataset of places for the
+// treasure map. Accepted offers flow through the source-stamped importer (source
+// = org slug, sourceUrl, sourceLicense) and are credited on the pins.
+export const shipDatasetOffers = mysqlTable("ship_dataset_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  orgName: varchar("orgName", { length: 200 }).notNull(),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  description: text("description").notNull(),
+  approxCount: int("approxCount"),
+  dataUrl: varchar("dataUrl", { length: 512 }),
+  licenseNote: varchar("licenseNote", { length: 500 }),
+  status: mysqlEnum("status", ["submitted", "reviewing", "imported", "declined"]).notNull().default("submitted"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_dataset_offers_status_idx").on(table.status),
+]));
+export type ShipDatasetOffer = typeof shipDatasetOffers.$inferSelect;
+
+// AI concierge sessions: intake answers, generated itinerary, chat transcript.
+export const shipConciergeSessions = mysqlTable("ship_concierge_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  bookingId: int("bookingId"),
+  profileAnswers: json("profileAnswers"),
+  itinerary: json("itinerary"),
+  messages: json("messages"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_concierge_user_idx").on(table.userId),
+]));
+export type ShipConciergeSession = typeof shipConciergeSessions.$inferSelect;
+
+// Seed plantings logged via the one-QR chest card. Verified rows appear on the map.
+export const shipSeedPlantings = mysqlTable("ship_seed_plantings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  bookingId: int("bookingId"),
+  locationId: int("locationId"),
+  lat: double("lat"),
+  lng: double("lng"),
+  species: varchar("species", { length: 200 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  notes: text("notes"),
+  isVerified: boolean("isVerified").notNull().default(false),
+  plantedAt: timestamp("plantedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_seed_plantings_user_idx").on(table.userId),
+  index("ship_seed_plantings_verified_idx").on(table.isVerified),
+]));
+export type ShipSeedPlanting = typeof shipSeedPlantings.$inferSelect;
+
+// Public voyage log: daily/bi-daily crew entries.
+export const shipLogEntries = mysqlTable("ship_log_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId").notNull(),
+  userId: int("userId").notNull(),
+  dayNumber: int("dayNumber"),
+  title: varchar("title", { length: 200 }),
+  content: text("content").notNull(),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  isPublic: boolean("isPublic").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_log_booking_idx").on(table.bookingId),
+  index("ship_log_public_idx").on(table.isPublic),
+]));
+export type ShipLogEntry = typeof shipLogEntries.$inferSelect;
+
+// Digital passport: one stamp per (user, location).
+export const shipPassportStamps = mysqlTable("ship_passport_stamps", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  locationId: int("locationId").notNull(),
+  bookingId: int("bookingId"),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  stampedAt: timestamp("stampedAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("ship_passport_uq").on(table.userId, table.locationId),
+  index("ship_passport_user_idx").on(table.userId),
+]));
+export type ShipPassportStamp = typeof shipPassportStamps.$inferSelect;
+
+// Live ship position pings (manual v1, GPS tracker v2). Latest row is "she sails here".
+export const shipPositionPings = mysqlTable("ship_position_pings", {
+  id: int("id").autoincrement().primaryKey(),
+  lat: double("lat").notNull(),
+  lng: double("lng").notNull(),
+  source: mysqlEnum("source", ["manual", "tracker"]).notNull().default("manual"),
+  note: varchar("note", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_position_created_idx").on(table.createdAt),
+]));
+export type ShipPositionPing = typeof shipPositionPings.$inferSelect;
+
+// ── Ship's Inventory (the bag) ────────────────────────────────────────────────
+// Everything she carries, as game-style item slots (SHIP_MAINTAINER_INVENTORY
+// Section 2). Public read of visible items; admin CRUD. Icons come from the
+// locked-style pipeline (scripts/generate-ship-item-icon.ts).
+export const shipInventoryItems = mysqlTable("ship_inventory_items", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  slug: varchar("slug", { length: 160 }).notNull().unique(),
+  category: mysqlEnum("category", [
+    "adventure", "galley", "water", "power", "connectivity", "tools", "magic", "comfort", "safety",
+  ]).notNull().default("comfort"),
+  description: text("description"),
+  lore: text("lore"),
+  iconUrl: varchar("iconUrl", { length: 512 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  quantity: int("quantity").notNull().default(1),
+  storagePlace: varchar("storagePlace", { length: 200 }),
+  activityTags: json("activityTags"),
+  isVisible: boolean("isVisible").notNull().default(true),
+  /** Flagged for the boarding/return gear check (V5 gear manifest). */
+  isGearChecked: boolean("isGearChecked").notNull().default(false),
+  /** True for gear that is not aboard yet and arrives in year two (shown with a badge). */
+  comingYear2: boolean("comingYear2").notNull().default(false),
+  sortOrder: int("sortOrder").notNull().default(0),
+  // ── Nested tree + physical-manifest merge (0210_ship_inventory_nesting.sql) ──
+  /** Self-reference -> ship_inventory_items(id). Nullable = top-level (a hero card).
+   *  No .references() by house convention; integrity is enforced in the procedure layer. */
+  parentId: int("parentId"),
+  /** True for hero cards that hold child items (drillable on /ship/inventory). */
+  isContainer: boolean("isContainer").notNull().default(false),
+  /** Where the row came from: the hand-authored bag, the transcribed manifest, or a curator-added container. */
+  provenance: mysqlEnum("provenance", ["curated", "transcribed", "curator_added"]).notNull().default("curated"),
+  zone: varchar("zone", { length: 40 }),
+  unit: varchar("unit", { length: 40 }),
+  itemCondition: varchar("itemCondition", { length: 60 }),
+  confidence: varchar("confidence", { length: 12 }),
+  sourceVideo: varchar("sourceVideo", { length: 120 }),
+  sourceTimestamp: varchar("sourceTimestamp", { length: 12 }),
+  /** Real photo pulled from the walkthrough video (detail view; the overview uses iconUrl). */
+  frameUrl: varchar("frameUrl", { length: 512 }),
+  /** The manifest taxonomy value, kept verbatim (not remapped into the 9-value `category` enum). */
+  manifestCategory: varchar("manifestCategory", { length: 40 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("ship_inventory_category_idx").on(table.category),
+  index("ship_inventory_sort_idx").on(table.sortOrder),
+  index("ship_inventory_visible_idx").on(table.isVisible),
+  index("ship_inventory_parent_idx").on(table.parentId),
+]));
+export type ShipInventoryItem = typeof shipInventoryItems.$inferSelect;
+export type InsertShipInventoryItem = typeof shipInventoryItems.$inferInsert;
+
+// ── The Shipwright: maintainer knowledge base + case log ──────────────────────
+// Retrieval, not training (SHIP_MAINTAINER_INVENTORY Section 1). Approved chunks
+// answer questions; resolved cases can be drafted into new chunks after human
+// approval so bad advice never compounds automatically.
+export const shipKnowledgeChunks = mysqlTable("ship_knowledge_chunks", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  system: mysqlEnum("system", [
+    "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+    "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+  ]).notNull().default("general"),
+  sourceType: mysqlEnum("sourceType", ["manual", "service_bulletin", "forum_wisdom", "resolved_case"]).notNull().default("manual"),
+  sourceRef: varchar("sourceRef", { length: 512 }),
+  tags: json("tags"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_knowledge_system_idx").on(table.system),
+  index("ship_knowledge_approved_idx").on(table.isApproved),
+]));
+export type ShipKnowledgeChunk = typeof shipKnowledgeChunks.$inferSelect;
+
+export const shipMaintenanceCases = mysqlTable("ship_maintenance_cases", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId"),
+  reportedByUserId: int("reportedByUserId").notNull(),
+  system: mysqlEnum("system", [
+    "chassis", "engine", "propane", "electrical", "plumbing", "slides", "generator",
+    "appliances", "starlink", "water_filtration", "tires_brakes", "hvac", "general",
+  ]).notNull().default("general"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  photoUrls: json("photoUrls"),
+  conversation: json("conversation"),
+  status: mysqlEnum("status", ["open", "advised", "resolved", "escalated"]).notNull().default("open"),
+  isEscalation: boolean("isEscalation").notNull().default(false),
+  resolution: text("resolution"),
+  whatWorked: text("whatWorked"),
+  approvedIntoKb: boolean("approvedIntoKb").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => ([
+  index("ship_case_status_idx").on(table.status),
+  index("ship_case_booking_idx").on(table.bookingId),
+]));
+export type ShipMaintenanceCase = typeof shipMaintenanceCases.$inferSelect;
+
+// ── Gear manifest checks (V5 Section 1) ───────────────────────────────────────
+// Boarding + return photo-verified checklist of high-value gear.
+export const shipGearChecks = mysqlTable("ship_gear_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId").notNull(),
+  phase: mysqlEnum("phase", ["boarding", "return"]).notNull(),
+  items: json("items"),
+  completedByUserId: int("completedByUserId"),
+  witnessedByKeeperId: int("witnessedByKeeperId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_gear_booking_idx").on(table.bookingId),
+]));
+export type ShipGearCheck = typeof shipGearChecks.$inferSelect;
+
+// ── The Galley (food experience) ──────────────────────────────────────────────
+// A crew logs what they gathered (market haul + what is aboard), then remixes it
+// into dishes that follow the ship's diet. Two engines: the deterministic remix
+// (server/lib/galley-remix.ts) and the Ship's Cook AI. Hauls and remixes save to
+// the crew's account and, when a voyage is active, link to that booking. Photos
+// mirror the ship_maintenance_cases pattern (json photoUrls, json conversation).
+export const galleyHauls = mysqlTable("galley_hauls", {
+  id: int("id").autoincrement().primaryKey(),
+  bookingId: int("bookingId"),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 200 }),
+  visibility: mysqlEnum("visibility", ["crew", "public"]).notNull().default("crew"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("galley_hauls_booking_idx").on(table.bookingId),
+  index("galley_hauls_user_idx").on(table.userId),
+  index("galley_hauls_visibility_idx").on(table.visibility),
+]));
+export type GalleyHaul = typeof galleyHauls.$inferSelect;
+export type InsertGalleyHaul = typeof galleyHauls.$inferInsert;
+
+export const galleyHaulItems = mysqlTable("galley_haul_items", {
+  id: int("id").autoincrement().primaryKey(),
+  haulId: int("haulId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  note: varchar("note", { length: 500 }),
+  photoUrl: varchar("photoUrl", { length: 512 }),
+  category: mysqlEnum("category", ["produce", "pantry", "protein", "sauce", "other"]).notNull().default("produce"),
+  source: mysqlEnum("source", ["market", "ship", "forage", "store"]).notNull().default("market"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("galley_haul_items_haul_idx").on(table.haulId),
+]));
+export type GalleyHaulItem = typeof galleyHaulItems.$inferSelect;
+export type InsertGalleyHaulItem = typeof galleyHaulItems.$inferInsert;
+
+export const galleyRemixes = mysqlTable("galley_remixes", {
+  id: int("id").autoincrement().primaryKey(),
+  haulId: int("haulId"),
+  bookingId: int("bookingId"),
+  userId: int("userId").notNull(),
+  dishName: varchar("dishName", { length: 200 }).notNull(),
+  engine: mysqlEnum("engine", ["deterministic", "cook"]).notNull().default("deterministic"),
+  cardSlugs: json("cardSlugs"),
+  /** The composed dish: { base, fillings, toppings, sauce, method, why }. */
+  recipe: json("recipe"),
+  /** The Cook thread, when engine = cook. */
+  conversation: json("conversation"),
+  photoUrls: json("photoUrls"),
+  visibility: mysqlEnum("visibility", ["crew", "public"]).notNull().default("crew"),
+  /** Admin-approved into the public "From the Crews" cookbook. */
+  publishedToCookbook: boolean("publishedToCookbook").notNull().default(false),
+  /** Moderation state for a crew submission to the shared cookbook. */
+  cookbookStatus: mysqlEnum("cookbookStatus", ["none", "pending", "approved", "rejected"]).notNull().default("none"),
+  submittedToCookbookAt: timestamp("submittedToCookbookAt"),
+  approvedByUserId: int("approvedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("galley_remixes_haul_idx").on(table.haulId),
+  index("galley_remixes_user_idx").on(table.userId),
+  index("galley_remixes_published_idx").on(table.publishedToCookbook),
+  index("galley_remixes_visibility_idx").on(table.visibility),
+]));
+export type GalleyRemix = typeof galleyRemixes.$inferSelect;
+export type InsertGalleyRemix = typeof galleyRemixes.$inferInsert;
+
+// ── Crew list (V5 Section 4) ──────────────────────────────────────────────────
+// Email capture on non-open week cards. Double-opt-in, one-click unsubscribe.
+export const shipCrewListSignups = mysqlTable("ship_crew_list_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  userId: int("userId"),
+  interests: json("interests"),
+  source: varchar("source", { length: 120 }),
+  confirmedAt: timestamp("confirmedAt"),
+  /** Last time the nightly job emailed this signup about an opening (throttle). */
+  lastNotifiedAt: timestamp("lastNotifiedAt"),
+  unsubscribeToken: varchar("unsubscribeToken", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("ship_crewlist_email_idx").on(table.email),
+]));
+export type ShipCrewListSignup = typeof shipCrewListSignups.$inferSelect;
+
+/**
+ * user_guide_preferences: each member's personally designed ReGen Guide (the
+ * general companion). Name, chosen face, tone, and whether voice is on. One row
+ * per user. The Guide's forum/governance behavior (ADR-23) is unrelated and
+ * unchanged; this only personalizes the general assistant.
+ */
+export const userGuidePreferences = mysqlTable("user_guide_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  guideName: varchar("guideName", { length: 60 }).notNull(),
+  portraitKey: varchar("portraitKey", { length: 32 }).notNull().default("guide-archetype-1"),
+  tone: varchar("tone", { length: 16 }).notNull().default("gentle"),
+  voiceEnabled: boolean("voiceEnabled").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserGuidePreferences = typeof userGuidePreferences.$inferSelect;
+
+// ─── The Harvest: quick_notes capture inbox (Phase 1) ─────────────────────────
+/**
+ * Rye's private idea captures from the admin FAB (voice or text). `id` is the
+ * bridge sync cursor; `captureId` is the stable UUID the local second brain
+ * dedupes by. `audioKey` points at the private R2 prefix (harvest/voice/...),
+ * never a public URL. Owner-gated everywhere via ownerProcedure; owner_id is
+ * always derived from ctx.user.id, never from input.
+ */
+export const quickNotes = mysqlTable("quick_notes", {
+  id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
+  captureId: char("capture_id", { length: 36 }).notNull().unique(),
+  ownerId: int("owner_id").notNull(),
+  body: text("body").notNull(),
+  source: mysqlEnum("source", ["text", "voice"]).default("text").notNull(),
+  audioKey: varchar("audio_key", { length: 512 }),
+  themes: json("themes"),
+  status: mysqlEnum("status", ["inbox", "processed"]).default("inbox").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+}, (t) => ({
+  ownerStatusIdIdx: index("quick_notes_owner_status_id_idx").on(t.ownerId, t.status, t.id),
+}));
+export type QuickNote = typeof quickNotes.$inferSelect;
+export type InsertQuickNote = typeof quickNotes.$inferInsert;
+
+// ─── The Harvest: feed + provenance (Phase 2) ─────────────────────────────────
+/**
+ * The ripe-ideas tier. The vault computes ripeness components locally; the
+ * bridge pushes curated idea text + components; the generation worker composes
+ * the score and drafts on 0.6 transitions. idea_ref = vault note ref or
+ * capture UUID. All access owner-gated (ownerProcedure / bridge token).
+ */
+export const harvestIdeas = mysqlTable("harvest_ideas", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaRef: varchar("idea_ref", { length: 191 }).notNull(),
+  /** As the vault sends it: the first ~45 raw characters, usually cut mid-word. */
+  title: varchar("title", { length: 300 }).notNull(),
+  /**
+   * A real title generated from the summary (server/lib/harvest-titles.ts).
+   * What the UI shows. Kept separate so re-syncing the bridge never clobbers it.
+   */
+  displayTitle: varchar("display_title", { length: 300 }),
+  summary: text("summary"),
+  themes: json("themes"),
+  ripeness: double("ripeness").notNull().default(0),
+  scoreComponents: json("score_components"),
+  whyNow: varchar("why_now", { length: 500 }),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["ripe", "snoozed", "suppressed", "developed"]).default("ripe").notNull(),
+  snoozedUntil: timestamp("snoozed_until"),
+  steer: text("steer"),
+  crossedAt: timestamp("crossed_at"),
+  draftedAt: timestamp("drafted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerRefUnique: uniqueIndex("harvest_ideas_owner_ref_unique").on(t.ownerId, t.ideaRef),
+  ownerStatusRipenessIdx: index("harvest_ideas_owner_status_ripeness_idx").on(t.ownerId, t.status, t.ripeness),
+}));
+export type HarvestIdea = typeof harvestIdeas.$inferSelect;
+export type InsertHarvestIdea = typeof harvestIdeas.$inferInsert;
+
+/**
+ * Drafted copy per (owner, idea, channel). ai_body keeps the untouched AI
+ * draft; body is the live text. Once status leaves 'ready' the worker never
+ * overwrites the row (write-once), so (ai_body, body) is Phase 3's edit pair.
+ */
+export const creationItems = mysqlTable("creation_items", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaId: int("idea_id"),
+  captureId: varchar("capture_id", { length: 191 }).notNull(),
+  channel: varchar("channel", { length: 32 }).notNull(),
+  ripeness: double("ripeness").notNull().default(0),
+  angle: varchar("angle", { length: 200 }),
+  aiBody: text("ai_body"),
+  body: text("body"),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["ready", "edited", "shipped"]).default("ready").notNull(),
+  postedText: text("posted_text"),
+  postedAt: timestamp("posted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerCaptureChannelUnique: uniqueIndex("creation_items_owner_capture_channel_unique").on(t.ownerId, t.captureId, t.channel),
+  ownerStatusIdx: index("creation_items_owner_status_idx").on(t.ownerId, t.status),
+}));
+export type CreationItem = typeof creationItems.$inferSelect;
+export type InsertCreationItem = typeof creationItems.$inferInsert;
+
+/** Addressable provenance store: the raw message/capture rows cards trace to. */
+export const sourceIndex = mysqlTable("source_index", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  refId: varchar("ref_id", { length: 64 }).notNull(),
+  date: timestamp("date"),
+  text: text("text"),
+  links: json("links"),
+  forwardedFrom: varchar("forwarded_from", { length: 300 }),
+  media: varchar("media", { length: 64 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerRefUnique: uniqueIndex("source_index_owner_ref_unique").on(t.ownerId, t.refId),
+}));
+export type SourceIndexRow = typeof sourceIndex.$inferSelect;
+
+/**
+ * One row per saved draft edit: the (ai_version, edited_version) pair plus
+ * Rye's style/content call. Bodies are nulled after rule extraction (plan s6
+ * storage rule); the row survives as extraction bookkeeping only.
+ */
+export const voiceEdits = mysqlTable("voice_edits", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  itemId: int("item_id").notNull(),
+  channel: varchar("channel", { length: 32 }).notNull(),
+  editKind: mysqlEnum("edit_kind", ["style", "content"]).default("content").notNull(),
+  aiVersion: text("ai_version"),
+  editedVersion: text("edited_version"),
+  extractedAt: timestamp("extracted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerKindIdx: index("voice_edits_owner_kind_idx").on(t.ownerId, t.editKind, t.extractedAt),
+}));
+export type VoiceEdit = typeof voiceEdits.$inferSelect;
+
+/** Derived, taxonomy-constrained style rules with weight + recurrence. */
+export const voiceRules = mysqlTable("voice_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  category: mysqlEnum("category", ["word_swap", "sentence_length", "opener", "closer", "punctuation", "formatting", "aside"]).notNull(),
+  rule: varchar("rule", { length: 500 }).notNull(),
+  weight: double("weight").notNull().default(1),
+  firstSeen: timestamp("first_seen").defaultNow().notNull(),
+  lastSeen: timestamp("last_seen").defaultNow().notNull(),
+}, (t) => ({
+  ownerWeightIdx: index("voice_rules_owner_weight_idx").on(t.ownerId, t.weight),
+}));
+export type VoiceRule = typeof voiceRules.$inferSelect;
+
+/**
+ * Audit trail for the hardened one-button email send. body_hash binds the
+ * confirm token to the exact previewed text; idempotency_key makes a
+ * double-click a no-op; ai_body/sent_body persist the ai-vs-shipped pair.
+ * No recipient PII, only the count.
+ */
+export const harvestEmailSends = mysqlTable("harvest_email_sends", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  itemId: int("item_id").notNull(),
+  bodyHash: char("body_hash", { length: 64 }).notNull(),
+  recipientCount: int("recipient_count").notNull().default(0),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }).notNull().unique(),
+  status: mysqlEnum("status", ["sent", "failed"]).default("sent").notNull(),
+  subject: varchar("subject", { length: 300 }),
+  aiBody: text("ai_body"),
+  sentBody: text("sent_body"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ownerCreatedIdx: index("harvest_email_sends_owner_created_idx").on(t.ownerId, t.createdAt),
+}));
+export type HarvestEmailSend = typeof harvestEmailSends.$inferSelect;
+
+// ─── The Harvest: Compose to Publish (Phase 5) ────────────────────────────────
+/** One composed idea; groups the article, per-channel posts, images, email. */
+export const publications = mysqlTable("publications", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  ideaId: int("idea_id"),
+  title: varchar("title", { length: 300 }).notNull(),
+  sourceRefs: json("source_refs"),
+  status: mysqlEnum("status", ["draft", "partially_published", "published"]).default("draft").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdx: index("publications_owner_idx").on(t.ownerId, t.createdAt),
+}));
+export type Publication = typeof publications.$inferSelect;
+
+/** Per-surface state so publishing is staged and idempotent. */
+export const publicationTargets = mysqlTable("publication_targets", {
+  id: int("id").autoincrement().primaryKey(),
+  publicationId: int("publication_id").notNull(),
+  surface: mysqlEnum("surface", ["site", "linkedin", "facebook", "instagram", "threads_x", "email"]).notNull(),
+  itemId: int("item_id"),
+  status: mysqlEnum("status", ["draft", "approved", "scheduled", "published", "failed"]).default("draft").notNull(),
+  scheduledFor: timestamp("scheduled_for"),
+  externalUrl: varchar("external_url", { length: 600 }),
+  publishedAt: timestamp("published_at"),
+  /**
+   * Fact-check state (server/lib/content-verify.ts), separate from `status`:
+   * this is the machine's verdict on whether the copy is TRUE, while `status`
+   * stays the human/workflow state. approveTarget refuses while a block-level
+   * flag is unresolved; editing the draft resets this to 'unverified'.
+   */
+  verificationStatus: mysqlEnum("verification_status", ["unverified", "passed", "flagged"]).default("unverified").notNull(),
+  verificationFlags: json("verification_flags"),
+  verifiedAt: timestamp("verified_at"),
+  /**
+   * Where the link goes. A raw URL in the body suppresses reach on LinkedIn and
+   * Instagram, so the post carries the idea and this carries the link. Verified
+   * alongside the body, because it is published text too.
+   */
+  firstComment: text("first_comment"),
+  /**
+   * The honest replacement for analytics: one sentence after the fact on
+   * whether it landed, written on the harvest-digest cron's weekly rhythm.
+   */
+  weeklyNote: text("weekly_note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  pubSurfaceUnique: uniqueIndex("publication_targets_pub_surface_unique").on(t.publicationId, t.surface),
+}));
+export type PublicationTarget = typeof publicationTargets.$inferSelect;
+
+/** Generated image options per slot. alt_text is required (accessibility rule). */
+export const publicationImages = mysqlTable("images", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  publicationId: int("publication_id").notNull(),
+  slot: mysqlEnum("slot", ["hero", "inline"]).notNull(),
+  r2Key: varchar("r2_key", { length: 512 }).notNull(),
+  url: varchar("url", { length: 600 }).notNull(),
+  altText: varchar("alt_text", { length: 500 }).notNull(),
+  prompt: text("prompt"),
+  chosen: tinyint("chosen").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  publicationSlotIdx: index("images_publication_slot_idx").on(t.publicationId, t.slot),
+}));
+export type PublicationImage = typeof publicationImages.$inferSelect;
+
+/**
+ * Runtime blog surface for composed articles: hidden preview first (private
+ * URL via preview_token), then public. Static blogPosts.ts stays canonical
+ * for pre-existing posts; the blog pages merge both.
+ */
+export const publishedArticles = mysqlTable("published_articles", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  publicationId: int("publication_id"),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  excerpt: varchar("excerpt", { length: 600 }),
+  content: text("content").notNull(),
+  author: varchar("author", { length: 120 }).default("Rieki Cordon").notNull(),
+  heroImageUrl: varchar("hero_image_url", { length: 600 }),
+  heroImageAlt: varchar("hero_image_alt", { length: 500 }),
+  tags: json("tags"),
+  previewToken: char("preview_token", { length: 36 }).notNull(),
+  status: mysqlEnum("status", ["preview", "public", "unpublished"]).default("preview").notNull(),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type PublishedArticle = typeof publishedArticles.$inferSelect;
+
+/** Append-only run stats for the /admin-create status line. */
+export const harvestRuns = mysqlTable("harvest_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  kind: mysqlEnum("kind", ["bridge", "generation", "seed", "digest"]).notNull(),
+  ranAt: timestamp("ran_at").defaultNow().notNull(),
+  stats: json("stats"),
+}, (t) => ({
+  kindRanIdx: index("harvest_runs_kind_ran_idx").on(t.kind, t.ranAt),
+}));
+export type HarvestRun = typeof harvestRuns.$inferSelect;
+
+// ─── Multiplayer Mode: quest crews (Phase A, improvement 1) ──────────────────
+/**
+ * Crews of 3 to 7 players form around a multiplayer quest in a bioregion.
+ * Quest definitions are file-based (shared/multiplayerQuests.ts), so questId is
+ * the same varchar quest key quest_completions uses, with no SQL FK. bioregionId
+ * references bioregions(id); integrity is enforced in the procedure layer.
+ * Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
+ */
+export const questCrews = mysqlTable("quest_crews", {
+  id: int("id").autoincrement().primaryKey(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  bioregionId: int("bioregionId").notNull(),
+  crewSize: tinyint("crewSize").notNull(),
+  status: mysqlEnum("status", ["forming", "ready", "active", "complete", "disbanded"]).default("forming").notNull(),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  activatedAt: timestamp("activatedAt"),
+}, (t) => ({
+  questBioregionStatusIdx: index("quest_crews_questId_bioregionId_status_idx").on(t.questId, t.bioregionId, t.status),
+}));
+export type QuestCrew = typeof questCrews.$inferSelect;
+export type InsertQuestCrew = typeof questCrews.$inferInsert;
+
+export const questCrewMembers = mysqlTable("quest_crew_members", {
+  id: int("id").autoincrement().primaryKey(),
+  crewId: int("crewId").notNull(),
+  userId: int("userId").notNull(),
+  role: varchar("role", { length: 100 }),
+  status: mysqlEnum("status", ["joined", "left", "completed"]).default("joined").notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  // Formation-email idempotency key: one email per member per crew, ever.
+  formationEmailSentAt: timestamp("formationEmailSentAt"),
+}, (t) => ({
+  crewUserUnique: uniqueIndex("quest_crew_members_crewId_userId_unique").on(t.crewId, t.userId),
+  userIdx: index("quest_crew_members_userId_idx").on(t.userId),
+}));
+export type QuestCrewMember = typeof questCrewMembers.$inferSelect;
+export type InsertQuestCrewMember = typeof questCrewMembers.$inferInsert;
+
+export const questCrewSignups = mysqlTable("quest_crew_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  bioregionId: int("bioregionId").notNull(),
+  note: varchar("note", { length: 500 }),
+  status: mysqlEnum("status", ["open", "crewed", "cancelled"]).default("open").notNull(),
+  crewId: int("crewId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  questBioregionStatusIdx: index("quest_crew_signups_questId_bioregionId_status_idx").on(t.questId, t.bioregionId, t.status),
+  userIdx: index("quest_crew_signups_userId_idx").on(t.userId),
+}));
+export type QuestCrewSignup = typeof questCrewSignups.$inferSelect;
+export type InsertQuestCrewSignup = typeof questCrewSignups.$inferInsert;
+
+// ─── Needs and Offers board (Phase B2, improvement 10) ───────────────────────
+/**
+ * Two boards fed by /board and by optional needs/offers fields on every
+ * application form (source tags the form family). Posters are signed-in
+ * players (ownerId) or form applicants (contactEmail); the procedure layer
+ * requires one of the two. needs_offers_matches is the deterministic
+ * matcher's ledger: one row per (need, offer) pair, so the introduction
+ * email can never send twice. Spec:
+ * CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
+ */
+export const projectNeeds = mysqlTable("project_needs", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId"),
+  contactName: varchar("contactName", { length: 200 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: text("body"),
+  tags: json("tags"),
+  bioregionId: int("bioregionId"),
+  timeWindow: varchar("timeWindow", { length: 200 }),
+  status: mysqlEnum("status", ["open", "matched", "closed"]).default("open").notNull(),
+  source: varchar("source", { length: 50 }).default("board").notNull(),
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  statusBioregionIdx: index("project_needs_status_bioregionId_idx").on(t.status, t.bioregionId),
+  ownerIdx: index("project_needs_ownerId_idx").on(t.ownerId),
+}));
+export type ProjectNeed = typeof projectNeeds.$inferSelect;
+export type InsertProjectNeed = typeof projectNeeds.$inferInsert;
+
+export const playerOffers = mysqlTable("player_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId"),
+  contactName: varchar("contactName", { length: 200 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: text("body"),
+  tags: json("tags"),
+  bioregionId: int("bioregionId"),
+  timeWindow: varchar("timeWindow", { length: 200 }),
+  status: mysqlEnum("status", ["open", "matched", "closed"]).default("open").notNull(),
+  source: varchar("source", { length: 50 }).default("board").notNull(),
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  statusBioregionIdx: index("player_offers_status_bioregionId_idx").on(t.status, t.bioregionId),
+  ownerIdx: index("player_offers_ownerId_idx").on(t.ownerId),
+}));
+export type PlayerOffer = typeof playerOffers.$inferSelect;
+export type InsertPlayerOffer = typeof playerOffers.$inferInsert;
+
+export const needsOffersMatches = mysqlTable("needs_offers_matches", {
+  id: int("id").autoincrement().primaryKey(),
+  needId: int("needId").notNull(),
+  offerId: int("offerId").notNull(),
+  matchedAt: timestamp("matchedAt").defaultNow().notNull(),
+  emailSentAt: timestamp("emailSentAt"),
+}, (t) => ({
+  pairUnique: uniqueIndex("needs_offers_matches_needId_offerId_unique").on(t.needId, t.offerId),
+}));
+export type NeedsOffersMatch = typeof needsOffersMatches.$inferSelect;
+export type InsertNeedsOffersMatch = typeof needsOffersMatches.$inferInsert;
+
+// ─── Consent-based player memory (Phase D2, improvement 13) ──────────────────
+/**
+ * Small game-journey facts the Guide remembers, opt-in per player (default OFF
+ * via player_profiles.companionMemoryOptIn), fully visible, deletable, and
+ * exportable on the settings surface. Written deterministically from events
+ * (no LLM extraction); loaded read-only into companion context framed as
+ * untrusted prior notes. No health, conflict, or finance facts, by schema and
+ * by the writer's construction. sourceRef is the per-surface idempotency key.
+ */
+export const playerCompanionMemory = mysqlTable("player_companion_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  surface: varchar("surface", { length: 50 }).notNull(),
+  fact: text("fact").notNull(),
+  sourceRef: varchar("sourceRef", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  supersededAt: timestamp("supersededAt"),
+}, (t) => ({
+  userSourceUnique: uniqueIndex("player_companion_memory_userId_sourceRef_unique").on(t.userId, t.sourceRef),
+  userIdx: index("player_companion_memory_userId_idx").on(t.userId),
+}));
+export type PlayerCompanionMemory = typeof playerCompanionMemory.$inferSelect;
+
+// ─── Peer attestation, verification ladder rung 2 (Phase D3, ADR-42) ─────────
+/**
+ * A crewmate attests a member's quest completion. One attestation per member
+ * per quest (unique key); the attester must be a co-crew member (procedure
+ * layer). Earns the rung-2 multiplier as PRIVATE internal credit only (source
+ * tag quest_attested_bonus); public tokens stay gated by Hypha voting.
+ */
+export const questCompletionAttestations = mysqlTable("quest_completion_attestations", {
+  id: int("id").autoincrement().primaryKey(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  crewId: int("crewId").notNull(),
+  memberUserId: int("memberUserId").notNull(),
+  attesterUserId: int("attesterUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  questMemberUnique: uniqueIndex("quest_completion_attestations_questId_memberUserId_unique").on(t.questId, t.memberUserId),
+  attesterIdx: index("quest_completion_attestations_attesterUserId_idx").on(t.attesterUserId),
+}));
+export type QuestCompletionAttestation = typeof questCompletionAttestations.$inferSelect;
+
+// ── The Ship's Inventory: physical manifest (RV walkthrough) — RETIRED ─────────
+// The standalone `ship_inventory` table + shipManifest router were retired on
+// 2026-07-18. The 118-item physical manifest (data/rv_inventory.json) is now
+// merged into `ship_inventory_items` above as a nested tree (parentId /
+// isContainer / provenance='transcribed' + zone/unit/itemCondition/confidence/
+// sourceVideo/sourceTimestamp/frameUrl/manifestCategory), seeded by
+// scripts/seed-ship-inventory-manifest.ts and surfaced via ship.inventory.*.
+// The old DB table still exists in Railway; Rye may DROP it separately (no
+// destructive migration is emitted here).
+
+// ── Funding pipeline portal + application engine ────────────────────────────
+/**
+ * The funder pipeline: 117 sources researched and verified against their own
+ * sites on 2026-07-24 (data/funding-pipeline-seed.json). Two column groups
+ * with different owners. The research columns (category through notes) are the
+ * compiled record and get re-upserted by scripts/seed-funding-pipeline.ts on
+ * `name`. The tracking columns (appStatus, owner, nextAction, nextActionDate,
+ * lastTouch, sortOrder) belong to Rye in /admin/funding, so the seed sets them
+ * on first insert only and never overwrites a later edit. `priority` ships with
+ * the research and stays editable.
+ *
+ * appStatus is the funnel. `cultivating` covers the invitation-only funders
+ * (Kalliopeia, Fetzer, Hidden Leaf) that need a months-long relationship before
+ * an application exists; `parked` is the off-ramp for a real row that is not
+ * now (closed round, wrong entity, geography we have not landed in).
+ */
+export const fundingPipeline = mysqlTable("funding_pipeline", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 120 }).notNull(),
+  capitalType: varchar("capitalType", { length: 255 }),
+  whatItFunds: text("whatItFunds"),
+  typicalSize: varchar("typicalSize", { length: 160 }),
+  geography: varchar("geography", { length: 160 }),
+  eligibility: text("eligibility"),
+  accessStatus: varchar("accessStatus", { length: 255 }),
+  deadline: varchar("deadline", { length: 160 }),
+  fit: varchar("fit", { length: 120 }),
+  /** Which ReGen vehicle applies here. Never the Fund where funds are excluded. */
+  regenEntity: varchar("regenEntity", { length: 255 }),
+  link: varchar("link", { length: 500 }),
+  notes: text("notes"),
+  priority: mysqlEnum("priority", ["P1", "P2", "P3", "ADV", "ALLY"]).notNull().default("P2"),
+  appStatus: mysqlEnum("appStatus", [
+    "not_started",
+    "researching",
+    "preparing",
+    "cultivating",
+    "submitted",
+    "in_review",
+    "awarded",
+    "declined",
+    "parked",
+  ]).notNull().default("not_started"),
+  owner: varchar("owner", { length: 120 }),
+  nextAction: varchar("nextAction", { length: 500 }),
+  nextActionDate: date("nextActionDate"),
+  lastTouch: timestamp("lastTouch"),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("funding_pipeline_name_uq").on(table.name),
+  index("funding_pipeline_priority_idx").on(table.priority),
+  index("funding_pipeline_status_idx").on(table.appStatus),
+  index("funding_pipeline_category_idx").on(table.category),
+  index("funding_pipeline_next_action_date_idx").on(table.nextActionDate),
+]));
+export type FundingPipelineRow = typeof fundingPipeline.$inferSelect;
+export type InsertFundingPipelineRow = typeof fundingPipeline.$inferInsert;
+
+/**
+ * One row per positioning run from the application engine
+ * (adminFunding.generateApplication). Regenerating adds a row instead of
+ * replacing one: the history is how Rye compares a re-run against what the
+ * kernel said last time.
+ *
+ * When the model returns output that fails schema validation twice, the raw
+ * text lands in positioningSummary and flags carries "generation_unvalidated",
+ * so a bad generation is visible rather than lost.
+ */
+export const fundingApplications = mysqlTable("funding_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  pipelineId: int("pipelineId").notNull(),
+  positioningSummary: text("positioningSummary"),
+  keyPoints: json("keyPoints").$type<string[]>(),
+  entityToUse: varchar("entityToUse", { length: 255 }),
+  flags: json("flags").$type<string[]>(),
+  coworkPrompt: mediumtext("coworkPrompt"),
+  modelUsed: varchar("modelUsed", { length: 120 }),
+  /** Admin user who ran the generation. */
+  generatedBy: int("generatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("funding_applications_pipeline_idx").on(table.pipelineId),
+]));
+export type FundingApplication = typeof fundingApplications.$inferSelect;
+export type InsertFundingApplication = typeof fundingApplications.$inferInsert;
+
+/* ════════════════════════════════════════════════════════════════════
+ * Governance fork relay (ADR-46): the hub runs ONE Alchemy listener for
+ * every fork of the village platform. When an on-chain proposal carrying a
+ * fork's [gm:<id>] mechanics marker executes, the outcome is relayed to
+ * each registered fork's callback with that fork's shared secret. Forks
+ * discard markers that are not theirs, so delivery is broadcast and
+ * at-least-once; the fork-side receiver is idempotent by contract.
+ * Migration: 0220_governance_fork_relay.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const governanceForkRelays = mysqlTable("governanceForkRelays", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The fork's platform instance id (from its /api/platform/info), for the directory. */
+  instanceId: varchar("instanceId", { length: 80 }),
+  name: varchar("name", { length: 120 }).notNull(),
+  /** The fork's receiver: POST <callbackUrl> with x-governance-hub-secret. */
+  callbackUrl: varchar("callbackUrl", { length: 500 }).notNull(),
+  secret: varchar("secret", { length: 200 }).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastRelayAt: timestamp("lastRelayAt"),
+  lastStatus: varchar("lastStatus", { length: 200 }),
+});
+export type GovernanceForkRelay = typeof governanceForkRelays.$inferSelect;
+
+export const governanceRelayDeliveries = mysqlTable("governanceRelayDeliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  forkId: int("forkId").notNull(),
+  /** The [gm:<id>] marker's id — the fork resolves it to its proposal. */
+  marker: varchar("marker", { length: 80 }).notNull(),
+  outcome: mysqlEnum("outcome", ["passed", "failed"]).notNull(),
+  txHash: varchar("txHash", { length: 80 }),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 80 }),
+  basescanUrl: varchar("basescanUrl", { length: 200 }),
+  attempts: int("attempts").default(0).notNull(),
+  lastAttemptAt: timestamp("lastAttemptAt"),
+  lastError: varchar("lastError", { length: 300 }),
+  deliveredAt: timestamp("deliveredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("gov_relay_once_idx").on(table.forkId, table.marker, table.outcome),
+  index("gov_relay_pending_idx").on(table.deliveredAt, table.lastAttemptAt),
+]));
+export type GovernanceRelayDelivery = typeof governanceRelayDeliveries.$inferSelect;
+
+/**
+ * Marker links (ADR-46 production path): "fork F's marker M is on-chain
+ * proposal N". Real decoded governance logs carry only the numeric
+ * proposalId — never the title — so the fork registers this mapping when its
+ * founder pastes the Hypha proposal URL back into the proposal page. Unique
+ * per (fork, marker); re-linking upserts the id/url.
+ */
+export const governanceForkMarkerLinks = mysqlTable("governanceForkMarkerLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  forkId: int("forkId").notNull(),
+  marker: varchar("marker", { length: 80 }).notNull(),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 80 }).notNull(),
+  proposalUrl: varchar("proposalUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("gov_marker_link_once_idx").on(table.forkId, table.marker),
+  index("gov_marker_link_pid_idx").on(table.hyphaProposalId),
+]));
+export type GovernanceForkMarkerLink = typeof governanceForkMarkerLinks.$inferSelect;

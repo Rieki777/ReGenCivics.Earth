@@ -91,6 +91,24 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 8. Experiential (lived experience, craft hours)
 9. Health (body vitality, wellness, rest)
 
+**Health capital**. The ninth form, and the one that is ours. It covers a person's physical
+and emotional vitality and the work that builds it in others: movement, rest, bodywork,
+nutrition, recovery, care. Forms 1 through 8 are Ethan Roland and Gregory Landua's
+*8 Forms of Capital* (2011, expanded in *Regenerative Enterprise*, 2013), used unchanged and
+credited. We added the ninth because the original eight have no place for it: Living means
+ecosystems, Social means relationships, Experiential means accumulated skill, Spiritual means
+meaning. None of them hold a bodyworker, a movement teacher, an herbalist, or a cook.
+
+**The ninth form is Health, never Influence.** Between 2026-07-03 and 2026-08-01, `llms.txt`,
+`llms-full.txt`, and the `/bionomics` + `/glossary` crawler content all listed the ninth as
+"Influence Capital", which appears nowhere in the code. The canonical list has always been
+`shared/capitals.ts` (`CAPITAL_TYPES`), which the calculator, the crowdpooling taxonomy, the
+Living Tree, and quest-to-capital mapping all import. The drifted copy was the machine-readable
+surface we publish specifically for LLMs, so the one file written for answer engines named a
+form of capital that does not exist in the product. Fixed 2026-08-01, and the reasoning now has a
+public page at `/learn/nine-forms-of-capital` so the model is citable rather than only asserted.
+Source of truth for any future edit: `shared/capitals.ts`.
+
 **Contribution Score**. A player's accumulated standing. Computed from the 9 roots + recency. Reads use TOTAL tokens (private + public).
 
 **Voice weight**. How much a vote counts. Computed from RGVoice (Game) or RCVoice (Fund).
@@ -222,3 +240,35 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 - "Bioregional" (region + ecological character; preferred over "regional" alone).
 - "The Field Guide" (the canonical Game player's guide).
 - "Welcome Aboard" (the onboarding moment; capitalized).
+
+## ReGen Ship terms
+
+- **ReGen Ship**: the regenerative pirate ship (a 2006 Fleetwood Revolution LE motorhome), a CORE program. Always capitalized.
+- **ReGen Fleet**: the growing fleet of regenerative ships; a traveling festival moving from land project to land project. The ReGen Ship is its flagship.
+- **Voyage**: one 7-night booking cycle aboard the ship (set by tank capacity).
+- **Ship Keeper**: the paid role ($200 per turnover) that cleans, resets, and runs the two-hour crew orientation.
+- **Treasure Map**: the interactive Leaflet map of Cascadia locations at /ship/map.
+- **First Mate**: the ship's AI voyage-planning companion at /ship/concierge (route path unchanged; the persona was renamed from "the concierge" on 2026-07-10). She greets with "Ahoy. I'm your First Mate. Tell me who you are and I'll chart your voyage." and plots an itinerary drawn only from verified treasure-map places. She is grounded in the whole community-grown database, so new place categories join her knowledge as they land. On the map page she can chart a voyage that draws live on the map and shares the "My voyage" state. Technical identifiers (`ship.concierge` tRPC namespace, the `concierge` feature flag, `isConciergeConfigured`) keep the old name.
+- **Flagkeeper**: the fleet's qualification companion on /ship/fleet (added 2026-07-16). She sews the flag of every ship that joins and hears the story behind it first: why the owner cares about regeneration, their vision for traveling with the fleet, what they'd give, and what they hope to receive. A `FormCompanion` persona (`flagkeeper` in `shared/companions.ts`, form `fleet-application`); her answers and full conversation land on `ship_fleet_applications` (`whyRegeneration`, `fleetVision`, `offersText`, `needsText`, `companionTranscript`) so the crew can qualify fleet leads from the story. She never scores or judges; she gathers, the crew reads.
+- **Dataset door**: the "Add your database to the map" flow (`ship_dataset_offers`) at the bottom of /ship/map. Partners and networks in the Regenerative Renaissance offer a dataset of places; accepted ones flow through the source-stamped importer and are credited on the pins.
+- **Voyage Offering**: the suggested donation to CORE that accompanies a voyage. Legally voluntary, never required, never a rental charge.
+- **Healing Hole**: the planting site at the anchorage where returning crews plant their saved seeds.
+- **Anchorage**: the ship's home base, currently The Sanctuary / Tao Hermitage in Ashland, Oregon.
+- **Ship's Bell**: the ship's referral program (referral codes, `ship_referral` credits, quest board points).
+- **Ship's Manifest**: the six-email pre-voyage sequence (welcome through homecoming).
+- **Water Doctrine**: the input-control practice aboard (only the ship's soaps and cleaners, no chemical body products, vegan-diet inputs) that lets black and gray water return be regenerative on consenting private land.
+- **Winter Anchorage**: the off-season program where the ship becomes stationary sanctuary housing at a host land project.
+- **Passport**: the digital land-project stamp book (one stamp per location), physical stamp book later.
+- **The Regatta**: the annual fleet convergence festival at one land project, announced at fleet launch.
+- **Voyage range / the board**: what the treasure map always renders: everything within a 3-day sail of the anchorage (`ANCHORAGE` × `ROAD_MILES_PER_DAY` in `shipMapConfig.ts`). Past the gold horizon lies fog; pins out there render dimmed and unclickable. The board follows the anchorage when she moves.
+- **Commercial boondock**: the `commercial_boondock` location type: rest areas, Walmart and Home Depot lots, and other high-traffic paved sites for a quick legal night. Asphalt-gray ring, 🅿️ glyph, always imported unverified with a check-the-signs access note. Distinct from wild boondocks.
+- **Chakra points**: the symbolic energy centers of the region on the treasure map, joined into one line of light. Root at Mount Shasta, Heart at Mount Ashland, Crown at Crater Lake; the other four await Rye's research (`CHAKRA_POINTS` in `shipMapConfig.ts`). Voyagers are invited to focus, release, clear, and heal each center's energy when they visit its land.
+- **Inner Compass**: the intuition practice on the map page (2026-07-10). Players design a printable treasure map (their chosen tokens, day rings, chakra points), print it big at a print shop, and dowse it with a pendulum under the best-timeline intention; or they chart with the First Mate, or both. The poster is our own illustrated board (`shipInnerCompass.tsx`), never third-party imagery.
+- **Best timeline**: the intention of the Inner Compass practice: the journey that brings the most growth and love. Rye's phrase; keep it verbatim in copy.
+- **The Mycelium**: the memory-and-worldview layer of the second brain: ontology (`08 Concepts`, `09 Positions` in the vault), the Worldview Pack, local retrieval, and the memory hygiene contract. Name is Rye's to confirm.
+- **Worldview Pack**: the versioned, curated, redaction-gated bundle of Rye's voice, concepts, positions, and style rules, built from the vault and loaded by agent surfaces via `server/lib/worldview.ts` (ADR-38). Never contains raw sources.
+- **Agent contract**: `second-brain/contract.json` plus its AGENT GUIDE section: the machine-readable rules for how any agent reads and writes vault memory (ADR-40).
+- **Supersession**: marking an idea or position replaced (`superseded_by`) while retaining it as history. Agents never delete worldview content.
+
+### Governance fork relay (gm-marker)
+The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain vote outcomes to forks of the village platform. A **gm-marker** is `[gm:<id>]` — the fork-side mechanics proposal's identity. Real chain events carry only the numeric on-chain proposalId, so a **marker link** (`governanceForkMarkerLinks`, registered by the fork via `governance-fork-link` when its founder pastes the Hypha proposal URL back) is what lets the relay match production events; title markers still match test/manual events and BROADCAST, linked ids deliver targeted. Distinct from our own `[rc:<bridgeKey>]` bridge markers: `rc` means this repo's bridge rows, `gm` means a fork's game-mechanics proposal. Never mint either shape by hand outside the owning module.

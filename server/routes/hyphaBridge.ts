@@ -16,6 +16,7 @@ import {
   KNOWN_INTENTS,
 } from "../lib/hypha-bridge";
 import type { HyphaBridgePayload, HyphaFormKind, HyphaBridgeSource } from "../lib/hypha-bridge/types";
+import { resolveQuestRegenReward } from "@shared/quest-rewards";
 
 /** $ReGen token contract address on Base. */
 const REGEN_TOKEN_ADDRESS = "0x4E617cd113364193d215d107AdD6fa50418AA2E4" as const;
@@ -134,8 +135,12 @@ export const hyphaBridgeRouter = router({
         questDescription: z.string().min(1).max(2000),
         /** e.g. "A written or recorded reflection on a rite you designed" */
         questDeliverable: z.string().min(1).max(500),
-        /** How many $ReGen tokens this quest awards */
-        regenReward: z.number().int().positive().max(10000),
+        /**
+         * Client-displayed reward, accepted for backward compatibility and
+         * NEVER used for the payout. The server resolves the real amount from
+         * the canonical quest reward table (shared/quest-rewards.ts).
+         */
+        regenReward: z.number().int().positive().max(10000).optional(),
         /** The player's video, article, or other deliverable URL */
         deliverableUrl: z.string().url(),
         /** Optional quest card image URL to use as lead image on the proposal */
@@ -143,6 +148,22 @@ export const hyphaBridgeRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // The payout amount comes from the canonical reward table, never from
+      // the client. An unknown quest id cannot request a payout at all.
+      const resolved = resolveQuestRegenReward(input.questId, input.regenReward);
+      if (!resolved) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Unknown quest "${input.questId}"`,
+        });
+      }
+      if (resolved.mismatch) {
+        console.warn(
+          `[hyphaBridge] createFromQuest reward mismatch for ${input.questId}: client sent ${input.regenReward}, using canonical ${resolved.regen} (user ${ctx.user.id})`,
+        );
+      }
+      const regenReward = resolved.regen;
+
       const description = [
         input.questDescription,
         "",
@@ -150,7 +171,7 @@ export const hyphaBridgeRouter = router({
         "",
         `My work: ${input.deliverableUrl}`,
         "",
-        `Requesting ${input.regenReward} $ReGen tokens + 1 RGVoice for completing ${input.questTitle} in the ReGen Civics Game.`,
+        `Requesting ${regenReward} $ReGen tokens + 1 RGVoice for completing ${input.questTitle} in the ReGen Civics Game.`,
       ].join("\n");
 
       const payload: HyphaBridgePayload = {
@@ -161,7 +182,7 @@ export const hyphaBridgeRouter = router({
         title: input.questTitle,
         description,
         payouts: [
-          { amount: String(input.regenReward), token: REGEN_TOKEN_ADDRESS },
+          { amount: String(regenReward), token: REGEN_TOKEN_ADDRESS },
         ],
         attachments: [
           {
@@ -175,7 +196,7 @@ export const hyphaBridgeRouter = router({
         metadata: {
           questId: input.questId,
           questTitle: input.questTitle,
-          regenReward: input.regenReward,
+          regenReward,
           deliverableUrl: input.deliverableUrl,
         },
       };

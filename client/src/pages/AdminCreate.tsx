@@ -1,0 +1,579 @@
+/**
+ * The Harvest at /admin-create (Phase 2).
+ *
+ * Two tiers: Ripe ideas (why-now + Develop with an angle) and Drafts (edit in
+ * place). Every card traces to its raw sources via the provenance panel.
+ * Owner-only: harvest.listFeed is ownerProcedure, so anyone else sees the
+ * quiet gate message, never data.
+ */
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { ComposeBox, PublicationReview } from "@/components/HarvestCompose";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sprout, RefreshCw, Loader2, ChevronDown, ChevronUp, Copy, Check,
+  Send, Moon, Ban, Compass, Sparkles, ExternalLink, ArrowLeft, Mail, Share2,
+} from "lucide-react";
+
+const CHANNELS = [
+  { key: "linkedin", label: "LinkedIn" },
+  { key: "facebook", label: "Facebook" },
+  { key: "instagram", label: "Instagram" },
+  { key: "threads_x", label: "Threads / X" },
+  { key: "newsletter", label: "Newsletter" },
+  { key: "article", label: "Article" },
+] as const;
+type ChannelKey = (typeof CHANNELS)[number]["key"];
+
+function channelLabel(key: string): string {
+  return CHANNELS.find((c) => c.key === key)?.label ?? key;
+}
+
+/** Reading surfaces (title, summary, why-now) never show em-dashes. Raw
+ * provenance sources are left untouched so they stay faithful to the original. */
+function cleanDashes(s: string): string {
+  return s.replace(/[—–]/g, "-");
+}
+
+function timeAgo(date: string | Date | null): string {
+  if (!date) return "never";
+  const ms = Date.now() - new Date(date).getTime();
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function ScorePills({ components, ripeness }: { components: unknown; ripeness: number }) {
+  const c = (components ?? {}) as Record<string, number>;
+  const parts: Array<[string, number | undefined]> = [
+    ["material", c.material], ["recency", c.recency], ["cluster", c.cluster], ["focus", c.theme_focus],
+  ];
+  return (
+    <span className="flex flex-wrap gap-1 items-center">
+      <Badge className="bg-[#1a472a] text-[#7dd87d] hover:bg-[#1a472a]">{ripeness.toFixed(2)}</Badge>
+      {parts.map(([name, value]) => value !== undefined && (
+        <span key={name} className="text-[11px] px-2 py-0.5 rounded bg-[#1a472a]/10 text-[#1a472a] font-medium">
+          {name} {Number(value).toFixed(2)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function Provenance({ itemId, ideaId }: { itemId?: number; ideaId?: number }) {
+  const query = trpc.harvest.getSource.useQuery(
+    itemId ? { itemId } : { ideaId: ideaId! },
+    { retry: false, refetchOnWindowFocus: false },
+  );
+  if (query.isLoading) return <p className="text-xs text-[#2d5a3d] py-2"><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Tracing sources...</p>;
+  if (!query.data) return <p className="text-xs text-[#2d5a3d] py-2">No provenance recorded for this one.</p>;
+  const { sources, linkTree, noteRefs } = query.data;
+  return (
+    <div className="space-y-3 py-2 text-sm">
+      {sources.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide">Raw sources</p>
+          {sources.map((s) => (
+            <div key={s.refId} className="rounded-lg bg-[#f0ebe3] px-3 py-2">
+              <p className="text-[10px] text-[#2d5a3d] mb-1">{s.refId} · {s.date ? new Date(s.date).toLocaleDateString() : "undated"}{s.forwardedFrom ? ` · fwd: ${s.forwardedFrom}` : ""}</p>
+              <p className="text-xs text-[#1a472a] whitespace-pre-wrap">{(s.text ?? "").slice(0, 700)}{(s.text ?? "").length > 700 ? "..." : ""}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {linkTree.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide mb-1">Link tree</p>
+          <div className="flex flex-col gap-1">
+            {linkTree.slice(0, 12).map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs text-[#2d5a3d] hover:underline flex items-center gap-1 break-all">
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />{url}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+      {noteRefs.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-[#2d5a3d] uppercase tracking-wide mb-1">Vault notes</p>
+          {noteRefs.map((ref) => (
+            <p key={ref} className="text-xs text-[#1a472a] font-mono">{ref}</p>
+          ))}
+        </div>
+      )}
+      {sources.length === 0 && linkTree.length === 0 && noteRefs.length === 0 && (
+        <p className="text-xs text-[#2d5a3d]">No sources on file yet; the bridge fills these in.</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The hardened email send flow (Phase 4): preview shows subject + live
+ * recipient count and carries a signed token bound to the exact text; Confirm
+ * returns that token with an idempotency key, so a double-click is a no-op
+ * and any text change since preview is rejected server-side.
+ */
+function EmailSendPanel({ itemId, onSent }: { itemId: number; onSent: () => void }) {
+  const [preview, setPreview] = useState<{ subject: string; recipientCount: number; confirmToken: string } | null>(null);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [result, setResult] = useState<string | null>(null);
+  const sendPreview = trpc.harvest.sendPreview.useMutation();
+  const confirmSend = trpc.harvest.confirmSend.useMutation();
+
+  if (result) return <p className="text-xs text-[#2d5a3d] font-medium py-1">{result}</p>;
+
+  if (!preview) {
+    return (
+      <div className="flex items-center gap-2 py-1 flex-wrap">
+        <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={sendPreview.isPending}
+          onClick={async () => {
+            try {
+              const p = await sendPreview.mutateAsync({ itemId });
+              setPreview({ subject: p.subject, recipientCount: p.recipientCount, confirmToken: p.confirmToken });
+            } catch {
+              // Message renders below via isError.
+            }
+          }}>
+          {sendPreview.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Mail className="w-3.5 h-3.5 mr-1" />}
+          Preview email send
+        </Button>
+        {sendPreview.isError && <p className="text-xs text-red-700">{sendPreview.error.message}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 space-y-2">
+      <p className="text-xs text-amber-900">
+        <span className="font-semibold">Subject:</span> {preview.subject}
+      </p>
+      <p className="text-xs text-amber-900">
+        This sends to <span className="font-semibold">{preview.recipientCount} subscriber{preview.recipientCount === 1 ? "" : "s"}</span> and cannot be unsent. The confirm is bound to this exact text; if you edit again, preview again.
+      </p>
+      <div className="flex items-center gap-2">
+        <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={confirmSend.isPending}
+          onClick={async () => {
+            try {
+              const r = await confirmSend.mutateAsync({ itemId, confirmToken: preview.confirmToken, idempotencyKey });
+              setResult(r.duplicate ? "Already sent (double-click caught, nothing re-sent)." : `Sent to ${r.recipientCount} subscribers.`);
+              onSent();
+            } catch {
+              // Message renders below via isError.
+            }
+          }}>
+          {confirmSend.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
+          Confirm send to {preview.recipientCount}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-8 text-[#2d5a3d]" onClick={() => setPreview(null)}>Cancel</Button>
+      </div>
+      {confirmSend.isError && <p className="text-xs text-red-700">{confirmSend.error.message}</p>}
+    </div>
+  );
+}
+
+/**
+ * Read-only idea graph (Phase 4): themes as hubs on a ring, ideas as dots
+ * linked to their themes. Deterministic layout, no graph library.
+ */
+function IdeaGraph({ ideas }: { ideas: Array<{ id: number; title: string; themes: unknown; ripeness: number }> }) {
+  const themed = ideas
+    .map((i) => ({ ...i, themeList: (Array.isArray(i.themes) ? (i.themes as unknown[]) : []).filter((t): t is string => typeof t === "string") }))
+    .filter((i) => i.themeList.length > 0)
+    .slice(0, 80);
+  const themes = Array.from(new Set(themed.flatMap((i) => i.themeList))).slice(0, 14);
+  if (themes.length === 0) return <p className="text-sm text-[#2d5a3d]">No themed ideas to graph yet.</p>;
+
+  const W = 640, H = 420, CX = W / 2, CY = H / 2;
+  const hubPos = new Map(themes.map((t, n) => {
+    const angle = (2 * Math.PI * n) / themes.length - Math.PI / 2;
+    return [t, { x: CX + Math.cos(angle) * 150, y: CY + Math.sin(angle) * 130 }] as const;
+  }));
+  // Each idea sits at the average of its theme hubs, fanned by golden angle
+  // so overlapping ideas spread instead of stacking.
+  const nodes = themed.map((idea, n) => {
+    const hubs = idea.themeList.filter((t) => hubPos.has(t)).map((t) => hubPos.get(t)!);
+    if (hubs.length === 0) return null;
+    const x = hubs.reduce((s, h) => s + h.x, 0) / hubs.length;
+    const y = hubs.reduce((s, h) => s + h.y, 0) / hubs.length;
+    const jitterAngle = (n * 2.399963) % (2 * Math.PI);
+    const r = 18 + (n % 5) * 9;
+    return { idea, x: x + Math.cos(jitterAngle) * r, y: y + Math.sin(jitterAngle) * r, hubs: idea.themeList.filter((t) => hubPos.has(t)) };
+  }).filter((n): n is NonNullable<typeof n> => n !== null);
+
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-[#4a7c59]/25 bg-white">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[560px]">
+        {nodes.map((node) => node.hubs.map((t) => {
+          const hub = hubPos.get(t)!;
+          return <line key={`${node.idea.id}-${t}`} x1={node.x} y1={node.y} x2={hub.x} y2={hub.y} stroke="#4a7c59" strokeOpacity="0.15" strokeWidth="1" />;
+        }))}
+        {nodes.map((node) => (
+          <circle key={node.idea.id} cx={node.x} cy={node.y} r={3 + node.idea.ripeness * 3} fill="#4a7c59" fillOpacity={0.4 + node.idea.ripeness * 0.5}>
+            <title>{node.idea.title} ({node.idea.ripeness.toFixed(2)})</title>
+          </circle>
+        ))}
+        {themes.map((t) => {
+          const hub = hubPos.get(t)!;
+          return (
+            <g key={t}>
+              <circle cx={hub.x} cy={hub.y} r="7" fill="#1a472a" />
+              <text x={hub.x} y={hub.y - 12} textAnchor="middle" fontSize="10" fill="#1a472a" fontWeight="600">{t}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+type IdeaRow = {
+  id: number; title: string; displayTitle: string | null;
+  summary: string | null; whyNow: string | null;
+  ripeness: number; scoreComponents: unknown; themes: unknown; steer: string | null;
+};
+
+function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [channels, setChannels] = useState<ChannelKey[]>(["linkedin"]);
+  const [angle, setAngle] = useState("");
+  const [steerText, setSteerText] = useState("");
+  const [showSteer, setShowSteer] = useState(false);
+  const develop = trpc.harvest.develop.useMutation();
+  const snooze = trpc.harvest.snooze.useMutation();
+  const notThis = trpc.harvest.notThis.useMutation();
+  const steer = trpc.harvest.steer.useMutation();
+
+  function toggleChannel(key: ChannelKey) {
+    setChannels((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]);
+  }
+
+  async function runDevelop() {
+    if (channels.length === 0) return;
+    await develop.mutateAsync({ ideaId: idea.id, channels, ...(angle.trim() ? { angle: angle.trim() } : {}) });
+    onChanged();
+  }
+
+  const themes = Array.isArray(idea.themes) ? (idea.themes as string[]) : [];
+  const [showSources, setShowSources] = useState(false);
+  // The vault's `title` is the first ~45 raw characters of the note, cut
+  // mid-word. displayTitle is the generated one; fall back while it backfills.
+  const headline = (idea.displayTitle ?? "").trim() || idea.title;
+
+  return (
+    <div className="rounded-2xl border border-[#4a7c59]/25 bg-white p-4 space-y-2">
+      <div className="space-y-1.5">
+        <p className="font-semibold text-[15px] leading-snug text-[#1a472a]">{cleanDashes(headline)}</p>
+        {idea.whyNow && (
+          <button
+            type="button"
+            onClick={() => setShowSources((s) => !s)}
+            className="text-left text-xs text-[#2d5a3d] underline decoration-dotted underline-offset-2 hover:text-[#1a472a]"
+            title="See the notes this idea webs together"
+          >
+            {cleanDashes(idea.whyNow)}
+          </button>
+        )}
+        {showSources && (
+          <div className="rounded-lg bg-[#f8f5f0] px-3 py-2">
+            <Provenance ideaId={idea.id} />
+          </div>
+        )}
+        <ScorePills components={idea.scoreComponents} ripeness={idea.ripeness} />
+      </div>
+      {themes.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {themes.slice(0, 5).map((t) => <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-[#1a472a]/10 text-[#1a472a]">{t}</span>)}
+        </div>
+      )}
+      {idea.steer && <p className="text-xs text-amber-800 bg-amber-50 rounded px-2 py-1">Steer: {idea.steer}</p>}
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1.5">
+        <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] text-[#f0ebe3] hover:bg-[#2d5a3d] hover:text-white" onClick={() => setExpanded((e) => !e)}>
+          <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Develop {expanded ? <ChevronUp className="w-3.5 h-3.5 ml-1.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-1.5" />}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" disabled={snooze.isPending}
+          onClick={async () => { await snooze.mutateAsync({ ideaId: idea.id, days: 7 }); onChanged(); }}>
+          <Moon className="w-3.5 h-3.5 mr-1.5" /> Snooze
+        </Button>
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" disabled={notThis.isPending}
+          onClick={async () => { await notThis.mutateAsync({ ideaId: idea.id }); onChanged(); }}>
+          <Ban className="w-3.5 h-3.5 mr-1.5" /> Not this
+        </Button>
+        <Button size="sm" variant="ghost" className="h-9 px-2.5 text-[#1a472a] hover:bg-[#1a472a]/5" onClick={() => setShowSteer((s) => !s)}>
+          <Compass className="w-3.5 h-3.5 mr-1.5" /> Steer
+        </Button>
+      </div>
+
+      {showSteer && (
+        <div className="flex gap-2">
+          <Textarea value={steerText} onChange={(e) => setSteerText(e.target.value)} placeholder="e.g. focus on the fundraising angle"
+            className="min-h-[40px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" rows={1} />
+          <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={!steerText.trim() || steer.isPending}
+            onClick={async () => { await steer.mutateAsync({ ideaId: idea.id, text: steerText.trim() }); setShowSteer(false); setSteerText(""); onChanged(); }}>
+            Save
+          </Button>
+        </div>
+      )}
+
+      {expanded && (
+        <div className="space-y-2 border-t border-[#1a472a]/10 pt-2">
+          {idea.summary && <p className="text-sm leading-relaxed text-[#1a472a] whitespace-pre-wrap">{cleanDashes(idea.summary).slice(0, 500)}</p>}
+          <div className="flex flex-wrap gap-1.5">
+            {CHANNELS.map((c) => (
+              <button key={c.key} onClick={() => toggleChannel(c.key)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${channels.includes(c.key) ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a] border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <input value={angle} onChange={(e) => setAngle(e.target.value)} placeholder="Angle (optional): the fatherhood thread, the numbers, ..."
+            className="w-full text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={200} />
+          <div className="flex items-center gap-2">
+            <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] text-[#f0ebe3] hover:bg-[#2d5a3d] hover:text-white" disabled={develop.isPending || channels.length === 0} onClick={runDevelop}>
+              {develop.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+              {develop.isPending ? "Drafting..." : `Draft ${channels.length} channel${channels.length === 1 ? "" : "s"}`}
+            </Button>
+            {develop.isError && <p className="text-xs text-red-700">{develop.error.message}</p>}
+          </div>
+          <details>
+            <summary className="text-xs text-[#2d5a3d] cursor-pointer">Where this comes from</summary>
+            <Provenance ideaId={idea.id} />
+          </details>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type DraftRow = {
+  id: number; channel: string; body: string | null; aiBody: string | null;
+  status: "ready" | "edited" | "shipped"; angle: string | null;
+  updatedAt: string | Date; ripeness: number;
+};
+
+function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { ideaId: number | null; captureId: string }; ideaTitleById: Map<number, string>; onChanged: () => void }) {
+  const [body, setBody] = useState(item.body ?? "");
+  const [dirty, setDirty] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [nudge, setNudge] = useState("");
+  const [showNudge, setShowNudge] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+  const [postedOpen, setPostedOpen] = useState(false);
+  const [postedText, setPostedText] = useState("");
+  const [kindOpen, setKindOpen] = useState(false);
+  const edit = trpc.harvest.editItem.useMutation();
+  const regenerate = trpc.harvest.regenerate.useMutation();
+  const markPosted = trpc.harvest.markPosted.useMutation();
+
+  useEffect(() => { setBody(item.body ?? ""); setDirty(false); setKindOpen(false); }, [item.id, item.body]);
+
+  // The one-tap classifier (plan s6): saving asks "mostly style or mostly
+  // content?" so only style edits teach the voice loop. Content is the safer
+  // default and gets the plain button.
+  async function save(editKind: "style" | "content") {
+    if (!dirty || !body.trim()) return;
+    await edit.mutateAsync({ itemId: item.id, body, editKind });
+    setDirty(false);
+    setKindOpen(false);
+    onChanged();
+  }
+
+  async function copyBody() {
+    await navigator.clipboard.writeText(body);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  const statusColor = item.status === "shipped" ? "bg-[#4a7c59] text-white" : item.status === "edited" ? "bg-amber-100 text-amber-900" : "bg-[#1a472a]/10 text-[#1a472a]";
+  const title = (item.ideaId && ideaTitleById.get(item.ideaId)) || item.captureId;
+
+  return (
+    <div className="rounded-2xl border border-[#4a7c59]/25 bg-white p-4 space-y-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge className="bg-[#1a472a] text-white hover:bg-[#1a472a]">{channelLabel(item.channel)}</Badge>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColor}`}>{item.status}</span>
+          <span className="text-xs text-[#2d5a3d] truncate">{title}</span>
+        </div>
+        <span className="text-[10px] text-[#2d5a3d]">{timeAgo(item.updatedAt)}</span>
+      </div>
+      {item.angle && <p className="text-xs text-[#2d5a3d]">Angle: {item.angle}</p>}
+
+      <Textarea value={body} onChange={(e) => { setBody(e.target.value); setDirty(true); }}
+        className="min-h-[140px] text-sm leading-relaxed text-[#1a472a] rounded-xl border-[#1a472a]/25 focus-visible:ring-[#4a7c59] font-normal whitespace-pre-wrap" />
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        {!kindOpen ? (
+          <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={!dirty || edit.isPending} onClick={() => setKindOpen(true)}>
+            {edit.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save edit"}
+          </Button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs text-[#1a472a]">
+            That edit was
+            <Button size="sm" variant="outline" className="h-8 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={edit.isPending} onClick={() => void save("style")}>
+              mostly style
+            </Button>
+            <Button size="sm" className="h-8 rounded-lg bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={edit.isPending} onClick={() => void save("content")}>
+              mostly content
+            </Button>
+          </span>
+        )}
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={copyBody}>
+          {copied ? <Check className="w-3.5 h-3.5 mr-1 text-[#2d5a3d]" /> : <Copy className="w-3.5 h-3.5 mr-1" />}{copied ? "Copied" : "Copy"}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={() => setShowNudge((s) => !s)} disabled={item.status === "shipped"}>
+          <RefreshCw className="w-3.5 h-3.5 mr-1" /> Regenerate
+        </Button>
+        <Button size="sm" variant="ghost" className="h-8 text-[#1a472a]" onClick={() => setPostedOpen((s) => !s)} disabled={item.status === "shipped"}>
+          <Send className="w-3.5 h-3.5 mr-1" /> Mark as posted
+        </Button>
+        <button className="text-xs text-[#2d5a3d] hover:underline ml-auto" onClick={() => setShowSources((s) => !s)}>
+          {showSources ? "Hide sources" : "Where this comes from"}
+        </button>
+      </div>
+
+      {showNudge && (
+        <div className="flex gap-2 items-center">
+          <input value={nudge} onChange={(e) => setNudge(e.target.value)} placeholder="Nudge: shorter, more personal, lead with the question..."
+            className="flex-1 text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={300} />
+          <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={regenerate.isPending}
+            onClick={async () => { await regenerate.mutateAsync({ itemId: item.id, ...(nudge.trim() ? { nudge: nudge.trim() } : {}) }); setShowNudge(false); setNudge(""); onChanged(); }}>
+            {regenerate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
+          </Button>
+        </div>
+      )}
+
+      {postedOpen && (
+        <div className="space-y-2 border-t border-[#1a472a]/10 pt-2">
+          <Textarea value={postedText} onChange={(e) => setPostedText(e.target.value)}
+            placeholder="Optional: paste the final text as it was posted (the cleanest voice signal of all)"
+            className="min-h-[60px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" />
+          <Button size="sm" className="h-8 rounded-lg bg-[#4a7c59] hover:bg-[#1a472a]" disabled={markPosted.isPending}
+            onClick={async () => { await markPosted.mutateAsync({ itemId: item.id, ...(postedText.trim() ? { postedText: postedText.trim() } : {}) }); setPostedOpen(false); onChanged(); }}>
+            Confirm posted
+          </Button>
+        </div>
+      )}
+
+      {item.channel === "newsletter" && item.status === "edited" && (
+        <EmailSendPanel itemId={item.id} onSent={onChanged} />
+      )}
+
+      {showSources && <Provenance itemId={item.id} />}
+    </div>
+  );
+}
+
+export default function AdminCreate() {
+  const feed = trpc.harvest.listFeed.useQuery({ tier: "all" }, { retry: false, refetchOnWindowFocus: false });
+  const refresh = trpc.harvest.refresh.useMutation();
+  const publicationsList = trpc.harvest.listPublications.useQuery(undefined, { retry: false, refetchOnWindowFocus: false });
+  const [openPublicationId, setOpenPublicationId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+  const onChanged = () => void utils.harvest.listFeed.invalidate();
+
+  const ideaTitleById = useMemo(() => {
+    const map = new Map<number, string>();
+    // Generated title where we have one; the vault's mid-word cut otherwise.
+    for (const idea of feed.data?.ideas ?? []) {
+      map.set(idea.id, (idea.displayTitle ?? "").trim() || idea.title);
+    }
+    return map;
+  }, [feed.data?.ideas]);
+
+  if (feed.isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#f8f5f0]"><Loader2 className="w-6 h-6 animate-spin text-[#1a472a]" /></div>;
+  }
+
+  if (feed.isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f5f0] p-6">
+        <div className="text-center space-y-3">
+          <Sprout className="w-8 h-8 text-[#2d5a3d] mx-auto" />
+          <p className="text-[#1a472a] font-semibold">The Harvest is the owner's creation studio.</p>
+          <p className="text-sm text-[#2d5a3d]">Sign in as the owner to see the feed.</p>
+          <Link href="/admin" className="text-sm text-[#2d5a3d] hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-3.5 h-3.5" /> Back to admin</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const data = feed.data!;
+  const staleWarning = data.status.generationStale;
+
+  return (
+    <div className="min-h-screen bg-[#f8f5f0] pb-24">
+      <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <Link href="/admin" className="text-xs text-[#2d5a3d] hover:underline inline-flex items-center gap-1 mb-1"><ArrowLeft className="w-3 h-3" /> Admin</Link>
+            <h1 className="text-2xl font-bold text-[#1a472a] flex items-center gap-2"><Sprout className="w-6 h-6 text-[#2d5a3d]" /> The Harvest</h1>
+            <Link href="/admin/voice-rules" className="text-xs text-[#2d5a3d] hover:underline">Voice rules</Link>
+            <p className="text-xs text-[#2d5a3d] mt-1">
+              {data.ready
+                ? <>Generation ran {timeAgo(data.status.lastGeneration)} · bridge {timeAgo(data.status.lastBridge)} · digest {timeAgo(data.status.lastDigest)} · last send {timeAgo(data.status.lastSend)}</>
+                : "The feed tables are not migrated yet."}
+              {staleWarning && data.ready && <span className="text-amber-700 font-medium"> · generation has not run in over two hours</span>}
+            </p>
+          </div>
+          <Button size="sm" variant="outline" className="h-9 rounded-lg border-[#1a472a]/30 text-[#1a472a]" disabled={refresh.isPending}
+            onClick={async () => { await refresh.mutateAsync(); onChanged(); }}>
+            {refresh.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />} Refresh
+          </Button>
+        </div>
+
+        <ComposeBox onComposed={(id) => {
+          setOpenPublicationId(id);
+          void publicationsList.refetch();
+          onChanged();
+        }} />
+
+        {(openPublicationId !== null || (publicationsList.data?.length ?? 0) > 0) && (
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Publications</h2>
+              {(publicationsList.data ?? []).slice(0, 6).map((pub) => (
+                <button key={pub.id}
+                  onClick={() => setOpenPublicationId((current) => current === pub.id ? null : pub.id)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${openPublicationId === pub.id ? "bg-[#1a472a] text-white border-[#1a472a]" : "bg-white text-[#1a472a] border-[#1a472a]/25 hover:border-[#1a472a]/50"}`}>
+                  {pub.title.slice(0, 40)} · {pub.status}
+                </button>
+              ))}
+            </div>
+            {openPublicationId !== null && <PublicationReview publicationId={openPublicationId} />}
+          </section>
+        )}
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Ripe ideas ({data.ideas.length})</h2>
+          {data.ideas.length === 0 && <p className="text-sm text-[#2d5a3d]">Nothing ripe right now. The bridge and the hourly worker keep this fresh.</p>}
+          {data.ideas.map((idea) => <IdeaCard key={idea.id} idea={idea as IdeaRow} onChanged={onChanged} />)}
+        </section>
+
+        <details className="group">
+          <summary className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide cursor-pointer flex items-center gap-1.5">
+            <Share2 className="w-3.5 h-3.5" /> Idea graph
+          </summary>
+          <div className="pt-3">
+            <IdeaGraph ideas={data.ideas as Array<{ id: number; title: string; themes: unknown; ripeness: number }>} />
+          </div>
+        </details>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Drafts ({data.drafts.length})</h2>
+          {data.drafts.length === 0 && <p className="text-sm text-[#2d5a3d]">No drafts yet. Tap Develop on a ripe idea.</p>}
+          {data.drafts.map((item) => (
+            <DraftCard key={item.id} item={item as DraftRow & { ideaId: number | null; captureId: string }} ideaTitleById={ideaTitleById} onChanged={onChanged} />
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}

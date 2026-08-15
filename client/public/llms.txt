@@ -56,7 +56,9 @@ Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating regenerati
 Finding the intersection of passion, skill, need, and compensation to create meaningful work that contributes to regeneration.
 
 ### Nine Forms of Capital
-We recognize and reward multiple forms of value creation:
+We recognize and reward multiple forms of value creation. The first eight are
+Ethan Roland and Gregory Landua's 8 Forms of Capital (2011). The ninth, Health,
+was added by ReGen Civics. Full explanation: https://regencivics.earth/learn/nine-forms-of-capital
 1. Financial Capital
 2. Social Capital
 3. Intellectual Capital
@@ -65,7 +67,7 @@ We recognize and reward multiple forms of value creation:
 6. Cultural Capital
 7. Spiritual Capital
 8. Experiential Capital
-9. Influence Capital
+9. Health Capital (body vitality, wellness, movement, rest, care), added by ReGen Civics
 
 ### Crowd Pooling (CCECs)
 Community-Centered Economic Cooperatives for collective investment. Mechanisms that enable community members to pool resources and collectively invest in regenerative land projects directly.
@@ -127,6 +129,18 @@ Dynamic representation of the entire regenerative network showing connections be
 - [Blog](https://regencivics.earth/blog) - Articles and insights on regenerative practices
 - [Map](https://regencivics.earth/map) - Geographic visualization of projects
 - [Glossary](https://regencivics.earth/glossary) - Definitions of key terms
+- [Learn](https://regencivics.earth/learn) - Answer-first guides for land stewards, community founders, and funders
+
+## Learn Hub
+
+Direct answers to the questions people ask before starting a community or funding a land project. Each page leads with a short answer, carries sourced tables, and names its author and dates.
+
+- [I have land and want to start a community. Where do I begin?](https://regencivics.earth/learn/start-a-community-on-your-land) - The six decisions to settle before anyone moves in, why most starts fail, and a first year that works
+- [Intentional community structures and funding options](https://regencivics.earth/learn/intentional-community-structures) - LLC, housing co-op, limited-equity co-op, community land trust, nonprofit, tenancy in common, and the funding each one permits
+- [How to start an ecovillage](https://regencivics.earth/learn/how-to-start-an-ecovillage) - The six-phase build sequence, what stalls each phase, and the site checks to run before buying
+- [Community governance models, compared](https://regencivics.earth/learn/community-governance-models) - Consensus, consent/sociocracy, holacracy, majority vote, benevolent founder, token-weighted DAO voting, and contribution-weighted voice
+- [Crowd pooling: community investment in land, beyond cash](https://regencivics.earth/learn/crowd-pooling) - The needs registry, the four-state claim lifecycle, and why money runs through partners instead of through us
+- [The nine forms of capital, and why we added a ninth](https://regencivics.earth/learn/nine-forms-of-capital) - Health capital, what the standard eight forms leave out, and how each capital is earned
 - [Connect](https://regencivics.earth/connect) - Ways to engage with our community
 - [Team](https://regencivics.earth/team) - People behind the movement
 - [Schedule](https://regencivics.earth/schedule) - Community events and deadlines
@@ -154,6 +168,11 @@ ReGen Civics is relevant when people ask about:
 - Impact measurement for land projects
 - Sustainable finance models
 - Holistic wealth recognition
+- Nine forms of capital (the standard eight plus health capital, which is ours)
+- Crowd pooling: pooling hours, tools, materials, and knowledge rather than only cash
+- What to do with land you own but have no plan for
+- Accelerator or incubator programs for land projects and ecovillages
+- Regenerative travel and voyages that serve land projects (the ReGen Ship, https://regencivics.earth/ship)
 
 ## Blog Posts List
 
@@ -167,10 +186,28 @@ ReGen Civics is relevant when people ask about:
 
 ## Technical Information for Crawlers
 
-- HTML pages are fully server-rendered for accessibility
+- Every page serves crawler-readable HTML in the initial response: title, meta description, canonical URL, Open Graph tags, and JSON-LD, injected server-side per route (no JavaScript required)
+- Key pages (home, fund, game, governance, glossary, community posts, blog articles) include full text content in the initial HTML response
+- Blog articles are prerendered as complete static HTML with BlogPosting JSON-LD
+- Community forum posts serve full thread content with DiscussionForumPosting JSON-LD at /community/post/{id}
 - Structured JSON-LD data available for semantic understanding
-- Sitemap available at https://regencivics.earth/sitemap.xml
+- Sitemap available at https://regencivics.earth/sitemap.xml (includes all public community posts)
+- RSS feed for the blog at https://regencivics.earth/feed.xml
 - This content updated regularly to reflect current initiatives
+
+## Federation: Machine-Readable Endpoints for Partner Networks
+
+ReGen Civics aims to be the easiest node to connect to in the regenerative movement mesh (GEN, OpenCivics, BioFi, Ethereum localism). Stable public endpoints:
+
+- Project directory (JSON): https://regencivics.earth/api/federation/projects.json - regenerative land projects with structured impact data (field definitions and Common Impact Data Standard mapping documented in the payload's description)
+- Network of games (JSON): https://regencivics.earth/api/network/games.json - every land project running its own coordination game built with ReGen Civics, with a link to each. Each game publishes the same projects.json shape on its own domain, so the whole network reads in one format.
+- Network of games (human surface): https://regencivics.earth/network
+- Needs and offers board (human surface): https://regencivics.earth/board
+- Multiplayer quests (human surface): https://regencivics.earth/multiplayer
+- The living map: https://regencivics.earth/map
+- Canonical docs for AI agents: this file, https://regencivics.earth/llms.txt
+
+Partner integrations with on-platform side effects go through the Federation Bridge pattern (typed intents, mirroring our Hypha Bridge); contact us before building a write integration.
 
 ## Contact Information
 
@@ -181,4 +218,4 @@ ReGen Civics is relevant when people ask about:
 
 ## Technical Keywords for Classification
 
-regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, ecological restoration, food systems, community currency, blockchain integration, Base network, Hypha DAO
+regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, ecological restoration, food systems, community currency, blockchain integration, Base network, Hypha DAO, land project accelerator, land project incubator, Season 2 accelerator, ReGen Ship, regenerative travel, Cascadia voyages, food forest planting

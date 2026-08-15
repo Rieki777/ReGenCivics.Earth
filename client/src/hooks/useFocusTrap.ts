@@ -37,10 +37,14 @@ export function useFocusTrap(active: boolean) {
     const focusables = Array.from(
       container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
     );
+    // preventScroll so activating a trapped overlay never yanks the page's scroll
+    // position to bring the focused element into view (the element is already
+    // visible inside the fixed/positioned overlay). Without this, opening a modal
+    // or drawer while the page is scrolled mid-way jumps the whole page.
     if (focusables.length > 0) {
-      focusables[0].focus();
+      focusables[0].focus({ preventScroll: true });
     } else {
-      container.focus();
+      container.focus({ preventScroll: true });
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,12 +60,12 @@ export function useFocusTrap(active: boolean) {
       if (e.shiftKey) {
         if (document.activeElement === first) {
           e.preventDefault();
-          last.focus();
+          last.focus({ preventScroll: true });
         }
       } else {
         if (document.activeElement === last) {
           e.preventDefault();
-          first.focus();
+          first.focus({ preventScroll: true });
         }
       }
     };
@@ -70,9 +74,10 @@ export function useFocusTrap(active: boolean) {
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      // Restore focus to the previously active element
+      // Restore focus to the previously active element, without scrolling the
+      // page back to wherever that element sits.
       if (previousFocusRef.current instanceof HTMLElement) {
-        previousFocusRef.current.focus();
+        previousFocusRef.current.focus({ preventScroll: true });
       }
     };
   }, [active]);

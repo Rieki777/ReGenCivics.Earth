@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getGameVariableOr } from "../game";
 
 const PROPOSAL_CATEGORIES = [
   "fund_allocation", "game_variable", "new_quest", "food_economy",
@@ -127,11 +128,10 @@ export const proposalsRouter = router({
         WHERE id = ${input.proposalId}
       `);
 
-      // Check threshold from game_variables (default 25 if not set)
-      const [thresholdRow] = await db.execute(sql`
-        SELECT value FROM game_variables WHERE \`key\` = 'proposals.signal_threshold' LIMIT 1
-      `).then((r: any) => r[0] ?? []);
-      const threshold = thresholdRow?.value ?? 25;
+      // Check threshold from game_variables (default 25 if not set).
+      // getGameVariableOr also Number-coerces — the old raw read compared
+      // signalVoteCount against a driver string.
+      const threshold = await getGameVariableOr("proposals.signal_threshold", 25);
 
       // If threshold reached, update status
       const [proposal] = await db.execute(sql`

@@ -193,7 +193,7 @@ export default function Fund() {
             >
               <Link href="/loi">Submit LOI</Link>
             </Button>
-            <span className="hidden sm:inline text-[#1a472a]/50">|</span>
+            <span className="hidden sm:inline text-[#1a472a]/75">|</span>
             <Link
               href="/risk-disclosure"
               className="text-[#1a472a]/80 hover:text-[#1a472a] text-xs sm:text-sm font-semibold underline underline-offset-2"

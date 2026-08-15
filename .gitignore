@@ -143,6 +143,7 @@ second-brain/
 /.agents/
 /.claude/skills/find-skills
 /.claude/skills/use-railway
+/.claude/skills/last30days
 
 # Editor backup files
 *.bak
@@ -172,3 +173,23 @@ imports-log.txt
 
 # Elder backfill review artifact (generated, not source)
 ELDER_BACKFILL_REVIEW.md
+
+# go-pmtiles binary + extract cache (build artifacts, never commit)
+scripts/.bin/
+scripts/.cache/
+
+# iOverlander CSV exports: partner data used with permission (personal use +
+# people we know). Never commit; lives only on this machine + the production DB.
+data/ioverlander/
+
+# A nested, unrelated git repo (~180MB) that lives in this folder. Not part of
+# the app; excluded so it stays out of the `railway up` bundle (413 on 2026-07-16).
+loomio Governance Tools/
+
+# Kokoro TTS demo clips (research artifacts, not app assets)
+voice-demos/
+
+# UI harness screenshots and raw video output (local dev artifacts)
+harness/shots/
+harness/.out/
+video-out/

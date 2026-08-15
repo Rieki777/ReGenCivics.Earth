@@ -14,6 +14,13 @@ import {
   Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
@@ -157,22 +164,16 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
     searchResults.members.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[#f0ebe3] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#1a472a]/20">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-[#1a472a]">New conversation</h2>
-          <button
-            onClick={onClose}
-            className="text-[#1a472a]/80 hover:text-[#1a472a] transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <p className="text-sm text-[#1a472a]/70 mb-4">
-          Search by display name to find someone to message.
-        </p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="bg-[#f0ebe3] border-[#1a472a]/20 md:max-w-md md:rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-[#1a472a]">
+            New conversation
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#1a472a]/75">
+            Search by display name to find someone to message.
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="relative">
           <Input
@@ -185,7 +186,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
               setSelectedUserName("");
             }}
             onKeyDown={handleKeyDown}
-            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/55"
+            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
           />
 
           {showDropdown && (
@@ -211,7 +212,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
         </div>
 
         {selectedUserName && selectedUserId && (
-          <p className="mt-2 text-sm text-[#1a472a]/70">
+          <p className="mt-2 text-sm text-[#1a472a]/75">
             Starting conversation with <strong>{selectedUserName}</strong>.
           </p>
         )}
@@ -224,7 +225,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
           <Button
             variant="ghost"
             onClick={onClose}
-            className="text-[#1a472a]/70 hover:text-[#1a472a]"
+            className="text-[#1a472a]/75 hover:text-[#1a472a]"
           >
             Cancel
           </Button>
@@ -236,8 +237,8 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
             {getOrCreate.isPending ? "Opening…" : "Start conversation"}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -409,7 +410,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
                   </span>
                   <span className="text-xs text-[#1a472a]/80 flex-shrink-0">{timeAgo(r.createdAt)}</span>
                 </div>
-                <p className="text-xs text-[#1a472a]/70 line-clamp-2">
+                <p className="text-xs text-[#1a472a]/75 line-clamp-2">
                   {highlightMatch(r.snippet, debouncedQuery)}
                 </p>
               </button>
@@ -437,7 +438,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
             {!isLoading && (!conversations || conversations.length === 0) && (
               <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
                 <MessageCircle className="w-12 h-12 text-[#7dd87d]/80 mb-4" />
-                <p className="text-[#1a472a]/70 text-sm leading-relaxed">
+                <p className="text-[#1a472a]/75 text-sm leading-relaxed">
                   No messages yet. Connect with a fellow regenerator to get started.
                 </p>
                 <Button
@@ -612,7 +613,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
         {isMobile && (
           <button
             onClick={onBack}
-            className="p-1.5 rounded-full hover:bg-[#1a472a]/10 text-[#1a472a] transition-colors"
+            className="p-1.5 min-h-11 min-w-11 inline-flex items-center justify-center rounded-full hover:bg-[#1a472a]/10 text-[#1a472a] transition-colors"
             aria-label="Back to inbox"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -695,7 +696,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         }`}
                       >
                         {isDeleted ? (
-                          <span className={`italic text-sm ${isSelf ? "text-white/40" : "text-[#1a472a]/80"}`}>
+                          <span className={`italic text-sm ${isSelf ? "text-white/60" : "text-[#1a472a]/80"}`}>
                             [Message deleted]
                           </span>
                         ) : (
@@ -703,6 +704,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         )}
                       </div>
                       {isSelf && !isDeleted && (
+                        /* touch-ok: floating corner delete over the bubble, expander gives the 44px hit area */
                         <button
                           onClick={() => {
                             if (window.confirm("Delete this message?")) {
@@ -757,8 +759,10 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area */}
-      <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3">
+      {/* Input area. text-base on mobile: fonts under 16px make iOS Safari
+          zoom the whole page on focus. Bottom padding respects the iPhone
+          home indicator. */}
+      <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {showCharCount && (
           <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/80"}`}>
             {charCount} / 5000
@@ -772,16 +776,16 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
             onKeyDown={handleKeyDown}
             placeholder="Write a message… (Shift+Enter for new line)"
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-[#1a472a]/20 bg-white px-3 py-2 text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
-            style={{ minHeight: "40px", maxHeight: "120px" }}
+            className="flex-1 resize-none rounded-xl border border-[#1a472a]/20 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
+            style={{ minHeight: "44px", maxHeight: "120px" }}
           />
           <Button
             onClick={handleSend}
             disabled={!inputText.trim() || sendMessage.isPending || charOver}
-            className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-10 w-10 flex-shrink-0"
+            className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-11 w-11 flex-shrink-0"
             aria-label="Send"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </Button>
         </div>
       </div>

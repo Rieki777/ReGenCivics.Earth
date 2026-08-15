@@ -35,8 +35,10 @@ import {
   playerProfiles,
 } from "../../drizzle/schema";
 import { payRole } from "../db/bounties";
+import { ENV } from "../_core/env";
 
-const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET ?? "";
+// Read through ENV (single validated config surface), not process.env.
+const GITHUB_WEBHOOK_SECRET = ENV.githubWebhookSecret;
 
 // ── In-memory gate state ──────────────────────────────────────────────────────
 // Lost on process restart — conservative fallback is hold, not auto-pay.

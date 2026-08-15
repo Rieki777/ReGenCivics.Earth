@@ -18,26 +18,47 @@ import {
 } from "../../db";
 import { hyphaBridges, users } from "../../../drizzle/schema";
 import { stripTitleMarker } from "./prefill";
-import { checkCitizenshipTiers } from "../../routes/batchJobs";
+import { checkCitizenshipTiers } from "../citizenship";
 import type { QuestBridgeMetadata } from "./types";
 import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
 import { logger } from "../../_core/logger";
+import { flushForkRelays, maybeQueueForkRelay, registerForkLinkRoute } from "./fork-relay";
 
 const log = logger("hypha-alchemy");
 
-const ALCHEMY_SIGNING_KEY = process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "";
+// One or more Alchemy signing keys, comma-separated. Alchemy issues a distinct
+// signing key per webhook, and more than one webhook (the token address-activity
+// feed plus the governance DAOProposals log feed) POSTs to this single endpoint,
+// so we accept any of the configured keys. A single-key value keeps working
+// unchanged. Whitespace around each key is trimmed.
+const ALCHEMY_SIGNING_KEYS = (process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "")
+  .split(",")
+  .map((k) => k.trim())
+  .filter((k) => k.length > 0);
 const BASESCAN_TX_BASE = "https://basescan.org/tx/";
 
 /** Verify the Alchemy webhook signature header. Alchemy signs the raw body
- * with HMAC-SHA256 using the signing key from the dashboard. */
+ * with HMAC-SHA256 using the signing key from the dashboard. Returns true if
+ * the signature matches ANY configured key, so several webhooks that share this
+ * endpoint (each with its own Alchemy signing key) all verify. */
 function verifyAlchemySignature(rawBody: string, signature: string | undefined): boolean {
-  if (!ALCHEMY_SIGNING_KEY || !signature) return false;
-  const computed = crypto.createHmac("sha256", ALCHEMY_SIGNING_KEY).update(rawBody).digest("hex");
+  if (ALCHEMY_SIGNING_KEYS.length === 0 || !signature) return false;
+  let sigBuf: Buffer;
   try {
-    return crypto.timingSafeEqual(Buffer.from(computed, "hex"), Buffer.from(signature, "hex"));
+    sigBuf = Buffer.from(signature, "hex");
   } catch {
     return false;
   }
+  return ALCHEMY_SIGNING_KEYS.some((key) => {
+    const computed = crypto.createHmac("sha256", key).update(rawBody).digest("hex");
+    const computedBuf = Buffer.from(computed, "hex");
+    if (computedBuf.length !== sigBuf.length) return false;
+    try {
+      return crypto.timingSafeEqual(computedBuf, sigBuf);
+    } catch {
+      return false;
+    }
+  });
 }
 
 /** Extract a bridge key from a proposal title's [rc:xxxxxxxx] marker. */
@@ -381,6 +402,14 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
           log.error("cascadeClaimPassed top-level error", err),
         );
       }
+      // A formalized crowdpool contribution passed on chain: the project's DHO
+      // issued its tokens. Stamp the contribution confirmed and notify. Either
+      // ProposalExecuted or the token Transfer signals success.
+      if (bridgeSource === "crowdpool") {
+        cascadeCrowdpoolPassed(bridgeRow, event.txHash).catch((err: any) =>
+          log.error("cascadeCrowdpoolPassed top-level error", err),
+        );
+      }
       // Assembly ratification arriving machine-to-machine: the binding vote
       // concluded on Hypha and the Evolution Engine takes it from here. Only
       // ProposalExecuted (a governance outcome) triggers this — a bare token
@@ -660,7 +689,107 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
   } as any).catch((err: any) => log.error("claim_failed notification failed", err));
 }
 
+/**
+ * A formalized crowdpool contribution passed on chain: the project's DHO issued
+ * its tokens. Stamp the contribution confirmed (so the campaign reflects it
+ * without a join to hyphaBridges), surface it on the pool ledger, and notify
+ * the contributor and the steward. Idempotent: a compare-and-swap stamps only a
+ * contribution whose hyphaConfirmedAt is still null, and the passed-transition
+ * CAS upstream already fires this exactly once per bridge. We never mint or move
+ * tokens here; issuance happened on chain in the DHO.
+ */
+async function cascadeCrowdpoolPassed(bridgeRow: any, txHash: string | undefined): Promise<void> {
+  if (bridgeRow.source !== "crowdpool") return;
+  const db = await getDb();
+  if (!db) {
+    log.warn("cascadeCrowdpoolPassed: no db connection");
+    return;
+  }
+
+  let payload: any = null;
+  try {
+    payload = typeof bridgeRow.payload === "string" ? JSON.parse(bridgeRow.payload) : bridgeRow.payload;
+  } catch { /* ignore */ }
+  const contributionId = Number(payload?.metadata?.contributionId ?? bridgeRow.sourceId);
+  if (!Number.isFinite(contributionId) || contributionId <= 0) {
+    log.warn("cascadeCrowdpoolPassed: missing contributionId in metadata", { bridgeKey: bridgeRow.bridgeKey });
+    return;
+  }
+
+  const { campaignContributions, campaigns } = await import("../../../drizzle/schema");
+
+  // Idempotency: only the first pass stamps the confirmation.
+  const casResult = await db
+    .update(campaignContributions)
+    .set({ hyphaConfirmedAt: new Date() } as any)
+    .where(and(
+      eq(campaignContributions.id, contributionId),
+      sql`hyphaConfirmedAt IS NULL`,
+    ));
+  const affected = (casResult as unknown as { affectedRows?: number }[])[0]?.affectedRows
+    ?? (casResult as unknown as { affectedRows?: number })?.affectedRows
+    ?? 0;
+  if (affected === 0) {
+    log.info(`cascadeCrowdpoolPassed: contribution ${contributionId} already confirmed, skipping`);
+    return;
+  }
+
+  const [contribution] = await db.select().from(campaignContributions).where(eq(campaignContributions.id, contributionId)).limit(1).catch(() => []);
+  if (!contribution) return;
+  const campaignId = (contribution as any).campaignId;
+  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).limit(1).catch(() => []);
+  const projectName = (campaign as any)?.projectName || (campaign as any)?.title || "the project";
+  const needTitle = (contribution as any).title || "your contribution";
+  const txLink = txHash ? `https://basescan.org/tx/${txHash}` : ((bridgeRow as any).basescanUrl || "");
+
+  const { createUserNotification } = await import("../../db");
+  const contributorUserId = (contribution as any).userId as number | null;
+  const stewardUserId = (campaign as any)?.userId as number | null;
+
+  if (contributorUserId) {
+    await createUserNotification({
+      userId: contributorUserId,
+      type: "campaign_milestone",
+      title: "Your contribution is confirmed on chain",
+      message: `${projectName} formalized "${needTitle}" on Hypha and issued its tokens.${txLink ? ` View on Basescan: ${txLink}` : ""}`,
+      campaignId,
+      contributionId,
+    } as any).catch((err: any) => log.error("cascadeCrowdpoolPassed: contributor notification failed", err));
+  }
+  if (stewardUserId && stewardUserId !== contributorUserId) {
+    await createUserNotification({
+      userId: stewardUserId,
+      type: "campaign_milestone",
+      title: "A contribution was confirmed on chain",
+      message: `"${needTitle}" was formalized on Hypha for ${projectName}.`,
+      campaignId,
+      contributionId,
+    } as any).catch((err: any) => log.error("cascadeCrowdpoolPassed: steward notification failed", err));
+  }
+
+  // Best-effort pool-ledger event so the confirmation shows on the public feed.
+  try {
+    const { logActivityEvent } = await import("../../game");
+    await logActivityEvent(
+      "crowdpool_confirmed",
+      "player",
+      contributorUserId || 0,
+      "campaign",
+      campaignId,
+      { contributionId, bridgeKey: bridgeRow.bridgeKey },
+    );
+  } catch (err: any) {
+    log.error("cascadeCrowdpoolPassed: activity event failed", err);
+  }
+
+  log.info(`cascadeCrowdpoolPassed: contribution ${contributionId} confirmed on chain (bridge ${bridgeRow.bridgeKey})`);
+}
+
 export function registerHyphaWebhookRoutes(app: Express) {
+  // Fork→hub marker links ride the same registration point (ADR-46): the
+  // relay can only match production log events through them.
+  registerForkLinkRoute(app);
+
   app.post("/api/webhooks/hypha-alchemy", async (req: Request, res: Response) => {
     const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
     if (await isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {
@@ -706,7 +835,14 @@ export function registerHyphaWebhookRoutes(app: Express) {
       const results = [];
       for (const ev of events) {
         results.push(await handleHyphaEvent(ev));
+        // ADR-46: a [gm:<id>] marker is a FORK's mechanics proposal — it can
+        // never match this repo's [rc:] bridges, so relaying it is purely
+        // additive. Queue is idempotent per (fork, marker, outcome).
+        await maybeQueueForkRelay(ev).catch((e) => log.warn("fork relay enqueue failed", { error: String(e) }));
       }
+      // Flush owed deliveries opportunistically on the chain's own heartbeat
+      // (every incoming webhook) — retries ride the backoff in the queue.
+      void flushForkRelays().catch((e) => log.warn("fork relay flush failed", { error: String(e) }));
       return res.json({ ok: true, processed: results.length, matched: results.filter((r) => r.matched).length });
     } catch (err: any) {
       log.error("handler error", err);

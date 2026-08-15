@@ -105,6 +105,7 @@ export function HeroPageLoader({
 
       {/* Page content */}
       <div
+        // tap-audit-ok: page-reveal wrapper; its hit-box IS the page content
         className={`transition-opacity duration-500 ${
           revealed ? "opacity-100" : "opacity-0"
         }`}

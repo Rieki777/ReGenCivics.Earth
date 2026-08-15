@@ -148,7 +148,7 @@ export function EmailCaptureModal() {
               </PillButton>
               <button
                 onClick={handleSkip}
-                className="text-sm text-white/40 hover:text-white/70 transition-colors py-2 px-4"
+                className="text-sm text-white/60 hover:text-white/70 transition-colors py-2 px-4"
               >
                 Skip for now
               </button>

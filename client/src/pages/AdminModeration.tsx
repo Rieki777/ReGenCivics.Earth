@@ -174,14 +174,14 @@ export default function AdminModeration() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 min-h-[44px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
                 activeTab === tab.key
                   ? 'bg-[#7dd87d] text-[#1a472a]'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span>{tab.label}</span>
               {tab.count !== undefined && tab.count > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   activeTab === tab.key ? 'bg-[#1a472a]/20' : 'bg-white/10'
@@ -343,7 +343,7 @@ export default function AdminModeration() {
             <div className="space-y-2">
               {moderatorsQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
-                  <Shield className="w-10 h-10 text-white/45 mx-auto mb-3" />
+                  <Shield className="w-10 h-10 text-white/60 mx-auto mb-3" />
                   <p className="text-white/65 text-sm">No moderators assigned yet</p>
                 </div>
               ) : (

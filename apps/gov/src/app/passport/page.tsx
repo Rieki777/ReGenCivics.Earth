@@ -100,7 +100,7 @@ export default function PassportPage() {
             <div className="text-center py-4">
               <Vote className="w-10 h-10 text-[#d4a574]/50 mx-auto mb-2" />
               <p className="text-white/65 text-sm">You haven't delegated your voice yet.</p>
-              <p className="text-white/45 text-xs mt-1">
+              <p className="text-white/60 text-xs mt-1">
                 Delegation lets a trusted community member vote on your behalf for specific topics. You can override any delegated vote by voting directly.
               </p>
               <PillButton variant="secondary" className="mt-4 text-xs px-4 py-2">
@@ -136,7 +136,7 @@ export default function PassportPage() {
                 <p className="text-white/80 text-sm">
                   Your embedded Privy wallet on Base. Used for claiming governance tokens to Hypha when you cross the threshold.
                 </p>
-                <p className="text-white/45 text-xs mt-2 font-mono">
+                <p className="text-white/60 text-xs mt-2 font-mono">
                   (Connect via the Privy login to see your wallet address)
                 </p>
               </div>

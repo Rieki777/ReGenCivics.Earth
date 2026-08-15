@@ -139,6 +139,7 @@ export async function routePostToElder(
         { role: "user", content: `Post\nTitle: ${title}\n\n${content}`.slice(0, 4000) },
       ],
       maxTokens: 16,
+      task: "light",
     });
     return parseRouterChoice(res.choices?.[0]?.message?.content ?? "", elders.map((e) => e.id));
   } catch (err) {

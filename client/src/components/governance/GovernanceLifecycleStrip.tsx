@@ -137,7 +137,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, sensingSta
               >
                 <p
                   className={`text-xs font-semibold ${
-                    isActive ? "text-[#1a472a]" : isPast ? "text-[#4a7c59]" : "text-[#4a7c59]/50"
+                    isActive ? "text-[#1a472a]" : isPast ? "text-[#4a7c59]" : "text-[#1a472a]/75"
                   }`}
                 >
                   {cfg.label}
@@ -166,7 +166,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, sensingSta
                 </span>
               )}
               {reversibility && REVERSIBILITY_LABELS[reversibility] && (
-                <span className="md:hidden text-[10px] text-[#4a7c59]/70 w-full">
+                <span className="md:hidden text-[10px] text-[#1a472a]/75 w-full">
                   {REVERSIBILITY_LABELS[reversibility].tooltip}
                 </span>
               )}
@@ -200,7 +200,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, sensingSta
                   <button
                     type="button"
                     onClick={() => setConfirmingReturn(false)}
-                    className="text-xs text-[#4a7c59]/80 hover:text-[#4a7c59] transition-colors"
+                    className="text-xs text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
                   >
                     Keep sensing
                   </button>
@@ -209,7 +209,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, sensingSta
                 <button
                   type="button"
                   onClick={() => setConfirmingReturn(true)}
-                  className="text-xs text-[#4a7c59]/80 hover:text-[#1a472a] underline transition-colors"
+                  className="text-xs text-[#1a472a]/75 hover:text-[#1a472a] underline transition-colors"
                   title="Undo Sensing and return this thread to open conversation."
                 >
                   Return to dialogue

@@ -46,11 +46,18 @@ const glossaryEntries: GlossaryEntry[] = [
     category: "Core Concepts",
   },
   {
-    term: "8 Forms of Capital",
-    definition: "A framework recognizing eight types of wealth beyond money: Financial, Material, Living (ecological), Social, Intellectual, Experiential, Spiritual, and Cultural capital. Used in ReGen Civics to measure holistic value creation.",
+    term: "9 Forms of Capital",
+    definition: "A framework recognizing nine types of wealth beyond money: Financial, Material, Living (ecological), Social, Intellectual, Experiential, Spiritual, Cultural, and Health capital. The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital. ReGen Civics added the ninth, Health, covering body vitality, wellness, movement, rest, and care.",
     category: "Core Concepts",
-    relatedLink: "/calculator",
-    relatedLabel: "Contribution Calculator",
+    relatedLink: "/learn/nine-forms-of-capital",
+    relatedLabel: "Why we added a ninth",
+  },
+  {
+    term: "Health Capital",
+    definition: "The physical and emotional vitality a person holds, and the work that builds it in others: movement, rest, bodywork, nutrition, recovery, and care. The ninth form of capital, added by ReGen Civics because the standard eight have no place for it.",
+    category: "Core Concepts",
+    relatedLink: "/learn/nine-forms-of-capital",
+    relatedLabel: "The nine forms of capital",
   },
   {
     term: "HEIST Framework",
@@ -292,8 +299,8 @@ export default function Glossary() {
             )}
             {showPropose && (
               <div className="max-w-md mx-auto mt-4 bg-white/10 border border-white/20 rounded-2xl p-4 space-y-3 text-left">
-                <input value={proposeTerm} onChange={e => setProposeTerm(e.target.value)} placeholder="Term (e.g. 'Bioregion')" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={200} />
-                <textarea value={proposeDefinition} onChange={e => setProposeDefinition(e.target.value)} placeholder="Definition..." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[80px] resize-y" maxLength={5000} />
+                <input value={proposeTerm} onChange={e => setProposeTerm(e.target.value)} placeholder="Term (e.g. 'Bioregion')" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={200} />
+                <textarea value={proposeDefinition} onChange={e => setProposeDefinition(e.target.value)} placeholder="Definition..." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[80px] resize-y" maxLength={5000} />
                 <Button onClick={() => { if (proposeTerm.trim() && proposeDefinition.trim()) proposeMutation.mutate({ term: proposeTerm.trim(), definition: proposeDefinition.trim() }); }} disabled={!proposeTerm.trim() || !proposeDefinition.trim() || proposeMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-5 text-sm">
                   <Send className="w-3 h-3 mr-1" /> {proposeMutation.isPending ? "Submitting..." : "Submit"}
                 </Button>

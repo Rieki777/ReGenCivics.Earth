@@ -188,7 +188,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
                 </Suspense>
               </div>
               {displayEndDate && (
-                <p className="text-xs text-[#1a472a]/70 mt-3">
+                <p className="text-xs text-[#1a472a]/75 mt-3">
                   Active until {new Date(displayEndDate).toLocaleDateString()}
                 </p>
               )}

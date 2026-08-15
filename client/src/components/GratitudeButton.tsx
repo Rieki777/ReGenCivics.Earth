@@ -14,7 +14,7 @@ import { getLoginUrl } from "@/const";
 
 type Props = {
   recipientHandle?: string | null;
-  sourceType?: "forum_post" | "forum_reply" | "profile" | "command_center";
+  sourceType?: "forum_post" | "forum_reply" | "profile" | "command_center" | "bounty" | "contribution";
   sourceId?: number;
   /** Compact icon-only button. Default false (icon + label). */
   compact?: boolean;

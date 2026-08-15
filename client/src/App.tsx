@@ -31,6 +31,7 @@ import Navigation from "./components/Navigation";
 const MycelialBackground = lazy(() => import("./components/MycelialBackground").then(m => ({ default: m.MycelialBackground })));
 const AnimationLayer = lazy(() => import("./components/AnimationLayer").then(m => ({ default: m.AnimationLayer })));
 import { WizardRadialMenu } from "./components/mobile/WizardRadialMenu";
+import { HarvestCaptureModal } from "./components/HarvestCaptureModal";
 import { MobileMoreMenu } from "./components/mobile/MobileMoreMenu";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
@@ -66,7 +67,7 @@ const RegenIntroGate = lazy(() => import("./components/RegenIntroGate").then(m =
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
 function isAdminRoute(path: string) {
-  return path === "/admin" || path.startsWith("/admin/");
+  return path === "/admin" || path.startsWith("/admin/") || path === "/admin-create";
 }
 
 /**
@@ -83,6 +84,9 @@ const CoreApp = lazyWithRetry(() => import("./pages/core/CoreApp"));
 // Lazy load pages for better initial load performance
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
+const Multiplayer = lazy(() => import("./pages/Multiplayer"));
+const Board = lazy(() => import("./pages/Board"));
+const Watch = lazy(() => import("./pages/Watch"));
 const Opportunity = lazyWithRetry(() => import("./pages/Opportunity"));
 // Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
@@ -125,6 +129,11 @@ const InvestorContact = lazy(() => import("./pages/InvestorContact"));
 const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminCreate = lazy(() => import("./pages/AdminCreate"));
+const AdminVoiceRules = lazy(() => import("./pages/AdminVoiceRules"));
+const AdminCalls = lazy(() => import("./pages/AdminCalls"));
+const AdminFunding = lazy(() => import("./pages/AdminFunding"));
+const AdminGovernanceForks = lazy(() => import("./pages/AdminGovernanceForks"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 const CrowdPooling = lazy(() => import("./pages/CrowdPooling"));
 const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
@@ -143,6 +152,7 @@ const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
 const ReGenCoCreatorsGuide = lazy(() => import("./pages/ReGenCoCreatorsGuide"));
+const RegenCommunityOnboarding = lazy(() => import("./pages/RegenCommunityOnboarding"));
 const LOI = lazy(() => import("./pages/LOI"));
 const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
@@ -162,6 +172,8 @@ const QuestSuggestions = lazy(() => import("./pages/QuestSuggestions"));
 const UserForumProfile = lazy(() => import("./pages/UserForumProfile"));
 const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
+const Learn = lazy(() => import("./pages/Learn"));
+const LearnArticle = lazy(() => import("./pages/LearnArticle"));
 const FeatureSuggestions = lazy(() => import("./pages/FeatureSuggestions"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
@@ -197,6 +209,8 @@ function NewsletterConfirm() {
 }
 const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
+const CustomGamesApply = lazy(() => import("./pages/CustomGamesApply"));
+const Network = lazy(() => import("./pages/Network"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
@@ -205,6 +219,29 @@ const ShapeNextSession = lazy(() => import("./pages/ShapeNextSession"));
 const Checkin = lazy(() => import("./pages/Checkin"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Accessibility = lazy(() => import("./pages/Accessibility"));
+// ReGen Ship (CORE program)
+const Ship = lazy(() => import("./pages/ship/Ship"));
+const ShipBook = lazy(() => import("./pages/ship/ShipBook"));
+const ShipTheme = lazy(() => import("./pages/ship/ShipTheme"));
+const ShipMap = lazy(() => import("./pages/ship/ShipMap"));
+const Galley = lazy(() => import("./pages/ship/Galley"));
+const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
+const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
+const ShipQuestRules = lazy(() => import("./pages/ship/ShipQuestRules"));
+const ShipGiveaway = lazy(() => import("./pages/ship/ShipGiveaway"));
+const ShipGiveawayRules = lazy(() => import("./pages/ship/ShipGiveawayRules"));
+const ShipNominate = lazy(() => import("./pages/ship/ShipNominate"));
+const ShipFleet = lazy(() => import("./pages/ship/ShipFleet"));
+const ShipKeeper = lazy(() => import("./pages/ship/ShipKeeper"));
+const ShipWinter = lazy(() => import("./pages/ship/ShipWinter"));
+const ShipLog = lazy(() => import("./pages/ship/ShipLog"));
+const ShipGuide = lazy(() => import("./pages/ship/ShipGuide"));
+const CaptainsBook = lazy(() => import("./pages/ship/CaptainsBook"));
+const ShipCrewListAction = lazy(() => import("./pages/ship/ShipCrewListAction"));
+const ShipHomecoming = lazy(() => import("./pages/ship/ShipHomecoming"));
+const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
+const ShipTerms = lazy(() => import("./pages/ship/ShipTerms"));
+const ShipManifest = lazy(() => import("./pages/ship/ShipManifest"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -229,7 +266,38 @@ function Router() {
       {/* CORE lives on its own subdomain; on the main domain, /church sends users there. */}
       <Route path={"/church"}>{() => { window.location.replace('https://core.regencivics.earth'); return null; }}</Route>
       <Route path={"/quest/:slug"}><EB><Quest /></EB></Route>
+      <Route path={"/watch/:videoId"}><EB><Watch /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
+      <Route path={"/multiplayer"}><EB><Multiplayer /></EB></Route>
+      <Route path={"/board"}><EB><Board /></EB></Route>
+
+      {/* ReGen Ship (CORE program) */}
+      <Route path={"/ship"}><EB><Ship /></EB></Route>
+      <Route path={"/ship/inventory"}><EB><ShipManifest /></EB></Route>
+      <Route path={"/ship/inventory/:slug"}><EB><ShipManifest /></EB></Route>
+      <Route path={"/ship/book"}><EB><ShipBook /></EB></Route>
+      <Route path={"/ship/theme"}><EB><ShipTheme /></EB></Route>
+      <Route path={"/ship/map"}><EB><ShipMap /></EB></Route>
+      <Route path={"/ship/galley"}><EB><Galley /></EB></Route>
+      <Route path={"/ship/concierge"}><EB><ShipConcierge /></EB></Route>
+      <Route path={"/ship/quest/rules"}><EB><ShipQuestRules /></EB></Route>
+      <Route path={"/ship/quest"}><EB><ShipQuest /></EB></Route>
+      <Route path={"/ship/giveaway/rules"}><EB><ShipGiveawayRules /></EB></Route>
+      <Route path={"/ship/giveaway"}><EB><ShipGiveaway /></EB></Route>
+      <Route path={"/ship/nominate"}><EB><ShipNominate /></EB></Route>
+      <Route path={"/ship/fleet"}><EB><ShipFleet /></EB></Route>
+      <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
+      <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
+      <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>
+      <Route path={"/ship/log/:slug"}><EB><ShipHomecoming /></EB></Route>
+      <Route path={"/ship/guide"}><EB><ShipGuide /></EB></Route>
+      <Route path={"/ship/terms"}><EB><ShipTerms /></EB></Route>
+      <Route path={"/ship/voyage"}><EB><CaptainsBook /></EB></Route>
+      <Route path={"/ship/crew-list/confirm"}><EB><ShipCrewListAction mode="confirm" /></EB></Route>
+      <Route path={"/ship/crew-list/unsubscribe"}><EB><ShipCrewListAction mode="unsubscribe" /></EB></Route>
+      {/* The Love Voyage article lives in the blog; /ship/honeymoon is the friendly shortcut. */}
+      <Route path={"/ship/honeymoon"}>{() => { window.location.replace('/blog/more-than-one-honeymoon'); return null; }}</Route>
+      <Route path={"/admin/ship"}><EB><ShipAdmin /></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
       <Route path={"/land"}><EB><Land /></EB></Route>
       <Route path={"/ally"}><EB><Ally /></EB></Route>
@@ -237,6 +305,7 @@ function Router() {
       <Route path={"/opportunity"}><EB><Opportunity /></EB></Route>
       <Route path={"/governance"}><EB><Governance /></EB></Route>
       <Route path={"/co-creators-guide"}><EB><ReGenCoCreatorsGuide /></EB></Route>
+      <Route path={"/regen-community-onboarding"}><EB><RegenCommunityOnboarding /></EB></Route>
       <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
       <Route path={"/loi"}><EB><LOI /></EB></Route>
       <Route path={"/404"}><EB><NotFound /></EB></Route>
@@ -266,9 +335,14 @@ function Router() {
       <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
       <Route path={"/connect"}><EB><Connect /></EB></Route>
       <Route path={"/admin"}><EB><Admin /></EB></Route>
+      <Route path={"/admin-create"}><EB><AdminCreate /></EB></Route>
+      <Route path={"/admin/voice-rules"}><EB><AdminVoiceRules /></EB></Route>
+      <Route path={"/admin/calls"}><EB><AdminCalls /></EB></Route>
+      <Route path={"/admin/funding"}><EB><AdminFunding /></EB></Route>
+      <Route path={"/admin/governance-forks"}><EB><AdminGovernanceForks /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
-      <Route path={"/crowd-pooling-projects"}><EB><CrowdPoolingProjects /></EB></Route>
+      <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
       <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
@@ -279,7 +353,7 @@ function Router() {
       <Route path={"/gov/:slug/backfield"}><EB><GovBackField /></EB></Route>
       <Route path={"/gov/:slug"}><EB><GovTenant /></EB></Route>
       <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
-      <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
+      <Route path={"/campaigns"}><EB><CrowdPoolingProjects /></EB></Route>
       <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>
       <Route path={"/campaign/:id/manage"}><EB><CampaignManage /></EB></Route>
       <Route path={"/campaign/:id/analytics"}><EB><CampaignAnalytics /></EB></Route>
@@ -310,6 +384,8 @@ function Router() {
       <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
       <Route path={"/accessibility"}><EB><Accessibility /></EB></Route>
       <Route path={"/glossary"}><EB><Glossary /></EB></Route>
+      <Route path={"/learn/:slug"}><EB><LearnArticle /></EB></Route>
+      <Route path={"/learn"}><EB><Learn /></EB></Route>
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
@@ -333,6 +409,11 @@ function Router() {
       <Route path={"/bounties/:id"}><EB><BountyDetail /></EB></Route>
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
       <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
+      <Route path={"/custom-games/apply"}><EB><CustomGamesApply /></EB></Route>
+      {/* The return half of the foundation credit: every custom game links back
+          to regencivics.earth, and this page links back out to every game. */}
+      <Route path={"/network"}><EB><Network /></EB></Route>
+      <Route path={"/federation"}><Redirect to="/network" /></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
       {/* Final fallback route (also serves /404; the earlier explicit /404 route handles direct hits) */}
       <Route><EB><NotFound /></EB></Route>
@@ -459,7 +540,7 @@ function MainApp() {
           )}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content" className="pb-20">
+          <main id="main-content" className="pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]">
             <Router />
           </main>
           {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (
@@ -486,6 +567,7 @@ function MainApp() {
           {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
           {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
           {!adminMode && <WizardRadialMenu />}
+          {!adminMode && <HarvestCaptureModal />}
           {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}

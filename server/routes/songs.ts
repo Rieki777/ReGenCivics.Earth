@@ -14,6 +14,7 @@ import { getDb } from "../db";
 import { songSubmissions, songSubmissionVotes, users } from "../../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getGameVariableOr } from "../game";
 
 // Best-effort current season helper. Returns the active game season id when the
 // game_seasons table exists, otherwise `null` (which is treated as the global
@@ -31,17 +32,8 @@ async function getActiveSeasonId(): Promise<number | null> {
 }
 
 async function getWinnerReward(): Promise<number> {
-  const db = await getDb();
-  if (!db) return 3333;
-  try {
-    const rows = await db.execute(sql`SELECT value FROM game_variables WHERE \`key\` = 'hymnSubmissionWinnerReward' LIMIT 1`);
-    const row = (rows as any)?.[0]?.[0] ?? (rows as any)?.[0];
-    const v = row?.value;
-    const n = typeof v === "number" ? v : Number(v);
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : 3333;
-  } catch {
-    return 3333;
-  }
+  const n = await getGameVariableOr("hymnSubmissionWinnerReward", 3333);
+  return n > 0 ? Math.round(n) : 3333;
 }
 
 export const songsRouter = router({
@@ -108,6 +100,14 @@ export const songsRouter = router({
       if (!db) return [] as Array<any>;
       const seasonId = input?.seasonId ?? await getActiveSeasonId();
 
+      // Only live submissions belong on the voting page. After a season is
+      // tallied, losers are archived and the winner moves into the Hymn Book,
+      // so neither should keep showing as "this season's submissions".
+      // `includeWinners` opts winners back in for archive/hall-of-fame views.
+      const statusCond = input?.includeWinners
+        ? sql`${songSubmissions.status} IN ('pending', 'winner')`
+        : eq(songSubmissions.status, "pending");
+
       const rows = await db.select({
         id: songSubmissions.id,
         userId: songSubmissions.userId,
@@ -125,8 +125,8 @@ export const songsRouter = router({
       .leftJoin(users, eq(users.id, songSubmissions.userId))
       .where(
         seasonId === null || seasonId === undefined
-          ? sql`1 = 1`
-          : eq(songSubmissions.seasonId, seasonId)
+          ? statusCond
+          : and(eq(songSubmissions.seasonId, seasonId), statusCond)
       )
       .orderBy(desc(songSubmissions.voteCount), desc(songSubmissions.submittedAt))
       .limit(200);

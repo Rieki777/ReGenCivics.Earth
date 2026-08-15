@@ -202,13 +202,13 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
               </span>
             </Link>
             <div className="flex items-center gap-1">
-              <button onClick={audio.prevSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Previous track">
+              <button onClick={audio.prevSong} className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-white/60 hover:text-white" aria-label="Previous track">
                 <SkipBack className="w-4 h-4" />
               </button>
               <button onClick={audio.togglePlay} className="p-2 text-[#7dd87d] hover:text-[#9de89d]" aria-label={audio.isPlaying ? "Pause" : "Play"}>
                 {audio.isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </button>
-              <button onClick={audio.nextSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Next track">
+              <button onClick={audio.nextSong} className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-white/60 hover:text-white" aria-label="Next track">
                 <SkipForward className="w-4 h-4" />
               </button>
             </div>

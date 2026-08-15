@@ -305,6 +305,39 @@
       line-height: 1.6 !important;
     }
   }
+  /* iOS Safari auto-zooms when a focused form control renders under 16px.
+     The base Input/Textarea are 16px on mobile, but some inputs across the
+     site carry an explicit text-sm (14px) override (footer newsletter, a few
+     admin and modal fields), which reintroduces the zoom. Force a 16px floor
+     on mobile for text-entry controls so no form zooms on focus; desktop keeps
+     the compact size. Checkboxes, radios, ranges, and color pickers are
+     excluded since font-size does not apply to them. */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+  @media (max-width: 767px) {
+    /* Leaflet map controls (the treasure map is a key mobile surface). */
+    .leaflet-bar a {
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Breadcrumb + footer navigation links: comfortable tap height without
+       changing the text size. inline-flex + align-items keeps them centered.
+       Scoped to these nav regions so inline prose links are never affected. */
+    nav[aria-label="Breadcrumb"] a,
+    footer a[href] {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -653,6 +686,36 @@
   }
   .quest-card-green:hover {
     box-shadow: 0 0 0 1px rgba(125, 216, 125, 0.5), 0 8px 32px rgba(125, 216, 125, 0.2);
+  }
+
+  /* The booking nav card: a brighter, more alive green shimmer than the quest
+     green, so "Grab your spot" pulls the eye. The pure-gold ring is reserved
+     for the page you are currently on, so the two never read the same. */
+  .ship-nav-book {
+    box-shadow: 0 0 0 2px rgba(61, 220, 132, 0.75), 0 0 22px rgba(61, 220, 132, 0.45);
+  }
+  .ship-nav-book::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(140, 245, 170, 0.55) 50%,
+      transparent 70%
+    );
+    background-size: 300% 100%;
+    animation: green-shimmer 3.5s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 2;
+    mix-blend-mode: screen;
+  }
+  .ship-nav-book:hover {
+    box-shadow: 0 0 0 2px rgba(140, 245, 170, 0.95), 0 0 34px rgba(61, 220, 132, 0.7);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ship-nav-book::after { animation: none; }
   }
 
   /* Staggered animation delays */
@@ -1181,14 +1244,22 @@
   border-radius: 0.5rem;
 }
 
-/* Touch target: ensure 44px minimum hit area on coarse-pointer devices */
+/* Touch target: ensure 44px minimum hit area on coarse-pointer devices.
+   Includes Radix checkbox/radio/switch, whose visuals stay small by design;
+   the ::after overlay gives them a full 44x44 tap zone without resizing them. */
 @media (pointer: coarse) {
   button:not([disabled]):not(.no-touch-extend),
-  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend) {
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="checkbox"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="radio"]:not([aria-disabled="true"]):not(.no-touch-extend),
+  [role="switch"]:not([aria-disabled="true"]):not(.no-touch-extend) {
     position: relative;
   }
   button:not([disabled]):not(.no-touch-extend)::after,
-  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend)::after {
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="checkbox"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="radio"]:not([aria-disabled="true"]):not(.no-touch-extend)::after,
+  [role="switch"]:not([aria-disabled="true"]):not(.no-touch-extend)::after {
     content: "";
     position: absolute;
     top: 50%;

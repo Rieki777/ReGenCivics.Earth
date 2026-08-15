@@ -70,7 +70,7 @@ export function LOIManager() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-[#7dd87d]/10 to-[#7dd87d]/5 border-2 border-[#7dd87d]/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Total Pledged</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total Pledged</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export function LOIManager() {
 
         <Card className="bg-white border-2 border-[#1a472a]/10">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Total LOIs</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total LOIs</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function LOIManager() {
 
         <Card className="bg-white border-2 border-[#1a472a]/10">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Pending</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export function LOIManager() {
 
         <Card className="bg-white border-2 border-[#1a472a]/10">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">Confirmed</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Confirmed</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -146,11 +146,11 @@ export function LOIManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <span className="text-sm text-[#1a472a]/70">Core governance & council establishment</span>
+              <span className="text-sm text-[#1a472a]/75">Core governance & council establishment</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <span className="text-sm text-[#1a472a]/70">13+ land projects & 20+ alliance partners</span>
+              <span className="text-sm text-[#1a472a]/75">13+ land projects & 20+ alliance partners</span>
             </div>
           </div>
         </CardContent>
@@ -187,7 +187,7 @@ export function LOIManager() {
                           {statusLabels[loi.status]}
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-[#1a472a]/70">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-[#1a472a]/75">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4" />
                           <span className="truncate">{loi.email}</span>
@@ -245,7 +245,7 @@ export function LOIManager() {
               <div className="space-y-6">
                 {/* Status Badge */}
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-[#1a472a]/70">Status:</span>
+                  <span className="text-sm font-medium text-[#1a472a]/75">Status:</span>
                   <Badge className={`${statusColors[selectedLOI.status]} text-white`}>
                     {statusLabels[selectedLOI.status]}
                   </Badge>

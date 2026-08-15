@@ -10,6 +10,7 @@ import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
+import { currentIncubatorSeason } from "../../shared/incubatorSeason";
 
 export const applicationsRouter = router({
   // Create a new draft application
@@ -99,6 +100,21 @@ export const applicationsRouter = router({
         latitude: z.number().optional(),
         longitude: z.number().optional(),
         country: z.string().optional(),
+        // Size + community metrics. The form always sent these; zod strips
+        // unknown keys, so before this they were silently dropped (bug fix).
+        projectSizeHectares: z.number().optional(),
+        currentPeopleCount: z.number().optional(),
+        currentHouseholdCount: z.number().optional(),
+        intendedPeopleCount: z.number().optional(),
+        intendedHouseholdCount: z.number().optional(),
+        mixedUse: z.string().optional(), // JSON array string
+        // Conversation record from the Gardener companion on /apply. JSON array
+        // of turns; capped well above the client's 60-turn ceiling.
+        companionTranscript: z.string().max(400_000).optional(),
+        // Optional needs/offers capture (Phase B2): stored here through the
+        // draft flow, mirrored to the board tables on submit.
+        needsText: z.string().max(2000).optional(),
+        offersText: z.string().max(2000).optional(),
       }),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -154,7 +170,44 @@ export const applicationsRouter = router({
       if (application.userId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
-      await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date(), stewardUserId: ctx.user.id });
+      await db.updateApplication(input.id, {
+        status: "submitted",
+        submittedAt: new Date(),
+        stewardUserId: ctx.user.id,
+        season: currentIncubatorSeason(),
+      });
+
+      // Backfill map coordinates when the applicant submitted without dropping a
+      // pin on /apply. The pin is optional, so a text-only location would leave
+      // the project invisible on the globe (mapData requires lat+lng). Best-effort:
+      // a geocoding hiccup must never block the submission.
+      if ((application.latitude == null || application.longitude == null) && application.location) {
+        try {
+          const { geocodeLocation } = await import("../lib/geocode");
+          const geo = await geocodeLocation(application.location);
+          if (geo) {
+            await db.updateApplication(input.id, {
+              latitude: geo.lat,
+              longitude: geo.lng,
+              country: application.country || geo.country || undefined,
+            });
+          }
+        } catch (e) {
+          console.warn("[Geocode] Application submit backfill failed:", e);
+        }
+      }
+
+      // Mirror the optional needs/offers capture to the board tables (Phase B2).
+      // Non-fatal by design: a board hiccup never blocks a submission.
+      const { captureFormNeedsOffers } = await import("../lib/needsOffersStore");
+      await captureFormNeedsOffers({
+        source: "incubator_application",
+        sourceId: input.id,
+        ownerId: ctx.user.id,
+        contactName: application.projectName,
+        needsText: application.needsText,
+        offersText: application.offersText,
+      });
 
       // Notify owner of new application submission (respects notification preferences)
       // Also send confirmation email directly to the applicant
@@ -233,6 +286,42 @@ export const applicationsRouter = router({
     }),
 
   // Admin: Get all non-draft applications (submitted, under_review, approved, active, etc.)
+  // ── ReGen impact schema (Phase C1, improvement 7) ──────────────────────────
+  // Admin-edited structured impact record, validated against shared/impact.ts
+  // on every write. Public display goes through publicImpactSummary() only.
+  adminGetImpact: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const app = await db.getApplicationById(input.id);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      const { parseImpactData } = await import("@shared/impact");
+      return { id: app.id, projectName: app.projectName, impact: parseImpactData(app.impactData) };
+    }),
+
+  adminSetImpact: adminProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        impact: z.record(z.string(), z.unknown()),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const app = await db.getApplicationById(input.id);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      const { impactDataSchema } = await import("@shared/impact");
+      const parsed = impactDataSchema.omit({ updatedAt: true }).safeParse(input.impact);
+      if (!parsed.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Impact data failed validation: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+        });
+      }
+      await db.updateApplication(input.id, {
+        impactData: { ...parsed.data, updatedAt: new Date().toISOString() },
+      });
+      return { ok: true };
+    }),
+
   list: adminProcedure.query(async () => {
     return db.getAllApplications();
   }),
@@ -250,15 +339,12 @@ export const applicationsRouter = router({
     }),
 
   // Admin: Update application status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested"]),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
       await db.updateApplication(input.id, { status: input.status });
 
       // Inline tier detection on approval. Land Project Co-Creator
@@ -574,7 +660,7 @@ export const applicantsForCampaignRouter = router({
 
 export const reviewsRouter = router({
   // Admin: Create a review
-  create: protectedProcedure
+  create: adminProcedure
     .input(z.object({
       applicationId: z.number(),
       decision: z.enum(["approve", "reject", "request_changes", "pending"]),
@@ -586,9 +672,6 @@ export const reviewsRouter = router({
       teamScore: z.number().min(1).max(5).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
       const reviewId = await db.createReview({
         ...input,
         reviewerId: ctx.user.id,

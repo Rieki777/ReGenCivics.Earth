@@ -1,9 +1,13 @@
 /**
  * Play Detail - Individual play page with collapsible sections, endorsements, and adopt
  * Route: /plays/:slug
+ *
+ * Vision plays render the needs-first section set plus the robustness
+ * self-test; culture plays render the original 14 sections. Approved vision
+ * plays can launch a Crowdpooling campaign (the trial bridge).
  */
 import { useState, useEffect, useRef } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import {
   ArrowLeft,
   Gamepad2,
@@ -14,7 +18,8 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
-  Download,
+  Rocket,
+  Loader2,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -26,6 +31,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { getLoginUrl } from "@/const";
+import {
+  VISION_SECTIONS,
+  ROBUSTNESS_DIMENSIONS,
+  robustnessAverage,
+  playKindLabel,
+  type RobustnessScores,
+} from "@/data/playVision";
 
 const PLAY_SECTIONS = [
   { key: "sectionIdentity", label: "Identity and Origin" },
@@ -47,11 +59,13 @@ const PLAY_SECTIONS = [
 function PlaySection({
   title,
   content,
+  defaultOpen,
 }: {
   title: string;
   content?: string | null;
+  defaultOpen?: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!!defaultOpen);
   const hasContent = content != null && content.trim().length > 0;
 
   return (
@@ -69,9 +83,9 @@ function PlaySection({
           <span className="text-white font-medium">{title}</span>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-white/40" />
+          <ChevronUp className="w-4 h-4 text-white/60" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-white/40" />
+          <ChevronDown className="w-4 h-4 text-white/60" />
         )}
       </button>
       {isOpen && (
@@ -91,10 +105,61 @@ function PlaySection({
   );
 }
 
+function RobustnessPanel({ scores }: { scores: RobustnessScores }) {
+  const avg = robustnessAverage(scores);
+  return (
+    <div className="border border-[#7dd87d]/25 bg-[#7dd87d]/[0.04] rounded-xl p-5">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-white font-bold text-sm">Robustness self-test</h3>
+        {avg !== null && (
+          <span className="text-[#7dd87d] font-bold text-sm">{avg}/5</span>
+        )}
+      </div>
+      <p className="text-white/60 text-xs mb-4">
+        Six marks of systems that endure, after biologist Olivier Hamant.
+        Self-scored by the play's creator, published in the open.
+      </p>
+      <div className="space-y-3">
+        {ROBUSTNESS_DIMENSIONS.map((dim) => {
+          const score = scores[dim.key];
+          return (
+            <div key={dim.key}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white/80 text-sm">{dim.label}</span>
+                <span className="text-white/70 text-xs font-medium">
+                  {typeof score === "number" ? `${score}/5` : "not scored"}
+                </span>
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full ${
+                      typeof score === "number" && i <= score
+                        ? "bg-[#7dd87d]"
+                        : "bg-white/10"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {scores.note && (
+        <p className="text-white/60 text-xs italic leading-relaxed mt-4 pt-3 border-t border-white/10">
+          "{scores.note}"
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function PlayDetail() {
   const [, params] = useRoute("/plays/:slug");
   const slug = params?.slug;
-  const { isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const [endorseText, setEndorseText] = useState("");
   const [adopted, setAdopted] = useState(false);
   const viewTracked = useRef(false);
@@ -126,6 +191,12 @@ export default function PlayDetail() {
     },
   });
 
+  const launchCampaignMutation = trpc.plays.launchCampaign.useMutation({
+    onSuccess: (data) => {
+      setLocation(`/campaign/${data.campaignId}/manage`);
+    },
+  });
+
   const handleAdopt = () => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
@@ -151,7 +222,7 @@ export default function PlayDetail() {
           <h2 className="text-white text-xl font-semibold mb-2">
             Play not found
           </h2>
-          <p className="text-white/50 mb-6">
+          <p className="text-white/60 mb-6">
             This play may have been removed or the link is incorrect.
           </p>
           <Link href="/plays">
@@ -163,6 +234,21 @@ export default function PlayDetail() {
       </div>
     );
   }
+
+  const isVision = play.kind === "vision";
+  const lifecycle = playKindLabel(play.kind, play.totalAdoptions, play.campaignId);
+  const robustness = (play.robustness ?? null) as RobustnessScores | null;
+  const userId = (user as any)?.id;
+  const userRole = (user as any)?.role;
+  const isOwner =
+    userId != null &&
+    (play.submittedBy === userId || play.creatorUserId === userId);
+  const isAdmin = userRole === "admin" || userRole === "superadmin";
+  const canLaunchCampaign =
+    isVision &&
+    !play.campaignId &&
+    play.status === "approved" &&
+    (isOwner || isAdmin);
 
   const pricingBadgeClass =
     play.pricingModel === "free"
@@ -182,16 +268,17 @@ export default function PlayDetail() {
       ? play.pricingModel.charAt(0).toUpperCase() + play.pricingModel.slice(1)
       : "Free";
 
-  const filledSections = PLAY_SECTIONS.filter((s) => {
+  const sectionList = isVision ? VISION_SECTIONS : PLAY_SECTIONS;
+  const filledSections = sectionList.filter((s) => {
     const val = play[s.key as keyof typeof play] as string | null | undefined;
-    return val != null && val.trim().length > 0;
+    return val != null && String(val).trim().length > 0;
   }).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
         title={`${play.name} | Plays | ReGen Civics`}
-        description={play.summary || `Explore the ${play.name} community play on ReGen Civics.`}
+        description={play.summary || `Explore the ${play.name} play on ReGen Civics.`}
         url={`/plays/${slug}`}
       />
 
@@ -214,6 +301,22 @@ export default function PlayDetail() {
             {/* Header */}
             <AnimatedSection>
               <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge
+                    className={
+                      lifecycle === "Practiced"
+                        ? "bg-[#7dd87d]/20 text-[#7dd87d] border-[#7dd87d]/30"
+                        : lifecycle === "In Trial"
+                          ? "bg-sky-500/20 text-sky-300 border-sky-500/30"
+                          : "bg-violet-500/20 text-violet-300 border-violet-500/30"
+                    }
+                  >
+                    {lifecycle}
+                  </Badge>
+                  <span className="text-white/60 text-xs">
+                    {isVision ? "Vision Play" : "Culture Play"}
+                  </span>
+                </div>
                 <h1
                   className="text-3xl md:text-4xl font-bold text-white mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -234,17 +337,24 @@ export default function PlayDetail() {
             </AnimatedSection>
 
             {/* Section completion indicator */}
-            <div className="flex items-center gap-2 text-white/40 text-xs">
+            <div className="flex items-center gap-2 text-white/60 text-xs">
               <Check className="w-3.5 h-3.5" />
               <span>
-                {filledSections} of {PLAY_SECTIONS.length} sections filled
+                {filledSections} of {sectionList.length} sections filled
               </span>
             </div>
+
+            {/* Robustness self-test (vision plays) */}
+            {isVision && robustness && (
+              <AnimatedSection>
+                <RobustnessPanel scores={robustness} />
+              </AnimatedSection>
+            )}
 
             {/* Collapsible Sections */}
             <AnimatedSection>
               <div className="space-y-2">
-                {PLAY_SECTIONS.map((section) => {
+                {sectionList.map((section, i) => {
                   const content = play[
                     section.key as keyof typeof play
                   ] as string | null | undefined;
@@ -252,7 +362,8 @@ export default function PlayDetail() {
                     <PlaySection
                       key={section.key}
                       title={section.label}
-                      content={content}
+                      content={content == null ? content : String(content)}
+                      defaultOpen={isVision && i === 0}
                     />
                   );
                 })}
@@ -276,7 +387,7 @@ export default function PlayDetail() {
                       value={endorseText}
                       onChange={(e) => setEndorseText(e.target.value)}
                       placeholder="Share why you recommend this play and how it has shaped your community..."
-                      className="w-full bg-transparent text-white placeholder:text-white/40 text-sm resize-none min-h-[80px] border-0 focus-visible:ring-0 mb-3"
+                      className="w-full bg-transparent text-white placeholder:text-white/60 text-sm resize-none min-h-[80px] border-0 focus-visible:ring-0 mb-3"
                     />
                     <div className="flex justify-end">
                       <Button
@@ -301,7 +412,7 @@ export default function PlayDetail() {
                   </div>
                 ) : (
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-center">
-                    <p className="text-white/50 text-sm mb-3">
+                    <p className="text-white/60 text-sm mb-3">
                       Sign in to share your endorsement.
                     </p>
                     <a href={getLoginUrl()}>
@@ -336,7 +447,7 @@ export default function PlayDetail() {
                             <span className="text-white/70 text-sm font-medium">
                               {e.userName}
                             </span>
-                            <span className="text-white/40 text-xs">
+                            <span className="text-white/60 text-xs">
                               {new Date(e.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -390,7 +501,7 @@ export default function PlayDetail() {
               )}
 
               {/* Stats */}
-              <div className="flex gap-4 text-white/50 text-sm">
+              <div className="flex gap-4 text-white/60 text-sm">
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" /> {play.totalAdoptions ?? 0}{" "}
                   adopted
@@ -399,6 +510,48 @@ export default function PlayDetail() {
                   <Eye className="w-4 h-4" /> {play.totalViews ?? 0} views
                 </span>
               </div>
+
+              {/* Crowdpooling: the trial bridge */}
+              {play.campaignId ? (
+                <Link href={`/campaign/${play.campaignId}`}>
+                  <Button className="w-full bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 font-bold">
+                    <Rocket className="w-4 h-4 mr-2" /> View its Crowdpooling
+                    campaign
+                  </Button>
+                </Link>
+              ) : canLaunchCampaign ? (
+                <div>
+                  <Button
+                    onClick={() =>
+                      launchCampaignMutation.mutate({ playId: play.id })
+                    }
+                    disabled={launchCampaignMutation.isPending}
+                    className="w-full bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 font-bold"
+                  >
+                    {launchCampaignMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                        Launching...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="w-4 h-4 mr-2" /> Launch a
+                        Crowdpooling campaign
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-white/60 text-xs mt-1.5">
+                    Pool the resources to trial this play: land, labor,
+                    expertise, funds.
+                  </p>
+                  {launchCampaignMutation.isError && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {launchCampaignMutation.error?.message ||
+                        "Could not launch the campaign."}
+                    </p>
+                  )}
+                </div>
+              ) : null}
 
               {/* Adopt button */}
               {adopted || adoptMutation.isSuccess ? (
@@ -466,8 +619,8 @@ export default function PlayDetail() {
 
               {/* Community type */}
               {play.communityType && (
-                <div className="text-white/40 text-xs pt-2 border-t border-white/10">
-                  Community type: {play.communityType}
+                <div className="text-white/60 text-xs pt-2 border-t border-white/10">
+                  {isVision ? "Designed for" : "Community type"}: {play.communityType}
                 </div>
               )}
             </div>

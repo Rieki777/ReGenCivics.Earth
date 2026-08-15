@@ -108,7 +108,7 @@ function FeedCard({ entry, onOpen }: { entry: any; onOpen: (entry: any) => void 
                 decoding="async"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-white/40">
+              <div className="absolute inset-0 flex items-center justify-center text-white/60">
                 <VideoIcon className="w-12 h-12" />
               </div>
             )}
@@ -183,7 +183,7 @@ function FeedCard({ entry, onOpen }: { entry: any; onOpen: (entry: any) => void 
           )}
         </div>
         {(entry.caption || (isText && entry.artifactText)) && !isText && (
-          <p className="text-[#1a472a]/70 text-xs leading-relaxed line-clamp-3">
+          <p className="text-[#1a472a]/75 text-xs leading-relaxed line-clamp-3">
             {entry.caption ?? entry.artifactText}
           </p>
         )}
@@ -222,7 +222,7 @@ export function QuestCompletionFeed({
           >
             {title}
           </h2>
-          <p className="text-[#1a472a]/70">{subtitle}</p>
+          <p className="text-[#1a472a]/75">{subtitle}</p>
         </div>
         <QuestCarousel totalCount={entries.length}>
           {entries.map((entry) => (

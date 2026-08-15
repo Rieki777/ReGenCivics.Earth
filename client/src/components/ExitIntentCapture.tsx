@@ -4,7 +4,7 @@
  * Mobile: after 60 seconds of inactivity.
  * Messaging adapts to the current page context.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { X, Mail, FileText, Shield, Leaf, Handshake, Map } from "lucide-react";
@@ -108,6 +108,33 @@ export function ExitIntentCapture() {
   const context = getPageContext(location);
   const config = contextConfig[context];
 
+  // Engagement gates so the popup only appears after real reading, never on a
+  // stray early mouse-to-the-tabs. It may fire once the visitor has spent
+  // MIN_DWELL_MS on the page AND scrolled at least MIN_SCROLL_FRACTION through it.
+  const MIN_DWELL_MS = 45_000; // 45s on the page before eligible
+  const MIN_SCROLL_FRACTION = 0.4; // scrolled at least 40% through
+  const mountTimeRef = useRef(Date.now());
+  const maxScrollFractionRef = useRef(0);
+
+  // Reset the engagement gates on every route change so each page earns the popup
+  // on its own (dwell + scroll), rather than inheriting a prior page's progress.
+  useEffect(() => {
+    mountTimeRef.current = Date.now();
+    maxScrollFractionRef.current = 0;
+  }, [location]);
+
+  useEffect(() => {
+    const trackDepth = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      const frac = scrollable > 0 ? window.scrollY / scrollable : 1;
+      if (frac > maxScrollFractionRef.current) maxScrollFractionRef.current = frac;
+    };
+    trackDepth();
+    window.addEventListener("scroll", trackDepth, { passive: true });
+    return () => window.removeEventListener("scroll", trackDepth);
+  }, [location]);
+
   // Server-side check: has the user already subscribed to the newsletter?
   const { data: subscribedData } = trpc.newsletter.hasSubscribed.useQuery(undefined, {
     enabled: !!user,
@@ -139,6 +166,9 @@ export function ExitIntentCapture() {
 
   const triggerModal = useCallback(() => {
     if (dismissed || show || submitted) return;
+    // Engagement gates: enough time on the page and enough of it read.
+    if (Date.now() - mountTimeRef.current < MIN_DWELL_MS) return;
+    if (maxScrollFractionRef.current < MIN_SCROLL_FRACTION) return;
     const hasFormSubmitted = sessionStorage.getItem("formSubmitted");
     if (hasFormSubmitted) return;
     // Don't show newsletter modal if already subscribed (server or local)
@@ -174,10 +204,10 @@ export function ExitIntentCapture() {
       lastActivity = Date.now();
       clearTimeout(timeout);
       timeout = setTimeout(() => {
-        if (Date.now() - lastActivity >= 60000) {
+        if (Date.now() - lastActivity >= 90000) {
           triggerModal();
         }
-      }, 60000);
+      }, 90000);
     };
 
     resetTimer();
@@ -222,7 +252,7 @@ export function ExitIntentCapture() {
   return (
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 ${
-        visible ? "opacity-100" : "opacity-0"
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       role="presentation"
       onClick={handleDismiss}
@@ -231,6 +261,7 @@ export function ExitIntentCapture() {
 
       <div
         ref={trapRef}
+        // tap-audit-ok: parent overlay gates pointer-events-none while hidden
         className={`relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl transition-all duration-300 ${
           visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-5"
         }`}

@@ -94,7 +94,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
         <div className="flex items-center gap-2 mb-2 px-1">
           <button
             onClick={togglePlay}
-            className="w-7 h-7 bg-[#7dd87d] rounded-full flex items-center justify-center text-[#1a472a] hover:bg-[#9de89d] transition-colors flex-shrink-0"
+            className="w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 bg-[#7dd87d] rounded-full flex items-center justify-center text-[#1a472a] hover:bg-[#9de89d] transition-colors flex-shrink-0"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
@@ -105,7 +105,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           <button
             onClick={guide.toggle}
             aria-label="Guide"
-            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
+            className={`w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
               guide.isOpen
                 ? 'bg-[#7dd87d]/20 text-[#7dd87d]'
                 : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/80'
@@ -163,7 +163,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-white/50 text-center py-4">No page-specific tools on this page.</p>
+                <p className="text-[11px] text-white/60 text-center py-4">No page-specific tools on this page.</p>
               )}
 
               {/* Guide + Proposals + Search quick buttons */}

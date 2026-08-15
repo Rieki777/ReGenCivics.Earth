@@ -99,7 +99,7 @@ export default function CrowdPooling() {
             <p className="text-[#1a472a]/85 max-w-xl mx-auto safe-prose">
               {pageCopy.crowdPooling.subtext}
             </p>
-            <p className="mt-3 text-[#1a472a]/70 text-sm max-w-xl mx-auto">
+            <p className="mt-3 text-[#1a472a]/75 text-sm max-w-xl mx-auto">
               {pageCopy.crowdPooling.browseCampaigns}{" "}
               <Link href="/crowd-pooling-projects" className="text-[#4a7c59] font-medium hover:underline">
                 {pageCopy.crowdPooling.browseCampaignsLink}
@@ -198,7 +198,7 @@ export default function CrowdPooling() {
               </Link>
             </div>
             
-            <p className="text-center text-xs text-[#1a472a]/70 mt-3">
+            <p className="text-center text-xs text-[#1a472a]/75 mt-3">
               {pageCopy.crowdPooling.submit.footer}
             </p>
           </div>

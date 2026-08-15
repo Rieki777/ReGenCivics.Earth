@@ -85,7 +85,7 @@ export default function LOI() {
             <p className="text-[#1a472a]/80 text-lg mb-6">
               We've received your LOI for <span className="font-bold text-[#7dd87d]">${parseInt(formData.pledgeAmount).toLocaleString()}</span>.
             </p>
-            <p className="text-[#1a472a]/70 mb-8">
+            <p className="text-[#1a472a]/75 mb-8">
               Our team will review your submission and reach out to you within 3-5 business days to discuss next steps.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -142,7 +142,7 @@ export default function LOI() {
           <h1 className="text-4xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Letter of Intent
           </h1>
-          <p className="text-[#1a472a]/70 mb-8 safe-prose">
+          <p className="text-[#1a472a]/75 mb-8 safe-prose">
             Express your interest in becoming a capital partner for the ReGen Civics Fund. This is a non-binding way to tell us you're interested so we can plan accordingly.
           </p>
 

@@ -34,6 +34,7 @@ import { ELDERS } from "./elders";
 const SYSTEM_HANDLES = new Set([
   "regen-guide",
   "regen-civics-team",
+  "regen-crews",
   "system",
   "admin",
   ...ELDERS.map((e) => e.handle),

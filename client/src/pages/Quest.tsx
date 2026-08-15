@@ -49,7 +49,7 @@ import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { PathPortalsSelector } from "@/components/PathPortalsSelector";
 import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
 import { useActivePathHash } from "@/hooks/useActivePathHash";
-import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
+import { MultiplayerQuestsBanner } from "@/components/MultiplayerQuestsBanner";
 import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
   SEASON_ORDER as SEASON_ORDER_ALL, SEASON_EMOJI as SHARED_SEASON_EMOJI,
@@ -66,6 +66,27 @@ function questImageUrl(id: number, slug: string) {
 
 function questImageFallback(id: number, slug: string) {
   return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
+}
+
+// Absolute lead-art URL for a quest, keyed by the "quest-<id>" string that
+// questDetailsData uses. The Hypha bridge is an external consumer and the server
+// validates leadImageUrl as a full URL, so this must be absolute; the quest art
+// is served from /images/quests (not R2).
+const QUEST_LEAD_IMAGE: Record<string, string> = {};
+for (const group of Object.values(questData) as Array<unknown>) {
+  const quests = (Array.isArray(group) ? group : [group]) as Array<{ id: number; slug?: string }>;
+  for (const q of quests) {
+    if (q?.slug) {
+      QUEST_LEAD_IMAGE[`quest-${q.id}`] = questImageFallback(q.id, q.slug);
+    }
+  }
+}
+
+function questLeadImageUrl(key: string | null): string | undefined {
+  const rel = key ? QUEST_LEAD_IMAGE[key] : undefined;
+  if (!rel) return undefined;
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://regencivics.earth";
+  return origin + rel;
 }
 
 
@@ -109,7 +130,7 @@ function SignInCTA() {
   return (
     <div className="mt-8 pt-6 border-t border-[#1a472a]/20">
       <BackButton />
-      <p className="text-[#1a472a]/70 mb-4">Sign in to track your quest progress and earn rewards</p>
+      <p className="text-[#1a472a]/75 mb-4">Sign in to track your quest progress and earn rewards</p>
       <Button
         size="lg"
         className="rounded-xl bg-[#1a472a] hover:bg-[#0d2818] text-white"
@@ -138,7 +159,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#f0f7f0] px-2 py-1 rounded-md transition-colors text-[#1a472a]/70 hover:text-[#1a472a] w-full text-left"
+      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#f0f7f0] px-2 py-1 pointer-coarse:min-h-11 rounded-md transition-colors text-[#1a472a]/75 hover:text-[#1a472a] w-full text-left"
       title={`Copy: ${text}`}
     >
       {copied ? <Check className="w-3 h-3 text-[#7dd87d] flex-shrink-0" /> : <Copy className="w-3 h-3 flex-shrink-0" />}
@@ -264,7 +285,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
             )}
           </div>
           {/* Metadata row */}
-          <div className="flex items-center justify-between px-4 py-3 text-xs text-[#1a472a]/70">
+          <div className="flex items-center justify-between px-4 py-3 text-xs text-[#1a472a]/75">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-[#4a7c59]" />
               {masterContent?.timeEstimate || 'Ongoing'}
@@ -294,7 +315,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               </h4>
               <p className="text-xs text-[#4a7c59] italic">{quest.subtitle}</p>
               {QUEST_METADATA[questId]?.experience && (
-                <p className="text-xs italic text-[#4a7c59]/80 mt-0.5">{QUEST_METADATA[questId].experience}</p>
+                <p className="text-xs italic text-[#1a472a]/75 mt-0.5">{QUEST_METADATA[questId].experience}</p>
               )}
             </div>
           </div>
@@ -431,16 +452,16 @@ function Quest0FlipCard() {
               <h3 className="text-2xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Quest 0: Fire
               </h3>
-              <p className="text-[#1a472a]/70">Transforming the Stories That No Longer Serve Us</p>
+              <p className="text-[#1a472a]/75">Transforming the Stories That No Longer Serve Us</p>
             </div>
           </div>
           <p className="text-[#1a472a]/80 mb-4">
             {questData.intro.description}
           </p>
           <div className="bg-white/50 p-4 rounded-xl mb-4">
-            <p className="text-sm text-[#1a472a]/70 mb-2"><strong>What you'll gain:</strong></p>
+            <p className="text-sm text-[#1a472a]/75 mb-2"><strong>What you'll gain:</strong></p>
             <p className="text-sm text-[#1a472a]/80">A clear vision and intention for what you're wanting to achieve with this journey.</p>
-            <p className="text-sm text-[#1a472a]/70 mt-2"><strong>What the community gains:</strong></p>
+            <p className="text-sm text-[#1a472a]/75 mt-2"><strong>What the community gains:</strong></p>
             <p className="text-sm text-[#1a472a]/80">Another inspired and clear-sighted friend and ally!</p>
           </div>
           <div className="flex items-center gap-4 text-sm mb-4">
@@ -562,7 +583,7 @@ function ContinueYourJourneyBanner() {
         <h2 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
           Continue Your Journey <ForYouLabel />
         </h2>
-        <p className="text-[#1a472a]/70 text-base mb-4">{bannerSub}</p>
+        <p className="text-[#1a472a]/75 text-base mb-4">{bannerSub}</p>
         {nextQuest?.prompt && (
           <p className="text-[#4a7c59] font-medium text-sm mb-4">{nextQuest.prompt}</p>
         )}
@@ -1116,7 +1137,7 @@ export default function Quest() {
                 </h2>
                 <ChevronDown className={`w-8 h-8 text-[#7dd87d] transition-transform duration-300 ${whyQuestsExpanded ? 'rotate-180' : ''}`} />
               </div>
-              <p className="text-[#1a472a]/70 text-left mt-2">
+              <p className="text-[#1a472a]/75 text-left mt-2">
                 Click to learn how quests help us transition into regenerative realities
               </p>
             </button>
@@ -1150,7 +1171,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Heal Ourselves</h3>
-                      <p className="text-sm text-[#1a472a]/70">Our bodies, families, communities, bioregions, and Earth</p>
+                      <p className="text-sm text-[#1a472a]/75">Our bodies, families, communities, bioregions, and Earth</p>
                     </div>
                   </div>
                   
@@ -1160,7 +1181,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h3>
-                      <p className="text-sm text-[#1a472a]/70">Share our journey and insights with each other & our communities</p>
+                      <p className="text-sm text-[#1a472a]/75">Share our journey and insights with each other & our communities</p>
                     </div>
                   </div>
                   
@@ -1170,7 +1191,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Distribute Ownership</h3>
-                      <p className="text-sm text-[#1a472a]/70">Earn currency tokens and gain voice in governing the Game</p>
+                      <p className="text-sm text-[#1a472a]/75">Earn currency tokens and gain voice in governing the Game</p>
                     </div>
                   </div>
                   
@@ -1180,7 +1201,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Co-Create the Game</h3>
-                      <p className="text-sm text-[#1a472a]/70">Constantly redesigned by all of us together - to better serve our growing needs</p>
+                      <p className="text-sm text-[#1a472a]/75">Constantly redesigned by all of us together - to better serve our growing needs</p>
                     </div>
                   </div>
                   
@@ -1190,7 +1211,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Regenerate Relationships</h3>
-                      <p className="text-sm text-[#1a472a]/70">With each other and the more-than-human world as we journey into new civilizations together</p>
+                      <p className="text-sm text-[#1a472a]/75">With each other and the more-than-human world as we journey into new civilizations together</p>
                     </div>
                   </div>
                 </div>
@@ -1281,7 +1302,7 @@ export default function Quest() {
                 {questData.featured.description}
               </p>
               <div className="bg-white/50 p-4 rounded-xl mb-4">
-                <p className="text-sm text-[#1a472a]/70 mb-2"><strong>Deliverable:</strong> A &lt;3 min video and/or written article:</p>
+                <p className="text-sm text-[#1a472a]/75 mb-2"><strong>Deliverable:</strong> A &lt;3 min video and/or written article:</p>
                 <ul className="text-sm text-[#1a472a]/80 list-disc list-inside space-y-1">
                   <li>What you learned, insights, etc</li>
                   <li>What you planted and where</li>
@@ -1345,6 +1366,9 @@ export default function Quest() {
       {/* Continue Your Journey Banner - progress + next-quest prompt */}
       <ContinueYourJourneyBanner />
 
+      {/* Multiplayer Mode banner - renders only when crew quests are live */}
+      <MultiplayerQuestsBanner />
+
       {/* All Quests by Season - Header */}
       <section id="rites-of-passage" className="py-12 bg-[#f0ebe3]">
         <div className="container">
@@ -1354,7 +1378,7 @@ export default function Quest() {
           >
             Rites &amp; Quests by <span className="text-[#2d5a3d]">Season</span> <ForYouLabel label="Track Progress" />
           </h2>
-          <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
+          <p className="text-center text-[#1a472a]/75 max-w-2xl mx-auto mb-6">
             Each season combines Rites of Passage (gold cards) with seasonal depth quests. Quests can be done at any time and in any order. <strong>A key focus is growing and having fun!</strong>
           </p>
           {/* Season filter tabs */}
@@ -1564,7 +1588,7 @@ export default function Quest() {
               <Sparkles className="w-7 h-7 text-[#1a472a]" />
             </div>
             <h2 className="text-2xl font-bold mb-3 text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>Got a Quest Idea?</h2>
-            <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes. The best ones become official quests.</p>
+            <p className="text-[#1a472a]/75 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes. The best ones become official quests.</p>
             <Link href="/community/quests" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">
               Suggest a Quest <ArrowRight className="w-4 h-4" />
             </Link>
@@ -1590,7 +1614,7 @@ export default function Quest() {
 
         <div className="container relative">
           <div className="text-center mb-12 max-w-2xl mx-auto">
-            <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a472a]/70 bg-white/60 border border-[#7dd87d]/30 rounded-full px-4 py-1.5 mb-5">
+            <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a472a]/75 bg-white/60 border border-[#7dd87d]/30 rounded-full px-4 py-1.5 mb-5">
               <Coins className="w-3.5 h-3.5" /> The Two Tokens
             </span>
             <h2
@@ -1599,7 +1623,7 @@ export default function Quest() {
             >
               Want to learn more about the tokens you're earning in quests?
             </h2>
-            <p className="text-[#1a472a]/60 text-base mt-4 leading-relaxed">
+            <p className="text-[#1a472a]/75 text-base mt-4 leading-relaxed">
               Every quest grows two things at once: your stake in the Game, and your voice in how it evolves.
             </p>
           </div>
@@ -1625,7 +1649,7 @@ export default function Quest() {
               <span className="inline-flex items-center gap-1.5 self-start text-xs font-semibold text-[#1a472a] bg-[#7dd87d]/15 border border-[#7dd87d]/30 rounded-full px-3 py-1 mb-4">
                 🌳 Quests build your stake in the Game
               </span>
-              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-6 flex-1">
+              <p className="text-[#1a472a]/75 text-sm leading-relaxed mb-6 flex-1">
                 Every quest you complete earns $ReGen tokens, which is our in-game currency. Part of our Infinite Game involves making this a real and meaningful currency for our everyday lives in how we meet our needs and thrive together. The more you contribute, the more currency you earn.
               </p>
               <Link href="/bionomics" className="group/btn inline-flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
@@ -1653,7 +1677,7 @@ export default function Quest() {
               <span className="inline-flex items-center gap-1.5 self-start text-xs font-semibold text-[#1a472a] bg-[#5bb8c4]/15 border border-[#5bb8c4]/30 rounded-full px-3 py-1 mb-4">
                 🗳️ Quests build your governance voice
               </span>
-              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-6 flex-1">
+              <p className="text-[#1a472a]/75 text-sm leading-relaxed mb-6 flex-1">
                 Every quest you complete earns RGVoice tokens, giving you more say in how the game evolves. The more you contribute, the more the game is governed by players like you.
               </p>
               <Link href="/governance" className="group/btn inline-flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
@@ -1676,7 +1700,7 @@ export default function Quest() {
 
       {/* Quest Detail Modal */}
       <QuestDetailModal
-        quest={selectedQuest ? questDetailsData[selectedQuest] : null}
+        quest={selectedQuest ? { ...questDetailsData[selectedQuest], imageUrl: questLeadImageUrl(selectedQuest) } : null}
         isOpen={!!selectedQuest}
         onClose={closeQuestDetails}
       />

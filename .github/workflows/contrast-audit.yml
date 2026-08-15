@@ -21,16 +21,18 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
 
+      # pnpm must be installed before setup-node so the pnpm cache resolves.
+      # Version comes from packageManager in package.json (audit Phase 1 fix:
+      # this workflow ran node 20 / pnpm 8 against engines >=22.19 / pnpm 10
+      # and called a preview script that did not exist; it always failed).
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
 
       - name: Install deps
         run: pnpm install --frozen-lockfile

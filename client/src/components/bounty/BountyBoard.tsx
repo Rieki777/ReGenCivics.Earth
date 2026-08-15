@@ -107,7 +107,7 @@ export function BountyBoard({ emptyState, onCounts }: Props) {
           <div className="text-center py-16 border border-white/8 rounded-2xl bg-white/[0.02]">
             <Sparkles className="w-10 h-10 text-[#7dd87d] mx-auto mb-3" />
             <p className="text-white/70 text-lg mb-1">No open bounties right now</p>
-            <p className="text-white/50 text-sm">New bounties are born from community sessions. Check back soon.</p>
+            <p className="text-white/60 text-sm">New bounties are born from community sessions. Check back soon.</p>
           </div>
         ))
       ) : (

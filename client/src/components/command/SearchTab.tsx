@@ -9,9 +9,9 @@ export function SearchTab() {
       >
         <Search className="w-4 h-4 flex-shrink-0" />
         <span className="text-sm">Search pages, quests, tools...</span>
-        <kbd className="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40">Ctrl+K</kbd>
+        <kbd className="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60">Ctrl+K</kbd>
       </button>
-      <p className="text-[10px] text-white/40">Opens the full search palette</p>
+      <p className="text-[10px] text-white/60">Opens the full search palette</p>
     </div>
   )
 }

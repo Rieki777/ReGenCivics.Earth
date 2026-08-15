@@ -246,6 +246,50 @@ truth for all quest data:
 These sheets are the master reference for any work involving quests. Always
 read them before making quest-related changes to code or content.
 
+## SDT Rubric (score every quest before shipping)
+
+Self-determination theory names the three needs that make a quest worth
+returning to: autonomy, competence, relatedness. Score each 1-5 before any
+quest ships. Multiplayer quests (shared/multiplayerQuests.ts) carry these
+scores in their `sdt` field; solo quests record them in the quest's entry in
+QUEST_MASTER_SHEET.md.
+
+**Autonomy (1-5)** -- how much do players shape the quest themselves?
+- 5: players choose the site, timing, method, and roles
+- 3: players choose timing and some method within a fixed structure
+- 1: a fixed checklist with one way through
+
+**Competence (1-5)** -- does completing it produce a visible, earned result?
+- 5: a real-world artifact or change the player can point at the same day
+- 3: a completed practice or event with soft evidence
+- 1: participation only, nothing to show
+
+**Relatedness (1-5)** -- does the quest connect people?
+- 5: structurally requires coordination (a crew, distinct roles, shared output)
+- 3: solo work with a strong sharing moment (forum post, gathering)
+- 1: fully solo, no sharing built in
+
+Rules of thumb:
+- No quest ships with any score of 1 unless there's a stated reason.
+- Multiplayer quests must score 4+ on relatedness; that's what makes them
+  multiplayer. If roles are interchangeable, redesign until the parts are
+  distinct (a hauler is not a documenter).
+- If autonomy is low, say so in the story card ("the stewards direct the
+  work") so the trade is honest.
+- Record one sentence of rationale per score. The rationale is what the next
+  quest designer learns from.
+
+## Multiplayer quests (crew quests)
+
+Multiplayer quest definitions live in `shared/multiplayerQuests.ts`, keyed
+`crew-quest-{N}`, with `status: "draft" | "live"`. Drafts never render and
+never accept signups; Rye ratifies copy and rewards, then flips status to
+live. Each needs: 3-7 crew size (min and max), 3+ distinct `crewRoles`, 4+
+steps, a `definitionOfDone` the crew thread's welcome post names, and the
+`sdt` scores above. Crew assembly, crew chat threads, and formation emails
+are handled by `server/jobs/questCrewAssembly.ts`; the signup surface is
+`/multiplayer` (client/src/pages/Multiplayer.tsx).
+
 ## Writing Quality Checklist
 
 Before shipping any quest content, verify:

@@ -217,7 +217,7 @@ export function AdminSeedsClaimsTab({}: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-[#1a472a]/5 to-transparent border-[#1a472a]/10">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/70">
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">
               Total Claims
             </CardTitle>
           </CardHeader>
@@ -322,7 +322,7 @@ export function AdminSeedsClaimsTab({}: Props) {
           {/* Search & Filter Row */}
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
               <input
                 type="text"
                 placeholder="Search by SEEDS account or email..."
@@ -331,7 +331,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
               />
             </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
@@ -360,7 +360,7 @@ export function AdminSeedsClaimsTab({}: Props) {
           </div>
 
           {claims.length !== totalClaims && (
-            <p className="text-xs text-[#1a472a]/70 pt-2">
+            <p className="text-xs text-[#1a472a]/75 pt-2">
               Showing {claims.length} of {totalClaims} claims
             </p>
           )}
@@ -383,43 +383,43 @@ export function AdminSeedsClaimsTab({}: Props) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 text-sm">
                         <div>
-                          <div className="text-[#1a472a]/70 text-xs font-medium">SEEDS Account</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">SEEDS Account</div>
                           <div className="text-[#1a472a] font-medium text-sm truncate">
                             {claim.seedsAccount}
                           </div>
                         </div>
                         <div className="hidden sm:block">
-                          <div className="text-[#1a472a]/70 text-xs font-medium">Email</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">Email</div>
                           <div className="text-[#1a472a] text-sm truncate">
                             {claim.email}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[#1a472a]/70 text-xs font-medium">Original USD</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">Original USD</div>
                           <div className="text-[#1a472a] font-medium">
                             ${claim.originalUsdAmount.toLocaleString()}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[#1a472a]/70 text-xs font-medium">Claimed USD</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">Claimed USD</div>
                           <div className="text-[#1a472a] font-medium">
                             ${claim.claimedUsdAmount.toLocaleString()}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[#1a472a]/70 text-xs font-medium">$ReGen</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">$ReGen</div>
                           <div className="text-[#1a472a] font-medium">
                             {claim.regenAmount.toLocaleString()}
                           </div>
                         </div>
                         <div className="hidden lg:block">
-                          <div className="text-[#1a472a]/70 text-xs font-medium">Wallet</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">Wallet</div>
                           <div className="text-[#1a472a] font-mono text-xs">
                             {truncateWallet(claim.baseWalletAddress)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[#1a472a]/70 text-xs font-medium">Status</div>
+                          <div className="text-[#1a472a]/75 text-xs font-medium">Status</div>
                           <Badge variant="outline" className={`text-xs ${getStatusColor(claim.status)}`}>
                             {claim.status}
                           </Badge>
@@ -442,7 +442,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                           <h4 className="font-medium text-[#1a472a] text-sm">Our Records</h4>
                           <div className="space-y-2 p-3 bg-white rounded-lg border border-[#1a472a]/10">
                             <div>
-                              <div className="text-[#1a472a]/70 text-xs">Original USD Total</div>
+                              <div className="text-[#1a472a]/75 text-xs">Original USD Total</div>
                               <div className="text-xl font-bold text-[#1a472a]">
                                 ${claim.originalUsdAmount.toLocaleString()}
                               </div>
@@ -454,7 +454,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                           <h4 className="font-medium text-[#1a472a] text-sm">Their Claim</h4>
                           <div className="space-y-2 p-3 bg-white rounded-lg border border-[#1a472a]/10">
                             <div>
-                              <div className="text-[#1a472a]/70 text-xs">Claimed Amount</div>
+                              <div className="text-[#1a472a]/75 text-xs">Claimed Amount</div>
                               <div className="text-xl font-bold text-[#1a472a]">
                                 ${claim.claimedUsdAmount.toLocaleString()}
                               </div>
@@ -520,7 +520,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                       </div>
 
                       {/* Submitted date */}
-                      <div className="text-xs text-[#1a472a]/70">
+                      <div className="text-xs text-[#1a472a]/75">
                         Submitted: {formatDate(claim.submittedAt)}
                       </div>
 
@@ -561,7 +561,7 @@ export function AdminSeedsClaimsTab({}: Props) {
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-[#1a472a]/70">
+            <div className="p-8 text-center text-[#1a472a]/75">
               <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p>No claims match your search</p>
               <button
@@ -582,7 +582,7 @@ export function AdminSeedsClaimsTab({}: Props) {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-[#1a472a]/10 flex items-center justify-between">
-            <div className="text-sm text-[#1a472a]/70">
+            <div className="text-sm text-[#1a472a]/75">
               Page {page} of {totalPages}
             </div>
             <div className="flex gap-2">
@@ -622,19 +622,19 @@ export function AdminSeedsClaimsTab({}: Props) {
               {selectedClaimForAction && (
                 <div className="space-y-3 mt-4 text-left">
                   <div>
-                    <span className="text-[#1a472a]/70 text-sm">SEEDS Account:</span>
+                    <span className="text-[#1a472a]/75 text-sm">SEEDS Account:</span>
                     <div className="font-medium text-[#1a472a]">
                       {selectedClaimForAction.seedsAccount}
                     </div>
                   </div>
                   <div>
-                    <span className="text-[#1a472a]/70 text-sm">Claimed Amount:</span>
+                    <span className="text-[#1a472a]/75 text-sm">Claimed Amount:</span>
                     <div className="font-medium text-[#1a472a]">
                       ${selectedClaimForAction.claimedUsdAmount.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="adminNotes" className="text-sm text-[#1a472a]/70">
+                    <Label htmlFor="adminNotes" className="text-sm text-[#1a472a]/75">
                       Admin Notes (Optional)
                     </Label>
                     <textarea

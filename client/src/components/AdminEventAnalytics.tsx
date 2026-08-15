@@ -58,7 +58,7 @@ export function AdminEventAnalytics() {
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-[#1a472a]" />
           <h2 className="text-lg font-bold text-[#1a472a]">Behavior analytics</h2>
-          <span className="text-xs text-[#1a472a]/50">first-party, cookieless</span>
+          <span className="text-xs text-[#1a472a]/75">first-party, cookieless</span>
         </div>
         <div className="inline-flex rounded-lg border border-[#1a472a]/15 overflow-hidden">
           {RANGES.map((r) => (
@@ -67,7 +67,7 @@ export function AdminEventAnalytics() {
               type="button"
               onClick={() => setDays(r)}
               className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                days === r ? "bg-[#1a472a] text-white" : "text-[#1a472a]/70 hover:bg-[#1a472a]/5"
+                days === r ? "bg-[#1a472a] text-white" : "text-[#1a472a]/75 hover:bg-[#1a472a]/5"
               }`}
             >
               {r}d
@@ -78,7 +78,7 @@ export function AdminEventAnalytics() {
 
       {!hasData ? (
         <Card>
-          <CardContent className="py-12 text-center text-[#1a472a]/60">
+          <CardContent className="py-12 text-center text-[#1a472a]/75">
             <Activity className="w-8 h-8 mx-auto mb-3 text-[#1a472a]/30" />
             <p className="font-medium">No events yet</p>
             <p className="text-sm mt-1">
@@ -94,7 +94,7 @@ export function AdminEventAnalytics() {
             {funnelSteps.map((s) => (
               <Card key={s.label}>
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-[#1a472a]/60 mb-1">
+                  <div className="flex items-center gap-2 text-[#1a472a]/75 mb-1">
                     <s.icon className="w-4 h-4" />
                     <span className="text-xs font-medium">{s.label}</span>
                   </div>

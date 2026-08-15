@@ -118,7 +118,7 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
+            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -129,7 +129,7 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCircle className="w-8 h-8 text-green-400 mb-3" />
-              <p className="text-sm font-medium text-[#1a472a]/70">All caught up</p>
+              <p className="text-sm font-medium text-[#1a472a]/75">All caught up</p>
               <p className="text-xs text-[#1a472a]/80 mt-1">No pending notifications</p>
             </div>
           ) : (

@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link, useSearch } from 'wouter';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import {
   User,
@@ -48,6 +48,7 @@ import {
   Compass,
   Flame,
   Scroll,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +92,8 @@ import ContributionTimeline from "@/components/ContributionTimeline";
 import { getCurrentSeason } from "@/lib/seasons";
 import { cdnImg } from "@/lib/utils";
 import { ProfileCallTasksTab } from "@/components/profile/ProfileCallTasksTab";
+import { YourCrewsTab } from "@/components/profile/YourCrewsTab";
+import { MemorySettings } from "@/components/profile/MemorySettings";
 import { GratitudeTab } from "@/components/profile/GratitudeTab";
 
 // Badge definitions
@@ -142,7 +145,7 @@ function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
   if (!name) return null;
   return (
     <div>
-      <p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Bioregion</p>
+      <p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Bioregion</p>
       <p className="text-sm text-[#1a472a]/90 mt-0.5">{name}</p>
     </div>
   );
@@ -223,7 +226,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       {[1, 2, 3].map(s => (
         <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s ? 'bg-[#7dd87d]' : 'bg-[#1a472a]/10'}`} />
       ))}
-      <span className="text-xs text-[#1a472a]/70 whitespace-nowrap">Step {step} of 3</span>
+      <span className="text-xs text-[#1a472a]/75 whitespace-nowrap">Step {step} of 3</span>
     </div>
   );
 
@@ -240,22 +243,22 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">e.g. Land steward, investor, builder, artist…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, investor, builder, artist…</p>
             <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, investor, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">The deeper calling that brought you here…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">The deeper calling that brought you here…</p>
             <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you looking to get from this ecosystem?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">What would make this worth your time and energy?</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">What would make this worth your time and energy?</p>
             <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
-            <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
+            <p className="text-xs text-[#1a472a]/75 mb-2">Skills, resources, wisdom, connections…</p>
             <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
             <p className="text-xs text-[#1a472a]/80 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
@@ -306,7 +309,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                     </div>
                     <div className="p-3">
                       <img src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")} alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" width={600} height={400} loading="lazy" />
-                      <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                      <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                         <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                         <li>Look at the top right of the page</li>
                         <li>Find your account address (e.g., 0xaAaF…354e)</li>
@@ -329,7 +332,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
               Continue <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
-          <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#1a472a]/70 hover:text-[#1a472a] underline">
+          <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#1a472a]/75 hover:text-[#1a472a] underline">
             Skip for now →
           </button>
         </div>
@@ -339,15 +342,15 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       {step === 3 && (
         <div className="space-y-5">
           <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-4 space-y-3">
-            <p className="text-xs text-[#1a472a]/70 uppercase tracking-wider font-semibold">Your Profile Preview</p>
+            <p className="text-xs text-[#1a472a]/75 uppercase tracking-wider font-semibold">Your Profile Preview</p>
             <p className="text-lg font-bold text-[#1a472a]">{displayName || 'Your Name'}</p>
-            {role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Role</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{role}</p></div>}
-            {soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
-            {desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
-            {gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
-            {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
+            {role && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Role</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{role}</p></div>}
+            {soul && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
+            {desires && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
+            {gifts && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
+            {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
             {bioregionId != null && <BioregionPreviewRow bioregionId={bioregionId} />}
-            {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
+            {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(2)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
@@ -429,7 +432,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                       className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
                       loading="lazy"
                     />
-                    <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                    <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                       <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a></li>
                       <li>Look at the top right corner</li>
                       <li>Click the <strong>copy icon</strong> next to your address</li>
@@ -456,7 +459,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
               loading="lazy"
             />
-            <p className="text-sm text-[#1a472a]/70">
+            <p className="text-sm text-[#1a472a]/75">
               <strong>Find your account:</strong> Visit <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a>, look at the top right, and click the copy icon next to your address.
             </p>
           </div>
@@ -560,10 +563,10 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           if (parsed && (parsed.role || parsed.soul || parsed.desires || parsed.gifts)) {
             return (
               <div className="space-y-3">
-                {parsed.role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Role</p><p className="text-[#1a472a]">{parsed.role}</p></div>}
-                {parsed.soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Soul's Mission</p><p className="text-[#1a472a]">{parsed.soul}</p></div>}
-                {parsed.desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Seeking</p><p className="text-[#1a472a]">{parsed.desires}</p></div>}
-                {parsed.gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Gifts to Offer</p><p className="text-[#1a472a]">{parsed.gifts}</p></div>}
+                {parsed.role && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Role</p><p className="text-[#1a472a]">{parsed.role}</p></div>}
+                {parsed.soul && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Soul's Mission</p><p className="text-[#1a472a]">{parsed.soul}</p></div>}
+                {parsed.desires && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Seeking</p><p className="text-[#1a472a]">{parsed.desires}</p></div>}
+                {parsed.gifts && <div><p className="text-[10px] text-[#1a472a]/75 uppercase tracking-wider font-semibold mb-0.5">Gifts to Offer</p><p className="text-[#1a472a]">{parsed.gifts}</p></div>}
               </div>
             );
           }
@@ -596,7 +599,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
               <button
                 onClick={onSyncTokens}
                 disabled={syncIsPending}
-                className="flex items-center gap-1.5 text-[#4a7c59]/70 hover:text-[#4a7c59] text-xs transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 text-[#1a472a]/75 hover:text-[#4a7c59] text-xs transition-colors disabled:opacity-40"
               >
                 <RefreshCw className={`w-3 h-3 ${syncIsPending ? "animate-spin" : ""}`} />
                 {syncIsPending ? "Syncing..." : "Refresh balances"}
@@ -1758,7 +1761,7 @@ function ReferralStatsCard() {
           <button
             type="button"
             onClick={handleCopy}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] text-xs font-bold transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 pointer-coarse:min-h-11 rounded-md bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] text-xs font-bold transition-colors"
             aria-label="Copy referral link"
           >
             {copied ? <CheckCircle2 className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />}
@@ -1767,7 +1770,7 @@ function ReferralStatsCard() {
           <button
             type="button"
             onClick={handleNativeShare}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 pointer-coarse:min-h-11 rounded-md bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
             aria-label="Share referral link"
           >
             <Share2 className="w-3 h-3" />
@@ -1909,7 +1912,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🧮</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Contribution Calculator</p>
-              <p className="text-white/60 text-xs mt-1">Estimate your contribution using the 8 forms of capital - save your contributions here</p>
+              <p className="text-white/60 text-xs mt-1">Estimate your contribution using the 9 forms of capital - save your contributions here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
@@ -2429,13 +2432,14 @@ function QuestJournal({ userId }: { userId: number }) {
   );
 }
 
-type ProfileTab = "overview" | "submissions" | "quests" | "tasks" | "gratitude" | "contributions" | "settings";
+type ProfileTab = "overview" | "submissions" | "quests" | "crews" | "tasks" | "gratitude" | "contributions" | "settings";
 
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
-  { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
+  { id: "submissions",    label: "Submissions",    icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
-  { id: "tasks",          label: "Tasks",          icon: Scroll },
+  { id: "crews",          label: "Crews",          icon: UsersIcon },
+  { id: "tasks",          label: "Tasks",          icon: ClipboardList },
   { id: "gratitude",      label: "Gratitude",      icon: Heart },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
@@ -2447,11 +2451,21 @@ export default function PlayerProfile() {
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "tasks", "gratitude", "contributions", "settings"];
+  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "crews", "tasks", "gratitude", "contributions", "settings"];
   const _tabParam = new URLSearchParams(window.location.search).get("tab") as ProfileTab | null;
   const [activeTab, setActiveTab] = useState<ProfileTab>(
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
   );
+  // Keep the active tab in sync with the URL after mount. Notification
+  // deep links (e.g. /profile?tab=gratitude) navigate client-side, so the
+  // component never remounts; without this the tab param is read once and
+  // then ignored.
+  const searchString = useSearch();
+  useEffect(() => {
+    const t = new URLSearchParams(searchString).get("tab") as ProfileTab | null;
+    if (t && _validTabs.includes(t)) setActiveTab(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchString]);
   const [questFilter, setQuestFilter] = useState<"completed" | "in-progress" | "proposed">("completed");
   const [settingsSection, setSettingsSection] = useState<"profile" | "game" | "notifications">("profile");
 
@@ -2594,29 +2608,34 @@ export default function PlayerProfile() {
                 url.searchParams.set("tab", "quests");
                 window.history.replaceState({}, "", url.toString());
               }} />
-              {/* Tab nav */}
+              {/* Tab nav: 4x2 grid of icon+label buttons. Two rows at every
+                  width so each target stays 56px+ tall on phones; the old
+                  single scroll row hid labels below sm and overflowed on
+                  desktop. */}
               <AnimatedSection animation="slide-up">
-                <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 mb-6 overflow-x-auto scrollbar-none">
+                <div className="grid grid-cols-4 gap-1 bg-white/5 border border-white/10 rounded-2xl p-1.5 mb-6" role="tablist" aria-label="Profile sections">
                   {PROFILE_TABS.map(tab => {
                     const Icon = tab.icon;
                     const active = activeTab === tab.id;
                     return (
                       <button
                         key={tab.id}
+                        role="tab"
+                        aria-selected={active}
                         onClick={() => {
                           setActiveTab(tab.id);
                           const url = new URL(window.location.href);
                           url.searchParams.set("tab", tab.id);
                           window.history.replaceState({}, "", url.toString());
                         }}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-1 justify-center ${
+                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2.5 min-h-[56px] rounded-xl text-[11px] sm:text-xs font-medium leading-tight transition-all ${
                           active
                             ? "bg-[#1a472a] text-white shadow-sm border border-[#7dd87d]/20"
-                            : "text-white/70 hover:text-white/80"
+                            : "text-white/70 hover:text-white/80 hover:bg-white/5"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${active ? "text-[#7dd87d]" : ""}`} />
-                        <span className="hidden sm:inline">{tab.label}</span>
+                        <Icon className={`w-5 h-5 shrink-0 ${active ? "text-[#7dd87d]" : ""}`} />
+                        <span className="text-center">{tab.label}</span>
                       </button>
                     );
                   })}
@@ -2760,6 +2779,15 @@ export default function PlayerProfile() {
                       </div>
                     );
                   })()}
+                </AnimatedSection>
+                </ErrorBoundary>
+              )}
+
+              {/* Crews tab (Multiplayer Mode, Phase A) */}
+              {activeTab === "crews" && (
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <AnimatedSection animation="slide-up">
+                  <YourCrewsTab />
                 </AnimatedSection>
                 </ErrorBoundary>
               )}
@@ -2910,6 +2938,11 @@ export default function PlayerProfile() {
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
+                        </AnimatedSection>
+                        {/* Consent-based player memory (improvement 13): the
+                            transparency surface gates all Guide memory. */}
+                        <AnimatedSection animation="slide-up">
+                          <MemorySettings />
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <div className="glass-panel p-5 rounded-xl">

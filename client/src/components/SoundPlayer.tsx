@@ -12,22 +12,10 @@
 
 import { useState, useMemo } from "react";
 import { useAudio } from "@/contexts/AudioContext";
+import { isIos } from "@/lib/platform";
 import {
-  SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus, Download, Share2,
+  SkipBack, SkipForward, Play, Pause, Volume2, VolumeX, Music, ListMusic, Plus, Download, Share2, Loader2,
 } from "lucide-react";
-
-/**
- * iOS (including iPadOS) ignores programmatic `audio.volume` changes on HTML5
- * audio — Apple ties it to system volume and silently drops the call. Detect
- * iOS so we can show a hint instead of a non-functional slider.
- */
-function isIOS(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua)) return true;
-  // iPadOS 13+ reports as Mac; detect via touch capability.
-  return ua.includes("Mac") && typeof document !== "undefined" && "ontouchend" in document;
-}
 
 interface SoundPlayerProps {
   variant?: "desktop" | "mobile";
@@ -45,14 +33,14 @@ function formatTime(s: number) {
 
 export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProps) {
   const {
-    isPlaying, togglePlay, nextSong, prevSong,
+    isPlaying, isBuffering, togglePlay, nextSong, prevSong,
     currentSong, currentIndex, playlist, playSong,
-    duration, currentTime, seek, volume, setVolume,
+    duration, currentTime, seek, volume, setVolume, muted, toggleMute,
   } = useAudio();
 
   const [showTrackList, setShowTrackList] = useState(variant === "mobile");
   const isMobile = variant === "mobile";
-  const iOS = useMemo(isIOS, []);
+  const iOS = useMemo(isIos, []);
 
   const playBtnSize = isMobile ? "w-12 h-12" : "w-10 h-10";
   const playIcon = isMobile ? "w-6 h-6" : "w-5 h-5";
@@ -232,7 +220,13 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
           className={`${playBtnSize} bg-[#7dd87d] rounded-full flex items-center justify-center text-[#1a472a] hover:bg-[#9de89d] transition-colors`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
-          {isPlaying ? <Pause className={playIcon} /> : <Play className={`${playIcon} ml-0.5`} />}
+          {isBuffering && isPlaying ? (
+            <Loader2 className={`${playIcon} animate-spin`} />
+          ) : isPlaying ? (
+            <Pause className={playIcon} />
+          ) : (
+            <Play className={`${playIcon} ml-0.5`} />
+          )}
         </button>
         <button
           onClick={nextSong}
@@ -243,23 +237,40 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
         </button>
       </div>
 
-      {/* Volume — iOS controls playback volume at the system level and ignores
-          programmatic changes, so show a hint instead of a broken slider. */}
+      {/* Volume — iOS controls playback volume at the system level and
+          ignores programmatic changes, so instead of a dead slider it gets a
+          working mute toggle (muted IS settable on iOS) plus a hint. */}
       {iOS ? (
         <div className="flex items-center justify-center gap-2 text-xs text-white/70">
-          <Volume2 className="w-4 h-4" />
-          <span>Use your device volume buttons</span>
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            aria-pressed={muted}
+            className="flex items-center justify-center min-w-[44px] min-h-[44px] -my-3 text-white/70 hover:text-white transition-colors"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+          <span>{muted ? "Muted" : "Use your device volume buttons"}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Volume2 className="w-4 h-4 text-white/60" />
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            aria-pressed={muted}
+            className="text-white/60 hover:text-white transition-colors p-2 -m-2"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
           <input
             type="range"
             aria-label="Volume"
             min={0}
             max={1}
             step={0.05}
-            value={volume}
+            value={muted ? 0 : volume}
             onChange={(e) => setVolume(Number(e.target.value))}
             onInput={(e) => setVolume(Number((e.target as HTMLInputElement).value))}
             className="flex-1 accent-[#7dd87d] h-1"

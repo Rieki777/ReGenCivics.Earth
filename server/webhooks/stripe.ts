@@ -20,6 +20,7 @@ import { eq } from "drizzle-orm";
 import { ENV } from "../_core/env";
 import { getStripe, isStripeConfigured } from "../lib/stripe";
 import { sendEmail } from "../_core/email";
+import { recomputeCrewSponsorship } from "../lib/ship-sponsorship";
 
 function receiptHtml(amountCents: number, currency: string, monthly: boolean): string {
   const amount = (amountCents / 100).toLocaleString("en-US", {
@@ -134,6 +135,8 @@ export function registerStripeWebhookRoutes(app: Express) {
             .limit(1);
           const to = session.customer_details?.email ?? row?.donorEmail ?? null;
           if (row) await safeSendReceipt(to, row.amountCents, row.currency, row.giftInterval === "monthly");
+          // Crew sponsorship: reconcile the crew's total, flip on goal, notify.
+          if (row?.crewProfileId) await recomputeCrewSponsorship(row.crewProfileId, row.amountCents);
           break;
         }
 

@@ -72,11 +72,11 @@ function AssignBlock({
       {search.length >= 2 && (
         <div className="rounded-lg border border-[#1a472a]/15 max-h-40 overflow-y-auto bg-white">
           {lookup.isLoading ? (
-            <div className="p-3 text-sm text-[#1a472a]/70 flex items-center gap-2">
+            <div className="p-3 text-sm text-[#1a472a]/75 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> searching
             </div>
           ) : candidates.length === 0 ? (
-            <div className="p-3 text-sm text-[#1a472a]/70">No matches.</div>
+            <div className="p-3 text-sm text-[#1a472a]/75">No matches.</div>
           ) : (
             candidates.map((u) => (
               <button
@@ -88,7 +88,7 @@ function AssignBlock({
               >
                 <span className="text-[#1a472a]">
                   <span className="font-semibold">{u.name ?? u.handle ?? `User ${u.id}`}</span>
-                  {u.email && <span className="text-[#1a472a]/70 ml-2">{u.email}</span>}
+                  {u.email && <span className="text-[#1a472a]/75 ml-2">{u.email}</span>}
                 </span>
                 <UserPlus className="w-3.5 h-3.5 text-[#4a7c59]" />
               </button>
@@ -174,7 +174,7 @@ function HoldersOverviewPanel({
             {cov.filled} of {cov.total} roles filled · {cov.open} open
           </p>
           {cov.uncoveredCircles.length > 0 && (
-            <p className="text-xs text-[#1a472a]/60 mt-1">Uncovered circles: {cov.uncoveredCircles.join(", ")}</p>
+            <p className="text-xs text-[#1a472a]/75 mt-1">Uncovered circles: {cov.uncoveredCircles.join(", ")}</p>
           )}
         </div>
       )}
@@ -198,7 +198,7 @@ function HoldersOverviewPanel({
           </Button>
         </div>
         {invite.error && <p className="text-xs text-red-600">{invite.error.message}</p>}
-        <p className="text-xs text-[#1a472a]/50">The member gets a magic-link email. When they sign in with that email, their account links to this invite automatically.</p>
+        <p className="text-xs text-[#1a472a]/75">The member gets a magic-link email. When they sign in with that email, their account links to this invite automatically.</p>
       </div>
 
       {pendingRows.length > 0 && (
@@ -207,7 +207,7 @@ function HoldersOverviewPanel({
           <ul className="space-y-1 text-sm text-[#1a472a]/80">
             {pendingRows.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2">
-                <span>{p.name} <span className="text-[#1a472a]/50">({p.email})</span></span>
+                <span>{p.name} <span className="text-[#1a472a]/75">({p.email})</span></span>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === "accepted" ? "bg-[#7dd87d]/30 text-[#1a472a]" : "bg-amber-100 text-amber-800"}`}>{p.status}</span>
               </li>
             ))}
@@ -234,21 +234,21 @@ function HoldersOverviewPanel({
           </Button>
         </div>
         {createRole.error && <p className="text-xs text-red-600">{createRole.error.message}</p>}
-        <p className="text-xs text-[#1a472a]/50">A holder row appears on the next flywheel run (or reload).</p>
+        <p className="text-xs text-[#1a472a]/75">A holder row appears on the next flywheel run (or reload).</p>
       </div>
 
       <div>
-        <button type="button" onClick={() => setShowAudit((v) => !v)} className="text-xs text-[#1a472a]/60 hover:text-[#1a472a]">
+        <button type="button" onClick={() => setShowAudit((v) => !v)} className="text-xs text-[#1a472a]/75 hover:text-[#1a472a]">
           {showAudit ? "Hide" : "Show"} assignment history
         </button>
         {showAudit && (
-          <ul className="mt-2 space-y-1 text-xs text-[#1a472a]/70">
+          <ul className="mt-2 space-y-1 text-xs text-[#1a472a]/75">
             {auditRows.map((a) => (
               <li key={a.id}>
                 {new Date(a.createdAt).toLocaleString()} · {a.action} · {a.roleSlug}{a.targetLabel ? ` → ${a.targetLabel}` : ""}
               </li>
             ))}
-            {auditRows.length === 0 && <li className="text-[#1a472a]/40">No assignments yet.</li>}
+            {auditRows.length === 0 && <li className="text-[#1a472a]/75">No assignments yet.</li>}
           </ul>
         )}
       </div>
@@ -282,11 +282,11 @@ export function AdminRoleHoldersTab() {
       <CardContent className="space-y-8">
         <HoldersOverviewPanel holders={list.data ?? []} onChanged={() => list.refetch()} />
         {list.isLoading ? (
-          <div className="text-sm text-[#1a472a]/70 flex items-center gap-2">
+          <div className="text-sm text-[#1a472a]/75 flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> loading
           </div>
         ) : (list.data ?? []).length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#1a472a]/20 p-6 text-center text-sm text-[#1a472a]/70">
+          <div className="rounded-lg border border-dashed border-[#1a472a]/20 p-6 text-center text-sm text-[#1a472a]/75">
             No roleHolders rows yet. Run <code className="px-1 bg-[#1a472a]/5 rounded">npx tsx scripts/seed-role-holders.ts</code> on your machine to seed from gameRoles.ts.
           </div>
         ) : (
@@ -294,7 +294,7 @@ export function AdminRoleHoldersTab() {
             <section key={kind} className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#1a472a]/80">
                 {kind === "game" ? "Game-side roles" : "Fund-side roles"}
-                <span className="ml-2 text-[#1a472a]/60 font-medium normal-case">
+                <span className="ml-2 text-[#1a472a]/75 font-medium normal-case">
                   ({byKind[kind].length})
                 </span>
               </h3>
@@ -309,7 +309,7 @@ export function AdminRoleHoldersTab() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div>
                           <p className="font-bold text-[#1a472a]">{row.roleTitle}</p>
-                          <p className="text-xs text-[#1a472a]/70">
+                          <p className="text-xs text-[#1a472a]/75">
                             slug: <code className="px-1 bg-[#1a472a]/5 rounded">{row.roleSlug}</code>
                             {row.circle && <span className="ml-2">circle: {row.circle}</span>}
                           </p>
@@ -336,7 +336,7 @@ export function AdminRoleHoldersTab() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/60 mb-1">Notifications</p>
+                          <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/75 mb-1">Notifications</p>
                           <div className="flex items-center gap-3 text-sm">
                             <label className="inline-flex items-center gap-1.5 text-[#1a472a]">
                               <input
@@ -354,7 +354,7 @@ export function AdminRoleHoldersTab() {
                               />
                               <Bell className="w-3 h-3" /> In-app
                             </label>
-                            <label className="inline-flex items-center gap-1.5 text-[#1a472a]/70">
+                            <label className="inline-flex items-center gap-1.5 text-[#1a472a]/75">
                               <input
                                 type="checkbox"
                                 checked={row.isActive === 1}
@@ -366,7 +366,7 @@ export function AdminRoleHoldersTab() {
                           </div>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/60 mb-1">
+                          <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/75 mb-1">
                             Aliases the LLM may match
                           </p>
                           <AliasEditor

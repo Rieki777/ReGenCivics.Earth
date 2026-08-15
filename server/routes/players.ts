@@ -4,6 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
+import { getGameVariableOr } from "../game";
 import { eq, sql, count, and, or, like, isNotNull } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
@@ -346,12 +347,9 @@ export const playerProfilesRouter = router({
   }),
 
   // Admin: Verify a player profile
-  verify: protectedProcedure
+  verify: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       await db.updatePlayerProfile(input.id, { isVerified: 1 });
       return { success: true };
     }),
@@ -630,12 +628,13 @@ export const playerProfilesRouter = router({
       }));
 
       // Threshold check (OR within the requested set).
-      const thresholdKey = (t: string) => `governance.claim_threshold_${t}`;
       const thresholds = await Promise.all(
-        requestedTokens.map(async (t) => {
-          const rows = await drizzleDb.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${thresholdKey(t.tokenType)} LIMIT 1`).then((r: any) => r[0] ?? []);
-          return Number(rows[0]?.value ?? (t.tokenType === "regen" || t.tokenType === "rcivics" ? 1000 : 20));
-        }),
+        requestedTokens.map((t) =>
+          getGameVariableOr(
+            `governance.claim_threshold_${t.tokenType}`,
+            t.tokenType === "regen" || t.tokenType === "rcivics" ? 1000 : 20,
+          ),
+        ),
       );
       const anyAboveThreshold = requestedTokens.some((t, i) => t.balance >= thresholds[i]);
       if (!anyAboveThreshold) {
@@ -868,15 +867,12 @@ export const playerProfilesRouter = router({
     }),
 
   // Admin: Award badge
-  awardBadge: protectedProcedure
+  awardBadge: adminProcedure
     .input(z.object({
       id: z.number(),
       badgeId: z.string(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    .mutation(async ({ input }) => {
       const profile = await db.getPlayerProfileById(input.id);
       if (!profile) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
@@ -1899,7 +1895,7 @@ Keep answers short (2-4 sentences max) and link to relevant pages when possible.
         ...input.messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
       ];
 
-      const response = await invokeLLM({ messages, maxTokens: 300 });
+      const response = await invokeLLM({ messages, maxTokens: 300, task: "light" });
       return { reply: response ?? "I'm having trouble responding right now. Try again in a moment." };
     }),
 });

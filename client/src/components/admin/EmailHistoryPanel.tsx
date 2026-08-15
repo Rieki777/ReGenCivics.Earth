@@ -34,9 +34,9 @@ export function EmailHistoryPanel({ email }: { email: string }) {
       </button>
       {open && (
         <div className="mt-2 space-y-2">
-          {isLoading && <p className="text-xs text-[#1a472a]/65 py-2">Loading…</p>}
+          {isLoading && <p className="text-xs text-[#1a472a]/75 py-2">Loading…</p>}
           {!isLoading && !logs?.length && (
-            <p className="text-xs text-[#1a472a]/65 py-2">
+            <p className="text-xs text-[#1a472a]/75 py-2">
               No emails sent to this contact yet.
             </p>
           )}
@@ -46,7 +46,7 @@ export function EmailHistoryPanel({ email }: { email: string }) {
               className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-xs"
             >
               <p className="font-medium text-[#1a472a] truncate">{log.subject}</p>
-              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#1a472a]/70">
+              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#1a472a]/75">
                 <span>{new Date(log.sentAt).toLocaleString()}</span>
                 <span
                   className={
@@ -64,7 +64,7 @@ export function EmailHistoryPanel({ email }: { email: string }) {
                 {log.openedAt && <span className="text-blue-500">· opened</span>}
                 {log.clickedAt && <span className="text-purple-500">· clicked</span>}
                 {log.template && (
-                  <span className="text-[#4a7c59]/80">template: {log.template}</span>
+                  <span className="text-[#1a472a]/75">template: {log.template}</span>
                 )}
               </div>
             </div>

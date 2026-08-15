@@ -128,7 +128,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
     pages: [
       { href: "/quest", title: "Start Questing", description: "Browse available quests and start earning tokens today." },
       { href: "/crowd-pooling", title: "Crowd Pooling", description: "Pool resources with other players to fund regenerative projects." },
-      { href: "/calculator", title: "Contribution Calculator", description: "Measure your full value across 8 forms of capital." },
+      { href: "/calculator", title: "Contribution Calculator", description: "Measure your full value across 9 forms of capital." },
     ],
     blog: { slug: "introducing-games-and-quests", title: "Introducing Games and Quests", excerpt: "Play your way to regeneration with our infinite game mechanics." },
   },

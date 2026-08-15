@@ -57,10 +57,34 @@ import {
   Sprout,
   ChevronsUpDown,
   Calendar,
-  Camera
+  Camera,
+  Laptop,
+  Compass,
+  Palette,
+  HeartPulse,
+  MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import {
+  CAPITAL_TYPES,
+  CAPITAL_LABELS,
+  CONTRIBUTION_CATEGORIES,
+  ROLE_TEMPLATES_BY_CAPITAL,
+  NEED_KINDS,
+  categoryForKey,
+  type CapitalType,
+  type NeedKind,
+  type RoleTemplate,
+} from '@shared/crowdpoolingTaxonomy';
+import {
+  STEP_TIPS,
+  valuationForRole,
+  valuationForLand,
+  valuationBandForValue,
+  type ValuationBand,
+  type CoachNeedInput,
+} from '@shared/crowdpoolCoach';
 // Navigation is rendered globally in App.tsx
 import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
@@ -72,6 +96,9 @@ import { BackButton } from "@/components/BackButton";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cdnImg } from "@/lib/utils";
+import { CapitalBalanceMeter } from '@/components/crowdpool/CapitalBalanceMeter';
+import { TeachingTip } from '@/components/crowdpool/TeachingTip';
+import { DesignCompanion, type CompanionSuggestion } from '@/components/crowdpool/DesignCompanion';
 
 // Types
 interface LandRequirement {
@@ -99,6 +126,8 @@ interface RoleRequirement {
   id: string;
   title: string;
   category: string;
+  /** Which of the 9 capitals this role feeds. Set from the template; custom roles default to experiential. */
+  capitalType?: CapitalType;
   description: string;
   hoursPerWeek: number;
   weeksNeeded: number;
@@ -110,6 +139,9 @@ interface RoleRequirement {
 interface OtherNeed {
   id: string;
   category: string;
+  /** Capital + need kind carried from the taxonomy category. */
+  capitalType?: CapitalType;
+  kind?: NeedKind;
   title: string;
   description: string;
   estimatedValue: number;
@@ -213,69 +245,55 @@ const EQUIPMENT_TEMPLATES = [
   ]},
 ];
 
-const ROLE_TEMPLATES = [
-  { category: 'Leadership', roles: [
-    { title: 'Project Director', hourlyRate: 50, hoursPerWeek: 40, description: 'Overall project leadership and vision' },
-    { title: 'Operations Manager', hourlyRate: 40, hoursPerWeek: 40, description: 'Day-to-day operations coordination' },
-    { title: 'Community Manager', hourlyRate: 35, hoursPerWeek: 30, description: 'Member relations and community building' },
-  ]},
-  { category: 'Agriculture', roles: [
-    { title: 'Farm Manager', hourlyRate: 35, hoursPerWeek: 40, description: 'Agricultural operations oversight' },
-    { title: 'Permaculture Designer', hourlyRate: 45, hoursPerWeek: 20, description: 'Land design and food forest planning' },
-    { title: 'Gardener/Farmer', hourlyRate: 25, hoursPerWeek: 40, description: 'Hands-on cultivation work' },
-    { title: 'Livestock Manager', hourlyRate: 30, hoursPerWeek: 35, description: 'Animal husbandry and care' },
-  ]},
-  { category: 'Construction', roles: [
-    { title: 'Construction Manager', hourlyRate: 45, hoursPerWeek: 40, description: 'Building project oversight' },
-    { title: 'Carpenter', hourlyRate: 35, hoursPerWeek: 40, description: 'Woodworking and structures' },
-    { title: 'Electrician', hourlyRate: 40, hoursPerWeek: 30, description: 'Electrical systems installation' },
-    { title: 'Plumber', hourlyRate: 40, hoursPerWeek: 25, description: 'Water and waste systems' },
-    { title: 'Natural Builder', hourlyRate: 35, hoursPerWeek: 40, description: 'Earthen and natural construction' },
-  ]},
-  { category: 'Technology', roles: [
-    { title: 'IT Manager', hourlyRate: 50, hoursPerWeek: 20, description: 'Technology infrastructure' },
-    { title: 'Web Developer', hourlyRate: 45, hoursPerWeek: 25, description: 'Website and app development' },
-    { title: 'Systems Administrator', hourlyRate: 40, hoursPerWeek: 15, description: 'Server and network management' },
-  ]},
-  { category: 'Marketing & Outreach', roles: [
-    { title: 'Marketing Director', hourlyRate: 45, hoursPerWeek: 30, description: 'Brand and outreach strategy' },
-    { title: 'Social Media Manager', hourlyRate: 30, hoursPerWeek: 20, description: 'Social presence management' },
-    { title: 'Content Creator', hourlyRate: 35, hoursPerWeek: 25, description: 'Video, photos, and written content' },
-    { title: 'Community Outreach', hourlyRate: 30, hoursPerWeek: 20, description: 'Local partnerships and events' },
-  ]},
-  { category: 'Education', roles: [
-    { title: 'Education Director', hourlyRate: 40, hoursPerWeek: 30, description: 'Learning program development' },
-    { title: 'Workshop Facilitator', hourlyRate: 35, hoursPerWeek: 20, description: 'Skills training and workshops' },
-    { title: 'Children\'s Program Lead', hourlyRate: 30, hoursPerWeek: 25, description: 'Youth education and activities' },
-  ]},
-  { category: 'Wellness', roles: [
-    { title: 'Wellness Coordinator', hourlyRate: 35, hoursPerWeek: 25, description: 'Health and wellness programs' },
-    { title: 'Chef/Cook', hourlyRate: 30, hoursPerWeek: 40, description: 'Community meals preparation' },
-    { title: 'Healthcare Provider', hourlyRate: 50, hoursPerWeek: 20, description: 'Basic medical care' },
-  ]},
-  { category: 'Finance & Admin', roles: [
-    { title: 'Financial Manager', hourlyRate: 45, hoursPerWeek: 25, description: 'Budgets and accounting' },
-    { title: 'Fundraising Coordinator', hourlyRate: 40, hoursPerWeek: 30, description: 'Grants and donations' },
-    { title: 'Administrative Assistant', hourlyRate: 25, hoursPerWeek: 30, description: 'General admin support' },
-    { title: 'Legal Advisor', hourlyRate: 75, hoursPerWeek: 10, description: 'Legal compliance and contracts' },
-  ]},
+// Role templates now come from the shared taxonomy (ROLE_TEMPLATES_BY_CAPITAL),
+// grouped by the capital each role feeds. The old flat ROLE_TEMPLATES list is gone.
+
+// Maps taxonomy icon names (strings) to the actual lucide components.
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  TreePine,
+  Coins,
+  Car,
+  Tractor,
+  Wrench,
+  Hammer,
+  Laptop,
+  Home,
+  Sprout,
+  BookOpen,
+  Compass,
+  Users,
+  Palette,
+  Sparkles,
+  HeartPulse,
+  Package,
+};
+
+// The Other Needs picker: every taxonomy category except land (its own step)
+// and crypto (the Financial Target step tracks money).
+const WIZARD_NEED_CATEGORIES = CONTRIBUTION_CATEGORIES.filter(
+  (c) => c.key !== 'land' && c.key !== 'crypto'
+);
+
+// Which teaching tip belongs at the top of each wizard step (Photos has none).
+const STEP_TIP_KEYS: (string | null)[] = [
+  'land',       // 0 Land
+  'equipment',  // 1 Equipment
+  'roles',      // 2 Roles
+  'otherNeeds', // 3 Other Needs
+  null,         // 4 Photos
+  'financial',  // 5 Financial Target
 ];
 
-const OTHER_CATEGORIES = [
-  { id: 'engineering', label: 'Engineering Plans', icon: Wrench, suggested: true, description: 'Civil, structural, and site engineering plans' },
-  { id: 'architectural', label: 'Architectural Plans', icon: Building, suggested: true, description: 'Building designs and architectural drawings' },
-  { id: 'permaculture', label: 'Permaculture Site Plan', icon: Sprout, suggested: true, description: 'Holistic land design and ecosystem planning' },
-  { id: 'financial', label: 'Financial Proformas', icon: Coins, suggested: true, description: 'Financial projections and business plans' },
-  { id: 'permits', label: 'Permits & Legal', icon: FileText },
-  { id: 'insurance', label: 'Insurance', icon: Shield },
-  { id: 'training', label: 'Training & Education', icon: BookOpen },
-  { id: 'marketing', label: 'Marketing & Branding', icon: Megaphone },
-  { id: 'software', label: 'Software & Subscriptions', icon: Code },
-  { id: 'events', label: 'Events & Gatherings', icon: Users },
-  { id: 'travel', label: 'Travel & Transportation', icon: Car },
-  { id: 'supplies', label: 'Supplies & Materials', icon: Package },
-  { id: 'other', label: 'Other', icon: HelpCircle },
-];
+const isCapitalType = (value: unknown): value is CapitalType =>
+  typeof value === 'string' && (CAPITAL_TYPES as readonly string[]).includes(value);
+
+const isNeedKind = (value: unknown): value is NeedKind =>
+  typeof value === 'string' && (NEED_KINDS as readonly string[]).includes(value);
+
+// Picks a sensible Other Needs category key for a capital, so a coach-added
+// need shows a matching icon. Falls back to "other".
+const otherNeedCategoryForCapital = (capital: CapitalType): string =>
+  WIZARD_NEED_CATEGORIES.find((c) => c.capital === capital)?.key ?? 'other';
 
 // Currency options
 const currencies = [
@@ -504,6 +522,7 @@ export default function CreateCampaign() {
   const [videoUrl, setVideoUrl] = useState('');
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [companionOpen, setCompanionOpen] = useState(false);
   const currencySymbol = currencies.find(c => c.code === currency)?.symbol || '$';
   
   // Step tracking
@@ -572,7 +591,91 @@ export default function CreateCampaign() {
   
   const grandTotal = landTotal + equipmentTotal + rolesTotal + otherTotal;
   const recommendedFinancial = Math.round(grandTotal * 0.2);
-  
+
+  // The live needs array the capital coach reads: every item mapped to its
+  // capital, kind, title, and current value. Powers the balance meter and the
+  // design companion, and updates as needs are added across every step.
+  const draftNeeds = useMemo<Array<CoachNeedInput & { title: string }>>(() => [
+    ...landRequirements.map((l) => ({
+      title: `${l.hectares} hectares${l.regions[0] ? ` in ${l.regions[0]}` : ''}`.trim(),
+      capitalType: 'living' as CapitalType,
+      kind: 'item',
+      estimatedValue: l.customValue ?? l.estimatedValue,
+    })),
+    ...equipment.map((e) => ({
+      title: e.name || 'Equipment',
+      capitalType: 'material' as CapitalType,
+      kind: 'item',
+      estimatedValue: (e.customValue ?? e.estimatedValue) * e.quantity,
+    })),
+    ...roles.map((r) => ({
+      title: r.title || 'Role',
+      capitalType: (r.capitalType ?? 'experiential') as CapitalType,
+      kind: 'role',
+      estimatedValue: r.customValue ?? r.estimatedValue,
+    })),
+    ...otherNeeds.map((o) => {
+      const cat = categoryForKey(o.category);
+      return {
+        title: o.title || cat?.label || 'Need',
+        capitalType: (o.capitalType ?? cat?.capital ?? 'material') as CapitalType,
+        kind: (o.kind ?? cat?.kind ?? 'item') as string,
+        estimatedValue: o.customValue ?? o.estimatedValue,
+      };
+    }),
+  ], [landRequirements, equipment, roles, otherNeeds]);
+
+  // Region hint for fair-value bands: prefer the first land region, else the
+  // project location. The coach matches loosely, so either form is fine.
+  const coachRegion = landRequirements[0]?.regions?.[0] || projectLocation || '';
+
+  // Adds a coach suggestion to the right wizard list. A role/shift becomes a
+  // role; everything else becomes an other-need. Never auto-called; it only
+  // fires when the builder taps "Add" in the panel.
+  const handleAddSuggestion = useCallback((s: CompanionSuggestion) => {
+    if (s.kind === 'role' || s.kind === 'shift') {
+      const hoursPerWeek = Math.max(1, Math.round(s.hoursPerWeek ?? 5));
+      const weeksNeeded = Math.max(1, Math.round(s.weeks ?? 52));
+      const hourlyRate =
+        s.estimatedValue > 0
+          ? Math.max(1, Math.round(s.estimatedValue / (hoursPerWeek * weeksNeeded)))
+          : 30;
+      const capital = isCapitalType(s.capitalType) ? s.capitalType : 'experiential';
+      setRoles((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          title: s.title,
+          category: CAPITAL_LABELS[capital].label,
+          capitalType: capital,
+          description: s.rationale || '',
+          hoursPerWeek,
+          weeksNeeded,
+          hourlyRate,
+          estimatedValue: hoursPerWeek * weeksNeeded * hourlyRate,
+          customValue: null,
+        },
+      ]);
+    } else {
+      const capital = isCapitalType(s.capitalType) ? s.capitalType : 'material';
+      const kind = isNeedKind(s.kind) ? s.kind : 'item';
+      setOtherNeeds((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          category: otherNeedCategoryForCapital(capital),
+          capitalType: capital,
+          kind,
+          title: s.title,
+          description: s.rationale || '',
+          estimatedValue: Math.max(0, Math.round(s.estimatedValue || 0)),
+          customValue: null,
+        },
+      ]);
+    }
+    toast.success(`Added "${s.title}" to your campaign`);
+  }, []);
+
   // Handle campaign submission
   const handleSubmitCampaign = async () => {
     if (!campaignName || !campaignDescription) {
@@ -592,11 +695,14 @@ export default function CreateCampaign() {
     
     setIsSubmitting(true);
     
-    // Prepare campaign items
+    // Prepare campaign items. Every item carries kind + capitalType from the
+    // shared taxonomy so the needs registry can group by capital.
     const items = [
       // Land items
       ...landRequirements.map(land => ({
         category: 'land' as const,
+        kind: 'item' as const,
+        capitalType: 'living' as const,
         hectares: land.hectares,
         region: land.regions[0] || '',
         features: land.features,
@@ -607,29 +713,38 @@ export default function CreateCampaign() {
       // Equipment items
       ...equipment.map(eq => ({
         category: 'equipment' as const,
+        kind: 'item' as const,
+        capitalType: 'material' as const,
         equipmentName: eq.name,
         equipmentQuantity: eq.quantity,
         equipmentCategory: eq.category,
         estimatedValue: (eq.customValue ?? eq.estimatedValue) * eq.quantity,
       })),
-      // Role items
+      // Role items: capital comes from the template, custom roles default to experiential
       ...roles.map(role => ({
         category: 'role' as const,
+        kind: 'role' as const,
+        capitalType: role.capitalType ?? ('experiential' as const),
         roleTitle: role.title,
         hoursPerWeek: role.hoursPerWeek,
         durationMonths: Math.round((role.weeksNeeded || 0) / 4.33), // Convert weeks to months
         roleDescription: role.description,
         estimatedValue: role.customValue ?? role.estimatedValue,
       })),
-      // Resource items
-      ...otherNeeds.map(need => ({
-        category: 'resource' as const,
-        resourceName: need.title,
-        resourceQuantity: 1,
-        resourceUnit: need.category,
-        resourceDescription: need.description,
-        estimatedValue: need.customValue ?? need.estimatedValue,
-      })),
+      // Other needs: kind + capital carried from the taxonomy category
+      ...otherNeeds.map(need => {
+        const cat = categoryForKey(need.category);
+        return {
+          category: 'resource' as const,
+          kind: need.kind ?? cat?.kind ?? ('item' as const),
+          capitalType: need.capitalType ?? cat?.capital ?? ('material' as const),
+          resourceName: need.title,
+          resourceQuantity: 1,
+          resourceUnit: need.category,
+          resourceDescription: need.description,
+          estimatedValue: need.customValue ?? need.estimatedValue,
+        };
+      }),
     ];
     
     // Submit campaign with all rich project data
@@ -704,7 +819,7 @@ export default function CreateCampaign() {
                 <h1 className="text-2xl md:text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                   Create Your Campaign
                 </h1>
-                <p className="text-[#1a472a]/70 mt-2 max-w-md mx-auto">
+                <p className="text-[#1a472a]/75 mt-2 max-w-md mx-auto">
                   Select your project from the list of season applicants. Your application data will be automatically loaded into the campaign.
                 </p>
               </div>
@@ -846,7 +961,7 @@ export default function CreateCampaign() {
           <h1 className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Create Your Crowd Pooling Campaign
           </h1>
-          <p className="text-[#1a472a]/70 max-w-2xl mx-auto mb-4">
+          <p className="text-[#1a472a]/75 max-w-2xl mx-auto mb-4">
             We don't need as much money as we think we do! Pool diverse forms of capital from your community: land, equipment, roles, skills, and more. Skip straight to what your project actually needs to launch.
           </p>
           <p className="text-sm text-[#4a7c59] max-w-xl mx-auto">
@@ -879,8 +994,13 @@ export default function CreateCampaign() {
               </span>
             </div>
           </div>
+          {/* Capital balance meter: live read of how many of the nine forms are covered */}
+          <div className="mt-3 pt-3 border-t border-[#7dd87d]/20">
+            <CapitalBalanceMeter needs={draftNeeds} />
+            <TeachingTip text={STEP_TIPS.capitals} className="mt-2" />
+          </div>
         </div>
-        
+
         {/* Campaign Info */}
         <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -901,7 +1021,7 @@ export default function CreateCampaign() {
                   <DialogTitle>Choose a Campaign Template</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 mt-4">
-                  <p className="text-sm text-[#1a472a]/70">
+                  <p className="text-sm text-[#1a472a]/75">
                     Start with a pre-filled template for common project types:
                   </p>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -990,7 +1110,7 @@ export default function CreateCampaign() {
                     <DialogTitle>Import from Application</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-3 mt-4">
-                    <p className="text-sm text-[#1a472a]/70">
+                    <p className="text-sm text-[#1a472a]/75">
                       Select an application to pre-fill your campaign details:
                     </p>
                     {userApplications.map((app: any) => (
@@ -1222,7 +1342,7 @@ export default function CreateCampaign() {
                         placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
                         className="bg-white border-[#7dd87d]/30"
                       />
-                      <p className="text-xs text-[#4a7c59]/70 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
+                      <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
                     </div>
                   </div>
                 </div>
@@ -1255,6 +1375,10 @@ export default function CreateCampaign() {
         
         {/* Step Content */}
         <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30 min-h-[500px]">
+          {/* Per-step teaching tip, drawn from the shared coach */}
+          {STEP_TIP_KEYS[currentStep] && (
+            <TeachingTip text={STEP_TIPS[STEP_TIP_KEYS[currentStep] as string]} className="mb-5" />
+          )}
           {/* Step 1: Land */}
           {currentStep === 0 && (
             <LandSection
@@ -1282,6 +1406,7 @@ export default function CreateCampaign() {
               setRoles={setRoles}
               currencySymbol={currencySymbol}
               total={rolesTotal}
+              region={coachRegion}
             />
           )}
           
@@ -1303,7 +1428,7 @@ export default function CreateCampaign() {
                   <Camera className="w-5 h-5 text-[#4a7c59]" />
                   Project Photos
                 </h3>
-                <p className="text-sm text-[#1a472a]/70 mb-4">
+                <p className="text-sm text-[#1a472a]/75 mb-4">
                   Add photos of your land, team, and progress to help contributors understand your project.
                   The first image will be used as your campaign cover photo.
                 </p>
@@ -1397,6 +1522,31 @@ export default function CreateCampaign() {
           </p>
         )}
       </div>
+
+      {/* Design coach: opens at any step, suggests, never blocks a launch */}
+      <button
+        type="button"
+        onClick={() => setCompanionOpen(true)}
+        className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex items-center gap-2 rounded-full bg-[#4a7c59] hover:bg-[#1a472a] text-white pl-4 pr-5 py-3 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d] focus:ring-offset-2"
+        aria-label="Open the design coach"
+      >
+        <MessageCircle className="w-5 h-5" />
+        <span className="hidden sm:inline text-sm font-semibold">Design coach</span>
+      </button>
+
+      <DesignCompanion
+        open={companionOpen}
+        onOpenChange={setCompanionOpen}
+        draft={{
+          projectName: campaignName,
+          location: projectLocation,
+          region: coachRegion,
+          vision: projectVision,
+          needs: draftNeeds,
+        }}
+        onAddSuggestion={handleAddSuggestion}
+        currencySymbol={currencySymbol}
+      />
     </div>
   );
 }
@@ -1421,7 +1571,9 @@ function LandSection({
     description: '',
     videoUrl: '',
   });
-  
+  // Fair-value band from area and a regional per-hectare price, when asked.
+  const [landBand, setLandBand] = useState<ValuationBand | null>(null);
+
   const estimatedValue = estimateLandPrice(formData.hectares || 0, formData.regions || []);
   
   const handleAddLand = () => {
@@ -1437,6 +1589,7 @@ function LandSection({
     };
     setRequirements([...requirements, newLand]);
     setFormData({ hectares: 0, regions: [], features: [], description: '', videoUrl: '' });
+    setLandBand(null);
     setShowForm(false);
     toast.success('Land requirement added');
   };
@@ -1619,7 +1772,7 @@ function LandSection({
                   className="bg-white border-[#7dd87d]/30"
                 />
               </div>
-              <p className="text-xs text-[#4a7c59]/70 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
+              <p className="text-xs text-[#1a472a]/75 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
             </div>
             
             {/* Estimated Value */}
@@ -1636,6 +1789,41 @@ function LandSection({
               <p className="text-xs text-[#1a472a]/80 mb-3">
                 Based on average land prices in selected regions. You can edit this value if you have better figures.
               </p>
+              {/* Fair-value helper: a band from area and a regional per-hectare price */}
+              <div className="mb-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setLandBand(
+                      valuationForLand({
+                        hectares: formData.hectares || 0,
+                        region: (formData.regions || [])[0] || '',
+                      })
+                    )
+                  }
+                  className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+                >
+                  <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                  Suggest a fair value
+                </Button>
+                {landBand && (
+                  <div className="mt-2 rounded-lg bg-[#f8f5f0] border border-[#7dd87d]/30 p-3">
+                    <p className="text-xs text-[#1a472a]/80 leading-relaxed">{landBand.note}</p>
+                    {landBand.mid > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, customValue: landBand.mid })}
+                        className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                      >
+                        Use {formatCurrency(landBand.mid, currencySymbol)}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
                 <Input
@@ -1798,14 +1986,14 @@ function EquipmentSection({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
+                    className="w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 inline-flex items-center justify-center rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     -
                   </button>
                   <span className="w-8 text-center text-sm">{item.quantity}</span>
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
+                    className="w-7 h-7 pointer-coarse:w-11 pointer-coarse:h-11 inline-flex items-center justify-center rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     +
                   </button>
@@ -1941,19 +2129,23 @@ function EquipmentSection({
 }
 
 // Roles Section Component
-function RolesSection({ 
-  roles, 
-  setRoles, 
-  currencySymbol, 
-  total 
+function RolesSection({
+  roles,
+  setRoles,
+  currencySymbol,
+  total,
+  region,
 }: {
   roles: RoleRequirement[];
   setRoles: React.Dispatch<React.SetStateAction<RoleRequirement[]>>;
   currencySymbol: string;
   total: number;
+  region: string;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+  // Fair-value band for the custom role, filled when the coach is asked.
+  const [roleBand, setRoleBand] = useState<ValuationBand | null>(null);
   const [formData, setFormData] = useState<Partial<RoleRequirement>>({
     title: '',
     category: '',
@@ -1965,27 +2157,29 @@ function RolesSection({
   
   const calculatedValue = (formData.hoursPerWeek || 0) * (formData.weeksNeeded || 0) * (formData.hourlyRate || 0);
   
-  const handleAddFromTemplate = (category: string, role: { title: string; hourlyRate: number; hoursPerWeek: number; description: string }) => {
+  const handleAddFromTemplate = (capital: CapitalType, role: RoleTemplate) => {
     const newRole: RoleRequirement = {
       id: generateId(),
       title: role.title,
-      category,
+      category: CAPITAL_LABELS[capital].label,
+      capitalType: capital,
       description: role.description,
-      hoursPerWeek: role.hoursPerWeek,
+      hoursPerWeek: role.defaultHoursPerWeek,
       weeksNeeded: 52, // Default to 1 year
-      hourlyRate: role.hourlyRate,
-      estimatedValue: role.hoursPerWeek * 52 * role.hourlyRate,
+      hourlyRate: role.defaultHourlyRate,
+      estimatedValue: role.defaultHoursPerWeek * 52 * role.defaultHourlyRate,
       customValue: null,
     };
     setRoles([...roles, newRole]);
     toast.success(`${role.title} added`);
   };
-  
+
   const handleAddCustom = () => {
     const newRole: RoleRequirement = {
       id: generateId(),
       title: formData.title || '',
       category: formData.category || 'Other',
+      capitalType: 'experiential', // Custom roles default to experiential
       description: formData.description || '',
       hoursPerWeek: formData.hoursPerWeek || 20,
       weeksNeeded: formData.weeksNeeded || 52,
@@ -1995,6 +2189,7 @@ function RolesSection({
     };
     setRoles([...roles, newRole]);
     setFormData({ title: '', category: '', description: '', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 30 });
+    setRoleBand(null);
     setShowForm(false);
     toast.success('Role added');
   };
@@ -2108,47 +2303,56 @@ function RolesSection({
         </div>
       )}
       
-      {/* Template Categories */}
+      {/* Role templates from the shared taxonomy, grouped by the capital they feed */}
       <div className="space-y-4 mb-6">
         <h3 className="font-medium text-[#1a472a] flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-[#d4a017]" />
-          Common Roles (click to add)
+          Roles a community needs held (click to add)
         </h3>
-        
-        {ROLE_TEMPLATES.map((cat) => (
-          <div key={cat.category} className="border border-[#7dd87d]/30 rounded-xl overflow-hidden">
-            <button
-              onClick={() => setSelectedCategory(selectedCategory === cat.category ? '' : cat.category)}
-              className="w-full px-4 py-3 bg-white hover:bg-[#f0f7f0] flex items-center justify-between transition-colors"
-            >
-              <span className="font-medium text-[#1a472a]">{cat.category}</span>
-              {selectedCategory === cat.category ? (
-                <ChevronUp className="w-4 h-4 text-[#1a472a]/80" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-[#1a472a]/80" />
+
+        {CAPITAL_TYPES.map((capital) => {
+          const info = CAPITAL_LABELS[capital];
+          const templates = ROLE_TEMPLATES_BY_CAPITAL[capital];
+          return (
+            <div key={capital} className="border border-[#7dd87d]/30 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setSelectedCategory(selectedCategory === capital ? '' : capital)}
+                className="w-full px-4 py-3 bg-white hover:bg-[#f0f7f0] flex items-center justify-between transition-colors"
+              >
+                <div className="text-left">
+                  <span className="font-medium text-[#1a472a]">{info.label} Capital</span>
+                  <p className="text-xs text-[#1a472a]/75">{info.blurb}</p>
+                </div>
+                {selectedCategory === capital ? (
+                  <ChevronUp className="w-4 h-4 text-[#1a472a]/80 flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#1a472a]/80 flex-shrink-0" />
+                )}
+              </button>
+              {selectedCategory === capital && (
+                <div className="p-3 bg-[#f8f5f0] space-y-2">
+                  {templates.map((role) => (
+                    <button
+                      key={role.title}
+                      onClick={() => handleAddFromTemplate(capital, role)}
+                      className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#f0f7f0] transition-colors text-left"
+                    >
+                      <div>
+                        <span className="text-sm font-medium text-[#1a472a]">{role.title}</span>
+                        <p className="text-xs text-[#1a472a]/80">
+                          {role.defaultHoursPerWeek}h/week @ {formatCurrency(role.defaultHourlyRate, currencySymbol)}/h · {role.description}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium text-[#4a7c59] flex-shrink-0 ml-2">
+                        {formatCurrency(role.defaultHoursPerWeek * 52 * role.defaultHourlyRate, currencySymbol)}/yr
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
-            </button>
-            {selectedCategory === cat.category && (
-              <div className="p-3 bg-[#f8f5f0] space-y-2">
-                {cat.roles.map((role) => (
-                  <button
-                    key={role.title}
-                    onClick={() => handleAddFromTemplate(cat.category, role)}
-                    className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#f0f7f0] transition-colors text-left"
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-[#1a472a]">{role.title}</span>
-                      <p className="text-xs text-[#1a472a]/80">{role.hoursPerWeek}h/week @ {formatCurrency(role.hourlyRate, currencySymbol)}/h</p>
-                    </div>
-                    <span className="text-sm font-medium text-[#4a7c59]">
-                      {formatCurrency(role.hoursPerWeek * 52 * role.hourlyRate, currencySymbol)}/yr
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
       
       {/* Custom Role Form */}
@@ -2205,6 +2409,44 @@ function RolesSection({
               <div className="bg-white rounded-lg p-3 border border-[#7dd87d]/30 mb-2">
                 <p className="text-xs text-[#1a472a]/80">Calculated Value:</p>
                 <p className="text-lg font-bold text-[#4a7c59]">{formatCurrency(calculatedValue, currencySymbol)}</p>
+              </div>
+              {/* Fair-value helper: a defensible band from hours, weeks, rate, and region */}
+              <div className="mb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setRoleBand(
+                      valuationForRole({
+                        capital: 'experiential',
+                        hoursPerWeek: formData.hoursPerWeek || 0,
+                        weeks: formData.weeksNeeded || 0,
+                        region,
+                        hourlyRate: formData.hourlyRate || undefined,
+                      })
+                    )
+                  }
+                  className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+                >
+                  <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                  Suggest a fair value
+                </Button>
+                {roleBand && (
+                  <div className="mt-2 rounded-lg bg-white border border-[#7dd87d]/30 p-3">
+                    <p className="text-xs text-[#1a472a]/80 leading-relaxed">{roleBand.note}</p>
+                    {roleBand.mid > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, customValue: roleBand.mid })}
+                        className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                      >
+                        Use {formatCurrency(roleBand.mid, currencySymbol)}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
@@ -2276,21 +2518,26 @@ function OtherNeedsSection({
   });
   const formRef = React.useRef<HTMLDivElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
-  
-  const openFormWithCategory = (categoryId: string) => {
-    const cat = OTHER_CATEGORIES.find(c => c.id === categoryId);
-    setFormData({ ...formData, category: categoryId, title: cat?.label || '' });
+  // Fair-value band around the figure entered, filled when the coach is asked.
+  const [otherBand, setOtherBand] = useState<ValuationBand | null>(null);
+
+  const openFormWithCategory = (categoryKey: string) => {
+    const cat = categoryForKey(categoryKey);
+    setFormData({ ...formData, category: categoryKey, title: cat?.label || '' });
     setShowForm(true);
     // Scroll to form after a tick so it's rendered
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
   };
-  
+
   const handleAdd = () => {
+    const cat = categoryForKey(formData.category || 'other');
     const newNeed: OtherNeed = {
       id: generateId(),
       category: formData.category || 'other',
+      capitalType: cat?.capital ?? 'material',
+      kind: cat?.kind ?? 'item',
       title: formData.title || '',
       description: formData.description || '',
       estimatedValue: formData.estimatedValue || 0,
@@ -2298,6 +2545,7 @@ function OtherNeedsSection({
     };
     setNeeds([...needs, newNeed]);
     setFormData({ category: 'other', title: '', description: '', estimatedValue: 0 });
+    setOtherBand(null);
     setShowForm(false);
     toast.success('Item added');
     // Scroll back to the category list so user can keep adding
@@ -2333,15 +2581,23 @@ function OtherNeedsSection({
       {needs.length > 0 && (
         <div className="space-y-2 mb-6">
           {needs.map((need) => {
-            const catInfo = OTHER_CATEGORIES.find(c => c.id === need.category);
-            const Icon = catInfo?.icon || HelpCircle;
+            const catInfo = categoryForKey(need.category);
+            const Icon = (catInfo?.icon && CATEGORY_ICONS[catInfo.icon]) || HelpCircle;
+            const capital = need.capitalType ?? catInfo?.capital;
             return (
               <div key={need.id} className="bg-[#f0f7f0] rounded-xl p-3 border border-[#7dd87d]/30 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5 text-[#4a7c59]" />
                   <div>
                     <span className="font-medium text-[#1a472a]">{need.title}</span>
-                    <p className="text-xs text-[#1a472a]/80">{catInfo?.label || need.category}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-[#1a472a]/80">{catInfo?.label || need.category}</p>
+                      {capital && (
+                        <span className="text-xs bg-white px-2 py-0.5 rounded-full text-[#4a7c59]">
+                          {CAPITAL_LABELS[capital].label}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2362,49 +2618,31 @@ function OtherNeedsSection({
           })}
         </div>
       )}
-      
-      {/* Highly Suggested Needs */}
+
+      {/* Category picker from the shared taxonomy, each mapped to a capital */}
       <div className="mb-6" ref={listRef}>
         <h3 className="font-medium text-[#1a472a] mb-3 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#d4a017]" />
-          Highly Suggested
+          What does your project need?
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          {OTHER_CATEGORIES.filter(cat => cat.suggested).map((cat) => {
-            const Icon = cat.icon;
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {WIZARD_NEED_CATEGORIES.map((cat) => {
+            const Icon = (cat.icon && CATEGORY_ICONS[cat.icon]) || HelpCircle;
             return (
               <button
-                key={cat.id}
-                onClick={() => openFormWithCategory(cat.id)}
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#d4a017]/10 to-[#7dd87d]/10 rounded-xl border-2 border-[#d4a017]/30 hover:border-[#d4a017] transition-colors text-left"
+                key={cat.key}
+                onClick={() => openFormWithCategory(cat.key)}
+                className="flex items-start gap-3 p-3 bg-white rounded-xl border border-[#7dd87d]/30 hover:bg-[#f0f7f0] transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-[#d4a017]/20 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-[#d4a017]" />
+                <div className="w-9 h-9 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-[#4a7c59]" />
                 </div>
-                <div>
-                  <span className="font-medium text-[#1a472a] block">{cat.label}</span>
-                  <span className="text-xs text-[#1a472a]/80">{cat.description}</span>
+                <div className="min-w-0">
+                  <span className="font-medium text-[#1a472a] text-sm block">{cat.label}</span>
+                  <span className="text-xs bg-[#f0f7f0] px-2 py-0.5 rounded-full text-[#4a7c59] inline-block mt-1">
+                    {CAPITAL_LABELS[cat.capital].label}
+                  </span>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      
-      {/* Quick Add Categories */}
-      <div className="mb-6">
-        <h3 className="font-medium text-[#1a472a] mb-3">Other Categories</h3>
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-          {OTHER_CATEGORIES.filter(cat => !cat.suggested).map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => openFormWithCategory(cat.id)}
-                className="flex flex-col items-center gap-1 p-3 bg-white rounded-xl border border-[#7dd87d]/30 hover:bg-[#f0f7f0] transition-colors"
-              >
-                <Icon className="w-5 h-5 text-[#4a7c59]" />
-                <span className="text-xs text-[#1a472a]">{cat.label}</span>
               </button>
             );
           })}
@@ -2415,7 +2653,7 @@ function OtherNeedsSection({
       {showForm && (
         <div ref={formRef} className="bg-[#f8f5f0] rounded-xl p-6 border border-[#7dd87d]/30">
           <h3 className="font-medium text-[#1a472a] mb-4">
-            Add {OTHER_CATEGORIES.find(c => c.id === formData.category)?.label || 'Item'}
+            Add {categoryForKey(formData.category || 'other')?.label || 'Item'}
           </h3>
           <div className="space-y-4">
             <div>
@@ -2445,6 +2683,34 @@ function OtherNeedsSection({
                 placeholder="0"
                 className="bg-white border-[#7dd87d]/30"
               />
+            </div>
+            {/* Fair-value helper: a plus-or-minus band around the figure entered */}
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOtherBand(valuationBandForValue(formData.estimatedValue || 0))}
+                className="text-xs border-[#7dd87d] text-[#4a7c59] hover:bg-[#4a7c59]/10"
+              >
+                <Calculator className="w-3.5 h-3.5 mr-1.5" />
+                Suggest a fair range
+              </Button>
+              {otherBand && (
+                <div className="mt-2 rounded-lg bg-white border border-[#7dd87d]/30 p-3">
+                  <p className="text-xs text-[#1a472a]/80 leading-relaxed">{otherBand.note}</p>
+                  {otherBand.mid > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setFormData({ ...formData, estimatedValue: otherBand.mid })}
+                      className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
+                    >
+                      Use {formatCurrency(otherBand.mid, currencySymbol)}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1 rounded-xl border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59]/10">
@@ -2506,7 +2772,7 @@ function FinancialTargetSection({
             Financial Target
           </h2>
           <p className="text-sm text-[#1a472a]/80 mt-1">
-            How much actual money do you need to raise?
+            How much crypto does your project need to raise?
           </p>
         </div>
       </div>
@@ -2545,18 +2811,21 @@ function FinancialTargetSection({
         <div className="flex items-start gap-3 mb-4">
           <Info className="w-5 h-5 text-[#d4a017] flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-medium text-[#1a472a]">Why set a financial target?</h3>
-            <p className="text-sm text-[#1a472a]/70 mt-1">
-              While crowd pooling can provide land, equipment, and skills directly, some things require actual money: 
-              permits, insurance, emergency funds, and operational costs. We recommend at least 20% of your total 
-              campaign value be in financial contributions.
+            <h3 className="font-medium text-[#1a472a]">Why set a crypto target?</h3>
+            <p className="text-sm text-[#1a472a]/75 mt-1">
+              Crowd pooling covers land, equipment, and skills directly, and some things still need money:
+              permits, insurance, emergency funds, and operating costs. Your crypto target is tracked right
+              here on your campaign, pledged and delivered wallet to wallet. National currency runs through
+              our partners instead: donations run through Ma Earth, loans run through GoSteward. Link yours
+              after your campaign is live. We recommend at least 20% of your total campaign value in
+              financial contributions.
             </p>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 border border-[#d4a017]/20">
           <label className="block text-sm font-medium text-[#1a472a] mb-2">
-            Financial Target ({currencySymbol})
+            Crypto Target (USDC, ETH on Base) in {currencySymbol} value
           </label>
           
           {/* Full-width input with currency symbol */}
@@ -2635,7 +2904,7 @@ function FinancialTargetSection({
               }}
               className="w-24 bg-white border-[#7dd87d]/30 text-center text-lg font-bold"
             />
-            <span className="text-[#1a472a]/70">days</span>
+            <span className="text-[#1a472a]/75">days</span>
           </div>
           
           <div className="flex flex-wrap gap-2">

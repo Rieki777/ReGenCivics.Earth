@@ -23,21 +23,15 @@ import { invokeLLM } from "../_core/llm";
 import { requireCoCreatorPlus } from "./proposals";
 import { bridgeToHypha } from "../lib/hypha-bridge";
 import { notifyGovernanceSubscribers } from "../jobs/assemblyNotify";
+import { executionPayloadSchema } from "../lib/evolution-payload";
+import { getGameVariableOr, citizenshipTierRank } from "../game";
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
 
+// Canonical reader (cached, isActive-filtered); this used to be one of five
+// per-file raw-SQL copies.
 async function readGameVariable(key: string, fallback: number): Promise<number> {
-  const db = await getDb();
-  if (!db) return fallback;
-  try {
-    const [rows] = await db.execute(
-      sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`
-    );
-    const v = Number((rows as any)?.[0]?.value);
-    return Number.isFinite(v) ? v : fallback;
-  } catch {
-    return fallback;
-  }
+  return getGameVariableOr(key, fallback);
 }
 
 interface SignalAggregate {
@@ -145,7 +139,9 @@ async function isStewardPlus(userId: number): Promise<boolean> {
   const row = (rows as unknown as any[])?.[0];
   if (!row) return false;
   if (row.role === "admin" || row.role === "superadmin") return true;
-  return Number(row.tier) >= 2;
+  // citizenshipTier is an enum STRING ('steward' etc.) — Number() on it is
+  // NaN, which made this gate admin-only in practice. Rank it properly.
+  return citizenshipTierRank(row.tier) >= 2;
 }
 
 // ─── Lifecycle gates (spec section 4) ──────────────────────────────────────
@@ -416,27 +412,9 @@ export const assemblyRouter = router({
         category: z
           .enum(["fund_allocation", "game_variable", "new_quest", "food_economy", "platform_feature", "community", "bff_initiative", "partnership", "community_agreement", "other"])
           .default("community"),
-        executionPayload: z
-          .union([
-            z.object({
-              kind: z.literal("variable_change"),
-              variableKey: z.string().min(3).max(120),
-              newValue: z.number(),
-            }),
-            z.object({
-              kind: z.literal("bounds_change"),
-              variableKey: z.string().min(3).max(120),
-              newMin: z.number(),
-              newMax: z.number(),
-            }),
-            z.object({
-              kind: z.literal("feature"),
-              specMarkdown: z.string().min(20).max(20000),
-              acceptanceCriteria: z.array(z.string().min(3).max(300)).min(1).max(20),
-              scopePaths: z.array(z.string().min(1).max(200)).min(1).max(40),
-            }),
-          ])
-          .optional(),
+        // Canonical shape schema, shared with dispatchExecution so raise-time
+        // and execution-time validation can never drift apart.
+        executionPayload: executionPayloadSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -623,16 +601,11 @@ export const assemblyRouter = router({
   evolutionStatus: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) return { tier: 1, launchWindowHours: 24, circuitBreakerFailures: 2, inFlight: [] };
-    const readVar = async (key: string, fallback: number) => {
-      const [r] = await db.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`);
-      const v = Number((r as any)?.[0]?.value);
-      return Number.isFinite(v) ? v : fallback;
-    };
     const [tier, launchWindowHours, circuitBreakerFailures, launchRequireApproval] = await Promise.all([
-      readVar("evolution.max_autonomy_tier", 1),
-      readVar("evolution.launch_window_hours", 24),
-      readVar("evolution.circuit_breaker_failures", 2),
-      readVar("evolution.launch_require_approval", 1),
+      readGameVariable("evolution.max_autonomy_tier", 1),
+      readGameVariable("evolution.launch_window_hours", 24),
+      readGameVariable("evolution.circuit_breaker_failures", 2),
+      readGameVariable("evolution.launch_require_approval", 1),
     ]);
     const inFlight = await db
       .select()
@@ -846,8 +819,9 @@ export const assemblyRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not ready to launch." });
       }
       const idleDays = p.readyToLaunchAt ? (Date.now() - new Date(p.readyToLaunchAt as any).getTime()) / 86_400_000 : 0;
-      if (p.authorId !== ctx.user.id && idleDays < 7) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "The owner launches the vote. If it sits for 7 days, anyone can carry it over." });
+      const carryoverDays = await readGameVariable("governance.launch_carryover_idle_days", 7);
+      if (p.authorId !== ctx.user.id && idleDays < carryoverDays) {
+        throw new TRPCError({ code: "FORBIDDEN", message: `The owner launches the vote. If it sits for ${carryoverDays} days, anyone can carry it over.` });
       }
 
       const { bridgeKey, bridgeUrl } = await bridgeToHypha("assembly-proposal-to-contribution", {
@@ -911,7 +885,10 @@ export const assemblyRouter = router({
         const [profileRows] = await db.execute(
           sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
         );
-        const userTier = Number((profileRows as any)?.[0]?.citizenshipTier ?? 0);
+        // Enum-string tier ranked, not Number()'d — NaN < minTier is false,
+        // so the old compare silently waved everyone through when the gate
+        // was raised above 0.
+        const userTier = citizenshipTierRank((profileRows as any)?.[0]?.citizenshipTier);
         if (userTier < minTier) {
           throw new TRPCError({ code: "FORBIDDEN", message: "You need a higher citizenship tier to signal on proposals." });
         }
@@ -1053,6 +1030,7 @@ export const assemblyRouter = router({
             { role: "user", content: conversation },
           ],
           maxTokens: 2000,
+          task: "complex",
           outputSchema: {
             name: "proposal_synthesis",
             schema: {

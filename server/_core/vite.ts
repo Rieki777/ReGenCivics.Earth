@@ -6,8 +6,63 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { resolveCrawlerContent, escapeHtml, type CrawlerContent } from "./crawler-content";
+import { LEARN_SLUGS } from "@shared/learnContent";
+import { matchesAppRoute } from "@shared/appRoutes";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Rewrites the shell's head tags for one request.
+ *
+ * `title` and `description` are NOT always ours. For /community/post/:id and
+ * /campaign/:id they come from crawler-content.ts, which builds them from the
+ * forum post title and the campaign title, both of which are text any signed-in
+ * member can write. Until 2026-08-03 the title went into the <title> element
+ * with no escaping at all (the attributes got quote-escaping only), so a post
+ * titled
+ *
+ *     </title><link rel="canonical" href="https://spam.example/"><title>x
+ *
+ * closed the element early and injected an attacker-controlled canonical AHEAD
+ * of the real one. That is the exact shape of the blog bug fixed the same day:
+ * the first canonical is the one a crawler acts on, and conflicting canonicals
+ * get ignored entirely. A single forum post could have pointed a crawlable
+ * ReGen Civics URL at someone else's domain. The same hole took arbitrary
+ * <meta http-equiv="refresh"> and any other head markup.
+ *
+ * Everything interpolated here is escaped now, element text and attribute
+ * values alike. `canonical` and `ogImage` are server-built from BASE_URL and a
+ * matched numeric id, never from user text, but they get the same treatment so
+ * there is no "which of these is safe" question to get wrong later.
+ */
+export function injectMetaTags(
+  shell: string,
+  meta: { title: string; description: string; canonical: string; ogImage: string },
+): string {
+  const title = escapeHtml(meta.title);
+  const desc = escapeHtml(meta.description);
+  const canonical = escapeHtml(meta.canonical);
+  const ogImage = escapeHtml(meta.ogImage);
+
+  // Non-global replaces on purpose: the shell carries exactly one of each tag
+  // and a second one would be a shell bug, not something to paper over here.
+  // server/vite-meta.test.ts asserts the counts stay at one.
+  return shell
+    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/, `$1${desc}$2`)
+    // Open Graph
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${title}$2`)
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${desc}$2`)
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${canonical}$2`)
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${ogImage}$2`)
+    // Twitter Card
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${title}$2`)
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${desc}$2`)
+    .replace(/(<meta name="twitter:url" content=")[^"]*(")/, `$1${canonical}$2`)
+    .replace(/(<meta name="twitter:image" content=")[^"]*(")/, `$1${ogImage}$2`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${canonical}$2`);
+}
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -153,6 +208,17 @@ export function serveStatic(app: Express) {
     etag: true,
     extensions: false,
     index: false,
+    // `redirect: false` because the blog prerender writes real directories
+    // (dist/public/blog/<slug>/index.html). With the default `redirect: true`,
+    // express.static answers a request for a directory path with a 301 to the
+    // trailing-slash form, so every URL we publish for a blog post cost a
+    // crawler an extra hop: sitemap and llms.txt advertise /blog/<slug>, that
+    // 301'd to /blog/<slug>/, and the page served there declared its canonical
+    // as /blog/<slug> again. Measured on 2026-08-03 across 10 published URLs
+    // (/community, /blog, /map, /ship and 6 posts). With redirect off, the
+    // request falls through to the blog handler below, which matches both
+    // forms and serves 200 at the URL we actually advertise.
+    redirect: false,
     setHeaders(res, filePath) {
       // Don't cache HTML or service worker files, they must always reflect the latest deploy
       if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js")) {
@@ -160,6 +226,8 @@ export function serveStatic(app: Express) {
       }
     },
   }));
+
+  // (injectMetaTags lives at module scope, below, so it can be tested.)
 
   // ── Server-side meta tag injection ──────────────────────────────────────────
   // Google's crawler often sees the empty <div id="root"></div> SPA shell before
@@ -209,6 +277,10 @@ export function serveStatic(app: Express) {
     "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
     "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },
     "/glossary":    { title: "Glossary: ReGen Civics", description: "Key terms and concepts in the ReGen Civics ecosystem." },
+    // Prefix match, so /learn/:slug inherits this when the crawler-content
+    // lookup fails. Normally crawler-content.ts overrides title + description
+    // per article from shared/learnContent.
+    "/learn":       { title: "Learn: Land, Community, Funding, Governance | ReGen Civics", description: "Practical answers on starting a community on your land, intentional community structures and funding, ecovillages, governance models, crowd pooling, and the nine forms of capital." },
     "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform.", image: `${BASE_URL}/og/features.jpg` },
     "/bionomics":   { title: "Bionomics: ReGen Civics", description: "A living economy modelled on ecosystems. How ReGen Civics builds bioregional value flows.", image: `${BASE_URL}/og/bionomics.jpg` },
     "/hymn-book":   { title: "Hymn Book: ReGen Civics", description: "Songs of the ReGenerative Renaissance. A growing collection of hymns from the movement.", image: `${BASE_URL}/og/hymn-book.jpg` },
@@ -216,6 +288,9 @@ export function serveStatic(app: Express) {
     "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
     "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems.", image: `${BASE_URL}/og/tools.jpg` },
     "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
+    "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "Visiting the most beautiful places on earth in reverence and regeneration.", image: `${BASE_URL}/images/ship/ship-zion-redrock-hero.jpg` },
+    "/network":     { title: "The Network of Regenerative Games: ReGen Civics", description: "Land projects running their own coordination game, built with ReGen Civics and owned outright by the project." },
+    "/custom-games": { title: "Custom Games for Land Projects: ReGen Civics", description: "Your own coordination game: your domain, your brand, your data. Built with ReGen Civics, owned 100% by your project." },
   };
 
   let indexHtmlCache: string | null = null;
@@ -249,7 +324,7 @@ export function serveStatic(app: Express) {
     res.send(applyNonce(html, nonce));
   });
 
-  app.use("*", (_req, res) => {
+  app.use("*", async (_req, res) => {
     if (_req.originalUrl.startsWith("/api/")) {
       res.status(404).json({ error: "Not found" });
       return;
@@ -280,7 +355,47 @@ export function serveStatic(app: Express) {
       }
     }
 
-    const canonical = `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
+    // ── Soft-404 handling, two layers ──────────────────────────────────────
+    //
+    // An SPA catch-all answers 200 for everything by default, so until
+    // 2026-08-03 every invented URL looked like a real page to a crawler:
+    // /totally-made-up-route and /learn/buy-cheap-things both returned 200,
+    // each carrying whatever meta the nearest route prefix supplied and a
+    // canonical naming itself. Google downranks for that and spends crawl
+    // budget on pages that do not exist, on a site whose whole problem is
+    // getting crawled properly. Anyone could have linked any path at us and
+    // had it served as valid.
+    //
+    // Layer 1, shape: does the client router declare a route of this form?
+    // shared/appRoutes.ts is generated from App.tsx and kept honest by
+    // server/app-routes.test.ts, which fails if the two drift.
+    //
+    // Layer 2, identity: for a route space where we know the complete set of
+    // valid values, is this particular one real? /learn is the only such space
+    // today. /campaign/:id and /community/post/:id cannot be checked here
+    // because only the database knows, which is why the layers are separate:
+    // layer 1 would otherwise need a list of every id in the system.
+    //
+    // The reserved-slug redirect in index.ts runs before this and 301s
+    // /learn/regenerative-economics, so anything still arriving with a /learn/
+    // prefix is genuinely unknown.
+    //
+    // Humans always get the app in the body, so a mistyped URL still lands
+    // somewhere useful. Only the status code and the canonical change.
+    const learnSlugMatch = reqPath.match(/^\/learn\/(.+)$/);
+    const unknownLearnSlug =
+      learnSlugMatch !== null && !LEARN_SLUGS.includes(learnSlugMatch[1]);
+    const unknownRoute = !matchesAppRoute(reqPath);
+    const isNotFound = unknownRoute || unknownLearnSlug;
+
+    // A page that does not exist must not nominate itself as canonical.
+    // Unknown Learn slugs point at the hub, which is the real page for that
+    // space; anything else points at the site root.
+    const canonical = unknownLearnSlug
+      ? `${BASE_URL}/learn`
+      : unknownRoute
+        ? BASE_URL
+        : `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
 
     // Dynamic OG images for content pages
     let ogImage = meta.image ?? DEFAULT_META.image;
@@ -288,46 +403,57 @@ export function serveStatic(app: Express) {
     if (forumMatch) {
       ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
     }
+    const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
+    if (campaignMatch) {
+      ogImage = `${BASE_URL}/api/og?type=campaign&id=${campaignMatch[1]}`;
+    }
 
-    // Inject into the <head>, replace placeholder tags written into index.html
-    // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
-    const escapedTitle = meta.title.replace(/"/g, "&quot;");
-    const escapedDesc = meta.description.replace(/"/g, "&quot;");
+    // Crawler-visible content: real HTML body + JSON-LD for key routes and
+    // community posts. AI crawlers (GPTBot, ClaudeBot, PerplexityBot) fetch
+    // HTML without executing JS, so without this they see an empty shell.
+    // Never block page serving on it.
+    let crawlerContent: CrawlerContent | null = null;
+    try {
+      crawlerContent = await resolveCrawlerContent(reqPath);
+    } catch { /* serve the plain shell on any failure */ }
+    if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
+    if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
 
-    const injected = indexHtmlCache
-      .replace(/<title>[^<]*<\/title>/, `<title>${meta.title}</title>`)
-      .replace(/(<meta name="description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      // Open Graph
-      .replace(/(<meta property="og:title" content=")[^"]*(")/,
-        `$1${escapedTitle}$2`)
-      .replace(/(<meta property="og:description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      .replace(/(<meta property="og:url" content=")[^"]*(")/,
-        `$1${canonical}$2`)
-      .replace(/(<meta property="og:image" content=")[^"]*(")/,
-        `$1${ogImage}$2`)
-      // Twitter Card
-      .replace(/(<meta name="twitter:title" content=")[^"]*(")/,
-        `$1${escapedTitle}$2`)
-      .replace(/(<meta name="twitter:description" content=")[^"]*(")/,
-        `$1${escapedDesc}$2`)
-      .replace(/(<meta name="twitter:url" content=")[^"]*(")/,
-        `$1${canonical}$2`)
-      .replace(/(<meta name="twitter:image" content=")[^"]*(")/,
-        `$1${ogImage}$2`)
-      .replace(/(<link rel="canonical" href=")[^"]*(")/,
-        `$1${canonical}$2`);
+    const injected = injectMetaTags(indexHtmlCache, {
+      title: meta.title,
+      description: meta.description,
+      canonical,
+      ogImage,
+    });
+
+    // Inject crawler content: JSON-LD into <head>, prose before <div id="root">
+    // (same placement as the blog prerender output).
+    let withContent = injected;
+    if (crawlerContent) {
+      if (crawlerContent.jsonld) {
+        withContent = withContent.replace(
+          /<\/head>/i,
+          `<script type="application/ld+json">${JSON.stringify(crawlerContent.jsonld)}</script></head>`,
+        );
+      }
+      withContent = withContent.replace(
+        /<div id="root">/i,
+        `${crawlerContent.bodyHtml}<div id="root">`,
+      );
+    }
 
     // Per-request CSP nonce substitution. Same applyNonce helper used
     // by the dedicated /offline.html and / handlers above.
     const nonce = (res.locals.nonce as string) || "";
-    const withNonce = applyNonce(injected, nonce);
+    const withNonce = applyNonce(withContent, nonce);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // See note above about no-store: prevents 304 revalidation from
     // serving cached HTML with stale nonces alongside fresh CSP headers.
     res.setHeader("Cache-Control", "no-store, must-revalidate");
+    // Real status for a page that does not exist, with the app still in the
+    // body so a human who mistyped a Learn URL lands somewhere useful.
+    if (isNotFound) res.status(404);
     res.send(withNonce);
   });
 }

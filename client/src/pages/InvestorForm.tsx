@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
+import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
 
@@ -73,6 +74,8 @@ interface InvestorFormData {
   // Step 5: Final Details
   referralSource: string;
   additionalNotes: string;
+  needsText: string;
+  offersText: string;
   preferredContact: string;
   newsletterOptIn: boolean;
   
@@ -101,6 +104,8 @@ const initialFormData: InvestorFormData = {
   questionsForTeam: "",
   referralSource: "",
   additionalNotes: "",
+  needsText: "",
+  offersText: "",
   preferredContact: "email",
   newsletterOptIn: true,
   isAccreditedInvestor: false,
@@ -309,6 +314,8 @@ export default function InvestorForm() {
       questionsForTeam: formData.questionsForTeam || undefined,
       referralSource: formData.referralSource || undefined,
       additionalNotes: formData.additionalNotes || undefined,
+      needsText: formData.needsText.trim() || undefined,
+      offersText: formData.offersText.trim() || undefined,
       preferredContact: formData.preferredContact as any,
       newsletterOptIn: formData.newsletterOptIn,
     });
@@ -791,12 +798,15 @@ export default function InvestorForm() {
                         {investmentTimelines.map((timeline) => (
                           <div
                             key={timeline.value}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                            className={`flex items-center space-x-3 p-3 pointer-coarse:min-h-11 rounded-lg border-2 transition-all cursor-pointer ${
                               formData.investmentTimeline === timeline.value
                                 ? "border-[#7dd87d] bg-[#7dd87d]/10"
                                 : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
                             }`}
                             onClick={() => updateField("investmentTimeline", timeline.value)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateField("investmentTimeline", timeline.value); } }}
                           >
                             <RadioGroupItem value={timeline.value} id={timeline.value} />
                             <Label htmlFor={timeline.value} className="flex items-center gap-2 cursor-pointer flex-1 text-[#1a472a] font-medium">
@@ -840,6 +850,9 @@ export default function InvestorForm() {
                               : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
                           }`}
                           onClick={() => updateField("primaryInterest", "land_projects")}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateField("primaryInterest", "land_projects"); } }}
                         >
                           <RadioGroupItem value="land_projects" id="land_projects" />
                           <Label htmlFor="land_projects" className="cursor-pointer flex-1">
@@ -854,6 +867,9 @@ export default function InvestorForm() {
                               : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
                           }`}
                           onClick={() => updateField("primaryInterest", "alliance_fund")}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateField("primaryInterest", "alliance_fund"); } }}
                         >
                           <RadioGroupItem value="alliance_fund" id="alliance_fund" />
                           <Label htmlFor="alliance_fund" className="cursor-pointer flex-1">
@@ -868,6 +884,9 @@ export default function InvestorForm() {
                               : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
                           }`}
                           onClick={() => updateField("primaryInterest", "both")}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateField("primaryInterest", "both"); } }}
                         >
                           <RadioGroupItem value="both" id="both" />
                           <Label htmlFor="both" className="cursor-pointer flex-1">
@@ -1059,7 +1078,15 @@ export default function InvestorForm() {
                         className="border-2 border-[#1a472a]/20 focus:border-[#7dd87d] min-h-[80px]"
                       />
                     </div>
-                    
+
+                    <NeedsOffersFields
+                      needsText={formData.needsText}
+                      offersText={formData.offersText}
+                      onNeedsChange={(v) => updateField("needsText", v)}
+                      onOffersChange={(v) => updateField("offersText", v)}
+                      variant="light"
+                    />
+
                     <div className="flex items-center space-x-3 p-4 rounded-lg bg-[#f0ebe3]">
                       <Checkbox
                         id="newsletterOptIn"

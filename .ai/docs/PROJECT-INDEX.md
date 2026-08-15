@@ -34,4 +34,4 @@ Annotated index of the root-level reference docs. Referenced from `/CLAUDE.md`. 
 
 ---
 
-_Note: the previous CLAUDE.md also referenced `DRAFT_GAME_AND_ECONOMY_PAGES.md` and `QUALITY_SPRINT_9_10.md`, which are not present in the repo. Restore them or drop the references._
+_Verified 2026-07-16 (foundation audit Phase 5): every doc listed above exists. Stale references to `DRAFT_GAME_AND_ECONOMY_PAGES.md` and `QUALITY_SPRINT_9_10.md` were dropped._

@@ -154,6 +154,7 @@ export function FileUpload({
           multiple
           accept={accept}
           onChange={(e) => handleFiles(e.target.files)}
+          // tap-audit-ok: invisible file input over its own dropzone, taps are the point
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isUploading || value.length >= maxFiles}
         />
@@ -162,12 +163,12 @@ export function FileUpload({
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="w-8 h-8 animate-spin text-[#7dd87d]" />
-              <p className="text-sm text-[#1a472a]/70">Uploading...</p>
+              <p className="text-sm text-[#1a472a]/75">Uploading...</p>
             </div>
           ) : (
             <>
               <Upload className="w-8 h-8 mx-auto text-[#1a472a]/80 mb-2" />
-              <p className="text-sm text-[#1a472a]/70">{helperText}</p>
+              <p className="text-sm text-[#1a472a]/75">{helperText}</p>
               <p className="text-xs text-[#1a472a]/80 mt-1">
                 Max {maxFiles} files, {maxSizeMB}MB each
               </p>

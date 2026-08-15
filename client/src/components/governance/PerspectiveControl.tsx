@@ -151,7 +151,7 @@ export function PerspectiveControl({ threadId }: Props) {
               className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
                 isActive
                   ? meta.color
-                  : "bg-white border-[#e8e4de] text-[#1a472a]/70 hover:bg-[#f0f7f0] hover:text-[#1a472a]"
+                  : "bg-white border-[#e8e4de] text-[#1a472a]/75 hover:bg-[#f0f7f0] hover:text-[#1a472a]"
               }`}
             >
               <span>
@@ -169,7 +169,7 @@ export function PerspectiveControl({ threadId }: Props) {
       </div>
 
       {/* Concerns and blocks read differently by design */}
-      <p className="text-[#4a7c59]/80 text-[11px] mt-3 leading-relaxed">
+      <p className="text-[#1a472a]/75 text-[11px] mt-3 leading-relaxed">
         A serious concern pauses promotion until it is addressed. Every other perspective guides the
         proposal while it moves.
       </p>

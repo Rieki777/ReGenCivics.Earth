@@ -86,6 +86,7 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 - `app.set('trust proxy', 1)` set so X-Forwarded-* is honored at exactly one hop (Railway → Cloudflare).
 - `Strict-Transport-Security` enforced. `X-Content-Type-Options: nosniff`. `X-Frame-Options: SAMEORIGIN`.
 - Production: `NODE_ENV=production` → `secure: true` cookies default, even if `x-forwarded-proto` is missing (commit `657f230`).
+- 2026-07-17, companion voices (ADR-44): `script-src` gained `'wasm-unsafe-eval'` (WebAssembly compile only; grants nothing to eval), `worker-src 'self' blob:` added (onnxruntime-web threading workers), and `connect-src` gained `https://huggingface.co https://*.huggingface.co https://*.hf.co` (Kokoro model download, one ~90MB browser-cached fetch) plus `https://cdn.jsdelivr.net` (ONNX WASM binary). All serve static model artifacts; no script execution granted to those origins beyond the pre-existing jsdelivr `script-src` entry. The hosted `companion.speak` procedure is public but rate-limited (`companion_tts`), text-capped at 600 chars, registry-validated voice keys only, and server-cached, bounding third-party TTS spend per client.
 
 **Open / monitored**:
 - `script-src 'unsafe-inline'` is still present because Tailwind v4, Radix, shadcn/ui inject runtime `<style>` blocks without a nonce hook. Migrating to nonce-only is tracked as `CSP_NONCE_MIGRATION_PLAN`.

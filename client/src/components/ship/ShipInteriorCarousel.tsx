@@ -1,0 +1,123 @@
+/**
+ * Ship photo carousels: a two-row horizontal carousel with a full-screen
+ * lightbox on click. Used for both "Aboard the ship" (interior) and
+ * "Where she has been" (places). Extend a set by adding to its photo array.
+ *
+ * The generic ShipPhotoCarousel takes any photo list so both sections behave
+ * the same: two rows tall, scroll horizontally for more, tap to open full
+ * screen. Each card degrades to a warm placeholder if its file is missing, so
+ * the rows never break while photos are being swapped.
+ */
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { shipImg } from "@/pages/ship/shipShared";
+
+export type CarouselPhoto = { name: string; label: string; alt: string };
+
+// Ordered set of real interior photos of the coach: her cabin, galley, lounge,
+// bedrooms (by day and by candlelight), bath, wardrobe, and the view down her
+// length. Add more shots by extending this list.
+const INTERIOR_PHOTOS: CarouselPhoto[] = [
+  { name: "ship-interior-cabin-wide.jpg", label: "The cabin", alt: "A wide view of the ship's cabin, wood trim and soft daylight through the windows." },
+  { name: "ship-interior-cabin-forward.jpg", label: "Looking forward", alt: "The cabin looking forward toward the cockpit, seats and dash ahead." },
+  { name: "ship-interior-lounge-sofa.jpg", label: "The lounge", alt: "The lounge nook with the cream sofa and cushions by the window." },
+  { name: "ship-interior-galley-kitchen.jpg", label: "The galley kitchen", alt: "The real galley kitchen: counter, sink, and cabinetry for cooking aboard." },
+  { name: "ship-interior-living.jpg", label: "The living room", alt: "The living area: the dinette by a wide window, set up with Starlink for working aboard." },
+  { name: "ship-interior-bedroom.jpg", label: "The primary bedroom", alt: "The primary bedroom with a gold velvet headboard, ceiling fan, and trailing ivy." },
+  { name: "ship-interior-bedroom-2.jpg", label: "The bedroom", alt: "The bedroom from the doorway, with a beaded curtain and framed art." },
+  { name: "ship-interior-bath.jpg", label: "The bath", alt: "The bathroom with vanity, toilet, and the full-size washing machine in cherry cabinetry." },
+  { name: "ship-interior-shower.jpg", label: "The shower", alt: "A corner shower with frosted glass, fresh towels, and a skylight overhead." },
+  { name: "ship-interior-bath-sink.jpg", label: "The vanity", alt: "The bathroom vanity with a stone tile backsplash, brushed gold fixtures, and a folded towel." },
+  { name: "ship-interior-altar.jpg", label: "The altar", alt: "A small altar with framed agate slices, candles, selenite, and a feather." },
+  { name: "ship-interior-love-berth.jpg", label: "The love berth", alt: "The primary bedroom with a gold velvet drapery headboard, string lights, and trailing ivy." },
+  { name: "ship-interior-berth-night.jpg", label: "The berth by night", alt: "The primary bedroom under warm lamplight, gold drapery and patterned pillows made up for rest." },
+  { name: "ship-interior-candlelight.jpg", label: "By candlelight", alt: "The bedroom by warm lamplight at night, soft and made up for sleep." },
+  { name: "ship-interior-berth-daylight.jpg", label: "A berth in daylight", alt: "A bedroom in daylight, a quilted spread and a window onto the world outside." },
+  { name: "ship-interior-rear-bedroom.jpg", label: "The rear bedroom", alt: "The bedroom from the foot of the bed, a ceiling fan and framed art on wood-panelled walls." },
+  { name: "ship-interior-lounge-day.jpg", label: "The lounge in daylight", alt: "The cream sofa piled with sheepskins in the daylight, wide windows onto the outside." },
+  { name: "ship-interior-reading-nook.jpg", label: "The reading nook", alt: "The lounge sofa with sheepskins, a book and a mug of tea on the table by the window." },
+  { name: "ship-interior-galley-work.jpg", label: "The galley at work", alt: "The galley counter and sink set up for cooking, kettle and pot to the side." },
+  { name: "ship-interior-hall.jpg", label: "Down her length", alt: "A view down the length of the coach, wood floors with the galley and lounge opening off the hall." },
+  { name: "ship-interior-wardrobe.jpg", label: "The wardrobe", alt: "A robe hanging in the cherry-wood wardrobe, ready for the voyage." },
+  { name: "ship-interior-bath-shower.jpg", label: "The bath and shower", alt: "The bathroom with a frosted-glass corner shower and a skylight overhead." },
+];
+
+function CarouselCard({ photo, onOpen }: { photo: CarouselPhoto; onOpen: () => void }) {
+  const [err, setErr] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative w-56 sm:w-64 snap-start overflow-hidden rounded-2xl aspect-[4/3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
+      aria-label={`Open photo: ${photo.label}`}
+    >
+      {err ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2f5d3a] via-[#4a7c59] to-[#d4a574] text-white/70 text-3xl" aria-hidden="true">⚓</span>
+      ) : (
+        <img
+          src={shipImg(photo.name)}
+          alt={photo.alt}
+          loading="lazy"
+          onError={() => setErr(true)}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      )}
+      <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+      <figcaption className="absolute inset-x-0 bottom-0 p-2 text-center text-white text-sm font-semibold leading-tight">{photo.label}</figcaption>
+    </button>
+  );
+}
+
+export function ShipPhotoCarousel({ photos, title, helper }: { photos: CarouselPhoto[]; title?: string; helper?: string }) {
+  const [open, setOpen] = useState<CarouselPhoto | null>(null);
+
+  // Dismiss the lightbox on Escape; lock body scroll while it is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(null); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [open]);
+
+  return (
+    <div>
+      {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
+      {/* Two rows tall, filling column by column, scrolling horizontally for more. */}
+      <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 [scrollbar-width:thin]">
+        {photos.map((p) => (
+          <CarouselCard key={p.name} photo={p} onOpen={() => setOpen(p)} />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">{helper ?? "Swipe or scroll to see more. Tap a photo to open it full screen."}</p>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={open.alt}
+          onClick={() => setOpen(null)}
+        >
+          <button
+            type="button"
+            aria-label="Close full-screen photo"
+            onClick={() => setOpen(null)}
+            className="absolute top-4 right-4 rounded-full bg-white/15 hover:bg-white/25 text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
+          >
+            <X className="w-6 h-6" aria-hidden="true" />
+          </button>
+          <figure className="max-w-5xl max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <img src={shipImg(open.name)} alt={open.alt} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+            <figcaption className="mt-3 text-center text-white/90 text-sm">{open.label}</figcaption>
+          </figure>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ShipInteriorCarousel() {
+  return <ShipPhotoCarousel title="Aboard the ship" photos={INTERIOR_PHOTOS} />;
+}

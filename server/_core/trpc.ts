@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { validateCSRFToken } from "./security";
+import { ENV } from "./env";
 import { isCacheAvailable, redisRateLimit } from "../cache";
 import { getBountyPermission } from "../db/bounties";
 
@@ -144,6 +145,22 @@ export const superadminProcedure = t.procedure.use(csrfProtection).use(
         user: ctx.user,
       },
     });
+  }),
+);
+
+/**
+ * Owner procedure: Rye and only Rye. Deliberately NOT adminProcedure (that
+ * passes for any admin or superadmin); Harvest captures are the owner's
+ * private data. Compares ctx.user.id to ENV.ownerUserId and fails closed
+ * when OWNER_USER_ID is unset, so a missing env var can never widen access.
+ */
+export const ownerProcedure = t.procedure.use(csrfProtection).use(requireUser).use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+    if (!ENV.ownerUserId || ctx.user!.id !== ENV.ownerUserId) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Owner access required" });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user! } });
   }),
 );
 

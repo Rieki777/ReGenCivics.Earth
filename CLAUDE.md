@@ -118,16 +118,20 @@ The runner connects via DATABASE_URL, tracks applied migrations in `_migrations_
 
 The production site is the Railway **`ReGenCivics.Earth`** service (regencivics.earth) in the **`ReGen Civics` / production** project+environment. The governance app is a separate service, `ReGen Governance App` (gov.regencivics.earth). Deploys are **triggered by pushing to `main`** on GitHub — Railway watches the branch and auto-builds using `railway.toml` (nixpacks builder, `pnpm run build`, start `node dist/index.js`). Follow `docs/GOLDEN_RULE.md`: run `/ship` before pushing.
 
-The Railway CLI is installed and logged in, and this repo is linked to the `ReGenCivics.Earth` service, so deploy status can be checked directly (commands default to the linked service):
+The Railway CLI is installed and logged in. The `pnpm railway:*` scripts each pin `-s "ReGenCivics.Earth"` explicitly, so they always report the production site:
 
 ```bash
-pnpm railway:deploys   # railway deployment list — each deploy's status (SUCCESS / FAILED / BUILDING / CRASHED)
-pnpm railway:logs      # railway logs — live build + deploy logs for the linked service
-pnpm railway:status    # linked project / environment / service + all resources
-pnpm railway:deploy    # railway up — manual deploy of the working tree (bypasses the GitHub trigger)
+pnpm railway:deploys   # each deploy's status (SUCCESS / FAILED / BUILDING / CRASHED)
+pnpm railway:logs      # live build + deploy logs
+pnpm railway:status    # project / environment / service + all resources
+pnpm railway:deploy    # railway up: manual deploy of the working tree (bypasses the GitHub trigger)
 ```
 
-To check the governance app instead, append `-s "ReGen Governance App"` to any command (e.g. `railway logs -s "ReGen Governance App"`), or re-link with `railway link -s "ReGen Governance App"`.
+**Keep the `-s` pins.** Until 2026-07-16 this repo's CLI was linked to `multiplayer-earth`, which is NOT the site, so a bare `railway deployment list` reported that service's deploys, newest 2026-07-04. It answered, it just answered about the wrong thing, and a months-stale SUCCESS reads exactly like a fresh green deploy. The link now points at `ReGenCivics.Earth`, and the scripts pin `-s` on top so a future re-link cannot quietly break the deploy check again.
+
+`railway status` is the exception: it takes no `-s` and always reports the linked service. That makes it the thing to run if deploy output ever looks wrong. If it prints anything other than `Service: ReGenCivics.Earth`, re-link with `railway service "ReGenCivics.Earth"`.
+
+To check the governance app instead, use `-s "ReGen Governance App"` (e.g. `railway logs -s "ReGen Governance App"`).
 
 ### Standard deploy flow — Claude owns this end to end
 
@@ -170,10 +174,42 @@ Four absolute rules (reads use TOTAL, writes touch PRIVATE only, spend checks us
 Full protocol and rationale: `STEERING.md` section 3 + the `regen-ship-gate` skill. The three gates, from repo root:
 
 ```bash
-python3 scripts/audit-truncation.py                 # gate 1: no truncated source files
+pnpm gate                                           # gates 1 + 3, on any platform
 rg -g '*.css' '<className-you-added>' client/src/   # gate 2: per new className / @keyframes
-pnpm typecheck                                       # gate 3: exit 0
 ```
+
+`pnpm gate` runs the truncation audit and the typecheck, and finds a working
+Python itself. Prefer it over running the two by hand — the hand-written form was
+wrong in this file for three months and nobody noticed (see below).
+
+<details>
+<summary>The two gates by hand, and why the old text here was broken</summary>
+
+```bash
+py scripts/audit-truncation.py      # Windows: `py`, the launcher
+python3 scripts/audit-truncation.py # Linux / the cowork VM
+pnpm check                          # gate 3: exit 0 (`typecheck` is an alias)
+```
+
+This file used to say `python3 …` and `pnpm typecheck`, and 30+ prompt docs copied
+it from here. Both were wrong:
+
+- **`pnpm typecheck` never existed.** No commit has ever added a `typecheck`
+  script; the real one has been `check` since the initial commit. It was
+  authored in 619190f (2026-04-18) from assumption, not from package.json.
+  There is now a real `typecheck` alias, so the old docs are no longer lying.
+- **`python3` is right on the Linux cowork VM this gate was written for, and
+  wrong on Windows**, where it resolves to a Microsoft Store stub that prints an
+  ad and exits *without running the audit* — a green gate that checked nothing.
+
+Neither ever failed loudly: whoever hit them substituted a working command by
+hand and moved on, so the docs never got corrected. That is the failure mode to
+watch for — a gate you have to translate before running is a gate that
+eventually gets skipped.
+</details>
+
+The truncation gate is the one never to skip: FUSE truncation is silent, and
+typecheck does not catch it.
 
 Every `FIXES_TO_MAKE_*.md` CLAUDE CODE row needs an Evidence column (file:line, grep result, screenshot path, script output). No evidence = status stays `CODED`, never `VERIFIED`.
 

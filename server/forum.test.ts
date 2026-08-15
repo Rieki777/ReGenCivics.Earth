@@ -7,7 +7,7 @@ const skipIfNoDb = !process.env.DATABASE_URL;
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createAuthContext(): TrpcContext {
-  const user: AuthenticatedUser = {
+  const user = {
     id: 1,
     openId: "sample-user",
     email: "sample@example.com",
@@ -17,29 +17,31 @@ function createAuthContext(): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
-  };
+  } as unknown as AuthenticatedUser;
   return {
     user,
+    authMethod: "legacy",
     req: {
       protocol: "https",
       headers: {},
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 
 function createPublicContext(): TrpcContext {
   return {
     user: null,
+    authMethod: null,
     req: {
       protocol: "https",
       headers: {},
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+    } as unknown as TrpcContext["res"],
   };
 }
 

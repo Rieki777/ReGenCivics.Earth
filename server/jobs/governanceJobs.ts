@@ -12,6 +12,7 @@ import { eq, and, lte, isNull, sql, gt, lt } from "drizzle-orm";
 import { createPublicClient, http, parseAbiItem } from "viem";
 import { base } from "viem/chains";
 import { getDb } from "../db";
+import { getGameVariableOr } from "../game";
 import {
   forumPromotionRequests,
   forumPostDecisions,
@@ -28,14 +29,10 @@ interface JobReport {
   error?: string;
 }
 
+// Canonical reader: cached, isActive-filtered, and a stored 0 is a real
+// value (the old raw read's `|| fallback` made 0 impossible to configure).
 async function readVar(key: string, fallback: number): Promise<number> {
-  const db = await getDb();
-  if (!db) return fallback;
-  try {
-    const rows = await db.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`).then((r: any) => r[0] ?? []);
-    if (rows && rows.length > 0) return Number(rows[0].value) || fallback;
-  } catch { /* ignore */ }
-  return fallback;
+  return getGameVariableOr(key, fallback);
 }
 
 /** Mark all promotion requests with status=pending and expiresAt < now as expired. */

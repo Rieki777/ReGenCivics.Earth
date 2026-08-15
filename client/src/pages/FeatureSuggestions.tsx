@@ -95,9 +95,9 @@ export default function FeatureSuggestions() {
               <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/70"}`}>Report a Bug</button>
             </div>
 
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
-            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none">
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
+            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-base md:text-sm outline-none">
               <option value="" className="bg-[#1a472a]">Category (optional)</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a472a]">{c}</option>)}
             </select>

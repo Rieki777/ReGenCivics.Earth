@@ -70,7 +70,7 @@ const markdownComponents: Components = {
         return (
           <span className="block my-3">
             {showCaption && (
-              <span className="block text-sm text-[#1a472a]/70 mb-1.5">{linkText}</span>
+              <span className="block text-sm text-[#1a472a]/75 mb-1.5">{linkText}</span>
             )}
             <VideoEmbed url={safeHref} title={showCaption ? linkText : undefined} />
           </span>

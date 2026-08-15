@@ -9,7 +9,14 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { X, Landmark, Loader2, CheckCircle2 } from "lucide-react";
+import { Landmark, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CATEGORIES = [
   { value: "community", label: "Community" },
@@ -64,23 +71,19 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
     onSuccess: () => setDone(true),
   });
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="raise-modal-title">
-      <div className="bg-gradient-to-b from-[#0d2818] to-[#1a472a] border border-white/15 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <Landmark className="w-5 h-5 text-[#7dd87d]" />
-            <h2 id="raise-modal-title" className="text-white font-bold text-lg">Raise in the Assembly</h2>
-          </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white" aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="bg-gradient-to-b from-[#0d2818] to-[#1a472a] border-white/15 text-white p-0 pt-2 gap-0 md:max-w-lg md:rounded-2xl [&_[data-slot=dialog-close]]:text-white/70 [&_[data-slot=dialog-close]:hover]:text-white">
+        <DialogHeader className="flex-row items-center gap-2 space-y-0 p-5 border-b border-white/10 text-left">
+          <Landmark className="w-5 h-5 text-[#7dd87d]" />
+          <DialogTitle className="text-white font-bold text-lg">Raise in the Assembly</DialogTitle>
+          <DialogDescription className="sr-only">
+            Raise this forum thread into a forming Assembly proposal.
+          </DialogDescription>
+        </DialogHeader>
 
         {done ? (
-          <div className="p-6 text-center space-y-3">
+          <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-[#7dd87d] mx-auto" />
             <p className="text-white font-semibold">Raised. The proposal is now forming.</p>
             <p className="text-white/65 text-sm">
@@ -91,7 +94,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
             </Link>
           </div>
         ) : (
-          <div className="p-5 space-y-4">
+          <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4">
             <div>
               <label className="text-[10px] uppercase tracking-widest text-[#7dd87d] font-bold mb-1.5 block">Proposal title</label>
               <input
@@ -99,7 +102,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
-                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
               />
             </div>
 
@@ -113,10 +116,10 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                   onChange={(e) => setAim(e.target.value)}
                   maxLength={300}
                   placeholder="..."
-                  className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                  className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                 />
               </div>
-              <p className="text-white/50 text-[11px] mt-1">
+              <p className="text-white/60 text-[11px] mt-1">
                 One sentence. Objections are weighed against this aim, so make it concrete.
               </p>
             </div>
@@ -167,11 +170,11 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                   <div className="text-xs text-white/80 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[#7dd87d]">{selectedVar.key}</span>
-                      <button type="button" onClick={() => { setVarKey(null); setNewValue(""); }} className="text-white/50 hover:text-white/80 text-[11px] underline">
+                      <button type="button" onClick={() => { setVarKey(null); setNewValue(""); }} className="text-white/60 hover:text-white/80 text-[11px] underline">
                         change
                       </button>
                     </div>
-                    {selectedVar.description && <p className="text-white/55 text-[11px]">{selectedVar.description}</p>}
+                    {selectedVar.description && <p className="text-white/60 text-[11px]">{selectedVar.description}</p>}
                     <p className="text-white/65 text-[11px]">
                       Current: <span className="font-mono">{Number(selectedVar.value)}</span>
                       {selectedVar.unit ? ` ${selectedVar.unit}` : ""} · allowed {Number(selectedVar.minValue)} to {Number(selectedVar.maxValue)}
@@ -181,7 +184,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={newValue}
                       onChange={(e) => setNewValue(e.target.value)}
                       placeholder="Proposed new value"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {parsedNewValue !== null && selectedVar.minValue != null && (parsedNewValue < Number(selectedVar.minValue) || parsedNewValue > Number(selectedVar.maxValue)) && (
                       <p className="text-amber-300 text-[11px]">
@@ -196,7 +199,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={varSearch}
                       onChange={(e) => setVarSearch(e.target.value)}
                       placeholder="Search variables by name or key"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/40"
+                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {varMatches.length > 0 && (
                       <ul className="mt-1 rounded-lg border border-white/10 bg-[#0d2818] divide-y divide-white/5 max-h-48 overflow-y-auto">
@@ -208,7 +211,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                               className="w-full text-left px-3 py-2 hover:bg-white/5"
                             >
                               <span className="text-white text-xs font-medium block">{v.displayName}</span>
-                              <span className="text-white/50 text-[10px] font-mono">{v.key} · {Number(v.value)}{v.unit ? ` ${v.unit}` : ""}</span>
+                              <span className="text-white/60 text-[10px] font-mono">{v.key} · {Number(v.value)}{v.unit ? ` ${v.unit}` : ""}</span>
                             </button>
                           </li>
                         ))}
@@ -225,14 +228,14 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
               type="button"
               onClick={() => raise.mutate({ forumPostId: threadId, aim: aim.trim(), lane, category, title: title.trim() || undefined, executionPayload })}
               disabled={raise.isPending || aim.trim().length < 10 || title.trim().length < 5 || (category === "game_variable" && !executionPayload)}
-              className="w-full flex items-center justify-center gap-2 bg-[#7dd87d] text-[#1a472a] font-bold text-sm rounded-xl py-2.5 hover:bg-[#9de89d] transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-[#7dd87d] text-[#1a472a] font-bold text-sm rounded-xl py-2.5 pointer-coarse:min-h-11 hover:bg-[#9de89d] transition-colors disabled:opacity-50"
             >
               {raise.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Raise the proposal
             </button>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

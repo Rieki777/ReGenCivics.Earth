@@ -175,7 +175,7 @@ export default function Marketplace() {
                     )}
                   </div>
                   {item.location && (
-                    <p className="text-white/45 text-xs mt-0.5">{item.location}</p>
+                    <p className="text-white/60 text-xs mt-0.5">{item.location}</p>
                   )}
                   {item.dreamingOf && (
                     <p className="text-white/70 text-sm mt-1 italic">"{item.dreamingOf}"</p>

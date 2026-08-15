@@ -25,7 +25,7 @@ export function ContributorCard({ contributor }: { contributor: Contributor }) {
           <div>
             <div className="text-white font-semibold">{contributor.displayName}</div>
             {contributor.claimType === "organization" && (
-              <div className="text-white/45 text-xs">Organization</div>
+              <div className="text-white/60 text-xs">Organization</div>
             )}
           </div>
           {tier && <TierBadge tier={tier} />}

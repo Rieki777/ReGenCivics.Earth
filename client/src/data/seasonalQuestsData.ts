@@ -334,6 +334,20 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     element: "air",
     reward: { regen: 33, rvoice: 1 },
   },
+
+  // Crowdpooling. Points players at a live campaign to fill a real need.
+  {
+    id: "pool-your-gifts",
+    title: "Pool your gifts into a living project",
+    season: "any",
+    tagline: "Find a live campaign and fill a real need.",
+    description:
+      "Somewhere a land project needs exactly what you can bring: a tool, a skill, a week of work, a seed order, a pledge. Open the campaigns page, find a crowdpool that is live, and claim one of its open needs. Then deliver it. A project gets built one filled need at a time, and this is how you put your gifts to work where they land.",
+    deliverable: "Claim and deliver one need on a live crowdpooling campaign at /campaigns.",
+    estimatedTime: "A few hours to a full season, depending on the need",
+    element: "water",
+    reward: { regen: 111, rvoice: 1 },
+  },
 ];
 
 export type { SeasonalQuest as default };

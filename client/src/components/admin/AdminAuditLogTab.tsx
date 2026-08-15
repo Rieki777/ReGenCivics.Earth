@@ -104,18 +104,18 @@ export function AdminAuditLogTab() {
                         className="hover:bg-[#f5f9f5] cursor-pointer transition-colors"
                         onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
                       >
-                        <td className="px-4 py-3 text-[#1a472a]/70 whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#1a472a]/75 whitespace-nowrap">
                           <span title={createdAt.toLocaleString()}>
                             {formatRelativeTime(createdAt)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#1a472a]/70">#{entry.adminUserId}</td>
+                        <td className="px-4 py-3 text-[#1a472a]/75">#{entry.adminUserId}</td>
                         <td className="px-4 py-3">
                           <span className="inline-block bg-[#1a472a]/10 text-[#1a472a] text-xs px-2 py-0.5 rounded font-mono">
                             {entry.action}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#1a472a]/70">
+                        <td className="px-4 py-3 text-[#1a472a]/75">
                           {entry.entityType && (
                             <span>
                               {entry.entityType}

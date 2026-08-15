@@ -19,6 +19,7 @@ import { sql, eq, and, desc } from "drizzle-orm";
 import * as db from "../db";
 import { getDb } from "../db";
 import { forumPostReads, userFollows, bioregions } from "../../drizzle/schema";
+import { getGameVariableOr, citizenshipTierRank } from "../game";
 import {
   FEED_WEIGHTS as W,
   FEED_CANDIDATE_DAYS,
@@ -164,10 +165,11 @@ export const forumFeedRouter = router({
       const seedBoost = newcomer ? 1.0 : 0;
 
       // Sensing gate: does the viewer's tier allow setting a perspective?
-      const [tierRows]: any = await db2.execute(
-        sql`SELECT value FROM game_variables WHERE \`key\` = 'governance.sensing_min_citizen_tier' LIMIT 1`);
-      const minTier = parseInt((tierRows as any[])[0]?.value ?? "1", 10);
-      const canSense = Number(profile?.citizenshipTier ?? 0) >= minTier ? 1 : 0;
+      // Fallback unified to 0 (the seeded value; forum.ts's enterSensing used
+      // 0 while this read used 1, so an absent row split the two surfaces),
+      // and the enum-string tier is ranked instead of Number()'d to NaN.
+      const minTier = await getGameVariableOr("governance.sensing_min_citizen_tier", 0);
+      const canSense = citizenshipTierRank(profile?.citizenshipTier) >= minTier ? 1 : 0;
 
       const [rows]: any = await db2.execute(sql`
         SELECT * FROM (

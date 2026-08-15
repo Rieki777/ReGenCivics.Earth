@@ -37,7 +37,10 @@
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://regencivics.earth/" />
-    
+
+    <!-- Blog RSS feed (generated at build by scripts/prerender-blog.mjs) -->
+    <link rel="alternate" type="application/rss+xml" title="ReGen Civics Blog" href="https://regencivics.earth/feed.xml" />
+
     <!-- Language and Region -->
     <meta name="language" content="English" />
     <meta name="geo.region" content="US" />
@@ -229,11 +232,18 @@
     }
     </script>
 
-    <!-- Additional structured data for AI accessibility -->
+    <!-- Additional structured data for AI accessibility.
+         This block ships in the shell, so it is present on every route. It is
+         scoped to the homepage by @id + url so it cannot compete with a
+         per-page FAQPage: /learn/:slug injects its own article FAQPage at
+         <url>#faq, and an unscoped second FAQPage on the same URL would leave
+         an answer engine to guess which one describes the page. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
+      "@id": "https://regencivics.earth/#faq",
+      "url": "https://regencivics.earth/",
       "mainEntity": [
         {
           "@type": "Question",

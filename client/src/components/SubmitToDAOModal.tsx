@@ -133,7 +133,7 @@ export function SubmitToDAOModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
+            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
             aria-label="Close"
           >
             <X className="w-4 h-4" />

@@ -143,12 +143,12 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           {campaign.vision && (
             <div>
               <h4 className="text-sm font-bold text-[#1a472a] mb-1">Vision</h4>
-              <p className="text-sm text-[#1a472a]/70">{campaign.vision}</p>
+              <p className="text-sm text-[#1a472a]/75">{campaign.vision}</p>
             </div>
           )}
           <div>
             <h4 className="text-sm font-bold text-[#1a472a] mb-1">Description</h4>
-            <p className="text-sm text-[#1a472a]/70">{campaign.description}</p>
+            <p className="text-sm text-[#1a472a]/75">{campaign.description}</p>
           </div>
           {campaign.videoUrl && (
             <div>
@@ -190,7 +190,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
                 <div key={img.id} className="aspect-square rounded-lg overflow-hidden relative group">
                   <img src={resolveAssetUrl(img.imageUrl)} alt={img.caption || ''} className="w-full h-full object-cover" width={400} height={400} loading="lazy" />
                   {img.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                       {img.caption}
                     </div>
                   )}

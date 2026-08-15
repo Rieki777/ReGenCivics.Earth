@@ -889,6 +889,43 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Custom Games for land projects */}
+        <section className="relative py-8 md:py-12">
+          <div className="container max-w-4xl">
+            <AnimatedSection animation="fade-in">
+              <div className="glass-panel p-6 md:p-8 border-[#d4a574]/30 md:flex md:items-center md:justify-between md:gap-8">
+                <div className="mb-5 md:mb-0">
+                  <span className="inline-flex items-center gap-2 text-[#d4a574] text-sm font-semibold uppercase tracking-wider mb-2">
+                    <Sparkles className="w-4 h-4" />
+                    Custom Games
+                  </span>
+                  <h3
+                    className="text-xl md:text-2xl font-bold text-white mb-2"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    A coordination game built for your own land project
+                  </h3>
+                  <p className="text-white/70 text-sm md:text-base leading-relaxed">
+                    We build complete coordination games for land projects, on
+                    the same foundation as Amora, owned 100% by the community
+                    that runs them.
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <Link href="/custom-games">
+                    <Button
+                      onClick={() => analytics.ctaClick("home_custom_games_card", "/")}
+                      className="rounded-xl bg-[#d4a574] hover:bg-[#e3bd93] text-[#1a2818] font-bold px-6 py-3 h-auto"
+                    >
+                      Explore Custom Games <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
+        </section>
+
         {/* Live Community Activity */}
         <section className="relative py-8 md:py-10">
           <div className="container max-w-2xl">

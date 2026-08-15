@@ -46,6 +46,14 @@ import {
   isRiteOfPassage,
   canonicalQuestKey,
 } from "@shared/questPools";
+import { getGameVariableOr } from "../game";
+
+// The questPools constants are the FALLBACKS now — live values come from the
+// registry (paths.*, seeded 0221) so thresholds and bonus amounts are
+// tunable without a deploy. shared/questPools.ts itself cannot read the DB
+// (it is a shared client+server module), so the reads live here.
+const tierBonusFor = (tier: keyof typeof TIER_BONUS) =>
+  getGameVariableOr(`paths.tier_bonus.${tier}`, TIER_BONUS[tier]);
 
 export type TierPath = "investor" | "land_project" | "ally" | "player";
 type TierEventType = "co_creator_earned" | "steward_earned" | "sage_earned";
@@ -124,8 +132,9 @@ export async function detectTierProgression(userId: number): Promise<{
 
     const result = await checkCoCreator(userId, path);
     if (result.met) {
-      await fireTierEvent(userId, "co_creator_earned", path, TIER_BONUS.co_creator, result);
-      earnedTiers.push({ path, eventType: "co_creator_earned", amount: TIER_BONUS.co_creator });
+      const amount = await tierBonusFor("co_creator");
+      await fireTierEvent(userId, "co_creator_earned", path, amount, result);
+      earnedTiers.push({ path, eventType: "co_creator_earned", amount });
     }
   }
 
@@ -147,8 +156,9 @@ export async function detectTierProgression(userId: number): Promise<{
 
     const result = await checkSteward(userId, path);
     if (result.met) {
-      await fireTierEvent(userId, "steward_earned", path, TIER_BONUS.steward, result);
-      earnedTiers.push({ path, eventType: "steward_earned", amount: TIER_BONUS.steward });
+      const amount = await tierBonusFor("steward");
+      await fireTierEvent(userId, "steward_earned", path, amount, result);
+      earnedTiers.push({ path, eventType: "steward_earned", amount });
     }
   }
 
@@ -160,8 +170,9 @@ export async function detectTierProgression(userId: number): Promise<{
   if (hasSteward && !alreadyFired.has(sageKey)) {
     const result = await checkSage(userId);
     if (result.met) {
-      await fireTierEvent(userId, "sage_earned", null, TIER_BONUS.sage, result);
-      earnedTiers.push({ path: null, eventType: "sage_earned", amount: TIER_BONUS.sage });
+      const amount = await tierBonusFor("sage");
+      await fireTierEvent(userId, "sage_earned", null, amount, result);
+      earnedTiers.push({ path: null, eventType: "sage_earned", amount });
     }
   }
 
@@ -320,12 +331,13 @@ async function checkPlayerSteward(userId: number): Promise<CriterionResult> {
     .where(eq(proposalVotes.userId, userId));
   const voteCount = voteRows.length;
 
-  const met =
-    distinctQuests >= PLAYER_STEWARD_QUEST_COUNT && voteCount >= PLAYER_STEWARD_VOTE_COUNT;
+  const questTarget = await getGameVariableOr("paths.player.steward.quest_count", PLAYER_STEWARD_QUEST_COUNT);
+  const voteTarget = await getGameVariableOr("paths.player.steward.vote_count", PLAYER_STEWARD_VOTE_COUNT);
+  const met = distinctQuests >= questTarget && voteCount >= voteTarget;
 
   return {
     met,
-    note: `Quests: ${distinctQuests}/${PLAYER_STEWARD_QUEST_COUNT}, Votes: ${voteCount}/${PLAYER_STEWARD_VOTE_COUNT}`,
+    note: `Quests: ${distinctQuests}/${questTarget}, Votes: ${voteCount}/${voteTarget}`,
     evidence: { distinctQuests, voteCount },
   };
 }
@@ -428,8 +440,9 @@ async function checkLandProjectSteward(userId: number): Promise<CriterionResult>
     .where(eq(applications.userId, userId));
 
   type AppStewardRow = { id: number; seasonsCompleted: number; gameLaunchedAt: Date | null };
+  const minSeasons = await getGameVariableOr("paths.land_project.steward.min_seasons", 1);
   const qualifying = rows.find(
-    (r: AppStewardRow) => (r.seasonsCompleted ?? 0) >= 1 && r.gameLaunchedAt !== null,
+    (r: AppStewardRow) => (r.seasonsCompleted ?? 0) >= minSeasons && r.gameLaunchedAt !== null,
   );
 
   return {
@@ -499,13 +512,14 @@ async function checkAllyCoCreator(userId: number): Promise<CriterionResult> {
     }>;
 
   type Counted = { toolId: number; distinctUsers: number };
-  const qualifying = rows.find((r: Counted) => Number(r.distinctUsers) >= 11);
+  const minDistinctUsers = await getGameVariableOr("paths.ally.co_creator.min_distinct_tool_users", 11);
+  const qualifying = rows.find((r: Counted) => Number(r.distinctUsers) >= minDistinctUsers);
 
   return {
     met: !!qualifying,
     note: qualifying
       ? `Tool ${qualifying.toolId} has ${qualifying.distinctUsers} distinct users`
-      : `Top tool has ${rows.reduce((m: number, r: Counted) => Math.max(m, Number(r.distinctUsers)), 0)} distinct users; need 11`,
+      : `Top tool has ${rows.reduce((m: number, r: Counted) => Math.max(m, Number(r.distinctUsers)), 0)} distinct users; need ${minDistinctUsers}`,
     evidence: {
       approvedToolCount: approved.length,
       perToolDistinctUsers: rows.map((r: Counted) => ({

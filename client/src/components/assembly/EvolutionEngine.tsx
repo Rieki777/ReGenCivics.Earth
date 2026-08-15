@@ -68,7 +68,7 @@ export function EvolutionEngineSection({ isAuthenticated }: { isAuthenticated: b
         <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer list-none select-none hover:bg-white/[0.07] transition-colors">
           <Sparkles className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
           <span className="text-white text-sm font-semibold flex-1">How this works, in full</span>
-          <ChevronDown className="w-4 h-4 text-white/50 transition-transform group-open:rotate-180" />
+          <ChevronDown className="w-4 h-4 text-white/60 transition-transform group-open:rotate-180" />
         </summary>
         <div className="px-4 pb-4 pt-1 space-y-3 text-sm text-white/70 leading-relaxed safe-prose border-t border-white/10">
           <p>
@@ -166,7 +166,7 @@ export function EvolutionEngineSection({ isAuthenticated }: { isAuthenticated: b
       {/* In-flight machine ships */}
       {inFlight.length === 0 ? (
         <p className="text-white/60 text-xs safe-prose flex items-center gap-1.5">
-          <Bot className="w-3.5 h-3.5 text-white/40" />
+          <Bot className="w-3.5 h-3.5 text-white/60" />
           Nothing is being built right now. At level {tier}, a passed feature waits here until
           {tier < 3 ? " the community raises the level." : " its waiting period is up."}
         </p>
@@ -208,7 +208,7 @@ export function EvolutionEngineSection({ isAuthenticated }: { isAuthenticated: b
                       value={pauseReason[e.id] ?? ""}
                       onChange={(ev) => setPauseReason((r) => ({ ...r, [e.id]: ev.target.value }))}
                       placeholder="Why pause this ship?"
-                      className="flex-1 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/40"
+                      className="flex-1 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
                       maxLength={300}
                     />
                     <button
@@ -299,7 +299,7 @@ export function HyphaLinkRow({ proposal, currentUserId, isAdmin }: {
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder="https://app.hypha.earth/..."
-          className="flex-1 min-w-0 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/40"
+          className="flex-1 min-w-0 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
           maxLength={500}
         />
         <button

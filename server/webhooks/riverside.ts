@@ -20,6 +20,7 @@ import { recordings } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { timingSafeEqualStr } from "../_core/security";
 import { logger } from "../_core/logger";
+import { ENV } from "../_core/env";
 import { finalizeRecording, sendRecordingEmail } from "../lib/recording-finalize";
 
 const log = logger("riverside-webhook");
@@ -104,7 +105,8 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // parsed object and never match the signature.
       const rawBody: string = (req as any).rawBody ?? JSON.stringify(req.body);
       const signature = req.headers["x-riverside-signature"] as string | undefined;
-      const secret = process.env.RIVERSIDE_WEBHOOK_SECRET;
+      // Read through ENV (single validated config surface), not process.env.
+      const secret = ENV.riversideWebhookSecret;
 
       // This endpoint can create a forum post and email every active
       // newsletter subscriber (finalizeRecording), so an unauthenticated

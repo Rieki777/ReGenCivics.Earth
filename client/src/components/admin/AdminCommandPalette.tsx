@@ -70,7 +70,7 @@ export function AdminCommandPalette({ onSelectTab }: { onSelectTab: (tab: string
               onValueChange={setQuery}
               className="flex-1 bg-transparent text-white placeholder-white/55 text-sm outline-none"
             />
-            <kbd className="hidden sm:inline text-[10px] text-white/40 border border-white/15 rounded px-1.5 py-0.5">esc</kbd>
+            <kbd className="hidden sm:inline text-[10px] text-white/60 border border-white/15 rounded px-1.5 py-0.5">esc</kbd>
             <button onClick={() => setOpen(false)} aria-label="Close command palette" className="text-white/70 hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -91,7 +91,7 @@ export function AdminCommandPalette({ onSelectTab }: { onSelectTab: (tab: string
                     >
                       <Icon className="w-4 h-4 text-[#7dd87d] shrink-0" />
                       <span className="flex-1 min-w-0 font-medium">{item.label}</span>
-                      {item.route && <span className="text-[10px] text-white/40">page</span>}
+                      {item.route && <span className="text-[10px] text-white/60">page</span>}
                     </Command.Item>
                   );
                 })}

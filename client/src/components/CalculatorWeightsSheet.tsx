@@ -52,7 +52,8 @@ import {
   Plus,
   Lightbulb,
   X,
-  ChevronUp
+  ChevronUp,
+  HeartPulse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,7 +159,10 @@ interface CapitalType {
   weights: WeightItem[];
 }
 
-// Capital type definitions with their weights and examples
+// Capital type definitions with their weights and examples.
+// Canonical capital coverage (all nine) and shared labels live in
+// shared/crowdpoolingTaxonomy.ts; this list keeps its own weight entries
+// and rich examples, and it must cover the same nine capitals.
 const defaultCapitalWeights: CapitalType[] = [
   {
     id: 'financial',
@@ -312,6 +316,25 @@ const defaultCapitalWeights: CapitalType[] = [
       { input: 'Art/creative works', multiplier: '$150', unit: 'per work', rationale: 'Average value of creative and artistic contributions', key: 'cultural_art' },
       { input: 'Content views/reach', multiplier: '$0.02', unit: 'per view', rationale: 'CPM-based value of content reach and distribution', key: 'cultural_reach' },
       { input: 'Engagement rate', multiplier: '$25', unit: 'per % engagement', rationale: 'Value of audience engagement quality', key: 'cultural_engagement' },
+    ]
+  },
+  {
+    id: 'health',
+    name: 'Health Capital',
+    icon: HeartPulse,
+    color: '#ff9800',
+    description: 'Physical and emotional wellbeing, movement, rest, and care',
+    example: {
+      scenario: 'You teach 10 yoga classes and give 5 bodywork sessions',
+      input: '10 classes + 5 sessions',
+      calculation: '(10 x $60) + (5 x $80)',
+      result: '$600 + $400 = $1,000 contribution value'
+    },
+    weights: [
+      { input: 'Wellness classes taught', multiplier: '$60', unit: 'per class', rationale: 'Going rate for a group yoga, movement, or fitness class', key: 'health_classes' },
+      { input: 'Bodywork sessions given', multiplier: '$80', unit: 'per session', rationale: 'Typical rate for massage and one-on-one bodywork', key: 'health_bodywork' },
+      { input: 'People supported with care plans', multiplier: '$50', unit: 'per person', rationale: 'Value of herbal, nutrition, or recovery support per person', key: 'health_care' },
+      { input: 'Community fitness events led', multiplier: '$75', unit: 'per event', rationale: 'Value of organizing and leading group movement events', key: 'health_events' },
     ]
   }
 ];
@@ -660,7 +683,7 @@ export function CalculatorWeightsSheet() {
             <Scale className="w-5 h-5 text-[#7dd87d]" />
             Calculator Weights & Multipliers
           </SheetTitle>
-          <SheetDescription className="text-[#1a472a]/70">
+          <SheetDescription className="text-[#1a472a]/75">
             Edit weights to experiment, preview impact, and submit proposals collaboratively!
           </SheetDescription>
         </SheetHeader>
@@ -805,7 +828,7 @@ export function CalculatorWeightsSheet() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-4 pb-4">
-                        <p className="text-sm text-[#1a472a]/70 mb-3">{capital.description}</p>
+                        <p className="text-sm text-[#1a472a]/75 mb-3">{capital.description}</p>
                         
                         {/* Example calculation */}
                         <div className="bg-[#f0f7f0] rounded-lg p-3 mb-4 border border-[#1a472a]/5">
@@ -813,7 +836,7 @@ export function CalculatorWeightsSheet() {
                             <Calculator className="w-4 h-4 text-[#7dd87d]" />
                             <span className="text-xs font-medium text-[#1a472a]">Example Calculation</span>
                           </div>
-                          <p className="text-xs text-[#1a472a]/70 italic mb-2">"{capital.example.scenario}"</p>
+                          <p className="text-xs text-[#1a472a]/75 italic mb-2">"{capital.example.scenario}"</p>
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="bg-white px-2 py-1 rounded border border-[#1a472a]/10">{capital.example.input}</span>
                             <ArrowRight className="w-3 h-3 text-[#1a472a]/80" />
@@ -846,7 +869,7 @@ export function CalculatorWeightsSheet() {
                                     {isChanged && (
                                       <button
                                         onClick={() => resetIndividualWeight(weight.key)}
-                                        className="p-1 text-[#1a472a]/80 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
+                                        className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-[#1a472a]/80 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
                                         title="Reset to original"
                                       >
                                         <RotateCcw className="w-3 h-3" />
@@ -1114,7 +1137,7 @@ export function CalculatorWeightsSheet() {
                     </h4>
                     <button
                       onClick={() => setShowAddIdea(false)}
-                      className="p-1 text-[#1a472a]/80 hover:text-[#1a472a] rounded"
+                      className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center text-[#1a472a]/80 hover:text-[#1a472a] rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1207,10 +1230,10 @@ export function CalculatorWeightsSheet() {
                               )}
                             </div>
                           </div>
-                          <p className="text-sm text-[#1a472a]/70 mt-1">{idea.description}</p>
+                          <p className="text-sm text-[#1a472a]/75 mt-1">{idea.description}</p>
                           {idea.proposedWeight && (
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs bg-[#f0f7f0] px-2 py-1 rounded text-[#1a472a]/70">
+                              <span className="text-xs bg-[#f0f7f0] px-2 py-1 rounded text-[#1a472a]/75">
                                 Proposed: {idea.proposedWeight}
                               </span>
                               {idea.capitalType && (
@@ -1322,7 +1345,7 @@ export function CalculatorWeightsSheet() {
                   <Info className="w-4 h-4 text-[#7dd87d]" />
                   How Changes Are Made
                 </h4>
-                <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                <ol className="text-sm text-[#1a472a]/75 space-y-2 list-decimal list-inside">
                   <li>Community member submits a proposal on Hypha</li>
                   <li>Voice holders discuss and vote on the change</li>
                   <li>If approved, the calculator is updated</li>

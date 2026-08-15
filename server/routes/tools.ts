@@ -142,6 +142,7 @@ export const toolsRouter = router({
             { role: "user", content: `You are a tool matcher for regenerative communities. Given a user's problem, match them with the best tools from this list. Return JSON only: [{ "name": "Tool Name", "reason": "one sentence why" }]. Max 5 matches, ranked by relevance.\n\nAvailable tools:\n${toolList}\n\nUser's problem: ${input.problem}` }
           ],
           maxTokens: 500,
+          task: "light",
         });
         const text = typeof result === "string" ? result : (result as any)?.content?.[0]?.text ?? JSON.stringify(result);
         const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());

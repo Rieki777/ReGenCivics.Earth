@@ -162,7 +162,7 @@ export default function BridgeHypha() {
           {/* Claim eligibility banner for redeem-internal-tokens intent */}
           {intent === "redeem-internal-tokens" && claimData && (
             <div className={`border rounded-xl p-4 mb-4 flex items-start gap-3 ${claimData.eligible ? "bg-[#7dd87d]/10 border-[#7dd87d]/40" : "bg-white/5 border-white/15"}`}>
-              <Zap className={`w-5 h-5 shrink-0 mt-0.5 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/40"}`} />
+              <Zap className={`w-5 h-5 shrink-0 mt-0.5 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/60"}`} />
               <div>
                 <p className="text-sm font-semibold text-white">
                   Governance token balance: {claimData.balance.toLocaleString()} / {claimData.threshold.toLocaleString()}
@@ -183,7 +183,7 @@ export default function BridgeHypha() {
           {/* Small governance token indicator for non-redeem intents */}
           {intent !== "redeem-internal-tokens" && claimData && claimData.balance > 0 && (
             <div className="mb-4 flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-              <Zap className={`w-3.5 h-3.5 shrink-0 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/40"}`} />
+              <Zap className={`w-3.5 h-3.5 shrink-0 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/60"}`} />
               <p className="text-white/60 text-xs">
                 Governance balance: <span className={claimData.eligible ? "text-[#7dd87d] font-semibold" : "text-white/80"}>{claimData.balance.toLocaleString()}</span>
                 {claimData.eligible && <span className="text-[#7dd87d] ml-1">(claimable)</span>}
@@ -208,7 +208,7 @@ export default function BridgeHypha() {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-white/45 text-xs">
+          <p className="text-white/60 text-xs">
             This bridge carries your context across to Hypha so you do not have to retype anything.
             See <Link href="/governance" className="text-[#7dd87d]/80 hover:text-[#7dd87d] underline">how governance works</Link>.
           </p>

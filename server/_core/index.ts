@@ -25,6 +25,8 @@ import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
+import { runShipCrewListJob } from "../jobs/shipCrewList";
+import { runQuestCrewAssemblyJob } from "../jobs/questCrewAssembly";
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -40,19 +42,24 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import express from "express";
+import fsSync from "fs";
 import compression from "compression";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes, CHAT_SYSTEM_PROMPT } from "./oauth";
 import { streamLLM } from "./llm";
+import { sdk } from "./sdk";
+import { buildGuidePersona, buildGuideContext, fetchGuidePreferences } from "../lib/guide-companion";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { LEARN_SLUGS } from "@shared/learnContent";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
 import { registerPresenceRoutes } from "../routes/presence";
+import { registerShipCalendarRoutes } from "../routes/shipCalendarFeed";
 import { registerAnalyticsRoutes } from "../routes/analytics";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
@@ -64,12 +71,14 @@ import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver
 import { registerGithubWebhookRoutes } from "../webhooks/github";
 import { registerStripeWebhookRoutes } from "../webhooks/stripe";
 import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
+import { registerHarvestBridgeRoutes } from "../webhooks/harvest-bridge";
+import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
+import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
+import { cronAuthOk } from "./cronAuth";
 import { isCacheAvailable } from "../cache";
 import { initCacheOnStartup, setupCacheShutdownHandlers } from "../cacheInit";
 import path from "path";
@@ -109,27 +118,32 @@ async function startServer() {
     }
   }));
 
-  // Prerender.io middleware: serves pre-rendered HTML to bots/crawlers (SEO)
-  // PRERENDER_TOKEN must be set in Railway env vars
-  if (process.env.PRERENDER_TOKEN) {
-    try {
-      const prerenderNode = _require("prerender-node");
-      prerenderNode.set("prerenderToken", process.env.PRERENDER_TOKEN);
-      // Don't prerender API routes, static assets, or health checks
-      prerenderNode.set("beforeRenderFn", (req: any, done: (err: any, cached: string | null) => void) => {
-        const path = req.path || "";
-        if (path.startsWith("/api/") || path.startsWith("/assets/") || path === "/health") {
-          done(null, null); // skip prerender
-        } else {
-          done(null, null); // continue normally
-        }
-      });
-      app.use(prerenderNode);
-      log.info("Prerender middleware active (token configured)");
-    } catch (e) {
-      log.warn("Prerender: prerender-node not installed yet. Run npm install.", { error: String(e) });
-    }
-  }
+  // Prerender.io middleware: REMOVED 2026-08-01, and it was serving 503s.
+  //
+  // This block ran whenever PRERENDER_TOKEN was set. The token in Railway was
+  // invalid, so prerender-node intercepted every request with a crawler user
+  // agent, proxied it to Prerender.io, got rejected, and returned an empty 503.
+  // Measured against production before removal: Googlebot, bingbot, GPTBot,
+  // PerplexityBot, facebookexternalhit, and Twitterbot all received
+  // `HTTP 503` + `x-prerender-reject-reason: invalid-x-prerender-token-provided`
+  // on `/`, `/fund`, `/custom-games`, and `/network`. Only crawlers absent from
+  // prerender-node's bot list (ClaudeBot, OAI-SearchBot) and normal browsers
+  // got a page. So search indexing, ChatGPT's Bing-fed citations, and every
+  // social link preview were broken, and the Layer 1 crawler content could not
+  // reach the crawlers it was written for.
+  //
+  // It fails silently by design: humans never see it, health checks never see
+  // it, and a 503 to a bot leaves no trace in any surface we watch. The AI
+  // crawler telemetry below logs the hit, not the status.
+  //
+  // The removal is the decision already on record: LLM_DISCOVERABILITY_PLAN.md
+  // Layer 0 says own the rendering ourselves rather than paying Prerender.io
+  // (deterministic-first, STEERING section 11), and we do. `crawler-content.ts`
+  // injects real HTML bodies at request time for every route that matters, and
+  // the blog and Learn hub carry full prose. Nothing here needed a third party.
+  //
+  // Do not reintroduce it. If server-side rendering for bots is ever wanted
+  // again, extend crawler-content.ts.
 
   // Attach a unique request ID for tracing (logged on every request, sent to Sentry)
   app.use((req: any, _res, next) => {
@@ -156,6 +170,34 @@ async function startServer() {
         console.log(`[${level}] ${(req as any).id ?? '-'} ${req.method} ${loggedPath} ${res.statusCode} ${ms}ms`);
       }
     });
+    next();
+  });
+
+  // AI crawler telemetry: one greppable log line per AI-bot page fetch so we
+  // can verify from Railway logs which engines crawl us and what they read.
+  // Grep with: railway logs | grep '\[ai-crawler\]'
+  const AI_CRAWLER_RE = /(GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|Claude-Web|Anthropic-AI|PerplexityBot|Perplexity-User|Google-Extended|CCBot|Bytespider|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot|cohere-ai|MistralAI-User|Amazonbot|DuckAssistBot|YouBot)/i;
+  app.use((req, _res, next) => {
+    const ua = req.headers["user-agent"];
+    if (ua && !req.path.startsWith("/assets/") && req.path !== "/health") {
+      const m = ua.match(AI_CRAWLER_RE);
+      if (m) console.log(`[ai-crawler] ${m[1]} ${req.method} ${req.path}`);
+    }
+    next();
+  });
+
+  // Referral telemetry for the foundation credit. Every custom game's credit
+  // link carries ?ref=<gameId> (shared/foundationCredit.ts creditHref), so this
+  // one greppable line is how "referral clicks from footer credits" in the
+  // master plan's success metrics gets measured, at zero token cost.
+  // Grep with: railway logs | grep '\[credit-referral\]'
+  app.use((req, _res, next) => {
+    const ref = req.query?.ref;
+    if (typeof ref === "string" && ref && ref.length <= 60 && !req.path.startsWith("/assets/")) {
+      // Sanitize before logging: a ref value is attacker-controllable, and a
+      // newline in it would forge a second log line.
+      console.log(`[credit-referral] ${ref.replace(/[^\w.-]/g, "")} ${req.path}`);
+    }
     next();
   });
 
@@ -374,8 +416,12 @@ async function startServer() {
       { loc: '/governance',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/tokenomics',              changefreq: 'monthly', priority: '0.6' },
       { loc: '/glossary',                changefreq: 'monthly', priority: '0.5' },
+      { loc: '/learn',                   changefreq: 'weekly',  priority: '0.8' },
       { loc: '/regen-games',             changefreq: 'monthly', priority: '0.6' },
       { loc: '/custom-games',            changefreq: 'monthly', priority: '0.5' },
+      // Changes every time a custom game launches, which is the freshness
+      // signal Perplexity rewards. Weekly, so it gets re-fetched between ships.
+      { loc: '/network',                 changefreq: 'weekly',  priority: '0.6' },
       { loc: '/marketplace',             changefreq: 'weekly',  priority: '0.6' },
       { loc: '/crowd-pooling',           changefreq: 'weekly',  priority: '0.7' },
       { loc: '/crowd-pooling-projects',  changefreq: 'weekly',  priority: '0.7' },
@@ -420,6 +466,9 @@ async function startServer() {
       'what-makes-land-project-good-investment',
       'claim-your-land-project-or-organisation',
       'your-seeds-contributions-live-on',
+      'the-regen-ship',
+      'food-producers-first',
+      'more-than-one-honeymoon',
     ];
 
     // Dynamic DB entries (best-effort, sitemap still serves if DB is down)
@@ -430,7 +479,7 @@ async function startServer() {
       campaignIds = campaigns.map((c: { id: number }) => c.id);
     } catch { /* DB unavailable, skip dynamic campaigns */ }
     try {
-      const posts = await db.listForumPosts(undefined, 200, 0);
+      const posts = await db.listForumPosts(undefined, 2000, 0);
       forumPostIds = posts.map((p: { id: number }) => p.id);
     } catch { /* DB unavailable, skip dynamic forum posts */ }
 
@@ -444,8 +493,16 @@ async function startServer() {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
+      // Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2). Answer-first pages
+      // aimed at the query space the visibility panel showed us missing from.
+      // Each URL serves full prose + FAQPage JSON-LD via crawler-content.ts.
+      ...LEARN_SLUGS.map(slug => urlTag(`/learn/${slug}`, 'monthly', '0.8')),
       ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
-      // Community posts excluded from sitemap to save crawl budget (thin user-generated content)
+      // Community posts included by decision (2026-07-15): real conversations
+      // by practitioners are what answer engines cite. Each post URL serves
+      // full thread HTML + DiscussionForumPosting JSON-LD via the crawler
+      // content injector (server/_core/crawler-content.ts).
+      ...forumPostIds.map(id => urlTag(`/community/post/${id}`, 'weekly', '0.5')),
       '</urlset>',
     ];
 
@@ -456,19 +513,33 @@ async function startServer() {
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(xml);
   });
-  app.get('/robots.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/robots.txt'));
-  });
-  app.get('/llms.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms.txt'));
-  });
-  app.get('/llms-full.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
-  });
-  app.get('/llms-full.txt', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
-  });
-  
+  // AI accessibility files. IMPORTANT: in the production bundle __dirname is
+  // dist/, so the correct copy lives at dist/public/<name> (Vite copies
+  // client/public there at build, and prerender-blog.mjs appends the blog
+  // section to the dist copy). The old '../../client/public' path resolved
+  // outside the app root in production and served empty responses; keep the
+  // client/public path only as the dev fallback.
+  const publicFileCandidates = (name: string) => [
+    path.join(__dirname, 'public', name),               // production: dist/public
+    path.join(__dirname, '../../client/public', name),  // dev: repo source
+    path.join(__dirname, '../../dist/public', name),    // dev after a local build
+  ];
+  const servePublicFile = (name: string, contentType: string) =>
+    (_req: express.Request, res: express.Response) => {
+      const file = publicFileCandidates(name).find((f) => fsSync.existsSync(f));
+      if (!file) {
+        res.status(404).type('text/plain').send('Not found');
+        return;
+      }
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.sendFile(file);
+    };
+  app.get('/robots.txt', servePublicFile('robots.txt', 'text/plain; charset=utf-8'));
+  app.get('/llms.txt', servePublicFile('llms.txt', 'text/plain; charset=utf-8'));
+  app.get('/llms-full.txt', servePublicFile('llms-full.txt', 'text/plain; charset=utf-8'));
+  app.get('/feed.xml', servePublicFile('feed.xml', 'application/rss+xml; charset=utf-8'));
+
   // OAuth + email auth routes
   registerOAuthRoutes(app);
 
@@ -499,9 +570,67 @@ async function startServer() {
       ? `\n\n## USER CONTEXT\n${PATH_GREETINGS[userPath]}`
       : "";
 
+    // Personalize the Guide for the signed-in member: their chosen name + tone,
+    // and their OWN data (tokens, voyages) loaded strictly by their user id.
+    // Unauthenticated visitors get the normal general assistant, no personal data.
+    let guidePersona = "";
+    let guideContext = "";
     try {
+      const authedUser = await sdk.authenticateRequest(req);
+      if (authedUser) {
+        const prefs = await fetchGuidePreferences(authedUser.id);
+        guidePersona = buildGuidePersona(prefs);
+        guideContext = await buildGuideContext(authedUser);
+
+        // Consent-based player memory (improvement 13): read-only journey
+        // facts, ONLY for opted-in players (companionMemoryOptIn = 1), framed
+        // as untrusted prior notes. Fail-soft: chat is unchanged without it.
+        try {
+          const { getDb } = await import("../db");
+          const memDb = await getDb();
+          if (memDb) {
+            const { and, desc, eq, isNull } = await import("drizzle-orm");
+            const { playerCompanionMemory, playerProfiles } = await import("../../drizzle/schema");
+            const [profile] = await memDb
+              .select({ optIn: playerProfiles.companionMemoryOptIn })
+              .from(playerProfiles)
+              .where(eq(playerProfiles.userId, authedUser.id))
+              .limit(1);
+            if ((profile?.optIn ?? 0) === 1) {
+              const facts = await memDb
+                .select({ fact: playerCompanionMemory.fact, createdAt: playerCompanionMemory.createdAt })
+                .from(playerCompanionMemory)
+                .where(and(eq(playerCompanionMemory.userId, authedUser.id), isNull(playerCompanionMemory.supersededAt)))
+                .orderBy(desc(playerCompanionMemory.createdAt))
+                .limit(30);
+              const { framedMemoryContext } = await import("../lib/companionMemory");
+              const framed = framedMemoryContext(facts);
+              if (framed) guideContext = `${guideContext}\n\n${framed}`;
+            }
+          }
+        } catch {
+          // Memory must never break chat.
+        }
+      }
+    } catch {
+      // Not signed in, or session invalid: fall back to the generic guide.
+    }
+
+    // Worldview Pack (the Mycelium): ground the Guide in Rye's voice when a
+    // pack is present. Fail-soft: "" when absent, and behavior is unchanged.
+    let worldviewPreamble = "";
+    try {
+      worldviewPreamble = await getGuideWorldviewPreamble();
+    } catch {
+      // Pack loading must never break chat.
+    }
+
+    try {
+      const systemPrompt = [guidePersona, CHAT_SYSTEM_PROMPT + pathContext + guideContext + worldviewPreamble]
+        .filter(Boolean)
+        .join("\n\n");
       const llmMessages = [
-        { role: 'system' as const, content: CHAT_SYSTEM_PROMPT + pathContext },
+        { role: 'system' as const, content: systemPrompt },
         ...messages
           .filter((m) => m.role === 'user' || m.role === 'assistant')
           .slice(-20)
@@ -534,12 +663,46 @@ async function startServer() {
   registerStripeWebhookRoutes(app);
   // Zeffy webhook: CORE church donations (preferred, zero-fee processor)
   registerZeffyWebhookRoutes(app);
+  // Harvest bridge: the local second brain pulls Rye's captures (token auth)
+  registerHarvestBridgeRoutes(app);
+  // Worldview Pack upload: the Mycelium's distribution endpoint (token auth)
+  registerWorldviewUploadRoutes(app);
   // OIDC provider for shared auth with the ReGen Gov app at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count
   registerPresenceRoutes(app);
+  // Outbound availability feed the rental channels subscribe to
+  // (GET /api/ship/calendar/:token/regen-ship.ics, guarded by SHIP_ICAL_TOKEN).
+  // Our calendar is the source of truth; Outdoorsy re-reads this every 2h.
+  registerShipCalendarRoutes(app);
   // First-party analytics ingest (POST /api/analytics/collect)
   registerAnalyticsRoutes(app);
+
+  // ── Outdoorsy calendar sync cron endpoint ──────────────────────────────────
+  // Called every 15 minutes by Railway cron: POST /api/cron/outdoorsy-sync
+  // Pulls the Outdoorsy bookings feed, snaps each booking outward to whole
+  // voyage weeks, and reconciles ship_blackout_dates against it. Idempotent:
+  // rows are keyed on the channel's UID, so a repeat run over an unchanged feed
+  // reports created/updated/deleted all zero.
+  //
+  // Fifteen minutes rather than matching Outdoorsy's two-hour pull, because the
+  // window where a cancellation still reads as booked on our side is dead
+  // inventory, and this direction is cheap.
+  // Spec: CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6.
+  app.post("/api/cron/outdoorsy-sync", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runOutdoorsySync } = await import("../jobs/outdoorsySync");
+      const report = await runOutdoorsySync();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron outdoorsy-sync failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
 
   // ── Governance jobs cron endpoint ──────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/governance-jobs
@@ -549,15 +712,12 @@ async function startServer() {
   app.post("/api/cron/governance-jobs", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
     // Timing-safe comparison so attackers can't probe the secret byte-by-byte
     // via response-time analysis. Length mismatch returns 401 fast (length is
-    // not the secret).
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    // not the secret). See cronAuth.ts for why the length must be measured in
+    // BYTES: measuring it in string units let a crafted header crash the
+    // process instead of getting a 401.
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runAllGovernanceJobs } = await import("../jobs/governanceJobs");
@@ -569,6 +729,53 @@ async function startServer() {
     }
   });
 
+  // ── Harvest generation cron endpoint ───────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/harvest-generation (Bearer
+  // CRON_SECRET). Scores transitions and drafts the eager channel for up to
+  // MAX_AUTO_DRAFTS_PER_RUN newly-ripe ideas (The Harvest Phase 2).
+  app.post("/api/cron/harvest-generation", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runGeneration } = await import("../lib/harvest");
+      const stats = await runGeneration();
+      // Stage 7: extract insights for newly-transcribed community calls
+      // (bounded, cached per recording; a no-op when nothing new landed).
+      let calls: { scanned: number; extracted: number; insights: number } | undefined;
+      try {
+        const { sweepCallInsights } = await import("../lib/call-insights");
+        calls = await sweepCallInsights();
+      } catch (sweepErr) {
+        log.error("call-insights sweep failed", sweepErr instanceof Error ? sweepErr : undefined);
+      }
+      return res.json({ ok: true, ...stats, calls });
+    } catch (err: any) {
+      log.error("cron harvest-generation failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Harvest weekly digest cron endpoint ─────────────────────────────────────
+  // Called weekly by Railway cron: POST /api/cron/harvest-digest (Bearer
+  // CRON_SECRET). Clusters the week's fresh ideas and proposes three articles
+  // into the feed, with a summary email to the owner (Phase 4).
+  app.post("/api/cron/harvest-digest", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runWeeklyDigest } = await import("../lib/harvest");
+      const result = await runWeeklyDigest();
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      log.error("cron harvest-digest failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Admin automations cron endpoint ─────────────────────────────────────────
   // Called by Railway cron: POST /api/cron/admin-automations (Bearer CRON_SECRET).
   // Runs every enabled admin automation whose cadence is due. Schedule it
@@ -576,12 +783,7 @@ async function startServer() {
   app.post("/api/cron/admin-automations", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runDueAutomations } = await import("../routes/adminAutomations");
@@ -604,12 +806,7 @@ async function startServer() {
   app.post("/api/cron/coordination-pipeline", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runCoordinationPipeline } = await import("../jobs/coordinationPipeline");
@@ -632,12 +829,7 @@ async function startServer() {
   app.post("/api/cron/coordination-flywheel", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runCoordinationFlywheel } = await import("../jobs/coordinationFlywheel");
@@ -660,12 +852,7 @@ async function startServer() {
   app.post("/api/cron/tier-detector", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { detectTierProgressionForAllUsers } = await import("../lib/tierDetector");
@@ -673,6 +860,147 @@ async function startServer() {
       return res.json({ ok: true, ...report });
     } catch (err: any) {
       log.error("cron tier-detector failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Federation: public project directory (Phase C2, improvement 11) ─────────
+  // GET /api/federation/projects.json — the machine-readable directory partner
+  // networks fetch (GEN, OpenCivics, BioFi, the Ethereum localism cluster).
+  // Public data only: the same visibility statuses as publicDetail, a
+  // whitelisted field set, and the impact summary via publicImpactSummary()
+  // (shared/impact.ts decides what is public; nothing personal). Cached.
+  // Deeper partner handoffs wait for the Federation Bridge (ADR in
+  // .ai/docs/DECISIONS.md); this endpoint is read-only surface area.
+  app.get("/api/federation/projects.json", async (_req, res) => {
+    try {
+      const { cacheGet, cacheSet } = await import("../cache");
+      const CACHE_KEY = "federation:projects";
+      const cached = await cacheGet<object>(CACHE_KEY);
+      if (cached) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.json(cached);
+      }
+      const db = await import("../db");
+      const { parseImpactData, publicImpactSummary } = await import("@shared/impact");
+      const allApps = await db.getAllApplications();
+      const visibleStatuses = ["submitted", "under_review", "approved", "active"];
+      const projects = allApps
+        .filter((app: any) => visibleStatuses.includes(app.status ?? ""))
+        .map((app: any) => ({
+          id: app.id,
+          name: app.projectName,
+          projectType: app.projectType,
+          location: app.location ?? null,
+          country: app.country ?? null,
+          websiteUrl: app.websiteUrl ?? null,
+          videoUrl: app.videoUrl ?? null,
+          // Projects render on the Civics map; there is no per-project page yet
+          // (improvement 9, on hold). Only URLs that resolve, per SHIPPED_LOG.
+          profileUrl: "https://regencivics.earth/map",
+          impact: publicImpactSummary(parseImpactData(app.impactData)),
+        }));
+      const payload = {
+        network: "ReGen Civics",
+        description:
+          "Regenerative land projects in the ReGen Civics incubator and alliance. Impact fields follow shared/impact.ts (Common Impact Data Standard mapping in its header).",
+        docs: "https://regencivics.earth/llms.txt",
+        generatedAt: new Date().toISOString(),
+        projects,
+      };
+      await cacheSet(CACHE_KEY, payload, 600);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      return res.json(payload);
+    } catch (err: any) {
+      log.error("federation projects.json failed", err);
+      return res.status(500).json({ error: "temporarily unavailable" });
+    }
+  });
+
+  // ── The network of games: the return half of the foundation credit ──────────
+  // GET /api/network/games.json — every live custom game built with ReGen
+  // Civics, with the link back out to it. Each delivered game credits us in its
+  // footer (shared/foundationCredit.ts); this is how we credit them back, and
+  // what /network renders from.
+  //
+  // Registry-driven (shared/networkRegistry.ts), enriched best-effort from each
+  // game's own federation feed, cached in server/lib/network-feed.ts. Public
+  // data only: what the owner already publishes on their own site.
+  app.get("/api/network/games.json", async (_req, res) => {
+    try {
+      const { getNetworkFeed } = await import("../lib/network-feed");
+      const payload = await getNetworkFeed();
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=600");
+      return res.json(payload);
+    } catch (err: any) {
+      log.error("network games.json failed", err);
+      return res.status(500).json({ error: "temporarily unavailable" });
+    }
+  });
+
+  // ── Learn hub slugs, reserved ahead of the pages ────────────────────────────
+  // The foundation credit links to /learn/regenerative-economics from every
+  // custom game's about page, and those links live in other people's
+  // deployments where we cannot edit them later. The Learn hub shipped six
+  // articles and that is not one of them, so the slug resolves by 301 to the
+  // page that does answer the query (nine forms of capital, the "new economics"
+  // cluster in LLM_DISCOVERABILITY_PLAN.md section 3). Equity passes through,
+  // and no crawler following a credit link ever sees a 404.
+  //
+  // A real Learn article always wins: LEARN_SLUGS is checked first, so writing
+  // the article is all it takes to retire a redirect. Nobody has to remember to
+  // come back and delete the entry.
+  const LEARN_SLUG_REDIRECTS: Record<string, string> = {
+    "regenerative-economics": "/learn/nine-forms-of-capital",
+  };
+  app.get("/learn/:slug", (req, res, next) => {
+    const slug = req.params.slug;
+    if ((LEARN_SLUGS as readonly string[]).includes(slug)) return next();
+    const target = LEARN_SLUG_REDIRECTS[slug];
+    if (!target) return next();
+    return res.redirect(301, target);
+  });
+
+  // ── Multiplayer crew assembly cron endpoint ─────────────────────────────────
+  // Called by Railway cron (suggested: every 30 minutes): POST /api/cron/quest-crew-assembly
+  // Deterministic, zero LLM: groups open signups by (quest, bioregion), forms
+  // crews at crewSizeMin, creates crew chat threads, sends formation emails
+  // (idempotent per member per crew via formationEmailSentAt), and sweeps
+  // quest completions to close finished crews. Safe to re-run at any time.
+  // Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md, Phase A.
+  // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
+  app.post("/api/cron/quest-crew-assembly", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runQuestCrewAssemblyJob } = await import("../jobs/questCrewAssembly");
+      const report = await runQuestCrewAssemblyJob();
+      return res.json(report);
+    } catch (err: any) {
+      log.error("cron quest-crew-assembly failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Needs and Offers matcher cron endpoint ──────────────────────────────────
+  // POST /api/cron/needs-offers-matcher (Bearer CRON_SECRET). Deterministic
+  // tag + bioregion matching with one introduction email per pair ever and a
+  // per-party daily cap; also runs daily in-process. Safe to re-run any time.
+  // Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md, Phase B.
+  app.post("/api/cron/needs-offers-matcher", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher");
+      const report = await runNeedsOffersMatcherJob();
+      return res.json(report);
+    } catch (err: any) {
+      log.error("cron needs-offers-matcher failed", err);
       return res.status(500).json({ error: err.message });
     }
   });
@@ -686,12 +1014,7 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -830,30 +1153,57 @@ async function startServer() {
     }
   });
 
+  // ── Gratitude cycle close cron endpoint ────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/gratitude-cycles
+  // A lunation ends at an arbitrary hour, so closing hourly keeps a cycle from
+  // sitting open for most of a day after its new moon. Idempotent: the status
+  // guard, uniq_dist, and the ledger idempotencyKey make a repeat run a no-op,
+  // so running this hourly AND inside the nightly batch is safe.
+  app.post("/api/cron/gratitude-cycles", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    // Same helper as every other cron endpoint. This one was written before
+    // that helper existed and merged cleanly around it, which is how a
+    // textual merge can leave a single endpoint still carrying a hole the
+    // rest of the file no longer has.
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { getDb } = await import("../db");
+      const database = await getDb();
+      if (!database) return res.json({ skipped: true, reason: "no db" });
+      const { closeDueCycles } = await import("../lib/gratitude-cycles");
+      const result = await closeDueCycles(database);
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      log.error("cron gratitude-cycles failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Nightly batch cron endpoint ────────────────────────────────────────────
   // Called once per day by Railway cron: POST /api/cron/nightly-batch
-  // Runs the same steps as the admin-triggered runNightly procedure:
-  //   lunar cycles, contribution scores, trust scores, citizenship tiers,
-  //   gratitude multipliers, land project status.
+  // Runs a SUBSET of the admin-triggered batchJobs.runNightly procedure:
+  //   citizenship tiers, event status sweep, crowdpool claim expiry,
+  //   partner-progress hydration, and gratitude cycle close.
+  // It is not full parity with runNightly, and the comment that used to claim
+  // parity hid the fact that gratitude cycles never closed in production
+  // (audit 2026-07-28). Anything added to runNightly must be added here too,
+  // or it only ever runs when a human clicks the admin button.
   // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
   app.post("/api/cron/nightly-batch", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    const expected = `Bearer ${secret}`;
-    const ok =
-      typeof auth === "string" &&
-      auth.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {
       const { getDb } = await import("../db");
       const { sql: dbSql } = await import("drizzle-orm");
-      const { checkCitizenshipTiers } = await import("../routes/batchJobs");
+      const { checkCitizenshipTiers } = await import("../lib/citizenship");
       const database = await getDb();
       if (!database) return res.json({ skipped: true, reason: "no db" });
 
@@ -880,6 +1230,34 @@ async function startServer() {
         await sweepEventStatuses();
       } catch (e: any) { errors.push(`eventSweep: ${e.message}`); }
 
+      // Crowdpool claim expiry sweep + reminders: releases reserved slots on
+      // needs whose claims blew their delivery window.
+      try {
+        const { expireCrowdpoolClaims } = await import("../routes/batchJobs");
+        await expireCrowdpoolClaims(database);
+      } catch (e: any) { errors.push(`crowdpoolClaims: ${e.message}`); }
+
+      // Partner-progress hydration: refresh cached Ma Earth / GoSteward numbers
+      // on active + funded campaigns. Fetch or parse failures leave stale cache
+      // untouched (never zeroed).
+      try {
+        const { hydrateCampaignPartnerLinks } = await import("../routes/batchJobs");
+        await hydrateCampaignPartnerLinks(database);
+      } catch (e: any) { errors.push(`partnerHydration: ${e.message}`); }
+
+      // Gratitude lunar cycles: close every cycle whose new moon has passed,
+      // write acknowledgment weights, distribute the capped $ReGen pool, and
+      // open the current lunation. Idempotent. The dedicated hourly endpoint
+      // below normally gets there first; this is the safety net.
+      let gratitudeClosed = 0;
+      let gratitudeCredited = 0;
+      try {
+        const { closeDueCycles } = await import("../lib/gratitude-cycles");
+        const g = await closeDueCycles(database);
+        gratitudeClosed = g.closed;
+        gratitudeCredited = g.credited;
+      } catch (e: any) { errors.push(`gratitudeCycles: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`
@@ -890,7 +1268,7 @@ async function startServer() {
           WHERE id = ${jobId}
         `);
       }
-      res.json({ ok: true, status, promotions, demotions, errors });
+      res.json({ ok: true, status, promotions, demotions, gratitudeClosed, gratitudeCredited, errors });
     } catch (err: any) {
       log.error("cron/nightly-batch", err);
       res.status(500).json({ error: err.message });
@@ -1090,6 +1468,68 @@ setTimeout(async () => {
     try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
   }, 24 * 60 * 60 * 1000);
 }, 7 * 60 * 1000); // first run after 7 minutes
+
+// ─── Daily ReGen Ship crew-list trigger ─────────────────────────────────────
+// Emails confirmed crew-list signups when a bookable week now matches their
+// interests (any week / this season / winter / year two), at most once a
+// fortnight per signup. Deterministic enumeration, idempotent via lastNotifiedAt.
+setTimeout(async () => {
+  try { await runShipCrewListJob(); } catch (e) { log.error("ShipCrewListJob error", e); }
+  setInterval(async () => {
+    try { await runShipCrewListJob(); } catch (e) { log.error("ShipCrewListJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 9 * 60 * 1000); // first run after 9 minutes
+
+// ─── Daily Free Voyage Giveaway sweep ────────────────────────────────────────
+// Expires unverified public entries after 7 days (one resend at day 3) and
+// recomputes referral credits from confirmed referrals. Deterministic, zero LLM,
+// idempotent; also triggerable via batchJobsRouter.runGiveawaySweep.
+setTimeout(async () => {
+  const runGiveawaySweep = async () => {
+    const { expireGiveawayEntries } = await import("../routes/batchJobs");
+    const database = await db.getDb();
+    if (database) await expireGiveawayEntries(database);
+  };
+  try { await runGiveawaySweep(); } catch (e) { log.error("GiveawaySweep error", e); }
+  setInterval(async () => {
+    try { await runGiveawaySweep(); } catch (e) { log.error("GiveawaySweep error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 13 * 60 * 1000); // first run after 13 minutes
+
+// ─── Multiplayer crew assembly (every 30 minutes) ────────────────────────────
+// Forms quest crews when (quest, bioregion) signups reach crewSizeMin, creates
+// crew chat threads, sends formation emails (idempotent per member per crew),
+// and sweeps completions. Deterministic, zero LLM, safe to re-run; also
+// triggerable via POST /api/cron/quest-crew-assembly for a manual kick.
+setTimeout(async () => {
+  try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
+  setInterval(async () => {
+    try { await runQuestCrewAssemblyJob(); } catch (e) { log.error("QuestCrewAssemblyJob error", e); }
+  }, 30 * 60 * 1000);
+}, 5 * 60 * 1000); // first run after 5 minutes
+
+// ─── Consent-based player memory writer (daily) ──────────────────────────────
+// Derives game-journey facts from events for OPTED-IN players only
+// (companionMemoryOptIn = 1, default off). Deterministic, zero LLM, idempotent
+// via the (userId, sourceRef) unique key. The transparency surface in settings
+// is the gate and the mirror: full list, delete any or all, export.
+setTimeout(async () => {
+  try { const { runCompanionMemoryJob } = await import("../jobs/companionMemoryJob"); await runCompanionMemoryJob(); } catch (e) { log.error("CompanionMemoryJob error", e); }
+  setInterval(async () => {
+    try { const { runCompanionMemoryJob } = await import("../jobs/companionMemoryJob"); await runCompanionMemoryJob(); } catch (e) { log.error("CompanionMemoryJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 17 * 60 * 1000); // first run after 17 minutes
+
+// ─── Needs and Offers matcher (daily) ────────────────────────────────────────
+// Deterministic tag + bioregion matching over the board and application-form
+// captures. One introduction email per (need, offer) pair ever (ledgered),
+// per-party daily cap. Also triggerable via POST /api/cron/needs-offers-matcher.
+setTimeout(async () => {
+  try { const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher"); await runNeedsOffersMatcherJob(); } catch (e) { log.error("NeedsOffersMatcherJob error", e); }
+  setInterval(async () => {
+    try { const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher"); await runNeedsOffersMatcherJob(); } catch (e) { log.error("NeedsOffersMatcherJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 11 * 60 * 1000); // first run after 11 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

@@ -1,0 +1,11 @@
+/*
+ * The app's real stylesheet, plus an explicit source root.
+ *
+ * Tailwind v4's automatic source detection starts at the Vite root, which for
+ * the harness is harness/. Without the @source below it only generates classes
+ * it finds in the harness's own files, so components render with their text
+ * colours but no badges, pills, or button fills, which is worse than useless:
+ * it looks like a styling bug in the component.
+ */
+@import "../client/src/index.css";
+@source "../client/src";

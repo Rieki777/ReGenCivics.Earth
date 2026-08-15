@@ -9,6 +9,28 @@ import { nanoid } from "nanoid";
 import { sendEmail } from "./email";
 import { linkPendingMembersByEmail } from "../routes/roleHolders";
 
+/**
+ * Fire-and-forget: link any crowdpool contributions someone made anonymously
+ * under this email to their freshly signed-in account, and back-create the
+ * delivered ones onto their Living Tree. Best-effort and non-blocking, so it
+ * never delays the login redirect. Idempotent, so running it on every login is
+ * safe. Dynamically imports the campaigns router to avoid an init-order cycle.
+ */
+function linkContributionsBestEffort(openId: string, email: string | null | undefined): void {
+  if (!email) return;
+  void (async () => {
+    try {
+      const database = await db.getDb();
+      const user = await db.getUserByOpenId(openId);
+      if (!database || !user?.id) return;
+      const { linkAnonymousContributions } = await import("../routes/campaigns");
+      await linkAnonymousContributions(database, user.id, email);
+    } catch (e) {
+      console.error("[Auth] contribution link failed:", e);
+    }
+  })();
+}
+
 // ─── Chat System Prompt (shared with streaming endpoint) ─────────────────────
 export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowledgeable personal assistant on the ReGen Civics website. You help visitors understand the ReGen Civics Fund and Infinite Game.
 
@@ -379,6 +401,8 @@ export function registerOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
+      linkContributionsBestEffort(openId, userInfo.email ?? null);
+
       const sessionToken = await sdk.createSessionToken(openId, {
         name: userInfo.name || "",
         expiresInMs: ONE_YEAR_MS,
@@ -468,6 +492,8 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: "apple",
         lastSignedIn: new Date(),
       });
+
+      linkContributionsBestEffort(openId, appleUser.email ?? null);
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: name || "",
@@ -626,6 +652,8 @@ export function registerOAuthRoutes(app: Express) {
       } catch (e) {
         console.error("[Auth] pending-invite link failed:", e);
       }
+
+      linkContributionsBestEffort(openId, emailToken.email);
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: "",

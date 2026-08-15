@@ -31,6 +31,7 @@ import {
   playerProfiles,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { getGameVariableOr } from "../game";
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 // These mirror the game variables seeded in 0108. Hardcoded here as the
@@ -40,17 +41,10 @@ const DEFAULT_MIN_THREAD_AGE_HOURS = 48;
 const DEFAULT_MIN_UNIQUE_VOICES = 3;
 const DEFAULT_COSIGNER_WINDOW_HOURS = 24;
 
+// Canonical reader (cached, isActive-filtered) — the raw-SQL body this
+// helper used to carry bypassed both.
 async function readGovernanceVariable(key: string, fallback: number): Promise<number> {
-  const db = await getDb();
-  if (!db) return fallback;
-  try {
-    const rows = await db.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`).then((r: any) => r[0] ?? []);
-    if (rows && rows.length > 0) {
-      const v = Number(rows[0].value);
-      return Number.isFinite(v) ? v : fallback;
-    }
-  } catch { /* table missing or DB error */ }
-  return fallback;
+  return getGameVariableOr(key, fallback);
 }
 
 interface ReadinessReport {
@@ -696,12 +690,16 @@ export const governanceRouter = router({
       const total = votes.length;
       const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0];
       const consensusPct = top && total > 0 ? top[1] / total : 0;
+      const [minConsensus, minVotes] = await Promise.all([
+        readGovernanceVariable("governance.straw_poll.consensus_pct", 0.66),
+        readGovernanceVariable("governance.straw_poll.min_votes", 5),
+      ]);
       return {
         poll: polls[0],
         tally,
         total,
         consensusPct,
-        readyToPromote: consensusPct >= 0.66 && total >= 5,
+        readyToPromote: consensusPct >= minConsensus && total >= minVotes,
       };
     }),
 
@@ -820,6 +818,7 @@ export const governanceRouter = router({
             { role: "user", content: `Here is the forum thread:\n\n${threadSummary}\n\nWhich template fits best?` },
           ],
           maxTokens: 1024,
+          task: "light",
           outputSchema: {
             name: "template_suggestion",
             schema: {
@@ -879,6 +878,7 @@ export const governanceRouter = router({
             { role: "user", content: `Here is the full forum thread to summarize and structure as a decision:\n\n${threadContent}` },
           ],
           maxTokens: 4000,
+          task: "complex",
           outputSchema: {
             name: "decision_draft",
             schema: {

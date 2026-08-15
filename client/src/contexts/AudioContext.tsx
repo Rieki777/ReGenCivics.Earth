@@ -30,6 +30,7 @@ interface PersistedState {
   index: number
   time: number
   volume: number
+  muted?: boolean
 }
 
 function loadPersisted(): PersistedState | null {
@@ -63,6 +64,8 @@ const PAGE_START_INDEX: Record<string, number> = {
 
 interface AudioContextValue {
   isPlaying: boolean
+  /** True while the browser is fetching data and playback is stalled. */
+  isBuffering: boolean
   currentSong: Song | null
   currentIndex: number
   playlist: Song[]
@@ -77,6 +80,10 @@ interface AudioContextValue {
   queueSongBySlug: (slug: string) => boolean
   volume: number
   setVolume: (v: number) => void
+  /** Mute state. Unlike `volume`, muting works on iOS, so it is the
+   *  volume affordance we offer there. */
+  muted: boolean
+  toggleMute: () => void
   duration: number
   currentTime: number
   seek: (t: number) => void
@@ -89,7 +96,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const persisted = typeof window !== 'undefined' ? loadPersisted() : null
   const [currentIndex, setCurrentIndex] = useState(persisted?.index ?? 0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
   const [volume, setVolumeState] = useState(persisted?.volume ?? 0.7)
+  const [muted, setMuted] = useState(persisted?.muted ?? false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(persisted?.time ?? 0)
   const [location] = useLocation()
@@ -106,6 +115,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const audio = new Audio()
     audio.volume = persisted?.volume ?? 0.7
+    audio.muted = persisted?.muted ?? false
     audio.preload = 'metadata'
     audioRef.current = audio
 
@@ -115,6 +125,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     })
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime))
     audio.addEventListener('durationchange', () => setDuration(audio.duration))
+    // Keep React state in sync with the element itself so playback started
+    // or paused OUTSIDE our buttons (lock screen, control center, headset
+    // buttons via the Media Session API) updates every player UI on screen.
+    audio.addEventListener('play', () => {
+      isPlayingRef.current = true
+      setIsPlaying(true)
+    })
+    audio.addEventListener('pause', () => {
+      // A track finishing fires 'pause' just before 'ended'. That pause is
+      // mechanical, not the user's intent, so ignore it: the ended handler
+      // advances to the next song and playback resumes.
+      if (audio.ended) return
+      isPlayingRef.current = false
+      setIsPlaying(false)
+    })
+    // Buffering indicators: 'waiting' fires when playback stalls on the
+    // network, 'playing'/'canplay' when data is flowing again.
+    audio.addEventListener('waiting', () => setIsBuffering(true))
+    audio.addEventListener('playing', () => setIsBuffering(false))
+    audio.addEventListener('canplay', () => setIsBuffering(false))
     // Restore the saved play position once metadata is loaded
     audio.addEventListener('loadedmetadata', () => {
       errorChainRef.current = 0
@@ -152,25 +182,53 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Persist state to localStorage on every meaningful change
-  useEffect(() => {
+  // Persist state to localStorage. Track/volume/mute changes save
+  // immediately; play position saves at most every 3 seconds ('timeupdate'
+  // fires ~4x/s, and a localStorage write on each one is wasted work).
+  const lastTimeSaveRef = useRef(0)
+  const currentIndexRef = useRef(currentIndex)
+  const persistNow = useCallback(() => {
     if (typeof window === 'undefined') return
     try {
+      const audio = audioRef.current
       localStorage.setItem(PERSIST_KEY, JSON.stringify({
-        index: currentIndex,
-        time: currentTime,
-        volume,
+        index: currentIndexRef.current,
+        time: audio?.currentTime ?? 0,
+        volume: audio?.volume ?? 0.7,
+        muted: audio?.muted ?? false,
       } satisfies PersistedState))
+      lastTimeSaveRef.current = Date.now()
     } catch { /* ignore quota errors */ }
-  }, [currentIndex, currentTime, volume])
+  }, [])
+  useEffect(() => {
+    currentIndexRef.current = currentIndex
+    persistNow()
+  }, [currentIndex, volume, muted, persistNow])
+  useEffect(() => {
+    if (Date.now() - lastTimeSaveRef.current > 3000) persistNow()
+  }, [currentTime, persistNow])
+  // Save the exact position when the tab is backgrounded or closed, so
+  // "pick up where you left off" is accurate instead of up to 3s behind.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const save = () => persistNow()
+    window.addEventListener('pagehide', save)
+    document.addEventListener('visibilitychange', save)
+    return () => {
+      window.removeEventListener('pagehide', save)
+      document.removeEventListener('visibilitychange', save)
+    }
+  }, [persistNow])
 
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    const wasPlaying = isPlaying
     audio.src = PLAYLIST[currentIndex].src
     audio.load()
-    if (wasPlaying) {
+    // isPlayingRef (not state) so the resume also works when a track just
+    // ended: the mechanical 'pause' right before 'ended' is ignored above,
+    // leaving the ref true, and the next track starts without a tap.
+    if (isPlayingRef.current) {
       audio.play().catch(() => setIsPlaying(false))
     }
   }, [currentIndex])
@@ -187,13 +245,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current
     if (!audio) return
     hasInteracted.current = true
-    if (isPlaying) {
-      audio.pause()
-      setIsPlaying(false)
+    // Drive the element and let its 'play'/'pause' events update state, so
+    // this button and the lock-screen controls stay in agreement.
+    if (audio.paused) {
+      audio.play().catch(() => setIsPlaying(false))
     } else {
-      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
+      audio.pause()
     }
-  }, [isPlaying])
+  }, [])
 
   const nextSong = useCallback(() => {
     hasInteracted.current = true
@@ -207,11 +266,30 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const setVolume = useCallback((v: number) => {
     setVolumeState(v)
-    if (audioRef.current) audioRef.current.volume = v
+    const audio = audioRef.current
+    if (!audio) return
+    audio.volume = v
+    // Raising the volume is an unambiguous "I want to hear this" signal.
+    if (v > 0 && audio.muted) {
+      audio.muted = false
+      setMuted(false)
+    }
+  }, [])
+
+  const toggleMute = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.muted = !audio.muted
+    setMuted(audio.muted)
   }, [])
 
   const seek = useCallback((t: number) => {
-    if (audioRef.current) audioRef.current.currentTime = t
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = t
+    // Reflect the jump immediately instead of waiting for 'timeupdate',
+    // so the seek bar doesn't snap back for a frame after a drag.
+    setCurrentTime(t)
   }, [])
 
   const playSong = useCallback((index: number) => {
@@ -247,11 +325,72 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     return true
   }, [])
 
+  // Media Session API: lock screen, control center, and headset controls.
+  // This is what makes the player feel native on a phone: the current hymn
+  // shows up with artwork on the lock screen, and the hardware controls
+  // drive OUR playlist instead of just pausing one file. Typed loosely
+  // because older TS dom libs don't ship MediaSession types.
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    const ms = (navigator as any).mediaSession
+    const MediaMeta = (window as any).MediaMetadata
+    if (!ms || !MediaMeta) return
+    const song = PLAYLIST[currentIndex]
+    try {
+      ms.metadata = new MediaMeta({
+        title: song.title,
+        artist: song.artist ?? 'Hymns of the ReGeneration',
+        album: 'Hymns of the ReGeneration',
+        artwork: [
+          { src: '/og/hymn-book.jpg', sizes: '1200x630', type: 'image/jpeg' },
+          { src: '/og/hymn-book.webp', sizes: '1200x630', type: 'image/webp' },
+        ],
+      })
+    } catch { /* metadata is progressive enhancement */ }
+  }, [currentIndex])
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    const ms = (navigator as any).mediaSession
+    if (!ms || typeof ms.setActionHandler !== 'function') return
+    const handlers: Array<[string, ((d?: any) => void) | null]> = [
+      ['play', () => { audioRef.current?.play().catch(() => setIsPlaying(false)) }],
+      ['pause', () => { audioRef.current?.pause() }],
+      ['previoustrack', prevSong],
+      ['nexttrack', nextSong],
+      ['seekto', (d: any) => { if (d && typeof d.seekTime === 'number') seek(d.seekTime) }],
+    ]
+    for (const [action, handler] of handlers) {
+      try { ms.setActionHandler(action, handler) } catch { /* unsupported action */ }
+    }
+    return () => {
+      for (const [action] of handlers) {
+        try { ms.setActionHandler(action, null) } catch { /* ignore */ }
+      }
+    }
+  }, [prevSong, nextSong, seek])
+
+  // Keep the lock-screen progress bar honest after seeks and track changes.
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    const ms = (navigator as any).mediaSession
+    if (!ms || typeof ms.setPositionState !== 'function') return
+    if (!isFinite(duration) || duration <= 0) return
+    try {
+      ms.setPositionState({
+        duration,
+        playbackRate: 1,
+        position: Math.min(currentTime, duration),
+      })
+    } catch { /* progressive enhancement */ }
+  }, [duration, currentTime])
+
   return (
     <AudioCtx.Provider value={{
-      isPlaying, currentSong: PLAYLIST[currentIndex], currentIndex,
+      isPlaying, isBuffering, currentSong: PLAYLIST[currentIndex], currentIndex,
       playlist: PLAYLIST,
-      togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug, volume, setVolume,
+      togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug,
+      volume, setVolume, muted, toggleMute,
       duration, currentTime, seek,
     }}>
       {children}

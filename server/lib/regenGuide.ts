@@ -16,6 +16,7 @@ import { eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { users, forumPosts, forumReplies } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { getGameVariableOr } from "../game";
 
 const REGEN_GUIDE_OPEN_ID = "regen-guide-system";
 
@@ -44,10 +45,7 @@ export async function postGuideReply(threadId: number, content: string): Promise
   if (!guideId) return null;
 
   // Rate limit: governance.guide.proactive_posts_per_week from game variables
-  const limitRows = await db.execute(sql`
-    SELECT value FROM game_variables WHERE \`key\` = 'governance.guide.proactive_posts_per_week' LIMIT 1
-  `).then((r: any) => r[0] ?? []);
-  const weeklyLimit = Number(limitRows[0]?.value ?? 5);
+  const weeklyLimit = await getGameVariableOr("governance.guide.proactive_posts_per_week", 5);
   // Table is forumReplies (camelCase); the old forum_replies name made this
   // count query error and the weekly rate limit never actually applied.
   const recentRows = await db.execute(sql`
