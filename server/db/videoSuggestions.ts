@@ -34,6 +34,40 @@ export async function getAllVideoSuggestions() {
     .orderBy(desc(videoSuggestions.voteCount));
 }
 
+/**
+ * Public projection of the suggestion list, for the voting board on /blog.
+ *
+ * `video_suggestions` stores `submitterEmail` and a `voterEmails` JSON array,
+ * so the whole-row version above published the address of everyone who ever
+ * suggested or voted on a video. The board needs the title, the category and
+ * the tally; it never needed to know who.
+ *
+ * No status filter, deliberately. The board renders a badge per status and
+ * links completed suggestions to their blog post, so filtering to approved
+ * would empty most of the page. Status is a label here, not a gate: nothing
+ * private is attached to a pending row once the two email columns are gone.
+ */
+export const PUBLIC_VIDEO_SUGGESTION_COLUMNS = {
+  id: videoSuggestions.id,
+  title: videoSuggestions.title,
+  description: videoSuggestions.description,
+  category: videoSuggestions.category,
+  voteCount: videoSuggestions.voteCount,
+  status: videoSuggestions.status,
+  completedVideoUrl: videoSuggestions.completedVideoUrl,
+  completedBlogSlug: videoSuggestions.completedBlogSlug,
+  createdAt: videoSuggestions.createdAt,
+} as const;
+
+export async function getPublicVideoSuggestions() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select(PUBLIC_VIDEO_SUGGESTION_COLUMNS)
+    .from(videoSuggestions)
+    .orderBy(desc(videoSuggestions.voteCount));
+}
+
 export async function getApprovedVideoSuggestions() {
   const db = await getDb();
   if (!db) return [];

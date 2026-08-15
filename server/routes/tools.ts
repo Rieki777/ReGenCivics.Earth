@@ -9,8 +9,46 @@ import { sql, eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
 
+/**
+ * Public columns of a `regen_tools` row, aliased `t` in every query below.
+ *
+ * Withheld: `contactEmail` (the submitter's address, collected on the submit
+ * form so we can reach them, not so the directory can publish it),
+ * `submittedBy` and `approvedBy` (internal user ids that link a tool to the
+ * member who submitted it and the admin who cleared it).
+ *
+ * Narrowed in the SQL rather than filtered afterwards, so the private
+ * columns never leave the database.
+ */
+export const PUBLIC_TOOL_FIELDS = [
+  "id",
+  "name",
+  "slug",
+  "websiteUrl",
+  "logoUrl",
+  "cardImageUrl",
+  "shortSummary",
+  "longDescription",
+  "pricingModel",
+  "gettingStartedUrl",
+  "isOpenSource",
+  "isPhysical",
+  "regions",
+  "integrations",
+  "problemStatements",
+  "status",
+  "totalClicks",
+  "seasonSpotlight",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+// sql.raw is safe here: the list above is a compile-time constant of column
+// identifiers, never anything derived from a request.
+const PUBLIC_TOOL_COLUMNS = sql.raw(PUBLIC_TOOL_FIELDS.map((f) => `t.${f}`).join(", "));
+
 export const toolsRouter = router({
-  // List approved tools with filters
+  // List approved tools with filters (public projection)
   list: publicProcedure
     .input(z.object({
       categorySlug: z.string().optional(),
@@ -38,7 +76,7 @@ export const toolsRouter = router({
 
       if (input?.categorySlug) {
         const [tools] = await db.execute<any>(sql`
-          SELECT t.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+          SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
           FROM regen_tools t
           JOIN regen_tool_category_map m ON m.toolId = t.id
           JOIN regen_tool_categories c ON c.id = m.categoryId
@@ -52,7 +90,7 @@ export const toolsRouter = router({
       }
 
       const [tools] = await db.execute<any>(sql`
-        SELECT t.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
         FROM regen_tools t
         LEFT JOIN regen_tool_category_map m ON m.toolId = t.id
         LEFT JOIN regen_tool_categories c ON c.id = m.categoryId
@@ -64,27 +102,31 @@ export const toolsRouter = router({
       return (tools as unknown as unknown as any[]).map(parseToolRow);
     }),
 
-  // Get single tool by slug
+  // Get single tool by slug (public projection).
+  // The status filter is new: without it, anyone who guessed a slug could
+  // read a pending or rejected submission, contact email included.
   getBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return null;
       const [rows] = await db.execute(sql`
-        SELECT t.*, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
         FROM regen_tools t
         LEFT JOIN regen_tool_category_map m ON m.toolId = t.id
         LEFT JOIN regen_tool_categories c ON c.id = m.categoryId
-        WHERE t.slug = ${input.slug}
+        WHERE t.slug = ${input.slug} AND t.status = 'approved'
         GROUP BY t.id
         LIMIT 1
       `);
       const tool = (rows as unknown as unknown as any[])[0];
       if (!tool) return null;
 
-      // Get endorsements
+      // Get endorsements. Named columns: `e.*` carried the endorser's userId,
+      // which pairs a named member with a tool they use.
       const [endorsements] = await db.execute(sql`
-        SELECT e.*, u.name as userName FROM regen_tool_endorsements e
+        SELECT e.id, e.toolId, e.comment, e.createdAt, u.name as userName
+        FROM regen_tool_endorsements e
         LEFT JOIN users u ON u.id = e.userId
         WHERE e.toolId = ${tool.id}
         ORDER BY e.createdAt DESC LIMIT 20

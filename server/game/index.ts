@@ -168,7 +168,11 @@ export async function logActivityEvent(
   targetType?: string,
   targetId?: number,
   metadata?: Record<string, unknown>,
-  visibility: "public" | "admin_only" = "public",
+  // Must match the column enum, drizzle/schema.ts activity_feed_events.
+  // This said "admin_only", which is not a member of ("public","community",
+  // "admin"), so MySQL stored '' and `activityFeed.list`'s `visibility !=
+  // 'admin'` filter let those rows through: abuse-flag reasons went public.
+  visibility: "public" | "community" | "admin" = "public",
 ): Promise<void> {
   const db = await getDb();
   if (!db) return;

@@ -17,6 +17,58 @@ import {
 } from "../lib/hypha-bridge";
 import type { HyphaBridgePayload, HyphaFormKind, HyphaBridgeSource } from "../lib/hypha-bridge/types";
 import { resolveQuestRegenReward } from "@shared/quest-rewards";
+import { canSeeFullRecord, pickPublic } from "../lib/public-projection";
+
+/**
+ * What a bridge looks like to someone who merely holds a key.
+ *
+ * Bridge keys are 16 characters drawn from a 40-bit space and they are
+ * published in `activityFeed.list` metadata, so "you need the key" is not a
+ * control. Withheld here: `initiatorUserId` (which member started it),
+ * `hyphaRecipientWallet` and `hyphaTxHash` and `basescanUrl` (who got paid,
+ * and the on-chain trail that ties a wallet to that person), and inside the
+ * payload, `recipient`, `payouts` and `metadata`.
+ *
+ * What survives is what the bridge page shows a visitor: the intent, the
+ * proposal's own title and description, its images, and its status.
+ */
+export const PUBLIC_BRIDGE_FIELDS = [
+  "bridgeKey",
+  "source",
+  "sourceId",
+  "targetDhoSlug",
+  "formKind",
+  "status",
+  "hyphaProposalId",
+  "hyphaPassedAt",
+  "hyphaTokenAmount",
+  "hyphaTokenSymbol",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+export const PUBLIC_BRIDGE_PAYLOAD_FIELDS = [
+  "source",
+  "sourceId",
+  "targetDhoSlug",
+  "formKind",
+  "title",
+  "description",
+  "attachments",
+  "leadImageUrl",
+] as const;
+
+type BridgeRow = Awaited<ReturnType<typeof getBridge>>;
+
+export function toPublicBridge(bridge: NonNullable<BridgeRow>) {
+  const payload = bridge.payload
+    ? pickPublic(bridge.payload as Record<string, unknown>, PUBLIC_BRIDGE_PAYLOAD_FIELDS)
+    : null;
+  return {
+    ...pickPublic(bridge as Record<string, unknown>, PUBLIC_BRIDGE_FIELDS),
+    payload,
+  };
+}
 
 /** $ReGen token contract address on Base. */
 const REGEN_TOKEN_ADDRESS = "0x4E617cd113364193d215d107AdD6fa50418AA2E4" as const;
@@ -86,22 +138,48 @@ export const hyphaBridgeRouter = router({
       return createHyphaBridge(payload);
     }),
 
-  /** Read a bridge by its short key. Used by the bridge page on the client. */
+  /**
+   * Read a bridge by its short key. Used by the bridge page on the client.
+   *
+   * Public projection. The bridge key is short (16 chars, and the generator
+   * draws from a 40-bit space) and keys are published in `activityFeed.list`
+   * metadata, so this is not a secret URL. The row it keys carries the
+   * recipient's wallet address, the on-chain transaction hash, the
+   * initiating member's user id, and a payload whose `recipient` and
+   * `payouts[]` name who is being paid what. None of that belongs to a
+   * passer-by holding a key.
+   *
+   * The signed-in initiator, and admins, still get the whole row.
+   */
   get: publicProcedure
     .input(z.object({ bridgeKey: z.string().min(6).max(16) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const bridge = await getBridge(input.bridgeKey);
       if (!bridge) throw new TRPCError({ code: "NOT_FOUND", message: "Bridge not found" });
-      return bridge;
+      if (canSeeFullRecord(ctx.user, bridge.initiatorUserId)) return bridge;
+      return toPublicBridge(bridge);
     }),
 
   /** Build the redirect URL for the bridge page. Returned as a string the
-   * client never has to construct itself. */
+   * client never has to construct itself.
+   *
+   * Gated to the initiator and admins. The URL carries the whole payload as
+   * Hypha prefill query parameters, recipient wallet and payouts included,
+   * so leaving this open would have handed back through a URL exactly what
+   * `get` above stops handing back through a row. `markHandoffSent` is
+   * already protectedProcedure, so the handoff flow was signed-in anyway.
+   */
   buildRedirectUrl: publicProcedure
     .input(z.object({ bridgeKey: z.string().min(6).max(16), lang: z.string().max(8).optional() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const bridge = await getBridge(input.bridgeKey);
       if (!bridge) throw new TRPCError({ code: "NOT_FOUND", message: "Bridge not found" });
+      if (!canSeeFullRecord(ctx.user, bridge.initiatorUserId)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Sign in as the person who started this bridge to continue to Hypha.",
+        });
+      }
       return { url: buildHyphaTargetUrl(bridge as any, input.lang ?? "en") };
     }),
 

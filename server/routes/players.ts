@@ -6,20 +6,92 @@ import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 import { eq, sql, count, and, or, like, isNotNull } from "drizzle-orm";
-import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
+import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions, type PlayerProfile } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
 import { sanitizeInput } from "../_core/security";
+import type { TrpcContext } from "../_core/context";
+import { canSeeFullRecord, pickPublic } from "../lib/public-projection";
 
 // Sanitize free-text prose fields while preserving null/undefined (so an
 // unset field is not accidentally overwritten with an empty string).
 const cleanText = <T extends string | null | undefined>(v: T): T =>
   (typeof v === "string" ? (sanitizeInput(v) as T) : v);
 
+/**
+ * Public projection for a player profile.
+ *
+ * A `player_profiles` row carries member PII next to the public game
+ * identity: email, wallet address, Base account, Hypha and GitHub
+ * identifiers, exact map coordinates, private token balances, and
+ * notification preferences. Handing a whole row to an anonymous caller
+ * leaks all of it, so every public read goes through `toPublicPlayerProfile`.
+ *
+ * This is an allowlist, applied by picking rather than deleting: a column
+ * added to the table later stays private until someone adds its name here
+ * on purpose. `players.pii.test.ts` locks that behaviour in — if a future
+ * edit spreads a full row through one of these procedures, that test fails.
+ *
+ * Fields deliberately withheld (do not add without a page that renders them
+ * and a reason it is safe): email, walletAddress, baseAccountName,
+ * hyphaProfileUrl, verificationTxHash, blockchainVerifiedAt, githubHandle,
+ * githubId, githubLinkedAt, locationLat, locationLng, locationLabel,
+ * locationPrecision, locationNomadic, locationEarth, forumLocation, every
+ * token balance (public and private) and lastTokenSync, emailDigestFrequency,
+ * notificationPrefs, companionMemoryOptIn, preferredLanguage, trustScore and
+ * trustScoreRaw, contributionScore and contributionScoreRaw, capitalScoresJson.
+ */
+export const PUBLIC_PLAYER_PROFILE_FIELDS = [
+  "id",
+  "userId",
+  "displayName",
+  "bio",
+  "avatarUrl",
+  "bannerUrl",
+  "badges",
+  "questsCompleted",
+  "totalContributionValue",
+  "isVerified",
+  "citizenshipTier",
+  "currentTier",
+  "seasonsCompleted",
+  "lunarStreak",
+  "reputation",
+  "collaborationStatus",
+  "dreamingOf",
+  "currentlyWorkingOn",
+  "website",
+  // Coarse place only. The bioregion is a region-sized public grouping;
+  // the lat/lng pair and the free-text label stay private.
+  "bioregionId",
+  "createdAt",
+] as const satisfies ReadonlyArray<keyof PlayerProfile>;
+
+export type PublicPlayerProfile = Pick<PlayerProfile, (typeof PUBLIC_PLAYER_PROFILE_FIELDS)[number]>;
+
+export function toPublicPlayerProfile(profile: PlayerProfile): PublicPlayerProfile {
+  return pickPublic(profile, PUBLIC_PLAYER_PROFILE_FIELDS);
+}
+
+/**
+ * Who gets the unredacted row: the profile's own owner, and admins (the
+ * admin panel already reads wallet + balances through adminProcedure).
+ * Uses the existing session context; no new permission concept.
+ */
+export function canSeeFullPlayerProfile(
+  user: TrpcContext["user"] | undefined,
+  profileUserId: number | null,
+): boolean {
+  return canSeeFullRecord(user, profileUserId);
+}
+
 // ─── Player Profiles ──────────────────────────────────────────────────────────
 export const playerProfilesRouter = router({
-  // Get all active player profiles
-  list: publicProcedure.query(async () => {
+  // Every active profile, whole rows, wallet + email + coordinates included.
+  // adminProcedure because the admin players tab is its only caller and it
+  // renders exactly those private columns. It was publicProcedure until
+  // 2026-08-15, which handed the entire member table to anonymous callers.
+  list: adminProcedure.query(async () => {
     return db.getAllPlayerProfiles();
   }),
 
@@ -57,9 +129,11 @@ export const playerProfilesRouter = router({
       return out;
     }),
 
-  // Get verified players (leaderboard)
+  // Get verified players (leaderboard). Public projection only: a leaderboard
+  // needs the name, avatar and contribution total, never the contact details.
   leaderboard: publicProcedure.query(async () => {
-    return db.getVerifiedPlayerProfiles();
+    const rows = await db.getVerifiedPlayerProfiles();
+    return rows.map(toPublicPlayerProfile);
   }),
 
   // Get current user's profile
@@ -73,11 +147,17 @@ export const playerProfilesRouter = router({
     }
   }),
 
-  // Get profile by ID
+  // Get profile by ID. Public projection unless the caller owns the profile
+  // or is an admin. The id is enumerable, so an unprojected row here was a
+  // one-request scrape of every member's email and wallet.
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      return db.getPlayerProfileById(input.id);
+    .query(async ({ ctx, input }) => {
+      const profile = await db.getPlayerProfileById(input.id);
+      if (!profile) return undefined;
+      return canSeeFullPlayerProfile(ctx.user, profile.userId)
+        ? profile
+        : toPublicPlayerProfile(profile);
     }),
 
   // Create player profile
@@ -122,14 +202,21 @@ export const playerProfilesRouter = router({
       return { id, success: true };
     }),
 
-  // Look up a profile by handle (public). Resolves the handle -> userId, then returns the profile.
+  // Look up a profile by handle (public). Resolves the handle -> userId, then
+  // returns the profile. Anonymous and third-party callers get the public
+  // projection, which is everything /@handle renders; the owner (and admins)
+  // get the full row. Until 2026-08-15 this spread the whole row to anyone.
   getByHandle: publicProcedure
     .input(z.object({ handle: z.string().min(3).max(40) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const user = await db.getUserByHandle(input.handle);
       if (!user) return null;
       const profile = await db.getPlayerProfileByUserId(user.id);
-      return profile ? { ...profile, handle: user.handle, userName: user.name } : null;
+      if (!profile) return null;
+      const body = canSeeFullPlayerProfile(ctx.user, profile.userId)
+        ? profile
+        : toPublicPlayerProfile(profile);
+      return { ...body, handle: user.handle, userName: user.name };
     }),
 
   // Update the current user's handle. Validates regex, uniqueness, and rate limit.

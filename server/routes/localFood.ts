@@ -4,8 +4,43 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sql, desc, eq } from "drizzle-orm";
 
+/**
+ * Public columns of a `local_food_applications` row.
+ *
+ * A food-producer application carries the producer's personal contact
+ * details and the exact coordinates of their land. `SELECT *` published
+ * both. Withheld: contactEmail, contactName, locationLat, locationLng.
+ * The directory shows the producer, their description and their own public
+ * links; anyone who wants to reach them goes through the website URL or the
+ * needs/offers board, which is what those fields are for.
+ *
+ * Narrowed in the SQL rather than filtered afterwards, so the private
+ * columns never leave the database.
+ */
+export const PUBLIC_LOCAL_FOOD_FIELDS = [
+  "id",
+  "producerName",
+  "bioregionId",
+  "description",
+  "productsOffered",
+  "regenerativePractices",
+  "websiteUrl",
+  "localScaleProfileUrl",
+  "needsText",
+  "offersText",
+  "status",
+  "communityRatingsCount",
+  "regenerativeScore",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+// sql.raw is safe here: the list above is a compile-time constant of column
+// identifiers, never anything derived from a request.
+const PUBLIC_LOCAL_FOOD_COLUMNS = sql.raw(PUBLIC_LOCAL_FOOD_FIELDS.join(", "));
+
 export const localFoodRouter = router({
-  // List approved/active local food applications
+  // List approved/active local food applications (public projection)
   list: publicProcedure
     .input(z.object({
       bioregionId: z.number().optional(),
@@ -15,19 +50,22 @@ export const localFoodRouter = router({
       const db = await getDb();
       if (!db) return [];
 
+      // Note the identifiers: this table is camelCase in the live schema
+      // (drizzle/ci-baseline.sql:2048). The snake_case `bioregion_id` /
+      // `created_at` that used to be here cannot resolve to a column.
       if (input.bioregionId) {
         return db.execute(sql`
-          SELECT * FROM local_food_applications
+          SELECT ${PUBLIC_LOCAL_FOOD_COLUMNS} FROM local_food_applications
           WHERE (status = 'approved' OR status = 'active')
-            AND bioregion_id = ${input.bioregionId}
-          ORDER BY created_at DESC
+            AND bioregionId = ${input.bioregionId}
+          ORDER BY createdAt DESC
         `).then((r: any) => r[0] ?? []);
       }
 
       return db.execute(sql`
-        SELECT * FROM local_food_applications
+        SELECT ${PUBLIC_LOCAL_FOOD_COLUMNS} FROM local_food_applications
         WHERE status = 'approved' OR status = 'active'
-        ORDER BY created_at DESC
+        ORDER BY createdAt DESC
       `).then((r: any) => r[0] ?? []);
     }),
 
@@ -86,7 +124,10 @@ export const localFoodRouter = router({
       return { id };
     }),
 
-  // Get a single application by ID
+  // Get a single application by ID (public projection).
+  // The id is enumerable and there was no status filter, so this returned
+  // the contact email and land coordinates of every application ever
+  // submitted, including the ones still under review and the declined ones.
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
@@ -94,7 +135,10 @@ export const localFoodRouter = router({
       if (!db) return null;
 
       const rows = await db.execute(sql`
-        SELECT * FROM local_food_applications WHERE id = ${input.id} LIMIT 1
+        SELECT ${PUBLIC_LOCAL_FOOD_COLUMNS} FROM local_food_applications
+        WHERE id = ${input.id}
+          AND (status = 'approved' OR status = 'active')
+        LIMIT 1
       `);
       const results = (rows as any)[0] ?? [];
       return results[0] ?? null;
