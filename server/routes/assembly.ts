@@ -797,7 +797,10 @@ export const assemblyRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      await db.execute(sql`UPDATE proposals SET restingSince = NULL WHERE id = ${input.proposalId} AND restingSince IS NOT NULL`);
+      // An example never rests (markResting filters it out), so this matches
+      // nothing today. The clause keeps the rule uniform: no write touches a
+      // demonstration row.
+      await db.execute(sql`UPDATE proposals SET restingSince = NULL WHERE id = ${input.proposalId} AND restingSince IS NOT NULL AND isExample = 0`);
       return { ok: true };
     }),
 
@@ -1099,8 +1102,11 @@ export const assemblyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const props = await db.select({ authorId: proposals.authorId }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      const props = await db.select({ authorId: proposals.authorId, isExample: proposals.isExample }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      if (props[0].isExample) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This is a demonstration proposal. Its objection is a fixed example." });
+      }
       if (props[0].authorId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposal owner can mark the objection addressed." });
       }

@@ -199,6 +199,8 @@ export const proposalsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
+      await refuseIfExample(db, input.proposalId);
+
       // Verify the current user is the proposal author or an admin
       const [proposal] = await db.execute(sql`
         SELECT authorId FROM proposals WHERE id = ${input.proposalId} LIMIT 1
