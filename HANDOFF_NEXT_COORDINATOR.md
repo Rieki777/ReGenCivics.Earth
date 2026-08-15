@@ -1,96 +1,104 @@
 # HANDOFF — next coordinator session
 
 **Everything below is verified, not remembered. Re-verify anything older than an hour.**
-Regenerated 2026-08-14 ~20:00 EDT, session 1 of the standing integration program.
+Regenerated 2026-08-15 ~18:10 EDT after rounds 1–3 and the cost programme landed on game-amora.
 
 ## 1 · Where you are
 
-You are the Master Integrator Coordinator. Your charter, addenda and all program documents:
-`docs/integration-program/INDEX.md`. Your durable state: `INTEGRATION_LEDGER.md` (read §0, §2, §4,
-§6, §8 first). Your home: `C:/Users/taren/Downloads/regen-integration` on `wt/integration`
-(hub repo). Invoke the `swarm-supervisor` skill before doing anything.
+You are the Master Integrator Coordinator. Charter, addenda, program documents:
+`docs/integration-program/INDEX.md`. Durable state: `INTEGRATION_LEDGER.md` — read §0, §2 (lane
+registry), §4 (queue), §6 (blockers), §8 (rulings R1–R25), §9 (paid lessons), §10 (Rye's list)
+first. Home: `C:/Users/taren/Downloads/regen-integration` on `wt/integration` (hub repo; this
+branch is docs-only and is NOT merged to hub main). Invoke `swarm-supervisor` before anything.
 
-## 2 · What is in flight right now
+## 2 · State at handoff (2026-08-15 18:10 EDT)
 
-Three lanes were dispatched 2026-08-14 as background agents (they DIE if the coordinator session
-dies — check for their reports; if absent, re-dispatch from the amended briefs summarised in
-ledger §8-R5/R6 plus the brief files in `docs/integration-program/`):
+**game-amora `origin/main` = `72a7fca`, live `/health` build = `72a7fca`.** Every landing of
+rounds 1–3 and the cost programme is deployed: A, C (round 1); Q, M, F2, F3, F1, F4 (round 2 +
+fixes); I, D (+#7, #10), P (game-amora side), K1, K2 (round 3 + cost). Landing flow since R21:
+fix lanes fast-forwarded; everything else by PR with a MERGE commit (`gh pr merge N --merge`),
+CI (`verify`) as the required check, then read `gh run list --commit <sha>` AND `curl /health`
+before writing DONE. The CI gate set is **thirteen** steps — enumerate `.github/workflows/ci.yml`
+`run:` steps; never trust a count.
 
-- **Lane A** — **LANDED on main `8e02dd0`** 2026-08-14, 11 gates green, 1010/0/0. If the CI-run
-  result on that SHA is not yet in the ledger changelog, read it first (`gh run list --commit`).
-  A live acceptance run (screenshot + real-village numbers) is on Rye's list, needs his key.
-- **Lane C** — **DONE, observed live**: main `d14b160`, CI green ×2, live build marker matches.
-  C1 (amended) + C2 both landed. Its contract-enforcement gap list is adopted at
-  `docs/integration-program/CONTRACT_ENFORCEMENT_GAPS_2026-08-14.md` and sources the queue.
+**hub `origin/main` = `37c61d2`** (Lane P's pool merge, PR #41). Hub deploys from main
+(Railway); its blocking gates are `pnpm gate`, `pnpm test`, `pnpm build`, `check-migration-numbers`,
+`check-env-example`; `Contrast Audit` and `Lighthouse CI` workflows are BROKEN on every branch
+since 08-03 (queue 32) — ignore them, do not treat as red. Hub worktree `.env` files may carry the
+PRODUCTION `DATABASE_URL` behind a BOM — never run DB suites in a hub worktree without checking
+which host it names.
 
-**STATE AT 2026-08-15 ~11:50 EDT.** Round-2 fix lanes: F2 DONE (live), F3 LANDED (`efdf7da`,
-CI/live read pending), F1 in flight (lands next, HIGH mobile root cause), F4 complete at
-`3cb6331` and holding for last (rebases over F1). Round 3 dispatched (rulings R18–R22): Lane I
-(images → WebP + posters to the Railway volume + upload helper + image ratchet), Lane D
-(START_HERE + module-facts + doc-link check + intake workflow + CODEOWNERS + review checklist
-+ review-agent + contract v1.1 in game-amora), Lane P ($ReGen builders' pool: hub design/build
-+ game-amora `poolStatus`/payout). Round-3 lanes land by PR with MERGE commits (R21). Rye's
-separate session owns the S9 flake fix (queue 22) — land its branch when it reports. Waiting
-on Rye: the test admin account + token mode (blocks the $0.10 live run, decision item 12) and
-branch protection (item 13). Handles at dispatch, in order: fix block F2/F3/F4/F1; round 3
-I/D/P. Do NOT re-dispatch over a worktree with dirty files — inspect first (see §9).
+**In flight (background agents die with the session — check worktrees, never re-dispatch over
+pushed work):**
+- **HS** — hub security. Worktree `C:/Users/taren/Downloads/regen-pii-fix`, branch `wt/pii-fix`.
+  Scope WIDENED to all ten HIGH public procedures in
+  `docs/integration-program/round3-security/HUB_PUBLIC_PROCEDURE_PII_SWEEP_2026-08-15.md` (PR 1),
+  eleven MEDIUM (PR 2). If dead: `git status` there; resume via its transcript or re-dispatch
+  from that file + ledger §2 row. **When PR 1 deploys, tell Rye to rotate event check-in tokens**
+  (his item 18) — anyone could mint ledger credits with them.
+- **V2** — closing mobile audit (report-only) against live ≥ `3d1e57b`; screenshots to
+  `scratchpad/lane-v2/`. If dead, restart from `LANE_L_AND_V_LIVE_QA_BRIEFS.md` + the V report
+  under `round2-qa/`; verdicts are the HARM metrics (see §9 "harm metric"), not raw counts.
+- **Rye's own session** on the S9 e2e flake (queue 22) — land its branch when it reports.
 
-**Round 1 CLOSED; round 2 IN FLIGHT (2026-08-15, rulings R13/R14).** Running: Lane Q (eight-defect
-fixes, lands first) and Lane M (store research→design→build with developer monetization,
-mobile-first UI). Queued: Lanes L (live QA) + V (mobile-first Safari QA via Playwright WebKit)
-— dispatch both when M+Q are observed live; briefs staged at
-`docs/integration-program/LANE_L_AND_V_LIVE_QA_BRIEFS.md`. The Saberra letter is with the
-"Saberra-Amora game integration" session for review + delivery to Rye. If resuming cold with
-lanes dead: their worktrees are `wt-qa-fixes` and `wt-store` in Desktop/Amora — check
-committed/pushed state before re-dispatching; never re-dispatch over pushed work. Still on
-Rye: counsel §3c, sending the letter after that session delivers it, live acceptance run.
-Other queue: 5 (incident log + probe — collides with M's surfaces, hold until M lands),
-6 (diagnostic path), 9 (Lane H), 10 (contract page, after 5). Lane S build gated on B4/B5/B7.
-- **Lane S** — DONE for this phase, reported 2026-08-14 20:21. Stages 1–5 drafted and adopted at
-  `docs/integration-program/lane-s/`; stage 0 BLOCKED: no tenant credential has ever been issued
-  (B5, only Rye can obtain; the stage-1 letter carries the ask). Findings: no hard-delete
-  endpoint exists (B7); Managed gate fails 7/12 rows today; sandbox tenant already live. Do NOT
-  re-dispatch stages 0–5; the next Lane S action is running the pre-committed audit plan the day
-  the credential lands. Migration 0080 still reserved for the build stage.
+**Not started, ready:** queue 5 (incident log + liveness probe — now safe, M landed), 6
+(diagnostic path — needs Rye's eight sentences), 9 (Lane H hub-side Managed), 10 (publish the
+contract on a URL after 5), 20 (store perf: `/admin` Admin chunk 328 KB), 24 (`.invalid` test
+email in health snapshots), 25/31 (assistant: no-tools enum value; shelf excerpts are the next
+cost lever), 27/28 (admin sign-in a11y; GameMechanics z-70 bar), 33 (two upload sites for
+`prepareImageForUpload`), 34 (`loop.e2e:1015` race), 32 (hub broken workflows), 17 (delete the
+hub's orphan lunar clock — Rye default yes). Lane S build stays gated on the Saberra credential
+(B5), hard-delete endpoint (B7), commercial terms (B4) — the stage-1 letter is with the
+"Saberra-Amora game integration" session for delivery to Rye.
 
-## 3 · What waits on Rye
+## 3 · What waits on Rye (ledger §10, sorted)
 
-Ledger §10. ADR-49 is RESOLVED (Rye approved, R10 — Managed-plane code authorized) and the
-contract question is RESOLVED (Rye ruled publish-on-a-URL, R11 — publication queued as item 10
-behind C1 + the incident log). Still open: counsel questions §3c, Saberra commercial ask,
-possibly tenant access for stage 0, the eight diagnostic sentences (not yet due).
+1. **Send the Saberra stage-1 letter** (that session delivers the final text). 2. **Rotate hub
+check-in tokens after HS PR 1 deploys** + audit ledger credits. 3. Counsel §3c (entity, DPA,
+agency-vs-resale, UBIT incl. 4a/4b). 4. Review-agent `ANTHROPIC_API_KEY` in GitHub secrets (his
+spend). 5. Pool amount per cycle (default 5,000 $ReGen; ships at 0), escrow (default treasury),
+orphan clock (default delete). 6. HSTS needs the Railway domain inventory. 7. Per-user token
+ceiling (default measure-only). 8. Branch protection settings if not yet applied. Everything else
+was decided by ruling and recorded.
 
 ## 4 · Re-measure at open (do not inherit)
 
-1. `git -C C:/Users/taren/Desktop/Amora/game-amora fetch origin` → new origin/main; update §0.
+1. `git -C C:/Users/taren/Desktop/Amora/game-amora fetch origin` → origin/main; `curl -s
+   https://amora.regencivics.earth/health` → live build; update ledger §0.
 2. `git -C C:/Users/taren/Downloads/regen-civics-clean fetch origin` → hub origin/main.
-3. Re-read both CI files at the new SHAs; re-stamp §5 if the blobs moved.
-4. Re-run the 4-way migration scan before believing 0078/0079/0080 are still the allocation.
-5. Check lane worktrees exist and their branches' last commit (`git log -1 --format='%h %ci %s'`).
+3. `gh pr list` in both repos — anything open is a lane's unlanded work.
+4. Re-run the 4-way migration scan before believing 0080 (Saberra reserved) / 0083+ free.
+5. For each in-flight worktree: `git status --short | wc -l`, `git log -1`, `git rev-parse
+   origin/<branch>` — committed vs pushed vs dirty decides resume-vs-redispatch.
 
 ## 5 · Known hazards in this exact state
 
-- game-amora primary is on `voice-sweep-2026-08-01` with 52 dirty files; hub primary is on
-  `ship-rite-truth` with 87 dirty. NEVER work in either primary.
-- The integration worktree's `node_modules` is PARTIAL (machine slept mid-install). Run
-  `pnpm install --prefer-offline` before any hub gate run.
-- The lane specs' `server/index.ts` line numbers are stale at 28dace2 (+279 lines). Lanes were
-  told to re-locate by content; hold them to it.
-- Brand ratchet 63/63, zero headroom. Any lane adding a village name anywhere in the ratchet
-  zones goes red on a file it thinks is unrelated.
+- game-amora primary is on `voice-sweep-2026-08-01` (52 dirty); hub primary `regen-civics-clean`
+  on `ship-rite-truth` (87 dirty). NEVER work in either.
+- The full-suite mutex `C:/Users/taren/Desktop/Amora/.test-lock` became pathological under 5+
+  lanes (4-hour waits). Standing clearance: lanes may skip the local suite when the mutex is held
+  and CI is green on their tip — CI runs the identical suite on MySQL 9.4 and is authoritative;
+  local adds only MariaDB coverage. Lanes must release only locks they acquired.
+- Playwright `networkidle` never fires on this app (pulse endpoint + notification poller).
+- `railway variables` needs `--service "Amora Game"` from a project-linked dir (`wt-cost` is
+  linked); the standing test admin `integration-qa` is minted per
+  `docs/integration-program/tools/mint-test-token.mjs` — secret from stdin, never on disk.
+- Brand ratchet 63/63, zero headroom; read `$?`, and `$?` after a pipe is the pipe's exit.
+- Two of every three "hollow green" incidents this program had were a missing/BOM'd `.env`.
 
-## 6 · What I got wrong since the last handoff
+## 6 · What I got wrong since the last handoff (all recorded in §9 at full prominence)
 
-- Dispatched the initial state-measurement fetch as a foreground call with the default timeout;
-  it timed out on a slow network and cost a round. Fetches here go in the background with 300s.
-- Launched a locator subagent for facts (game-amora path, Saberra zip) that one `ls` against the
-  Lane C brief's paths would have answered; the agent stalled and was wasted spend. Read the
-  briefs' own paths first.
-- The original plan (pre-addenda) had the ledger as one file and the ADR as an afterthought;
-  Addendum 1 corrected both before any damage. If you find prompt-vs-addendum conflicts, the
-  addenda win on facts, the skill wins on method.
+- Misrouted two mid-flight messages to the wrong lane (handles read swapped) — verify handles
+  against the dispatch record.
+- Compressed a research relay into a claim that conflated a KB policy figure with a contract
+  clause — Lane M correctly refused to transcribe it.
+- Wrote a brief whose root-cause hypothesis was wrong (F1 measured the truth) and whose target was
+  a raw count that a sampled sweep cannot reach — write HARM metrics as targets.
+- Misapplied a game-amora CI memory to the hub when briefing Lane P (hub has no bundle budget).
+- Let a lane report "eleven gates" after CI had grown to twelve — the count lives in `ci.yml`.
 
 ## 7 · The protocol
 
-Every claim carries the ref it was measured at. CODED / VERIFIED / DONE, and no evidence means
-CODED. A lane reporting done without a ref, gate output and skip count has not reported done.
+Every claim carries the ref it was measured at. CODED / VERIFIED / DONE; DONE means CI green on
+that SHA AND the live build marker matches AND, where the change is user-visible, a live probe.
+A lane reporting done without a ref, gate output and skip count has not reported done.
