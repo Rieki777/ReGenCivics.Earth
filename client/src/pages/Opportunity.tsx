@@ -252,35 +252,6 @@ function PulsingDot({ color = '#7dd87d' }: { color?: string }) {
   );
 }
 
-// Highlight card for key callouts
-function HighlightCard({ icon: Icon, title, children, accent = false }: {
-  icon?: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div className={`rounded-xl p-5 border transition-all duration-300 hover:scale-[1.01] ${
-      accent 
-        ? 'bg-gradient-to-br from-[#7dd87d]/15 to-[#4a7c59]/10 border-[#7dd87d]/40 shadow-[0_0_20px_rgba(125,216,125,0.08)]' 
-        : 'bg-white/5 border-white/10 hover:border-white/20'
-    }`}>
-      {Icon && (
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${
-          accent ? 'bg-[#7dd87d]/20' : 'bg-white/10'
-        }`}>
-          <Icon className={`w-4 h-4 ${accent ? 'text-[#7dd87d]' : 'text-white/70'}`} />
-        </div>
-      )}
-      <h4 className={`font-bold text-sm mb-1.5 ${accent ? 'text-[#7dd87d]' : 'text-white'}`}
-        style={{ fontFamily: 'var(--font-display)' }}>
-        {title}
-      </h4>
-      <div className="text-white/60 text-xs leading-relaxed">{children}</div>
-    </div>
-  );
-}
-
 // =============================================
 // MAIN COMPONENT
 // =============================================
@@ -1545,7 +1516,7 @@ export default function Opportunity() {
             </CollapsibleSection>
 
             {/* ===== SECTION 5: RISK FACTORS (collapsible) ===== */}
-            <CollapsibleSection title="Risk Factors & Mitigation" icon={AlertTriangle} id="risk-factors">
+            <CollapsibleSection title="Risk Factors & Mitigation" icon={AlertTriangle} id="risk-mitigation">
               <div className="overflow-x-auto mb-4">
                 <table className="w-full border-collapse text-xs">
                   <thead>
