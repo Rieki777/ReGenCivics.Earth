@@ -52,6 +52,7 @@ The coordinator's live state is NOT here. It is `/INTEGRATION_LEDGER.md` and
 | `round4/REMEASURE_2026-08-16_1030.md` | Workflow lane's re-measurement: main still `135db66`, PR #16 open, five dirty worktrees named with their diffs, migrations, CI = 14 steps, impact notes. |
 | `round4/SOCIOCRACY_MAPS_RESEARCH_2026-08-16.md` | Peerdom, Holaspirit, GlassFrog, Sobol, Maptio, Kumu, SoFA, Nestr, D3 zoomable packing; the 14-point interaction spec for `/map/circles`; layout-engine decision. |
 | `round4/NOW_VISION_INSPECTION_2026-08-16.md` | What Now and Vision draw in `grounds-v0.html` (verified by a second agent), the sheen defect, three candidate models, test plan. |
+| `round4/briefs/LANE_*.md` | The ten round-4 lane briefs (L1 library flow, L1a catalog art, L2 How Power Is Held, L3 How Resources Flow, L4 grounds handover for the map session, L5a calendar core, L5b calendar community, L6 Your agent, L7 Intents & Introductions, L8 three persona QA). Dispatch state lives in the ledger §2. |
 
 ## Saberra
 
