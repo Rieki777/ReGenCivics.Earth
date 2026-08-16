@@ -334,6 +334,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-16 ~13:55 EDT · **L1a commit B pushed (`7bde527`, all eighteen images ≤ 25,600 B, set 456,406 B, ratchet lowered to measured 2,268,846); CI red on Bundle budget only (6136 > 6000 KB) → R33 raises the dist ceiling to 6600 on L1a's branch.** L6 asked and was granted an additive `headers` opt on `guardedFetchJson` (header HMAC over the raw body) and a sibling `MEMBER_DRAFT_KINDS` export.
 - 2026-08-16 ~13:35 EDT · **Brief review applied (binding amendments on eight briefs; R28 numbering note); L6 DISPATCHED** (its zone: assistant*/villageReaders/Profile.tsx/docs/skills/new /api/agent block, untouched by every dirty worktree; dependencies on L5a/L7 handled by adapter + flag per amendments). L1a milestone 1 accepted (style sheet sent to Rye). L5a told to register jobs inside its events block. Held: L1, L2 (housing, map-org still dirty), L3, L7 (after L1), L4 handover, L8.
 - 2026-08-16 ~13:05 EDT · **90-minute check (R30): main `3c295b8` live; other session rebased, still dirty, no go. R31/R32 recorded. Ten round-4 briefs committed (`round4/briefs/`); L1a and L5a DISPATCHED (disjoint zones, R32); L1/L2/L3/L6/L7 held; L4 handover ready to send; next check 60 min.** Brief-drafting workflow: 10/10 files written; 8 agents and the review agent died on the session limit AFTER writing (files complete, review to re-run).
 - 2026-08-16 ~11:00 EDT · **R27–R29 recorded; workflow lane re-measured game-amora and researched the map.** Facts: main STILL `135db66` (nothing landed from the other session), PR #16 open (grounds inspector, MERGEABLE), five dirty unpushed worktrees hold their real work (`wt-doors`, `wt-map-org` incl. `orgChart.ts` archetypes, `wt-map-overlays`, `wt-map-geometry`, `wt-housing` incl. untracked `0077`), CI = 14 steps, `0083+` free on every ref. Sociocracy-map research → 14-point interaction spec for `/map/circles` (adopted into L2). Now|Vision inspection verified: Now hides only phase-3 blueprints, so phase-2 pools at 0–35% show as WIP and Vision adds three ghosts + overlays; sheen paints in Now (defect); tooltip promise untrue; model B (three tiers, gated promotion, shared "vision with exit conditions" block) recommended. Proposal §10 + `round4/` memos committed. Waiting on Rye's N1–N8 and on the other session's landings (R27).
@@ -451,6 +452,18 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R33** (2026-08-16, coordinator ruling, Rye may override): **the game-amora dist ceiling `MAX_TOTAL_DIST_KB`
+  is raised once from 6000 to 6600 KB for the catalog art**, on L1a's branch in its own commit. Measured
+  by L1a: CI run 31961496849 on `7bde527` failed only the Bundle budget step ("dist/public is 6136 KB, over
+  the 6000 KB budget"); main sits at ~5628 KB by `du -sk`, ext4 rounds each ~25 KB WebP to 28 KB, eighteen
+  files + directory = 508 KB. Reasoning: the images are lazy per card, so the mobile-relevant budget
+  (`MAX_MAIN_JS_KB` 700) is untouched; the image ratchet itself is green (2,268,846 bytes over 56 files,
+  lowered with `--update-baseline` after the one sanctioned raise); the dist number is a ceiling, not a
+  ratchet, and the proposal's "~25 KB × 18" was priced against the image ratchet, never against this
+  ceiling (coordinator's miss, logged in §9). 6600 leaves L1's lazy pages room; the next raise needs its own
+  ruling. Also fixes the stale "4 MB of slack" sentence in `scripts/check-image-budget.mjs`. Rejected:
+  shrinking to 20 KB (breaks the quality floor on busy scenes) and the uploads volume (rejected in the
+  proposal for the reason the quest posters taught).
 - **R32** (2026-08-16, coordinator ruling at the 90-minute check, Rye may override): **start the lanes whose
   zones no dirty worktree touches; hold the rest.** At 12:56 EDT the other session had not landed and had
   sent no go (its five worktrees were rebased onto `3c295b8` and are still growing). Rye's instruction was to
@@ -667,6 +680,8 @@ docs-only and do not touch main.
 ---
 
 ## §9 Paid lessons (seeded; append the day they happen)
+
+- **2026-08-16 · A budget priced against one gate is not priced.** The catalog art was sized against the image ratchet (bytes) and never against the dist ceiling (`du -sk` blocks): 18 × 25 KB became 508 KB on ext4 and tripped `MAX_TOTAL_DIST_KB` by 136 KB after the images were already painted. Rule: when a lane will add static bytes, price them against EVERY size gate in `ci.yml` (image ratchet, artifact budget, main JS, total dist) in the brief, in the gate's own unit.
 
 - A worktree's name says nothing about its ref (`wt-integrate` ≠ integration home; `gov-overflow`
   sits detached at 1428603).
