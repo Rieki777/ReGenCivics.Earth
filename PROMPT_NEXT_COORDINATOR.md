@@ -72,9 +72,11 @@ costs minutes, not the round.
    `curl -s https://amora.regencivics.earth/health` → live build. Write both to ledger §0.
 2. `git -C C:/Users/taren/Downloads/regen-civics-clean fetch origin` → hub `origin/main`.
 3. `gh pr list` in both repos: anything open is a lane's unlanded work.
-4. For every worktree in `git worktree list` (both repos): `git status --short | wc -l`,
-   `git log -1`, `git rev-parse origin/<branch>`. Committed vs pushed vs dirty decides
-   resume-vs-redispatch. **Never re-dispatch fresh over a worktree with dirty files** — that is how
+4. For every worktree in `git worktree list` (both repos): `git status --short` (any line =
+   dirty), `git log -1` (compare with the base ref in ledger §2), and
+   `git merge-base --is-ancestor HEAD origin/<branch>` (pushed?; lane branches often have no
+   upstream, so `[ahead N]` cannot be trusted). Four classes: dirty / pushed /
+   committed-not-pushed / untouched (clean at the base ref) decide resume-vs-redispatch. **Never re-dispatch fresh over a worktree with dirty files** — that is how
    work is done twice or reverted. Resume the lane from its own transcript with "commit your work
    first with `git add -p`, then continue."
 5. Four-way migration scan before allocating a number: remote refs, LOCAL refs on every worktree,
