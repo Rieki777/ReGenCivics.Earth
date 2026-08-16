@@ -724,3 +724,183 @@ Where a recommendation changed, the old one is named.
 L1 (+ L1a art) → L2 and L5a in parallel → L3 (`resources`) and L5b → L7 (intents + brief) → L6 (BYO
 agent, security-reviewed) → L4 (grounds patch, other session or after it lands). Follow-up queued: the
 `land` / `power` module split (ADR).
+
+---
+
+## §9 Rulings received (R27, R28) and the open conversation
+
+Rye 2026-08-16: ["We'll wait for the other coordinator session to finish before starting this one"] (R27);
+["Final list to rule on - yes if not mentioned"] with three amendments (R28): item 8 gains an **Other**
+section; item 13's radiation becomes **every producing sprite always has a ring: one icon of each capital
+at once when it gives several, several of the one icon when it gives one**; ask 5 must **aggregate every
+dated thing** (events, date-specific quests, "and more") and Admin gains an **Events section that attaches
+a Google Calendar (etc.)**. Asks 2 and 4 stay open for conversation. What follows is the deeper pass on
+those three.
+
+### 9.1 Ask 2, talked out: what the module must answer, and the questions only Rye can settle
+
+The module is worth building only if a member, a visitor and a founder each get an answer they cannot get
+today. Today they can read seats and holders at `/map/circles` and static prose at `/governance`. Nobody
+can read *how a decision gets made here*, *who I go to*, or *what shape this village is*.
+
+**Five answers the map gives, in one picture:**
+1. **What shape is this village?** (village-level `shape`, R28 adds Other) drawn as the geometry itself:
+   rings, tree, council ring, flat ring, steward centre, network. A spectrum legend from "one holds it" to
+   "all hold it", with the village's marker on it and the shape's one-line gloss.
+2. **How does each circle decide?** (per-circle `decides_by`, R28 adds Other) as a chip on the circle,
+   with a plain gloss on tap ("Consent: a decision passes when nobody has a reasoned objection").
+3. **Who holds what, and where am I?** seats with holders' character avatars, open seats as open calls,
+   partial seats as "1 of 3", terms ending this season marked. Tap a person: profile, character, seats,
+   term, contact relay (existing tiers: faces and names for members, structure only for the public).
+4. **How does power move?** the existing relations (reports to / advises / covers / double-links) drawn
+   when the shape asks for them, plus **term ends and the season roll** shown as time ("Kitchen lead:
+   term ends at the equinox"), so the map is not a frozen chart.
+5. **If I disagree, where do I go?** a per-circle **escalation** relation ("objections go to: Council")
+   drawn as a thin arrow, so the objection path is visible rather than tribal knowledge.
+
+**The setup walk** (R28 yes): steps every open or partial seat, then any circle without a decides-by, then
+the village shape; assign / skip / open call; the member tray shows avatars; ends with "publish structure
+to the network?" (already nameless by construction).
+
+**Beauty:** the picture stays SVG (deterministic, snapshot-tested, mobile accordion) but takes the painted
+world's palette: parchment field, the circle homes' colours from `CIRCLE_COL`, avatars in painted frames,
+morph animation between shapes. The land map is where sprites live; the power map is where the structure
+lives; both share colour and vocabulary.
+
+**Questions for Rye (defaults in brackets):**
+- P1 **Now and Vision.** The land map has Now | Vision. Should the power map too: the shape and holders
+  we have now, and the shape we are growing toward ("steward now, circle by season 4"), drawn as a ghost?
+  [default: yes, using `org_drafts` as the Vision layer, since a draft is already "a reorganisation you
+  can read before it is true"].
+- P2 **Decides-by per circle, or per circle × domain?** One method per circle is simple. Members' real
+  question is often "who decides about *money* vs *people* vs *land* vs *rules*". [default: one method per
+  circle in v1 plus optional overrides for exactly four domains: money, people, space and land, rules;
+  the resources card reads the money one].
+- P3 **Names to the public?** Today the public sees structure without faces or names; members see people.
+  Keep that for the power map [default: yes; a village can widen it with the existing `map.public_structure`
+  variable].
+- P4 **Amora's own shape now**, so the lane seeds a real example instead of a blank: steward, council,
+  circle, or a stated transition? [default: seed the vocabulary and leave Amora's answer to you in Admin;
+  say the word and it ships pre-filled].
+- P5 **Escalation as a first-class relation** ("objections go to") in v1 [default: yes; it is one relation
+  type in the existing table].
+- P6 **Terms and elections on the map** (term ends, next season roll, "who chooses the next holder":
+  appointed by lead / elected by circle / rotates) [default: show term ends and roll in v1; "how chosen"
+  as a per-role field in v1 since it is the heart of "how power is held"].
+- P7 **Where Hypha appears**: a small "binding record: Hypha DHO" chip on circles whose decisions bind
+  on-chain (mechanics ring 2), deep-linking via the tools module [default: yes, display only].
+- P8 **Resources v1 units and cadence**: rules in USD and in village tokens; budgets per season or per
+  lunar cycle? [default: both currencies allowed per rule; budgets per season, since dials already turn
+  at cycle boundaries and a season is what a founder plans in].
+- P9 **Funding-source kinds** to ship as the picker: donations, memberships, stays, grants, sales, land
+  or lease, investors, other [default: that list; edit it].
+- P10 **Who may declare** shape, methods, rules and sources: admins only, or admins plus a capability
+  (`org.structure`) so a coordination circle can hold it? [default: admins plus one capability, matching
+  how `health.record` was split from admin].
+
+### 9.2 Ask 4, talked out: what was learned and how it benefits us
+
+Lesson → evidence → what it means for a residential village → what we build.
+
+1. **The durable part was the APIs and a folder of markdown skills; the hosted agents were the cost and
+   the breakage.** 239 agents, 17.5B tokens, $60–90K sought for a month, provisioning collapsed at the
+   first workshop, a heartbeat cron burned ~2.4M tokens a day per agent. → We are the API. Members' own
+   agents (or none) read the calendar, the directory tier they may see, and their intents; we ship
+   `SKILL.md` files. Zero tokens on our side; works for every fork; hosted agents only ever as a Managed
+   listing with a vendor and a price.
+2. **People seek, they do not offer.** 75% of intents were seeking, 3% explicitly offering; agents inferred
+   supply. → Do not ask people to list what they offer; **infer offers** from what the village already
+   knows (badges and skills, seats held, quests completed) and show "you could offer…" as a pre-filled
+   suggestion the member confirms. That is the difference between an empty offers board and a live one.
+3. **Bridging beat bonding.** 67% of sought connections crossed clusters. → Matching favours people
+   outside your circle and your arrival cohort; the weekly brief carries one "someone you have not met"
+   line; the concierge routes newcomers past the obvious.
+4. **Discovery is easy; valuation is the bottleneck.** 9,688 detected → 572 surfaced (6%) → 147 accepted;
+   negotiations shrank to 1.5 turns as agents learned taste. → **Few, good introductions.** The brief
+   carries at most two or three; a village default policy ("two great introductions beat ten okay ones")
+   and a per-member policy line ("no more than one a week", "only about food and land"). Deterministic
+   scoring with a confidence floor; nothing under it is shown.
+5. **Popular people got saturated.** After one talk four or five people messaged the same person; "arranging
+   the meetings became its own burden". → Extend the existing per-recipient contact cap
+   (`map.contact_recipient_daily_cap`) to introductions, and let a member publish **"meet me" windows**
+   on the calendar (a slot type from ask 5): introductions land in a window instead of in an inbox pile.
+6. **Consent is a recorded step, hidden stays hidden, every write is confirmed.** The onboarding ritual
+   asked one verbatim consent question before touching profile data; `*` fields were never inferred; the
+   agent showed the exact payload before any write. → Same three rules for our concierge, intents matching
+   and any BYO-agent token: an opt-in sentence before profile data is used for matching, capability tiers
+   respected by construction, RSVP and intent posts confirmed by the human. It is already our posture; now
+   it is written into the briefs.
+7. **Hallucinated self-summaries were the sharpest harm.** "It hallucinated an interesting summary about
+   me." → Wherever the assistant says something *about a person* (routing, matching, the brief), the
+   member can see the sentence, its source, and correct or withdraw it. Templates and citations first;
+   "I don't see that anywhere" when the data is absent.
+8. **Chat was the wrong surface for anything needing review.** Opportunities scrolled away in Telegram;
+   residents asked for a persistent app. → Opportunities and the brief live in Messages/notifications with
+   accept controls, and by email; never only in a chat stream.
+9. **Individually helpful agents did not add up to collective good** (shared credits and shared attention
+   drained; simulated voters allocated $10K without principals ratifying). → Humans ratify, always (our
+   standing rule); the assistant may *draft* a member's position on a proposal from their stated values
+   ("help me weigh this"), and the member posts it. Drafts-only, like roles and circles.
+10. **The most interesting builds came from residents** who pointed their own tools at published skills.
+    → Publish ours; the module library's last card and the $ReGen pool are the invitation.
+11. **Time-to-yes was human time.** 4.9 s of agent negotiation, a median 20 h until both said yes. →
+    Design for the slow yes: one reminder, no urgency, an expiry that returns the intent to the pool.
+
+Who benefits, concretely: **residents** get introductions worth having and one brief a week;
+**members** get an intents board where offering is inferred and matching respects their policy;
+**visitors** get What's On, the public calendar feed and the map's Now mode; **founders** get a demand
+signal (unmatched intents beside the concierge's unmatched queries: which role or module to create next).
+
+**Questions for Rye (defaults in brackets):**
+- A1 Intents and introductions as one library card, "Introductions", requiring `messaging` [yes].
+- A2 Who may post intents: members, plus guests with an active stay [yes; visitors read only].
+- A3 Infer offers from badges, seats and quests and suggest them for confirmation [yes].
+- A4 The brief: weekly, sent in village time on an evening you pick, opt-out per member [yes; Sunday
+  evening default; lunar-week cadence available, off].
+- A5 "Meet me" windows on the calendar as an introduction landing place [yes, in L5b].
+- A6 Per-member policy line for introductions (frequency, topics) [yes].
+- A7 REST + `SKILL.md` now, MCP later only if measured small [yes].
+
+### 9.3 Ask 5, amended: everything dated, and external calendars
+
+**Everything dated, through providers.** Each module contributes a `calendarProvider(range, viewer)` that
+projects its own rows into calendar items (kind, title, start, end, all-day, layer, link, colour), gated
+by the module's lifecycle and the viewer's tier; the source of truth never moves. The assistant's events
+reader reads the same feed, so "what is on this week" includes everything below. Providers, measured
+against the schema:
+- **Gatherings** (`events`, `event_rsvps`): as today, plus recurrence and layers.
+- **Quests with a window**: quests carry no date today (`duration` is free text). Add optional
+  `starts_at`, `ends_at`, `due_at` (nullable) so a planting day or a deadline is a calendar item; quests
+  without dates stay off the calendar. Also **quest crews' meetups** if a crew sets one (0067).
+- **Stays**: `arrive_on` / depart per stay → the "who is here" band (counts for visitors, names for
+  members).
+- **Gratitude cycles** (`gratitude_cycles.starts_at/ends_at`): cycle open, cycle close due (marks only;
+  close remains a human act).
+- **Seasons and the sky**: season starts and ends from `SeasonConfig.seasons`, solstices and equinoxes,
+  cross-quarters optional, new and full moons, the year anchor.
+- **Seasonal festivals** (`SeasonalFestivals` page reads `/api/season`): each festival with its date.
+- **Seats**: `org_role_assignments.term_ends_at` → "term ends", and the season roll date.
+- **Calls** (automation module): the weekly call as a recurring item where the village sets it.
+- **Material Library**: loan due dates for the borrower (private layer).
+- **Exits**: `notice_ends_at` for the member and admins (private).
+- **Launch milestones** (JourneyToLaunch) and **health snapshots** per lunation, admin layer.
+- **External calendars** (below).
+
+**Admin → Events section: attach a Google Calendar (etc.).** v1 is **subscribe by iCal URL**: Google's
+"secret address in iCal format" or a public calendar's `.ics`, Apple, Outlook, Luma, Meetup, any `.ics`.
+A founder pastes the URL, names it, picks a layer and visibility and a colour; the scheduler polls it on
+a window (every few hours; a timer, allowed: only cycle close and season roll are forbidden), imports
+events by UID (dedupe, update, soft-remove when gone upstream), expands upstream RRULEs, marks them
+`source: external` (read-only mirror; RSVP still works on our side because the kitchen still counts
+heads). Several calendars per village. The URL is a credential when it carries a secret token: stored in
+the village secrets store (source + last4, never returned), fetched server-side over https only with the
+SSRF guard, and the feature goes through security review. Two-way (write back to Google) is v2 via OAuth;
+one-way the other direction already exists the day our `.ics` feed ships (Google subscribes to us).
+
+**Questions for Rye (defaults in brackets):**
+- C1 Quests gain optional start/end/due dates and appear on the calendar when set [yes].
+- C2 External calendars v1 = subscribe by iCal URL (Google secret address, Luma, Apple, Outlook, any
+  `.ics`); Google OAuth two-way = v2 [yes].
+- C3 Imported events keep RSVP on our side [yes].
+- C4 Which private layers exist in v1: mine (loans, exits, my RSVPs), admin (milestones, snapshots),
+  village, public [yes].
