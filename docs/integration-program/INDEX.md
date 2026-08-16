@@ -31,6 +31,15 @@ The coordinator's live state is NOT here. It is `/INTEGRATION_LEDGER.md` and
 | `PROMPT_LANE_C_MODULE_LIBRARY.md` | Lane C brief: the library platform, phases C1/C2. Dispatched with amendments (ledger §8-R6). |
 | `PROMPT_LANE_S_SABERRA_LISTING.md` | Lane S brief: Saberra as first listing, stages 0–5 first, stage 0 can end the lane. |
 
+## Round 4 (Amora: library flow, power and flow map, capitals overlay, agent lessons, calendar)
+
+| File | What it is |
+|---|---|
+| `ROUND4_PROPOSAL_2026-08-16.md` | Coordinator working paper: Rye's five asks verbatim, as-built facts at `135db66`, improvements, 24 numbered questions with defaults, draft lane plan L1–L7. PROPOSED, nothing dispatched. |
+| `round4/AGENT_VILLAGE_DIGEST_2026-08-16.md` | Digest of the Cosmos Institute "We gave a village personal AI agents" article and every link it carries (Index Network, EdgeOS, Geo, Hermes, agentvillage repo, issue #100). |
+| `round4/CALENDAR_RESEARCH_2026-08-16.md` | Community calendar designs (12 read) + the 12/13-moon astronomy and four dual-calendar layouts, 46 sources. |
+| `round4/moons-2025-2028.mjs` | The `astronomy-engine` script behind the memo's new-moon / full-moon / solstice counts. |
+
 ## Saberra
 
 | File | What it is |

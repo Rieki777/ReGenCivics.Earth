@@ -34,6 +34,17 @@ content**) and `drizzle/0076` (foundation-economy merged). Byte-unchanged: `CLAU
 game-amora worktree count at measurement: **30** (includes other sessions' scratchpad worktrees —
 they count as migration-number holders, §3).
 
+**UPDATE 2026-08-16 08:13 EDT (round 4 open, coordinator re-measured):** game-amora `origin/main` = **`135db66`**
+(PR #15 e2e-audit-race, on top of `25f08eb` map overlays/plates/journey PR #12), live `/health` build
+`2026-07-28-wave1-135db66` MATCHES. Hub `origin/main` = `cbec306` (unchanged since handoff). `gh pr list`
+game-amora: none open. game-amora worktree count **52**. **Concurrent session ACTIVE**: `wt-doors` (26 dirty),
+`wt-housing` (13 dirty, carries `drizzle/0077_housing_availability.sql`, the gap number), `wt-map-inspector`
+(11), `wt-map-org` (3), `wt-map-overlays` (3), `wt-map-geometry` (2), `wt-maia` (0), all cut at `25f08eb`
+07:51–08:08 EDT, none pushed, patching `docs/prototypes/grounds-v0.html` (= live `/map`, served by
+`server/index.ts:18524`). Nothing of ours in flight. Read-only scout worktree `wt-r4-scout` (detached at
+`135db66`) created for round-4 grounding; remove it at dispatch. Migration numbers: main ends `0082`; `0077`
+gap being filled by wt-housing; `0080` reserved; round 4 allocates from `0083+` after the four-way scan.
+
 ---
 
 ## §1 Rules
@@ -311,6 +322,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-16 ~08:45 EDT · **Round 4 opened (Amora): five asks from Rye by Telegram, improved and grounded before dispatch, NOTHING DISPATCHED.** Two read-only scouts at `135db66` + two research lanes (Agent Village digest, every link followed; community + lunar calendar research with `astronomy-engine` measurements) → `docs/integration-program/ROUND4_PROPOSAL_2026-08-16.md` (asks 1–5: as-built, improvements, 24 numbered questions with defaults, draft lane plan L1–L7) + `round4/AGENT_VILLAGE_DIGEST_2026-08-16.md`, `round4/CALENDAR_RESEARCH_2026-08-16.md`, `round4/moons-2025-2028.mjs`. Facts that reshape the asks: enabled and published are ONE lifecycle enum; Admin nav ignores module state; no image field; `/library` is the Material Library; live `/map` is the grounds artifact another session is patching now; the eight capitals exist only in an unbuilt spec while the map has nine *media* glyphs; the calendar is a UTC list with no recurrence/.ics and the village TZ drives seasons only; `CycleClock` moon ring never fills (0–1 phase divided by 29.53 again); `shared/lunar.ts` is a ±14 h mean clock shared by gratitude, pool and now the calendar. Waiting on Rye's rulings (R27+).
 - 2026-08-15 19:38 EDT · **Hub PR 2 VERIFIED LIVE** — projections observed on regencivics.earth (actorId/metadata and adminNotes keys gone). Both security PRs are DONE by the program's definition. **The program has nothing in flight and nothing unverified.**
 - 2026-08-15 ~19:45 EDT · **HUB SECURITY PR 2 MERGED (#43 → hub main `cbec306`) — Lane HS COMPLETE.** All ten HIGH + eleven MEDIUM + four extras projected across two PRs; the check-in token abuse path is closed and verified live; three judgement calls reasoned from the hub's own ADRs (votes unattributed; 3-decimal coordinates; server-side ownership boolean). Every lane of rounds 1–3, the cost programme, the fix set, and the security work is now merged; nothing is in flight. Rye's rotation (item 18) is the open action.
 - 2026-08-15 19:29 EDT · **PR #14 DONE live at `68f832e`** — CI green, build marker matches. game-amora is fully deployed through the last small fix; only HS PR 2 (hub) remains in flight.
