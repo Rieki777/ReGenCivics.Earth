@@ -436,6 +436,24 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R28** (2026-08-16): **Rye ruled the round-4 list** (`ROUND4_PROPOSAL_2026-08-16.md` §7 + §8 amended
+  items 1–26), his words: ["Final list to rule on - yes if not mentioned"], with three amendments in his
+  words: item 8 ["also have an 'other' section"] (shape and decides-by each gain an Other entry with a
+  required one-line description shown in the legend); item 13 ["radiation (if a sprite is having all 9
+  forms radiating it should show one icon of each at the same time radiating out - if it's just 1 it can
+  have a few of those one type radiating out so that every sprite has a radiation ring if it's producing
+  one)"] (supersedes the coordinator's one-icon-at-a-time cycling: every producing building always shows a
+  ring; N distinct capitals → one icon of each at once; one capital → several of that icon; caps and LOD
+  keep the frame budget); ask 5 ["make sure all the events, quests (that are date specific), and more is
+  found in the calendar - then have an events section in admin where a founder can attached a google
+  calendar (etc) to populate the calendar"] (the calendar aggregates every dated thing in the village
+  through per-module providers, and Admin gains an Events section that subscribes external calendars).
+  Asks 2 and 4 stay open for design conversation before briefs are written.
+- **R27** (2026-08-16): **Round 4 does not dispatch until the other coordinator session lands.** Rye's
+  words: ["We'll wait for the other coordinator session to finish before starting this one so there
+  should be less worktrees and conflicts with the codebase - so we'll continue planning right now"].
+  Consequence: no lane is cut while `wt-doors`, `wt-housing`, `wt-map-*`, `wt-maia` are dirty; the
+  coordinator re-measures worktrees and main before the first dispatch; planning continues meanwhile.
 - **R26** (2026-08-15): **The mobile harm class is "partially visible and dead"** — a control whose top edge shows above the fixed bar while its centre is under it (the original login shape). A control WHOLLY under the bar at first paint is below the effective fold: not visible, reachable by scroll (V2 measured 0 unreachable), not the login harm. V2's two residuals are that second kind and are routed as cheap UX layout moves, not as harm. The closing verdict for round 2's mobile fixes is therefore PASS on both harm metrics as defined, with the `/quests` 375 CTA and store 360 regression as follow-ups.
 - **R25** (2026-08-15): K2's decision RATIFIED — the batch synthesis path ships **off by default** (`assistant.synthesis_batch=false`, founder ring). There was no scheduled synthesis to move; adding one that runs itself would break the automation module's promise that nothing applies itself. The road exists; a village turns it on. Also ratified: the poll job's budget gate is check-only (a timer must never charge the interactive day budget by merely ticking).
 - **R24** (2026-08-15): **Assistant cost programme** (Rye: "can we bring that cost down more by
