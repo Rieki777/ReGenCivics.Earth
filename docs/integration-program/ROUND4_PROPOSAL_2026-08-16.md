@@ -597,3 +597,130 @@ Migrations from `0083`, one lane at a time through the four-way scan.
 
 Every default above is what I dispatch with if you reply "defaults" and nothing else. Anything you strike
 or add goes into the ledger as R27+ in your words before a brief is written.
+
+---
+
+## §8 Second pass (Rye: "go through one more time and give any upgrades or fixes ... reconsider your suggestions")
+
+Read adversarially against the code facts and against his words. Numbered so a ruling can point at one.
+Where a recommendation changed, the old one is named.
+
+### Cross-cutting fixes
+1. **The concurrent-session conflict is wider than §0 said.** `wt-housing` edits `client/src/pages/Admin.tsx`,
+   `client/src/App.tsx` and `server/index.ts`, the same three files L1 must touch. Fix: L1's Admin change
+   is written as one small filter function over `navGroups()` (minimal line overlap), L1 rebases onto main
+   the moment housing lands, and I ask the other session for its landing order before cutting L1. If
+   housing is days away, L1 still goes first and takes the rebase.
+2. **Test mutex.** Seven concurrent worktrees plus three of ours will make `.test-lock` pathological again.
+   Every brief carries the standing clearance verbatim (skip local when held AND CI green on the tip;
+   release only locks you acquired).
+3. **Migrations pre-allocated at dispatch** after the four-way scan: L2 `0083`, L3 `0084`, L5 `0085`,
+   L7 `0086`; `0077` belongs to housing; `0080` Saberra. Never renumber.
+4. **Brand ratchet is 63/63 with zero headroom** and `check-voice` parses `shared/`. Catalog copy for
+   eighteen modules is platform language, never the village's brand, and no dashes, or the lane will
+   spend its afternoon on the gate instead of the work. Said in the brief up front.
+5. **Bring-your-own-agent tokens are a new credential type** (scoped read + two writes) and go through
+   `/security-review` before merge, with rate limits, revocation, and audit rows on every write. Not
+   optional.
+
+### Ask 1 upgrades
+6. **Public read-only catalog (changes Q3).** I had "no public catalog in v1". Reversed: `/modules` is
+   public and read-only, showing platform copy only; a village's on/off state renders only for signed-in
+   members (already public via the nav and `village.json` at members+), and preview never renders to
+   anyone but admins. Cost is nothing (the `/api/modules` projection already exists), it is the
+   platform's own "what a village can be" page, and it is where a builder sees the shelf the $ReGen pool
+   pays into. Default flips to public.
+7. **Core modules get cards too**, marked "Always on" with their benefits, so a founder reads the whole
+   game in one place instead of four missing cards.
+8. **Group the shelf**: a `group` per module (Coordinate / Recognise / Host and earn / Know and decide /
+   Connect), five headed rows instead of one wall of eighteen. Small field, big difference to
+   "beautiful".
+9. **The last card is "Build one, get paid in $ReGen"**: links `docs/modules/BUILDING_A_MODULE.md` and
+   the hub's builders' pool page. That is R20's incentive made visible at the exact moment a founder
+   wishes a module existed.
+10. **Turn on with example content.** The platform already has standing examples (`is_example` rows,
+    `server/lib/examples.ts`, six tables carry the flag). Where a module supports it, the Turn-on step
+    offers "start with example content" so a freshly turned-on module is never an empty page, and the
+    Go-live card can say "3 examples showing; replace or remove them before going live". Existing
+    machinery, no new concept.
+11. **The Go-live card only offers tiers a module's dependencies allow.** `feed` requires `forum`; feed at
+    public with forum at members is a wall of broken links. The card greys "Everyone" and says why. The
+    dependency rank check exists on the enable path; this reuses it on the publish path.
+12. **Lifecycle badge on the Admin tab itself** (preview / members / everyone), so a founder always sees
+    where a module stands without opening the library.
+13. **Images: two decisions, both reconsidered.** (a) *Style*: I said quest-poster. Better: the module
+    images are **places in the village painted in the grounds map's own style** (Events = the commons at
+    dusk with lanterns; Material Library = the tool shed; Stays = the guest cabin; How Power Is Held = the
+    council fire). It ties the library to the map the village already knows, and it is one style, not
+    two. Recommend painted-world; poster is the fallback if you prefer. (b) *Where they live*: bundle
+    (raise the image ratchet once, deliberately, in the same commit, at ~25 KB x 18 = ~450 KB) or hub CDN
+    (`assets.regencivics.earth/modules/<id>.webp`, no ratchet cost, forks show the fallback offline). The
+    uploads volume is out: the fourteen quest posters had to be hand-copied to Railway because the seed
+    never repeats (ledger item 11). Recommend bundle: forks stay self-contained and R19's WebP standard
+    holds; the ratchet raise is a ruling, not a habit.
+
+### Ask 2 upgrades
+14. **Do not split module ids this round (fixes a hidden cost in Q6).** The `map` module gates the land
+    map AND the org chart AND the concierge under one `/api/map` prefix, interleaved. Carving a `land`
+    module out is a contract-visible id change (village.json publishes ids; the pool counts them) inside
+    the concurrent session's `server/index.ts` zone. So card A "How Power Is Held" **is** the `map`
+    module, its card copy says "includes the Living Map of the land", and the clean `land` / `power`
+    split is queued as a follow-up ADR for after the grounds program lands. Honest and cheap now; right
+    later.
+15. **Shape is village-level; decides-by is per circle (simplifies §2 card A item 1).** A per-circle
+    shape inside a nested-circle layout is geometrically awkward (a pyramid inside a ring) and doubles
+    the layout matrix. The pyramid-to-circle question is about the whole organisation; the *how we
+    decide* question is genuinely per circle. Per-circle shape moves to v2.
+16. **A guided "setup walk", which is what "founders can go through and place" literally says.** On the
+    org map: a Walk button steps through every open or partial seat in order, highlights it, offers the
+    member tray (avatars), assign / skip / "open call", with a progress bar; on mobile the same walk as
+    a card stack. Ends with the shape and decides-by chips for any circle still blank. It is the
+    onboarding for the module and the reason a founder finishes it.
+17. **Card B gets one action: "Request approval".** A member who reads "up to $500 with Kitchen consent"
+    taps Request, and the platform opens a **forum proposal** (the decision primitive already exists,
+    `proposal.open`) in the circle's category, pre-filled with the amount, the rule and the payer. The
+    map of rules becomes a working thing with zero new decision machinery, and outcomes are recorded
+    where decisions already are.
+18. **Module id `resources`, not `flows`**, so it never collides with the land map's `map_flows` scene
+    block or the "Flows" overlay button in conversation.
+19. **The Capitals view on the land belongs to `map`** (declared per structure in the scene), independent
+    of whether `resources` is on. `resources` draws the rules on the org map. Both read
+    `shared/capitals.ts`.
+
+### Ask 3 upgrades
+20. **Plain labels first, jargon second.** Legend reads Money, Materials, Living things, Knowledge,
+    Experience, Relationships, Culture, Spirit, Health; the tooltip carries the formal name (financial,
+    material, living, intellectual, experiential, social, cultural, spiritual, health and wellbeing).
+    Visitors are the audience of the map.
+21. **Viewport cull and zoom LOD beat a global cap alone.** Only buildings in view emit; zoomed out past
+    a threshold, radiation collapses to a static row of small capital badges under each building; zoomed
+    in, the rising icons. The global caps (24 / 10) stay as the safety net.
+22. **The editor is the map inspector** the other session is building (per-structure fields), which is
+    another reason Q14's default (they take the grounds patch) is right; our lane ships the vocabulary,
+    the defaults, and the org-map side.
+
+### Ask 4 upgrades
+23. **Reorder: intents and the brief (L7) before bring-your-own-agent (L6).** At Amora's scale most
+    residents will never run an agent; everyone reads a brief and everyone benefits from a good
+    introduction. L6 stays in the round, second, behind its security review. **Visitors** are served by
+    the calendar's public layer, the `.ics` feed and What's On on the visit page; nothing further.
+
+### Ask 5 upgrades
+24. **Freeze the past when the true clock lands (tightens Q18).** Gratitude rows already carry
+    `cycle_id` stamped at write (`0001_init.sql:87`, `0010` adds the numeric twin), so history would not
+    reassign; the table still applies only from the deployment lunation forward and reproduces the mean
+    formula's boundaries for every earlier cycle, so "no past boundary moves" is true by construction,
+    not by test alone. Both repos take the same table.
+25. **The year anchor is a game variable** (`calendar.year_anchor`: December solstice | March equinox |
+    June solstice | September equinox), hemisphere-aware default (December for the north, June for the
+    south). Amora's default: December solstice. A white-label platform cannot hard-code the north.
+26. **Split L5 in two.** L5a core: dual view, village time, true clock, recurrence, `.ics`, CycleClock
+    fix. L5b community: waitlist, slots, layers, who's here, the weekly brief. L5a is already a full
+    lane; L5b follows it in the same round. Q20's default becomes "L5a then L5b".
+27. **Recurring events need an occurrence identity for RSVPs** (`event_rsvps` keyed by event + occurrence
+    date + user). Named here so the migration is designed once.
+
+### Amended lane order
+L1 (+ L1a art) → L2 and L5a in parallel → L3 (`resources`) and L5b → L7 (intents + brief) → L6 (BYO
+agent, security-reviewed) → L4 (grounds patch, other session or after it lands). Follow-up queued: the
+`land` / `power` module split (ADR).
