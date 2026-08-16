@@ -49,6 +49,9 @@ The coordinator's live state is NOT here. It is `/INTEGRATION_LEDGER.md` and
 | `round4/AGENT_VILLAGE_DIGEST_2026-08-16.md` | Digest of the Cosmos Institute "We gave a village personal AI agents" article and every link it carries (Index Network, EdgeOS, Geo, Hermes, agentvillage repo, issue #100). |
 | `round4/CALENDAR_RESEARCH_2026-08-16.md` | Community calendar designs (12 read) + the 12/13-moon astronomy and four dual-calendar layouts, 46 sources. |
 | `round4/moons-2025-2028.mjs` | The `astronomy-engine` script behind the memo's new-moon / full-moon / solstice counts. |
+| `round4/REMEASURE_2026-08-16_1030.md` | Workflow lane's re-measurement: main still `135db66`, PR #16 open, five dirty worktrees named with their diffs, migrations, CI = 14 steps, impact notes. |
+| `round4/SOCIOCRACY_MAPS_RESEARCH_2026-08-16.md` | Peerdom, Holaspirit, GlassFrog, Sobol, Maptio, Kumu, SoFA, Nestr, D3 zoomable packing; the 14-point interaction spec for `/map/circles`; layout-engine decision. |
+| `round4/NOW_VISION_INSPECTION_2026-08-16.md` | What Now and Vision draw in `grounds-v0.html` (verified by a second agent), the sheen defect, three candidate models, test plan. |
 
 ## Saberra
 

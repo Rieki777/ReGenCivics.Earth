@@ -904,3 +904,175 @@ one-way the other direction already exists the day our `.ics` feed ships (Google
 - C3 Imported events keep RSVP on our side [yes].
 - C4 Which private layers exist in v1: mine (loans, exits, my RSVPs), admin (milestones, snapshots),
   village, public [yes].
+
+---
+
+## §10 R29 folded in: re-measurement, the map/circles rebuild, Now | Vision, the agent harness, one calendar
+
+Sources: `round4/REMEASURE_2026-08-16_1030.md`, `round4/SOCIOCRACY_MAPS_RESEARCH_2026-08-16.md`,
+`round4/NOW_VISION_INSPECTION_2026-08-16.md` (inspection + a second agent that tried to refute every
+factual claim; four claims were narrowed, none of the recommendation's premises fell).
+
+### 10.1 What the other session has actually landed: nothing yet
+- `origin/main` is still `135db66` and live matches; `git log 135db66..origin/main` is empty. Every file
+  our lanes touch is at the exact content the plan was written against; rebase cost today is zero.
+- **Open PR #16** (`wt/integrate` @ `065a278`, MERGEABLE): `grounds-v0.html` +431/−16 (inspector tips,
+  listbox, homes dials, import type-checks) and 3 lines in `shared/mapScene.ts`. `wt-map-inspector`'s
+  tracked edits are byte-identical to it.
+- **Five dirty, unpushed worktrees still hold real work**, all cut at `25f08eb`: `wt-doors` (+587/−167 on
+  the artifact, doors and escaping), `wt-map-org` (+338 on the artifact, plus `server/lib/orgChart.ts` +22
+  `OrgRole.archetypes`, `server/index.ts` +5, `LivingMap.tsx` +54, four org tests), `wt-map-overlays`
+  (+146/−5, top band and help threads), `wt-map-geometry` (+3/−2), `wt-housing` (Admin tab + panel,
+  `/reserve` route, six `/api/housing/*` routes, +341 lines in `server/index.ts`, untracked
+  `drizzle/0077_housing_availability.sql`). Nothing on any ref anywhere holds an unmerged drizzle file;
+  `0083+` is safe. CI at main is **fourteen** `run:` steps.
+- Consequences: (a) "basically done" means their agents finished, not that the work is on main; until PR
+  #16 merges and the five worktrees are committed, pushed and landed, nothing of theirs is safe to build
+  on and R27 holds; (b) `wt-housing` will collide textually with L1 in `Admin.tsx`'s tab array and
+  `App.tsx`'s route list; (c) `wt-map-org`'s `orgChart.ts` archetypes change is exactly the file L2 starts
+  from, so L2 should branch after it lands (or absorb the diff); (d) `grounds-v0.html` has five competing
+  patch sets with no established order; that is theirs to resolve, and it is why L4 waits.
+
+### 10.2 Ask 2 becomes the map/circles rebuild
+Rye: ["this module is going to be an improvement on map/circles (which right now is very poorly done ...)"].
+The research memo compared Peerdom, Holaspirit/Talkspirit, GlassFrog, Sobol, Maptio, Kumu, SoFA and S3
+diagrams, Nestr, and Bostock's zoomable circle packing, on top of the internal `PEERDOM_LESSONS.md`. Its
+14-point interaction spec is adopted whole into L2's brief; the headline decisions:
+- **Tap a circle to zoom into it** (van Wijk `interpolateZoom`, 400 ms, `?focus=` in the URL so a view is a
+  link and Back works); tap the focused ring or the crumb to zoom out; a tap on a seat never moves the
+  camera. **Breadcrumb bar** Village › Circle › Sub-circle. **Focus + context**: siblings at 30%, labels
+  only for children of the focus, never hide the rest (Kumu's mistake).
+- **Five seat states, five glyphs, colour never alone**: open call (dashed hollow ring, "+"), partial (pie
+  fill of held/needed, notch per empty seat, "1 of 3"), filled (avatars), forming (dotted, hourglass),
+  expired (greyed avatar, clock). Legend with counts. GlassFrog hides unfilled roles; we do the opposite,
+  vacancy is the most-asked question.
+- **Search is "who does X"**: the concierge bar gains type-ahead over seats, circles, aims,
+  accountabilities and holders; selecting zooms to the circle and pulses the seat (Holaspirit's auto-zoom,
+  NN/g's suggested search cut a lookup from 1 min 44 s to 2 s).
+- **Filters as chips** (open seats, my seats, expiring soon, one circle); tapping any avatar filters to
+  that person's seats (Peerdom). **Relation lines on demand**, never all at once: double links as two
+  short arcs (leader down, delegate up, the SoFA convention), `org_relations` as dashed chords for the
+  focused circle only, and the new **escalation** relation (P5).
+- **Term and season markers** (amber arc within 30 days of term end, clock on expired, a season ring with
+  the next roll date), P6's **"how the next holder is chosen"** on the seat card.
+- **Layout engine: keep the hand-rolled deterministic ring pack** (a new sibling moves one arc slot, not
+  the whole map, which is the spatial-memory promise the file exists to keep) and import only
+  `interpolateZoom` for the camera, driven through framer-motion. Force layouts stay banned.
+- **Keyboard and a11y**: every circle and seat focusable, Enter zooms/opens, Esc zooms out, live region
+  announces "Now inside Land Care, 3 seats, 1 open"; reduced motion collapses transitions.
+- **Accordion fallback** kept: below 480 px, or when the smallest seat would render under 24 px, or by
+  choice. **Performance**: fine to ~60 circles / 400 seats; above that avatars only in the focus circle;
+  above 1,000 nodes canvas. **Print/export** honours `map.public_structure`.
+- Plus the R29 layers: **three decision layers with a lens** (P2): village overall, circle, domain
+  (money / people / space and land / rules) as chips and a "How we decide" lens that colours circles by
+  method and shows domain overrides as small marks; ask "who decides about money?" and the map highlights
+  the deciding body per circle. **Hypha as a decider** (P7): `decides_by` gains `hypha` and the seat/circle
+  card always carries the DHO deep link via the tools module. **Ships pre-filled** (P4): every vocabulary,
+  the shape, the methods, currency and sources seeded as `is_example` rows renameable in Admin.
+- **Power Now | Vision** (P1): Vision = an `org_draft` (already "a reorganisation you can read before it
+  is true") plus a `vision` block: `objectives: [{text, metric, target, current, source: measured|declared,
+  done}]` and `trigger: {all_objectives_done, by?}`. Measured metrics come from what the platform already
+  counts (seats filled, members at a stage, seasons completed, decisions recorded); declared ones the
+  founder ticks. When every objective is met the platform **prompts** "Vision conditions met: apply this
+  structure?", and a human applies the draft (atomic, revertable, as today). Nothing applies itself.
+- **Currency** (P8): new project settings `country` and `currency` (Amora `CR` → `CRC`), universal default
+  `CHF` when no country is set, per-user display currency in the site header, amounts stored as minor
+  units + ISO code (the `ModulePricing` pattern), a daily ECB rate table cached by the scheduler (a
+  timer, allowed) with the original currency shown when no rate exists. Stripe settlement stays what it is
+  (`usd` in `payments.ts`); the display layer never changes what is charged. Note: no country, location or
+  fiat currency field exists in `gameConfig` today; the lane adds them.
+- **Who may declare** (P10, "admins plus whomever is elected to represent a circle/domain"): admins, a
+  capability `org.declare`, **and** the current holders of an org role flagged `represents_circle` for
+  that circle only. That last clause is a scoped bridge from the seat plane to a permission, which
+  `0049_org_roles.sql` deliberately did not have; the lane records it as an ADR (one narrow, per-circle
+  exception, never a global capability) so the architecture stays honest.
+
+### 10.3 Now | Vision on the land map, talked out (verified against the artifact)
+- **What the code does**: `mode` hides only `state === 'blueprint'`, and blueprint requires `phase >= 3`
+  (or phase ≥ 3 with an empty pool). Every phase-2 structure, including four with pools at 0–35% (market,
+  possiblespring, ridgeB, sanctuary), draws in Now with a WIP sprite or scaffold and a progress ring, and
+  every building a founder places in build mode is born phase 2 (`grounds-v0.html:3696`), so it shows in
+  Now too. Vision adds only three far-south ghosts (guest, healing, trailhead), some geometry overlays
+  (zones, planned roads, water lines, footprints, `vision_bound`), and dashes four funding banners. Seven
+  of seven "future" buildings have identical emblems in both modes. The tooltip promises "Now: only what
+  is" (`:5573`); the code does not deliver it. `docs/prototypes/FIXES_TO_MAKE_2026-08-08.md:192` states
+  the intended asymmetry ("Now stays honest and Vision does the revealing"), applied to the terrain bake
+  and never to the structure layer.
+- **Two defects on the way**: the "vision sheen" full-map tint paints in Now as well because it sits in the
+  `else` of `mode==='now' && SKIN.mist` and mist defaults off (`:2050-2054`); and `library` is phase 1
+  ("Built") yet derives "Under construction". Phones have no toggle button (the bar is hidden on pocket)
+  but the mode still flips from the `v` key and the Maia intent, so tests must not assume "phones stay
+  Now". Canvas assertions must be scoped to the sat/paint raster; the vector bake draws ghosts in both
+  modes.
+- **Recommended model (B): three tiers, two views, gated promotion.** Keep `phase` as the founder's tier
+  and make Now and Vision agree with it: **Now** = phase 1 built, plus phase 2 that is *in motion* (pool
+  above zero, or an active build quest or build day) drawn as WIP; **Vision** = all of that plus phase 3
+  ghosts, plus phase 2 with an empty pool drawn as ghosts rather than WIP, plus `vision_bound`. Each
+  structure gains the **same `vision` block as the power map**: `objectives` with metric/target/current
+  and a `trigger`. Promotion 3 → 2 requires every objective done (or a logged founder override); 2 → 1
+  requires the pool at 100% and a "built" objective. In Vision, a ghost's panel lists its objectives and
+  a "what would make this real" line; a Vision journey walks the ghosts in dependency order. Fix the
+  sheen and the tooltip in the same patch. Model A (Now = only fully built) throws away the "watch it
+  become walls" story; Model C (a year slider) needs a new field on 47 items and rewrites every mode
+  branch.
+- **One concept, two maps**: "a vision with exit conditions" is the same block for a building on the
+  land and for a governance structure on the power map. Same fields, same prompt, same rule that a human
+  applies. That is P1's "so that it doesn't just stay a forever future vision" made mechanical once.
+- **Test plan** (Playwright, `docs/prototypes/qa/`, three viewports incl. pocket 390×844): in Now every
+  visible POI is phase 1 or in-motion phase 2, hidden count = phase 3 + idle phase 2; in Vision they
+  reappear as `st-blueprint` with ghosted banners and the minimap dot count rises by the same number;
+  sheen pixel alpha in Now equals the mist-off baseline; derived state and promotion gates; export/restore
+  round-trips the `vision` block; hit-test and flows visibility match; zero page errors; the tooltip text
+  matches behaviour. This is a grounds-side patch (Q14) queued behind the five patch sets already in
+  flight there.
+
+### 10.4 Ask 4: the agent harness in every profile
+Rye: ["our app should ship with the ability in everyone's profile to connect their own LLM agent to serve
+them and support them - we provide the harness and the foundations for each member to connect their own
+agent!"]. Two shapes, both in the profile under one heading, **Your agent**:
+1. **Outbound, "bring your agent"**: a personal access token (scoped to what the member already sees, two
+   writes: RSVP and post an intent, every write confirmed, revocable, audited), the shipped `SKILL.md`
+   files and an OpenAPI slice, copy-paste setup cards for Claude Code, Hermes, OpenClaw and any
+   OpenAI-compatible agent, and an optional **agent inbox URL** (a webhook the member sets) so the weekly
+   brief and opportunities are also delivered to their agent, not only to them.
+2. **Inbound, "run the village assistant on your own key"**: the member stores their own LLM key (encrypted
+   at rest in the per-member secrets pattern the village store already uses, never returned) and the
+   in-app concierge/assistant answers *their* questions on *their* key and budget. This is a cost lever
+   for the village and the cleanest reading of "connect their own LLM to serve them". Provider scope is
+   the open question: the assistant speaks the Anthropic tool format today; supporting OpenAI-compatible
+   endpoints (OpenRouter, Ollama, most others) needs one adapter.
+3. **Foundations both share**: a member-controlled "about me for my agent" note with privacy tiers, the
+   consent sentence before profile data is used for matching, the show/correct control on anything the
+   assistant says about a person, and per-member policy lines for introductions.
+
+### 10.5 Ask 5: one calendar, one table
+Rye: ["Make sure we have only 1 calendar and source of truth per village where all dates live"]. So the
+providers design tightens into **one table**: the existing `events` table becomes *the* calendar
+(`calendar_items` in spirit) and gains `kind` (gathering | quest-window | festival | season | sky |
+cycle-mark | seat-term | call | loan-due | notice-end | milestone | external | meet-me), `source_module`,
+`source_id`, `layer`, recurrence, occurrence identity, and `external_uid`. Modules write their dated facts
+**into it** on their own save path (`calendar.upsert(kind, sourceRef, when…)`), so a quest window is stored
+once, on the calendar row, and the quest keeps only a reference; computed sky events (moons, solstices,
+equinoxes, the year anchor) are generated as rows once per year, idempotently, so they are subscribable
+and queryable like everything else; external calendars import into the same table with `source:
+external`; the `.ics` feed, the assistant's reader, the wheel, the week view and What's On all read one
+table. Settlement and governance timestamps (`gratitude_cycles`, `term_ends_at`, `notice_ends_at`) stay
+authoritative on their own rows because they are legal facts, and are **mirrored** in with the source
+named, so every date appears in exactly one calendar and no page computes its own.
+
+### 10.6 Questions for Rye (defaults in brackets)
+- N1 Now | Vision on the land: model B, three tiers, gated promotion, sheen and tooltip fixed [yes].
+- N2 One "vision with exit conditions" block shared by land structures and power drafts; the platform
+  prompts when conditions are met, a human applies [yes].
+- N3 The map/circles rebuild adopts the 14-point spec; keep the deterministic ring pack, import only the
+  zoom interpolator [yes].
+- N4 Currency: `country` + `currency` project settings (Amora CRC), CHF universal default, per-user
+  display toggle, daily ECB rates cached, Stripe settlement untouched [yes].
+- N5 Declare rights: admin, `org.declare`, and holders of a role flagged `represents_circle` for that
+  circle, recorded as a one-exception ADR [yes].
+- N6 Your agent: both shapes; v1 providers for the inbound key = Anthropic plus one OpenAI-compatible
+  adapter (base URL + key) [yes]; agent inbox webhook in v1 [yes].
+- N7 One calendar table as in 10.5; settlement timestamps mirrored, not moved [yes].
+- N8 Landing order before we cut: PR #16 merges, then the five dirty worktrees are committed, pushed and
+  landed by your other session (housing first, since it collides with L1). I can send that session the
+  exact list through the session bridge, or you tell it [I send it].
