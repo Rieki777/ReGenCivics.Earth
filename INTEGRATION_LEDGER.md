@@ -437,6 +437,29 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R31** (2026-08-16): **Closing phase of round 4: three persona QA passes on live, mobile first.** Rye's
+  words: ["After all your lanes pass and our live, we're gonna run three comprehensive QA passes against
+  the live site with three unique perspectives for how to navigate the site and what they're looking for
+  so that we get a full and robust test preference for mobile as that will be our main platform that
+  people are using to explore the site to ensure the highest quality look for any ways that we can improve
+  improvement any design improvements, any routing improvements anyways that people can navigate the site
+  in a more effective way anything that can make it easier for them making sure we're taking care of all
+  bugs and overlapping buttons and design things that just aren't of the highest standard we're releasing
+  a world class platform here I wanna demonstrate as being a world class and the QA passes are to identify
+  ways to make that possible"]. Coordinator reading: three report-only QA lanes (the round-2 L/V shape,
+  `LANE_L_AND_V_LIVE_QA_BRIEFS.md`), each a distinct persona with its own goals and navigation habits
+  (e.g. a first-time visitor on a phone deciding whether to visit; a new member finding their seat, the
+  calendar and the map; a founder administering modules on a phone), against live after every round-4
+  lane is DONE; verdicts as harm metrics plus ranked improvement lists (design, routing, navigation,
+  overlapping controls, polish); coordinator triages into fix lanes with disjoint zones. Mobile is the
+  primary viewport set (WebKit iPhone 14 DPR3 390×844 / 390×664 / 375×812, +360), desktop secondary.
+- **R30** (2026-08-16): **Go signal and defaults.** Rye's words: ["Excellent! The other session will let
+  you know when to start building! If the other session doesn't check back in 90 minutes to see if it
+  finished and get started"]. Consequence: dispatch starts on a message from the other session, or at the
+  90-minute check (one-shot scheduled 12:56 EDT) if PR #16 has merged and the five dirty worktrees are
+  landed or clean; never over dirty worktrees (R27). N1–N8 of proposal §10.6 stand at their defaults
+  under R28's "yes if not mentioned" (N8: the coordinator may message the other session through the
+  session bridge with the landing list). Briefs are drafted now so dispatch is immediate.
 - **R29** (2026-08-16): **Rye ruled the ask-2/4/5 conversation** (proposal §9), his words in brackets.
   Ask 2 reframed: [this module is going to be an improvement on map/circles (which right now is very
   poorly done - research some better sociocracy maps and see the interaction of those maps and how they
