@@ -11,6 +11,25 @@ registry), §4 (queue), §6 (blockers), §8 (rulings R1–R25), §9 (paid lesson
 first. Home: `C:/Users/taren/Downloads/regen-integration` on `wt/integration` (hub repo; this
 branch is docs-only and is NOT merged to hub main). Invoke `swarm-supervisor` before anything.
 
+## 1a · UPDATE 2026-08-16 ~08:50 EDT: round 4 opened, PROPOSED, nothing dispatched
+
+- game-amora `origin/main` = **`135db66`**, live matches; hub main `cbec306`, live. No PRs open. Nothing
+  of ours in flight.
+- **A concurrent session is active** on seven dirty, unpushed worktrees cut at `25f08eb` this morning
+  (`wt-doors`, `wt-housing` (carries `drizzle/0077`), `wt-map-inspector`, `wt-map-org`, `wt-map-overlays`,
+  `wt-map-geometry`, `wt-maia`), patching `docs/prototypes/grounds-v0.html`, which IS the live `/map`.
+  Do not dispatch anything that touches that file or `shared/mapScene.ts` until it lands; hand grounds-side
+  work to that session as a patch brief (proposal §6, Q14).
+- Rye's five asks (module library flow; power/resources map module; eight capitals on the flows overlay;
+  Agent Village lessons; 12/13-moon village calendar) are grounded and improved in
+  `docs/integration-program/ROUND4_PROPOSAL_2026-08-16.md` with 24 numbered questions, each with a default,
+  and a draft lane plan L1–L7. **Wait for his rulings (R27+), record them verbatim, then brief and
+  dispatch.** If he answers "defaults", dispatch with every default as written.
+- Scout worktree `C:/Users/taren/Desktop/Amora/wt-r4-scout` (detached at `135db66`, read-only) exists;
+  remove it (`git worktree remove`) when the first round-4 lane is cut.
+- Two live defects found by the scouts, both belong to lane L5: `CycleClock.tsx:36-39` moon ring never
+  fills; the calendar windows and renders in UTC while the village TZ drives seasons only.
+
 ## 2 · State at handoff (2026-08-15 18:10 EDT)
 
 **game-amora `origin/main` = `72a7fca`, live `/health` build = `72a7fca`.** Every landing of
