@@ -68,3 +68,8 @@ CycleClock, true clock, `.ics`, external calendars, quest date fields, month nam
 ## Report format
 
 Tip SHA; PR number and merge commit; the L5a names found on main and which hypotheses above measured false; the fourteen gate outputs pasted with the enumerated step list; `pnpm test` skip count and duration; harm metrics 1-7 with test file and result; the `weekly-brief` job's first `scheduled_jobs.last_result` on the scratch DB; live probe evidence (URL, build marker, screenshots of week view, band, print preview); status CODED / VERIFIED / DONE; requests handed to the coordinator (out-of-zone files, `quests.created_at`, `depart_on`).
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Design 7 (weekly brief): `opportunities` comes from L7's `opportunitiesForBrief(pool, userId)` when it exists on main at your tip; if L7 has not landed, export `setOpportunitiesProvider(fn)` from `server/lib/calendarBrief.ts` so L7 wires it with one line later. Say which case you shipped in the report.
+2. Register your jobs inside the events route block, never at the `startScheduler` anchor (L5a and L6 were both aiming at that line; each lane registers inside its own block).

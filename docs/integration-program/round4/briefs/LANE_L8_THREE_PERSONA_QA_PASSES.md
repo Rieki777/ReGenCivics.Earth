@@ -76,3 +76,8 @@ Writes to live: none. Local write pass: <yes/no>, scratch schema dropped.
 Paths: docs/integration-program/round4/qa/persona-N/ (REPORT, findings.json, verdicts.json, unmeasured.json, screenshots/).
 Status: CODED / VERIFIED / DONE.
 ```
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Report format: if any script lands by PR, include the fourteen enumerated CI steps' outputs, `pnpm test` skip count and duration, and the tip SHA, like every other lane; report-only findings need no gates.
+2. R31 (Rye verbatim) is in the ledger §8; the persona definitions in this brief implement it.

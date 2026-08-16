@@ -72,3 +72,12 @@ Worktree `wt-r4-power`, branch `wt/r4-power`, migration `0083`.
 ## Report format
 
 Tip SHA and PR number; a fourteen-row gate table (step, command, exit code, one output line); test summary with skip count, duration and whether `TEST_DATABASE_URL` was set; `--status` for `0083`; live probe per viewport with the `/health` marker; one line per harm metric with CODED / VERIFIED / DONE and evidence (file:line, test name, probe output); boundary exceptions used and written requests raised; hypotheses measured (ECB CRC coverage, `archetypes` on main, `d3-interpolate` audit) with results.
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Boundaries: add `package.json` and `pnpm-lock.yaml` for `d3-interpolate` only.
+2. Expose for L3 (which draws the resources lens without editing your files): `PowerMap.tsx` accepts `lenses?: React.ReactNode` rendered inside the SVG after seats, and the layout function takes a `pad` (outer margin) argument so L3 can draw an outer ring; name both in your report. `shared/money.ts` exports `formatMoney(minor, currency, display?)` as you planned.
+3. Design 4 (currency): also export `CurrencyPicker` from `client/src/components/power/`; the site-header mount is a coordinator follow-up (say so in the report), the picker lives on the legend footer in v1 as you wrote.
+4. R28 "item 8 gains an Other section" refers to the rulings-list item 8 = YOUR shape and decides-by vocabularies: each gains an `other` value with a required one-line gloss the legend shows. Confirmed reading.
+5. `wt-map-org` (the other session) will land `OrgRole.archetypes` in `orgChart.ts` before you dispatch: branch after it lands (the coordinator cuts your worktree from that main).
+6. `shared/modules.ts` stays L1's file: the catalog rename to "How Power Is Held" is L1's; you do not touch the registry.

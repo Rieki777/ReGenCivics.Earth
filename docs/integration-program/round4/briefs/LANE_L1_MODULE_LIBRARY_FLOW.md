@@ -66,3 +66,12 @@ Catalog images (L1a); mobile bottom bar has no module gate (`mobileNav.ts`); "As
 ## Report format
 
 One message: status (CODED / VERIFIED / DONE), tip SHA and PR number, the fourteen gates each with its output line (skip count and duration for `pnpm test`), the seven harm metrics each with evidence (test name, probe output, byte sizes), the `TAB_MODULE` decisions measured (Org Chart, Season Shapes, Payments), any written request and its answer, and what could not be measured and why. Live probe: `/health` marker, `/modules` and one detail page at 1280 and 390, anonymous only.
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Boundaries: `shared/moduleCatalog.ts` also exports `POOL_REASON_COPY` and `BUILDER_GUIDE_URL`, lifted out of `Admin.tsx` (they are module-local constants there, `Admin.tsx:3277` and `:3288` at `3c295b8`); `Admin.tsx` gains one import line for them.
+2. Design 8: `TAB_MODULE` (in `client/src/lib/adminNav.ts`) is the single owner of tab-to-module mapping and ALSO maps `resources-admin -> resources` and `intents-admin -> introductions` now, so L3's and L7's tabs stay hidden until their modules are on. `navGroups()` array: you own it; L3, L7 and L5a add exactly one line each and rebase over you.
+3. Design 2: rename the catalog `name` for `map` to "How Power Is Held" with the gloss "includes the Living Map of the land" (proposal §8 item 14, R28), and for `events` to "Village Calendar" (L5a's request). Groups stay FIVE: R28's "item 8 gains an Other section" refers to the RULINGS LIST item 8 (the shape and decides-by vocabularies, L2), not to proposal §8 item 8 (the shelf groups). No sixth group.
+4. Steps 7: prepend "run `/security-review` on the public catalog route and the image PUT (`/api/admin/modules/:id/image`) before the PR".
+5. Your `shared/moduleCatalog.test.ts` proves every `MODULES` id has a catalog entry, group and setup: write it so a later lane adding an entry to `MODULES` AND `moduleCatalog.ts` passes (L3 and L7 will).
+6. R30/R31 text: R30 = the proposal §10.6 defaults N1..N8 stand ("yes if not mentioned"); R31 = three persona QA passes on live after round 4. Both are in the ledger §8; you do not need them beyond that.

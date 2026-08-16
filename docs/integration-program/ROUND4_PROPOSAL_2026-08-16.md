@@ -729,6 +729,11 @@ agent, security-reviewed) → L4 (grounds patch, other session or after it lands
 
 ## §9 Rulings received (R27, R28) and the open conversation
 
+> **Numbering note (added after the brief review):** R28's "item 8" and "item 13" refer to the **rulings list
+> in the coordinator's chat message** (the 26-item "Final list to rule on"), where item 8 = the shape and
+> decides-by vocabularies (they gain an Other entry) and item 13 = radiation. They do NOT refer to §8 of this
+> paper (where item 8 is the shelf groups and item 13 is images). The shelf stays five groups.
+
 Rye 2026-08-16: ["We'll wait for the other coordinator session to finish before starting this one"] (R27);
 ["Final list to rule on - yes if not mentioned"] with three amendments (R28): item 8 gains an **Other**
 section; item 13's radiation becomes **every producing sprite always has a ring: one icon of each capital

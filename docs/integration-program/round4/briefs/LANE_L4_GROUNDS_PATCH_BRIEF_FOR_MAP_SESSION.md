@@ -76,3 +76,8 @@ Worktree and branch for this handover: your session's own worktree and patch ser
 ## Report format
 
 One message to the coordinator: patch file names in order; commit and merge-commit SHAs; `check-artifact-budget --json` before and after; the fourteen gate outputs on the tip (test skip count and duration); probe output for `verify_capitals_vocab.js`, the capitals probe and `verify_modes.js` at all three viewports; screenshots per viewport (Materials, Capitals, Now, Vision, pocket Vision via `v`); inherited reds left alone; the live `/map` probe after merge with the `/health` build marker. Status CODED / VERIFIED / DONE per the rule above.
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Design A5 (radiation), one sentence that reconciles the ruling with the budget: **the ring itself is never culled or capped: every producing sprite always shows its ring, one icon of each capital it gives (or several of its one capital); the 24-desktop / 10-pocket caps, the viewport cull and the zoom-LOD collapse to a static badge row apply to the RISING icons only.** R28 item 13 is Rye's verbatim ruling; this sentence is how it stays true on a phone.
+2. R28 "item 13" is the RULINGS LIST item 13 (radiation), which is what you implemented; ignore any reading that maps it to proposal §8 item 13 (images).

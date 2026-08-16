@@ -178,3 +178,10 @@ duration for `pnpm test`, TEST_DATABASE_URL set yes/no); `0086` applied locally 
 harm-metric tests by name with pass output; live probe: `/health` build, `/api/modules` shows `introductions`,
 `/introductions` signed out; the usage-row query for `mode = 'introductions'`; written requests raised;
 status CODED / VERIFIED / DONE with the reason it is not higher.
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Boundaries: add `shared/moduleCatalog.ts` (ONE entry for `introductions`) and `client/src/lib/adminNav.ts` `TAB_MODULE` (one line `intents-admin -> introductions`); ONE line in `navGroups()` (L1 owns the array; rebase over it).
+2. Design 8: export `createIntent(pool, userId, input)` for L6's confirmed write, and export `opportunitiesForBrief(pool, userId)` for L5b's digest; when `enqueueAgentDelivery` (L6) exists on main at your tip, call it once per surfaced opportunity, otherwise leave a named `TODO(L6)` the coordinator wires after L6 lands. If L5b has landed first, wire your `opportunitiesForBrief` into its `setOpportunitiesProvider(fn)` with one line (that line is granted to you in `server/lib/calendarBrief.ts`).
+3. `noteAssistantUsage` is a private function in `server/index.ts` (`:1167` at `3c295b8`): inject it into `intents.ts` as a dependency from your route block; never import it.
+4. Steps 6: prepend `/security-review` (member-pii tables, a model call on member text, the `insertContactRequest` widening, the per-recipient cap).

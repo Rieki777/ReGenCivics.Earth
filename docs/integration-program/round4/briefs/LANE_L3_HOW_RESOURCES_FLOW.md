@@ -89,3 +89,10 @@ harm metrics: (a) ledger write grep <output> (b) one-proposal e2e <result>
 zone requests sent: <examples entry, MODULE_DOCS line, L2 pad prop, formatter name>
 could not measure: <list, with why>
 ```
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Boundaries: add `shared/moduleCatalog.ts` (ONE entry for `resources`: promise, benefits, forWhom, setupSummary, dataSummary, hue, emblem) and `client/src/lib/adminNav.ts` `TAB_MODULE` (one line `resources-admin -> resources`) so L1's catalog test and nav filter stay green; add ONE line to `navGroups()` in `Admin.tsx` (L1 owns the array; rebase over it).
+2. Draw the lens through L2's exposed slot: `PowerMap.tsx` `lenses` prop and the layout `pad` argument (L2 names them in its report); do not edit L2's files.
+3. R28 "Other section" is L2's vocabulary, not yours; your `approval` and `paidFrom` enums do gain an `other` value with a required note (same spirit).
+4. Prepend to your security step: `/security-review` covers the forum-proposal creation path you call and the new `/api/resources` block.

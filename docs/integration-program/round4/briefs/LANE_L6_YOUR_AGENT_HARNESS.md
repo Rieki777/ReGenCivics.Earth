@@ -72,3 +72,10 @@ Migration for this lane: `0087`. Worktree `wt-r4-agent`, branch `wt/r4-your-agen
 ## Report format
 
 Tip SHA; PR number and merge commit; each of the fourteen gate outputs (skip count and duration under Test); the seven harm metrics with the test file and name proving each; the security review verdict and open items; live probe results with build marker, route, viewport and screenshot path; the written requests sent (toolcheck `headers`, L7 wiring) and their answers; whether the intent write and adapter tools shipped or stayed behind their flags, and why; status per item CODED / VERIFIED / DONE; anything measured that contradicts this brief.
+
+## Coordinator amendments (post-review, 2026-08-16, binding)
+
+1. Register your jobs and routes inside your own `/api/agent` block; do not insert at the `startScheduler` anchor (L5a was pointed there too; each lane registers inside its own block).
+2. Post intents through L7's exported `createIntent(pool, userId, input)`; if L7 has not landed at your tip, ship the RSVP write and keep the intent write behind a flag with a named `TODO(L7)`.
+3. Export `enqueueAgentDelivery(userId, payload)` (webhook queue) for L7 and L5b; name it in your report.
+4. Ref drift at `3c295b8`: `drafts/:id/accept` is at `server/index.ts:9991`; anchor by route string.
