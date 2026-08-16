@@ -436,6 +436,32 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R29** (2026-08-16): **Rye ruled the ask-2/4/5 conversation** (proposal §9), his words in brackets.
+  Ask 2 reframed: [this module is going to be an improvement on map/circles (which right now is very
+  poorly done - research some better sociocracy maps and see the interaction of those maps and how they
+  work - like simple things like zooming in on a circle when clicked to more complex things like the
+  open/partial/filled roles along with graphics and details and so many ways we can make this map more
+  useful)]. New item: [We also need an agent to go through and fix/test the Now | Vision buttons on the
+  map as right now the "now" shows buildings being built and planned already so the vision button seems
+  redundant and not useful unless we improve how it's working (let's talk this out too)].
+  P1 [Yes we can have an optional Now and Vision for the governance and power too (to represent the very
+  common reality where now power may be concentrated but the vision is more democratic and the "vision"
+  should have the clear objectives/metrics that need to be met before it triggers so that it doesn't
+  just stay a forever future vision)]. P2 [Yes circles and domains and the overall (3 layers of different
+  decision making possible and having a lens for that too)]. P3 [Yes]. P4 [It ships pre-filled with all
+  variables in Admin to be renamed/set by the founder]. P5 [Yes]. P6 [Yes]. P7 [Yes - always a deep link
+  to Hypha if that is the decider]. P8 [Use Swiss Francs as the universal default currency and have a
+  admin toggle to choose whatever currency they want - always default to the country the map is located
+  in (so for Amora it will be set to CRC for Costa Rica). But have a site-wide toggle for a user to choose
+  which currency they want to see]. P9 not mentioned → default list stands. P10 [Admins plus whomever is
+  elected to represent a circle/domain etc].
+  Ask 4: [Love all the lessons our app should ship with the ability in everyone's profile to connect
+  their own LLM agent to serve them and support them - we provide the harness and the foundations for
+  each member to connect their own agent!] → bring-your-own-agent is a first-class profile feature
+  (harness + foundations), not an afterthought; A1–A7 defaults stand.
+  Ask 5: [Make sure we have only 1 calendar and source of truth per village where all dates live] → one
+  calendar per village; every dated thing appears there through providers; external calendars feed INTO
+  it, never beside it; C1–C4 defaults stand.
 - **R28** (2026-08-16): **Rye ruled the round-4 list** (`ROUND4_PROPOSAL_2026-08-16.md` §7 + §8 amended
   items 1–26), his words: ["Final list to rule on - yes if not mentioned"], with three amendments in his
   words: item 8 ["also have an 'other' section"] (shape and decides-by each gain an Other entry with a
