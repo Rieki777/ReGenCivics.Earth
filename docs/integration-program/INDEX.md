@@ -7,6 +7,15 @@ reference the Desktop paths; the Desktop copies stay until all three lanes have 
 The coordinator's live state is NOT here. It is `/INTEGRATION_LEDGER.md` and
 `/HANDOFF_NEXT_COORDINATOR.md` at the worktree root. Start there when resuming cold.
 
+## The coordinator's own method
+
+| Where | What it is |
+|---|---|
+| `/PROMPT_NEXT_COORDINATOR.md` | The takeover prompt: paste into a fresh session to run the next suite the same way. ReGen-specific layer (repos, gates, traps, rulings, Rye's list). |
+| `~/.claude/skills/swarm-supervisor/` (SKILL.md, `references/failure-catalogue.md`, `references/artifacts.md`) | The generic method, v1.1.0 (2026-08-16): artifacts incl. rulings register and handoff, brief and pre-dispatch templates, landing checklist, recovery sequence, 22 catalogued tool lies and the supervisor's own errors. Invoke `swarm-supervisor` before dispatching. |
+| `/INTEGRATION_LEDGER.md` §9 | Paid lessons, ReGen-specific, appended the day they happen. The skill's catalogue is the generic form of the same entries. |
+| `round2-qa/`, `round3-security/`, `round3-live-run/` | Audit reports, triage routing, closing proofs — the round shape (audit → triage → fix → closing proof) worked examples. |
+
 ## The program
 
 | File | What it is |

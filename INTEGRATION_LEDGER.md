@@ -719,6 +719,22 @@ docs-only and do not touch main.
   contain the string. Rule: before trusting any negative, prove the same pipeline returns matches
   on a known-present pattern, and prefer shape-based searches (the credential's format) over
   name-based ones (the variable you guessed).
+- **Relay research verbatim with its source, never compressed into a claim** (coordinator,
+  2026-08-15): my relay to Lane M merged Atlassian's knowledge-base policy figure (90 days) and
+  a contract clause (45-day takedown) into one sentence; M correctly refused to transcribe it.
+  A lane refusing a coordinator relay is a control working; ratify the refusal.
+- **Hazards are per-repo** (coordinator, 2026-08-15): I briefed Lane P (hub) with the
+  game-amora memory "CI has two gates CLAUDE.md omits" (bundle budget + audit); the hub has no
+  bundle budget and its audit is advisory. Any remembered fact about "the CI" names which CI.
+- **The gate count in a brief is stale the moment a lane merges** (coordinator, 2026-08-15):
+  F4's brief said eleven while D's merge had made it twelve; F4 caught it by enumerating
+  `ci.yml`. §5's header now says enumerate; briefs say "this list may have grown".
+- **Two coordinators now share `wt/integration`** (2026-08-16): a round-4 session committed
+  five times to this branch while the round-3 session was still open. Rule for both: pull
+  before every write, edit the ledger and handoff by hunk (never wholesale `Write` from an
+  in-memory copy), stage by path, and leave the other session's files alone. The
+  swarm-supervisor skill (v1.1.0, 2026-08-16) and `PROMPT_NEXT_COORDINATOR.md` carry every
+  lesson in this section in generic form.
 
 ---
 

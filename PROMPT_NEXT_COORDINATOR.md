@@ -34,6 +34,15 @@ costs minutes, not the round.
 - **The state you inherit is stale by definition.** At handoff game-amora main = `68f832e` (live),
   hub main = `cbec306` (live), nothing in flight, dormant lane worktrees on disk (all pushed).
   Re-measure before believing any of it (section 3).
+- **You may not be alone on this branch.** On 2026-08-16 a round-4 coordinator session was
+  committing to `wt/integration` while the round-3 session was still open (see ledger §9, last
+  entry, and INDEX "Round 4"). Before every write to a shared file: `git pull --ff-only`; edit the
+  ledger and handoff by hunk with Edit, never wholesale Write; stage by path; and check
+  `git log -5` for another session's commits before assuming your handoff is the latest.
+- **The generic method lives in the `swarm-supervisor` skill (v1.1.0)** — five artifacts plus the
+  rulings register and handoff, the brief and pre-dispatch templates, the landing checklist, the
+  recovery sequence, and the failure catalogue (22 tool lies + 5 supervisor errors). This file is
+  the ReGen-specific layer on top of it; when they disagree, the more recent ledger ruling wins.
 
 ## 2 · The protocol (non-negotiable)
 
