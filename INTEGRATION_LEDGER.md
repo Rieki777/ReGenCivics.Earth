@@ -337,6 +337,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-21 ~09:50 EDT · **R38 standing landing authorization recorded; hourly stall-catcher scheduled.** L1 in final gates; L2, L5b building.
 - 2026-08-21 ~09:40 EDT · **R37: the sign-in gate applies to ALL members-only pages (L1 addendum 2 widened).**
 - 2026-08-21 ~09:30 EDT · **R36 recorded (sign-in prompt, not 404, for members-only modules when signed out); addendum appended to L1's brief and sent to the running lane.**
 - 2026-08-21 ~09:20 EDT · **Events and Messaging enabled on LIVE at Rye's explicit instruction** (his words: ["Enable events and messaging on live"]). Coordinator, via the QA admin token: `events` → **public** (the calendar is the village's public face), `messaging` → **members** (member-pii; the Go-live default our own design prescribes). Verified live: anonymous `/api/events` 200; `/api/events/calendar.ics` 200 `text/calendar`, **42 VEVENTs** (12.1 KB); authed `/api/messages` 200, anonymous 401. The L5a DONE row's "dark until enabled" caveat is now closed.
@@ -462,6 +463,14 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R38** (2026-08-21): **Standing landing authorization for round 4** (Rye's words: ["Land the lanes as
+  they report and keep going"]). The coordinator merges each lane's PR without a per-lane ask when: the
+  lane reported per its brief (tip SHA, gates, skip count), `verify` is SUCCESS on that tip, the diff is
+  in-zone, and any security-review findings are fixed or accepted in writing. After each landing: CI on
+  the merge SHA, live `/health` marker, live probe, DONE row. Then the queue continues without pause:
+  L7 dispatches when L1 lands; L3 when L2 lands; L8's three persona QA passes when every build lane is
+  DONE; L4's handover goes whenever the map session wakes. A clause-13/security hit, an out-of-zone
+  diff, or a red gate still stops that lane and goes to Rye.
 - **R37** (2026-08-21): **Rye widened R36 to every members-only page** (his words: ["Apply the same
   sign-in prompt to all members-only pages"]). Consequence for L1: the shared sign-in gate replaces the
   inline `modules.loaded && !module → NotFound` pattern on EVERY module-gated page (one shared component
