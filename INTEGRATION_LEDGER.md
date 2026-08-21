@@ -337,6 +337,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-21 ~09:30 EDT · **R36 recorded (sign-in prompt, not 404, for members-only modules when signed out); addendum appended to L1's brief and sent to the running lane.**
 - 2026-08-21 ~09:20 EDT · **Events and Messaging enabled on LIVE at Rye's explicit instruction** (his words: ["Enable events and messaging on live"]). Coordinator, via the QA admin token: `events` → **public** (the calendar is the village's public face), `messaging` → **members** (member-pii; the Go-live default our own design prescribes). Verified live: anonymous `/api/events` 200; `/api/events/calendar.ics` 200 `text/calendar`, **42 VEVENTs** (12.1 KB); authed `/api/messages` 200, anonymous 401. The L5a DONE row's "dark until enabled" caveat is now closed.
 - 2026-08-21 ~09:10 EDT · **L1, L2, L5b DISPATCHED from `def4b18` (R35).** L2 cut without map-org's stalled archetypes edit; L5b told L7's provider seam is absent (exports `setOpportunitiesProvider`); L1 told main moved four merges since its brief. Next: L7 after L1 lands; L3 after L2; L4 handover when the map session wakes; L8 after everything.
 - 2026-08-21 ~08:55 EDT · **Session resumed after five quiet days ("Try again"). L6 MERGED (PR #19 `cce87b0` → main `def4b18`); L5a and L6 both DONE** (live `def4b18`, probes above; **events module is OFF on live**, so the calendar is dark until Rye enables it, §10 item). **Two coordinator secret-handling incidents logged (§9): rotation of `AUTH_TOKEN_SECRET` recommended to Rye.** R35: L1/L2/L5b dispatch from `def4b18`; the other session is stalled, not working.
@@ -460,6 +461,16 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R36** (2026-08-21): **Rye ruled the signed-out experience for members-only modules** (his words:
+  ["Non signed in members should get a prompt to sign-in not a 401 in messaging"]). Measured: anonymous
+  `/messages` renders the 404 page because the anonymous manifest omits `members`-lifecycle modules, so
+  the page's existing sign-in card never shows. Design (routed to Lane L1, whose zone holds the manifest):
+  the anonymous `/api/modules` response gains `signInToSee: [ids]` for modules whose SERVED lifecycle is
+  `members` (never `preview`, never `off`: the preview-is-indistinguishable-from-off invariant stands, and
+  village.json already publishes module ids at members+, so this leaks nothing new); pages' module gate
+  renders the house sign-in card with a `?next=` return when signed out and the id is in `signInToSee`;
+  the `modules` array itself is unchanged so anonymous nav behaviour does not move. Messaging is the
+  named case; the lane reports (not fixes) sibling pages with the same shape.
 - **R35** (2026-08-21, coordinator ruling, Rye may override): **the hold on L1/L2/L5b converts to proceed.**
   The other session's worktrees have not moved since 2026-08-16 ~17:00 EDT (identical dirty counts five
   days running: doors 33, map-org 38, housing 14, overlays 8, geometry 2; nothing pushed, no go signal),

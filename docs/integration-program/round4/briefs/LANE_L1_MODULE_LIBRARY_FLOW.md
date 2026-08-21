@@ -75,3 +75,25 @@ One message: status (CODED / VERIFIED / DONE), tip SHA and PR number, the fourte
 4. Steps 7: prepend "run `/security-review` on the public catalog route and the image PUT (`/api/admin/modules/:id/image`) before the PR".
 5. Your `shared/moduleCatalog.test.ts` proves every `MODULES` id has a catalog entry, group and setup: write it so a later lane adding an entry to `MODULES` AND `moduleCatalog.ts` passes (L3 and L7 will).
 6. R30/R31 text: R30 = the proposal §10.6 defaults N1..N8 stand ("yes if not mentioned"); R31 = three persona QA passes on live after round 4. Both are in the ledger §8; you do not need them beyond that.
+
+## Addendum 2 (2026-08-21, R36, binding): sign-in prompt for members-only modules
+
+Rye, verbatim: ["Non signed in members should get a prompt to sign-in not a 401 in messaging"]. Measured
+on live: anonymous `/messages` renders the 404 page because the anonymous manifest omits `members`
+modules, so `Messages.tsx`'s own sign-in card (present in the file) never renders. Your fix, inside your
+existing zone:
+1. The anonymous `/api/modules` response gains `signInToSee: string[]`: ids whose SERVED lifecycle is
+   `members`. Never `preview`, never `off` (the preview-indistinguishable-from-off invariant stands; an
+   existing test asserts the byte-identical 404, keep it green). `village.json` already publishes ids at
+   members+, so this leaks nothing new. The `modules` array itself is UNCHANGED (anonymous nav must not
+   move; add a test pinning that).
+2. Extract the sign-in card already in `Messages.tsx` into a shared component (house copy, check-voice
+   applies) that takes the module's catalog name and a `next` path, and render it from the module gate
+   path when signed out and the id is in `signInToSee`, with the Sign in link carrying `?next=` back.
+3. Apply it to `/messages` now. REPORT (do not fix) every other page whose module gate renders NotFound
+   and which would qualify (grep the `modules.loaded && !module` pattern), with the module id and its
+   live lifecycle, so the coordinator can route them.
+4. Harm metrics: anonymous `/messages` on your built tip shows the sign-in card with a working `?next=`
+   (probe, screenshot at 390x844); the preview 404 test unchanged; the anonymous manifest `modules`
+   array byte-identical for a fixture village with a preview module (test).
+
