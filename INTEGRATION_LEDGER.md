@@ -339,6 +339,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-21 ~15:05 EDT · **L3 opened PR #26 (tip `fcfd42a`) and asked; R41 grants examples + doc, ratifies the VillageMap lens wiring conditional on the probe re-run.** L7 building.
 - 2026-08-21 ~14:50 EDT · **L1 DONE on live `11ee42d`**: `/modules` 200; `signInToSee:["messaging"]`; anonymous `/messages` shows the sign-in card in the browser (R36/R37 delivered). Building: L3, L7. Next: land both, then L8's three persona passes.
 - 2026-08-21 ~14:40 EDT · **L1 MERGED (PR #23 `fa4852a` → main `11ee42d`) after its merge-resolve; L7 DISPATCHED from `11ee42d`. Near-miss logged (§9): a wrong-repo `gh pr merge 23` was attempted against the hub's closed dependabot PR and failed on a moved base; no damage; the "20f45bc" status earlier relayed was the hub PR.** Hub main has moved independently (`cbec306` → `fb32af1`, a11y fixes from another session; not this program's). Waiting: live `11ee42d` probe (background), L3, L7.
 - 2026-08-21 ~14:10 EDT · **L1 and L2 formal reports received (both complete). L2 DONE (fx first live tick = 14 real ECB rates, R39 live check passed). L5b DONE. PR #23's MERGEABLE was stale: L2's VillageMap rebuild conflicts with L1's gate swap; L1 resumed to merge main and re-gate. L3 DISPATCHED from `3d3db34` with L2's measured seam names; L7 holds until L1 lands (its files do not exist on main yet).** Queued from L1's report: Characters sign-in link; Profile `?next=`; register/magic-link `?next=`; stale "Modules On/Off" copy in ProjectHistory + EventsAdminPanel; "Ask your founders" CTA; example-count on the Go-live card.
@@ -471,6 +472,13 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R41** (2026-08-21, coordinator): **L3's PR-time requests ruled.** Granted: the standing-examples
+  entry (`resources` key in EXAMPLE_TABLES + seed rows, is_example, schema-tested) and the module doc +
+  MODULE_DOCS shelf line (`docs/modules/how-resources-flow.md`, knowledge pin updated per its own
+  comment). Ratified: ~35 lines of lens wiring in `VillageMap.tsx` (the seam is composed at the page;
+  L2's comment names L3 as its user; no L2 component or layout file changed), conditional on L2's
+  power-map probe re-run green on L3's tip. Moot: pad and formatter requests (L2 landed both).
+  Untouched, correctly: villageExport.
 - **R40** (2026-08-21, coordinator, Rye may override): **the anonymous calendar keeps L5a's landed layer
   semantics** (anonymous sees `public` + `village`; sky rows are village-layer; the visitor `.ics` copy
   promises that content). L5b's brief carried the coordinator's contrary harm metric ("village absent for
