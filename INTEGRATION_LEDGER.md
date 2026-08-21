@@ -337,6 +337,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-21 ~09:40 EDT · **R37: the sign-in gate applies to ALL members-only pages (L1 addendum 2 widened).**
 - 2026-08-21 ~09:30 EDT · **R36 recorded (sign-in prompt, not 404, for members-only modules when signed out); addendum appended to L1's brief and sent to the running lane.**
 - 2026-08-21 ~09:20 EDT · **Events and Messaging enabled on LIVE at Rye's explicit instruction** (his words: ["Enable events and messaging on live"]). Coordinator, via the QA admin token: `events` → **public** (the calendar is the village's public face), `messaging` → **members** (member-pii; the Go-live default our own design prescribes). Verified live: anonymous `/api/events` 200; `/api/events/calendar.ics` 200 `text/calendar`, **42 VEVENTs** (12.1 KB); authed `/api/messages` 200, anonymous 401. The L5a DONE row's "dark until enabled" caveat is now closed.
 - 2026-08-21 ~09:10 EDT · **L1, L2, L5b DISPATCHED from `def4b18` (R35).** L2 cut without map-org's stalled archetypes edit; L5b told L7's provider seam is absent (exports `setOpportunitiesProvider`); L1 told main moved four merges since its brief. Next: L7 after L1 lands; L3 after L2; L4 handover when the map session wakes; L8 after everything.
@@ -461,6 +462,14 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R37** (2026-08-21): **Rye widened R36 to every members-only page** (his words: ["Apply the same
+  sign-in prompt to all members-only pages"]). Consequence for L1: the shared sign-in gate replaces the
+  inline `modules.loaded && !module → NotFound` pattern on EVERY module-gated page (one shared component
+  deciding: signed out + id ∈ `signInToSee` → sign-in card with `?next=`; otherwise NotFound as today),
+  and the lane also sweeps pages gated by auth alone and reports any that still dead-end a signed-out
+  visitor. Off and preview behaviour stays byte-identical everywhere. Today only `messaging` is at
+  `members` on live, so the visible change is /messages; the mechanism binds platform-wide for any
+  village's settings.
 - **R36** (2026-08-21): **Rye ruled the signed-out experience for members-only modules** (his words:
   ["Non signed in members should get a prompt to sign-in not a 401 in messaging"]). Measured: anonymous
   `/messages` renders the 404 page because the anonymous manifest omits `members`-lifecycle modules, so

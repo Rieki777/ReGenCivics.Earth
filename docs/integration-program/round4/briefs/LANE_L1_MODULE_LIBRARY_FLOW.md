@@ -90,10 +90,15 @@ existing zone:
 2. Extract the sign-in card already in `Messages.tsx` into a shared component (house copy, check-voice
    applies) that takes the module's catalog name and a `next` path, and render it from the module gate
    path when signed out and the id is in `signInToSee`, with the Sign in link carrying `?next=` back.
-3. Apply it to `/messages` now. REPORT (do not fix) every other page whose module gate renders NotFound
-   and which would qualify (grep the `modules.loaded && !module` pattern), with the module id and its
-   live lifecycle, so the coordinator can route them.
+3. (Widened by R37, Rye verbatim: ["Apply the same sign-in prompt to all members-only pages"].) Sweep
+   EVERY page whose module gate renders NotFound (grep the `modules.loaded && !module` pattern and any
+   variant) and replace the inline NotFound with the shared gate component, which decides: signed out
+   and id ∈ `signInToSee` → the sign-in card with `?next=`; otherwise NotFound exactly as today. One
+   component, one behaviour, every module-gated page. Also sweep pages gated by auth alone (no module)
+   and REPORT any that still dead-end a signed-out visitor (blank, error, or 404 instead of a prompt or
+   redirect); fixing those is routed separately unless it is the same one-line swap.
 4. Harm metrics: anonymous `/messages` on your built tip shows the sign-in card with a working `?next=`
-   (probe, screenshot at 390x844); the preview 404 test unchanged; the anonymous manifest `modules`
-   array byte-identical for a fixture village with a preview module (test).
+   (probe, screenshot at 390x844); the SAME probe over every swept route with its module forced to
+   `members` on a fixture village (loop, fail loud on any 404); the preview 404 test unchanged; the
+   anonymous manifest `modules` array byte-identical for a fixture village with a preview module (test).
 
