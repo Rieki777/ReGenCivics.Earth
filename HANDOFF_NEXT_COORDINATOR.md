@@ -13,6 +13,11 @@ branch is docs-only and is NOT merged to hub main). Invoke `swarm-supervisor` be
 
 ## 1a-bis · UPDATE 2026-08-21 ~16:05 EDT: round 4 built and live; only L8 QA + triage remain
 
+- **Unified learnings (16:25 EDT):** the `swarm-supervisor` skill now carries BOTH coordinators'
+  lessons as one list: §10 (this session's twelve mechanical rules) + §4b (the swarm-coordinator
+  session's token-waste accounting, sharpened with two additions), cross-linked. The takeover prompt
+  `PROMPT_NEXT_COORDINATOR.md` cites both. Next session reads them before dispatching anything.
+
 - **All eight round-4 build lanes are DONE on game-amora main = live = `335058f`** (L1a art, L5a calendar
   core, L6 agent harness, L5b calendar community, L2 power map, L1 library flow + sign-in gate, L3
   resources, L7 introductions). Ledger §2 has the DONE rows with SHAs and probes; rulings R27–R42 in §8.

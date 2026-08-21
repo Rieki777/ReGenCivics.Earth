@@ -32,7 +32,7 @@ handoff: **L8's three persona QA passes** (visitor / member / founder, R31) writ
 `docs/integration-program/round4/qa/persona-N/`; if their reports exist uncommitted, commit them; if a
 persona died silently, resume it from its transcript. **Then triage** into ranked fix lanes with
 disjoint zones — the queued-fixes list in the handoff §1a-bis is the floor (intake-scanner first-party
-scoping is FIRST: 71 waivers deep). Rye's round-5 asks come after the close-out, at his word.
+scoping is FIRST: 71 waivers deep). Rye's round-5 asks arrive as SCREENSHOTS of work to do: transcribe each verbatim into the round-5 proposal (the round-4 paper is the template), ground them with read-only scouts, number the questions with defaults, and dispatch only on his rulings.
 
 **3 · The protocol (unchanged, plus round-4 amendments).** Five artifacts updated the moment a fact
 changes. Every claim carries the ref it was measured at. CODED/VERIFIED/DONE; DONE = CI `verify` green
@@ -44,7 +44,11 @@ Standing authorizations that survived round 4: **R38** (land each lane on its re
 in-zone diff, security findings closed — no per-lane ask), and lanes may skip the local full suite when
 the mutex is held AND CI is green on their tip.
 
-**4 · Mechanical rules that were paid for (skill §10 has the full twelve).** cd-and-act in one command
+**4 · Mechanical rules that were paid for (skill §10 + §4b are ONE list; both binding).** Two
+coordinators wrote them: this session's twelve (§10) and the swarm-coordinator session's
+token-waste accounting (§4b: needless barriers, never re-dispatch over a running workflow, canary
+before a fleet near a quota ceiling, rank reviews by the tier of defect they could still find,
+waiting is armed never polled, take the one inline measurement that makes half a wave unnecessary). Highlights of §10:  cd-and-act in one command
 (three wrong-repo `gh` calls, one near-merge of a stranger's PR); re-read MERGEABLE in the same breath
 as the merge; never print captured pipeline output on failure and mint tokens in one process; a guard
 nobody's data exercises is not a guard — outbound wrappers ship a dialing test and a job's first tick
