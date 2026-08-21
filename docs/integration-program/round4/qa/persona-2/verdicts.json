@@ -1,0 +1,82 @@
+[
+  {
+    "metric": "R26: partially visible and dead at first contentful paint, scrollY 0",
+    "verdict": "FAIL",
+    "count": 12,
+    "worst": "/profile/characters 'Walk this path' (primary CTA) at wk-390x844/375x812/360x800",
+    "notMeasurable": 0,
+    "note": "12 instances at 2026-07-28-wave1-335058f across 8 unique controls; +6 month-grid day cells on /events measured on the 2026-07-28-wave1-379d2e7 confirm pass (the 2026-07-28-wave1-335058f runs under-counted /events because the harness broke its span fetch)."
+  },
+  {
+    "metric": "Tap targets under 44px effective (expander-aware, strict ownership)",
+    "verdict": "FAIL",
+    "count": 337,
+    "worst": "input[type=checkbox] 12x12 on /profile",
+    "notMeasurable": 129,
+    "note": "337 route+element+size rows across five viewports (near-duplicates across widths inflate this; unique element classes ~40). Real clusters: 12x12 checkboxes, 36x36 bell, 30-32px calendar controls, 61x16 That's-me, 32px footer rows, 72x36 Buy. 129 centres offscreen at probe time counted NOT MEASURABLE. Desktop rows included for completeness; 44px is a touch norm."
+  },
+  {
+    "metric": "Horizontal overflow (document)",
+    "verdict": "PASS",
+    "count": 0,
+    "worst": null,
+    "notMeasurable": 0,
+    "note": "0 of 18 routes x 5 viewports. Zero at 360px too."
+  },
+  {
+    "metric": "Horizontal overflow (map iframe)",
+    "verdict": "FAIL",
+    "count": 1,
+    "worst": "/map iframe +400px",
+    "notMeasurable": 0,
+    "note": "Known round-2 residual (V-H3); owner is the map session per the brief's non-findings; routed, not re-litigated."
+  },
+  {
+    "metric": "Text under 14px",
+    "verdict": "FAIL",
+    "count": 120,
+    "worst": "10.0px moon-day labels on /events day cells",
+    "notMeasurable": 0,
+    "note": "120 unique route+size+element groups; the design system leans on 10-12px labels everywhere. Counted honestly; most are secondary labels, several are load-bearing (tier names, chip labels)."
+  },
+  {
+    "metric": "Contrast below WCAG AA (rendered, alpha-composited)",
+    "verdict": "FAIL",
+    "count": 83,
+    "worst": "2.59:1 12px citizenship tier labels on /profile",
+    "notMeasurable": 497,
+    "note": "Raw 83 across viewports. Two classes (~35 rows: home hero, quest card titles) are the checker's stated blind spot, text over sibling photos, and were verified readable by eye (dark scrims); the real failing clusters are /profile tier labels 2.59:1 (~33 nodes), /gratitude subtitle 3.67:1, /roles Forming 4.31:1. 497 nodes NOT MEASURABLE (gradient/image backdrops), counted never passed."
+  },
+  {
+    "metric": "Dead ends (no route onward)",
+    "verdict": "PASS",
+    "count": 0,
+    "worst": null,
+    "notMeasurable": 0,
+    "note": "Raw sweep flagged /map x5: false positive, its Back to the village control is a button the anchor count cannot see (verified in shots and round-2 V-H2). The 404 page's Go Home is likewise a button."
+  },
+  {
+    "metric": "Broken back (?brief=, ?focus=)",
+    "verdict": "PASS",
+    "count": 0,
+    "worst": null,
+    "notMeasurable": 1,
+    "note": "?brief= then Back: ok at all five viewports, content in ~0.5s. ?focus= then Back: ok on desktop (31ms, pushState + popstate). Phone ?focus= not exercisable: below 480px the map box is hidden by design (accordion is the page), counted NOT MEASURABLE."
+  },
+  {
+    "metric": "404s (network and soft)",
+    "verdict": "FAIL",
+    "count": 2,
+    "worst": "GET /api/intents/board -> 404 on /introductions",
+    "notMeasurable": 0,
+    "note": "One real network 404 (module-off page probes its API). One soft-404 class: /introductions renders the generic 404 while its module is off (deliberate ModuleGate posture) and unknown paths answer HTTP 200. No other 4xx/5xx anywhere in five runs."
+  },
+  {
+    "metric": "Console errors",
+    "verdict": "FAIL",
+    "count": 1,
+    "worst": "Failed to load resource: 404 (/api/intents/board) on /introductions",
+    "notMeasurable": 0,
+    "note": "One real member-visible class. Three further signatures were harness artifacts, proven by the no-interception A/B: two 'access control checks' lines are WebKit surfacing fetches aborted under Playwright routing, one Beacon queue warning came from the write guard holding RUM beacons; none appear without interception."
+  }
+]

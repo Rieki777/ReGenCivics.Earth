@@ -1,0 +1,50 @@
+[
+  {
+    "what": "safe-area insets",
+    "note": "WebKit on Windows reads 0; per the brief this is could-not-measure and routed."
+  },
+  {
+    "what": "who-is-here band, rendered",
+    "note": "Quiet data window (nobody arriving or leaving) renders nothing by design, and on the guarded WebKit runs the band's fetch was broken by the harness (A/B against --noguard proved the artifact). Band never seen; not proven wrong."
+  },
+  {
+    "what": "RSVP surfaces on real events",
+    "note": "No RSVP-able occurrence in the visible window on this build; 0 controls rendered. Pressing one is a write and out of scope anyway."
+  },
+  {
+    "what": "meet-me posting, brief opt-out toggle, bell mark-read, any write",
+    "note": "Write paths not exercised on live; the guard fulfilled 1 attempted POST per run (Cloudflare RUM beacon), nothing else fired."
+  },
+  {
+    "what": "phone ?focus= zoom on /map/circles",
+    "note": "Below 480px the circles SVG is hidden by design; the accordion is the page. Exercised on desktop instead."
+  },
+  {
+    "what": "contrast over photos and gradients",
+    "note": "497 nodes not measurable by the rendered-pixel checker; two big classes verified readable by eye (hero, quest cards)."
+  },
+  {
+    "what": "tap targets with offscreen centres",
+    "note": "129 rows counted NOT MEASURABLE by the walk."
+  },
+  {
+    "what": "real iOS URL bar, software keyboard, LCP, momentum scroll",
+    "note": "Emulation cannot see these; per the brief."
+  },
+  {
+    "what": "notifications with unread items",
+    "note": "The standing QA account had zero unread; the badge, the 9+ cap, and mark-read behaviour render only with data."
+  },
+  {
+    "what": "intents/introductions member surfaces",
+    "note": "Module off on live; the L7 card on /messages and the board cannot render for anyone until it is turned on."
+  },
+  {
+    "what": "modules Turn on, Go-live, events admin",
+    "note": "Persona 3 territory and writes besides; this pass hit-tested nothing behind Admin tabs."
+  },
+  {
+    "what": "map iframe internals",
+    "note": "Owner: the map session (grounds prototype). Only its document-level overflow was measured from outside."
+  }
+]

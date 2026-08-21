@@ -1,0 +1,526 @@
+{
+  "profile": "wk-390x844",
+  "buildStart": "2026-07-28-wave1-379d2e7",
+  "routes": [
+    {
+      "route": "/events",
+      "notes": [
+        "week view opened",
+        "who-is-here band not rendered (quiet state renders nothing by design; band untestable without arrivals data)",
+        "layer-ish chips visible: 1",
+        "rsvp controls visible (never pressed): 0",
+        "meet-me windows inside the community card (render only, write path not exercised on live)"
+      ],
+      "extraShots": [
+        "events-week--wk-390x844.jpg",
+        "events-meet-me--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 2028,
+        "cameLate": false,
+        "textAt3500": 2028
+      },
+      "timing": {
+        "dcl": 792,
+        "load": 887,
+        "transferKb": 407,
+        "resources": 36
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 2028,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "2\nmoon 7 day 20",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "3\nmoon 7 day 21",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "4\nmoon 7 day 22",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "5\nmoon 7 day 23",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "6\nmoon 7 day 24",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "7\nmoon 7 day 25",
+            "top": 752,
+            "cy": 780
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 61,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-center < div.grid.grid-cols-7 < div.calendar-print",
+              "n": 7
+            },
+            {
+              "size": 10,
+              "sample": "moon 7 day 13",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 42
+            },
+            {
+              "size": 10,
+              "sample": "new moon",
+              "chain": "span.ml-1.font-medium < div.text-[10px].text-muted-foreground < button.flex.flex-col",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Print this month",
+              "chain": "button.print-hide.inline-flex < span.ml-auto.mb-2 < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "00-events--wk-390x844.jpg",
+      "tap": {
+        "checked": 63,
+        "small": [
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+            "text": "Read this week's",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          },
+          {
+            "w": 324,
+            "h": 41,
+            "inline": false,
+            "chain": "input.w-full.text-sm < div < div.grid.sm:grid-cols-2",
+            "text": "Seed swap on the porch",
+            "count": 8
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 95,
+        "unmeasurable": 8,
+        "fails": []
+      },
+      "ms": 7790
+    },
+    {
+      "route": "/events?brief=2026-08-17",
+      "notes": [
+        "brief panel text hits: 2",
+        "opt-out style controls in view: 1 (rendered only; write path not exercised on live)"
+      ],
+      "extraShots": [
+        "events-brief--wk-390x844.jpg"
+      ],
+      "backTests": [
+        {
+          "what": "?brief= then Back",
+          "ok": true,
+          "msToContent": 526,
+          "to": "https://amora.regencivics.earth/events"
+        }
+      ],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 1750,
+        "cameLate": false,
+        "textAt3500": 1750
+      },
+      "timing": {
+        "dcl": 677,
+        "load": 744,
+        "transferKb": 406,
+        "resources": 37
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1750,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 28,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 14
+            },
+            {
+              "size": 11,
+              "sample": "Week of",
+              "chain": "span.text-[11px].text-muted-foreground < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 3
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Send me this every week",
+              "chain": "label.flex.items-center < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "01-events-brief-2026-08-17--wk-390x844.jpg",
+      "tap": {
+        "checked": 40,
+        "small": [
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 25,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 41,
+        "unmeasurable": 7,
+        "fails": []
+      },
+      "ms": 11341
+    },
+    {
+      "route": "/messages",
+      "notes": [
+        "threads surface: emptyState=true textLen=861",
+        "intent/introduction affordances on messages: 0"
+      ],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 861,
+        "cameLate": false,
+        "textAt3500": 861
+      },
+      "timing": {
+        "dcl": 626,
+        "load": 674,
+        "transferKb": 341,
+        "resources": 29
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 861,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "02-messages--wk-390x844.jpg",
+      "tap": {
+        "checked": 37,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 43,
+        "unmeasurable": 5,
+        "fails": []
+      },
+      "ms": 4324
+    }
+  ],
+  "blockedWrites": [
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    }
+  ],
+  "unmeasured": [],
+  "consoleErrs": [
+    {
+      "route": "https://amora.regencivics.earth/events",
+      "msg": "Fetch API cannot load https: /amora.regencivics.earth/api/events/who-is-here?from=2026-08-16&to=2026-08-22 due to access control checks."
+    },
+    {
+      "route": "https://amora.regencivics.earth/events",
+      "msg": "Fetch API cannot load https: /amora.regencivics.earth/api/events?from=2025-12-01T00%3A00%3A00.000Z&to=2027-02-01T00%3A00%3A00.000Z due to ac"
+    }
+  ],
+  "badResponses": [],
+  "buildEnd": "2026-07-28-wave1-379d2e7"
+}

@@ -1,0 +1,4336 @@
+{
+  "profile": "cr-1280x800",
+  "buildStart": "2026-07-28-wave1-335058f",
+  "routes": [
+    {
+      "route": "/",
+      "notes": [
+        "bell present (36x36)",
+        "bell opened (dropdown header=true emptyText=false); mark-read POST intercepted if fired (write path not exercised on live)"
+      ],
+      "extraShots": [
+        "home-bell-open--cr-1280x800.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 5364,
+        "cameLate": false,
+        "textAt3500": 5364
+      },
+      "timing": {
+        "dcl": 3304,
+        "load": 6283,
+        "transferKb": 331,
+        "resources": 26
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 5364,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 27,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "31",
+              "chain": "span.text-white.text-xs < div.container.flex < section.bg-teal-band.text-white",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Build Progress",
+              "chain": "span.inline-block.text-xs < div.text-center.mb-12 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Complete",
+              "chain": "span.shrink-0.inline-flex < div.flex.items-start < div.flex-1.min-w-0",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "Completed",
+              "chain": "p.text-xs.text-stone-500 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "Core circle forming, still welcomi",
+              "chain": "p.text-xs.text-amber-700 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Village Pulse",
+              "chain": "span.inline-flex.items-center < div.text-center.mb-8 < div.container.max-w-2xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "6d ago",
+              "chain": "span.shrink-0.text-xs < li.flex.items-center < ul.space-y-2",
+              "n": 8
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "00-home--cr-1280x800.jpg",
+      "tap": {
+        "checked": 49,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 147,
+            "h": 24,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.text-center.mt-12 < div.container",
+            "text": "Find your path",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 163,
+        "unmeasurable": 1,
+        "fails": [
+          {
+            "text": "Come co-create paradise",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(245,245,245)"
+          },
+          {
+            "text": "A regenerative village in Costa Rica",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(252,252,252)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "Read the Co-Creators Guide",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(245,245,245)"
+          },
+          {
+            "text": "Co-Become the Most  Village",
+            "ratio": 1.12,
+            "floor": 3,
+            "size": 72,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "belong",
+            "ratio": 1.12,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "thrive",
+            "ratio": 1.12,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "Nothing yet. Go be seen.",
+            "ratio": 2.6,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(153,161,175)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          },
+          {
+            "text": "Find your path",
+            "ratio": 4.3,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(242,242,242)"
+          }
+        ]
+      },
+      "ms": 7968
+    },
+    {
+      "route": "/profile",
+      "notes": [
+        "your-agent text: \"Your agent\""
+      ],
+      "extraShots": [
+        "profile-your-agent--cr-1280x800.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 5090,
+        "cameLate": false,
+        "textAt3500": 5090
+      },
+      "timing": {
+        "dcl": 6102,
+        "load": 6102,
+        "transferKb": 364,
+        "resources": 51
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 5090,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 70,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "calendar.read",
+              "chain": "code.text-[11px] < span < label.flex.items-start",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "# in your shell, once (the value i",
+              "chain": "pre.overflow-x-auto.rounded-lg < div.mb-4 < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Your next step",
+              "chain": "p.text-xs.uppercase < div.min-w-0 < div.flex.items-center",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Visitor",
+              "chain": "span.flex.items-center < li.flex.items-center < ol.flex.flex-wrap",
+              "n": 12
+            },
+            {
+              "size": 12,
+              "sample": "quest.propose",
+              "chain": "span.inline-flex.items-center < div.flex.flex-wrap < div.bg-white.rounded-2xl",
+              "n": 21
+            },
+            {
+              "size": 12,
+              "sample": "received",
+              "chain": "p.text-xs.text-gray-500 < div.text-center.bg-teal-deep/5 < div.grid.grid-cols-3",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "people thanked you",
+              "chain": "p.text-xs.text-gray-600 < div.text-center.bg-amber-50 < div.grid.grid-cols-3",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "(role holders only; senders see a ",
+              "chain": "span.text-xs.text-gray-600 < label.flex.items-center < div.bg-white.rounded-2xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "A personal access token lets your ",
+              "chain": "p.text-xs.text-gray-600 < section.rounded-xl.border < div.space-y-5",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Mint a token",
+              "chain": "label.block.text-xs < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "read the calendar",
+              "chain": "span < label.flex.items-start < div.grid.sm:grid-cols-2",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "Claude Code",
+              "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "The skills your agent should read:",
+              "chain": "p.text-xs.text-gray-600 < div.mb-4 < section.rounded-xl.border",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "skills index",
+              "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Agent inbox (optional)",
+              "chain": "span.text-xs.font-medium < div.flex.items-center < div.rounded-lg.bg-white",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "An https URL your agent listens on",
+              "chain": "p.text-xs.text-gray-600 < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "this deployment has no member-secr",
+              "chain": "p.text-xs.text-amber-900 < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "this deployment has no member-secr",
+              "chain": "p.text-xs.text-amber-900 < section.rounded-xl.border < div.space-y-5",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Private: nobody reads it, not even",
+              "chain": "span < label.flex.items-start < div.space-y-1.mb-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "The assistant may use this note an",
+              "chain": "span < label.flex.items-start < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Nothing yet. When the assistant sa",
+              "chain": "p.text-xs.text-gray-500 < section.rounded-xl.border < div.space-y-5",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Gratitude Balance",
+              "chain": "span.text-xs.font-semibold < div.flex.items-center < div.bg-gradient-to-br.from-amber",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 30,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "01-profile--cr-1280x800.jpg",
+      "tap": {
+        "checked": 75,
+        "small": [
+          {
+            "w": 13,
+            "h": 13,
+            "inline": false,
+            "chain": "input < label.flex.items-center < div.bg-white.rounded-2xl",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 13,
+            "h": 13,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < div.grid.sm:grid-cols-2",
+            "text": "",
+            "count": 4
+          },
+          {
+            "w": 13,
+            "h": 13,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < div.space-y-1.mb-2",
+            "text": "",
+            "count": 3
+          },
+          {
+            "w": 13,
+            "h": 13,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < section.rounded-xl.border",
+            "text": "",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 15,
+            "inline": true,
+            "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+            "text": "OpenAPI",
+            "count": 1
+          },
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 67,
+            "h": 15,
+            "inline": true,
+            "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+            "text": "skills index",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.p-2.hover:bg-gray-100 < div.flex.justify-between < div.bg-white.rounded-2xl",
+            "text": "Edit your bio",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 75,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Hermes",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 90,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "OpenClaw",
+            "count": 1
+          },
+          {
+            "w": 104,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Claude Code",
+            "count": 1
+          },
+          {
+            "w": 144,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-sm.font-medium < div.flex.items-center < div.bg-white.rounded-2xl",
+            "text": "Village exchange",
+            "count": 1
+          },
+          {
+            "w": 159,
+            "h": 20,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.border-t.border-gray-100 < div.bg-white.rounded-2xl",
+            "text": "Delete my account",
+            "count": 1
+          },
+          {
+            "w": 172,
+            "h": 20,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.bg-white.rounded-2xl < div.grid.md:grid-cols-2",
+            "text": "Browse open quests",
+            "count": 1
+          },
+          {
+            "w": 111,
+            "h": 31,
+            "inline": false,
+            "chain": "select.text-xs.border < div.flex.items-center < div.space-y-2.5.mb-6",
+            "text": "Right away\nDaily digest\nIn-app",
+            "count": 6
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 193,
+            "h": 20,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.bg-white.rounded-2xl < div.grid.md:grid-cols-2",
+            "text": "Visit the Gratitude Wall",
+            "count": 1
+          },
+          {
+            "w": 215,
+            "h": 22,
+            "inline": true,
+            "chain": "a.text-teal-deep.underline < p.text-lg.text-gray-600 < div.min-w-0.flex-1",
+            "text": "Choose who you will be",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 40,
+            "inline": false,
+            "chain": "button.px-4.py-2 < div.mb-8.flex < div",
+            "text": "Sign Out",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 249,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Any OpenAI-compatible agent (c",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          },
+          {
+            "w": 378,
+            "h": 20,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.border-t.border-gray-100 < div.bg-white.rounded-2xl",
+            "text": "Download everything the villag",
+            "count": 1
+          },
+          {
+            "w": 1084,
+            "h": 38,
+            "inline": false,
+            "chain": "input.w-full.min-w-0 < div.rounded-lg.bg-white < section.rounded-xl.border",
+            "text": "A name you will recognise, lik",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 164,
+        "unmeasurable": 6,
+        "fails": [
+          {
+            "text": "Immersant",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Participant",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Member",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Contributor",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Quest Seeker",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Initiate",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Co-Creator",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Role Holder",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Guide",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Sage",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Delete my account",
+            "ratio": 3.81,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(251,44,54)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          },
+          {
+            "text": "quest.propose",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "quest.consent",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "forum.post",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "forum.moderate",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "proposal.open",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "proposal.decide",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.viewPeople",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.contact",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.edit",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.publish",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "feed.announce",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "stay.member_rate",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.buy",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.swap",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.manage",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "health.record",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "message.send",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "mechanics.propose",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "event.rsvp",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "event.manage",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "org.declare",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Sign Out",
+            "ratio": 4.36,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(231,0,11)",
+            "bg": "rgb(254,242,242)"
+          }
+        ]
+      },
+      "ms": 10465
+    },
+    {
+      "route": "/profile/characters",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 1325,
+        "cameLate": false,
+        "textAt3500": 1325
+      },
+      "timing": {
+        "dcl": 636,
+        "load": 637,
+        "transferKb": 519,
+        "resources": 26
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 1325,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 1,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "Building & Developing",
+              "chain": "p.text-xs.font-semibold < aside.order-3.rounded-2xl < div.grid.grid-cols-[minmax(0,1fr)]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "02-profile-characters--cr-1280x800.jpg",
+      "tap": {
+        "checked": 50,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 40,
+            "h": 40,
+            "inline": false,
+            "chain": "button.h-10.w-10 < div.flex.items-center < div.mt-4.flex",
+            "text": "Deep",
+            "count": 3
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 63,
+        "unmeasurable": 4,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4215
+    },
+    {
+      "route": "/events",
+      "notes": [
+        "week view opened",
+        "who-is-here band not rendered (quiet state renders nothing by design; band untestable without arrivals data)",
+        "layer-ish chips visible: 1",
+        "rsvp controls visible (never pressed): 0",
+        "meet-me windows inside the community card (render only, write path not exercised on live)"
+      ],
+      "extraShots": [
+        "events-week--cr-1280x800.jpg",
+        "events-meet-me--cr-1280x800.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 2057,
+        "cameLate": false,
+        "textAt3500": 2057
+      },
+      "timing": {
+        "dcl": 1401,
+        "load": 1401,
+        "transferKb": 405,
+        "resources": 34
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 2057,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 57,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-center < div.grid.grid-cols-7 < div.calendar-print",
+              "n": 7
+            },
+            {
+              "size": 10,
+              "sample": "moon 7 day 13",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 42
+            },
+            {
+              "size": 10,
+              "sample": "new moon",
+              "chain": "span.ml-1.font-medium < div.text-[10px].text-muted-foreground < button.flex.flex-col",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Cycle 329 opens",
+              "chain": "span.truncate.text-[10px] < li.flex.items-center < ul.mt-0.5.space-y-0.5",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Print this month",
+              "chain": "button.print-hide.inline-flex < span.ml-auto.mb-2 < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "03-events--cr-1280x800.jpg",
+      "tap": {
+        "checked": 66,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+            "text": "Read this week's",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          },
+          {
+            "w": 393,
+            "h": 38,
+            "inline": false,
+            "chain": "input.w-full.text-sm < div < div.grid.sm:grid-cols-2",
+            "text": "Seed swap on the porch",
+            "count": 8
+          },
+          {
+            "w": 393,
+            "h": 38,
+            "inline": false,
+            "chain": "select.w-full.text-sm < div < div.grid.sm:grid-cols-2",
+            "text": "My calendar only\nAsk for the p",
+            "count": 2
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 101,
+        "unmeasurable": 3,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 7603
+    },
+    {
+      "route": "/events?brief=2026-08-17",
+      "notes": [
+        "brief panel text hits: 2",
+        "opt-out style controls in view: 1 (rendered only; write path not exercised on live)"
+      ],
+      "extraShots": [
+        "events-brief--cr-1280x800.jpg"
+      ],
+      "backTests": [
+        {
+          "what": "?brief= then Back",
+          "ok": true,
+          "msToContent": 512,
+          "to": "https://amora.regencivics.earth/events"
+        }
+      ],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 1764,
+        "cameLate": false,
+        "textAt3500": 1764
+      },
+      "timing": {
+        "dcl": 2494,
+        "load": 2494,
+        "transferKb": 406,
+        "resources": 36
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 1764,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 23,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 14
+            },
+            {
+              "size": 11,
+              "sample": "Week of",
+              "chain": "span.text-[11px].text-muted-foreground < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Send me this every week",
+              "chain": "label.flex.items-center < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "04-events-brief-2026-08-17--cr-1280x800.jpg",
+      "tap": {
+        "checked": 56,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 27,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 83,
+        "unmeasurable": 3,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 7255
+    },
+    {
+      "route": "/messages",
+      "notes": [
+        "threads surface: emptyState=true textLen=875",
+        "intent/introduction affordances on messages: 0"
+      ],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 875,
+        "cameLate": false,
+        "textAt3500": 875
+      },
+      "timing": {
+        "dcl": 690,
+        "load": 690,
+        "transferKb": 341,
+        "resources": 28
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 875,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "05-messages--cr-1280x800.jpg",
+      "tap": {
+        "checked": 40,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 49,
+        "unmeasurable": 0,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4281
+    },
+    {
+      "route": "/introductions",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 2680,
+        "load": 2681,
+        "transferKb": 306,
+        "resources": 21
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "06-introductions--cr-1280x800.jpg",
+      "tap": {
+        "checked": 1,
+        "small": [
+          {
+            "w": 124,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.flex-col < div.px-6.pt-8",
+            "text": "Go Home",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 3,
+        "fails": []
+      },
+      "ms": 6260
+    },
+    {
+      "route": "/map/circles",
+      "notes": [
+        "breadcrumb: present",
+        "search: present",
+        "legend text: present",
+        "decides-by text: present",
+        "currency text: NOT found",
+        "your seat text: present",
+        "search typed 'water' (client-side/GET only; the Ask button is never pressed)",
+        "centre tap did not land on a circle (no ?focus=); zoom-back not exercised at this size"
+      ],
+      "extraShots": [
+        "map-circles-settled--cr-1280x800.jpg",
+        "map-circles-search--cr-1280x800.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 2551,
+        "cameLate": false,
+        "textAt3500": 2551
+      },
+      "timing": {
+        "dcl": 2277,
+        "load": 2277,
+        "transferKb": 380,
+        "resources": 41
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 2551,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 89,
+          "groups": [
+            {
+              "size": 9,
+              "sample": "forming",
+              "chain": "text < g < svg",
+              "n": 9
+            },
+            {
+              "size": 10,
+              "sample": "Health &",
+              "chain": "tspan < text < g",
+              "n": 12
+            },
+            {
+              "size": 10,
+              "sample": "one holds it",
+              "chain": "span < div.flex.justify-between < div",
+              "n": 2
+            },
+            {
+              "size": 10,
+              "sample": "No daily rate for",
+              "chain": "p.text-[10px].text-muted-foreground < div.text-left < div.pt-2.border-t",
+              "n": 3
+            },
+            {
+              "size": 11,
+              "sample": "Leadership",
+              "chain": "tspan < text < g",
+              "n": 9
+            },
+            {
+              "size": 11,
+              "sample": "This village has not declared its ",
+              "chain": "p.text-[11px].text-muted-foreground < div < div.space-y-3",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Show money in",
+              "chain": "span < label.text-[11px].text-muted-foreground < div.text-left",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Now",
+              "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "How we decide",
+              "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "List",
+              "chain": "button.hidden.sm:inline-flex < div.flex.items-center < div.flex.items-center",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Open seats",
+              "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Permaculture",
+              "chain": "tspan < text < g",
+              "n": 15
+            },
+            {
+              "size": 12,
+              "sample": "open call",
+              "chain": "span < li.flex.items-center < ul.space-y-1.5",
+              "n": 5
+            },
+            {
+              "size": 12,
+              "sample": "14",
+              "chain": "span.ml-auto.text-muted-foreground < li.flex.items-center < ul.space-y-1.5",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "17",
+              "chain": "p.text-xs.text-muted-foreground < div < div.space-y-4",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "16",
+              "chain": "p.text-xs.text-amber-700 < div < div.space-y-4",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Tap a circle to step inside it. Ta",
+              "chain": "p.text-xs.text-muted-foreground < div.space-y-4 < aside.w-80.shrink-0",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "The village's shape",
+              "chain": "p.text-xs.font-semibold < div.bg-card.border < div.space-y-4",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Steward",
+              "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+              "n": 7
+            }
+          ]
+        },
+        "onwardLinks": 28,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "07-map-circles--cr-1280x800.jpg",
+      "tap": {
+        "checked": 106,
+        "small": [
+          {
+            "w": 12,
+            "h": 12,
+            "inline": false,
+            "chain": "g < g < svg",
+            "text": "Business Lead, a seat in Leade",
+            "count": 22
+          },
+          {
+            "w": 16,
+            "h": 16,
+            "inline": false,
+            "chain": "button.text-muted-foreground.hover:text-foreground < div.mb-6.rounded-lg < div.max-w-2xl.mx-auto",
+            "text": "Hide the walk invitation",
+            "count": 1
+          },
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 24,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+            "text": "Now",
+            "count": 1
+          },
+          {
+            "w": 45,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Flat",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 57,
+            "h": 24,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+            "text": "Vision",
+            "count": 1
+          },
+          {
+            "w": 57,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Circle",
+            "count": 1
+          },
+          {
+            "w": 58,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Other",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 40,
+            "h": 40,
+            "inline": false,
+            "chain": "button.shrink-0.w-10 < div.flex.gap-2 < div.relative.max-w-2xl",
+            "text": "Speak instead of typing",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 26,
+            "inline": false,
+            "chain": "button.hidden.sm:inline-flex < div.flex.items-center < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 26,
+            "inline": false,
+            "chain": "button.hidden.sm:inline-flex < div.flex.items-center < div.flex.items-center",
+            "text": "SVG",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 26,
+            "inline": false,
+            "chain": "button.hidden.sm:inline-flex < div.flex.items-center < div.flex.items-center",
+            "text": "PNG",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Council",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-2.py-1 < nav.flex.items-center < div.flex.items-center",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 26,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Links",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Steward",
+            "count": 1
+          },
+          {
+            "w": 74,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Pyramid",
+            "count": 1
+          },
+          {
+            "w": 75,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "My seats",
+            "count": 1
+          },
+          {
+            "w": 75,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Network",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 91,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "Open seats",
+            "count": 1
+          },
+          {
+            "w": 142,
+            "h": 18,
+            "inline": true,
+            "chain": "a.text-teal-deep.font-medium < p.text-foreground < div.flex-1.text-sm",
+            "text": "Take the short walk",
+            "count": 1
+          },
+          {
+            "w": 100,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "Ending soon",
+            "count": 1
+          },
+          {
+            "w": 116,
+            "h": 26,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "How we decide",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 27,
+            "inline": false,
+            "chain": "select.text-xs.border < label.text-[11px].text-muted-foreground < div.text-left",
+            "text": "CRC (this village's)\nAUD\nBRL\nC",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 160,
+            "h": 27,
+            "inline": false,
+            "chain": "select.text-xs.border < label.text-xs.text-muted-foreground < div.flex.items-center",
+            "text": "Any circle\nLeadership Circle\nP",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          },
+          {
+            "w": 558,
+            "h": 42,
+            "inline": false,
+            "chain": "input.w-full.text-sm < div.relative.flex-1 < div.flex.gap-2",
+            "text": "Find a seat, a circle, or a pe",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": [
+          {
+            "chain": "g < g < svg",
+            "text": "Architecture Circle Lead, a se"
+          },
+          {
+            "chain": "g < g < svg",
+            "text": "Regenerative Agriculture and P"
+          },
+          {
+            "chain": "g < g < svg",
+            "text": "Entity and Land Trust Steward,"
+          }
+        ]
+      },
+      "contrast": {
+        "measured": 128,
+        "unmeasurable": 4,
+        "fails": [
+          {
+            "text": "Walk the setup: seats, methods, shap",
+            "ratio": 2.68,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(237,184,114)"
+          },
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 10166
+    },
+    {
+      "route": "/modules",
+      "notes": [
+        "module cards: \"On in this village\" x14, \"Always on\" x4; ask-your-founders affordances: 0 (this account is an admin, so founder-only chrome may show)",
+        "shelf headings: [\"Coordinate\",\"Quests\",\"Call Automation\",\"Tools Hub\",\"Village Calendar\",\"Recognise\",\"Gratitude\",\"Stages & Roles\",\"Badges & Skills\",\"Host and earn\",\"Stays\",\"Material Library\"]"
+      ],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 0,
+        "textLen": 3306,
+        "cameLate": false,
+        "textAt3500": 3306
+      },
+      "timing": {
+        "dcl": 1116,
+        "load": 1116,
+        "transferKb": 784,
+        "resources": 50
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 3306,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 18,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "Always on",
+              "chain": "span.text-[10px].px-1.5 < div.flex.flex-wrap < div.p-4",
+              "n": 18
+            }
+          ]
+        },
+        "onwardLinks": 47,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "08-modules--cr-1280x800.jpg",
+      "tap": {
+        "checked": 61,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 118,
+        "unmeasurable": 0,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          },
+          {
+            "text": "Read the builder guide ↗",
+            "ratio": 4.03,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,236,236)"
+          },
+          {
+            "text": "See the builders' pool ↗",
+            "ratio": 4.03,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,236,236)"
+          }
+        ]
+      },
+      "ms": 4720
+    },
+    {
+      "route": "/map",
+      "notes": [
+        "map iframe overflow: 420px"
+      ],
+      "extraShots": [
+        "map-blank-at-3s5--cr-1280x800.jpg",
+        "map-settled--cr-1280x800.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 9283,
+        "textLen": 19,
+        "cameLate": false,
+        "textAt3500": 19
+      },
+      "timing": {
+        "dcl": 599,
+        "load": 600,
+        "transferKb": 5635,
+        "resources": 17
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 19,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "09-map--cr-1280x800.jpg",
+      "iframeOverflow": 420,
+      "tap": {
+        "checked": 1,
+        "small": [],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 0,
+        "fails": []
+      },
+      "ms": 16295
+    },
+    {
+      "route": "/gratitude",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 1176,
+        "cameLate": false,
+        "textAt3500": 1176
+      },
+      "timing": {
+        "dcl": 625,
+        "load": 625,
+        "transferKb": 292,
+        "resources": 22
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 1176,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "10-gratitude--cr-1280x800.jpg",
+      "tap": {
+        "checked": 43,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 110,
+            "h": 42,
+            "inline": false,
+            "chain": "input.px-3.py-2 < div.grid.md:grid-cols-[1fr_110px] < form.bg-white.rounded-2xl",
+            "text": "Amount of gratitude to send",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          },
+          {
+            "w": 468,
+            "h": 42,
+            "inline": false,
+            "chain": "input.px-3.py-2 < div.grid.md:grid-cols-[1fr_110px] < form.bg-white.rounded-2xl",
+            "text": "Member's email",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 58,
+        "unmeasurable": 0,
+        "fails": [
+          {
+            "text": "Appreciation, spoken out loud. Every",
+            "ratio": 3.67,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(208,229,229)",
+            "bg": "rgb(21,127,125)"
+          },
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4997
+    },
+    {
+      "route": "/quests",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 3615,
+        "cameLate": false,
+        "textAt3500": 3615
+      },
+      "timing": {
+        "dcl": 566,
+        "load": 566,
+        "transferKb": 829,
+        "resources": 40
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 3615,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 54,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "Be the first hello a newcomer reme",
+              "chain": "span.block.text-xs < span.min-w-0.flex-1 < a.flex.items-center",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "All",
+              "chain": "button.px-3.min-h-[44px] < div.flex.gap-2 < div.container",
+              "n": 14
+            },
+            {
+              "size": 12,
+              "sample": "14",
+              "chain": "p.text-xs.text-muted-foreground < div.container < section.sticky.top-24",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Community Development",
+              "chain": "p.text-white/80.text-xs < div.absolute.bottom-0 < div.relative.overflow-hidden",
+              "n": 7
+            },
+            {
+              "size": 12,
+              "sample": "50-100",
+              "chain": "span.inline-flex.items-center < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 22
+            },
+            {
+              "size": 12,
+              "sample": "Beginner",
+              "chain": "span.px-2.py-0.5 < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 7
+            }
+          ]
+        },
+        "onwardLinks": 34,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "11-quests--cr-1280x800.jpg",
+      "tap": {
+        "checked": 65,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 40,
+            "h": 44,
+            "inline": false,
+            "chain": "button.px-3.min-h-[44px] < div.flex.gap-2 < div.container",
+            "text": "All",
+            "count": 2
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 132,
+        "unmeasurable": 5,
+        "fails": [
+          {
+            "text": "Welcome Ambassador",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Community Development",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Food Forest Tender",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Regenerative Agriculture",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Circle Scribe",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Governance",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Children's Play Day Facilitator",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Education",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Community Music Circle Host",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Arts & Culture",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Retreat Center Host",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Tourism & Retreat",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Tech & Platform Steward",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Technology",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          },
+          {
+            "text": "50-100 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "40-80 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "40-80 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "70-130 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "50-100 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "80-150 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "80-200 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Advanced",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Show all 9",
+            "ratio": 4.3,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(242,242,242)"
+          }
+        ]
+      },
+      "ms": 4136
+    },
+    {
+      "route": "/badges",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 2341,
+        "cameLate": false,
+        "textAt3500": 2341
+      },
+      "timing": {
+        "dcl": 610,
+        "load": 611,
+        "transferKb": 337,
+        "resources": 26
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 2341,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 30,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "granted",
+              "chain": "span.text-[10px].border < div.flex.items-center < div.flex-1",
+              "n": 6
+            },
+            {
+              "size": 12,
+              "sample": "Declare what you can do. It helps ",
+              "chain": "p.text-xs.text-muted-foreground < div.flex.flex-wrap < div.bg-card.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Grants:",
+              "chain": "p.text-xs.text-emerald-700 < div.flex-1 < div.flex.items-start",
+              "n": 6
+            },
+            {
+              "size": 12,
+              "sample": "Held by",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-start",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "Aditi",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "That's me",
+              "chain": "button.text-xs.text-[#2D5A5A] < div.flex.flex-col < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Suspends:",
+              "chain": "p.text-xs.text-red-600 < div.flex-1 < div.flex.items-start",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "until",
+              "chain": "span.text-amber-700 < span < p.text-xs.text-muted-foreground",
+              "n": 2
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "12-badges--cr-1280x800.jpg",
+      "tap": {
+        "checked": 42,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 61,
+            "h": 16,
+            "inline": false,
+            "chain": "button.text-xs.text-[#2D5A5A] < div.flex.flex-col < div.flex.items-start",
+            "text": "That's me",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 74,
+            "h": 38,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Add",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          },
+          {
+            "w": 484,
+            "h": 38,
+            "inline": false,
+            "chain": "input.flex-1.text-sm < div.flex.flex-wrap < div.bg-card.border",
+            "text": "e.g. carpentry",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 82,
+        "unmeasurable": 2,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4228
+    },
+    {
+      "route": "/wallet",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 0,
+        "textLen": 1257,
+        "cameLate": false,
+        "textAt3500": 1257
+      },
+      "timing": {
+        "dcl": 669,
+        "load": 670,
+        "transferKb": 343,
+        "resources": 32
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 1257,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 6,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "13-wallet--cr-1280x800.jpg",
+      "tap": {
+        "checked": 44,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 94,
+            "h": 19,
+            "inline": true,
+            "chain": "a.text-teal-deep.font-medium < p.text-muted-foreground.max-w-xl < div.container.text-center",
+            "text": "your profile",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 64,
+            "h": 34,
+            "inline": false,
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 72,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "count": 2
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 57,
+        "unmeasurable": 3,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4250
+    },
+    {
+      "route": "/tokens",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 1257,
+        "cameLate": false,
+        "textAt3500": 1257
+      },
+      "timing": {
+        "dcl": 781,
+        "load": 782,
+        "transferKb": 343,
+        "resources": 32
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 1257,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 6,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "14-tokens--cr-1280x800.jpg",
+      "tap": {
+        "checked": 44,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 94,
+            "h": 19,
+            "inline": true,
+            "chain": "a.text-teal-deep.font-medium < p.text-muted-foreground.max-w-xl < div.container.text-center",
+            "text": "your profile",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 64,
+            "h": 34,
+            "inline": false,
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 72,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "count": 2
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 57,
+        "unmeasurable": 3,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4358
+    },
+    {
+      "route": "/circles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 4035,
+        "cameLate": false,
+        "textAt3500": 4035
+      },
+      "timing": {
+        "dcl": 627,
+        "load": 628,
+        "transferKb": 353,
+        "resources": 31
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 4035,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "15-circles--cr-1280x800.jpg",
+      "tap": {
+        "checked": 58,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 94,
+        "unmeasurable": 0,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          }
+        ]
+      },
+      "ms": 4256
+    },
+    {
+      "route": "/roles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 4639,
+        "cameLate": false,
+        "textAt3500": 4639
+      },
+      "timing": {
+        "dcl": 670,
+        "load": 671,
+        "transferKb": 351,
+        "resources": 31
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 4639,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 62,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "Working groups with real authority",
+              "chain": "p.text-xs.text-muted-foreground < div.rounded-xl.bg-muted/30 < div.mb-14.grid",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Filled",
+              "chain": "span.text-xs.px-2 < div.flex.flex-wrap < div.min-w-0",
+              "n": 25
+            },
+            {
+              "size": 12,
+              "sample": "Leadership Circle",
+              "chain": "p.text-xs.text-muted-foreground < div.min-w-0 < div.flex.items-start",
+              "n": 25
+            },
+            {
+              "size": 12,
+              "sample": "Jessica",
+              "chain": "span.text-sage.font-medium < p.text-xs.text-muted-foreground < div.min-w-0",
+              "n": 9
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "16-roles--cr-1280x800.jpg",
+      "tap": {
+        "checked": 65,
+        "small": [
+          {
+            "w": 44,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Home",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Join",
+            "count": 1
+          },
+          {
+            "w": 50,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Quests",
+            "count": 1
+          },
+          {
+            "w": 62,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "About",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.flex.items-center",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Guides",
+            "count": 1
+          },
+          {
+            "w": 79,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < div.hidden.lg:flex < div.container.py-4",
+            "text": "Living Map",
+            "count": 1
+          },
+          {
+            "w": 103,
+            "h": 20,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.hidden.lg:flex",
+            "text": "Community",
+            "count": 1
+          },
+          {
+            "w": 99,
+            "h": 36,
+            "inline": false,
+            "chain": "a.px-4.py-2 < div.hidden.lg:flex < div.container.py-4",
+            "text": "Main Site",
+            "count": 1
+          },
+          {
+            "w": 173,
+            "h": 32,
+            "inline": false,
+            "chain": "button.flex.items-center < div.relative < div.flex.items-center",
+            "text": "integration-qa",
+            "count": 1
+          },
+          {
+            "w": 205,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 26
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 158,
+        "unmeasurable": 0,
+        "fails": [
+          {
+            "text": "integration-qa",
+            "ratio": 4.02,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(45,140,138)"
+          },
+          {
+            "text": "Forming",
+            "ratio": 4.34,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(236,245,243)"
+          }
+        ]
+      },
+      "ms": 4321
+    },
+    {
+      "route": "/x-missing-page-probe",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 4987,
+        "load": 4987,
+        "transferKb": 277,
+        "resources": 12
+      },
+      "first": {
+        "vw": 1280,
+        "vh": 800,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "17-x-missing-page-probe--cr-1280x800.jpg",
+      "tap": {
+        "checked": 1,
+        "small": [
+          {
+            "w": 124,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.flex-col < div.px-6.pt-8",
+            "text": "Go Home",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 3,
+        "fails": []
+      },
+      "ms": 8563
+    }
+  ],
+  "blockedWrites": [
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    },
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    }
+  ],
+  "unmeasured": [],
+  "consoleErrs": [
+    {
+      "route": "https://amora.regencivics.earth/introductions",
+      "msg": "Failed to load resource: the server responded with a status of 404 ()"
+    }
+  ],
+  "badResponses": [
+    {
+      "route": "https://amora.regencivics.earth/introductions",
+      "status": 404,
+      "path": "/api/intents/board"
+    }
+  ],
+  "buildEnd": "2026-07-28-wave1-335058f"
+}

@@ -1,0 +1,1491 @@
+{
+  "profile": "wk-390x844",
+  "buildStart": "2026-07-28-wave1-335058f",
+  "routes": [
+    {
+      "route": "/",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 5350,
+        "cameLate": false,
+        "textAt3500": 5350
+      },
+      "timing": {
+        "dcl": 11048,
+        "load": 11392,
+        "transferKb": 333,
+        "resources": 24
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 5350,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 32,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "31",
+              "chain": "span.text-white.text-xs < div.container.flex < section.bg-teal-band.text-white",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Build Progress",
+              "chain": "span.inline-block.text-xs < div.text-center.mb-12 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Complete",
+              "chain": "span.shrink-0.inline-flex < div.flex.items-start < div.flex-1.min-w-0",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "Completed",
+              "chain": "p.text-xs.text-stone-500 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "Core circle forming, still welcomi",
+              "chain": "p.text-xs.text-amber-700 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Village Pulse",
+              "chain": "span.inline-flex.items-center < div.text-center.mb-8 < div.container.max-w-2xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "6d ago",
+              "chain": "span.shrink-0.text-xs < li.flex.items-center < ul.space-y-2",
+              "n": 8
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "00-home--wk-390x844.jpg",
+      "ms": 14859
+    },
+    {
+      "route": "/profile",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 4872,
+        "cameLate": false,
+        "textAt3500": 4872
+      },
+      "timing": {
+        "dcl": 622,
+        "load": 675,
+        "transferKb": 365,
+        "resources": 52
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 4872,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 75,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "calendar.read",
+              "chain": "code.text-[11px] < span < label.flex.items-start",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "# in your shell, once (the value i",
+              "chain": "pre.overflow-x-auto.rounded-lg < div.mb-4 < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Your next step",
+              "chain": "p.text-xs.uppercase < div.min-w-0 < div.flex.items-center",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Visitor",
+              "chain": "span.flex.items-center < li.flex.items-center < ol.flex.flex-wrap",
+              "n": 12
+            },
+            {
+              "size": 12,
+              "sample": "quest.propose",
+              "chain": "span.inline-flex.items-center < div.flex.flex-wrap < div.bg-white.rounded-2xl",
+              "n": 21
+            },
+            {
+              "size": 12,
+              "sample": "received",
+              "chain": "p.text-xs.text-gray-500 < div.text-center.bg-teal-deep/5 < div.grid.grid-cols-3",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "people thanked you",
+              "chain": "p.text-xs.text-gray-600 < div.text-center.bg-amber-50 < div.grid.grid-cols-3",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "(role holders only; senders see a ",
+              "chain": "span.text-xs.text-gray-600 < label.flex.items-center < div.bg-white.rounded-2xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "A personal access token lets your ",
+              "chain": "p.text-xs.text-gray-600 < section.rounded-xl.border < div.space-y-5",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Mint a token",
+              "chain": "label.block.text-xs < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "read the calendar",
+              "chain": "span < label.flex.items-start < div.grid.sm:grid-cols-2",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "Claude Code",
+              "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "The skills your agent should read:",
+              "chain": "p.text-xs.text-gray-600 < div.mb-4 < section.rounded-xl.border",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "skills index",
+              "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Agent inbox (optional)",
+              "chain": "span.text-xs.font-medium < div.flex.items-center < div.rounded-lg.bg-white",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "An https URL your agent listens on",
+              "chain": "p.text-xs.text-gray-600 < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "this deployment has no member-secr",
+              "chain": "p.text-xs.text-amber-900 < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "this deployment has no member-secr",
+              "chain": "p.text-xs.text-amber-900 < section.rounded-xl.border < div.space-y-5",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Private: nobody reads it, not even",
+              "chain": "span < label.flex.items-start < div.space-y-1.mb-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "The assistant may use this note an",
+              "chain": "span < label.flex.items-start < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Nothing yet. When the assistant sa",
+              "chain": "p.text-xs.text-gray-500 < section.rounded-xl.border < div.space-y-5",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Gratitude Balance",
+              "chain": "span.text-xs.font-semibold < div.flex.items-center < div.bg-gradient-to-br.from-amber",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 29,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "01-profile--wk-390x844.jpg",
+      "ms": 4501
+    },
+    {
+      "route": "/profile/characters",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 1311,
+        "cameLate": false,
+        "textAt3500": 1311
+      },
+      "timing": {
+        "dcl": 204,
+        "load": 290,
+        "transferKb": 271,
+        "resources": 24
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1311,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.min-h-11.rounded-xl < div.mt-5.text-center < section.order-1.lg:order-2",
+            "text": "Walk this path",
+            "top": 756,
+            "cy": 780
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 6,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Building & Developing",
+              "chain": "p.text-xs.font-semibold < aside.order-3.rounded-2xl < div.grid.grid-cols-[minmax(0,1fr)]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "02-profile-characters--wk-390x844.jpg",
+      "ms": 4110
+    },
+    {
+      "route": "/events",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 5,
+        "textLen": 2028,
+        "cameLate": false,
+        "textAt3500": 2028
+      },
+      "timing": {
+        "dcl": 313,
+        "load": 328,
+        "transferKb": 38,
+        "resources": 33
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 2028,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "2\nmoon 7 day 20",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "3\nmoon 7 day 21",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "4\nmoon 7 day 22",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "5\nmoon 7 day 23",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "6\nmoon 7 day 24",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "7\nmoon 7 day 25",
+            "top": 752,
+            "cy": 780
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 61,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-center < div.grid.grid-cols-7 < div.calendar-print",
+              "n": 7
+            },
+            {
+              "size": 10,
+              "sample": "moon 7 day 13",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 42
+            },
+            {
+              "size": 10,
+              "sample": "new moon",
+              "chain": "span.ml-1.font-medium < div.text-[10px].text-muted-foreground < button.flex.flex-col",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Print this month",
+              "chain": "button.print-hide.inline-flex < span.ml-auto.mb-2 < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "03-events--wk-390x844.jpg",
+      "ms": 3995
+    },
+    {
+      "route": "/events?brief=2026-08-17",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 2359,
+        "cameLate": false,
+        "textAt3500": 2359
+      },
+      "timing": {
+        "dcl": 205,
+        "load": 276,
+        "transferKb": 13,
+        "resources": 29
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 2359,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "2\nmoon 7 day 20",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "3\nmoon 7 day 21",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "4\nmoon 7 day 22",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "5\nmoon 7 day 23",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "6\nmoon 7 day 24",
+            "top": 752,
+            "cy": 780
+          },
+          {
+            "chain": "button.flex.flex-col < div.grid.grid-cols-7 < div.calendar-print",
+            "text": "7\nmoon 7 day 25",
+            "top": 752,
+            "cy": 780
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 65,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "example name",
+              "chain": "span.text-[10px].font-medium < div.min-h-[44px].flex < div.grid.grid-rows-2",
+              "n": 1
+            },
+            {
+              "size": 10,
+              "sample": "Sun",
+              "chain": "div.text-center < div.grid.grid-cols-7 < div.calendar-print",
+              "n": 7
+            },
+            {
+              "size": 10,
+              "sample": "moon 7 day 13",
+              "chain": "div.text-[10px].text-muted-foreground < button.flex.flex-col < div.grid.grid-cols-7",
+              "n": 42
+            },
+            {
+              "size": 10,
+              "sample": "new moon",
+              "chain": "span.ml-1.font-medium < div.text-[10px].text-muted-foreground < button.flex.flex-col",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Week of",
+              "chain": "span.text-[11px].text-muted-foreground < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 3
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Print this month",
+              "chain": "button.print-hide.inline-flex < span.ml-auto.mb-2 < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Send me this every week",
+              "chain": "label.flex.items-center < div.px-5.py-3 < div.w-full.max-w-lg",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "04-events-brief-2026-08-17--wk-390x844.jpg",
+      "ms": 3979
+    },
+    {
+      "route": "/messages",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 502,
+      "late": {
+        "extraMs": 2,
+        "textLen": 388,
+        "cameLate": false,
+        "textAt3500": 388
+      },
+      "timing": {
+        "dcl": 15191,
+        "load": 15248,
+        "transferKb": 5,
+        "resources": 3
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 388,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 7,
+          "groups": [
+            {
+              "size": 12,
+              "sample": "Error code 502",
+              "chain": "span.code-label < h1.inline-block.sm:block < header.mx-auto.pt-10",
+              "n": 1
+            },
+            {
+              "size": 13,
+              "sample": "Cloudflare Ray ID:",
+              "chain": "span.cf-footer-item.sm:block < p.text-13 < div.cf-error-footer.cf-wrapper",
+              "n": 2
+            },
+            {
+              "size": 13,
+              "sample": "a2ec4f126c4bc8b2",
+              "chain": "strong.font-semibold < span.cf-footer-item.sm:block < p.text-13",
+              "n": 1
+            },
+            {
+              "size": 13,
+              "sample": "Click to reveal",
+              "chain": "button.cf-footer-ip-reveal-btn < span.cf-footer-item.sm:block < p.text-13",
+              "n": 1
+            },
+            {
+              "size": 13,
+              "sample": "Performance & security by",
+              "chain": "span < span.cf-footer-item.sm:block < p.text-13",
+              "n": 1
+            },
+            {
+              "size": 13,
+              "sample": "Cloudflare",
+              "chain": "a < span.cf-footer-item.sm:block < p.text-13",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "05-messages--wk-390x844.jpg",
+      "ms": 18783
+    },
+    {
+      "route": "/introductions",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 8,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 198,
+        "load": 304,
+        "transferKb": 13,
+        "resources": 15
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "06-introductions--wk-390x844.jpg",
+      "ms": 3953
+    },
+    {
+      "route": "/map/circles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 1539,
+        "cameLate": false,
+        "textAt3500": 1539
+      },
+      "timing": {
+        "dcl": 241,
+        "load": 364,
+        "transferKb": 55,
+        "resources": 37
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1539,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 24,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Now",
+              "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "How we decide",
+              "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Open seats",
+              "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Legend",
+              "chain": "button.md:hidden.w-full < div.bg-card.border < div.sm:max-w-xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "(forming)",
+              "chain": "span.ml-2.text-xs < span.font-semibold.text-foreground < button.w-full.flex",
+              "n": 11
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "07-map-circles--wk-390x844.jpg",
+      "ms": 3984
+    },
+    {
+      "route": "/modules",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 3292,
+        "cameLate": false,
+        "textAt3500": 3292
+      },
+      "timing": {
+        "dcl": 215,
+        "load": 311,
+        "transferKb": 23,
+        "resources": 31
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 3292,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "a.group.block < div.grid.grid-cols-1 < section.mb-10",
+            "text": "Call Automation\n\nThe weekly call becomes",
+            "top": 742,
+            "cy": 910
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 23,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "Always on",
+              "chain": "span.text-[10px].px-1.5 < div.flex.flex-wrap < div.p-4",
+              "n": 18
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 46,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "08-modules--wk-390x844.jpg",
+      "ms": 3976
+    },
+    {
+      "route": "/map",
+      "notes": [],
+      "extraShots": [
+        "map-blank-at-3s5--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 9240,
+        "textLen": 19,
+        "cameLate": false,
+        "textAt3500": 19
+      },
+      "timing": {
+        "dcl": 1979,
+        "load": 3031,
+        "transferKb": 3870,
+        "resources": 17
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 19,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "09-map--wk-390x844.jpg",
+      "ms": 16151
+    },
+    {
+      "route": "/gratitude",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 1163,
+        "cameLate": false,
+        "textAt3500": 1163
+      },
+      "timing": {
+        "dcl": 1217,
+        "load": 2747,
+        "transferKb": 15,
+        "resources": 21
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1163,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "10-gratitude--wk-390x844.jpg",
+      "ms": 4871
+    },
+    {
+      "route": "/quests",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 3610,
+        "cameLate": false,
+        "textAt3500": 3610
+      },
+      "timing": {
+        "dcl": 198,
+        "load": 295,
+        "transferKb": 30,
+        "resources": 31
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 3610,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 59,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Be the first hello a newcomer reme",
+              "chain": "span.block.text-xs < span.min-w-0.flex-1 < a.flex.items-center",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "All",
+              "chain": "button.px-3.min-h-[44px] < div.flex.gap-2 < div.container",
+              "n": 14
+            },
+            {
+              "size": 12,
+              "sample": "14",
+              "chain": "p.text-xs.text-muted-foreground < div.container < section.sticky.top-24",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Community Development",
+              "chain": "p.text-white/80.text-xs < div.absolute.bottom-0 < div.relative.overflow-hidden",
+              "n": 7
+            },
+            {
+              "size": 12,
+              "sample": "50-100",
+              "chain": "span.inline-flex.items-center < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 22
+            },
+            {
+              "size": 12,
+              "sample": "Beginner",
+              "chain": "span.px-2.py-0.5 < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 7
+            }
+          ]
+        },
+        "onwardLinks": 33,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "11-quests--wk-390x844.jpg",
+      "ms": 3976
+    },
+    {
+      "route": "/badges",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 965,
+        "cameLate": false,
+        "textAt3500": 965
+      },
+      "timing": {
+        "dcl": 211,
+        "load": 2056,
+        "transferKb": 9,
+        "resources": 14
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 965,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 6,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Declare what you can do. It helps ",
+              "chain": "p.text-xs.text-muted-foreground < div.flex.flex-wrap < div.bg-card.border",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "12-badges--wk-390x844.jpg",
+      "ms": 3897
+    },
+    {
+      "route": "/wallet",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 1243,
+        "cameLate": false,
+        "textAt3500": 1243
+      },
+      "timing": {
+        "dcl": 1883,
+        "load": 1971,
+        "transferKb": 18,
+        "resources": 28
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1243,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "top": 772,
+            "cy": 790
+          },
+          {
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "top": 772,
+            "cy": 790
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 11,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "13-wallet--wk-390x844.jpg",
+      "ms": 5577
+    },
+    {
+      "route": "/tokens",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 1243,
+        "cameLate": false,
+        "textAt3500": 1243
+      },
+      "timing": {
+        "dcl": 186,
+        "load": 280,
+        "transferKb": 9,
+        "resources": 28
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1243,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "top": 772,
+            "cy": 790
+          },
+          {
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "top": 772,
+            "cy": 790
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 11,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "14-tokens--wk-390x844.jpg",
+      "ms": 3868
+    },
+    {
+      "route": "/circles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 5,
+        "textLen": 4038,
+        "cameLate": false,
+        "textAt3500": 4038
+      },
+      "timing": {
+        "dcl": 177,
+        "load": 278,
+        "transferKb": 28,
+        "resources": 27
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 4038,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "15-circles--wk-390x844.jpg",
+      "ms": 3856
+    },
+    {
+      "route": "/roles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 4559,
+        "cameLate": false,
+        "textAt3500": 4559
+      },
+      "timing": {
+        "dcl": 199,
+        "load": 296,
+        "transferKb": 24,
+        "resources": 27
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 4559,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 58,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Working groups with real authority",
+              "chain": "p.text-xs.text-muted-foreground < div.rounded-xl.bg-muted/30 < div.mb-14.grid",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Filled",
+              "chain": "span.text-xs.px-2 < div.flex.flex-wrap < div.min-w-0",
+              "n": 25
+            },
+            {
+              "size": 12,
+              "sample": "Leadership Circle",
+              "chain": "p.text-xs.text-muted-foreground < div.min-w-0 < div.flex.items-start",
+              "n": 25
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "16-roles--wk-390x844.jpg",
+      "ms": 3873
+    },
+    {
+      "route": "/x-missing-page-probe",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 184,
+        "load": 286,
+        "transferKb": 6,
+        "resources": 9
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "17-x-missing-page-probe--wk-390x844.jpg",
+      "ms": 3956
+    }
+  ],
+  "blockedWrites": [],
+  "unmeasured": [],
+  "consoleErrs": [
+    {
+      "route": "https://amora.regencivics.earth/events?brief=2026-08-17",
+      "msg": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "badResponses": [
+    {
+      "route": "https://amora.regencivics.earth/events?brief=2026-08-17",
+      "status": 502,
+      "path": "/messages"
+    }
+  ],
+  "buildEnd": "2026-07-28-wave1-379d2e7"
+}

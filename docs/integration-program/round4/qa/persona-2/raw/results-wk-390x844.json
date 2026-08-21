@@ -1,0 +1,2769 @@
+{
+  "profile": "wk-390x844",
+  "buildStart": "2026-07-28-wave1-335058f",
+  "routes": [
+    {
+      "route": "/",
+      "notes": [
+        "bell present (36x36)",
+        "bell opened (dropdown header=true emptyText=false); mark-read POST intercepted if fired (write path not exercised on live)"
+      ],
+      "extraShots": [
+        "home-bell-open--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 19,
+        "textLen": 5350,
+        "cameLate": false,
+        "textAt3500": 5350
+      },
+      "timing": {
+        "dcl": 5347,
+        "load": 6321,
+        "transferKb": 333,
+        "resources": 24
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 5350,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 32,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "31",
+              "chain": "span.text-white.text-xs < div.container.flex < section.bg-teal-band.text-white",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Build Progress",
+              "chain": "span.inline-block.text-xs < div.text-center.mb-12 < div.container.max-w-4xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Complete",
+              "chain": "span.shrink-0.inline-flex < div.flex.items-start < div.flex-1.min-w-0",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "Completed",
+              "chain": "p.text-xs.text-stone-500 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "Core circle forming, still welcomi",
+              "chain": "p.text-xs.text-amber-700 < div.flex-1.min-w-0 < div.bg-white.rounded-2xl",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Village Pulse",
+              "chain": "span.inline-flex.items-center < div.text-center.mb-8 < div.container.max-w-2xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "6d ago",
+              "chain": "span.shrink-0.text-xs < li.flex.items-center < ul.space-y-2",
+              "n": 8
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "00-home--wk-390x844.jpg",
+      "tap": {
+        "checked": 46,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 147,
+            "h": 24,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.text-center.mt-12 < div.container",
+            "text": "Find your path",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 157,
+        "unmeasurable": 6,
+        "fails": [
+          {
+            "text": "Come co-create paradise",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(245,245,245)"
+          },
+          {
+            "text": "A regenerative village in Costa Rica",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(252,252,252)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "Read the Co-Creators Guide",
+            "ratio": 1.09,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(245,245,245)"
+          },
+          {
+            "text": "Co-Become the Most  Village",
+            "ratio": 1.12,
+            "floor": 3,
+            "size": 48,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "belong",
+            "ratio": 1.12,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "thrive",
+            "ratio": 1.12,
+            "floor": 4.5,
+            "size": 20,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(242,242,242)"
+          },
+          {
+            "text": "Nothing yet. Go be seen.",
+            "ratio": 2.6,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(153,161,175)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Find your path",
+            "ratio": 4.3,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(242,242,242)"
+          }
+        ]
+      },
+      "ms": 13405
+    },
+    {
+      "route": "/profile",
+      "notes": [
+        "your-agent text: \"Your agent\""
+      ],
+      "extraShots": [
+        "profile-blank-at-3s5--wk-390x844.jpg",
+        "profile-your-agent--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 587,
+        "textLen": 2984,
+        "cameLate": false,
+        "textAt3500": 12
+      },
+      "timing": {
+        "dcl": 983,
+        "load": 1071,
+        "transferKb": 238,
+        "resources": 24
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 2984,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 27,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "# in your shell, once (the value i",
+              "chain": "pre.overflow-x-auto.rounded-lg < div.mb-4 < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "A personal access token lets your ",
+              "chain": "p.text-xs.text-gray-600 < section.rounded-xl.border < div.space-y-5",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Mint a token",
+              "chain": "label.block.text-xs < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Claude Code",
+              "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "The skills your agent should read:",
+              "chain": "p.text-xs.text-gray-600 < div.mb-4 < section.rounded-xl.border",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "skills index",
+              "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Agent inbox (optional)",
+              "chain": "span.text-xs.font-medium < div.flex.items-center < div.rounded-lg.bg-white",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "An https URL your agent listens on",
+              "chain": "p.text-xs.text-gray-600 < div.rounded-lg.bg-white < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Private: nobody reads it, not even",
+              "chain": "span < label.flex.items-start < div.space-y-1.mb-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "The assistant may use this note an",
+              "chain": "span < label.flex.items-start < section.rounded-xl.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Nothing yet. When the assistant sa",
+              "chain": "p.text-xs.text-gray-500 < section.rounded-xl.border < div.space-y-5",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Gratitude Balance",
+              "chain": "span.text-xs.font-semibold < div.flex.items-center < div.bg-gradient-to-br.from-amber",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "01-profile--wk-390x844.jpg",
+      "tap": {
+        "checked": 72,
+        "small": [
+          {
+            "w": 12,
+            "h": 12,
+            "inline": false,
+            "chain": "input < label.flex.items-center < div.bg-white.rounded-2xl",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 12,
+            "h": 12,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < div.grid.sm:grid-cols-2",
+            "text": "",
+            "count": 4
+          },
+          {
+            "w": 12,
+            "h": 12,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < div.space-y-1.mb-2",
+            "text": "",
+            "count": 3
+          },
+          {
+            "w": 12,
+            "h": 12,
+            "inline": false,
+            "chain": "input.mt-0.5 < label.flex.items-start < section.rounded-xl.border",
+            "text": "",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.p-2.hover:bg-gray-100 < div.flex.justify-between < div.bg-white.rounded-2xl",
+            "text": "Edit your bio",
+            "count": 1
+          },
+          {
+            "w": 75,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Hermes",
+            "count": 1
+          },
+          {
+            "w": 90,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "OpenClaw",
+            "count": 1
+          },
+          {
+            "w": 104,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Claude Code",
+            "count": 1
+          },
+          {
+            "w": 144,
+            "h": 20,
+            "inline": false,
+            "chain": "a.text-sm.font-medium < div.flex.items-center < div.bg-white.rounded-2xl",
+            "text": "Village exchange",
+            "count": 1
+          },
+          {
+            "w": 159,
+            "h": 20,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.border-t.border-gray-100 < div.bg-white.rounded-2xl",
+            "text": "Delete my account",
+            "count": 1
+          },
+          {
+            "w": 172,
+            "h": 20,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.bg-white.rounded-2xl < div.grid.md:grid-cols-2",
+            "text": "Browse open quests",
+            "count": 1
+          },
+          {
+            "w": 193,
+            "h": 20,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.bg-white.rounded-2xl < div.grid.md:grid-cols-2",
+            "text": "Visit the Gratitude Wall",
+            "count": 1
+          },
+          {
+            "w": 141,
+            "h": 43,
+            "inline": false,
+            "chain": "select.text-xs.border < div.flex.items-center < div.space-y-2.5.mb-6",
+            "text": "Right away\nDaily digest\nIn-app",
+            "count": 6
+          },
+          {
+            "w": 249,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.rounded-full < div.flex.flex-wrap < div.mb-4",
+            "text": "Any OpenAI-compatible agent (c",
+            "count": 1
+          },
+          {
+            "w": 250,
+            "h": 41,
+            "inline": false,
+            "chain": "input.w-full.min-w-0 < div.rounded-lg.bg-white < section.rounded-xl.border",
+            "text": "A name you will recognise, lik",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          },
+          {
+            "w": 294,
+            "h": 40,
+            "inline": false,
+            "chain": "a.inline-flex.items-center < div.border-t.border-gray-100 < div.bg-white.rounded-2xl",
+            "text": "Download everything the villag",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": [
+          {
+            "chain": "a.text-teal-deep.underline < p.text-xs.text-gray-600 < div.mb-4",
+            "text": "skills index"
+          }
+        ]
+      },
+      "contrast": {
+        "measured": 158,
+        "unmeasurable": 11,
+        "fails": [
+          {
+            "text": "Immersant",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Participant",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Member",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Contributor",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Quest Seeker",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Initiate",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Co-Creator",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Role Holder",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Guide",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Sage",
+            "ratio": 2.59,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(166,160,155)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Delete my account",
+            "ratio": 3.81,
+            "floor": 4.5,
+            "size": 14,
+            "fg": "rgb(251,44,54)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "quest.propose",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "quest.consent",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "forum.post",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "forum.moderate",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "proposal.open",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "proposal.decide",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.viewPeople",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.contact",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.edit",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "map.publish",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "feed.announce",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "stay.member_rate",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.buy",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.swap",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "exchange.manage",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "health.record",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "message.send",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "mechanics.propose",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "event.rsvp",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "event.manage",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "org.declare",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Sign Out",
+            "ratio": 4.36,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(231,0,11)",
+            "bg": "rgb(254,242,242)"
+          }
+        ]
+      },
+      "ms": 8693
+    },
+    {
+      "route": "/profile/characters",
+      "notes": [],
+      "extraShots": [
+        "profile-characters-blank-at-3s5--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1622,
+        "textLen": 691,
+        "cameLate": true,
+        "textAt3500": 12
+      },
+      "timing": {
+        "dcl": 710,
+        "load": 815,
+        "transferKb": 278,
+        "resources": 15
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 691,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.min-h-11.rounded-xl < div.mt-5.text-center < section.order-1.lg:order-2",
+            "text": "Walk this path",
+            "top": 756,
+            "cy": 780
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "02-profile-characters--wk-390x844.jpg",
+      "tap": {
+        "checked": 46,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 40,
+            "h": 40,
+            "inline": false,
+            "chain": "button.h-10.w-10 < div.flex.items-center < div.mt-4.flex",
+            "text": "Deep",
+            "count": 3
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 49,
+        "unmeasurable": 9,
+        "fails": []
+      },
+      "ms": 7092
+    },
+    {
+      "route": "/events",
+      "notes": [
+        "week view opened",
+        "who-is-here band not rendered (quiet state renders nothing by design; band untestable without arrivals data)",
+        "layer-ish chips visible: 1",
+        "rsvp controls visible (never pressed): 0",
+        "meet-me surface NOT visible on /events"
+      ],
+      "extraShots": [
+        "events-blank-at-3s5--wk-390x844.jpg",
+        "events-week--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1074,
+        "textLen": 759,
+        "cameLate": true,
+        "textAt3500": 12
+      },
+      "timing": {
+        "dcl": 736,
+        "load": 878,
+        "transferKb": 328,
+        "resources": 30
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1145,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "button.w-full.flex < div.print-hide.mt-4 < div.container.max-w-4xl",
+            "text": "Subscribe from your own calendar\nShow",
+            "top": 746,
+            "cy": 782
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 9,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "03-events--wk-390x844.jpg",
+      "tap": {
+        "checked": 53,
+        "small": [
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+            "text": "Read this week's",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 77,
+        "unmeasurable": 8,
+        "fails": []
+      },
+      "ms": 8752
+    },
+    {
+      "route": "/events?brief=2026-08-17",
+      "notes": [
+        "brief panel text hits: 2",
+        "opt-out style controls in view: 1 (rendered only; write path not exercised on live)"
+      ],
+      "extraShots": [
+        "events-brief--wk-390x844.jpg"
+      ],
+      "backTests": [
+        {
+          "what": "?brief= then Back",
+          "ok": true,
+          "msToContent": 3741,
+          "to": "https://amora.regencivics.earth/events"
+        }
+      ],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 52,
+        "textLen": 1155,
+        "cameLate": false,
+        "textAt3500": 1155
+      },
+      "timing": {
+        "dcl": 704,
+        "load": 837,
+        "transferKb": 332,
+        "resources": 32
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1155,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 9,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Times are village time, America/Co",
+              "chain": "p.mt-2.text-xs < div.container.text-center < section.py-10.bg-gradient-to-b",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Show",
+              "chain": "span.text-xs.text-muted-foreground < button.w-full.flex < div.print-hide.mt-4",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Read this week's",
+              "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "04-events-brief-2026-08-17--wk-390x844.jpg",
+      "tap": {
+        "checked": 45,
+        "small": [
+          {
+            "w": 30,
+            "h": 30,
+            "inline": false,
+            "chain": "button.p-1.5.rounded-lg < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Earlier",
+            "count": 2
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 49,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "List",
+            "count": 1
+          },
+          {
+            "w": 55,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Year",
+            "count": 1
+          },
+          {
+            "w": 65,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Week",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 32,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.rounded-lg < div.flex.items-center",
+            "text": "Month",
+            "count": 1
+          },
+          {
+            "w": 68,
+            "h": 34,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.inline-flex.items-center < div.flex.items-center",
+            "text": "Today",
+            "count": 1
+          },
+          {
+            "w": 128,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-3.py-1.5 < div.print-hide.mt-4 < div.container.max-w-4xl",
+            "text": "Read this week's",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 27,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 50,
+        "unmeasurable": 8,
+        "fails": []
+      },
+      "ms": 10541
+    },
+    {
+      "route": "/messages",
+      "notes": [
+        "threads surface: emptyState=true textLen=861",
+        "intent/introduction affordances on messages: 0"
+      ],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 6,
+        "textLen": 861,
+        "cameLate": false,
+        "textAt3500": 861
+      },
+      "timing": {
+        "dcl": 843,
+        "load": 903,
+        "transferKb": 342,
+        "resources": 29
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 861,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "05-messages--wk-390x844.jpg",
+      "tap": {
+        "checked": 37,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 43,
+        "unmeasurable": 5,
+        "fails": []
+      },
+      "ms": 4608
+    },
+    {
+      "route": "/introductions",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 683,
+        "load": 954,
+        "transferKb": 221,
+        "resources": 15
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "06-introductions--wk-390x844.jpg",
+      "tap": {
+        "checked": 1,
+        "small": [],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 3,
+        "fails": []
+      },
+      "ms": 5143
+    },
+    {
+      "route": "/map/circles",
+      "notes": [
+        "breadcrumb: present",
+        "search: present",
+        "legend text: present",
+        "decides-by text: present",
+        "currency text: NOT found",
+        "your seat text: present",
+        "search typed 'water' (client-side/GET only; the Ask button is never pressed)",
+        "no visible map box at this width (phone gets the accordion list by design); accordion textLen=1539; zoom-and-back exercised on the desktop profile instead"
+      ],
+      "extraShots": [
+        "map-circles-settled--wk-390x844.jpg",
+        "map-circles-search--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 1539,
+        "cameLate": false,
+        "textAt3500": 1539
+      },
+      "timing": {
+        "dcl": 655,
+        "load": 717,
+        "transferKb": 379,
+        "resources": 42
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1539,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 24,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Now",
+              "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "How we decide",
+              "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "Open seats",
+              "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Legend",
+              "chain": "button.md:hidden.w-full < div.bg-card.border < div.sm:max-w-xl",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "(forming)",
+              "chain": "span.ml-2.text-xs < span.font-semibold.text-foreground < button.w-full.flex",
+              "n": 11
+            }
+          ]
+        },
+        "onwardLinks": 27,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "07-map-circles--wk-390x844.jpg",
+      "tap": {
+        "checked": 66,
+        "small": [
+          {
+            "w": 16,
+            "h": 16,
+            "inline": false,
+            "chain": "button.text-muted-foreground.hover:text-foreground < div.mb-6.rounded-lg < div.max-w-2xl.mx-auto",
+            "text": "Hide the walk invitation",
+            "count": 1
+          },
+          {
+            "w": 48,
+            "h": 24,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+            "text": "Now",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 57,
+            "h": 24,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.inline-flex.rounded-full < div.flex.items-center",
+            "text": "Vision",
+            "count": 1
+          },
+          {
+            "w": 66,
+            "h": 28,
+            "inline": false,
+            "chain": "button.px-2.py-1 < nav.flex.items-center < div.flex.items-center",
+            "text": "Village",
+            "count": 1
+          },
+          {
+            "w": 72,
+            "h": 26,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Links",
+            "count": 1
+          },
+          {
+            "w": 75,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "My seats",
+            "count": 1
+          },
+          {
+            "w": 91,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "Open seats",
+            "count": 1
+          },
+          {
+            "w": 142,
+            "h": 18,
+            "inline": true,
+            "chain": "a.text-teal-deep.font-medium < p.text-foreground < div.flex-1.text-sm",
+            "text": "Take the short walk",
+            "count": 1
+          },
+          {
+            "w": 100,
+            "h": 26,
+            "inline": false,
+            "chain": "button.text-xs.px-2.5 < div.flex.items-center < div.mb-3.space-y-2",
+            "text": "Ending soon",
+            "count": 1
+          },
+          {
+            "w": 116,
+            "h": 26,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "How we decide",
+            "count": 1
+          },
+          {
+            "w": 198,
+            "h": 16,
+            "inline": false,
+            "chain": "button.md:hidden.w-full < div.bg-card.border < div.sm:max-w-xl",
+            "text": "Legend",
+            "count": 1
+          },
+          {
+            "w": 160,
+            "h": 39,
+            "inline": false,
+            "chain": "select.text-xs.border < label.text-xs.text-muted-foreground < div.flex.items-center",
+            "text": "Any circle\nLeadership Circle\nP",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 76,
+        "unmeasurable": 9,
+        "fails": []
+      },
+      "ms": 7933
+    },
+    {
+      "route": "/modules",
+      "notes": [
+        "module cards with an On badge: 0; ask-your-founders affordances: 0 (this account is an admin, so founder-only chrome may show)"
+      ],
+      "extraShots": [
+        "modules-blank-at-3s5--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1088,
+        "textLen": 738,
+        "cameLate": true,
+        "textAt3500": 12
+      },
+      "timing": {
+        "dcl": 695,
+        "load": 801,
+        "transferKb": 223,
+        "resources": 22
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 738,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Resident",
+            "top": 771,
+            "cy": 787
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "08-modules--wk-390x844.jpg",
+      "tap": {
+        "checked": 33,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 25
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 38,
+        "unmeasurable": 5,
+        "fails": []
+      },
+      "ms": 6018
+    },
+    {
+      "route": "/map",
+      "notes": [
+        "map iframe overflow: 400px"
+      ],
+      "extraShots": [
+        "map-blank-at-3s5--wk-390x844.jpg",
+        "map-settled--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 9237,
+        "textLen": 19,
+        "cameLate": false,
+        "textAt3500": 19
+      },
+      "timing": {
+        "dcl": 2940,
+        "load": 3029,
+        "transferKb": 4082,
+        "resources": 18
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 19,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": false
+      },
+      "shot": "09-map--wk-390x844.jpg",
+      "iframeOverflow": 400,
+      "tap": {
+        "checked": 1,
+        "small": [],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 0,
+        "fails": []
+      },
+      "ms": 22831
+    },
+    {
+      "route": "/gratitude",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 1163,
+        "cameLate": false,
+        "textAt3500": 1163
+      },
+      "timing": {
+        "dcl": 670,
+        "load": 765,
+        "transferKb": 342,
+        "resources": 26
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1163,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "10-gratitude--wk-390x844.jpg",
+      "tap": {
+        "checked": 40,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          },
+          {
+            "w": 308,
+            "h": 42,
+            "inline": false,
+            "chain": "input.px-3.py-2 < div.grid.md:grid-cols-[1fr_110px] < form.bg-white.rounded-2xl",
+            "text": "Member's email",
+            "count": 2
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 52,
+        "unmeasurable": 5,
+        "fails": [
+          {
+            "text": "Appreciation, spoken out loud. Every",
+            "ratio": 3.67,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(208,229,229)",
+            "bg": "rgb(21,127,125)"
+          }
+        ]
+      },
+      "ms": 4359
+    },
+    {
+      "route": "/quests",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 4,
+        "textLen": 3610,
+        "cameLate": false,
+        "textAt3500": 3610
+      },
+      "timing": {
+        "dcl": 617,
+        "load": 668,
+        "transferKb": 476,
+        "resources": 36
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 3610,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 59,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Be the first hello a newcomer reme",
+              "chain": "span.block.text-xs < span.min-w-0.flex-1 < a.flex.items-center",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "All",
+              "chain": "button.px-3.min-h-[44px] < div.flex.gap-2 < div.container",
+              "n": 14
+            },
+            {
+              "size": 12,
+              "sample": "14",
+              "chain": "p.text-xs.text-muted-foreground < div.container < section.sticky.top-24",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Community Development",
+              "chain": "p.text-white/80.text-xs < div.absolute.bottom-0 < div.relative.overflow-hidden",
+              "n": 7
+            },
+            {
+              "size": 12,
+              "sample": "50-100",
+              "chain": "span.inline-flex.items-center < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 22
+            },
+            {
+              "size": 12,
+              "sample": "Beginner",
+              "chain": "span.px-2.py-0.5 < div.flex.flex-wrap < div.p-4.flex-1",
+              "n": 7
+            }
+          ]
+        },
+        "onwardLinks": 33,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "11-quests--wk-390x844.jpg",
+      "tap": {
+        "checked": 62,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 40,
+            "h": 44,
+            "inline": false,
+            "chain": "button.px-3.min-h-[44px] < div.flex.gap-2 < div.container",
+            "text": "All",
+            "count": 2
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 126,
+        "unmeasurable": 10,
+        "fails": [
+          {
+            "text": "Welcome Ambassador",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Community Development",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Food Forest Tender",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Regenerative Agriculture",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Circle Scribe",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Governance",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Children's Play Day Facilitator",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Education",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Community Music Circle Host",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Arts & Culture",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Retreat Center Host",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Tourism & Retreat",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Tech & Platform Steward",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 18,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "Technology",
+            "ratio": 1,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(255,255,255)",
+            "bg": "rgb(255,255,255)"
+          },
+          {
+            "text": "50-100 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "40-80 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "40-80 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "70-130 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "50-100 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "80-150 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "80-200 Gratitude",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Advanced",
+            "ratio": 4.21,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(231,242,242)"
+          },
+          {
+            "text": "Show all 9",
+            "ratio": 4.3,
+            "floor": 4.5,
+            "size": 16,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(242,242,242)"
+          }
+        ]
+      },
+      "ms": 4405
+    },
+    {
+      "route": "/badges",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 2327,
+        "cameLate": false,
+        "textAt3500": 2327
+      },
+      "timing": {
+        "dcl": 635,
+        "load": 688,
+        "transferKb": 336,
+        "resources": 27
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 2327,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 35,
+          "groups": [
+            {
+              "size": 10,
+              "sample": "granted",
+              "chain": "span.text-[10px].border < div.flex.items-center < div.flex-1",
+              "n": 6
+            },
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Declare what you can do. It helps ",
+              "chain": "p.text-xs.text-muted-foreground < div.flex.flex-wrap < div.bg-card.border",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Grants:",
+              "chain": "p.text-xs.text-emerald-700 < div.flex-1 < div.flex.items-start",
+              "n": 6
+            },
+            {
+              "size": 12,
+              "sample": "Held by",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-start",
+              "n": 8
+            },
+            {
+              "size": 12,
+              "sample": "Aditi",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            },
+            {
+              "size": 12,
+              "sample": "That's me",
+              "chain": "button.text-xs.text-[#2D5A5A] < div.flex.flex-col < div.flex.items-start",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Suspends:",
+              "chain": "p.text-xs.text-red-600 < div.flex-1 < div.flex.items-start",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "until",
+              "chain": "span.text-amber-700 < span < p.text-xs.text-muted-foreground",
+              "n": 2
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "12-badges--wk-390x844.jpg",
+      "tap": {
+        "checked": 39,
+        "small": [
+          {
+            "w": 61,
+            "h": 16,
+            "inline": false,
+            "chain": "button.text-xs.text-[#2D5A5A] < div.flex.flex-col < div.flex.items-start",
+            "text": "That's me",
+            "count": 1
+          },
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 74,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.flex-wrap < div.bg-card.border",
+            "text": "Add",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          },
+          {
+            "w": 316,
+            "h": 41,
+            "inline": false,
+            "chain": "input.flex-1.text-sm < div.flex.flex-wrap < div.bg-card.border",
+            "text": "e.g. carpentry",
+            "count": 1
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 76,
+        "unmeasurable": 7,
+        "fails": []
+      },
+      "ms": 4351
+    },
+    {
+      "route": "/wallet",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 1,
+        "textLen": 1243,
+        "cameLate": false,
+        "textAt3500": 1243
+      },
+      "timing": {
+        "dcl": 4300,
+        "load": 4354,
+        "transferKb": 341,
+        "resources": 33
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1243,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "top": 772,
+            "cy": 790
+          },
+          {
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "top": 772,
+            "cy": 790
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 11,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "13-wallet--wk-390x844.jpg",
+      "tap": {
+        "checked": 41,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 64,
+            "h": 37,
+            "inline": false,
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 72,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "count": 2
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 51,
+        "unmeasurable": 8,
+        "fails": []
+      },
+      "ms": 8020
+    },
+    {
+      "route": "/tokens",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 1243,
+        "cameLate": false,
+        "textAt3500": 1243
+      },
+      "timing": {
+        "dcl": 634,
+        "load": 668,
+        "transferKb": 331,
+        "resources": 33
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 1243,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [
+          {
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "top": 772,
+            "cy": 790
+          },
+          {
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "top": 772,
+            "cy": 790
+          }
+        ],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 11,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "$1.00 each",
+              "chain": "p.text-xs.text-muted-foreground < div.flex-1 < div.flex.items-center",
+              "n": 2
+            },
+            {
+              "size": 12,
+              "sample": "250",
+              "chain": "span < p.text-xs.text-muted-foreground < div.flex-1",
+              "n": 4
+            }
+          ]
+        },
+        "onwardLinks": 26,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "14-tokens--wk-390x844.jpg",
+      "tap": {
+        "checked": 41,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 64,
+            "h": 37,
+            "inline": false,
+            "chain": "input.w-16.text-sm < div.flex.items-center < div.flex.items-center",
+            "text": "",
+            "count": 2
+          },
+          {
+            "w": 72,
+            "h": 36,
+            "inline": false,
+            "chain": "button.inline-flex.items-center < div.flex.items-center < div.flex.items-center",
+            "text": "Buy",
+            "count": 2
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 51,
+        "unmeasurable": 8,
+        "fails": []
+      },
+      "ms": 4367
+    },
+    {
+      "route": "/circles",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 3,
+        "textLen": 4038,
+        "cameLate": false,
+        "textAt3500": 4038
+      },
+      "timing": {
+        "dcl": 624,
+        "load": 705,
+        "transferKb": 370,
+        "resources": 33
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 4038,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 5,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "15-circles--wk-390x844.jpg",
+      "tap": {
+        "checked": 55,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 88,
+        "unmeasurable": 5,
+        "fails": []
+      },
+      "ms": 4320
+    },
+    {
+      "route": "/roles",
+      "notes": [],
+      "extraShots": [
+        "roles-blank-at-3s5--wk-390x844.jpg"
+      ],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 522,
+        "textLen": 4559,
+        "cameLate": false,
+        "textAt3500": 12
+      },
+      "timing": {
+        "dcl": 649,
+        "load": 5084,
+        "transferKb": 334,
+        "resources": 31
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 4559,
+        "bar": {
+          "top": 779,
+          "height": 65
+        },
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 58,
+          "groups": [
+            {
+              "size": 11,
+              "sample": "Home",
+              "chain": "span.text-[11px].leading-none < a.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 4
+            },
+            {
+              "size": 11,
+              "sample": "More",
+              "chain": "span.text-[11px].leading-none < button.group.relative < div.grid.grid-cols-[repeat(5,minmax(0,1fr))]",
+              "n": 1
+            },
+            {
+              "size": 12,
+              "sample": "Working groups with real authority",
+              "chain": "p.text-xs.text-muted-foreground < div.rounded-xl.bg-muted/30 < div.mb-14.grid",
+              "n": 3
+            },
+            {
+              "size": 12,
+              "sample": "Filled",
+              "chain": "span.text-xs.px-2 < div.flex.flex-wrap < div.min-w-0",
+              "n": 25
+            },
+            {
+              "size": 12,
+              "sample": "Leadership Circle",
+              "chain": "p.text-xs.text-muted-foreground < div.min-w-0 < div.flex.items-start",
+              "n": 25
+            }
+          ]
+        },
+        "onwardLinks": 25,
+        "hasBottomBar": true,
+        "soft404": false
+      },
+      "shot": "16-roles--wk-390x844.jpg",
+      "tap": {
+        "checked": 62,
+        "small": [
+          {
+            "w": 36,
+            "h": 36,
+            "inline": false,
+            "chain": "button.relative.p-2 < div.relative < div.lg:hidden.flex",
+            "text": "Notifications",
+            "count": 1
+          },
+          {
+            "w": 358,
+            "h": 32,
+            "inline": false,
+            "chain": "a.text-white.hover:underline < li < ul.space-y-2",
+            "text": "Investor",
+            "count": 27
+          }
+        ],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 143,
+        "unmeasurable": 5,
+        "fails": [
+          {
+            "text": "Forming",
+            "ratio": 4.31,
+            "floor": 4.5,
+            "size": 12,
+            "fg": "rgb(21,127,125)",
+            "bg": "rgb(236,244,243)"
+          }
+        ]
+      },
+      "ms": 5833
+    },
+    {
+      "route": "/x-missing-page-probe",
+      "notes": [],
+      "extraShots": [],
+      "backTests": [],
+      "findingsSeed": [],
+      "status": 200,
+      "late": {
+        "extraMs": 2,
+        "textLen": 114,
+        "cameLate": false,
+        "textAt3500": 114
+      },
+      "timing": {
+        "dcl": 615,
+        "load": 724,
+        "transferKb": 278,
+        "resources": 13
+      },
+      "first": {
+        "vw": 390,
+        "vh": 844,
+        "over": 0,
+        "textLen": 114,
+        "bar": null,
+        "r26": [],
+        "overCulprits": [],
+        "smallText": {
+          "nodes": 0,
+          "groups": []
+        },
+        "onwardLinks": 0,
+        "hasBottomBar": false,
+        "soft404": true
+      },
+      "shot": "17-x-missing-page-probe--wk-390x844.jpg",
+      "tap": {
+        "checked": 1,
+        "small": [],
+        "unmeasurable": 0,
+        "coveredCentre": []
+      },
+      "contrast": {
+        "measured": 1,
+        "unmeasurable": 3,
+        "fails": []
+      },
+      "ms": 4390
+    }
+  ],
+  "blockedWrites": [
+    {
+      "method": "POST",
+      "path": "/cdn-cgi/rum"
+    }
+  ],
+  "unmeasured": [],
+  "consoleErrs": [
+    {
+      "route": "https://amora.regencivics.earth/events",
+      "msg": "Fetch API cannot load https: /amora.regencivics.earth/api/events/who-is-here?from=2026-08-16&to=2026-08-22 due to access control checks."
+    },
+    {
+      "route": "https://amora.regencivics.earth/events",
+      "msg": "Fetch API cannot load https: /amora.regencivics.earth/api/events?from=2025-12-01T06%3A00%3A00.000Z&to=2027-02-01T06%3A00%3A00.000Z due to ac"
+    }
+  ],
+  "badResponses": [],
+  "buildEnd": "2026-07-28-wave1-335058f"
+}
