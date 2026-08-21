@@ -1,0 +1,95 @@
+{
+ "buildStart": "2026-07-28-wave1-335058f",
+ "buildEnd": "2026-07-28-wave1-335058f",
+ "engine": "Playwright 1.62.1: WebKit iPhone 14 DPR3 touch (4 mobile viewports); Chromium desktop 1280x800 + CLS proxy",
+ "rows": [
+  {
+   "metric": "R26: control partially visible above the fixed bar, centre dead under it, first paint",
+   "verdict": "FAIL",
+   "count": 9,
+   "worst": "/events Month view at 390x844: six day buttons, 27px visible, centres under nav.md:hidden.fixed (barTop 779)",
+   "notMeasurable": 0,
+   "note": "+1 more on the 360 retry (footer sliver class); the second kind (wholly under the bar, scroll-reachable) seen 7x at 390x844 and 1x at 390x664 on /events, ruled UX-note by R26"
+  },
+  {
+   "metric": "Tap targets under 44px (owned hit area, strict ownership)",
+   "verdict": "FAIL",
+   "count": 338,
+   "worst": "site footer link rows 40px tall on every page (~14-16 per route); drawer rows 36/32/24px",
+   "notMeasurable": 9,
+   "note": "644 controls probed at 390x844; widths cap at 121px (walk radius) so heights carry the verdicts; inline text links exempt (0 counted); 9 occlusion-unresolved controls counted NOT MEASURABLE"
+  },
+  {
+   "metric": "Horizontal overflow (document + map iframe)",
+   "verdict": "PASS app shell / FAIL map iframe interior",
+   "count": 0,
+   "worst": "map iframe document 790px at vw 390 (+400px, unchanged round-2 B8, owner: map session)",
+   "notMeasurable": 0,
+   "note": "0 overflow on all 17 routes x 5 viewports in the app document"
+  },
+  {
+   "metric": "Text under 14px",
+   "verdict": "FAIL",
+   "count": 240,
+   "worst": "10px weekday headers and event pills on /events (59 instances); 49 on /quests (12px chips); 28 on /",
+   "notMeasurable": 0,
+   "note": "instances at 390x844 across the 17-route journey"
+  },
+  {
+   "metric": "Contrast (rendered pixels, WCAG AA)",
+   "verdict": "FAIL",
+   "count": 8,
+   "worst": "/gratitude subhead 3.67:1 at 16px",
+   "notMeasurable": 199,
+   "note": "2,934 nodes measured over 16 routes x 3 profiles; 160 checker-declared unmeasurable + 38 white-over-sibling-image entries (hero/quest cards; scrims visible in screenshots, invisible to the ancestor walk) + 1 zero-measure cell (/quests at iph14-390x844)"
+  },
+  {
+   "metric": "Dead ends (no onward route)",
+   "verdict": "PASS",
+   "count": 0,
+   "worst": "404 page has one onward control (Go Home, verified landing /) but zero anchor links and no chrome",
+   "notMeasurable": 0,
+   "note": "every journey page offers onward anchors; /map exits via Back to the village (round-2 verified)"
+  },
+  {
+   "metric": "Broken back behaviour",
+   "verdict": "PASS",
+   "count": 0,
+   "worst": "none: modules to detail and back restores the 20-card grid; login?next=/messages and back returns to /messages",
+   "notMeasurable": 1,
+   "note": "view/lens state deliberately not in the URL (P1-13); drawer-link back tested via history pairs after a drawer-click harness miss (1 NOT MEASURED path)"
+  },
+  {
+   "metric": "404s (network and soft)",
+   "verdict": "FAIL",
+   "count": 2,
+   "worst": "garbage URL returns HTTP 200 with the 404 card (soft 404, round-2 deferred, still true); intermittent 401 /api/messages on signed-out /messages at 360",
+   "notMeasurable": 0,
+   "note": "zero other 4xx/5xx across ~90 page loads"
+  },
+  {
+   "metric": "Console errors",
+   "verdict": "FAIL",
+   "count": 1,
+   "worst": "Failed to load resource: 401 (/api/messages) on signed-out /messages, narrow-360x800, intermittent (absent on retry)",
+   "notMeasurable": 0,
+   "note": "all other cells clean"
+  },
+  {
+   "metric": "Images that fail or stretch",
+   "verdict": "PASS",
+   "count": 0,
+   "worst": "none: 0 broken, 0 distorted across 65 imgs at 390x844",
+   "notMeasurable": 1,
+   "note": "CSS background-image photos (hero, team portraits) sit outside the img detector, counted as a NOT MEASURABLE class"
+  },
+  {
+   "metric": "Layout shift",
+   "verdict": "FAIL",
+   "count": 5,
+   "worst": "/modules/quests CLS 0.5039 (desktop Chromium proxy)",
+   "notMeasurable": 68,
+   "note": "5 routes past 0.25: 0.50 / 0.45 / 0.39 / 0.36 / 0.35; WebKit has no layout-shift entry so all 68 mobile cells are NOT MEASURABLE (stated, per brief)"
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+ "items": [
+  "safe-area insets: WebKit on Windows reads 0 (brief-listed)",
+  "layout shift on WebKit: no layout-shift PerformanceObserver entry; 68 mobile route-cells unmeasured; Chromium desktop used as the labelled proxy",
+  "CPU throttling, real iOS URL-bar dynamics, software keyboard, LCP: not reachable from this harness (brief-listed)",
+  "contrast: 160 checker-declared unmeasurable nodes (gradient/image backdrops) + 38 white-text-over-sibling-image entries (hero, quest cards; scrims visible in screenshots, invisible to the ancestor walk) + 1 zero-measure cell (/quests at iph14-390x844 rendered 0 nodes at probe time)",
+  "tap-target widths cap at 121px (60px walk radius each side); heights are exact; no verdict rests on a capped width",
+  "9 controls never owned their centre at any scroll position (fixed-bar/header occlusion during the sweep); counted and never treated as passing",
+  "CSS background-image rendering (hero, team portraits) outside the broken/stretched img detector",
+  "map iframe interior beyond the lens band (owner: the map session per brief non-findings)",
+  "drawer-link SPA back pair: click flake in the harness; back verified via history pairs instead (1 path)",
+  "module Turn on flow, admin surfaces, any write: out of persona-1 scope by design (anonymous, read/render only)"
+ ],
+ "detectorValidation": "21/21 fixture checks (R26, bar, overflow, small text, tiny text, broken img, stretched img, dead end, tap 20px flag, tap ::after expander pass, console error, 8 clean-fixture negatives, CLS positive + negative on Chromium); contrast.mjs reused as-is and carries its own six-failure-mode validation record"
+}
