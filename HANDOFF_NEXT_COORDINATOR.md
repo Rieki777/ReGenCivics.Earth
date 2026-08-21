@@ -11,6 +11,36 @@ registry), §4 (queue), §6 (blockers), §8 (rulings R1–R25), §9 (paid lesson
 first. Home: `C:/Users/taren/Downloads/regen-integration` on `wt/integration` (hub repo; this
 branch is docs-only and is NOT merged to hub main). Invoke `swarm-supervisor` before anything.
 
+## 1a-bis · UPDATE 2026-08-21 ~16:05 EDT: round 4 built and live; only L8 QA + triage remain
+
+- **All eight round-4 build lanes are DONE on game-amora main = live = `335058f`** (L1a art, L5a calendar
+  core, L6 agent harness, L5b calendar community, L2 power map, L1 library flow + sign-in gate, L3
+  resources, L7 introductions). Ledger §2 has the DONE rows with SHAs and probes; rulings R27–R42 in §8.
+- **In flight: only L8's three persona QA passes** (visitor anonymous / member via QA token GET-only /
+  founder on a LOCAL build), report-only, writing to `docs/integration-program/round4/qa/persona-N/`
+  (coordinator commits). A one-shot fallback check is scheduled 18:09 EDT in-session; if this session
+  died, check those dirs + the three worktrees `wt-r4-qa1/2/3` and resume from transcripts.
+- **Next after L8**: commit reports, triage into ranked fix lanes (do NOT dispatch over QA-flagged
+  surfaces without disjoint zones), then the round-4 close-out to Rye. The next round of Rye's asks
+  comes AFTER that (his word, 2026-08-21: wait until this is done).
+- **Rye's open items**: rotate `AUTH_TOKEN_SECRET` (leak incident §9 2026-08-21; ADMIN_PASSWORD optional);
+  decide `AGENT_INTENT_WRITE` env flag (enables the member-agent intent write, R42d); enable `resources`
+  and `introductions` modules on live when wanted (they ship off; events=public and messaging=members were
+  enabled at his instruction 08-21); the L4 grounds handover brief waits on his map session
+  (`round4/briefs/LANE_L4_GROUNDS_PATCH_BRIEF_FOR_MAP_SESSION.md`).
+- **Queued fixes** (ledger R40/R42 + L1's report): intake scanner first-party scoping (71 waivers deep,
+  FIRST post-round fix); notify.ts introduction email case; docs/modules/introductions.md + shelf line;
+  L6's matching_consent reads L7's consent_at; Characters sign-in link; Profile + register/magic-link
+  `?next=`; stale "Modules On/Off" copy (ProjectHistory, EventsAdminPanel); stays.depart_on;
+  NotifyPrefsPanel brief line; Events.tsx inline waitlist/slots placements; "Ask your founders" CTA;
+  hub item 17 lunar table.
+- **Hazards**: hub main moved independently to `fb32af1` (a11y fixes, another session). The other map
+  session's five dirty worktrees are STILL unlanded (doors/map-org/housing/overlays/geometry; R35
+  accepted the rebase cost). Wrong-repo `gh` calls bit three times: always `cd` into the game-amora
+  worktree in the same command. Secrets: never print captured pipeline output on failure (§9).
+- Migrations used this round: 0083–0088 all landed. game-amora CI = the `verify` job, enumerate its
+  `run:` steps (fourteen at `335058f`).
+
 ## 1a · UPDATE 2026-08-16 ~08:50 EDT: round 4 opened, PROPOSED, nothing dispatched
 
 - game-amora `origin/main` = **`135db66`**, live matches; hub main `cbec306`, live. No PRs open. Nothing
