@@ -1,0 +1,206 @@
+{
+  "log": [
+    "after set-password url: http://127.0.0.1:3341/admin",
+    "no email field: already signed in from set-password",
+    "founder token acquired for setup calls",
+    "nav item labels visible: 36",
+    "Menu | Make This Yours | All Forms | Feedback | Investor Journey | Steward Journey | Resident Journey | Prosperity Journey | Circles Page | Roles Page | Team Page | Email Settings | Integrations | Village Brain | Her Drafts | Investor Vault | Training Modules | Module Library | Quests | Quest Claims | Players | Game Roles | Org Chart | Season Shapes | Housing & Reservations | Departures | Tokens | Ledger | Game Mechanics | Season | Settings | Work With Us | FAQs | Build Progress | Visit Program | Investor Summary",
+    "rail: null",
+    "example-content offer visible: false",
+    "events -> preview: ok",
+    "map -> preview: ok",
+    "messaging -> preview: ok",
+    "forum -> preview: ok",
+    "no obvious add-tool field; screenshotting as-is",
+    "go-live card visible on tools tab: false (after 26s)",
+    "go-live card not present on intents tab (setup: none should mean ready)",
+    "maya public propose: 404 {\"error\":\"module_disabled\",\"module\":\"events\"}",
+    "no approve card from the member path; drafting a public item as founder",
+    "selects near brief: 8",
+    "circles: 200/200 {\"id\":\"land-water\",\"name\":\"Land & Water\",\"purpose\":\"Care for the ground the vill",
+    "seats: 200/200/200",
+    "draft: 200 id=draft-mt3dj1r9-1",
+    "change: 200 {\"success\":true,\"id\":\"dch-mt3dj1rd-2\"}",
+    "vision: 200 {\"success\":true}",
+    "conditions-met prompt visible: true",
+    "apply link landed on: http://127.0.0.1:3341/admin",
+    "landing page mentions publish: false",
+    "no Request approval control visible on the lens",
+    "maya intent: 404 {\"error\":\"module_disabled\",\"module\":\"introductions\"}",
+    "after back: http://127.0.0.1:3341/admin?tab=modules -> http://127.0.0.1:3341/admin?tab=events-admin",
+    "back returned to events tab: true"
+  ],
+  "findings": [],
+  "flowBreaks": [
+    {
+      "step": "module-tools-turn-on",
+      "what": "no Turn on button on the detail page for a signed-in founder",
+      "screenshot": "shots/10-module-tools-no-button.png",
+      "sentence": "I opened the tools page ready to switch it on and there was nothing to press."
+    },
+    {
+      "step": "calendar-create-gathering",
+      "what": "script-level failure: TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Add gathering\")')\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"px-4 py-2 bg-[#2D5A5A",
+      "screenshot": "shots/20-ERROR-calendar-create-gathering.png",
+      "sentence": "The step itself could not be completed."
+    },
+    {
+      "step": "calendar-slots",
+      "what": "no Slots control visible on the gathering row",
+      "screenshot": "shots/21-events-no-slots.png",
+      "sentence": "I saved the potluck and looked for where to ask people to bring a dish; nothing on the row said slots."
+    },
+    {
+      "step": "calendar-public-approval",
+      "what": "script-level failure: TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Save\"), button:has-text(\"Add\"), button:has-text(\"Create\")').first()\u001b[22m\n\u001b[2m    - locato",
+      "screenshot": "shots/22-ERROR-calendar-public-approval.png",
+      "sentence": "The step itself could not be completed."
+    },
+    {
+      "step": "calendar-ical-subscribe",
+      "what": "script-level failure: TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Attach calendar\")')\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"px-4 py-2 bg-[#2D5A",
+      "screenshot": "shots/25-ERROR-calendar-ical-subscribe.png",
+      "sentence": "The step itself could not be completed."
+    },
+    {
+      "step": "power-setup-walk",
+      "what": "Set up the chart button not found on /map/circles",
+      "screenshot": "shots/29-power-no-walk-button.png",
+      "sentence": "The chart was empty and nothing offered to walk me through setting it up."
+    }
+  ],
+  "errorLog": [
+    {
+      "step": "set-password",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "admin-signin",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "admin-nav",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "modules-browse",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "module-tools-turn-on",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "module-introductions-turn-on",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "admin-module-library-tab",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "tools-fill-and-golive",
+      "errs": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "bad": [
+        "404 /api/admin/tools"
+      ]
+    },
+    {
+      "step": "introductions-golive-bounding",
+      "errs": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "bad": [
+        "404 /api/intents/admin/demand"
+      ]
+    },
+    {
+      "step": "calendar-create-gathering",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "calendar-slots",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "calendar-public-approval",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "calendar-ical-subscribe",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "calendar-weekly-brief",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "power-structure-seed",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "power-map-first-look",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "power-setup-walk",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "vision-draft",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "resources-turn-on",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "resources-admin-declare",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "resources-lens-and-request",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "intents-demand",
+      "errs": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "bad": [
+        "404 /api/intents/admin/demand"
+      ]
+    },
+    {
+      "step": "agent-token",
+      "errs": [],
+      "bad": []
+    },
+    {
+      "step": "back-through-tabs",
+      "errs": [],
+      "bad": []
+    }
+  ]
+}

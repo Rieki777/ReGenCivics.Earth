@@ -1,0 +1,10 @@
+{
+  "log": [
+    "request controls: 3",
+    "submit label: Request approval",
+    "landed on: http://127.0.0.1:3341/map/circles",
+    "buttons at decides step: Community | Village | Join | Guides | About | Rye | Ask | Village | Now | Vision | How we decide | Resources | Links | List | SVG | PNG | Open seats | My seats | Ending soon | Legend | Walk the setup: seats, methods, shape | Steward | Pyramid | Council | Other | Circle | Network | Flat | Legend | Leadership Circle",
+    "buttons at shape step: Community | Village | Join | Guides | About | Rye | Ask | Village | Now | Vision | How we decide | Resources | Links | List | SVG | PNG | Open seats | My seats | Ending soon | Legend | Walk the setup: seats, methods, shape | Steward | Pyramid | Council | Other | Circle | Network | Flat | Legend | Leadership Circle"
+  ],
+  "flowBreaks": []
+}

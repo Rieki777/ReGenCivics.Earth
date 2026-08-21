@@ -25,7 +25,7 @@ branch is docs-only and is NOT merged to hub main). Invoke `swarm-supervisor` be
   founder on a LOCAL build), report-only, writing to `docs/integration-program/round4/qa/persona-N/`
   (coordinator commits). A one-shot fallback check is scheduled 18:09 EDT in-session; if this session
   died, check those dirs + the three worktrees `wt-r4-qa1/2/3` and resume from transcripts.
-- **Next after L8**: commit reports, triage into ranked fix lanes (do NOT dispatch over QA-flagged
+- **DONE 17:20: L8 complete, triage at `round4/QA_TRIAGE_2026-08-21.md` (FIX-A..F + 2 Rye questions); live moved to `ace9d9d` under the passes (map/housing session landing again → send the L4 handover, re-measure before fix lanes).** Next: (superseded) (do NOT dispatch over QA-flagged
   surfaces without disjoint zones), then the round-4 close-out to Rye. The next round of Rye's asks
   comes AFTER that (his word, 2026-08-21: wait until this is done).
 - **Rye's open items**: rotate `AUTH_TOKEN_SECRET` (leak incident §9 2026-08-21; ADMIN_PASSWORD optional);

@@ -1,0 +1,33 @@
+{
+  "log": [
+    "example-content offer visible: true",
+    "Add tool disabled: false",
+    "go-live card appeared after 15s: true",
+    "Everyone disabled (messaging narrower): true",
+    "Everyone title: Messages would need to reach everyone first",
+    "title after save: \"\"",
+    "maya propose: 200 {\"success\":true,\"event\":{\"id\":\"ev-1787343080553-t3ts\",\"title\":\"Open river cleanup\",\"description\":\"Neighbours welcome.\",\"",
+    "stored row: www.thunderbird.net (ends .ics) · 0 item(s) · fetched 8/21/2026, 4:11:33 PM",
+    "fetch status: Last fetch failed: fetch failed: upstream answered 404",
+    "picked Thursday",
+    "maya intent: 404 {\"error\":\"module_disabled\",\"module\":\"introductions\"}",
+    "no separate Demand control; the demand signal may be inline"
+  ],
+  "flowBreaks": [
+    {
+      "step": "resources-request",
+      "what": "Request approval still absent with a consent rule declared",
+      "screenshot": "shots/32-no-request-btn.png",
+      "sentence": "I declared that spending needs the circle's consent, and there was still no way to ask for it."
+    },
+    {
+      "step": "walk-desktop",
+      "what": "Set up the chart absent on desktop too",
+      "screenshot": "shots/37-walk-desktop-missing.png",
+      "sentence": "Even on the laptop the chart offered no setup walk."
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

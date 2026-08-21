@@ -1,0 +1,58 @@
+[
+  {
+    "site": "live",
+    "route": "/admin",
+    "status": 200,
+    "overflow": 0,
+    "smallTapCount": 0,
+    "smallTaps": [],
+    "tinyTextCount": 0,
+    "contrastFails": 0,
+    "contrastNotMeasurable": 2,
+    "consoleErrors": [],
+    "badResponses": [],
+    "textStart": "Amora Admin Sign in with your admin account Sign in"
+  },
+  {
+    "site": "live",
+    "route": "/modules",
+    "status": 200,
+    "overflow": 0,
+    "smallTapCount": 0,
+    "smallTaps": [],
+    "tinyTextCount": 10,
+    "contrastFails": 0,
+    "contrastNotMeasurable": 9,
+    "consoleErrors": [],
+    "badResponses": [],
+    "textStart": "Skip to content Module Library Everything this platform can be, one card at a time. A village turns on what it needs and leaves the rest on the shelf. Coordinate Plan the work and the days: quests, the calendar, calls, tools. Quests Work you can pick up and finish: the board where contribution starts. ALWAYS ON Call Automation The weekly call becomes assigned work. Tools Hub One place to find ever"
+  },
+  {
+    "site": "local",
+    "route": "/admin",
+    "status": 200,
+    "overflow": 0,
+    "smallTapCount": 0,
+    "smallTaps": [],
+    "tinyTextCount": 0,
+    "contrastFails": 0,
+    "contrastNotMeasurable": 2,
+    "consoleErrors": [],
+    "badResponses": [],
+    "textStart": "Amora Admin Sign in with your admin account Sign in"
+  },
+  {
+    "site": "local",
+    "route": "/modules",
+    "status": 200,
+    "overflow": 0,
+    "smallTapCount": 0,
+    "smallTaps": [],
+    "tinyTextCount": 10,
+    "contrastFails": 0,
+    "contrastNotMeasurable": 9,
+    "consoleErrors": [],
+    "badResponses": [],
+    "textStart": "Skip to content Module Library Everything this platform can be, one card at a time. A village turns on what it needs and leaves the rest on the shelf. Coordinate Plan the work and the days: quests, the calendar, calls, tools. Quests Work you can pick up and finish: the board where contribution starts. ALWAYS ON Call Automation The weekly call becomes assigned work. Tools Hub One place to find ever"
+  }
+]

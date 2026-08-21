@@ -1,0 +1,34 @@
+{
+  "persona": 3,
+  "buildMarker": "2026-07-28-wave1-335058f",
+  "items": [
+    {
+      "what": "contrast on 131 visible text nodes at 390x844 (per-route detail in matrix.json)",
+      "why": "background behind the text is a gradient, an image, or unflattened alpha; the walker refuses to guess. Includes the icon-help toast whose 1.12:1 reading is a walker artifact (the rendered toast is dark navy with white text)."
+    },
+    {
+      "what": "R26 on desktop 1280x800 (4 rows discarded)",
+      "why": "the bar detector keys on fixed bottom-anchored elements; desktop has no MobileTabBar and the detector's desktop hits are the skip-to-content link at the top, an artifact, so the desktop cells are counted NOT MEASURABLE rather than passed"
+    },
+    {
+      "what": "?focus= back walking (1)",
+      "why": "the phone accordion never writes ?focus= (finding P3-F19), and a synthetic click on the desktop SVG did not reach the focus handler; the code's push and popstate wiring exists but went unexercised"
+    },
+    {
+      "what": "iOS safe-area insets, real URL bar collapse, keyboard occlusion",
+      "why": "WebKit on Windows reads env(safe-area-inset-*) as 0; per the brief these are environment limits, routed to the coordinator, never counted as passing"
+    },
+    {
+      "what": "the run-1 /modules route spinner hang (4 consecutive visits in one WebKit session)",
+      "why": "not reproducible in three fresh sessions (page renders in about 2s signed in and out, both engines); recorded as finding P3-F21 NOTE and kept out of the harm counts because a defect that cannot be reproduced cannot be counted honestly"
+    },
+    {
+      "what": "the introductions demand list with live unmatched intents",
+      "why": "the intents API gates on the member stage or an active stay; the scratch village's test member is a guest, so the demand list could only be verified in its empty state (which reads correctly)"
+    },
+    {
+      "what": "slot kind 'ride' row (the second slot saved as kind dish)",
+      "why": "the probe's own select targeting picked the wrong dropdown; an app behavior was not disproved, the probe was wrong, so nothing is claimed either way"
+    }
+  ]
+}

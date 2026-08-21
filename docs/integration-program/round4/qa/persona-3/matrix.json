@@ -1,0 +1,5946 @@
+{
+  "rows": [
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 18,
+      "tinyTextCount": 5,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "All governance, voting, and equi",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Not connected yet. Every Hypha s",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 13,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 21,
+      "overflowCulprits": [
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        }
+      ],
+      "smallTapCount": 12,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Title",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Where (in words)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Starts",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Ends (optional)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Capacity",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        }
+      ],
+      "tapChecked": 30,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Title",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Where (in words)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Starts",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Ends (optional)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Capacity",
+          "tag": "LABEL"
+        },
+        {
+          "px": 11,
+          "text": "Blank means no limit. 0 means no",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Map structures",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 18,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Active intents",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Surfaced this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Opened this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Model calls this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Active intents no introduction h",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 19,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 5,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 25,
+          "h": 16,
+          "text": "Edit",
+          "cls": "text-xs text-teal-deep font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 51,
+          "h": 16,
+          "text": "Remove",
+          "cls": "text-xs text-red-600 font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 51,
+          "h": 16,
+          "text": "Remove",
+          "cls": "text-xs text-red-600 font-medium"
+        }
+      ],
+      "tapChecked": 25,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Everyone is out of reach for now",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 9,
+      "contrastFails": 3,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        }
+      ],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 5,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "INPUT",
+          "w": 234,
+          "h": 37,
+          "text": "Visionary Lead",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "SELECT",
+          "w": 234,
+          "h": 43,
+          "text": "Unplaced Leadership Circle Permacu",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "INPUT",
+          "w": 234,
+          "h": 37,
+          "text": "1",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        }
+      ],
+      "tapChecked": 23,
+      "tinyTextCount": 13,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "active",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "The Core Four. The Visionary Lea",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Seat",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Circle",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Seats",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "State",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Filled",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 21,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 12,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "Always on",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Call Automation\n\nThe weekly ca",
+          "top": 742,
+          "barTop": 779
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 8,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 9,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 11,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 11,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Module Library",
+          "px": 14,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "A",
+          "cls": "inline-flex items-center gap-1.5 tex"
+        }
+      ],
+      "contrastNotMeasurable": 10,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 12,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 28,
+          "text": "Village",
+          "cls": "px-2 py-1 rounded-lg hover:bg-muted font-sem"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 24,
+          "text": "Now",
+          "cls": "text-xs px-2.5 py-1 bg-teal-deep text-white"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 57,
+          "h": 24,
+          "text": "Vision",
+          "cls": "text-xs px-2.5 py-1 bg-card text-muted-foreg"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 116,
+          "h": 26,
+          "text": "How we decide",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 85,
+          "h": 26,
+          "text": "Resources",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 72,
+          "h": 26,
+          "text": "Links",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 91,
+          "h": 26,
+          "text": "Open seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 75,
+          "h": 26,
+          "text": "My seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 100,
+          "h": 26,
+          "text": "Ending soon",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "SELECT",
+          "w": 160,
+          "h": 39,
+          "text": "Any circle Leadership Circle Perma",
+          "cls": "text-xs border rounded-full px-2 py-1 bg-car"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 198,
+          "h": 16,
+          "text": "Legend",
+          "cls": "md:hidden w-full flex items-center justify-b"
+        }
+      ],
+      "tapChecked": 27,
+      "tinyTextCount": 21,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Now",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Vision",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "How we decide",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Resources",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Links",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Open seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "My seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Ending soon",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "One circle",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Legend",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "BUTTON",
+          "text": "Education Council(forming)",
+          "top": 768,
+          "barTop": 779
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 19,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 11,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/profile",
+      "viewport": "390x844",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 13,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Your next step",
+          "tag": "P"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 5,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "?tab= back walk",
+      "viewport": "390x844",
+      "backOk": true
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 14,
+      "tinyTextCount": 5,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "All governance, voting, and equi",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Not connected yet. Every Hypha s",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 13,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 21,
+      "overflowCulprits": [
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        }
+      ],
+      "smallTapCount": 7,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Title",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 260,
+          "h": 16,
+          "text": "Where (in words)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "INPUT",
+          "w": 260,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        }
+      ],
+      "tapChecked": 22,
+      "tinyTextCount": 7,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Title",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Where (in words)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Starts",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Ends (optional)",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 13,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 14,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Active intents",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Surfaced this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Opened this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Model calls this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Active intents no introduction h",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 17,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 4,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Everyone is out of reach for now",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 7,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 12,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 3,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "INPUT",
+          "w": 234,
+          "h": 37,
+          "text": "Visionary Lead",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "active",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "The Core Four. The Visionary Lea",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Seat",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Circle",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Seats",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 14,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 11,
+      "tinyTextCount": 9,
+      "tinyText": [
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 7,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 9,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 11,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 7,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Module Library",
+          "px": 14,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "A",
+          "cls": "inline-flex items-center gap-1.5 tex"
+        }
+      ],
+      "contrastNotMeasurable": 10,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 11,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 28,
+          "text": "Village",
+          "cls": "px-2 py-1 rounded-lg hover:bg-muted font-sem"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 24,
+          "text": "Now",
+          "cls": "text-xs px-2.5 py-1 bg-teal-deep text-white"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 57,
+          "h": 24,
+          "text": "Vision",
+          "cls": "text-xs px-2.5 py-1 bg-card text-muted-foreg"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 116,
+          "h": 26,
+          "text": "How we decide",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 85,
+          "h": 26,
+          "text": "Resources",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 72,
+          "h": 26,
+          "text": "Links",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 91,
+          "h": 26,
+          "text": "Open seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 75,
+          "h": 26,
+          "text": "My seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 100,
+          "h": 26,
+          "text": "Ending soon",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "SELECT",
+          "w": 160,
+          "h": 39,
+          "text": "Any circle Leadership Circle Perma",
+          "cls": "text-xs border rounded-full px-2 py-1 bg-car"
+        }
+      ],
+      "tapChecked": 24,
+      "tinyTextCount": 19,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Now",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Vision",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "How we decide",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Resources",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Links",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Open seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "My seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Ending soon",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "One circle",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Legend",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 14,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 11,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/profile",
+      "viewport": "390x664",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 13,
+      "tinyTextCount": 9,
+      "tinyText": [
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 1,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 15,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "?tab= back walk",
+      "viewport": "390x664",
+      "backOk": true
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 5,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "All governance, voting, and equi",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Not connected yet. Every Hypha s",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 13,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 36,
+      "overflowCulprits": [
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        }
+      ],
+      "smallTapCount": 11,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "LABEL",
+          "w": 245,
+          "h": 16,
+          "text": "Title",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 245,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 245,
+          "h": 16,
+          "text": "Where (in words)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 245,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 245,
+          "h": 16,
+          "text": "Starts",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 245,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 245,
+          "h": 16,
+          "text": "Ends (optional)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 245,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 245,
+          "h": 16,
+          "text": "Map structures",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        }
+      ],
+      "tapChecked": 28,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Title",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Where (in words)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Starts",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Ends (optional)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Capacity",
+          "tag": "LABEL"
+        },
+        {
+          "px": 11,
+          "text": "Blank means no limit. 0 means no",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Map structures",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Active intents",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Surfaced this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Opened this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Model calls this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Active intents no introduction h",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 19,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 5,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 51,
+          "h": 16,
+          "text": "Remove",
+          "cls": "text-xs text-red-600 font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 25,
+          "h": 16,
+          "text": "Edit",
+          "cls": "text-xs text-teal-deep font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 51,
+          "h": 16,
+          "text": "Remove",
+          "cls": "text-xs text-red-600 font-medium"
+        }
+      ],
+      "tapChecked": 24,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Everyone is out of reach for now",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 9,
+      "contrastFails": 3,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        }
+      ],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 5,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "INPUT",
+          "w": 219,
+          "h": 37,
+          "text": "Visionary Lead",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "SELECT",
+          "w": 219,
+          "h": 43,
+          "text": "Unplaced Leadership Circle Permacu",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "INPUT",
+          "w": 219,
+          "h": 37,
+          "text": "1",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        }
+      ],
+      "tapChecked": 21,
+      "tinyTextCount": 13,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "active",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "The Core Four. The Visionary Lea",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Seat",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Circle",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Seats",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "State",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Filled",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 20,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 12,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "Always on",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Call Automation\n\nThe weekly ca",
+          "top": 733,
+          "barTop": 747
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 8,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 9,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 11,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 11,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Module Library",
+          "px": 14,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "A",
+          "cls": "inline-flex items-center gap-1.5 tex"
+        }
+      ],
+      "contrastNotMeasurable": 10,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 12,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 28,
+          "text": "Village",
+          "cls": "px-2 py-1 rounded-lg hover:bg-muted font-sem"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 24,
+          "text": "Now",
+          "cls": "text-xs px-2.5 py-1 bg-teal-deep text-white"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 57,
+          "h": 24,
+          "text": "Vision",
+          "cls": "text-xs px-2.5 py-1 bg-card text-muted-foreg"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 116,
+          "h": 26,
+          "text": "How we decide",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 85,
+          "h": 26,
+          "text": "Resources",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 72,
+          "h": 26,
+          "text": "Links",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 91,
+          "h": 26,
+          "text": "Open seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 75,
+          "h": 26,
+          "text": "My seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 100,
+          "h": 26,
+          "text": "Ending soon",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "SELECT",
+          "w": 160,
+          "h": 39,
+          "text": "Any circle Leadership Circle Perma",
+          "cls": "text-xs border rounded-full px-2 py-1 bg-car"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 198,
+          "h": 16,
+          "text": "Legend",
+          "cls": "md:hidden w-full flex items-center justify-b"
+        }
+      ],
+      "tapChecked": 26,
+      "tinyTextCount": 21,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Now",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Vision",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "How we decide",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Resources",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Links",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Open seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "My seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Ending soon",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "One circle",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Legend",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 18,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 11,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/profile",
+      "viewport": "375x812",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "A",
+          "w": 215,
+          "h": 22,
+          "text": "Choose who you will be",
+          "cls": "text-teal-deep underline"
+        }
+      ],
+      "tapChecked": 13,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Your next step",
+          "tag": "P"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 3,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 15,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "?tab= back walk",
+      "viewport": "375x812",
+      "backOk": true
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 5,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "All governance, voting, and equi",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Not connected yet. Every Hypha s",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 13,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 51,
+      "overflowCulprits": [
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center gap-1.5 shrink-0 flex-wrap",
+          "right": 411,
+          "pos": "static",
+          "text": "AnswersSlotsEditCancelDelete"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-2.5 py-1 text-xs border border-red-200 text-r",
+          "right": 411,
+          "pos": "relative",
+          "text": "Delete"
+        }
+      ],
+      "smallTapCount": 11,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "LABEL",
+          "w": 230,
+          "h": 16,
+          "text": "Title",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 230,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 230,
+          "h": 16,
+          "text": "Where (in words)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 230,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 230,
+          "h": 16,
+          "text": "Starts",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 230,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 230,
+          "h": 16,
+          "text": "Ends (optional)",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        },
+        {
+          "tag": "INPUT",
+          "w": 230,
+          "h": 41,
+          "text": "",
+          "cls": "w-full text-sm border border-gray-200 rounde"
+        },
+        {
+          "tag": "LABEL",
+          "w": 230,
+          "h": 16,
+          "text": "Map structures",
+          "cls": "block text-xs font-medium text-gray-500 mb-1"
+        }
+      ],
+      "tapChecked": 28,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Title",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Where (in words)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Starts",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Ends (optional)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Capacity",
+          "tag": "LABEL"
+        },
+        {
+          "px": 11,
+          "text": "Blank means no limit. 0 means no",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Map structures",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 16,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 8,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Active intents",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Surfaced this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Opened this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Model calls this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Active intents no introduction h",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 19,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 3,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 51,
+          "h": 16,
+          "text": "Remove",
+          "cls": "text-xs text-red-600 font-medium"
+        }
+      ],
+      "tapChecked": 22,
+      "tinyTextCount": 6,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Everyone is out of reach for now",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 8,
+      "contrastFails": 2,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        }
+      ],
+      "contrastNotMeasurable": 15,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 5,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 55,
+          "h": 40,
+          "text": "Expand menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "INPUT",
+          "w": 204,
+          "h": 37,
+          "text": "Visionary Lead",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "SELECT",
+          "w": 204,
+          "h": 43,
+          "text": "Unplaced Leadership Circle Permacu",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        },
+        {
+          "tag": "INPUT",
+          "w": 204,
+          "h": 37,
+          "text": "1",
+          "cls": "border border-gray-200 rounded-lg px-2 py-1."
+        }
+      ],
+      "tapChecked": 21,
+      "tinyTextCount": 12,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Hold an icon to see its name, or",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Tap to dismiss",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "active",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "The Core Four. The Visionary Lea",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Seat",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Circle",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Seats",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "State",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Filled",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": false,
+      "contrastChecked": 2,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 1.12,
+          "need": 4.5,
+          "text": "Hold an icon to see its name, ",
+          "px": 12,
+          "fg": "rgb(255, 255, 255)",
+          "tag": "BUTTON",
+          "cls": "fixed z-50 left-16 bottom-6 max-w-[1"
+        }
+      ],
+      "contrastNotMeasurable": 19,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 12,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "Always on",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Call Automation\n\nThe weekly ca",
+          "top": 723,
+          "barTop": 735
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 8,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 9,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 1,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        }
+      ],
+      "tapChecked": 11,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 10,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Module Library",
+          "px": 14,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "A",
+          "cls": "inline-flex items-center gap-1.5 tex"
+        }
+      ],
+      "contrastNotMeasurable": 10,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 12,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 28,
+          "text": "Village",
+          "cls": "px-2 py-1 rounded-lg hover:bg-muted font-sem"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 24,
+          "text": "Now",
+          "cls": "text-xs px-2.5 py-1 bg-teal-deep text-white"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 57,
+          "h": 24,
+          "text": "Vision",
+          "cls": "text-xs px-2.5 py-1 bg-card text-muted-foreg"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 116,
+          "h": 26,
+          "text": "How we decide",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 85,
+          "h": 26,
+          "text": "Resources",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 72,
+          "h": 26,
+          "text": "Links",
+          "cls": "inline-flex items-center gap-1 text-xs px-2."
+        },
+        {
+          "tag": "BUTTON",
+          "w": 91,
+          "h": 26,
+          "text": "Open seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 75,
+          "h": 26,
+          "text": "My seats",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 100,
+          "h": 26,
+          "text": "Ending soon",
+          "cls": "text-xs px-2.5 py-1 rounded-full border tran"
+        },
+        {
+          "tag": "SELECT",
+          "w": 160,
+          "h": 39,
+          "text": "Any circle Leadership Circle Perma",
+          "cls": "text-xs border rounded-full px-2 py-1 bg-car"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 198,
+          "h": 16,
+          "text": "Legend",
+          "cls": "md:hidden w-full flex items-center justify-b"
+        }
+      ],
+      "tapChecked": 25,
+      "tinyTextCount": 20,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Now",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Vision",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "How we decide",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Resources",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Links",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Open seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "My seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Ending soon",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "One circle",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Legend",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 16,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 11,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/profile",
+      "viewport": "360x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 2,
+      "smallTaps": [
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "A",
+          "w": 215,
+          "h": 22,
+          "text": "Choose who you will be",
+          "cls": "text-teal-deep underline"
+        }
+      ],
+      "tapChecked": 13,
+      "tinyTextCount": 10,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Your next step",
+          "tag": "P"
+        },
+        {
+          "px": 13,
+          "text": "Roles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Profile",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Work with us",
+          "tag": "SPAN"
+        },
+        {
+          "px": 13,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Home",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Quests",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Gratitude",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "Circles",
+          "tag": "SPAN"
+        },
+        {
+          "px": 11,
+          "text": "More",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 3,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 15,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "?tab= back walk",
+      "viewport": "360x800",
+      "backOk": true
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 18,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 1280,
+          "h": 40,
+          "text": "🌳 Journey to Launch: 6 of 14 done",
+          "cls": "block bg-amber-400 text-teal-950 px-6 py-2.5"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Make This Yours",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "All Forms",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Feedback",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Moderation MEMBERS",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Investor Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Steward Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Resident Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Prosperity Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Circles Page",
+          "cls": "w-full flex items-center text-sm font-medium"
+        }
+      ],
+      "tapChecked": 18,
+      "tinyTextCount": 15,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Start here",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Submissions",
+          "tag": "P"
+        },
+        {
+          "px": 9,
+          "text": "members",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Content",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Notifications",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "All governance, voting, and equi",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Not connected yet. Every Hypha s",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Anyone can build a module for th",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "ReGen Civics shares a pool of $R",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 2,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 38,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 39,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 1280,
+          "h": 40,
+          "text": "🌳 Journey to Launch: 6 of 14 done",
+          "cls": "block bg-amber-400 text-teal-950 px-6 py-2.5"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Make This Yours",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "All Forms",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Feedback",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Moderation MEMBERS",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Investor Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Steward Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Resident Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Prosperity Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Circles Page",
+          "cls": "w-full flex items-center text-sm font-medium"
+        }
+      ],
+      "tapChecked": 39,
+      "tinyTextCount": 22,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Start here",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Submissions",
+          "tag": "P"
+        },
+        {
+          "px": 9,
+          "text": "members",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Content",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Notifications",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Title",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Where (in words)",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Starts",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Ends (optional)",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 1,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 42,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 15,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 1280,
+          "h": 40,
+          "text": "🌳 Journey to Launch: 6 of 14 done",
+          "cls": "block bg-amber-400 text-teal-950 px-6 py-2.5"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Make This Yours",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "All Forms",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Feedback",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Moderation MEMBERS",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Investor Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Steward Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Resident Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Prosperity Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Circles Page",
+          "cls": "w-full flex items-center text-sm font-medium"
+        }
+      ],
+      "tapChecked": 15,
+      "tinyTextCount": 11,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Start here",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Submissions",
+          "tag": "P"
+        },
+        {
+          "px": 9,
+          "text": "members",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Content",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Notifications",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Active intents",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Surfaced this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Opened this moon",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Model calls this moon",
+          "tag": "P"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 1,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 36,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 26,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 1280,
+          "h": 40,
+          "text": "🌳 Journey to Launch: 6 of 14 done",
+          "cls": "block bg-amber-400 text-teal-950 px-6 py-2.5"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Make This Yours",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "All Forms",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Feedback",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Moderation MEMBERS",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Investor Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Steward Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Resident Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Prosperity Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Circles Page",
+          "cls": "w-full flex items-center text-sm font-medium"
+        }
+      ],
+      "tapChecked": 29,
+      "tinyTextCount": 18,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Start here",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Submissions",
+          "tag": "P"
+        },
+        {
+          "px": 9,
+          "text": "members",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Content",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Notifications",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Everyone is out of reach for now",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Remove",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Edit",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 15,
+      "contrastFails": 2,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        },
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Edit",
+          "px": 12,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "BUTTON",
+          "cls": "text-xs text-teal-deep font-medium"
+        }
+      ],
+      "contrastNotMeasurable": 33,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 29,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 1280,
+          "h": 40,
+          "text": "🌳 Journey to Launch: 6 of 14 done",
+          "cls": "block bg-amber-400 text-teal-950 px-6 py-2.5"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 87,
+          "h": 20,
+          "text": "Sign Out",
+          "cls": "flex items-center gap-2 text-sm text-white/7"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Menu",
+          "cls": "flex items-center gap-2 mb-2 py-2.5 text-sm "
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Make This Yours",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "All Forms",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Feedback",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Moderation MEMBERS",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Investor Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Steward Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Resident Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Prosperity Journey",
+          "cls": "w-full flex items-center text-sm font-medium"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 223,
+          "h": 40,
+          "text": "Circles Page",
+          "cls": "w-full flex items-center text-sm font-medium"
+        }
+      ],
+      "tapChecked": 33,
+      "tinyTextCount": 29,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "game.amora.cr",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Start here",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Submissions",
+          "tag": "P"
+        },
+        {
+          "px": 9,
+          "text": "members",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Content",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Notifications",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "active",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "The Core Four. The Visionary Lea",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Seat",
+          "tag": "LABEL"
+        },
+        {
+          "px": 12,
+          "text": "Circle",
+          "tag": "LABEL"
+        }
+      ],
+      "r26Count": 0,
+      "r26": [],
+      "hasFixedBar": true,
+      "contrastChecked": 6,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 54,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 11,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 44,
+          "h": 20,
+          "text": "Home",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 50,
+          "h": 20,
+          "text": "Quests",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 79,
+          "h": 20,
+          "text": "Living Map",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 103,
+          "h": 20,
+          "text": "Community",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 20,
+          "text": "Village",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 20,
+          "text": "Join",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 68,
+          "h": 20,
+          "text": "Guides",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 62,
+          "h": 20,
+          "text": "About",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 96,
+          "h": 32,
+          "text": "Rye",
+          "cls": "flex items-center gap-2 px-3 py-1.5 bg-white"
+        },
+        {
+          "tag": "A",
+          "w": 99,
+          "h": 36,
+          "text": "Main Site",
+          "cls": "px-4 py-2 bg-amber text-foreground rounded-l"
+        }
+      ],
+      "tapChecked": 17,
+      "tinyTextCount": 2,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "Always on",
+          "tag": "SPAN"
+        },
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Skip to content",
+          "top": -1,
+          "barTop": 0
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 22,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 1,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 11,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 44,
+          "h": 20,
+          "text": "Home",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 50,
+          "h": 20,
+          "text": "Quests",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 79,
+          "h": 20,
+          "text": "Living Map",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 103,
+          "h": 20,
+          "text": "Community",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 20,
+          "text": "Village",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 20,
+          "text": "Join",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 68,
+          "h": 20,
+          "text": "Guides",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 62,
+          "h": 20,
+          "text": "About",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 96,
+          "h": 32,
+          "text": "Rye",
+          "cls": "flex items-center gap-2 px-3 py-1.5 bg-white"
+        },
+        {
+          "tag": "A",
+          "w": 99,
+          "h": 36,
+          "text": "Main Site",
+          "cls": "px-4 py-2 bg-amber text-foreground rounded-l"
+        }
+      ],
+      "tapChecked": 14,
+      "tinyTextCount": 1,
+      "tinyText": [
+        {
+          "px": 10,
+          "text": "On in this village",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Skip to content",
+          "top": -1,
+          "barTop": 0
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 18,
+      "contrastFails": 1,
+      "contrastWorst": [
+        {
+          "ratio": 4.3,
+          "need": 4.5,
+          "text": "Module Library",
+          "px": 14,
+          "fg": "rgb(21, 127, 125)",
+          "tag": "A",
+          "cls": "inline-flex items-center gap-1.5 tex"
+        }
+      ],
+      "contrastNotMeasurable": 1,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 46,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 44,
+          "h": 20,
+          "text": "Home",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 50,
+          "h": 20,
+          "text": "Quests",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 79,
+          "h": 20,
+          "text": "Living Map",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 103,
+          "h": 20,
+          "text": "Community",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 20,
+          "text": "Village",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 20,
+          "text": "Join",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 68,
+          "h": 20,
+          "text": "Guides",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 62,
+          "h": 20,
+          "text": "About",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 96,
+          "h": 32,
+          "text": "Rye",
+          "cls": "flex items-center gap-2 px-3 py-1.5 bg-white"
+        },
+        {
+          "tag": "A",
+          "w": 99,
+          "h": 36,
+          "text": "Main Site",
+          "cls": "px-4 py-2 bg-amber text-foreground rounded-l"
+        },
+        {
+          "tag": "INPUT",
+          "w": 558,
+          "h": 42,
+          "text": "Find a seat, a circle, or a person",
+          "cls": "w-full text-sm border border-border rounded-"
+        }
+      ],
+      "tapChecked": 64,
+      "tinyTextCount": 55,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Now",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Vision",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "How we decide",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Resources",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Links",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "List",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "SVG",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "PNG",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "Open seats",
+          "tag": "BUTTON"
+        },
+        {
+          "px": 12,
+          "text": "My seats",
+          "tag": "BUTTON"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Skip to content",
+          "top": -1,
+          "barTop": 0
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 70,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 3,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "/profile",
+      "viewport": "1280x800",
+      "status": 200,
+      "overflow": 0,
+      "overflowCulprits": [],
+      "smallTapCount": 13,
+      "smallTaps": [
+        {
+          "tag": "A",
+          "w": 44,
+          "h": 20,
+          "text": "Home",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 50,
+          "h": 20,
+          "text": "Quests",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "A",
+          "w": 79,
+          "h": 20,
+          "text": "Living Map",
+          "cls": "text-white hover:underline transition-colors"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 103,
+          "h": 20,
+          "text": "Community",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 66,
+          "h": 20,
+          "text": "Village",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 48,
+          "h": 20,
+          "text": "Join",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 68,
+          "h": 20,
+          "text": "Guides",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 62,
+          "h": 20,
+          "text": "About",
+          "cls": "flex items-center gap-1 text-white hover:und"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 36,
+          "h": 36,
+          "text": "Notifications",
+          "cls": "relative p-2 rounded-lg hover:bg-white/10 tr"
+        },
+        {
+          "tag": "BUTTON",
+          "w": 96,
+          "h": 32,
+          "text": "Rye",
+          "cls": "flex items-center gap-2 px-3 py-1.5 bg-white"
+        },
+        {
+          "tag": "A",
+          "w": 99,
+          "h": 36,
+          "text": "Main Site",
+          "cls": "px-4 py-2 bg-amber text-foreground rounded-l"
+        },
+        {
+          "tag": "A",
+          "w": 215,
+          "h": 22,
+          "text": "Choose who you will be",
+          "cls": "text-teal-deep underline"
+        }
+      ],
+      "tapChecked": 16,
+      "tinyTextCount": 13,
+      "tinyText": [
+        {
+          "px": 12,
+          "text": "Your next step",
+          "tag": "P"
+        },
+        {
+          "px": 12,
+          "text": "Visitor",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Guest",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Immersant",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Participant",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Member",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Contributor",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Quest Seeker",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Initiate",
+          "tag": "SPAN"
+        },
+        {
+          "px": 12,
+          "text": "Co-Creator",
+          "tag": "SPAN"
+        }
+      ],
+      "r26Count": 1,
+      "r26": [
+        {
+          "tag": "A",
+          "text": "Skip to content",
+          "top": -1,
+          "barTop": 0
+        }
+      ],
+      "hasFixedBar": true,
+      "contrastChecked": 19,
+      "contrastFails": 0,
+      "contrastWorst": [],
+      "contrastNotMeasurable": 28,
+      "notMeasurable": {
+        "tap": 0,
+        "text": 0,
+        "overflow": 0,
+        "r26": 0
+      },
+      "consoleErrors": [],
+      "badResponses": [],
+      "softNotFound": false
+    },
+    {
+      "route": "?tab= back walk",
+      "viewport": "1280x800",
+      "backOk": true
+    }
+  ],
+  "unmeasured": [
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 13
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 19
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 21
+    },
+    {
+      "route": "/modules",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 9
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 10
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 11
+    },
+    {
+      "route": "/profile",
+      "viewport": "390x844",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 13
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 13
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 17
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 12
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 14
+    },
+    {
+      "route": "/modules",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 9
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 10
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 11
+    },
+    {
+      "route": "/profile",
+      "viewport": "390x664",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 15
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 13
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 19
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 20
+    },
+    {
+      "route": "/modules",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 9
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 10
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 11
+    },
+    {
+      "route": "/profile",
+      "viewport": "375x812",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 15
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 13
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 16
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 19
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 15
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 19
+    },
+    {
+      "route": "/modules",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 9
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 10
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 11
+    },
+    {
+      "route": "/profile",
+      "viewport": "360x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 15
+    },
+    {
+      "route": "/admin?tab=modules",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 38
+    },
+    {
+      "route": "/admin?tab=events-admin",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 42
+    },
+    {
+      "route": "/admin?tab=intents-admin",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 36
+    },
+    {
+      "route": "/admin?tab=resources-admin",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 33
+    },
+    {
+      "route": "/admin?tab=org-chart",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 54
+    },
+    {
+      "route": "/modules",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 1
+    },
+    {
+      "route": "/modules/tools",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 1
+    },
+    {
+      "route": "/map/circles",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 3
+    },
+    {
+      "route": "/profile",
+      "viewport": "1280x800",
+      "tap": 0,
+      "text": 0,
+      "overflow": 0,
+      "contrast": 28
+    }
+  ]
+}

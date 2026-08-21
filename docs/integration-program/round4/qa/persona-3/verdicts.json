@@ -1,0 +1,101 @@
+{
+  "persona": 3,
+  "buildMarker": "2026-07-28-wave1-335058f",
+  "primaryViewport": "390x844 WebKit iPhone 14 DPR3 touch",
+  "routesMeasured": [
+    "/admin?tab=modules", "/admin?tab=events-admin", "/admin?tab=intents-admin",
+    "/admin?tab=resources-admin", "/admin?tab=org-chart", "/modules",
+    "/modules/tools", "/map/circles", "/profile"
+  ],
+  "rows": [
+    {
+      "metric": "R26 partially visible and dead at first paint",
+      "verdict": "FAIL",
+      "count": 2,
+      "worst": "/modules 'Call Automation' card, top edge above the tab bar at 742px, centre dead under the bar at 779px (also at 375x812 and 360x800); /map/circles 'Education Council (forming)' row at 390x844",
+      "notMeasurable": 4,
+      "notMeasurableWhy": "the four desktop rows: the bar detector keys on fixed bottom elements and desktop has none, so its desktop hits are the skip-link artifact, discarded"
+    },
+    {
+      "metric": "tap targets under 44px (strict elementFromPoint ownership)",
+      "verdict": "FAIL",
+      "count": 41,
+      "worst": "/map/circles lens chips: 'Now' 48x24, 'Vision' 57x24, 'How we decide' 116x26, 'Resources' 85x26; /admin 'Sign Out' 87x20; resources 'Edit' 25x16",
+      "notMeasurable": 0,
+      "perRoute": { "/admin?tab=modules": 2, "/admin?tab=events-admin": 12, "/admin?tab=intents-admin": 2, "/admin?tab=resources-admin": 5, "/admin?tab=org-chart": 5, "/modules": 1, "/modules/tools": 1, "/map/circles": 12, "/profile": 1 }
+    },
+    {
+      "metric": "horizontal overflow (scrollWidth > clientWidth, containment-aware)",
+      "verdict": "FAIL",
+      "count": 1,
+      "worst": "/admin?tab=events-admin at every phone width: +21px at 390, +36 at 375, +51 at 360; culprit div.flex.shrink-0.flex-wrap 'AnswersSlotsEditCancelDelete' with right edge 411px",
+      "notMeasurable": 0
+    },
+    {
+      "metric": "text under 14px (visible text nodes)",
+      "verdict": "FAIL",
+      "count": 85,
+      "worst": "/map/circles: 21 nodes, the 12px lens chip labels; admin form labels at 12px; 'Always on' badge at 10px on /modules",
+      "notMeasurable": 0,
+      "perRoute": { "/admin?tab=modules": 5, "/admin?tab=events-admin": 10, "/admin?tab=intents-admin": 8, "/admin?tab=resources-admin": 8, "/admin?tab=org-chart": 13, "/modules": 10, "/modules/tools": 10, "/map/circles": 21, "/profile": 10 }
+    },
+    {
+      "metric": "contrast (computed colors; AA 4.5 body / 3.0 large)",
+      "verdict": "FAIL",
+      "count": 2,
+      "worst": "teal rgb(21,127,125) link text on light gray at 4.3:1 where 4.5 is owed: resources 'Edit' rows, /modules/tools 'Module Library' back link",
+      "notMeasurable": 131,
+      "notMeasurableWhy": "backgrounds behind gradients, images, or unflattened alpha, plus the icon-help toast whose dark background the walker could not resolve (its 1.12:1 reading is a probe artifact, the rendered toast is high-contrast)"
+    },
+    {
+      "metric": "dead ends (no route onward except browser back)",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "none: module-off tabs name the remedy ('Turn it on in the Module Library'), every journey surface had an onward route",
+      "notMeasurable": 0
+    },
+    {
+      "metric": "broken back (?tab= and ?focus= included)",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "?tab= back walk correct at all five profiles (events-admin -> modules -> back lands on events-admin)",
+      "notMeasurable": 1,
+      "notMeasurableWhy": "?focus= could not be exercised: the phone accordion never writes it (finding P3-F19) and a synthetic desktop SVG click did not reach the focus handler"
+    },
+    {
+      "metric": "404s (network and soft)",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "none across 45 route-viewport cells; the module-off API 404s during setup are the existence-hiding gate answering as designed, not navigation dead links",
+      "notMeasurable": 0
+    },
+    {
+      "metric": "console errors",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "none across 45 route-viewport cells",
+      "notMeasurable": 0
+    },
+    {
+      "metric": "form fields that lose input",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "none observed: the gathering form clears only after a confirmed save; the admin gate keeps the email after a failed password",
+      "notMeasurable": 0
+    },
+    {
+      "metric": "saves without feedback",
+      "verdict": "PASS",
+      "count": 0,
+      "worst": "every observed save answered: toasts ('Slot added', 'Weekly brief settings saved', module-on), inline confirmations ('The rule is written.', 'The decision is open. Read the proposal'), refusal toasts with reasons. Note: the rule confirmation renders at the top of the panel, far from the button that earned it",
+      "notMeasurable": 0
+    }
+  ],
+  "detectorValidation": "13/13 (known-bad fixture flagged and negative control clean per detector; NaN fails the finite gate loudly)",
+  "backThroughTabs": { "390x844": true, "390x664": true, "375x812": true, "360x800": true, "1280x800": true },
+  "liveCompare": {
+    "pages": ["/admin (sign-in gate)", "/modules (anonymous)"],
+    "at": "390x844 WebKit",
+    "result": "no drift: identical metrics local vs live (overflow 0/0, taps<44 0/0, text<14 10/10 on /modules, contrast 0/0), same build 2026-07-28-wave1-335058f both ends"
+  }
+}
