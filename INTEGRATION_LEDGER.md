@@ -337,6 +337,7 @@ docs-only and do not touch main.
 - 2026-08-14 · **ADR-49 accepted by Rye** (in-session, after the opening brief). Status flipped in DECISIONS.md; blocker B1 resolved; Lane C notified that Managed-plane C2 artifacts are authorized, not merely designed-under-assumption. Committed `f22a07d`.
 - 2026-08-14 · **Contract publication ruled by Rye: published on a URL** (R11). B6 resolved; queue item 10 added (publish after C1 + incident log). Committed `ede6c2a`.
 - 2026-08-14 20:21 · **Lane S reported: stages 1–5 drafted, stage 0 blocked** — no tenant credential has ever been issued (confirmed from their own doc 07:19 + exhaustive local search). Six artifacts verified on disk and adopted at `docs/integration-program/lane-s/`. Findings: no hard-delete endpoint exists (B7); Managed gate fails 7/12 rows on current evidence; sandbox tenant already live; Sacred Pause (Aug–Sep) confounds the 90-day window — bucket by week when the data lands. No code written, nothing sent to Saberra, four unauthenticated /health-class GETs total. Committed `70c3c8e`.
+- 2026-08-21 ~10:05 EDT · **R39: L2 found the pinned dialer broken for every real outbound dial (lookup callback shape, Node ≥20); in-lane fix ratified with conditions; §9 lesson added.** L1 pushed, CI watcher armed.
 - 2026-08-21 ~09:50 EDT · **R38 standing landing authorization recorded; hourly stall-catcher scheduled.** L1 in final gates; L2, L5b building.
 - 2026-08-21 ~09:40 EDT · **R37: the sign-in gate applies to ALL members-only pages (L1 addendum 2 widened).**
 - 2026-08-21 ~09:30 EDT · **R36 recorded (sign-in prompt, not 404, for members-only modules when signed out); addendum appended to L1's brief and sent to the running lane.**
@@ -463,6 +464,17 @@ docs-only and do not touch main.
   N5 image byte ratchet + WebP standard [yes]; N6 upload optimization ["whichever causes less
   friction for the user" → **client-side canvas → WebP before upload**: no wait on the server,
   less mobile bandwidth, no native dependency]; N7 pathway location/audience [yes].
+- **R39** (2026-08-21): **L2's toolcheck boundary exception RATIFIED in-lane.** Finding (L2, verified
+  standalone on Node 25): the pinned dialer's custom `lookup` callbacks return a bare string while
+  node's net internally asks with `{all:true}` and expects `[{address, family}]`, so EVERY real guarded
+  outbound dial dies with "Invalid IP address: undefined". Nobody saw it because every existing consumer
+  short-circuits on empty data before dialing (zero tools, module off, zero inbox rows, zero
+  subscriptions): a dead guard reading as healthy. L2's fx-rates-daily was the first real dial. Fix: two
+  compat edits inside the lookup callbacks honouring `options.all`; pinning semantics unchanged.
+  Conditions: own commit with the finding in the body; unit tests for both callback shapes AND the
+  unchanged SSRF refusal; one real guarded dial in the fx job's tests; SHA named in the report.
+  Inheritors when it lands: L6 agent-inbox delivery, network peer sync, calendar external poll, tools
+  link check. Coordinator adds a post-landing live check of the fx job's first tick.
 - **R38** (2026-08-21): **Standing landing authorization for round 4** (Rye's words: ["Land the lanes as
   they report and keep going"]). The coordinator merges each lane's PR without a per-lane ask when: the
   lane reported per its brief (tip SHA, gates, skip count), `verify` is SUCCESS on that tip, the diff is
@@ -727,6 +739,8 @@ docs-only and do not touch main.
 ---
 
 ## §9 Paid lessons (seeded; append the day they happen)
+
+- **2026-08-21 · A guard nobody's data exercises is not a guard.** The pinned dialer was broken for every real dial on current Node, and four consumers stayed green for weeks because each short-circuited on empty data before dialing. Rule: any wrapper whose job is to TALK TO THE OUTSIDE ships with at least one test that actually dials (a local fixture host), and a job's first live tick is part of its lane's DONE.
 
 - **2026-08-21 · The coordinator printed secrets twice while debugging a pipe.** (1) A `head -c`-truncated `railway variables` blob failed a JSON parse, and the fallback branch printed the raw first lines, exposing `ADMIN_PASSWORD` and a truncated `ANTHROPIC_API_KEY`. (2) The mint tool, imported under `node -e`, threw with the piped `AUTH_TOKEN_SECRET` embedded in the error text, and the coordinator's `[ $rc -ne 0 ] && echo "$TOKEN"` printed it. Both are in this machine's transcript. Rules that now bind: never print a captured pipeline's raw output on failure (error text embeds the piped input); debug secret pipelines with presence/length only; a fallback branch is subject to the same redaction as the happy path. Remedy: Rye rotates `AUTH_TOKEN_SECRET` (all sessions re-login; nothing else breaks) and optionally `ADMIN_PASSWORD`.
 
