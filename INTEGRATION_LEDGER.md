@@ -796,6 +796,20 @@ docs-only and do not touch main.
   of our living map.] and [Let's also talk out the plan for governance audit and what would be the
   best route there. Spend more time thinking out the plan on these first 2.] Design deepening in
   flight; CP/G1 dispatch waits on his next ruling.
+- **R46** (2026-08-22, the five copy answers, verbatim): [1. you can get my language from
+  joinseeds.earth, our second brain (stored in regen civics clean document) and regencivics.earth]
+  (located: `regen-civics-clean/second-brain/`, incl. `90 Voice Profile/`); [2. Lets try a blend
+  with a beautiful and enchanting way to explain first, with a simple explanation with tooltips
+  throughout (so one card may have 3 tooltips explaining 3 different parts of the module/etc).] —
+  NOTE this inverts the R45-era default (enchant FIRST, plain explanation lives in TOOLTIPS, up to
+  several per card — a UI pattern addition, and the map's data-tip idiom is the precedent); [3. Yes
+  rename while in there.] (read as: confirm the Hearts→Gratitude and seats→Roles sweeps; no new
+  names were given so Exchange/Stay credits/Library credits keep their names); [4. All public
+  facing surfaces!]; [5. Yes old->new format side by side in the table, with a 3rd spot for me to
+  put my changes if any.] **Execution:** the in-flight COPY-1 lane completes its ruling-stable work
+  (renames, fixes, patch scripts, census coverage — unchanged by these answers); a COPY-2 revision
+  lane then reads the three corpora, restyles explainer lines enchant-first, adds the tooltip layer,
+  and produces the Copy Book with the third column. Rye proofreads only the COPY-2 book.
 - **R45** (2026-08-22, on the 10+10 improvement lists and copy questions): **ALL APPROVED, one
   amendment, one clearance.** Crowdpool: [Love the ideas! Make it exceptional and build it.] — all
   ten improvements stand; BUILD NOW. Governance: [3. Yes we'll offer 1-person 1 vote and 1 token 1
