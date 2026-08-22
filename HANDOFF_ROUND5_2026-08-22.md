@@ -10,9 +10,10 @@ lessons. This file is the volatile state a summary would drop.
 
 ## 1 · State at writing
 
-- **game-amora `origin/main` = `c708641`**, and **its own CI run is green**, which matters because
-  #59 and #60 both touched `client/src/pages/Admin.tsx` and neither PR run had seen the other.
-- **One PR open: #61** (docs-only, CLAUDE.md staleness), CI pending.
+- **game-amora `origin/main` = `be35e9a`**, and **its own CI run is green.** Twenty-six merges today.
+  Landed since the last regeneration: **#61** (docs), **#63** (the map panel merge and the building
+  tap), **#62** (the silhouette field and the unity moon).
+- **No PR open.** Four lanes are working and none has opened one yet.
 - Coordinator home unchanged: `C:/Users/taren/Downloads/regen-integration` on `wt/integration`,
   docs-only. NEVER work in the primary checkouts. **The primary `game-amora` checkout is parked on
   `voice-sweep-2026-08-01` and runs far behind main** - read `origin/main` with
@@ -22,10 +23,12 @@ lessons. This file is the volatile state a summary would drop.
 
 | Lane | Branch | Holds | Collision note |
 |---|---|---|---|
-| Vote visual | `wt/r5-vote` | Silhouette field for quorum, moon for unity, threshold notch | **OWNS `components/governance/**` and `components/natural/**`** and the Decision pages |
-| Mask | `wt/r5-mask` | One panel from Theme + Make-this-map-yours, pocket-reachable, the four dropped asks, the zoom watcher. **Carries two fix addenda ahead of the feature.** | **OWNS `grounds-v0.html` AND `LivingMap.tsx`.** |
-| Photos | `wt/r5-photos` | Community photo uploads on a place, like a listing. Migrations **0093, 0094** | Works the uploads/media regions of `server/**`. Must wait for mask before touching the artifact. |
-| Gov fix | `wt/r5-gov` | The no-quorum kill, the four unconductable wizards, four dead pieces in 0089, then advisory votes. Migration **0095** | Ballots/governance regions of `server/index.ts`. **Client changes go to the vote lane as an addendum, never direct.** |
+| Photos | `wt/r5-photos` | Community photo uploads on a place, like a listing. Migrations **0093, 0094**. Also owes the server half of the `paid` RSVP refusal | Uploads/media regions of `server/**`; **now unblocked to take the artifact** |
+| Gov fix | `wt/r5-gov` | The no-quorum kill, four unconductable wizards, four dead pieces in 0089, the `objections` field on the list payload, then advisory votes. Migration **0095** | Ballots/governance regions of `server/index.ts`. **Client changes route to the trail lane, never direct** |
+| Admin sweep | `wt/r5-adminsweep` | Stable ordering for tables reading `members.all()`, and accessible names that swallow their hint | **OWNS `client/src/pages/Admin.tsx`.** Both sweeps are one lane for exactly this reason |
+| Trail | `wt/r5-trail` | The two adjacent weight-trail cards on `/decisions` | **OWNS `components/governance/**` and the Decision pages** |
+
+**Next free migration number is 0096.**
 
 ## 3 · Migration numbers, allocated not scanned
 
