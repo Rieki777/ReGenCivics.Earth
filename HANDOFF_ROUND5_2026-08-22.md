@@ -43,10 +43,12 @@ gov lane's.** Next free is **0096**. Two lanes both ran a correct four-way scan 
    gap. Spec adopted at `d533308`. **The gov-fix lane is its foundation**, so this follows it rather
    than running beside it.
 2. **On-chain provenance for `hypha.space_id`** (task 15) - free to dispatch.
-3. **Two repo-wide sweeps filed as chips**: admin tables that reshuffle because the members repo
-   answers in write order, and `<label>`-wrapped controls whose accessible name swallows the hint.
-   Both wait on `Admin.tsx` being free.
-4. **The `/api/org` token posture** (task 23) - **needs Rye.**
+3. **The `/api/org` token posture** (task 23) - **needs Rye.**
+
+The three chips Rye started are now the admin-sweep and trail lanes in §2, so nothing is queued
+behind `Admin.tsx` any more. **Four concurrent lanes is the practical ceiling**, because they share
+one local MySQL and queue on `.test-lock`, and a full suite runs 200-300s. Land one before
+dispatching the fifth.
 
 ## 5 · What only Rye can close
 
