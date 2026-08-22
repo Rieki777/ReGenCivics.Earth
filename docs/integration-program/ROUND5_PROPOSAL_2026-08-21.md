@@ -278,3 +278,129 @@ close:          closing-proof lane that wrote none of it, then one decision list
 decide `AGENT_INTENT_WRITE` · enable `resources`/`introductions` when wanted · ElevenLabs spend
 (Kokoro ships free otherwise) · tick the door census · bless the visual samples (map swarm's
 four + M2's four when ready) · real hamlet/neighbourhood home counts.
+
+---
+
+## §6 Grounding update — scouts landed 2026-08-21 ~19:55 EDT (7 agents, 819K tokens, 0 errors)
+
+Rye reframed crowdpool ("maybe just another page for viewing the crowdpool data you'd see on
+regencivics.earth, more playful and game, following the living-map theme") and asked to deepen
+the governance-audit plan before dispatching either. Six read-only scouts + a completeness critic
+grounded both. Transcript: `subagents/workflows/wf_7ecac259-530/`. Every ref below is measured.
+
+### 6.1 Crowdpool — the reframe is right, and the map already models it
+
+**Headline (map-theme scout):** a crowdpool is ALREADY a first-class living-map concept. A
+structure carries `state:'funding'` + `fund:0..1`; under 100% it "wears a GOLD RING showing the
+percent," reads "gathering" under half and "under construction" above; a ✦ lantern "burns brighter
+as build day comes near"; the sprite grows blueprint→wip→painted as it funds. Maia already says
+*"the Ridge crowdpool crossed 72%"* and *"Crowdpooling you can watch become walls · funding
+becomes walls"* (`grounds-v0.html` SCENE structure `state:"funding",fund:`). The playful page is a
+**re-skin of existing hub data into an existing map metaphor**, not new economics.
+
+**The data exists and is rich (cp-data / cp-public):** hub `campaigns` + `campaign_items` (needs)
++ `campaign_contributions` (pledges), `drizzle/schema.ts:1026`. Progress = `pledgedTotal/totalValue`
+(`campaigns.ts:230`); per-need three-slot `quantityWanted/Claimed/Delivered` (`schema.ts:1187`) —
+claimed = "ghost" reserve, delivered = "solid" — the natural fill animation; live "Pool Ledger"
+activity feed (`campaigns.getActivity`, `campaigns.ts:1143`). A public **tRPC** read API already
+serves all of it no-auth; four fully-worked demo campaigns exist (Harmony Valley richest,
+`scripts/seed-demo-campaigns.ts`).
+
+**Two hard decisions gate the whole page:**
+1. **TRANSPORT.** The hub API is tRPC-only, **no CORS, no public REST/JSON export** (verified: no
+   `cors` import in hub `server/`; only ACAO on `basemap.pmtiles`). A game-client cross-origin fetch
+   is blocked. → **game-server proxy** to the hub's public tRPC (one cached route, no hub change,
+   clears the SSRF-pinned dialer rule). Recommended over adding hub CORS.
+2. **PRIVACY.** The hub page **shows per-pledge dollar amounts and non-anonymous names publicly**
+   (`campaigns.ts:487`, `:1170`), which contradicts the game crowdpool spec's "amounts NEVER
+   public" posture. Rye must choose mirror-as-is vs aggregate-only. → **aggregate-first**
+   recommended (fits the map's poetic idiom AND is safer): gold ring, ripples, "N backers", capital
+   coverage; names only where the hub already shows them and Rye opts in; never per-pledge amounts.
+
+**Vocabulary corrections (spec is stale):** capitals are **9 not 8** (adds `health`,
+`shared/capitals.ts:7`). Status lifecycle is **pending→accepted→fulfilled→thanked** (+rejected/
+withdrawn/expired), NOT the spec's pledged→scheduled→fulfilled→released. Money never touches either
+platform — fiat routes to Ma Earth (gifts) / GoSteward (loans) as partner CTAs; only crypto is
+tracked. **Critical tension (critic):** the 9-capitals framework is ENTIRELY ABSENT from the living
+map (`grep 'capital' grounds-v0.html` = 0; controls loom=221/flow=181). The map's economic
+vocabulary is FLOWS (8 physical media) + the POOL/gold-ring; there is no "money" flow. So the page
+paints needs in the **map's idiom** (pool fill, needs-shelf tiles tinted by capital colour, inbound
+dashed flows = "a quest waiting to be written") rather than importing the hub's 9-segment
+capital-stack bar wholesale. Do not graft the capitals scaffold onto the map — it breaks the map's
+own vocabulary.
+
+**Connections (Rye's points 2 & 3) — the join keys (game-library-roles):** material asks join on
+library-item **identity** (`library_items.id/name/category_id/credit_value`, `0024_library.sql:28`),
+NOT currency (library credits are `transferable:false, governance:'platform'` — sealed). Role asks
+join to the **org-chart seat** system (`org_roles` + `org_role_assignments`, `0049_org_roles.sql:24`),
+which already has a public `recruiting` flag and a documented→member claim flow — the "step into this
+role" primitive — NOT the capability roles that gate `library_items.requires_role`. Two gaps: no
+member self-donate route (intake is admin-only, `server/index.ts:13567`); the whole game-side
+crowdpool surface is **greenfield** (module deferred D7).
+
+**Re-scoped crowdpool v1 (a VIEW, not the deferred module):**
+`[game-server proxy → hub public tRPC, cached]` + `[map-themed /campaign/:slug page: gold-ring
+funding, sprite growth, Maia narration, needs-shelf, Pool-Ledger-as-pulse-ripples, Ma Earth/GoSteward
+partner CTAs]` + `[a map door/pin on the /contribute building]` + `[connections as read-only SIGNALS:
+a role-ask shows its matching org seat + claim link; a material-ask shows "in your village library"]`.
+Admin funding-flows panel (point 4) and member pledge actions **stay on regencivics.earth**,
+deep-linked (`/campaign/:id/manage` exists). No hub change, no new game tables in v1.
+
+### 6.2 Governance — the audit is essentially DONE, and "optional" means two different jobs
+
+The `gov-census` scout produced the route census Rye asked for. Verdict: **Amora already runs the
+STRUCTURE of governance on-site.** On-site with no Hypha: roles (both planes), org seats with
+apply/claim/lapse, the full quest create→claim→submit→consent loop, and bounded proposal authoring
+with a constitution/ring scope model. **Hypha owns exactly two functions:** the binding **VOTE
+tally** and the **AGREEMENT artifact**.
+
+**The framing trap the critic caught — "make Hypha optional" is used two ways:**
+- **HIDDEN** (config-gate off): nearly **FREE**. `hypha-reality` proved NO code synchronously calls
+  a Hypha API — every touchpoint is a deep-link URL a human clicks or an inbound Base/Alchemy event
+  listener, all gated on one var (`hypha.org_url`), hiding when blank. Proposal creation is already a
+  human submitting Hypha's own form, and a human "verify & apply" fallback already ships
+  (`server/index.ts:19879`). "Hypha for agreements only + manual verify" ≈ the **current live state**.
+- **FUNCTIONALLY REPLACED** (do it on-site): requires **building two objects that do not exist**:
+  (1) an executable **decision/tally engine** — no ballot/tally/quorum table or route exists;
+  `decidesBy` (majority/consent/consensus) and `HOW_CHOSEN` (elected/rotates) are **display-only
+  string enums** (`shared/power.ts`). A village can DECLARE it decides by majority; the platform
+  cannot CONDUCT that majority. (2) a first-class **AGREEMENTS object** — today only
+  `exit.agreement_ref` (a ≤255-char string pointer, `server/index.ts:12730`) + the Hypha
+  create-agreement URL. No table, no create/sign/amend/status.
+
+**Rye's own words point at REPLACE** ("handling all of governance and all the voting and the role
+admissions... on our site directly"). So the recommendation writes itself: **build the on-site tally
+engine + the agreements object; demote Hypha to an OPTIONAL quarterly export/attestation target**
+(exactly his "reflect the verified truth quarterly, users aren't married to Hypha"), config-gated off
+by default. `villageExport` already exists for org/seat data (PR #33) — the attestation bones are
+there.
+
+**Ask 3 converges with this:** the role-apply flow EXISTS but is thin (`raise-hand` writes to the
+stewards' inbox, `server/index.ts:8490`). The wizard (deliverables → pay-split sliders → fit →
+admin/vote) is its on-site hardening, and its final "goes up publicly for voting" step **is** the
+missing tally engine. Sequence: design tally + agreements first, build the wizard on top.
+
+**Best route to the audit (revised):** the scouts already delivered the census, so a big 4-journey
+audit fan-out is **unnecessary**. Write the audit as a report from these findings (done), then open a
+**DESIGN lane** for the two missing objects — not another audit lane. This saves a whole round.
+
+### 6.3 New questions for Rye (from the grounding; defaults in brackets)
+
+- **C1 Transport:** game-server proxy to the hub's public tRPC (no hub change). [yes]
+- **C2 Privacy:** aggregate-first on the game page — gold ring, ripples, backer counts, capital
+  coverage; never per-pledge amounts even though the hub shows them; names only where the hub already
+  does and you opt in. [aggregate-first]
+- **C3 Home:** a themed `/campaign/:slug` page + a map door/pin first; a full living-map "Raising"
+  lens later. [page + pin first]
+- **C4 First campaign:** build against the Harmony Valley demo as the dev fixture; do you have a REAL
+  campaign to point the first village at, or ship against demos for now? [demos for now]
+- **C5 Connections:** roles/materials surface as read-only SIGNALS in v1 (matching org seat + claim
+  link; "in your village library"); admin panel + pledging stay on the hub, deep-linked. [yes]
+- **G1 The big one:** "governance on our site" = **HIDE** Hypha (nearly free, ship now, keep manual
+  verify) or **REPLACE** its function on-site (build tally engine + agreements object)? Your
+  screenshots read as REPLACE. [replace, staged]
+- **G2 If replace:** next lane is a DESIGN for the on-site decision/tally engine (behind the
+  `decidesBy` labels) + a first-class agreements object, with Hypha as an optional quarterly export.
+  [yes]
+- **G3 Sequencing:** design tally + agreements before building the ask-3 role wizard, since the
+  wizard's public-vote step depends on the tally engine. [yes]

@@ -776,6 +776,22 @@ docs-only and do not touch main.
   constraint preserved as queue item 10: publication waits for C1 + the incident log, because
   clauses 9–12 promise machinery that does not exist yet; and the published page is
   version-stamped, since listings are accepted against a contract version.
+- **R43** (2026-08-21, round-5 rulings on `ROUND5_PROPOSAL_2026-08-21.md` §5): Rye ruled on the
+  eleven questions: [8. have it say a page like "this land project hasn't enabled this module.
+  reach out to the admin team or make a proposal to initiate this module in your village(s)."]
+  and [Everything else is yes]. So: Q1–Q7 and Q9–Q11 stand at their defaults (merge #31/#33 only
+  after refutations; coordinator corrects #32's record; seats→Roles copy-only; plain
+  Equinox/Solstice; per-role vote routing, admin initial; slider set = cash + live tokens incl.
+  Voice summing 100%; crowdpool v1 read-mirror + admin comms; org-drafts get their own Admin tab;
+  no Hypha-coupling changes until the G1 report; one global offshore distance). **Q8 REVERSES the
+  QA-triage default (P2-05):** the off-module page is no longer the plain 404 — it becomes a soft
+  page carrying Rye's copy above (route to FIX-C's brief; voice-gate the final wording).
+  **R43a:** crowdpool and the governance audit are NOT dispatched yet — Rye's words: [Let's talk
+  out the crowdpool bit more - where maybe there's just another page for viewing the crowdpool
+  data you'd see on regencivics.earth but talking a more playful and game way following the theme
+  of our living map.] and [Let's also talk out the plan for governance audit and what would be the
+  best route there. Spend more time thinking out the plan on these first 2.] Design deepening in
+  flight; CP/G1 dispatch waits on his next ruling.
 
 ---
 
