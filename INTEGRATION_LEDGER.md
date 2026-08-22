@@ -792,6 +792,30 @@ docs-only and do not touch main.
   of our living map.] and [Let's also talk out the plan for governance audit and what would be the
   best route there. Spend more time thinking out the plan on these first 2.] Design deepening in
   flight; CP/G1 dispatch waits on his next ruling.
+- **R44** (2026-08-21, on the grounded designs): **crowdpool route APPROVED, governance DECIDED.**
+  Rye's words: [1.Happy with the crowdpool route, let's build it all out including incredible
+  graphics to meet the living map quality and truly feel like a world class MMORPG! Make me proud!
+  Before we go give me 10 ways to improve this plan.] and [2. I'm decided that we need to ship a
+  v1.0 where you can play the whole game (vote on roles, etc) within the Game directly and then we
+  only use Hypha for audits. With this you may wan to explore the screenshots I have hear for how
+  Hypha 2.0 (last version that's not live anymore) used to do the roles proposal - which we could
+  bring back (these are screenshots 4-10 where Hypha's previous builds used these designs) there
+  code is: open source and we can learn/copy anything we like:
+  https://github.com/hypha-dao/dho-web-client) Or take a mix from how they do it, how other
+  regenerative decentralised organisation and ecovillages do governance and bake them into it along
+  with how the graphics. Tell me 10 ways you'd improve this plan.] **So: the G1 question resolves
+  as REPLACE (on-site voting; Hypha = audits only); dho-web-client is sanctioned source material.**
+  Both builds dispatch after the 10-ways exchange. **R44a — three new asks (verbatim):** ask 11
+  [Why does the tab on these top cards say "guess" it shouldn't be that at all!] (the amber
+  `achip.guess` provenance chip, grounds-v0.html:362/:957 — internal placement vocabulary on
+  public role cards; route to M1 as a chrome/copy addendum); ask 12 [this copy doesn't make sense -
+  we need to create a copy professional based on my style on explaining these concepts and
+  surfacing all public facing copy into a single document that I can proof read after you give it
+  your best overview on changing the language. Ask all the questions you have to get this right.]
+  (new lane COPY-1; census scout dispatched; the flagged Exchange panel still says "Hearts", a
+  RETIRED name — grounds-v0.html:892/:5423/:6739); ask 13 [Whenever it's a draft I should have a
+  save draft button right next to the back to village on the top left always present when in a
+  draft] (M1 addendum).
 
 ---
 
