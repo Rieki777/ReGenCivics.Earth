@@ -796,6 +796,22 @@ docs-only and do not touch main.
   of our living map.] and [Let's also talk out the plan for governance audit and what would be the
   best route there. Spend more time thinking out the plan on these first 2.] Design deepening in
   flight; CP/G1 dispatch waits on his next ruling.
+- **R45** (2026-08-22, on the 10+10 improvement lists and copy questions): **ALL APPROVED, one
+  amendment, one clearance.** Crowdpool: [Love the ideas! Make it exceptional and build it.] — all
+  ten improvements stand; BUILD NOW. Governance: [3. Yes we'll offer 1-person 1 vote and 1 token 1
+  vote options for voting weight - or custom weights set by the admin (where it's just 1 token 1
+  vote but the admin/founder can set how many tokens everyone has when choosing this option).
+  Everything else is perfect! Also I own Hypha and we're able to transplant anything that we want
+  from that code-base if we're able to! But good call on looking into other tools/systems and how
+  we can make it even better!] — so improvement 3 becomes THREE weight modes (1p1v / 1t1v /
+  admin-set custom allocations), the other nine stand, and dho-web-client transplanting is cleared
+  by OWNERSHIP on top of Apache 2.0. Copy: [2. Voice is enchanting while simply explaining (it's a
+  Game feel with a very practical and serious/simple foundation)] — the style ruling; Q1/3/4/5
+  proceed on their stated defaults. Process: [Let's go forward with everything in your lane for the
+  first pass then deliver me the whole copy of the site after that sessions has had a go with it
+  for me to pass over one more time.] — copy lane applies the first pass, then the coordinator
+  delivers the complete site-copy document (old→new, including new crowdpool/governance surfaces)
+  for Rye's final pass.
 - **R44** (2026-08-21, on the grounded designs): **crowdpool route APPROVED, governance DECIDED.**
   Rye's words: [1.Happy with the crowdpool route, let's build it all out including incredible
   graphics to meet the living map quality and truly feel like a world class MMORPG! Make me proud!
