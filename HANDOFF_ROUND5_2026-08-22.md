@@ -1,7 +1,7 @@
 # HANDOFF — round 5, regenerated 2026-08-22, late
 
 **Everything below is verified, not remembered. Re-verify anything older than an hour; main advanced
-thirty-three times today.**
+forty-plus times today.**
 
 Read `INTEGRATION_LEDGER.md` first: §7 changelog (newest at the top), §8 rulings R43-R58, §9 paid
 lessons. This file is the volatile state a summary would drop.
@@ -10,49 +10,64 @@ lessons. This file is the volatile state a summary would drop.
 
 ## 1 · State at writing
 
-- **game-amora `origin/main` = `95b315c`.** Thirty-three merges today. Landed since the last
-  regeneration: **#63** map panel and building tap, **#62** silhouettes and moon, **#65** governance
-  fixes, **#64** place photographs, **#66** the org posture (R57), **#67** the upload strip,
-  **#69** the decisions rail, **#68** the admin sweeps.
-- **Three PRs open, all waiting on CI:** **#70** the Hypha module, **#71** the waiting-proposal page,
-  **#72** a one-line copy-book correction (coordinator's own).
+- **game-amora `origin/main` = `7e730a7`.** Every PR dispatched today is merged: #62 #63 #64 #65 #66
+  #67 #68 #69 #70 #71 #72 #73 #74 #75. **No PR is open.**
 - Coordinator home unchanged: `C:/Users/taren/Downloads/regen-integration` on `wt/integration`,
   docs-only. NEVER work in the primary checkouts. **The primary `game-amora` checkout is parked on
   `voice-sweep-2026-08-01` and runs far behind main** - read `origin/main` with
   `git show origin/main:PATH`, never the working tree.
+- **Merged worktrees are deliberately NOT pruned.** Several checkouts on this machine are shared
+  with other sessions; reclaiming disk is not worth pulling one out from under live work.
 
 ## 2 · Lanes in flight
 
 | Lane | Branch | Holds | Collision note |
 |---|---|---|---|
-| Hypha | `wt/r5-hypha` | PR #70. The bridge becomes a module. Migrations **0096, 0097** | Owns `shared/hypha.ts`, `server/lib/hypha-bridge.ts`, `server/lib/base-reads.ts`, `api/admin/hypha` |
-| Waiting | `wt/r5-waiting` | PR #71. Three proposal states made distinguishable | **OWNS `client/src/pages/GameMechanics.tsx`** |
-| Door gate | `wt/r5-doorgate` | A CI check that catches `SITE_PAGES` drifting behind the router | `scripts/`, `ci.yml`, `CLAUDE.md`. **Must not write `grounds-v0.html`** |
+| Onsite | `wt/r5-onsite` | The missing door to the village's own mechanics vote, `auto_apply_enabled`, the `passed_onsite` apply button, two stale Hypha sentences, **and the weight routes that notify nobody** | **OWNS the governance block of `server/index.ts`, `client/src/pages/GameMechanics.tsx`, `shared/gameVariables.ts`** |
+| Clock | `wt/r5-clock` | `readOnchainBalance`'s freshness window compares the DB clock to the process clock; plus a sweep of the class | `server/lib/base-reads.ts` and wherever the sweep leads, outside Onsite's zone |
 
-**Next free migration number is 0098** (0094 and 0098 were released back unspent).
+**Next free migration number is 0099** (0098 was spent by G-B; 0094 and the strip lane's 0098 grant
+came back unspent and 0098 was reissued).
 
 ## 3 · What only Rye can close
 
-- **Should `org.public_people` be founder-held or proposable?** It shipped founder-held; under R54
-  that is a live question, and it is one word to flip.
-- Enabling `governance`, `crowdpool`, `resources`, `introductions` on live (all ship OFF).
-- Rotate `AUTH_TOKEN_SECRET` and the Alchemy key; `AGENT_INTENT_WRITE`; the ElevenLabs spend.
-- **A real Base key**, without which the Hypha module's chain paths cannot be driven for real.
-- **Sourcing the CC0 nature recordings.** CC0 ONLY - a CC-BY sample creates an attribution
-  obligation every fork inherits and silently violates. The BBC library is out on non-commercial
-  terms.
+- **DENY-BEATS-ROLE, and it got sharper.** Unchanged since S36: a warning badge's deny beats a role
+  grant. **But #75 grew its blast radius** - on a village-held key an admin is now judged on steps 2
+  to 5, so a warning badge's deny can stop an admin too. The break-glass covers either answer, so
+  nothing is stuck; the choice is real rather than theoretical now.
+- **R58c collides with `poolStatus`**, which returns `platform-built -> not eligible` for any module
+  without a `builtBy` credit, so every platform-written module is out of the pool by the existing
+  rule. **And nothing measures module usage at all.** Needs both a metering mechanism and a ruling.
+- **Should `org.public_people` be founder-held or proposable?** Shipped founder-held; one word to flip.
+- **A real Base key**, without which the Hypha module's mainnet paths cannot be driven.
 - The three photo gaps: no way to find photographs of yourself, no subject request without an
   account, and a takedown keeping the alt text.
+- Enabling `governance`, `crowdpool`, `resources`, `introductions` on live (all ship OFF).
+- Rotate `AUTH_TOKEN_SECRET` and the Alchemy key; `AGENT_INTENT_WRITE`; the ElevenLabs spend.
+- **Sourcing the CC0 nature recordings.** CC0 ONLY - a CC-BY sample creates an attribution
+  obligation every fork inherits and silently violates. The BBC library is out on non-commercial terms.
 
 ## 4 · Chips filed and not started
 
-- **The investor-docs upload has never worked** (writes columns the repo lacks, `title` NOT NULL,
-  so the insert always throws) **and every gate passes it.** The chip also asks the general question:
-  how many admin routes have a door, a caller and a handler that cannot succeed?
+- **The investor-docs upload has never worked** - it writes columns the repo lacks with `title` NOT
+  NULL, so the insert has always thrown, **and every gate passes it because a caller exists.** The
+  chip also asks the general question: how many admin routes have a door, a caller and a handler
+  that cannot succeed?
 - `SignInToSee` wants the shape `PeopleLock` now has.
-- A non-UTC `NOW()` staleness bug in `onchain_balances`.
 
-## 5 · The traps, and the ones this round added
+## 5 · Still owed, with nobody on it
+
+- **`member.vouch` is gated by nothing at all** - declared, and in no route anywhere. Second
+  confirmed instance of the declared-but-unenforced capability class after `quest.propose`.
+- **Eight real powers cannot be transferred yet** (`ballot.vote`, `proposal.decide`, `quest.consent`,
+  `map.publish`, `map.curatePhotos`, `feed.announce`, `health.record`, `org.declare`): they are inline
+  `hasCapability` calls that never see the request, so the break-glass cannot reach them. Each is one
+  small refactor, and the work is named in `shared/capabilities.ts`.
+- The handover spec's **G-C** (transfer as its own proposal type) and **G-D/G-E** remain unbuilt.
+- One `verify_door_routes.js` citation survives inside `grounds-v0.html`, editable only by a lane
+  holding that file through a guarded patch script.
+
+## 6 · The traps, and the ones this round added
 
 - **`git grep` matches NOTHING when the pattern starts with `/`.** Prove every negative against a
   known-present control IN THE SAME COMMAND.
