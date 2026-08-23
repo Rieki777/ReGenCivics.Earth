@@ -32,7 +32,7 @@ all platform code; the **hub** (`Rieki777/ReGenCivics.Earth`) holds the $ReGen p
 
 ## 1 · Where the tree stands
 
-- **`origin/main` = `18aa121`.** **Round 5 merged twenty-eight PRs, #62 through #89**, in roughly a
+- **`origin/main` = `b5bed01`.** **Round 5 merged twenty-nine PRs, #62 through #90**, in roughly a
   day. Main's own CI is green.
 - **NEVER work in the primary checkouts.** The primary `game-amora` checkout is parked on
   `voice-sweep-2026-08-01` and runs far behind main — read `origin/main` with
@@ -75,10 +75,11 @@ over any prose**.
    **Round 5 shipped twenty-eight PRs with no QA round over the whole of it. Treat that as the
    largest open risk in this file.**
 
-1. **Lane TIDY2 may still be in flight** on `wt/r5-tidy2`: the break-glass decline toast, a
-   `check-save-honesty.mjs` gate, register paths on four inline sign-in cards, and a recommendation on
-   two unread `investor_docs` columns. **Run `gh pr list` first.** If its PR is open and green, read
-   the report, merge, record.
+1. **THE INVESTOR PACKET SHIPS EVERY DOCUMENT TO ANYONE WHO ASKS.** Found by lane TIDY2 and NOT
+   fixed. The packet email sends `investorDocsRepo.all()` **unfiltered** to whoever fills the public
+   request form, and those links are `/api/uploads/<file>` - **ungated and cached one-year-immutable**,
+   as the route's own comment says. **Treat as the first fix of round 6** and tell Rye, because it is
+   his cap table.
 2. **Ask Rye the open decisions in §4, in one message**, each carrying the default you will take if he
    says nothing — then **dispatch everything those decisions do not gate.** A question is a dependency
    on one lane, never a stop on the round. A coordinator idled a whole swarm behind one ruling and was
@@ -191,8 +192,20 @@ whose reasoning would cost the same to rediscover.**
   route; `GET /api/journey/state` returns only checkboxes, copy, kanban and decisions. **On a page whose
   whole purpose is a shared founding-team tracker, what one founder types is invisible to everyone else
   and dies with their browser data.**
-- **`investor_docs.description` and `requiresRequest` are read by nothing** — TIDY2 may have reported a
-  recommendation on these; check its PR.
+- **`investor_docs`: TIDY2's recommendation is REMOVE NEITHER.** `requiresRequest` is written as a
+  literal `false` and read by nothing, and the redundancy is real today because **there is no
+  member-facing catalogue route at all** - but the actual defect is `server/db/schema.ts:211`, whose
+  comment claims "Doc vault gating, if the record carries it". **Fix the false comment, keep the
+  column as the place a gate would live.** `description` is hardcoded null on upload with no admin
+  input, so **no founder input is vanishing** - but the legacy importer carries real descriptions, and
+  `uploadRefs.ts` scans that column generically, **so a filename sitting in a description currently
+  protects a file from the orphan sweep.** Surface it (one admin input, one line in the packet email)
+  rather than remove it.
+- **`Decisions`, `Propose` and `Introductions` read only `user` from `useAuth()` and ignore
+  `loading`** - the exact bug `ModuleGate.tsx` documents, where a signed-in member is briefly told to
+  sign in. Left because the fix adds a loader branch to first paint on three public pages.
+- **`/register` takes no `next`**, here and in `SignInToSee`, because `Register.tsx` sends new members
+  into the first-run character walk and overriding it would skip character creation.
 - **The four core modules are not metered**; they do not mount behind `requireModule`.
 - **One `verify_door_routes.js` citation survives inside `grounds-v0.html`**, editable only through a
   guarded patch script by a lane holding that file.
