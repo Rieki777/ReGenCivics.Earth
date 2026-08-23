@@ -64,6 +64,17 @@ over any prose**.
 
 ## 2 · Start here, in this order
 
+0. **THE ROUND-5 QA ROUND IS OWED. DO IT FIRST.** R60 says a session closes only after three
+   complementary QA passes over everything it built, with their findings fixed. Round 5 dispatched
+   all three and **stopped them within minutes of starting, because the weekly usage limit ran out** -
+   nothing was reported and nothing was fixed. **Their briefs were good and are worth reusing
+   verbatim; the shape is in skill §7a step 0.** Run them READ-ONLY and in parallel over everything
+   in §3 and the round-5 changelog, each with its own scratch schema, then dispatch the fix wave with
+   disjoint zones. Three detached worktrees are already cut for it: `wt-r5-qa1`, `wt-r5-qa2`,
+   `wt-r5-qa3` (all at `18aa121`, `pnpm install` already run in at least one).
+   **Round 5 shipped twenty-eight PRs with no QA round over the whole of it. Treat that as the
+   largest open risk in this file.**
+
 1. **Lane TIDY2 may still be in flight** on `wt/r5-tidy2`: the break-glass decline toast, a
    `check-save-honesty.mjs` gate, register paths on four inline sign-in cards, and a recommendation on
    two unread `investor_docs` columns. **Run `gh pr list` first.** If its PR is open and green, read
