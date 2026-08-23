@@ -1,19 +1,21 @@
 # HANDOFF — round 5, regenerated 2026-08-22, late
 
 **Everything below is verified, not remembered. Re-verify anything older than an hour; main advanced
-twenty-two times today.**
+thirty-three times today.**
 
-Read `INTEGRATION_LEDGER.md` first: §7 changelog (newest at the top), §8 rulings R43-R56, §9 paid
+Read `INTEGRATION_LEDGER.md` first: §7 changelog (newest at the top), §8 rulings R43-R58, §9 paid
 lessons. This file is the volatile state a summary would drop.
 
 ---
 
 ## 1 · State at writing
 
-- **game-amora `origin/main` = `be35e9a`**, and **its own CI run is green.** Twenty-six merges today.
-  Landed since the last regeneration: **#61** (docs), **#63** (the map panel merge and the building
-  tap), **#62** (the silhouette field and the unity moon).
-- **No PR open.** Four lanes are working and none has opened one yet.
+- **game-amora `origin/main` = `95b315c`.** Thirty-three merges today. Landed since the last
+  regeneration: **#63** map panel and building tap, **#62** silhouettes and moon, **#65** governance
+  fixes, **#64** place photographs, **#66** the org posture (R57), **#67** the upload strip,
+  **#69** the decisions rail, **#68** the admin sweeps.
+- **Three PRs open, all waiting on CI:** **#70** the Hypha module, **#71** the waiting-proposal page,
+  **#72** a one-line copy-book correction (coordinator's own).
 - Coordinator home unchanged: `C:/Users/taren/Downloads/regen-integration` on `wt/integration`,
   docs-only. NEVER work in the primary checkouts. **The primary `game-amora` checkout is parked on
   `voice-sweep-2026-08-01` and runs far behind main** - read `origin/main` with
@@ -23,44 +25,34 @@ lessons. This file is the volatile state a summary would drop.
 
 | Lane | Branch | Holds | Collision note |
 |---|---|---|---|
-| Photos | `wt/r5-photos` | Community photo uploads on a place, like a listing. Migrations **0093, 0094**. Also owes the server half of the `paid` RSVP refusal | Uploads/media regions of `server/**`; **now unblocked to take the artifact** |
-| Gov fix | `wt/r5-gov` | The no-quorum kill, four unconductable wizards, four dead pieces in 0089, the `objections` field on the list payload, then advisory votes. Migration **0095** | Ballots/governance regions of `server/index.ts`. **Client changes route to the trail lane, never direct** |
-| Admin sweep | `wt/r5-adminsweep` | Stable ordering for tables reading `members.all()`, and accessible names that swallow their hint | **OWNS `client/src/pages/Admin.tsx`.** Both sweeps are one lane for exactly this reason |
-| Trail | `wt/r5-trail` | The two adjacent weight-trail cards on `/decisions` | **OWNS `components/governance/**` and the Decision pages** |
+| Hypha | `wt/r5-hypha` | PR #70. The bridge becomes a module. Migrations **0096, 0097** | Owns `shared/hypha.ts`, `server/lib/hypha-bridge.ts`, `server/lib/base-reads.ts`, `api/admin/hypha` |
+| Waiting | `wt/r5-waiting` | PR #71. Three proposal states made distinguishable | **OWNS `client/src/pages/GameMechanics.tsx`** |
+| Door gate | `wt/r5-doorgate` | A CI check that catches `SITE_PAGES` drifting behind the router | `scripts/`, `ci.yml`, `CLAUDE.md`. **Must not write `grounds-v0.html`** |
 
-**Next free migration number is 0096.**
+**Next free migration number is 0098** (0094 and 0098 were released back unspent).
 
-## 3 · Migration numbers, allocated not scanned
+## 3 · What only Rye can close
 
-**0092 landed** (#59). **0093 and 0094 are held by the photos lane in an unpushed tree. 0095 is the
-gov lane's.** Next free is **0096**. Two lanes both ran a correct four-way scan today and both took
-0090, because a number held in a sibling's unpushed tree is invisible to every prong at once.
-**Renaming a migration replays it** - the ledger keys on filename.
-
-## 4 · Queued, with why each waits
-
-1. **The handover** (task 30) - powers votable, the handover surface, closing the silent badge-edit
-   gap. Spec adopted at `d533308`. **The gov-fix lane is its foundation**, so this follows it rather
-   than running beside it.
-2. **On-chain provenance for `hypha.space_id`** (task 15) - free to dispatch.
-3. **The `/api/org` token posture** (task 23) - **needs Rye.**
-
-The three chips Rye started are now the admin-sweep and trail lanes in §2, so nothing is queued
-behind `Admin.tsx` any more. **Four concurrent lanes is the practical ceiling**, because they share
-one local MySQL and queue on `.test-lock`, and a full suite runs 200-300s. Land one before
-dispatching the fifth.
-
-## 5 · What only Rye can close
-
-- The `/api/org` posture above.
+- **Should `org.public_people` be founder-held or proposable?** It shipped founder-held; under R54
+  that is a live question, and it is one word to flip.
 - Enabling `governance`, `crowdpool`, `resources`, `introductions` on live (all ship OFF).
 - Rotate `AUTH_TOKEN_SECRET` and the Alchemy key; `AGENT_INTENT_WRITE`; the ElevenLabs spend.
-- **Sourcing the CC0 nature recordings.** The audio layer ships complete with a manifest and NO
-  assets by design: licence verification is a human step and a fabricated licence is worse than
-  silence. **CC0 ONLY** - a CC-BY sample creates an attribution obligation every fork inherits and
-  silently violates. The BBC library is out on non-commercial terms.
+- **A real Base key**, without which the Hypha module's chain paths cannot be driven for real.
+- **Sourcing the CC0 nature recordings.** CC0 ONLY - a CC-BY sample creates an attribution
+  obligation every fork inherits and silently violates. The BBC library is out on non-commercial
+  terms.
+- The three photo gaps: no way to find photographs of yourself, no subject request without an
+  account, and a takedown keeping the alt text.
 
-## 6 · The traps, and the four this round added
+## 4 · Chips filed and not started
+
+- **The investor-docs upload has never worked** (writes columns the repo lacks, `title` NOT NULL,
+  so the insert always throws) **and every gate passes it.** The chip also asks the general question:
+  how many admin routes have a door, a caller and a handler that cannot succeed?
+- `SignInToSee` wants the shape `PeopleLock` now has.
+- A non-UTC `NOW()` staleness bug in `onchain_balances`.
+
+## 5 · The traps, and the ones this round added
 
 - **`git grep` matches NOTHING when the pattern starts with `/`.** Prove every negative against a
   known-present control IN THE SAME COMMAND.
@@ -82,7 +74,7 @@ dispatching the fifth.
 - **A long-running lane is not a stuck lane.** Ask it four specific questions rather than reading
   its transcript, which will overflow context.
 
-## 7 · The rulings that shape everything
+## 6 · The rulings that shape everything
 
 - **R51 - adding to the running lane is the norm.** New work touching a file a lane holds goes to
   that lane as a numbered brief addendum, never a second lane into the same files.
@@ -97,8 +89,15 @@ dispatching the fifth.
 - **R56 - state what is true, then get out of the way.** Villages set their own dials, including a
   1% quorum. A count is a fact; a warning is an argument. **Is this telling them something they
   cannot see, or telling them what to want?**
+- **R57 - a village's people are PUBLIC BY DEFAULT**, with a village-set lock (`org.public_people`).
+  The narrow exception to R56: what crosses into public is a person's-exposure question, since real
+  people become visible and they did not vote on it.
+- **R58 - the Base listener follows the HOSTING RELATIONSHIP** (we host, we run it; they self-host,
+  they run it); **do not architect against a future write, which is not the same as authorising
+  one**; every module is FREE in v1.0 and earns $ReGen on usage; **other DAO stacks get SIBLING
+  modules rather than edits.**
 
-## 8 · Before ending any turn that started work
+## 7 · Before ending any turn that started work
 
 Update the ledger §7 and §8, regenerate this file, commit and push `wt/integration`, and tell Rye
 what landed, what is in flight, and what only he can do. **Do not wind down or archive while lanes
