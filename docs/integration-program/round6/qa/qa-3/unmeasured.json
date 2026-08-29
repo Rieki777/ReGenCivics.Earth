@@ -1,0 +1,26 @@
+[
+ {
+  "id": "QA3-U1",
+  "what": "Whether a Village Brain section reaches a member through the guide",
+  "why": "briefForPublicPrompt feeds the proposal guide's system prompt and no ANTHROPIC_API_KEY is set on this local build. The write, the audience filter and the direct markdown read at GET /api/village/brain are all proved; the guide's use of them is not.",
+  "wouldNeed": "An LLM key on a scratch build, or a unit-level assertion over the composed prompt."
+ },
+ {
+  "id": "QA3-U2",
+  "what": "Whether an admin Tools save reaches the member /tools page",
+  "why": "Every attempt was refused before it wrote. The tools module ships with no categories and POST /api/admin/tools requires one. The category editor exists (components/admin/ModuleConfigPanels.tsx:486), so the refusal points at a real door; the run ended before I walked it. The cold-reload line reading GONE for tools is this, not a defect.",
+  "wouldNeed": "Add a category through the module config panel, then create a tool and read /api/tools."
+ },
+ {
+  "id": "QA3-U3",
+  "what": "Anything behind the sign-in wall on LIVE",
+  "why": "Live was signed out and read only by instruction, and no production tokens were minted this round. Every operator finding here is therefore LOCAL, at the same SHA.",
+  "wouldNeed": "A production credential, which the coordinator deliberately did not issue."
+ },
+ {
+  "id": "QA3-U4",
+  "what": "Whether the fresh-fork content leak also stands on LIVE",
+  "why": "Live is a configured village, not a fork, so its /team is legitimately Amora's. The finding is about what an empty schema produces at first boot and cannot be observed on a configured deployment.",
+  "wouldNeed": "A second empty deployment, which is exactly what the local scratch schema was."
+ }
+]
