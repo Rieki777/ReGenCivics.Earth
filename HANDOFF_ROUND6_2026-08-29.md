@@ -1,4 +1,6 @@
-# HANDOFF — round 6, written 2026-08-29 at dispatch
+# HANDOFF — round 6, written at dispatch, CLOSED 2026-08-29
+
+**SUPERSEDED FOR ROUND 7 BY `PROMPT_ROUND7_COORDINATOR.md`.** This file is the round's own record.
 
 **Everything below is verified, not remembered. Re-verify anything older than an hour.** Read
 `INTEGRATION_LEDGER.md` first: §7 changelog newest at the top, §8 rulings R1 to R60, §9 paid lessons.
@@ -41,7 +43,7 @@ touching any of this. **Nothing is unrouted.**
 | G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | **VERIFIED. PR #93, CI green on `dda159e` (both runs). HELD.** Migration **0102**. **MUST LAND AFTER #92** and rebase onto it: both lanes edited `governanceApi.ts`, and a `git merge-tree` trial of the two tips is clean (exit 0) but the gates were run pre-rebase |
 | CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | **VERIFIED. PR #96, CI green on `6d325c0`. HELD.** Migration **0105** (taken). 39 readers examined, 7 wrong, 3 more its own fix would have broken |
 | MINT | `wt-r6-mint` / `wt/r6-mint` | **VERIFIED. PR #94, CI green on `2a0f50c`, plus `intake` and `review`. HELD.** Migration **0106** |
-| FORK | `wt-r6-fork` / `wt/r6-fork` | **Running.** Migration **0107** if needed. Four addenda (bootstrap + runbook, the four broken images, R61, the two extra path-gated workflows) |
+| FORK | `wt-r6-fork` / `wt/r6-fork` | **VERIFIED. PR #97, CI green on `3555a26`, plus both path-gated workflows. HELD.** 30 found, 29 fixed, 10 classes enumerated and left |
 | SIGNPOST | `wt-r6-signpost` / `wt/r6-signpost` | **VERIFIED. PR #95, CI green on `4a63106`. HELD.** No migration. 218 signposts examined, 4 defective |
 
 Plus `wt-r6-base`, detached at `b5bed01`, the coordinator's clean measuring instrument. **It has no
@@ -50,10 +52,10 @@ lane and must stay pristine.**
 **Migration allocations this round: 0102 G-E (taken), 0103 SKIPPED FOREVER, 0104 INVESTOR (taken),
 0105 CYCLE, 0106 MINT (taken), 0107 FORK if needed. Next free is 0108.**
 
-**SIX PRs ARE GREEN AND MERGEABLE AND ALL ARE HELD on one ask to the founder: round-6 landing
+**SEVEN PRs ARE GREEN AND MERGEABLE AND ALL ARE HELD on one ask to the founder: round-6 landing
 authority. R38's standing authorization says "for round 4" in its own text, and game-amora's own
 CLAUDE.md is silent on merge authority. Merging deploys to amora.regencivics.earth.**
-**#91, #92, #93, #94, #95, #96. Landing order: #92 BEFORE #93**, and G-E rebases onto it and re-runs its
+**#91 through #97. Landing order: #92 BEFORE #93**, and G-E rebases onto it and re-runs its
 gates rather than citing its pre-rebase greens.
 
 **`.github/workflows/` holds FOUR workflows, not one.** `ci.yml` (the eighteen-step `verify`),
