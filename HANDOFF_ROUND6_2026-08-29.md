@@ -38,7 +38,7 @@ touching any of this. **Nothing is unrouted.**
 | QA-3 the operator and fork | `wt-r5-qa3` @ `b5bed01` | **REPORTED.** 3 HIGH / 4 MED / 4 LOW. Probes at `a8eb803`, `99fe007`, unpushed |
 | INVESTOR | `wt-r6-investor` / `wt/r6-investor` | **VERIFIED. PR #91, CI green on `bf2387c` (both runs), MERGEABLE CLEAN. HELD on landing authority.** Migration 0104 taken |
 | G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | **VERIFIED. PR #92, CI green on `0152eda` (both runs), MERGEABLE CLEAN. HELD.** 22 found / 15 fixed / 1 refused / 1 deferred / 5 left alone. **Must land BEFORE G-E** |
-| G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | Running. Migration **0102**. Two addenda |
+| G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | **VERIFIED. PR #93, CI green on `dda159e` (both runs). HELD.** Migration **0102**. **MUST LAND AFTER #92** and rebase onto it: both lanes edited `governanceApi.ts`, and a `git merge-tree` trial of the two tips is clean (exit 0) but the gates were run pre-rebase |
 | CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | Running. Migration **0105**. The two-cycle-id split |
 | MINT | `wt-r6-mint` / `wt/r6-mint` | Running. Migration **0106**. One addendum (renamed token) |
 | FORK | `wt-r6-fork` / `wt/r6-fork` | Running. Migration **0107** if needed. Two addenda (bootstrap + runbook, the four broken images) |
