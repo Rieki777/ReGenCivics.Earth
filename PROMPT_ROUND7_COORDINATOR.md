@@ -73,7 +73,7 @@ in order, and prove the second run a no-op.
   round 5 is moot. 29 schemas remain on local MySQL, mostly round-5 drive schemas plus the
   `village_tpl_*` templates `provisionTestDb` clones. **Do not drop `village_tpl_*`.** Nothing else
   is urgent; **never drop by pattern**.
-- **Next free migration number: 0108.** **0103 is skipped forever** — the r5-eight/r5-glass sweep
+- **Next free migration number: 0107** (FORK never took 0107; confirmed by a four-way scan 2026-08-29). **0103 is skipped forever** — the r5-eight/r5-glass sweep
   labelled itself "0103" in about forty `server/index.ts` comments, so a migration by that number
   would read as that sweep's.
 
