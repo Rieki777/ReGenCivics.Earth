@@ -95,6 +95,12 @@ Standing guards (Addendum 1 §5):
 | Lane | Repo | Worktree / branch | Session | Owns | Status | Last ref | Liveness verified |
 |---|---|---|---|---|---|---|---|
 | Coordinator | hub | `regen-integration` / `wt/integration` | this session | ledger, handoff, decision list, `docs/integration-program/`, ADR-49 + DOMAIN-LANGUAGE entries | active | 55cff89 | 2026-08-14 19:53 |
+| **QA-1 — the member's eyes** (round 6) | game-amora | `wt-r5-qa1` / detached `b5bed01` | background agent, dispatched 2026-08-29 ~18:50 UTC | READ-ONLY. Drives the product as a person on phone and desk over everything #62-#90. Brief `round6/briefs/QA_1_MEMBERS_EYES.md` + `round6/QA_HOUSE_RULES.md`. Scratch schema `village_qa6_1` | dispatched | b5bed01 | — |
+| **QA-2 — the adversary** (round 6) | game-amora | `wt-r5-qa2` / detached `b5bed01` | background agent, dispatched 2026-08-29 ~18:50 UTC | READ-ONLY. Attacks eight invariants as an ordinary member; reports survived attacks too. Brief `round6/briefs/QA_2_ADVERSARY.md`. Scratch schema `village_qa6_2`. Addendum 1: co-signed manual grants | dispatched | b5bed01 | — |
+| **QA-3 — the operator and the fork** (round 6) | game-amora | `wt-r5-qa3` / detached `b5bed01` | background agent, dispatched 2026-08-29 ~18:50 UTC | READ-ONLY. Does every operator control save, and does anything read it; does a fresh fork get an honest product. Brief `round6/briefs/QA_3_OPERATOR_AND_FORK.md`. Scratch schema `village_qa6_3`. Addendum 1: a fifth class, NEVER BUILT | dispatched | b5bed01 | — |
+| **INVESTOR** (round 6) | game-amora | `wt-r6-investor` / `wt/r6-investor` | background agent, dispatched 2026-08-29 ~19:05 UTC | `server/index.ts` investor region (`/api/admin/investor-docs` through `/api/admin/investor-summary`), `investorDocs` in schema.ts, the investor tab of `Admin.tsx`, migration **0104** if needed. Brief `round6/briefs/LANE_INVESTOR.md` | dispatched | b5bed01 | — |
+| **G-D — the record and the seat** (round 6) | game-amora | `wt-r6-gd` / `wt/r6-gd` | background agent, dispatched 2026-08-29 ~19:05 UTC | Handover spec ideas 8+9+first-time moments. `Decisions/Decision/GameMechanics/Roles.tsx`, `components/power/**`, `ProfileJourney.tsx`, `server/lib/orgChart.ts`, `server/lib/ballots.ts`, `server/index.ts` org/seat region + `/api/game/progression` + `GET /api/governance/ballots/:id`. **No migration.** Brief `round6/briefs/LANE_GD.md` | dispatched | b5bed01 | — |
+| **G-E — lineage, not credit** (round 6) | game-amora | `wt-r6-ge` / `wt/r6-ge` | background agent, dispatched 2026-08-29 ~19:05 UTC | Handover spec idea 10. `server/index.ts` objection routes + mechanics open-ballot, `ObjectionPanel.tsx`, `ballotObjections` in schema.ts, migration **0102**. Brief `round6/briefs/LANE_GE.md` | dispatched | b5bed01 | — |
 | **L1a — catalog art** (round 4) | game-amora | `C:/Users/taren/Desktop/Amora/wt-r4-art` / `wt/r4-art` | reported VERIFIED 2026-08-16 ~14:20 EDT | `client/public/images/modules/*.webp` (18), `manifest.json`, image baseline (raised once R28, lowered to measured), ci.yml `MAX_TOTAL_DIST_KB` 6600 (R33) | **DONE**: PR #18 merged → main `4ca5e58`; CI `verify` on `4ca5e58` success (run 31963154427); live `/health` build `4ca5e58`; live probe 16:52 EDT: `/images/modules/{quests,gratitude,map,events,tools}.webp` → 200 image/webp at 25,272/25,464/25,172/25,096/25,374 B (all eighteen were 200 image/webp in the lane's card harness pre-merge; live sample of five after) | 4ca5e58 | 2026-08-16 16:52 EDT |
 | **L5a — calendar core** (round 4) | game-amora | `C:/Users/taren/Desktop/Amora/wt-r4-calendar` / `wt/r4-calendar` | background agent, dispatched 2026-08-16 ~13:05 EDT from `3c295b8` | brief `round4/briefs/LANE_L5A_CALENDAR_CORE.md` Boundaries; migration **0085** | **DONE** 2026-08-21: merged `5db7301` ⊂ live `def4b18`; CI on main green daily (latest 08-21 09:53Z); live probes: anonymous + QA-admin `/api/events` answer the designed module 404 because **events = off on the live village** (admin/modules lists it off; enabling is Rye's act, §10); `/events` shell 200; the lane's own four-viewport UI probe on the built tip stands | def4b18 | 2026-08-21 08:50 EDT |
 | **L6 — Your agent harness** (round 4) | game-amora | `C:/Users/taren/Desktop/Amora/wt-r4-agent` / `wt/r4-your-agent` | background agent, dispatched 2026-08-16 ~13:35 EDT from `3c295b8` | brief `round4/briefs/LANE_L6_YOUR_AGENT_HARNESS.md` Boundaries + amendments; migration **0087**; security review mandatory | **DONE** 2026-08-21: final tip `cce87b0` (main merged, weekAhead on `listCalendarItems`, occurrenceKey through the RSVP confirm), verify SUCCESS ×2, **merged → main `def4b18`**, live build `def4b18`; live probes 08-21: `/api/agent/v1/openapi.json` 200, `/skills` 200, `/api/agent/v1/calendar` without a vat_ token 401 | def4b18 | 2026-08-21 08:50 EDT |
@@ -152,6 +158,11 @@ confirmed from disk.
 | Branch `wt/integration` (hub) | coordinator home | Coordinator | created 2026-08-14 |
 | Branches `wt/memory-foundation`, `wt/module-library` (game-amora) | Lanes A, C | verified absent from `git branch -a` at fetch | at dispatch |
 | Env var (future) Saberra platform key | Managed plane, env-only | blocked on ADR-49 + stage 5 | — |
+| game-amora migration **0102** | `0102_objection_lineage.sql` | **Lane G-E** (round 6) | allocated by the coordinator 2026-08-29; 4-way scan showed only `0101_module_usage.sql` in the 01xx range across origin/main, every remote ref, every local ref, and the drizzle dir of every `wt-*` worktree on disk |
+| game-amora migration **0103** | **DELIBERATELY SKIPPED, never to be allocated** | — | The r5-eight / r5-glass sweep labelled itself "0103" in about forty `server/index.ts` comments and in `glassHandle.routes.e2e.test.ts`. A migration by that number would read as that sweep's migration to every future reader. Gaps are harmless: the applied-migrations ledger keys on filename, and 0094 and 0100 are already gaps |
+| game-amora migration **0104** | investor packet gating, **only if a new column is genuinely needed** | **Lane INVESTOR** (round 6) | allocated 2026-08-29; `investor_docs.requires_request` already exists and may carry it |
+| Scratch schemas `village_qa6_1/2/3` | round-6 QA lanes | QA-1 / QA-2 / QA-3 | allocated 2026-08-29. **`scripts/qa-scratch-db.mjs` hardcodes `SCHEMA = "village_qa"`**, so three concurrent lanes running it as shipped would drop each other's database. Each lane runs its own copy with its own name |
+| Branches `wt/r6-investor`, `wt/r6-gd`, `wt/r6-ge` | round-6 build lanes | created from origin/main at b5bed01 | 2026-08-29, `git worktree add` confirmed |
 
 ---
 
@@ -265,32 +276,46 @@ last. Before any merge: `git cherry main <branch>`, never `--stat A...B`.
 
 ## §5 Gate sets — verbatim, SHA-stamped. Re-read at session open.
 
-**game-amora** — read from `.github/workflows/ci.yml` at `28dace2` (blob `ac1b1e9`), 2026-08-14;
-**GREW on 2026-08-15 at `e18b380` (Lane D, PR #6): a Doc link guard step before the build.**
-**Thirteen** now (Lane I's `check-image-budget.mjs` landed at `4aa867d`), in CI order, run cold —
-every lane must enumerate `ci.yml`'s `run:` steps, never trust this count:
+**game-amora** — RE-READ 2026-08-29 from `.github/workflows/ci.yml` at **`b5bed01`**. The version
+this file carried until today was stamped at `28dace2` and was **three gates and one budget out of
+date**. `node scripts/module-facts.mjs` prints this list straight from `ci.yml` and **is the authority
+over this table.** Every lane enumerates the workflow's `run:` steps itself; this set grew twice in
+round 5, once while lanes were running.
 
 ```
+pnpm install --frozen-lockfile
 pnpm check
-rm -f node_modules/typescript/tsbuildinfo && npx tsc -p tsconfig.tests.json --noEmit
+npx tsc -p tsconfig.tests.json --noEmit          # run COLD: rm -f node_modules/typescript/tsbuildinfo
 node scripts/check-brand-refs.mjs
 node scripts/check-voice.mjs
+node scripts/check-hyphen-dash.mjs                # NOT in the 28dace2 list
 node scripts/check-auth-fetch.mjs
+node scripts/check-admin-reach.mjs                # NOT in the 28dace2 list
+node scripts/check-save-honesty.mjs               # NEW at b5bed01 (PR #90)
+node scripts/check-repo-payloads.mjs              # round 5
+node scripts/check-mirror-annotations.mjs         # round 5
+node scripts/check-upload-strip.mjs               # round 5
 node scripts/check-artifact-budget.mjs
-node scripts/check-doc-links.mjs          # NEW at e18b380 — every relative path in the builder docs resolves
-node scripts/check-image-budget.mjs       # NEW at 4aa867d — WebP-only rasters, 400 KB/file, total ratchet
+node scripts/check-doc-links.mjs
+node scripts/check-route-reachability.mjs         # NOT in the 28dace2 list
+node scripts/check-map-routes.mjs                 # round 5
+node scripts/check-image-budget.mjs
 pnpm build
 pnpm test
+# bundle budget block
 pnpm audit --prod --audit-level high
 ```
 
-Plus the bundle budget in ci.yml: MAX_MAIN_JS_KB=700, MAX_TOTAL_DIST_KB=6000.
-Notes: `tsconfig.tests.json` is a blocking CI gate CLAUDE.md omits; run it COLD. Brand ratchet
-is at **63/63 — zero headroom** (measured at 1428603; script unchanged to 28dace2); read `$?`,
-never the last line; never `--update-baseline`. Hollow-green check: `.env` with
-`TEST_DATABASE_URL`, vitest Duration in minutes, skip count vs pre-edit baseline (19/60 files
-skip without the env var). A push is not a green: read the CI run on the SHA afterwards (`gh` is
-installed).
+**Bundle budget is now `MAX_MAIN_JS_KB=700` and `MAX_TOTAL_DIST_KB=6600`.** This file said 6000; the
+6600 figure was raised under R33 and the gate section never caught up. `check-image-budget.mjs` was
+listed at `4aa867d` and survives.
+
+Notes that survive unchanged: brand ratchet — read `$?`, never the last line, never
+`--update-baseline`. Hollow-green check — `.env` with `TEST_DATABASE_URL`, vitest Duration in
+minutes, skip count against a pre-edit baseline. A push is not a green: read the CI run on the SHA
+afterwards. **And new at b5bed01: `pnpm build` can return exit 0 while the libuv abort fires, leaving
+`dist/index.js` at the previous commit — the only honest check is
+`grep -c "$(git rev-parse --short HEAD)" dist/index.js`.**
 
 **hub** — read from `.github/workflows/ci.yml` blob `8b68747` at `55cff89`, 2026-08-14. House
 gates per CLAUDE.md + regen-ship-gate:
@@ -331,6 +356,13 @@ docs-only and do not touch main.
 ---
 
 ## §7 Changelog
+
+- 2026-08-29 · **ROUND 6 OPENS BY PAYING THE DEBT ROUND 5 LEFT: six lanes dispatched, three of them the QA round R60 requires and round 5 never ran.** Round 5 merged twenty-nine PRs, #62 through #90, **with no QA over any of it** — its three QA lanes were dispatched at the close and killed within minutes by a weekly usage limit, so nothing was reported and nothing was fixed. The three perspectives are read-only, in parallel, each with **its own scratch schema**, over everything those PRs built and touched: the member's eyes (`wt-r5-qa1`), the adversary (`wt-r5-qa2`), the operator and the fork (`wt-r5-qa3`). Alongside them, three build lanes with disjoint zones inside a 28,650-line `server/index.ts`: **INVESTOR** (the packet leak), **G-D** (handover spec ideas 8 and 9), **G-E** (idea 10, migration 0102).
+- 2026-08-29 · **THE INVESTOR PACKET LEAK, VERIFIED AT `b5bed01` BEFORE IT WAS BRIEFED — AND THE INHERITED DESCRIPTION OF IT WAS WRONG IN ONE PLACE.** Confirmed: `POST /api/investor-docs/request` is public, takes any `{name, email, accredited}`, and calls `investorDocsRepo.all()` **unfiltered**, emailing a download link for **every row in `investor_docs`** to whatever address was typed. `requires_request` exists as a column, is written as a literal `false` at upload, and is read by nothing, so there is no per-document gate anywhere in the path. The route's own comment concedes the posture: *"The gate is weak (anyone with the URL can fetch)"*. **The correction: these documents are NOT cached one-year-immutable.** That branch of `GET /api/uploads/:filename` applies only to `image/`, `font/` and `audio/`; PDFs and unknown types get `Cache-Control: private, no-cache`. **The handoff I inherited stated the immutable cache as fact and it is false.** The leak is real, the blast radius is one claim smaller than advertised, and the difference matters because it changes what a fix has to undo.
+- 2026-08-29 · **THE GATE SET IN §5 WAS THREE GATES AND ONE BUDGET OUT OF DATE, AND THE PROMPT THAT OPENED THIS ROUND WAS WRONG ABOUT IT TOO.** §5 was stamped at `28dace2`; the prompt said "four blocking gates landed in round 5" plus "the two CI-only gates CLAUDE.md has always omitted". Reading `ci.yml` at `b5bed01` directly: **eighteen `run:` steps** plus the bundle block. Missing from the ledger's list: `check-hyphen-dash.mjs`, `check-admin-reach.mjs`, `check-route-reachability.mjs`, and `check-save-honesty.mjs` (new in PR #90). And **`MAX_TOTAL_DIST_KB` is 6600, not the 6000 §5 recorded** — raised under R33, and the gate section never caught up. **The lesson is the one CLAUDE.md already learned about dist figures and this file had not: a gate count written down anywhere is stale the moment a lane merges a gate.** `node scripts/module-facts.mjs` is now named in the ledger as the authority over the ledger.
+- 2026-08-29 · **`scripts/qa-scratch-db.mjs` HARDCODES `SCHEMA = "village_qa"`, so R60's three parallel QA passes would have dropped each other's database.** The ruling requires the three perspectives to run READ-ONLY and IN PARALLEL, each with its own scratch schema; the shipped script that exists to give them one is not lane-isolated. Caught at brief time rather than at run time. Each lane now runs its own copy against `village_qa6_1/2/3`, with the standing rule that a lane drops **only its exact schema name, never a `LIKE` pattern** — a lane once ate a sibling's leftover with `village_drive%`. **A tool built for one lane becomes a hazard the first time a ruling makes it parallel.**
+- 2026-08-29 · **MIGRATION 0103 IS DELIBERATELY SKIPPED AND WILL NEVER BE ALLOCATED.** The four-way scan found only `0101_module_usage.sql` in the 01xx range: on origin/main, on every remote ref, on every local ref, and in the drizzle directory of every `wt-*` worktree on disk. So 0102, 0103 and 0104 are all free by the scan. **0103 is still refused**, because the r5-eight / r5-glass sweep labelled itself "0103" in about forty `server/index.ts` comments and in `glassHandle.routes.e2e.test.ts`, and a migration by that number would read to every future reader as that sweep's migration. 0102 to G-E, 0104 to INVESTOR if it needs one. Gaps cost nothing: the applied-migrations ledger keys on filename, and 0094 and 0100 are already gaps.
+- 2026-08-29 · **THE §9 SWEEP OF OTHER SESSIONS' LOOSE THREADS RESOLVED TWO OF THEM BY REFUSING THEM, AND FOUND THE DOCUMENT NOBODY COULD FIND.** (a) **DB_HEAVY at 420s is NOT an un-reverted workaround.** The prompt said it was left as a hack with a self-owed TODO to lower it. `server/voiceClaim.test.ts` at `b5bed01` carries no TODO and argues the opposite in a comment: *"Raised, never lowered. A local override BELOW the global is the trap that cost another lane a day: the file's own number wins, so a smaller one silently undercuts headroom the config deliberately provides."* **Lowering it would re-pay a lesson someone already paid a day for.** What IS stale is the comment's justification, which cites a Railway MySQL behind a proxy at ~240ms per round trip while the suite now runs against local MySQL on 3307. Verdict: leave the number, fix the comment when a lane is next in the file. (b) **The Base token name and symbol ARE read live from Base.** `server/lib/base-reads.ts` `readTokenIdentity()` does three `readContract` calls for `name`, `symbol` and `decimals`, refuses an implausible `decimals()` and refuses a blank name or symbol, and it has callers in `server/index.ts` and seven references in `hypha.test.ts` (proven against a `readOnchainBalance` control in the same command). PR #70 shipped it. **All that is missing is a real Base key to exercise the mainnet path, which is the founder's item and not a build task.** (c) **§3b is `docs/FOUNDATION_HANDOFF_2026-08-11.md` §3b in game-amora** — four items: profile inventory (deliberately absent, and the reasoning is good), the Moon Ledger recap card, **co-signed manual grants (over 100 or any self-grant needs a second steward, specified and NOT BUILT)**, and the Mint's token-type editor. It went unrouted four times because nobody could find the document. Manual grants went to QA-2 as addendum 1 rather than to a seventh lane, because QA-2 already owns "value cannot be made to appear".
 
 - 2026-08-23 · **PR #89 merged (`18aa121`): 17 found, 17 fixed, 14 left alone, AND THE WORST ONE WAS NOT IN THE REPORT THAT TRIGGERED THE SWEEP.** `SeasonPatternsTab.call` **does check `res.ok`** and then **returns the error body from the failure branch, where its ten siblings in the same file return `null`.** An object is truthy, so `setPlan(await call(...))` **drew a season plan out of an error**, and creating a pattern wiped the name just typed. **A check that exists and then lies in its return value passes every reading of "does it check the status".** Three classes: **the lie** (6, reported success without asking, including four `"Deleted"` toasts fired from a `catch` that only runs on a dead network), **the optimistic write** (8, rolled back in a `catch` while `fetch` resolves happily on a 401, so an expired journey password refused every tick and the tracker went on showing them), and **the silence** (3, checked the status and told nobody).
 - 2026-08-23 · **The sweep closed a loop back onto the break-glass, an hour after it shipped.** `PUT api/admin/content/:section` sits behind `story.tell`, so **an operator who read the break-glass question and chose "Leave it" got the 409 back and the unchecked save printed "Saved!" for the change they had just declined.**
