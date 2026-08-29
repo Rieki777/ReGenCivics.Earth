@@ -70,8 +70,23 @@ pnpm test
 pnpm audit --prod --audit-level high
 ```
 
-`node scripts/module-facts.mjs` prints this list straight from `ci.yml` and **is the authority over
-any prose, including this file.**
+`node scripts/module-facts.mjs` prints this list straight from `ci.yml` and is the authority over any
+prose **about `ci.yml`**.
+
+**CORRECTION 2026-08-29: `ci.yml` IS NOT THE ONLY WORKFLOW, and both this file and `module-facts.mjs`
+inherited that blind spot.** `.github/workflows/` holds four files. `db-backup.yml` is schedule-only
+and never gates a PR. **`module-intake.yml` and `module-review-agent.yml` are `pull_request`-triggered
+and path-gated**, so they become REQUIRED checks for any lane touching:
+
+```
+shared/modules.ts   shared/capabilities.ts   shared/draftKinds.ts
+server/lib/modules.ts   server/lib/secrets.ts
+scripts/enable-all-modules.mjs   docs/modules/**
+```
+
+**If your diff touches one of those, run both locally before you push, and read what each does rather
+than assuming from its name.** They are cheap (under twenty seconds) and they block.
+**Enumerate the DIRECTORY, never one file in it.**
 
 ### The baseline, measured by the coordinator on a pristine `b5bed01` worktree, 2026-08-29
 
