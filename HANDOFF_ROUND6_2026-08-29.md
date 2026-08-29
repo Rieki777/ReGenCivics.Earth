@@ -36,8 +36,8 @@ touching any of this. **Nothing is unrouted.**
 | QA-1 the member's eyes | `wt-r5-qa1` @ `b5bed01` | **REPORTED.** 2 HIGH / 5 MED / 4 LOW. Probes at `3e9774b`, `26365a1`, unpushed |
 | QA-2 the adversary | `wt-r5-qa2` @ `b5bed01` | **REPORTED.** 4 HIGH / 1 MED, 72 attacks over 8 invariants. Probes at `5b9ac86`, unpushed |
 | QA-3 the operator and fork | `wt-r5-qa3` @ `b5bed01` | **REPORTED.** 3 HIGH / 4 MED / 4 LOW. Probes at `a8eb803`, `99fe007`, unpushed |
-| INVESTOR | `wt-r6-investor` / `wt/r6-investor` | **CODED and PUSHED. PR #91 open, CI running.** Tip `bf2387c`, migration 0104 taken |
-| G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | Running. **Five addenda** (baseline, refusal message, F2 + `/powers` + `/profile`, F8 + F11) |
+| INVESTOR | `wt-r6-investor` / `wt/r6-investor` | **VERIFIED. PR #91, CI green on `bf2387c` (both runs), MERGEABLE CLEAN. HELD on landing authority.** Migration 0104 taken |
+| G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | **VERIFIED. PR #92, CI green on `0152eda` (both runs), MERGEABLE CLEAN. HELD.** 22 found / 15 fixed / 1 refused / 1 deferred / 5 left alone. **Must land BEFORE G-E** |
 | G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | Running. Migration **0102**. Two addenda |
 | CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | Running. Migration **0105**. The two-cycle-id split |
 | MINT | `wt-r6-mint` / `wt/r6-mint` | Running. Migration **0106**. One addendum (renamed token) |
@@ -80,7 +80,7 @@ check-image-budget        55 WebP or AVIF, 2 allowed exceptions, per-file cap 40
 `check-upload-strip`, `check-hyphen-dash`, `check-doc-links`, `check-voice`. The other ten rest on
 their non-zero counts alone, which is weaker.
 
-**NOT MEASURED, and stated as unmeasured rather than assumed:** `pnpm check`,
+**CLOSED 2026-08-29 by #91 and #92's green pull_request runs, which build the branch already merged with main and so exercised the whole set over trunk twice from two branches. Previously recorded as NOT MEASURED:** `pnpm check`,
 `tsc -p tsconfig.tests.json`, `pnpm build`, `pnpm test`, the bundle budget, and `pnpm audit`. They
 were skipped deliberately, because a full suite from the coordinator while six lanes share one local
 MySQL and one machine is the exact cascade the round-5 lessons warn about. **Somebody must measure
