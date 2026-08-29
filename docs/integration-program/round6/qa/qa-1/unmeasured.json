@@ -1,0 +1,38 @@
+[
+ {
+  "what": "The page-zoom escape control that PR #63 actually shipped (client/src/pages/LivingMap.tsx)",
+  "surface": "live and local",
+  "route": "/map",
+  "why": "It only renders above a visualViewport scale of 1.05. Its own source records that four pinch-reset techniques were measured against a real synthesized pinch and none works on this engine. Playwright/WebKit on Windows offers no working pinch synthesis, so the zoom could not be raised and the control could not be made to appear. Neither passed nor failed."
+ },
+ {
+  "what": "Safe-area insets",
+  "surface": "local and live",
+  "route": "all mobile profiles",
+  "why": "env(safe-area-inset-*) reads 0 on WebKit for Windows. That is the platform reporting nothing, not the product having nothing. Counted, never treated as a pass."
+ },
+ {
+  "what": "The five ellipsis placeholders inside the village-health doughnut inner ring (Active this cycle, Members who gave recognition, Members who were recognized, Quests consented, Library in use)",
+  "surface": "live and local",
+  "route": "/village-health",
+  "why": "Could not tell a deliberate pre-first-lunation state from a loader that never resolves, because no lunation had closed on either surface. The centre of the doughnut says the first lands when the current lunar cycle closes, which is consistent with either. Not counted as a defect and not counted as clean."
+ },
+ {
+  "what": "Every live signed-in surface",
+  "surface": "live",
+  "route": "all member and admin routes",
+  "why": "No production token was minted this round, by the coordinator's deliberate decision. Everything requiring a signed-in member was run against a local build at the identical SHA instead."
+ },
+ {
+  "what": "Two amora.cr photographs on /team",
+  "surface": "live",
+  "route": "/team",
+  "why": "Reported 'not complete' on the first sweep, then absent from the DOM entirely after a full scroll on two later loads (2 images total, 0 broken). Not reproducible, so not counted as broken and not counted as clean."
+ },
+ {
+  "what": "Whether the /introductions topics field persists through its Save",
+  "surface": "local",
+  "route": "/introductions",
+  "why": "My own input mutation did not reach React state, so the field was still null when the save fired. The policy PUT itself was confirmed: PUT /api/intents/policy returned 200 with the stored policy. The topics round trip specifically was not exercised."
+ }
+]
