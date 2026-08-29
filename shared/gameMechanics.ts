@@ -207,11 +207,21 @@ export const MECHANICS_VARIABLE_FALLBACKS: Record<string, number> = {
   //
   // Defaults to 0, which pays nobody. That is deliberate and is not a
   // placeholder: the amount is a money decision and it is Rye's, so the
-  // machinery ships inert and starts paying the cycle after somebody sets this
-  // in the admin UI. A default that guessed at the number would start moving
-  // real value on a shipped-by-accident deploy. The design doc proposes 5,000
-  // (docs/MODULE_POOL_DESIGN.md, decision D1), which is half of
+  // machinery ships inert. A default that guessed at the number would start
+  // moving real value on a shipped-by-accident deploy. The design doc proposes
+  // 5,000 (docs/MODULE_POOL_DESIGN.md, decision D1), which is half of
   // gratitude.pool_per_cycle.
+  //
+  // THIS COMMENT USED TO SAY the machinery "starts paying the cycle after
+  // somebody sets this in the admin UI". That was never true of any build that
+  // shipped. The key had no row in `game_variables` (measured on production
+  // 2026-08-29: 259 rows, and not this one), and the admin panel edits a
+  // variable by id through `applyVariableChange`, which is an UPDATE against an
+  // existing row and answers "Game variable not found" for anything else. So
+  // there was nothing to update and no surface anywhere could create it.
+  // Migration 0228 seeds the row, at 0, which is what makes the sentence true.
+  // `modulePool.adminStatement` reads the row rather than assuming that
+  // migration ran, and the admin page says which of the two it found.
   "pool.regen_per_cycle": 0,
 };
 

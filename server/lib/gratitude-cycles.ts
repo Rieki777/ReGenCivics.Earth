@@ -406,3 +406,94 @@ async function distributeCycle(db: Db, cycle: GratitudeCycle): Promise<number> {
     .where(eq(gratitudeCycles.id, cycle.id));
   return creditedUsers;
 }
+
+/* ─── The builders' pool recycling its platform share back in (R64) ────── */
+
+/**
+ * Put what ReGen Civics' own modules earned into the ReGen Civics gratitude
+ * pool, where the community gives it out.
+ *
+ * R64, the founder: "regen civics built modules pay out regen civics but have
+ * it go to the regen civics gratitude pool as the Game tokens $ReGen ... As the
+ * revenue regen civics core team is getting from regen-civics is then
+ * distributed to regen civics gratitude system to give out!"
+ *
+ * ── WHERE IT LANDS, AND WHY THAT PLACE ──────────────────────────────────────
+ *
+ * On `poolPerCycle` of the gratitude cycle that is OPEN right now, which is the
+ * number `distributeCycle` splits across everybody who was thanked when that
+ * cycle closes. So the platform's share reaches the community the same way
+ * every other $ReGen in the gratitude system does, weighted by recognition,
+ * capped per person, and credited through `creditPrivateTokens`. Nothing here
+ * mints and nothing here picks a recipient.
+ *
+ * The open cycle rather than the next one, because the next one does not exist
+ * yet and a row nobody has created cannot be added to. It moves a number a
+ * member may already have seen, which is why the amount is recorded as its own
+ * row rather than folded silently into a total.
+ *
+ * ── IDEMPOTENT, ON THE POOL CYCLE ───────────────────────────────────────────
+ *
+ * `modulePoolRecycles.poolCycleNumber` is unique, so a re-run of a settlement
+ * that died halfway adds nothing a second time. This matters more than it looks
+ * like it does: the pool statement is written before this runs, so any retry
+ * path reaches this line with the statement already in place.
+ *
+ * Returns an outcome word rather than a boolean, because "there was nothing to
+ * recycle" and "this was already done" are different facts and a job report
+ * that showed both as `false` would hide a repeat.
+ */
+export async function recycleIntoGratitudePool(
+  db: Db,
+  input: { cycleNumber: number; amount: number },
+): Promise<{ outcome: "recycled" | "nothing-to-recycle" | "already-recycled" | "no-open-cycle"; amount: number; gratitudeCycleNumber: number | null }> {
+  const amount = Math.max(0, Math.floor(input.amount));
+  if (amount <= 0) return { outcome: "nothing-to-recycle", amount: 0, gratitudeCycleNumber: null };
+
+  const cycle = await getOrCreateCurrentCycle(db);
+  if (!cycle) return { outcome: "no-open-cycle", amount, gratitudeCycleNumber: null };
+
+  // Claim the recycle first. If this row already existed the pool was already
+  // credited, and adding again would give the community the same $ReGen twice.
+  const claimed: any = await db.execute(sql`
+    INSERT IGNORE INTO modulePoolRecycles (poolCycleNumber, gratitudeCycleId, gratitudeCycleNumber, amount)
+    VALUES (${input.cycleNumber}, ${cycle.id}, ${cycle.cycleNumber}, ${amount})
+  `);
+  const affected = claimed?.[0]?.affectedRows ?? claimed?.affectedRows ?? 0;
+  if (!affected) {
+    return { outcome: "already-recycled", amount, gratitudeCycleNumber: cycle.cycleNumber };
+  }
+
+  await db.execute(sql`
+    UPDATE gratitude_cycles SET poolPerCycle = poolPerCycle + ${amount} WHERE id = ${cycle.id}
+  `);
+
+  return { outcome: "recycled", amount, gratitudeCycleNumber: cycle.cycleNumber };
+}
+
+/**
+ * Every recycled amount, newest first, so the returning share is a number
+ * anybody can read rather than a claim in a document.
+ *
+ * R59 is explicit that the visibility is the point rather than a nicety: a
+ * village or an author should be able to see the platform's share going back in
+ * rather than into a pocket.
+ */
+export async function recycleHistory(db: Db, limit = 12): Promise<Array<{
+  poolCycleNumber: number;
+  gratitudeCycleNumber: number;
+  amount: number;
+  appliedAt: string | null;
+}>> {
+  const rows: any = await db.execute(sql`
+    SELECT poolCycleNumber, gratitudeCycleNumber, amount, appliedAt
+    FROM modulePoolRecycles ORDER BY poolCycleNumber DESC LIMIT ${limit}
+  `);
+  const list = rows?.[0] ?? rows?.rows ?? [];
+  return (Array.isArray(list) ? list : []).map((r: any) => ({
+    poolCycleNumber: Number(r.poolCycleNumber),
+    gratitudeCycleNumber: Number(r.gratitudeCycleNumber),
+    amount: Number(r.amount),
+    appliedAt: r.appliedAt ? new Date(r.appliedAt).toISOString() : null,
+  }));
+}

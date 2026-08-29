@@ -20,7 +20,8 @@ export type IntentName =
   | "expense-reimbursement"
   | "membership-exit"
   | "redeem-internal-tokens"
-  | "quest-completion";
+  | "quest-completion"
+  | "module-pool-payout";
 
 export interface IntentDescriptor {
   name: IntentName;
@@ -84,5 +85,25 @@ export const KNOWN_INTENTS: Record<IntentName, IntentDescriptor> = {
     source: "quest_completion",
     formKind: "propose_contribution",
     description: "Submit a completed quest as a contribution proposal to the ReGen Games DHO",
+  },
+  /*
+   * A builders' pool share, on its way to the person who built the module.
+   *
+   * `deploy_funds` and not `propose_contribution`: the share is already earned
+   * and already computed by a published statement, so what the treasury space
+   * is being asked is whether to send it, not whether the work happened. That
+   * is the deploy-funds question.
+   *
+   * This is where the payout flow ENDS on this side. The bridge carries the
+   * recipient, the amount and the $ReGen contract address to a Hypha form, a
+   * human presses create, and the treasury space's own members carry it from
+   * there. Nothing in this repository signs, mints, moves or prices anything,
+   * and this intent does not change that: it is the furthest honest step.
+   */
+  "module-pool-payout": {
+    name: "module-pool-payout",
+    source: "module_pool",
+    formKind: "deploy_funds",
+    description: "Send a builder their share of this cycle's $ReGen builders' pool",
   },
 };

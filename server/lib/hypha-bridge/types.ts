@@ -35,6 +35,8 @@ export type HyphaBridgeSource =
   | "exit"
   | "redeem_tokens"
   | "quest_completion"
+  /** A builders' pool share, handed to the treasury space to deploy (ADR-51). */
+  | "module_pool"
   | "other";
 
 /** Status of a single bridge instance as it moves through the lifecycle. */

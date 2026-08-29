@@ -1,16 +1,32 @@
 /**
- * The $ReGen builders' pool: the cycle statement job (ADR-50).
+ * The $ReGen builders' pool: the cycle statement job (ADR-50, ADR-51).
  *
- * Once a lunar cycle closes, this reads how many roster villages are running
- * each pool-eligible module, splits the pool in proportion, resolves each
- * builder's Base address from that builder's OWN ReGen Civics profile, and
- * writes one statement.
+ * Once a lunar cycle closes, this asks every roster village how many of its
+ * members opened each module during that cycle, splits the pool in proportion
+ * to that reach, resolves each third-party builder's Base address from that
+ * builder's OWN ReGen Civics profile, sends the platform's own share back into
+ * the ReGen Civics gratitude pool, and writes one statement.
  *
- * IT MOVES NOTHING. The statement is a document a human reads and executes
- * through Hypha from the treasury. `server/blockchain.ts` opens with
+ * ── WHAT ADR-51 CHANGED ─────────────────────────────────────────────────────
+ *
+ * This job used to read `/api/platform/info`, which carries module ids and a
+ * lifecycle word, and split the pool by HOW MANY VILLAGES had each module
+ * switched on. That measured installation, which Module Library Contract clause
+ * 14 does not promise and the village platform's own meter explicitly rejects:
+ * "shelfware earns exactly as much as a module the village lives inside". It
+ * also dropped every module with no hub builder record before computing the
+ * denominator, so the platform's own modules never entered the split at all,
+ * and their share was quietly handed to third-party builders.
+ *
+ * It now reads `/api/platform/module-usage`, which every village has served all
+ * along and which the hub had never once called.
+ *
+ * IT STILL MOVES NO TOKEN ON CHAIN. The statement is a document, and a payable
+ * line becomes a proposal in the treasury's Hypha space through the Hypha
+ * Bridge, which a human and then that space's members carry. There is no key
+ * here, no transaction, and no transfer. `server/blockchain.ts` opens with
  * "Read-only Base blockchain queries, no wallet, no signing" and this job does
- * not weaken it: there is no key here, no transaction, no transfer, and no
- * button anywhere in this codebase that makes one.
+ * not weaken it.
  *
  * Runs from POST /api/cron/module-pool-statement, daily. Daily rather than
  * monthly because a lunation is 29.53 days and no cron expression lands on a
@@ -27,12 +43,22 @@ import { NETWORK_GAMES, type NetworkGame } from "@shared/networkRegistry";
 import { MODULE_BUILDERS, moduleBuildersById } from "@shared/moduleBuilders";
 import { cycleBoundsByNumber, lastClosedCycle } from "@shared/lunar";
 import {
+  formatVillageCycleId,
+  mergeVillageUsage,
+  provenanceCoverage,
+  readVillageUsage,
+  type CountedVillage,
+  type VillageUsageReport,
+} from "@shared/villageUsage";
+import {
   POOL_DUST_FLOOR,
   computeStatement,
+  isAccruingState,
   statementSnapshotInput,
   type PoolIdentity,
   type PoolUsage,
 } from "@shared/modulePool";
+import { recycleIntoGratitudePool } from "../lib/gratitude-cycles";
 
 const log = logger("module-pool");
 
@@ -56,7 +82,22 @@ export interface VillageAnswer {
   id: string;
   instanceId: string | null;
   state: VillageState;
+  /** The cycle the village answered about. Null where it never answered. */
+  cycleId: string | null;
+  sealed: boolean;
+  activeMembers: number;
+  /** Module ids seen in the answer, for the snapshot. The weights live in `report`. */
   modules: string[];
+  /**
+   * Why an answer was not used, in words. Empty on a clean answer. Carried into
+   * the statement so an operator reading "3 villages could not be counted" can
+   * find out which and why without reading a log.
+   */
+  refusedBecause: string | null;
+  /** How many of this village's modules said who built them. */
+  provenance: { stated: number; unstated: number };
+  /** The parsed report, or null. Not persisted: the snapshot carries the digest. */
+  report: VillageUsageReport | null;
 }
 
 /** The roster: villages a human has agreed are real and live. */
@@ -65,21 +106,25 @@ export function poolRoster(games: readonly NetworkGame[] = NETWORK_GAMES): Netwo
 }
 
 /**
- * One village's module manifest.
+ * One village's usage report for one closed cycle.
  *
- * Reads `/api/platform/info`, which every village already serves publicly and
- * which carries `{ id, lifecycle }` for modules at rank members or above. The
- * pool asks for nothing that is not already published and learns nothing about
- * anybody: module ids and a lifecycle word, no people, no counts of people.
+ * Reads `/api/platform/module-usage?cycle=lunar-NNNNNN`. Every village has
+ * served this endpoint since the meter shipped; the hub had never called it.
+ * It carries counts of people and never a person: the village's own meter
+ * deletes member identity when it seals a cycle, and what survives is
+ * `(module, cycle, members_reached, active_members)`.
  *
- * Returns null for anything less than a clean answer. A null is not "no
- * modules", and the caller must not treat it as one.
+ * Returns the refusal sentence rather than null on a bad answer, because
+ * "unreachable" and "answered about the wrong cycle" have different fixes and
+ * collapsing them into one silence is how an outage and a bug look identical.
  */
-export async function fetchVillageModules(
+export async function fetchVillageUsage(
   game: NetworkGame,
-): Promise<{ instanceId: string | null; modules: string[] } | null> {
-  if (!game.url.startsWith("https://")) return null;
-  const url = `${game.url.replace(/\/$/, "")}/api/platform/info`;
+  cycleNumber: number,
+): Promise<{ ok: true; report: VillageUsageReport } | { ok: false; reason: string }> {
+  if (!game.url.startsWith("https://")) return { ok: false, reason: "the registry entry is not an https url" };
+  const cycleId = formatVillageCycleId(cycleNumber);
+  const url = `${game.url.replace(/\/$/, "")}/api/platform/module-usage?cycle=${encodeURIComponent(cycleId)}`;
 
   try {
     // The URL comes from our own registry, so this is belt to that braces: it
@@ -94,135 +139,177 @@ export async function fetchVillageModules(
       res = await fetch(url, {
         signal: controller.signal,
         redirect: "error",
-        headers: { accept: "application/json", "user-agent": "ReGenCivicsBuildersPool/1.0" },
+        headers: { accept: "application/json", "user-agent": "ReGenCivicsBuildersPool/2.0" },
       });
     } finally {
       clearTimeout(timer);
     }
-    if (!res.ok) return null;
-    if (Number(res.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) return null;
+    if (!res.ok) return { ok: false, reason: `the village answered ${res.status}` };
+    if (Number(res.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+      return { ok: false, reason: "the answer is larger than this hub will read" };
+    }
     const text = await res.text();
-    if (text.length > MAX_BODY_BYTES) return null;
+    if (text.length > MAX_BODY_BYTES) return { ok: false, reason: "the answer is larger than this hub will read" };
 
-    const body = JSON.parse(text) as Record<string, unknown>;
-    const raw = Array.isArray(body.modules) ? body.modules : null;
-    if (!raw) return null;
-
-    const modules = raw
-      .map((m) => (m && typeof m === "object" ? String((m as any).id ?? "") : ""))
-      .filter((id) => id.length > 0 && id.length <= 80);
-
-    return {
-      instanceId: typeof body.instanceId === "string" ? body.instanceId.slice(0, 80) : null,
-      modules: Array.from(new Set(modules)).sort(),
-    };
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return { ok: false, reason: "the answer is not JSON" };
+    }
+    return readVillageUsage(body, cycleNumber);
   } catch (err) {
-    log.info(`platform/info unavailable for ${game.id}: ${(err as Error)?.message ?? "unknown"}`);
-    return null;
+    return { ok: false, reason: `unreachable: ${(err as Error)?.message ?? "unknown"}` };
   }
 }
 
 /**
- * Ask every roster village what it is running, and decide what a silent one
- * contributes.
+ * Ask every roster village what its members opened, and decide what a silent
+ * one contributes.
  *
- * THE CARRY RULE. A village that does not answer is not a village that turned
- * its modules off, and counting the two the same would cut a builder's share
- * for somebody else's outage. So a silent village contributes its last known
- * snapshot ONCE, flagged `carried`. A village that already had a snapshot
- * carried contributes nothing on the next failure and keeps contributing
+ * THE CARRY RULE, unchanged from the version that counted installations. A
+ * village that does not answer is not a village whose members stopped opening
+ * things, and counting the two the same would cut a builder's share for
+ * somebody else's outage. So a silent village contributes its last stored
+ * report ONCE, flagged `carried`. A village whose stored report has already
+ * been carried contributes nothing on the next failure and keeps contributing
  * nothing until it answers again, which is what `carriedForCycle` records.
- * Without that, one permanently dead village would prop up a module's count
+ * Without that, one permanently dead village would prop up a module's share
  * forever.
+ *
+ * WHAT IS STORED CHANGED, and it had to. The snapshot now holds the whole
+ * report rather than a list of module ids, because a carried village has to
+ * contribute the reach it last reported and a module id carries no reach.
+ * A carried report keeps its ORIGINAL cycle id, so the statement's snapshot
+ * shows plainly that one village's numbers came from an earlier lunation.
  */
 export async function readRoster(cycleNumber: number, db: any): Promise<VillageAnswer[]> {
   const roster = poolRoster();
   const answers: VillageAnswer[] = [];
 
   for (const game of roster) {
-    const live = await fetchVillageModules(game);
+    const live = await fetchVillageUsage(game, cycleNumber);
 
-    if (live) {
+    if (live.ok) {
       await db.execute(sql`
-        INSERT INTO modulePoolVillageSnapshots (villageId, instanceId, modules, fetchedAt, carriedForCycle)
-        VALUES (${game.id}, ${live.instanceId}, ${JSON.stringify(live.modules)}, NOW(), NULL)
+        INSERT INTO modulePoolVillageSnapshots (villageId, instanceId, modules, usageReport, fetchedAt, carriedForCycle)
+        VALUES (
+          ${game.id}, ${live.report.instanceId},
+          ${JSON.stringify(live.report.modules.map((m) => m.moduleId))},
+          ${JSON.stringify(live.report)}, NOW(), NULL
+        )
         ON DUPLICATE KEY UPDATE
           instanceId = VALUES(instanceId),
           modules = VALUES(modules),
+          usageReport = VALUES(usageReport),
           fetchedAt = NOW(),
           carriedForCycle = NULL
       `);
-      answers.push({ id: game.id, instanceId: live.instanceId, state: "ok", modules: live.modules });
+      answers.push(answerFrom(game.id, "ok", live.report, null));
       continue;
     }
 
     const rows: any = await db.execute(sql`
-      SELECT instanceId, modules, carriedForCycle
+      SELECT instanceId, usageReport, carriedForCycle
       FROM modulePoolVillageSnapshots WHERE villageId = ${game.id} LIMIT 1
     `);
     const stored = rows?.[0]?.[0] ?? rows?.rows?.[0] ?? null;
+    const storedReport = parseStoredReport(stored?.usageReport);
 
-    if (!stored || stored.carriedForCycle !== null) {
-      // No snapshot at all, or one already spent on an earlier cycle.
-      answers.push({ id: game.id, instanceId: stored?.instanceId ?? null, state: "absent", modules: [] });
+    if (!stored || stored.carriedForCycle !== null || !storedReport) {
+      // No snapshot at all, one already spent on an earlier cycle, or one
+      // written before this hub stored whole reports. None of those is a
+      // village that reported zero, and none of them is counted as one.
+      answers.push({
+        id: game.id,
+        instanceId: stored?.instanceId ?? null,
+        state: "absent",
+        cycleId: null,
+        sealed: false,
+        activeMembers: 0,
+        modules: [],
+        refusedBecause: live.reason,
+        provenance: { stated: 0, unstated: 0 },
+        report: null,
+      });
       continue;
     }
 
-    const modules = parseModules(stored.modules);
     await db.execute(sql`
       UPDATE modulePoolVillageSnapshots SET carriedForCycle = ${cycleNumber} WHERE villageId = ${game.id}
     `);
-    answers.push({ id: game.id, instanceId: stored.instanceId ?? null, state: "carried", modules });
+    answers.push(answerFrom(game.id, "carried", storedReport, live.reason));
   }
 
   return answers;
 }
 
-function parseModules(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map(String);
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch {
-      return [];
-    }
+function answerFrom(
+  id: string,
+  state: VillageState,
+  report: VillageUsageReport,
+  refusedBecause: string | null,
+): VillageAnswer {
+  return {
+    id,
+    instanceId: report.instanceId,
+    state,
+    cycleId: report.cycleId,
+    sealed: report.sealed,
+    activeMembers: report.activeMembers,
+    modules: report.modules.map((m) => m.moduleId).sort(),
+    refusedBecause,
+    provenance: provenanceCoverage(report),
+    report,
+  };
+}
+
+function parseStoredReport(value: unknown): VillageUsageReport | null {
+  if (!value) return null;
+  const parsed = typeof value === "string" ? safeJson(value) : value;
+  if (!parsed || typeof parsed !== "object") return null;
+  const r = parsed as VillageUsageReport;
+  return Array.isArray(r.modules) && typeof r.cycleId === "string" ? r : null;
+}
+
+function safeJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
   }
-  return [];
 }
 
 /**
- * Villages running each payable module.
+ * What each module earned its share on, and who the hub is willing to say
+ * built it.
  *
- * A module id a village serves that has no builder record pays nobody, which is
- * the second human gate: a forged village is not on the roster, and a forged
- * module id is not in `MODULE_BUILDERS`.
+ * Thin on purpose: the decisions live in `mergeVillageUsage`, which is pure and
+ * has the argument for each one written next to it.
  */
-export function countUsage(answers: readonly VillageAnswer[]): PoolUsage[] {
-  const builders = moduleBuildersById();
-  const counts = new Map<string, number>();
-  for (const answer of answers) {
-    for (const id of new Set(answer.modules)) {
-      if (!builders.has(id)) continue;
-      counts.set(id, (counts.get(id) ?? 0) + 1);
-    }
-  }
-  return [...builders.values()].map((b) => ({
-    moduleId: b.moduleId,
-    villages: counts.get(b.moduleId) ?? 0,
-    builtBy: b.builtBy,
-    builtByAccount: b.account,
-  }));
+export function countUsage(
+  answers: readonly VillageAnswer[],
+  attestations = moduleBuildersById(),
+): PoolUsage[] {
+  const villages: CountedVillage[] = answers.map((a) => ({ id: a.id, state: a.state, report: a.report }));
+  return mergeVillageUsage(villages, attestations);
 }
 
 /**
- * Resolve each builder's handle to the Base address on their own profile.
+ * Resolve each third-party builder's handle to the Base address on their own
+ * profile.
  *
  * `COALESCE(walletAddress, baseAccountName)` is the fallback order every
  * existing consumer uses. `users.baseWalletAddress` is deliberately not read:
  * it has had no writer since Privy was removed. The address is NOT trusted for
  * shape here; `computeStatement` re-checks it, because the profile write path
  * has never validated one.
+ *
+ * A platform-built module is skipped: nobody is looked up, because its share is
+ * never sent to a wallet. An unattested module is skipped for a different
+ * reason, and the two are kept apart deliberately: looking up a handle a
+ * village asserted would put a real person's address next to a line the hub has
+ * refused to pay, which reads to an operator like an invitation to pay it.
  */
 export async function resolveIdentities(
   usage: readonly PoolUsage[],
@@ -230,7 +317,7 @@ export async function resolveIdentities(
 ): Promise<Map<string, PoolIdentity>> {
   const out = new Map<string, PoolIdentity>();
   for (const u of usage) {
-    if (!u.builtByAccount) continue;
+    if (u.platformBuilt || !u.attested || !u.builtByAccount) continue;
     const rows: any = await db.execute(sql`
       SELECT u.id AS userId, COALESCE(p.walletAddress, p.baseAccountName) AS address
       FROM users u
@@ -248,31 +335,36 @@ export async function resolveIdentities(
 }
 
 /**
- * What the previous cycle left owing, carried into this one.
+ * What the previous cycle left owing to a builder, carried into this one.
  *
- * WHAT THIS IS AND IS NOT. It is the sum of the previous statement's unpayable
- * lines, added to this cycle's pool and RE-SPLIT by this cycle's usage. It is
- * not an escrow held for the builder who earned it. A builder who links an
- * address keeps earning from the cycles after they do, and the amount their
- * silence contributed goes back to the pool the modules are sharing.
+ * WHAT THIS IS AND IS NOT. It is the sum of the previous statement's lines owed
+ * to a builder nobody could pay, added to this cycle's pool and RE-SPLIT by
+ * this cycle's reach. It is not an escrow held for the builder who earned it. A
+ * builder who links an address keeps earning from the cycles after they do, and
+ * the amount their silence contributed goes back to the pool the modules are
+ * sharing.
  *
- * Per-builder escrow with a lapse after three cycles is proposed in the design
- * doc (D6) and is deliberately NOT built here. It needs a claim path, a way to
- * pay somebody for a cycle whose statement a human already executed, and a
- * decision about what happens when a module changes hands. Each of those is a
- * question for Rye, and guessing at all three inside a first version would put
- * a wrong answer in a table that money is later reconciled against.
+ * **NAMING WHAT THAT COSTS SOMEBODY, because it is not free.** A builder who
+ * links an account three cycles late does not receive what accrued in their
+ * name; it was re-split among every module in the cycles they were absent for.
+ * The statement records `accruedSinceCycle` on every such line so the history
+ * exists, `/builders-pool` prints the waiting amount so nobody has to be told
+ * about it, and `modulePool.myAccruals` shows a signed-in builder every cycle
+ * their modules earned in, what the share was, and why it was not sent. There
+ * is NO claim path: whether the treasury honours a late claim for a cycle whose
+ * statement was already executed is a money question and is Rye's, and building
+ * a rule for it here would put a guess in a table money is reconciled against.
  *
- * `accruedSinceCycle` on the share row records when a line first went unpaid,
- * so the escrow rule can be built later against real history rather than
- * starting from nothing.
+ * The platform's recycled share is NOT carried here. It leaves for the
+ * gratitude pool the moment the statement is computed, and carrying it as well
+ * would spend it twice.
  */
 export async function carryInFor(cycleNumber: number, db: any): Promise<number> {
   const rows: any = await db.execute(sql`
     SELECT COALESCE(SUM(s.amount), 0) AS total
     FROM modulePoolShares s
     JOIN modulePoolStatements st ON st.id = s.statementId
-    WHERE s.state IN ('no-account','no-address','unusable-address')
+    WHERE s.state IN ('no-account','no-address','unusable-address','unattested')
       AND st.cycleNumber = ${cycleNumber - 1}
   `);
   const row = rows?.[0]?.[0] ?? rows?.rows?.[0] ?? null;
@@ -326,7 +418,15 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
         pool,
         carryIn,
         dustFloor: POOL_DUST_FLOOR,
-        villages: answers,
+        villages: answers.map((a) => ({
+          id: a.id,
+          instanceId: a.instanceId,
+          state: a.state,
+          cycleId: a.cycleId,
+          sealed: a.sealed,
+          activeMembers: a.activeMembers,
+          modules: a.modules,
+        })),
         usage,
       });
       const snapshotHash = crypto.createHash("sha256").update(snapshot).digest("hex");
@@ -334,7 +434,10 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
       if (opts.dryRun) {
         return {
           job, ok: true, count: statement.lines.length,
-          detail: { cycleNumber, dryRun: true, snapshotHash, totals: statement.totals, lines: statement.lines, roster: answers },
+          detail: {
+            cycleNumber, dryRun: true, snapshotHash, totals: statement.totals,
+            lines: statement.lines, roster: answers.map(publicAnswer),
+          },
         };
       }
 
@@ -347,12 +450,14 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
         const identity = identities.get(line.moduleId);
         await db.execute(sql`
           INSERT IGNORE INTO modulePoolShares
-            (statementId, moduleId, builtBy, builtByAccount, userId, address, villages, rawShare, amount, state, accruedSinceCycle)
+            (statementId, moduleId, builtBy, builtByAccount, platformBuilt, attested, userId, address,
+             villages, membersReached, reach, rawShare, amount, state, accruedSinceCycle)
           VALUES (
             ${statementId}, ${line.moduleId}, ${line.builtBy}, ${line.builtByAccount},
-            ${identity?.userId ?? null}, ${line.address}, ${line.villages},
-            ${line.rawShare.toFixed(6)}, ${line.amount}, ${line.state},
-            ${line.state === "payable" || line.state === "below-floor" ? null : cycleNumber}
+            ${line.platformBuilt ? 1 : 0}, ${line.attested ? 1 : 0},
+            ${identity?.userId ?? null}, ${line.address}, ${line.villages}, ${line.membersReached},
+            ${line.reach.toFixed(6)}, ${line.rawShare.toFixed(6)}, ${line.amount}, ${line.state},
+            ${isAccruingState(line.state) ? cycleNumber : null}
           )
         `);
       }
@@ -361,13 +466,29 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
         UPDATE modulePoolStatements SET
           status = 'computed', poolAmount = ${statement.totals.pool}, carryIn = ${statement.totals.carryIn},
           paid = ${statement.totals.paid}, accrued = ${statement.totals.accrued},
+          recycled = ${statement.totals.recycled},
           unallocated = ${statement.totals.unallocated}, snapshotHash = ${snapshotHash},
-          roster = ${JSON.stringify(answers)}, computedAt = NOW()
+          roster = ${JSON.stringify(answers.map(publicAnswer))}, computedAt = NOW()
         WHERE cycleNumber = ${cycleNumber}
       `);
 
-      log.info(`cycle ${cycleNumber}: ${statement.lines.length} line(s), ${statement.totals.paid} $ReGen payable`);
-      return { job, ok: true, count: statement.lines.length, detail: { cycleNumber, snapshotHash, totals: statement.totals } };
+      // R64: what the platform's own modules earned goes to the ReGen Civics
+      // gratitude pool, to be given out. Done AFTER the statement is written,
+      // and idempotent on the cycle number, so a retry of a half-finished run
+      // cannot hand the community the same amount twice.
+      const recycle = await recycleIntoGratitudePool(db, {
+        cycleNumber,
+        amount: statement.totals.recycled,
+      });
+
+      log.info(
+        `cycle ${cycleNumber}: ${statement.lines.length} line(s), ` +
+        `${statement.totals.paid} $ReGen payable, ${statement.totals.recycled} recycled (${recycle.outcome})`,
+      );
+      return {
+        job, ok: true, count: statement.lines.length,
+        detail: { cycleNumber, snapshotHash, totals: statement.totals, recycle },
+      };
     } catch (err) {
       // Un-latch, then rethrow. A cycle stuck in `computing` is a cycle the
       // cron will never pick up again while reporting green forever.
@@ -380,6 +501,12 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
     log.error(`cycle ${cycleNumber} failed`, err);
     return { job, ok: false, error: err?.message ?? "unknown" };
   }
+}
+
+/** The part of an answer that is stored and shown. The parsed report stays in memory. */
+function publicAnswer(a: VillageAnswer) {
+  const { report: _report, ...rest } = a;
+  return rest;
 }
 
 /**

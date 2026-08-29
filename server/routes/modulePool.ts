@@ -1,10 +1,11 @@
 /**
- * The $ReGen builders' pool: what a visitor sees, and what an admin sees
- * (ADR-50).
+ * The $ReGen builders' pool: what a visitor sees, what a builder sees, and what
+ * an operator can do (ADR-50, ADR-51).
  *
  * THE PUBLICATION RULE, in code. The public procedures carry the cycle, the
- * pool, and per-module counts and shares. They never carry which village runs
- * what, and they never carry a builder's address, handle, or payment state.
+ * pool, the recycled share, and per-module reach and amounts. They never carry
+ * which village runs what, and they never carry a builder's address or payment
+ * state.
  *
  * That distinction survives the obvious objection, which is that each village
  * already publishes its own module list in its own signed documents. A village
@@ -13,21 +14,27 @@
  * runs what, published by a party none of them asked to speak for. So the hub
  * aggregates to counts, and the counts are what it publishes.
  *
- * Nothing here moves value. `execute` records that a human made transfers
- * elsewhere; it does not make them, and there is no code path in this
- * repository that could.
+ * WHAT MOVES, AND WHERE IT STOPS. `openPayout` creates a Hypha Bridge handoff
+ * for one payable line: a bridge row, a title marker, and a pre-filled Hypha
+ * deploy-funds form carrying the recipient, the amount and the $ReGen contract
+ * address. It stops there, at a URL. The treasury's Hypha space proposes and
+ * executes, its own members decide, and the Alchemy webhook stamps the share
+ * paid with the transaction that did it. Nothing in this repository holds a
+ * key, signs anything, or moves a token, and `openPayout` does not change that.
  */
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { modulePoolShares, modulePoolStatements } from "../../drizzle/schema";
 import { MODULE_BUILDERS } from "@shared/moduleBuilders";
 import { cycleBoundsByNumber } from "@shared/lunar";
 import { POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement } from "@shared/modulePool";
+import { bridgeToHypha } from "../lib/hypha-bridge";
+import { recycleHistory } from "../lib/gratitude-cycles";
 
-/** One statement's public face: module ids, counts, amounts. No people, no villages. */
+/** One statement's public face: module ids, reach, amounts. No people, no villages. */
 function publicView(statement: any, shares: any[]) {
   return {
     cycleNumber: statement.cycleNumber,
@@ -38,6 +45,13 @@ function publicView(statement: any, shares: any[]) {
     carryIn: statement.carryIn,
     paid: statement.paid,
     accrued: statement.accrued,
+    /**
+     * What the platform's own modules earned and handed back to the ReGen
+     * Civics gratitude pool. PUBLIC, and that is the point rather than a
+     * nicety (R59): a village or an author should be able to see the
+     * platform's share going back in rather than into a pocket.
+     */
+    recycled: statement.recycled ?? 0,
     unallocated: statement.unallocated,
     snapshotHash: statement.snapshotHash,
     computedAt: statement.computedAt,
@@ -49,17 +63,32 @@ function publicView(statement: any, shares: any[]) {
     modules: shares.map((s: any) => ({
       moduleId: s.moduleId,
       builtBy: s.builtBy,
+      /** THE WEIGHT. Summed village reach, each village capped at 1.0. */
+      reach: Number(s.reach ?? 0),
+      membersReached: s.membersReached ?? 0,
       villages: s.villages,
       amount: s.amount,
+      platformBuilt: !!s.platformBuilt,
       /**
-       * Whether this share was sent or is waiting. The REASON it is waiting is
-       * the builder's business and stays in the admin view: "this builder has
-       * not linked a wallet" is a fact about a person, published beside their
-       * name, and nobody needs it to check the arithmetic.
+       * What happened to this share, in one word a reader can act on.
+       *
+       * `recycled` is published because R64 makes it the interesting case: it
+       * is how somebody checks that ReGen Civics is not paying itself. The
+       * private reasons a third-party share is waiting stay in the admin view,
+       * because "this builder has not linked a wallet" is a fact about a
+       * person, published beside their name, and nobody needs it to check the
+       * arithmetic.
        */
-      settled: s.state === "payable",
+      settlement: settlementWord(s.state),
     })),
   };
+}
+
+function settlementWord(state: string): "sent" | "recycled" | "waiting" | "too-small" {
+  if (state === "payable") return "sent";
+  if (state === "recycled") return "recycled";
+  if (state === "below-floor") return "too-small";
+  return "waiting";
 }
 
 function summariseRoster(roster: unknown): { total: number; ok: number; carried: number; absent: number } {
@@ -90,13 +119,50 @@ async function loadStatement(db: any, cycleNumber?: number) {
   return { statement, shares };
 }
 
+/**
+ * What the pool amount actually IS right now, read from the database rather
+ * than assumed from a default.
+ *
+ * The admin page used to imply the pool could be set in the admin UI. It could
+ * not: `pool.regen_per_cycle` had no row, the panel edits variables by id
+ * through an UPDATE, and there was nothing to update. Migration 0228 creates
+ * the row, and this procedure exists so the page states what it FOUND rather
+ * than what the migration was supposed to have done. A page that assumes its
+ * own migration ran is the same defect wearing a newer hat.
+ */
+async function readPoolVariable(db: any): Promise<
+  { exists: true; value: number; minValue: number | null; maxValue: number | null }
+  | { exists: false }
+> {
+  const rows: any = await db.execute(sql`
+    SELECT value, \`minValue\`, \`maxValue\` FROM game_variables
+    WHERE \`key\` = 'pool.regen_per_cycle' AND isActive = 1 LIMIT 1
+  `);
+  const row = rows?.[0]?.[0] ?? rows?.rows?.[0] ?? null;
+  if (!row) return { exists: false };
+  return {
+    exists: true,
+    value: Number(row.value ?? 0),
+    minValue: row.minValue == null ? null : Number(row.minValue),
+    maxValue: row.maxValue == null ? null : Number(row.maxValue),
+  };
+}
+
 export const modulePoolRouter = router({
   /** How the pool works, as data, so the page never hardcodes a rule. */
   terms: publicProcedure.query(() => ({
     dustFloor: POOL_DUST_FLOOR,
-    /** Modules the pool is able to pay at all. Ids and credits, nothing else. */
-    payableModules: MODULE_BUILDERS.map((b) => ({
+    /**
+     * Modules the hub has ATTESTED, and which side each is on.
+     *
+     * No longer the list of modules that can earn: since ADR-51 every module
+     * any village reports earns its share, whether or not it is named here.
+     * What a line here does is authorise a PAYMENT, or record that a module is
+     * the platform's own.
+     */
+    attestations: MODULE_BUILDERS.map((b) => ({
       moduleId: b.moduleId,
+      kind: b.kind,
       builtBy: b.builtBy,
       reviewedOn: b.reviewedOn,
     })),
@@ -135,9 +201,77 @@ export const modulePoolRouter = router({
           cycleEndsAt: s.cycleEndsAt,
           pool: s.poolAmount,
           paid: s.paid,
+          recycled: s.recycled ?? 0,
           status: s.status,
         }));
     }),
+
+  /**
+   * Every amount the platform's own modules earned and handed back to the
+   * gratitude pool, with the gratitude cycle it landed in.
+   *
+   * PUBLIC. R64 says the platform's revenue "is then distributed to regen
+   * civics gratitude system to give out", and R59 says the visibility is the
+   * point. A recycling nobody can check is a promise, and this makes it a
+   * receipt: the amount, the pool cycle it came from, and the gratitude cycle
+   * whose pool it grew.
+   */
+  recycles: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(24).default(12) }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return recycleHistory(db, input?.limit ?? 12);
+    }),
+
+  /**
+   * What accrued in the signed-in person's name, and what happened to it.
+   *
+   * THIS IS NOT A CLAIM PATH, and it deliberately does not pretend to be one.
+   * A share owed to a builder the hub could not pay does NOT wait in escrow: it
+   * is added to the next cycle's pool and re-split by that cycle's reach, so a
+   * builder who links an account three cycles late does not receive what
+   * accrued while they were unreachable. That is the shipped behaviour, it has
+   * always been the shipped behaviour, and nothing here changes it.
+   *
+   * What this does is stop it being SILENT. A builder can see every cycle their
+   * modules earned in, what the share was, why it was not sent, and that it
+   * went back to the pool. Whether the treasury honours a late claim for a
+   * cycle whose statement was already executed is a money decision and it is
+   * Rye's; building a payment rule for it here would be guessing at an answer
+   * that money is later reconciled against.
+   */
+  myAccruals: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { handle: null, lines: [], total: 0 };
+    const handle = String((ctx.user as any)?.handle ?? "").trim().toLowerCase();
+    if (!handle) return { handle: null, lines: [], total: 0 };
+
+    const rows: any = await db.execute(sql`
+      SELECT st.cycleNumber, s.moduleId, s.amount, s.state, s.accruedSinceCycle, s.paidAt, s.paidTxHash
+      FROM modulePoolShares s
+      JOIN modulePoolStatements st ON st.id = s.statementId
+      WHERE s.builtByAccount = ${handle}
+      ORDER BY st.cycleNumber DESC
+      LIMIT 60
+    `);
+    const list: any[] = rows?.[0] ?? rows?.rows ?? [];
+    const lines = (Array.isArray(list) ? list : []).map((r: any) => ({
+      cycleNumber: Number(r.cycleNumber),
+      moduleId: String(r.moduleId),
+      amount: Number(r.amount),
+      state: String(r.state),
+      accruedSinceCycle: r.accruedSinceCycle == null ? null : Number(r.accruedSinceCycle),
+      paidAt: r.paidAt ? new Date(r.paidAt).toISOString() : null,
+      paidTxHash: r.paidTxHash ?? null,
+    }));
+    return {
+      handle,
+      lines,
+      /** Earned, never sent, and already re-split into a later cycle's pool. */
+      total: lines.filter((l) => l.state !== "payable" && l.state !== "below-floor" && l.state !== "recycled")
+        .reduce((sum, l) => sum + l.amount, 0),
+    };
+  }),
 
   /**
    * The full statement, admin only: who is owed, where it goes, and why a share
@@ -147,27 +281,39 @@ export const modulePoolRouter = router({
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return null;
+      const poolVariable = await readPoolVariable(db);
       const loaded = await loadStatement(db, input?.cycleNumber);
-      if (!loaded) return null;
+      if (!loaded) return { statement: null, poolVariable };
       const { statement, shares } = loaded;
       return {
-        ...publicView(statement, shares),
-        /** The per-village answers in full. Admin only. */
-        rosterDetail: Array.isArray(statement.roster) ? statement.roster : safeParse(String(statement.roster ?? "[]")),
-        executedAt: statement.executedAt,
-        executedBy: statement.executedBy,
-        executionNote: statement.executionNote,
-        lines: shares.map((s: any) => ({
-          moduleId: s.moduleId,
-          builtBy: s.builtBy,
-          builtByAccount: s.builtByAccount,
-          address: s.address,
-          villages: s.villages,
-          rawShare: s.rawShare,
-          amount: s.amount,
-          state: s.state,
-          accruedSinceCycle: s.accruedSinceCycle,
-        })),
+        poolVariable,
+        statement: {
+          ...publicView(statement, shares),
+          /** The per-village answers in full, including why one was refused. */
+          rosterDetail: Array.isArray(statement.roster) ? statement.roster : safeParse(String(statement.roster ?? "[]")),
+          executedAt: statement.executedAt,
+          executedBy: statement.executedBy,
+          executionNote: statement.executionNote,
+          lines: shares.map((s: any) => ({
+            moduleId: s.moduleId,
+            builtBy: s.builtBy,
+            builtByAccount: s.builtByAccount,
+            platformBuilt: !!s.platformBuilt,
+            attested: !!s.attested,
+            address: s.address,
+            villages: s.villages,
+            reach: Number(s.reach ?? 0),
+            membersReached: s.membersReached ?? 0,
+            rawShare: s.rawShare,
+            amount: s.amount,
+            state: s.state,
+            accruedSinceCycle: s.accruedSinceCycle,
+            bridgeKey: s.bridgeKey ?? null,
+            bridgeOpenedAt: s.bridgeOpenedAt,
+            paidTxHash: s.paidTxHash ?? null,
+            paidAt: s.paidAt,
+          })),
+        },
       };
     }),
 
@@ -186,10 +332,13 @@ export const modulePoolRouter = router({
         totals: {
           pool: loaded.statement.poolAmount, carryIn: loaded.statement.carryIn,
           paid: loaded.statement.paid, accrued: loaded.statement.accrued,
+          recycled: loaded.statement.recycled ?? 0,
           unallocated: loaded.statement.unallocated,
         },
         lines: loaded.shares.map((s: any): PoolShareLine => ({
-          moduleId: s.moduleId, villages: s.villages, builtBy: s.builtBy,
+          moduleId: s.moduleId, villages: s.villages, reach: Number(s.reach ?? 0),
+          membersReached: s.membersReached ?? 0, platformBuilt: !!s.platformBuilt,
+          attested: !!s.attested, builtBy: s.builtBy,
           builtByAccount: s.builtByAccount, rawShare: Number(s.rawShare),
           amount: s.amount, state: s.state, address: s.address,
         })),
@@ -209,11 +358,107 @@ export const modulePoolRouter = router({
     }),
 
   /**
-   * Record that a human made the transfers.
+   * Hand one payable line to Hypha.
    *
-   * This is a NOTE, not an action. It writes down what somebody says they did
-   * in Hypha, and the hub does not verify it on chain in v1. Nothing in this
-   * procedure or anywhere behind it can move a token.
+   * WHAT THIS IS. A Hypha Bridge handoff, the only way anything in this
+   * codebase reaches an on-chain action (CLAUDE.md, and the bridge README's
+   * hard rule: never construct an app.hypha.earth URL outside the module). It
+   * creates a bridge row and returns a URL. The operator opens it, Hypha's
+   * deploy-funds form arrives pre-filled with this builder's address, this
+   * cycle's amount and the $ReGen contract, and the treasury space's own
+   * members decide from there.
+   *
+   * WHAT IT IS NOT. It is not a transfer and there is no code path in this
+   * repository that could make one. Ring 0 says the platform never mints,
+   * moves or prices, and this is the furthest step that respects it: the last
+   * thing the hub does is produce a link.
+   *
+   * THE ADDRESS COMES FROM THE STATEMENT, not from the request. The caller
+   * names a cycle and a module and nothing else, so an operator cannot redirect
+   * a payment by editing a form field, and the address on the line was resolved
+   * from the builder's own profile when the statement was computed and frozen
+   * there.
+   */
+  openPayout: adminProcedure
+    .input(z.object({ cycleNumber: z.number().int(), moduleId: z.string().min(1).max(80) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No database" });
+
+      const token = process.env.REGEN_TOKEN_ADDRESS_BASE;
+      if (!token || !/^0x[0-9a-fA-F]{40}$/.test(token)) {
+        // Refused rather than defaulted. A wrong contract address sends real
+        // tokens of some other kind, or none, and a fallback here would be a
+        // guess about which asset somebody is being paid in.
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "REGEN_TOKEN_ADDRESS_BASE is not set to a Base contract address, so this hub cannot say which token to send.",
+        });
+      }
+      const dhoSlug = process.env.HYPHA_DHO_REGEN_CIVICS_SLUG;
+      if (!dhoSlug) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "HYPHA_DHO_REGEN_CIVICS_SLUG is not set, so this hub does not know which Hypha space holds the treasury.",
+        });
+      }
+
+      const loaded = await loadStatement(db, input.cycleNumber);
+      if (!loaded) throw new TRPCError({ code: "NOT_FOUND", message: "No statement for that cycle" });
+      const line: any = loaded.shares.find((s: any) => s.moduleId === input.moduleId);
+      if (!line) throw new TRPCError({ code: "NOT_FOUND", message: "That module drew no share in that cycle" });
+      if (line.state !== "payable") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `That share is ${line.state}, and only a payable share can be handed to Hypha.`,
+        });
+      }
+      if (line.paidAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "That share is already paid on chain." });
+      }
+      if (line.bridgeKey) {
+        // Idempotent by re-use. Opening a second bridge for one share is how a
+        // builder gets paid twice, once per link somebody kept in a tab.
+        return { bridgeKey: line.bridgeKey, bridgeUrl: `/bridge/hypha/${line.bridgeKey}`, reused: true };
+      }
+
+      const { bridgeKey, bridgeUrl } = await bridgeToHypha("module-pool-payout", {
+        sourceId: `${input.cycleNumber}:${input.moduleId}`,
+        targetDhoSlug: dhoSlug,
+        title: `Builders pool cycle ${input.cycleNumber}: ${line.moduleId}`,
+        description:
+          `${line.amount} $ReGen from the builders' pool for cycle ${input.cycleNumber}, ` +
+          `for ${line.moduleId}, built by ${line.builtBy ?? "an unnamed builder"}. ` +
+          `Reach ${Number(line.reach ?? 0).toFixed(4)} across ${line.villages} village(s), ` +
+          `${line.membersReached} member(s) reached. ` +
+          `Statement snapshot ${loaded.statement.snapshotHash ?? "unrecorded"}.`,
+        recipient: String(line.address) as `0x${string}`,
+        payouts: [{ amount: String(line.amount), token: token as `0x${string}` }],
+        initiatorUserId: ctx.user.id,
+        metadata: {
+          poolCycleNumber: input.cycleNumber,
+          moduleId: line.moduleId,
+          shareId: line.id,
+          snapshotHash: loaded.statement.snapshotHash ?? null,
+        },
+      });
+
+      await db.update(modulePoolShares)
+        .set({ bridgeKey, bridgeOpenedAt: new Date() } as any)
+        .where(eq(modulePoolShares.id, line.id));
+
+      return { bridgeKey, bridgeUrl, reused: false };
+    }),
+
+  /**
+   * Record that a human made transfers outside the bridge.
+   *
+   * STILL A NOTE, and now it says so in its own name rather than in a comment
+   * nobody reading the page can see. It writes down what somebody says they did
+   * and the hub does not verify it on chain. The verified path is `openPayout`
+   * plus the Alchemy webhook, which stamps each share with the transaction that
+   * paid it; this stays for a cycle settled by hand before that existed, and
+   * for a payment made somewhere the webhook cannot see.
    */
   markExecuted: adminProcedure
     .input(z.object({ cycleNumber: z.number().int(), note: z.string().max(4000) }))
