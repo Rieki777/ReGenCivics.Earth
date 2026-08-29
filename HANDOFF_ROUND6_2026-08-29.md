@@ -11,9 +11,13 @@ This file is the volatile state a summary would drop.
 - **game-amora `origin/main` = `b5bed01`.** Live `/health` reports build `2026-07-28-wave1-b5bed01`,
   so **live and the tree agree exactly.** Measured 18:35 UTC.
 - **No PR is open.** Round 5 merged #62 through #90 and nothing has merged since.
-- Four remote branches sit unmerged and are believed to be leftovers, not work in flight:
-  `origin/wt-r4-qa-2`, `origin/wt/doors`, `origin/wt/housing`, `origin/wt/r5-budget`. **Nobody has
-  checked what is in them.** That is an open question, not a finding.
+- **The four branches `git branch -r --no-merged` reports are stale checkouts, and NOTHING IS LOST.
+  Checked and closed 2026-08-29.** `origin/wt/doors` and `origin/wt/housing` are content-identical
+  to main by `git cherry`. `origin/wt/r5-budget` carried one commit `git cherry` marked `+`
+  (`a063ee8`, the CI budget logging), and **its unique content is in main by grep against a
+  known-present control** (its `::warning::du -sk says` line and its `the script modelled` line each
+  appear once in main's `ci.yml`, control `MAX_TOTAL_DIST_KB` appears five times). `origin/wt-r4-qa-2`
+  holds round-4 persona probe scripts that were never meant to land. **Do not re-open this.**
 - Coordinator home unchanged: `C:/Users/taren/Downloads/regen-integration` on `wt/integration`,
   docs only, pushed. **NEVER work in the primary `game-amora` checkout** — it is parked on
   `voice-sweep-2026-08-01`, runs far behind main, and carries seventeen dirty files. Read
