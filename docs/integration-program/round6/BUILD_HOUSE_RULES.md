@@ -73,6 +73,62 @@ pnpm audit --prod --audit-level high
 `node scripts/module-facts.mjs` prints this list straight from `ci.yml` and **is the authority over
 any prose, including this file.**
 
+### The baseline, measured by the coordinator on a pristine `b5bed01` worktree, 2026-08-29
+
+**All fourteen script gates PASS on untouched trunk, and every one of them reports a NON-ZERO check
+count**, so none is a silent zero. Your landing criterion is **no worse than this**, not "green":
+
+```
+check-brand-refs          ratchet zones hold 60 legacy reference(s) in code, BASELINE 63
+check-voice               clean across 626 file(s), 2 waiver(s)
+check-hyphen-dash         0 hyphen(s) standing in for a dash
+check-auth-fetch          339 route prefixes refuse strangers with 401
+check-admin-reach         0 orphan admin write route(s)
+check-save-honesty        5 waiver(s) via save-ok, 7 call(s) whose method this CANNOT READ
+check-repo-payloads       every payload names every column its table requires
+check-mirror-annotations  every hand-kept map whose keys are a server union is annotated
+check-upload-strip        clean across 114 server file(s)
+check-artifact-budget     disk 81% of budget, wire 80%
+check-doc-links           38 reference(s) across 6 document(s) all resolve
+check-route-reachability  every route has 2 or more ways in
+check-map-routes          SITE_PAGES and the router agree, route for route
+check-image-budget        55 WebP or AVIF, 2 allowed exceptions, per-file cap 400 KB
+```
+
+**Four were watched going RED on a deliberate violation and naming the exact probe**, then green
+again after the restore: `check-upload-strip`, `check-hyphen-dash`, `check-doc-links`, `check-voice`.
+The other ten are trusted on their non-zero counts alone, which is weaker. If one of them passes your
+change and you are surprised, suspect the gate.
+
+### Five corrections to what this file and the ledger said before that measurement
+
+1. **THE BRAND RATCHET HAS 3 OF HEADROOM, not zero.** Every brief in this program inherited
+   "63/63, zero headroom" from a reading at `1428603`. It is **60 against a baseline of 63** at
+   `b5bed01`; round-5 lanes removed three. It still only ever decreases, so adding a reference trips
+   it. Read `$?`, never the last line, and never `--update-baseline`.
+2. **`check-hyphen-dash` IS NOT AN EM-DASH GATE.** An earlier version of this file implied it
+   enforces the no-em-dash rule. It does not. Its regex catches **a hyphen standing in for a dash**
+   (`word-not`, `word-but`, `word-which`), and it walks **`client/src` only**. An em-dash in
+   `shared/` sails straight past it.
+3. **The no-em-dash and no-contrast-framing rules are enforced by `check-voice`**, and only inside
+   what `check-voice` scans: `shared/` string literals, `server/seeds/**.json`, and
+   `docs/knowledge/*.md`. **Every other document under `docs/` is deliberately left alone as a
+   developer doc.** Voice in your commit messages, your reports, and most of `docs/` is on you.
+4. **`check-doc-links` watches exactly six documents**: the five under `docs/modules/` plus
+   `docs/MODULE_LIBRARY_CONTRACT.md`. **`docs/FORK_RUNBOOK.md` is NOT among them.**
+5. **`check-save-honesty` names its own blind spot in its passing output: "7 call(s) whose method
+   this cannot read."** A gate that tells you what it cannot see is doing its job; a lane that reads
+   its green as full coverage is not.
+
+### And the lesson the coordinator paid for while measuring the above
+
+**Three of the four falsification probes were wrong before one was right**, and each wrong one
+produced a clean green that read exactly like a hole in the gate: an em-dash aimed at a gate that
+does not look for em-dashes, a broken link in a document the link gate does not watch, banned copy in
+a doc the voice gate deliberately skips. **A falsification that stays green is a claim about your
+probe first and about the gate second.** Before reporting a gate as blind, prove your violation
+landed inside the scope the gate states it has.
+
 ## 3 · The traps. Every one has been paid for once
 
 - **`pnpm build` CAN RETURN EXIT 0 WHILE THE LIBUV ABORT FIRES.** Vite ticks green, the log carries
