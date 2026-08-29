@@ -25,26 +25,34 @@ This file is the volatile state a summary would drop.
 - **No node processes were running at session open**, so round 5 left no orphaned background jobs
   behind. `.test-lock` was free. Local MySQL is up on **3307**.
 
-## 2 · The six lanes in flight
+## 2 · Lanes, as of 2026-08-29 late
 
-All six were cut or reset from `b5bed01`, all have `node_modules` and a `.env` carrying
-`TEST_DATABASE_URL`. **None has pushed. None may merge without the coordinator.**
+**The three R60 QA passes are COMPLETE.** All twenty-two of their findings are routed in
+`docs/integration-program/round6/QA_TRIAGE_2026-08-29.md`, which is the file to read before
+touching any of this. **Nothing is unrouted.**
 
-| Lane | Worktree / ref | Holds | Migration |
-|---|---|---|---|
-| QA-1 the member's eyes | `wt-r5-qa1`, detached `b5bed01` | READ-ONLY sweep of everything #62-#90 | none |
-| QA-2 the adversary | `wt-r5-qa2`, detached `b5bed01` | READ-ONLY, eight invariants | none |
-| QA-3 the operator and the fork | `wt-r5-qa3`, detached `b5bed01` | READ-ONLY, does every control save and does anything read it | none |
-| INVESTOR | `wt-r6-investor` / `wt/r6-investor` | The packet leak. `server/index.ts` investor region, `investorDocs` schema, the investor tab of `Admin.tsx` | **0104 if needed** |
-| G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | Handover spec ideas 8 and 9. Decision pages, `components/power/**`, `orgChart.ts`, `ballots.ts`, org/seat region | **none** |
-| G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | Idea 10. Objection routes, `ObjectionPanel.tsx` | **0102** |
+| Lane | Worktree / branch | State |
+|---|---|---|
+| QA-1 the member's eyes | `wt-r5-qa1` @ `b5bed01` | **REPORTED.** 2 HIGH / 5 MED / 4 LOW. Probes at `3e9774b`, `26365a1`, unpushed |
+| QA-2 the adversary | `wt-r5-qa2` @ `b5bed01` | **REPORTED.** 4 HIGH / 1 MED, 72 attacks over 8 invariants. Probes at `5b9ac86`, unpushed |
+| QA-3 the operator and fork | `wt-r5-qa3` @ `b5bed01` | **REPORTED.** 3 HIGH / 4 MED / 4 LOW. Probes at `a8eb803`, `99fe007`, unpushed |
+| INVESTOR | `wt-r6-investor` / `wt/r6-investor` | **CODED and PUSHED. PR #91 open, CI running.** Tip `bf2387c`, migration 0104 taken |
+| G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | Running. **Five addenda** (baseline, refusal message, F2 + `/powers` + `/profile`, F8 + F11) |
+| G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | Running. Migration **0102**. Two addenda |
+| CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | Running. Migration **0105**. The two-cycle-id split |
+| MINT | `wt-r6-mint` / `wt/r6-mint` | Running. Migration **0106**. One addendum (renamed token) |
+| FORK | `wt-r6-fork` / `wt/r6-fork` | Running. Migration **0107** if needed. Two addenda (bootstrap + runbook, the four broken images) |
+| SIGNPOST | `wt-r6-signpost` / `wt/r6-signpost` | Running. **No migration.** One addendum |
 
-Plus `wt-r6-base`, detached at `b5bed01`, which is the **coordinator's own clean measuring
-instrument**. It has no lane and must stay pristine.
+Plus `wt-r6-base`, detached at `b5bed01`, the coordinator's clean measuring instrument. **It has no
+lane and must stay pristine.**
 
-**Briefs are committed** at `docs/integration-program/round6/`: `QA_HOUSE_RULES.md`,
-`BUILD_HOUSE_RULES.md`, and five files under `briefs/`. Every addendum sent to a running lane is
-recorded in §5 below.
+**Migration allocations this round: 0102 G-E, 0103 SKIPPED FOREVER, 0104 INVESTOR (taken), 0105
+CYCLE, 0106 MINT, 0107 FORK if needed. Next free is 0108.**
+
+**A lane broke the `.test-lock` and deleted a sibling's, causing a cascade between roughly 19:10 and
+19:28 UTC.** It disclosed this itself. G-D and G-E were warned. Any suite failure in that window is
+contention, not a regression.
 
 ## 3 · The measured baseline. Judge no lane against anything else
 
