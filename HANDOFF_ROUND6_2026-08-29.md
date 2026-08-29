@@ -39,7 +39,7 @@ touching any of this. **Nothing is unrouted.**
 | INVESTOR | `wt-r6-investor` / `wt/r6-investor` | **VERIFIED. PR #91, CI green on `bf2387c` (both runs), MERGEABLE CLEAN. HELD on landing authority.** Migration 0104 taken |
 | G-D the record and the seat | `wt-r6-gd` / `wt/r6-gd` | **VERIFIED. PR #92, CI green on `0152eda` (both runs), MERGEABLE CLEAN. HELD.** 22 found / 15 fixed / 1 refused / 1 deferred / 5 left alone. **Must land BEFORE G-E** |
 | G-E lineage, not credit | `wt-r6-ge` / `wt/r6-ge` | **VERIFIED. PR #93, CI green on `dda159e` (both runs). HELD.** Migration **0102**. **MUST LAND AFTER #92** and rebase onto it: both lanes edited `governanceApi.ts`, and a `git merge-tree` trial of the two tips is clean (exit 0) but the gates were run pre-rebase |
-| CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | **Running.** Migration **0105**. Two addenda (R61 lock rule; the two uncapped faucets, asked as a question) |
+| CYCLE | `wt-r6-cycle` / `wt/r6-cycle` | **VERIFIED. PR #96, CI green on `6d325c0`. HELD.** Migration **0105** (taken). 39 readers examined, 7 wrong, 3 more its own fix would have broken |
 | MINT | `wt-r6-mint` / `wt/r6-mint` | **VERIFIED. PR #94, CI green on `2a0f50c`, plus `intake` and `review`. HELD.** Migration **0106** |
 | FORK | `wt-r6-fork` / `wt/r6-fork` | **Running.** Migration **0107** if needed. Four addenda (bootstrap + runbook, the four broken images, R61, the two extra path-gated workflows) |
 | SIGNPOST | `wt-r6-signpost` / `wt/r6-signpost` | **VERIFIED. PR #95, CI green on `4a63106`. HELD.** No migration. 218 signposts examined, 4 defective |
@@ -50,10 +50,10 @@ lane and must stay pristine.**
 **Migration allocations this round: 0102 G-E (taken), 0103 SKIPPED FOREVER, 0104 INVESTOR (taken),
 0105 CYCLE, 0106 MINT (taken), 0107 FORK if needed. Next free is 0108.**
 
-**FIVE PRs ARE GREEN AND MERGEABLE AND ALL ARE HELD on one ask to the founder: round-6 landing
+**SIX PRs ARE GREEN AND MERGEABLE AND ALL ARE HELD on one ask to the founder: round-6 landing
 authority. R38's standing authorization says "for round 4" in its own text, and game-amora's own
 CLAUDE.md is silent on merge authority. Merging deploys to amora.regencivics.earth.**
-**#91, #92, #93, #94, #95. Landing order: #92 BEFORE #93**, and G-E rebases onto it and re-runs its
+**#91, #92, #93, #94, #95, #96. Landing order: #92 BEFORE #93**, and G-E rebases onto it and re-runs its
 gates rather than citing its pre-rebase greens.
 
 **`.github/workflows/` holds FOUR workflows, not one.** `ci.yml` (the eighteen-step `verify`),
