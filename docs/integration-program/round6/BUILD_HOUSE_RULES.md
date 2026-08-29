@@ -125,13 +125,14 @@ change and you are surprised, suspect the gate.
    enforces the no-em-dash rule. It does not. Its regex catches **a hyphen standing in for a dash**
    (`word-not`, `word-but`, `word-which`), and it walks **`client/src` only**. An em-dash in
    `shared/` sails straight past it.
-3. **The no-em-dash and no-contrast-framing rules are enforced by `check-voice`**, and only inside
-   what `check-voice` scans: `shared/` string literals, **string literals in `server/lib/`**,
-   `server/seeds/**.json`, and `docs/knowledge/*.md`. **Every other document under `docs/` is
-   deliberately left alone as a developer doc.** Voice in your commit messages, your reports, and
-   most of `docs/` is on you. **`server/lib/` was added here 2026-08-29 after Lane CYCLE watched the
-   gate catch a contrast frame in its own refusal sentence there — wider than this file first said.
-   It still does not read `client/src` prose, so client copy has no automatic check behind it.**
+3. **`check-voice` SCANS `client/src`, the WHOLE `server/` tree, `shared/`, and `docs/knowledge/`.**
+   Its roots are `["client/src", "server", "shared", "docs/knowledge"]` and it collects **JSX text**,
+   so client copy IS checked. **This entry has now been wrong twice in one round and each correction
+   came from a lane rather than from me.** First it said the gate does not read `server/lib`; a lane
+   watched it catch a contrast frame there. Then it said the gate does not read `client/src` prose;
+   a lane falsified that with an em-dash in JSX producing `Voice guard: 1 violation(s)`, exit 1,
+   naming the line. **Assume your copy is checked wherever you write it, and if you need to know the
+   scope, read `SCAN_ROOTS` rather than this file.**
 4. **`check-doc-links` watches exactly six documents**: the five under `docs/modules/` plus
    `docs/MODULE_LIBRARY_CONTRACT.md`. **`docs/FORK_RUNBOOK.md` is NOT among them.**
 5. **`check-save-honesty` names its own blind spot in its passing output: "7 call(s) whose method
