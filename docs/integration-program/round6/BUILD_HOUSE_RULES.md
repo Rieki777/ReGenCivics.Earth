@@ -126,9 +126,12 @@ change and you are surprised, suspect the gate.
    (`word-not`, `word-but`, `word-which`), and it walks **`client/src` only**. An em-dash in
    `shared/` sails straight past it.
 3. **The no-em-dash and no-contrast-framing rules are enforced by `check-voice`**, and only inside
-   what `check-voice` scans: `shared/` string literals, `server/seeds/**.json`, and
-   `docs/knowledge/*.md`. **Every other document under `docs/` is deliberately left alone as a
-   developer doc.** Voice in your commit messages, your reports, and most of `docs/` is on you.
+   what `check-voice` scans: `shared/` string literals, **string literals in `server/lib/`**,
+   `server/seeds/**.json`, and `docs/knowledge/*.md`. **Every other document under `docs/` is
+   deliberately left alone as a developer doc.** Voice in your commit messages, your reports, and
+   most of `docs/` is on you. **`server/lib/` was added here 2026-08-29 after Lane CYCLE watched the
+   gate catch a contrast frame in its own refusal sentence there — wider than this file first said.
+   It still does not read `client/src` prose, so client copy has no automatic check behind it.**
 4. **`check-doc-links` watches exactly six documents**: the five under `docs/modules/` plus
    `docs/MODULE_LIBRARY_CONTRACT.md`. **`docs/FORK_RUNBOOK.md` is NOT among them.**
 5. **`check-save-honesty` names its own blind spot in its passing output: "7 call(s) whose method
