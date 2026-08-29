@@ -2,9 +2,13 @@
  * This cycle's builders' pool.
  * Route: /builders-pool
  *
- * ReGen Civics distributes a pool of $ReGen each lunar cycle across the free
- * third-party modules villages are running. A module with a price is out of the
- * pool: its builder is paid by the villages running it.
+ * ReGen Civics distributes a pool of $ReGen each lunar cycle across the modules
+ * villages are running, split by how many MEMBERS opened each one. A module with
+ * a price is out of the pool: its builder is paid by the villages running it.
+ * Modules ReGen Civics built earn on the same footing as anybody else's, and
+ * what they earn goes back into the ReGen Civics gratitude pool to be given out
+ * (R64). This page prints that as its own number, because being able to see it
+ * is the point of the rule.
  *
  * WHAT THIS PAGE MAY SHOW, AND WHY THE LINE IS THERE (ADR-50). Module ids,
  * builder credits, village COUNTS, and amounts. Never which village runs what.
@@ -25,6 +29,20 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 
 const display = { fontFamily: "var(--font-display)" } as const;
+
+/**
+ * What happened to a share, in words a reader can act on.
+ *
+ * "Back to the gratitude pool" is spelled out rather than shown as a status
+ * chip, because it is the thing somebody would come to this page to check: it
+ * says the modules ReGen Civics built were paid into the community.
+ */
+const SETTLEMENT: Record<string, string> = {
+  sent: "Sent to the builder",
+  recycled: "Back to the gratitude pool",
+  waiting: "Waiting on the builder",
+  "too-small": "Too small to send",
+};
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const day = (value: string | Date | null | undefined) =>
@@ -59,8 +77,17 @@ export default function BuildersPool() {
             charges a price is paid by the villages using it, so it is not.
           </p>
           <p className="text-white/60 mt-3 max-w-2xl">
-            The split follows how many villages run each module. We publish the counts, never
-            which village runs what.
+            The split follows how many members opened each module. Each village counts the
+            members who opened it as a share of its own active members, so a module three
+            people use in a village of four earns more than one three people use in a village
+            of four hundred. We publish the totals, never which village runs what.
+          </p>
+          <p className="text-white/60 mt-3 max-w-2xl">
+            Modules we built are in the split on the same terms as everybody else's. What they
+            earn goes into the ReGen Civics gratitude pool and is given out through the
+            gratitude system, so it reaches the community rather than staying with us. One day
+            another group's modules may be opened by more members than ours, and they will earn
+            more than we do out of the same pool.
           </p>
         </AnimatedSection>
 
@@ -77,7 +104,7 @@ export default function BuildersPool() {
                 </span>
               </div>
 
-              <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <dl className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
                 <div>
                   <dt className="text-white/50 text-sm">Pool</dt>
                   <dd className="text-xl font-semibold">{fmt(statement.pool)} $ReGen</dd>
@@ -87,8 +114,12 @@ export default function BuildersPool() {
                   <dd className="text-xl font-semibold">{fmt(statement.paid)} $ReGen</dd>
                 </div>
                 <div>
-                  <dt className="text-white/50 text-sm">Waiting to be claimed</dt>
+                  <dt className="text-white/50 text-sm">Waiting on a builder</dt>
                   <dd className="text-xl font-semibold">{fmt(statement.accrued)} $ReGen</dd>
+                </div>
+                <div>
+                  <dt className="text-white/50 text-sm">Back to the gratitude pool</dt>
+                  <dd className="text-xl font-semibold">{fmt(statement.recycled)} $ReGen</dd>
                 </div>
                 <div>
                   <dt className="text-white/50 text-sm">Villages counted</dt>
@@ -116,7 +147,8 @@ export default function BuildersPool() {
                       <tr>
                         <th scope="col" className="py-2 pr-4 font-medium">Module</th>
                         <th scope="col" className="py-2 pr-4 font-medium">Built by</th>
-                        <th scope="col" className="py-2 pr-4 font-medium">Villages</th>
+                        <th scope="col" className="py-2 pr-4 font-medium">Members reached</th>
+                        <th scope="col" className="py-2 pr-4 font-medium">Reach</th>
                         <th scope="col" className="py-2 pr-4 font-medium">Share</th>
                         <th scope="col" className="py-2 font-medium">Status</th>
                       </tr>
@@ -125,10 +157,14 @@ export default function BuildersPool() {
                       {statement.modules.map((m) => (
                         <tr key={m.moduleId} className="border-t border-white/10">
                           <td className="py-3 pr-4 font-mono">{m.moduleId}</td>
-                          <td className="py-3 pr-4">{m.builtBy ?? ""}</td>
-                          <td className="py-3 pr-4">{m.villages}</td>
+                          <td className="py-3 pr-4">
+                            {m.builtBy ?? ""}
+                            {m.platformBuilt ? <span className="text-white/50"> (we built this)</span> : null}
+                          </td>
+                          <td className="py-3 pr-4">{m.membersReached}</td>
+                          <td className="py-3 pr-4">{m.reach.toFixed(2)}</td>
                           <td className="py-3 pr-4">{fmt(m.amount)} $ReGen</td>
-                          <td className="py-3 text-white/60">{m.settled ? "Sent" : "Waiting"}</td>
+                          <td className="py-3 text-white/60">{SETTLEMENT[m.settlement] ?? m.settlement}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -154,23 +190,30 @@ export default function BuildersPool() {
                 No cycle has closed yet
               </h2>
               <p className="text-white/70">
-                Every module in the platform today was built by ReGen Civics, so the pool has
-                nobody outside to pay. The first cycle with a line in it will show up here.
+                Every module in the platform today was built by ReGen Civics. Those modules still
+                earn their share, and that share goes back into the ReGen Civics gratitude pool
+                rather than to anybody's wallet. The first settled cycle shows up here.
               </p>
             </section>
           </AnimatedSection>
         )}
 
-        {terms.data && terms.data.payableModules.length > 0 ? (
+        {terms.data && terms.data.attestations.length > 0 ? (
           <AnimatedSection>
             <section className="mt-8">
               <h2 className="text-xl font-bold mb-3" style={display}>
-                Modules the pool can pay
+                Builders we have checked
               </h2>
+              <p className="text-white/60 text-sm mb-3 max-w-2xl">
+                Every module a village runs earns its share. A share is only sent to a builder
+                once somebody here has read the listing and confirmed who wrote it, which is
+                what this list records.
+              </p>
               <ul className="text-white/70 space-y-1">
-                {terms.data.payableModules.map((m) => (
+                {terms.data.attestations.map((m) => (
                   <li key={m.moduleId}>
                     <span className="font-mono">{m.moduleId}</span>, built by {m.builtBy}
+                    {m.kind === "platform" ? " (us)" : ""}, checked {m.reviewedOn}
                   </li>
                 ))}
               </ul>
@@ -187,7 +230,8 @@ export default function BuildersPool() {
               <ul className="text-white/70 space-y-1">
                 {history.data.map((h) => (
                   <li key={h.cycleNumber}>
-                    Cycle {h.cycleNumber}, closed {day(h.cycleEndsAt)}: {fmt(h.paid)} $ReGen to builders
+                    Cycle {h.cycleNumber}, closed {day(h.cycleEndsAt)}: {fmt(h.paid)} $ReGen to
+                    builders, {fmt(h.recycled)} $ReGen back to the gratitude pool
                   </li>
                 ))}
               </ul>
@@ -200,7 +244,9 @@ export default function BuildersPool() {
             Modules are built for the villages listed on the{" "}
             <Link href="/network" className="underline hover:text-white">network page</Link>.
             To be paid from the pool, a builder holds a ReGen Civics account with their Hypha
-            account and Base address linked in their profile.
+            account and Base address linked in their profile. We never keep a wallet address in
+            a file: the address comes from the builder's own profile at the moment a statement
+            is written, so the person being paid is the one who set it.
           </p>
         </AnimatedSection>
       </div>
