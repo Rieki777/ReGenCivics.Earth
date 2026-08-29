@@ -196,9 +196,12 @@ welcome; a full write-up is duplicated work. **If you find one is WRONG, that is
 3. **A village cannot create a role, seat anyone by vote, or take a power off a role.** The last is
    design: a ballot that stripped a capability would manufacture by vote the exact state
    `moveCapabilityToVillage` refuses to create.
-4. **`mayAct` writes the public "acted on a power" line before the route runs** for keys predating
-   the sealing work, so a break-glass followed by a validation failure can leave a record of an act
-   that did not complete. Partly addressed; known.
+4. ~~**`mayAct` writes the public "acted on a power" line before the route runs.**~~ **CORRECTED
+   2026-08-29 by QA-2, which drove it rather than inheriting it: break-glass plus a 400 wrote ZERO
+   public rows, and break-glass plus a valid body wrote EXACTLY ONE.** The class looks closed on this
+   build. It was measured on one key rather than all of them, so a NEW instance on a different key is
+   still a finding, but do not report the general claim as open. **This is the third inherited claim
+   this round that measurement moved in the product's favour.**
 5. **The READER half of the payload class has no gate** — a route that saves fine while the
    renderer addresses fields that are not columns. Known class. **A NEW INSTANCE IS A FINDING.**
 6. **`ProjectHistory.tsx`'s "Discussion topics" and per-item status overrides are localStorage
