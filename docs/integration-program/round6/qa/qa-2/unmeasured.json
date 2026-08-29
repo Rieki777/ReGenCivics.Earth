@@ -1,0 +1,32 @@
+[
+  {
+    "id": "U-01",
+    "what": "Whether the suppressed-photo 404 is byte-identical to a missing-file 404",
+    "why": "No suppressed place photo exists in the scratch village, and creating one needs a curator flow I did not build. The missing-file 404 was captured for whoever does measure it: status 404, content-type application/json; charset=utf-8, body exactly {\"error\":\"Not found\"}. Reading the route, both branches return res.status(404).json({error:\"Not found\"}), so the two look identical in source; that is a code read and not a measurement."
+  },
+  {
+    "id": "U-02",
+    "what": "What is actually in investor_docs on LIVE",
+    "why": "GET /api/admin/investor-docs answers 401 signed out and I do not hold a production credential this round. What I could bound from outside: /health reports the live uploads volume holds 14 files totalling under 1 MB with 0 orphans, so whatever the packet route would email is at most those 14 small files; and POST /api/investor-docs/request is reachable anonymously on live (an empty-bodied POST answers 400 at the validation step, before any lead is stored or any email sent)."
+  },
+  {
+    "id": "U-03",
+    "what": "Whether the client bundle at b5bed01 renders any of this differently",
+    "why": "`pnpm build` returned exit 0 to the harness and died silently mid-transform (the libuv abort in house rules section 6). dist/public is still the Aug 23 build and dist/index.js carried no b5bed01 marker until I ran scripts/build-server.mjs on its own. The SERVER I attacked is b5bed01 (grep -c b5bed01 dist/index.js = 1); the client is not, so I made no claim about any rendered page. Every finding here is API-level."
+  },
+  {
+    "id": "U-04",
+    "what": "Whether the 130-in-one-cycle gratitude overspend reproduces on LIVE",
+    "why": "It needs a signed-in member and two writes, and this round has no live tokens and no live writes. The live build marker matches the SHA I attacked exactly (2026-07-28-wave1-b5bed01 at both 18:44 and 19:13 UTC), and /api/gratitude is not behind requireModule, so the route exists there; I did not fire it."
+  },
+  {
+    "id": "U-05",
+    "what": "Whether ledger.admin_mint_cycle_cap actually stops a self-grant at its ceiling",
+    "why": "My loop ran 40 calls of 50 and stopped because the loop ended, not because the route refused: 2131 of 10000 issued. The cap was never reached, so I proved the per-call ceiling does not exist and did NOT prove the aggregate one bites. Someone should drive it to 10000 and read the 409."
+  },
+  {
+    "id": "U-06",
+    "what": "Whether any writer outside server/ reaches the uploads volume",
+    "why": "scripts/check-upload-strip.mjs scans server/ only (114 files, clean). I grepped client/, shared/ and scripts/ for a literal \"uploads\" path write and found none, but a writer that builds the path from parts would not show up in that grep, and I did not write a second AST pass over those trees."
+  }
+]

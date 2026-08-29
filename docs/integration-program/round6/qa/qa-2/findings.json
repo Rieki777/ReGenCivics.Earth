@@ -1,0 +1,67 @@
+[
+  {
+    "id": "QA2-01",
+    "severity": "HIGH",
+    "category": "value cannot be made to appear (invariant 1)",
+    "surface": "local",
+    "route": "POST /api/gratitude then POST /api/game/gratitude/send",
+    "viewport": "n/a (API)",
+    "buildMarker": "2026-07-28-wave1-b5bed01",
+    "elementChain": "POST /api/gratitude -> gratitude_log(cycle_id='moon-329') | POST /api/game/gratitude/send -> gratitude_log(cycle_id='lunar-000329') | GET /api/game/gratitude/me -> budget.spent",
+    "repro": "As one member in one lunar cycle: spend the whole Hearts allowance on POST /api/gratitude until it answers 'You can still give 0 this moon'. Then read GET /api/game/gratitude/me: it reports spent 0, remaining 100. Then spend 100 through POST /api/game/gratitude/send. gratitude_log now holds 130 from that one member in that one cycle, against an acknowledgement budget of 100 and a Hearts allowance of 30.",
+    "screenshot": null,
+    "personaLine": "I gave away thirty, the page told me I had given away nothing, and it let me give away a hundred more."
+  },
+  {
+    "id": "QA2-02",
+    "severity": "HIGH",
+    "category": "value cannot be made to appear (invariant 1)",
+    "surface": "local",
+    "route": "the moon settlement over gratitude_log",
+    "viewport": "n/a (API + shared/settlement functions)",
+    "buildMarker": "2026-07-28-wave1-b5bed01",
+    "elementChain": "server/lib/gratitude-cycles.ts settleCycle(entries, cycleId) filters e.cycleId === cycleId | parseCycleId matches ^lunar-(\\d+)$ | POST /api/gratitude writes cycle_id 'moon-329'",
+    "repro": "With gratitude given through both routes in one cycle, run the product's own settleCycle over the product's own rows at cycleIdFor(): it returns 101 of the 140 units in the table. The 39 units written by POST /api/gratitude are absent, every settlement row reads receivedHearts 0, and dueCycles never lists a cycle whose only activity came through that route.",
+    "screenshot": null,
+    "personaLine": "Nine people thanked me this moon and the moon's own ledger says nobody did."
+  },
+  {
+    "id": "QA2-03",
+    "severity": "HIGH",
+    "category": "a power cannot be held by someone nobody gave it to (invariant 3) / R54",
+    "surface": "local",
+    "route": "POST /api/admin/tokens/:slug/mint",
+    "viewport": "n/a (API)",
+    "buildMarker": "2026-07-28-wave1-b5bed01",
+    "elementChain": "POST /api/admin/tokens/gratitude/mint {toUserId: <the caller's own id>, amount, reason} -> postTransfer from sys:mint -> member ledger",
+    "repro": "As the only admin, POST /api/admin/tokens/gratitude/mint with toUserId set to your own user id and amount 25. It answers 200 and your own gratitude ledger moves 20 -> 45. Repeat with amount 101 to another member: 200, credited in full. Repeat for every platform-governed slug (credits, library-credit, stay-credit, village-voice): 500 each, all to yourself, all 200, in the same cycle. The only ceiling is ledger.admin_mint_cycle_cap = 10000, which is per token per cycle, so one admin can self-issue 10000 of each of five tokens per lunation with no second signature.",
+    "screenshot": null,
+    "personaLine": "The person who runs the software paid themselves and nobody had to agree."
+  },
+  {
+    "id": "QA2-04",
+    "severity": "HIGH",
+    "category": "a deny cannot be over-reach (invariant 6) / R56",
+    "surface": "local",
+    "route": "POST /api/admin/badges then POST /api/admin/badges/:id/award",
+    "viewport": "n/a (API)",
+    "buildMarker": "2026-07-28-wave1-b5bed01",
+    "elementChain": "POST /api/admin/badges {kind: 'warning', denies: ['ballot.vote']} -> 200 | award to a member -> 200 | buildElectorate() -> hasCapability('ballot.vote') -> false -> the member is absent from ballot_electorate | POST /api/governance/ballots/:id/vote -> 409 'Who may vote froze when it opened'",
+    "repro": "Create a warning badge whose denies list is ['ballot.vote'] (accepted, 200). Award it to a member (200). Open any ballot afterwards. That member is not in ballot_electorate at all; electorateCount drops by one; she gets no ballot_opened notice; GET /api/badges/of/<her id> returns an empty badge list while a granted badge on the same member renders there; and if she reaches the ballot and votes she is told 'You are outside this ballot's electorate. Who may vote froze when it opened', which names the freeze and not the badge.",
+    "screenshot": null,
+    "personaLine": "I was taken off the voting roll by one person, the reason is on no page I can see, and the product told me it was because I was late."
+  },
+  {
+    "id": "QA2-05",
+    "severity": "MED",
+    "category": "value cannot be made to appear (invariant 1)",
+    "surface": "local",
+    "route": "GET /api/<any public-tier module> with a revoked session token",
+    "viewport": "n/a (API)",
+    "buildMarker": "2026-07-28-wave1-b5bed01",
+    "elementChain": "wireModuleAuth.meterUserId -> decodeToken(header).userId (no tokenVersion check) | authedUser -> decodeToken + tokenVersion check",
+    "repro": "Sign in, POST /api/auth/logout, then GET a public-tier module route with the same token. GET /api/profile answers 401 with that token, so the session is genuinely dead; the module route still answers 200 and still writes a module_usage_marks row for that member. A signed-out or removed member keeps counting toward that module's membersReached and toward the village's activeMembers denominator for the rest of the cycle.",
+    "screenshot": null,
+    "personaLine": "I left the village in March and the module report still counts me as somebody who showed up."
+  }
+]
