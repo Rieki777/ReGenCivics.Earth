@@ -158,22 +158,29 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
     }
   }
 
+  /**
+   * Only what changed. Sending the whole draft every time would be wrong in a
+   * way that is easy to miss: `updateItem` moves a `raw` item to `shaped` when
+   * the payload carries a `kind`, so a save that filled in nothing would still
+   * report the item as shaped. "Shaped" has to mean it has a shape.
+   *
+   * An emptied text field sends `null`, not `""`, so it clears the column.
+   */
   const save = () => {
-    if (!draft) return;
-    void run("Saved.", () =>
-      update.mutateAsync({
-        id,
-        kind: draft.kind,
-        ask: draft.ask.trim() || null,
-        doneWhen: draft.doneWhen.trim() || null,
-        repo: draft.repo.trim() || null,
-        surface: draft.surface.trim() || null,
-        blockedOn: draft.blockedOn.trim() || null,
-        due: draft.due || null,
-        effort: draft.effort || null,
-        priority: draft.priority,
-      }),
-    );
+    if (!data || !draft) return;
+    const base = draftFrom(data);
+    const changed = (Object.keys(base) as Array<keyof Draft>).filter((k) => base[k] !== draft[k]);
+    if (changed.length === 0) return;
+
+    const payload: Record<string, unknown> = { id };
+    for (const k of changed) {
+      if (k === "priority") payload.priority = draft.priority;
+      else if (k === "kind") payload.kind = draft.kind;
+      else if (k === "due") payload.due = draft.due || null;
+      else if (k === "effort") payload.effort = draft.effort || null;
+      else payload[k] = (draft[k] as string).trim() || null;
+    }
+    void run("Saved.", () => update.mutateAsync(payload as never));
   };
 
   return (

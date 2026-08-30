@@ -145,7 +145,7 @@ describe("BrainItemSheet", () => {
     expect(screen.getByTestId("brain-notice").textContent).toContain("Promoted to ready");
   });
 
-  it("Save is dead until something changed, then sends the edit", async () => {
+  it("Save is dead until something changed, then sends ONLY what changed", async () => {
     updateMutateAsync.mockResolvedValue(item());
     const user = userEvent.setup();
     render(<BrainItemSheet id={7} onClose={() => {}} />);
@@ -156,13 +156,27 @@ describe("BrainItemSheet", () => {
     expect((screen.getByTestId("brain-save") as HTMLButtonElement).disabled).toBe(false);
 
     await user.click(screen.getByTestId("brain-save"));
-    await waitFor(() => {
-      expect(updateMutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 7, ask: "Fix the stacked dialogs on mobile" }),
-      );
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalled());
+
+    // `updateItem` moves a raw item to `shaped` when the payload carries a
+    // `kind`. Sending the untouched kind on every save would report items as
+    // shaped that nobody shaped, so the payload is exactly the diff.
+    expect(updateMutateAsync.mock.calls[0][0]).toEqual({
+      id: 7,
+      ask: "Fix the stacked dialogs on mobile",
     });
-    // An empty field must clear the column, not write "".
-    expect(updateMutateAsync.mock.calls[0][0]).toMatchObject({ doneWhen: null, repo: null });
+  });
+
+  it("clearing a field sends null, so the column is cleared rather than set to empty", async () => {
+    getUseQuery.mockReturnValue(loaded(item({ repo: "regen-civics", ask: "a" })));
+    updateMutateAsync.mockResolvedValue(item());
+    const user = userEvent.setup();
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+
+    await user.clear(screen.getByTestId("brain-field-repo"));
+    await user.click(screen.getByTestId("brain-save"));
+
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledWith({ id: 7, repo: null }));
   });
 
   it("renders an attachment from the authed asset route and degrades to its key", async () => {
