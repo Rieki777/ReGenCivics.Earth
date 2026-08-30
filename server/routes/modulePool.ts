@@ -79,13 +79,25 @@ function publicView(statement: any, shares: any[]) {
        * person, published beside their name, and nobody needs it to check the
        * arithmetic.
        */
-      settlement: settlementWord(s.state),
+      settlement: settlementWord(s.state, !!s.paidAt),
     })),
   };
 }
 
-function settlementWord(state: string): "sent" | "recycled" | "waiting" | "too-small" {
-  if (state === "payable") return "sent";
+/**
+ * What happened to this share, in one word.
+ *
+ * `payable` IS NOT `sent`, and the page used to say it was. A payable share is
+ * one the hub worked out it could send, and until the treasury's Hypha space
+ * executes the proposal nothing has moved. Saying "Sent" beside an amount
+ * nobody has received is a sentence the product causes to be false, and the
+ * reader it misleads is the builder waiting for the money.
+ *
+ * `paidAt` is written by the Alchemy webhook off a real transaction, so it is
+ * the only thing here entitled to the word.
+ */
+function settlementWord(state: string, paid: boolean): "sent" | "ready" | "recycled" | "waiting" | "too-small" {
+  if (state === "payable") return paid ? "sent" : "ready";
   if (state === "recycled") return "recycled";
   if (state === "below-floor") return "too-small";
   return "waiting";

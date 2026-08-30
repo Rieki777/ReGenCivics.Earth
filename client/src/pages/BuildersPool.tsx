@@ -38,7 +38,8 @@ const display = { fontFamily: "var(--font-display)" } as const;
  * says the modules ReGen Civics built were paid into the community.
  */
 const SETTLEMENT: Record<string, string> = {
-  sent: "Sent to the builder",
+  sent: "Sent, confirmed on Base",
+  ready: "Ready to send",
   recycled: "Back to the gratitude pool",
   waiting: "Waiting on the builder",
   "too-small": "Too small to send",
@@ -85,9 +86,9 @@ export default function BuildersPool() {
           <p className="text-white/60 mt-3 max-w-2xl">
             Modules we built are in the split on the same terms as everybody else's. What they
             earn goes into the ReGen Civics gratitude pool and is given out through the
-            gratitude system, so it reaches the community rather than staying with us. One day
-            another group's modules may be opened by more members than ours, and they will earn
-            more than we do out of the same pool.
+            gratitude system, so it reaches the community rather than staying with us. The
+            number is on every cycle below. One day another group's modules may be opened by
+            more members than ours, and they will earn more than we do out of the same pool.
           </p>
         </AnimatedSection>
 
@@ -190,9 +191,10 @@ export default function BuildersPool() {
                 No cycle has closed yet
               </h2>
               <p className="text-white/70">
-                Every module in the platform today was built by ReGen Civics. Those modules still
-                earn their share, and that share goes back into the ReGen Civics gratitude pool
-                rather than to anybody's wallet. The first settled cycle shows up here.
+                Every module in the platform today was built by ReGen Civics. A module we built
+                earns its share like any other, and that share goes back into the ReGen Civics
+                gratitude pool rather than to anybody's wallet, from the cycle a village starts
+                reporting who built each module it runs. The first settled cycle shows up here.
               </p>
             </section>
           </AnimatedSection>
