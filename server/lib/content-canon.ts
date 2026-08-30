@@ -12,7 +12,7 @@
  */
 
 export const CANON_FACTS = `
-- The Fund: venture capital structure (intentional, legibility is the point);
+- The Fund: venture capital structure (intentional, legibility is the point). It is IN FORMATION: not a legal entity, target launch 2027, gathering non-binding LOIs, accepting no capital. Never write about it in the present tense as an operating fund, never name a securities exemption, and label every fee, return target and minimum as proposed;
   governance token RCVoice; economic token $RCivics; land-backed security;
   90% Unity Model prevents governance capture; HEIST impact framework
   (soil health, water, biodiversity, social fabric); on-chain transparency

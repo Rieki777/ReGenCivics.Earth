@@ -654,7 +654,7 @@ export const gameRoles: GameRole[] = [
      7 roles that coordinate the capital side of the bridge.
      Governance flows through Hypha DAO + committee review.
      Primary compensation: $RCivics tokens. Optional fiat draw from
-     a 2% management fee pool once the fund crosses $1M AUM.
+     a 2% management fee pool once the fund is formed and crosses $1M AUM.
      ═══════════════════════════════════════════════════════════════ */
   {
     title: "Fund Steward",

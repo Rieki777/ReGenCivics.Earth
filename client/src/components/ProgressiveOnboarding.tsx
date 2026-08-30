@@ -13,6 +13,7 @@ import { PathCardImage } from '@/components/PathCardImage';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { cdnImg } from "@/lib/utils";
+import { FUND } from "@shared/fund";
 
 const VISIT_KEY = 'regen_civics_visit_count';
 const ONBOARDING_DISMISSED_KEY = 'regen_civics_onboarding_dismissed';
@@ -24,7 +25,7 @@ const pathCards = [
     tagline: "Fund the Renaissance",
     shortDesc: "Land-backed investments in systemic regeneration",
     details:
-      "ReGen Civics is a venture fund that backs regenerative land projects and the alliance organizations that support them. Capital flows in seasonal cohorts aligned with equinoxes and solstices. Returns come from land value appreciation, revenue sharing, and token economics. Open to accredited investors with a $250,000 minimum.",
+      `${FUND.statement} It is being formed to back regenerative land projects and the alliance organizations that support them, with capital flowing in seasonal cohorts aligned with equinoxes and solstices. Returns are designed to come from land value appreciation, revenue sharing, and token economics. ${FUND.eligibility} The proposed minimum is $250,000.`,
     href: "/fund",
     icon: Coins,
     borderColor: "border-amber-400/40",
