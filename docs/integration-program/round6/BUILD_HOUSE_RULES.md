@@ -88,10 +88,20 @@ scripts/enable-all-modules.mjs   docs/modules/**
 than assuming from its name.** They are cheap (under twenty seconds) and they block.
 **Enumerate the DIRECTORY, never one file in it.**
 
-### The baseline, measured by the coordinator on a pristine `b5bed01` worktree, 2026-08-29
+### The baseline. READ THE SHAPE, NOT THE NUMBERS.
 
 **All fourteen script gates PASS on untouched trunk, and every one of them reports a NON-ZERO check
-count**, so none is a silent zero. Your landing criterion is **no worse than this**, not "green":
+count**, so none is a silent zero. Your landing criterion is **no worse than this**, not "green".
+
+**THE COUNTS BELOW ARE STALE AND WILL BE STALE AGAIN.** They were measured on `b5bed01` on
+2026-08-29 and **four separate lanes corrected them within a single round** as work landed. At
+`e1dfe12` on 2026-08-30 the same gates read: **brand-refs 52 against a baseline of 63** (11 of
+headroom, not 3), **check-voice 657 files**, **auth-fetch 344 prefixes**, **doc-links 41 references**,
+**upload-strip 115 server files**, **route-reachability 71 routes**, **map-routes 63**.
+
+**So measure the baseline yourself, in your own session, from the pristine blob**, and compare failure
+SETS rather than counts. A number written into a brief is stale the moment another lane lands, and
+quoting one back at me as evidence tells me only that you read this file.
 
 ```
 check-brand-refs          ratchet zones hold 60 legacy reference(s) in code, BASELINE 63
@@ -118,7 +128,7 @@ change and you are surprised, suspect the gate.
 ### Five corrections to what this file and the ledger said before that measurement
 
 1. **THE BRAND RATCHET HAS 3 OF HEADROOM, not zero.** Every brief in this program inherited
-   "63/63, zero headroom" from a reading at `1428603`. It is **60 against a baseline of 63** at
+   "63/63, zero headroom" from a reading at `1428603`, and this file then said 60, which was also wrong by 2026-08-30. It was **60 against a baseline of 63** at
    `b5bed01`; round-5 lanes removed three. It still only ever decreases, so adding a reference trips
    it. Read `$?`, never the last line, and never `--update-baseline`.
 2. **`check-hyphen-dash` IS NOT AN EM-DASH GATE.** An earlier version of this file implied it
