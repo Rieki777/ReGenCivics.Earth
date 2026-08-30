@@ -182,8 +182,24 @@ export async function fetchVillageUsage(
  * contribute the reach it last reported and a module id carries no reach.
  * A carried report keeps its ORIGINAL cycle id, so the statement's snapshot
  * shows plainly that one village's numbers came from an earlier lunation.
+ *
+ * A DRY RUN WRITES NOTHING, and until now it did.
+ *
+ * `scripts/module-pool-statement.ts` has always told its reader that a dry run
+ * "writes nothing at all: no statement row, no share rows, and no snapshot
+ * carry, so running one can never spend a village's carry-forward". Two of the
+ * three were true. This function ran unconditionally, so a dry run overwrote
+ * every answering village's stored snapshot AND stamped `carriedForCycle` on
+ * every silent one, which SPENDS that village's single carry. The next real
+ * settlement then found the carry already used and counted the village as
+ * absent, cutting every builder's share for a preview somebody ran to decide
+ * whether to settle at all. `opts.dryRun` is what makes the sentence true.
  */
-export async function readRoster(cycleNumber: number, db: any): Promise<VillageAnswer[]> {
+export async function readRoster(
+  cycleNumber: number,
+  db: any,
+  opts: { dryRun?: boolean } = {},
+): Promise<VillageAnswer[]> {
   const roster = poolRoster();
   const answers: VillageAnswer[] = [];
 
@@ -191,7 +207,7 @@ export async function readRoster(cycleNumber: number, db: any): Promise<VillageA
     const live = await fetchVillageUsage(game, cycleNumber);
 
     if (live.ok) {
-      await db.execute(sql`
+      if (!opts.dryRun) await db.execute(sql`
         INSERT INTO modulePoolVillageSnapshots (villageId, instanceId, modules, usageReport, fetchedAt, carriedForCycle)
         VALUES (
           ${game.id}, ${live.report.instanceId},
@@ -235,9 +251,14 @@ export async function readRoster(cycleNumber: number, db: any): Promise<VillageA
       continue;
     }
 
-    await db.execute(sql`
-      UPDATE modulePoolVillageSnapshots SET carriedForCycle = ${cycleNumber} WHERE villageId = ${game.id}
-    `);
+    // The carry is SPENT here, so a dry run must not reach it. A preview that
+    // used up a village's one carry would change the settlement it was run to
+    // preview.
+    if (!opts.dryRun) {
+      await db.execute(sql`
+        UPDATE modulePoolVillageSnapshots SET carriedForCycle = ${cycleNumber} WHERE villageId = ${game.id}
+      `);
+    }
     answers.push(answerFrom(game.id, "carried", storedReport, live.reason));
   }
 
@@ -407,7 +428,7 @@ export async function settleCycle(cycleNumber: number, opts: { dryRun?: boolean 
     }
 
     try {
-      const answers = await readRoster(cycleNumber, db);
+      const answers = await readRoster(cycleNumber, db, { dryRun: opts.dryRun });
       const usage = countUsage(answers);
       const identities = await resolveIdentities(usage, db);
       const carryIn = opts.dryRun ? 0 : await carryInFor(cycleNumber, db);

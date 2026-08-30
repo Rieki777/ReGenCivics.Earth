@@ -31,7 +31,7 @@ import { modulePoolShares, modulePoolStatements } from "../../drizzle/schema";
 import { MODULE_BUILDERS } from "@shared/moduleBuilders";
 import { cycleBoundsByNumber } from "@shared/lunar";
 import { POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement } from "@shared/modulePool";
-import { bridgeToHypha } from "../lib/hypha-bridge";
+import { bridgePageUrl, bridgeToHypha } from "../lib/hypha-bridge";
 import { recycleHistory } from "../lib/gratitude-cycles";
 
 /** One statement's public face: module ids, reach, amounts. No people, no villages. */
@@ -419,7 +419,7 @@ export const modulePoolRouter = router({
       if (line.bridgeKey) {
         // Idempotent by re-use. Opening a second bridge for one share is how a
         // builder gets paid twice, once per link somebody kept in a tab.
-        return { bridgeKey: line.bridgeKey, bridgeUrl: `/bridge/hypha/${line.bridgeKey}`, reused: true };
+        return { bridgeKey: line.bridgeKey, bridgeUrl: bridgePageUrl(String(line.bridgeKey)), reused: true };
       }
 
       const { bridgeKey, bridgeUrl } = await bridgeToHypha("module-pool-payout", {

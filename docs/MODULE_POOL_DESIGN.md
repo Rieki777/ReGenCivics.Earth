@@ -4,6 +4,25 @@ Status: proposed, awaiting Rye's decisions in section 10.
 Date: 2026-08-15.
 Owner: hub (`regen-civics`). Fork side: `game-amora`.
 
+> **Section 6 is superseded. Read ADR-51 first** (`.ai/docs/DECISIONS.md`).
+>
+> The share formula below splits by how many VILLAGES run a module and excludes
+> the platform's own. Both were replaced on 2026-08-29 under founder rulings R64
+> and R72: the weight is REACH, the share of each village's active members who
+> opened the module, capped at one per village and summed; the platform's own
+> modules are in the denominator on the same footing as anybody else's; and what
+> they earn goes to the ReGen Civics gratitude pool to be given out.
+>
+> Decision D3 (a module must be listed a full cycle before it is eligible) was
+> never built and is not built now. Decision D6's three-cycle accrual escrow was
+> never built either, and `PROPOSED_ACCRUAL_CYCLES` remains a number nothing
+> reads. The rest of this document, including the reasoning for the roster, the
+> dust floor, the carry rule and the no-signing posture, still describes the
+> shipped design.
+>
+> The rest of the file is kept as the record of how the first version was
+> argued, not as a description of what runs.
+
 ## 1. What Rye asked for
 
 Verbatim:

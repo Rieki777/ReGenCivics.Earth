@@ -42,6 +42,19 @@ const FORM_KIND_URL: Record<string, string> = {
   space_to_space_membership: "space-to-space-membership",
 };
 
+/**
+ * The bridge page for one key.
+ *
+ * Exported so a caller re-offering an EXISTING bridge produces the same URL as
+ * the one that created it. `modulePool.openPayout` re-uses a bridge rather than
+ * opening a second one for the same share, because two links for one payment is
+ * how somebody gets paid twice, and a caller building that second URL by hand
+ * would have produced a different shape from the first.
+ */
+export function bridgePageUrl(bridgeKey: string): string {
+  return `${REGEN_CIVICS_BASE}/bridge/hypha/${bridgeKey}`;
+}
+
 /** 8-char base32 key. ~40 bits of entropy is plenty for the bridge use case. */
 function generateBridgeKey(): string {
   const bytes = crypto.randomBytes(5);
@@ -73,10 +86,7 @@ export async function createHyphaBridge(payload: HyphaBridgePayload): Promise<Cr
         payload: JSON.stringify(payload),
         status: "created",
       } as any);
-      return {
-        bridgeKey,
-        bridgeUrl: `${REGEN_CIVICS_BASE}/bridge/hypha/${bridgeKey}`,
-      };
+      return { bridgeKey, bridgeUrl: bridgePageUrl(bridgeKey) };
     } catch (err: any) {
       if (err?.code === "ER_DUP_ENTRY" && attempt < 4) continue;
       throw err;
