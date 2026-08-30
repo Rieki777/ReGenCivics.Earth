@@ -100,6 +100,17 @@ if (existsSync(TOUCH_AUDIT)) {
   run("gate 1c: touch-target audit", python, [TOUCH_AUDIT]);
 }
 
+// Gate 1d: the fund's story stays true, and stays in one place. Added
+// 2026-08-30 after the /opportunity honesty pass found the same fund
+// described twenty-one ways: a page promising 12 to 18% net IRR while the
+// crawler prose injected into every response promised 8 to 12%, an exemption
+// nobody had chosen cited in three places, and four different names for one
+// fund that is not yet a legal entity. Bans the retired claims, and requires
+// every surface that describes the fund to import from shared/fund.ts.
+// Suppress a reviewed line with `fund-claims-allow: <reason>` on it or the
+// line above.
+run("gate 1d: fund claims", process.execPath, ["scripts/check-fund-claims.mjs"]);
+
 // Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
@@ -112,7 +123,7 @@ if (!existsSync(TSC)) {
 run("gate 3: typecheck", process.execPath, [TSC, "--noEmit"]);
 
 process.stdout.write(
-  "\n✓ Gates 1, 1b, 1c and 3 pass.\n" +
+  "\n✓ Gates 1, 1b, 1c, 1d and 3 pass.\n" +
     "  Gate 2 is manual — for each className or @keyframes you added:\n" +
     "    rg -g '*.css' '<the-name>' client/src/\n",
 );
