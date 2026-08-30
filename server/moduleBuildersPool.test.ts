@@ -33,10 +33,14 @@ const wire = (over: Record<string, unknown> = {}) => ({
 
 const mod = (over: Record<string, unknown> & { moduleId: string }) => ({
   membersReached: 3,
+  activeMembers: 4,
   reach: 0.75,
   builtBy: "Ada Lovelace",
   builtByAccount: "ada",
+  builtByNamespace: null,
   platformBuilt: false,
+  poolEligible: true,
+  disposition: "payable",
   ...over,
 });
 
@@ -300,6 +304,98 @@ describe("merging villages into one cycle's usage", () => {
   it("orders by module id, so the same answers hash the same way", () => {
     const a = parsed(wire({ modules: [mod({ moduleId: "zebra" }), mod({ moduleId: "apple" })] }));
     expect(mergeVillageUsage([counted("a", a)], new Map()).map((u) => u.moduleId)).toEqual(["apple", "zebra"]);
+  });
+});
+
+describe("clause 14: a listing that charges is out of the pool by construction", () => {
+  it("drops a priced listing out of the DENOMINATOR, not merely out of the payments", () => {
+    /*
+     * Leaving it in dilutes every free module by the reach of something the
+     * villages running it are already paying for directly. Until the village
+     * started sending `poolEligible` the hub could not see a price at all and
+     * counted priced modules in.
+     */
+    const a = parsed(wire({
+      modules: [mod({ moduleId: "free", reach: 0.5 }), mod({ moduleId: "priced", reach: 0.5, poolEligible: false })],
+    }));
+    const usage = mergeVillageUsage([counted("a", a)], new Map());
+    expect(usage.map((u) => u.moduleId)).toEqual(["free"]);
+  });
+
+  it("counts a module whose report says nothing about eligibility", () => {
+    // Silence is not ineligibility. A village on a build that predates the
+    // field says nothing about ANY of its modules, and reading that as "priced"
+    // would drop every module it runs and zero its builders.
+    const bare = { moduleId: "old-build", membersReached: 2, reach: 0.5 };
+    const a = parsed(wire({ modules: [bare] }));
+    expect(a.modules[0].poolEligible).toBeNull();
+    expect(mergeVillageUsage([counted("a", a)], new Map()).map((u) => u.moduleId)).toEqual(["old-build"]);
+  });
+
+  it("keeps a module in when one village says priced and another says free", () => {
+    /*
+     * Unlike "the platform built this", removing a module RAISES everybody
+     * else's share including the remover's own, so it is a claim a village
+     * could profit from. One village contradicting it is enough to keep the
+     * module in, and the price is one fact in one repository so an honest
+     * disagreement cannot happen.
+     */
+    const a = parsed(wire({ modules: [mod({ moduleId: "map", poolEligible: false })] }));
+    const b = parsed(wire({ modules: [mod({ moduleId: "map", poolEligible: true })] }));
+    expect(mergeVillageUsage([counted("a", a), counted("b", b)], new Map()).map((u) => u.moduleId)).toEqual(["map"]);
+  });
+
+  it("reads only a real boolean, so a string never decides a payment", () => {
+    const a = parsed(wire({ modules: [mod({ moduleId: "map", poolEligible: "false" })] }));
+    expect(a.modules[0].poolEligible).toBeNull();
+    expect(mergeVillageUsage([counted("a", a)], new Map())).toHaveLength(1);
+  });
+});
+
+describe("what the reader deliberately refuses to read", () => {
+  it("takes no settlement word from a village, whatever its disposition says", () => {
+    /*
+     * The village serves `disposition` (its own verdict: "recycled", and so
+     * on). The hub decides what happens to a share; a village handing down a
+     * settlement word would be governing the pool from the Game side, which the
+     * founder ruled against. Here the village calls a third-party module
+     * "recycled" and the hub still treats it as third-party.
+     */
+    const a = parsed(wire({
+      modules: [mod({ moduleId: "map", platformBuilt: false, disposition: "recycled" })],
+    }));
+    expect(a.modules[0]).not.toHaveProperty("disposition");
+    expect(mergeVillageUsage([counted("a", a)], new Map())[0].platformBuilt).toBe(false);
+  });
+
+  it("does not claim to have verified the signature the report carries", () => {
+    /*
+     * The live report carries a `proof` block (ed25519, a kid, a signedAt and a
+     * signature) under `protocol: "module-usage/1"`. Checking it needs the
+     * village's public key and the exact bytes it was taken over, and this hub
+     * has neither. A parsed report therefore carries no proof, no protocol and
+     * no field that could be mistaken for a verification having happened.
+     */
+    const a = parsed(wire({
+      protocol: "module-usage/1",
+      proof: { alg: "ed25519", kid: "fd6f6a555f893940", signedAt: "2026-08-30T01:03:55.538Z", signature: "abc" },
+      modules: [mod({ moduleId: "map" })],
+    }));
+    for (const key of ["proof", "protocol", "signature", "verified", "signed"]) {
+      expect(a).not.toHaveProperty(key);
+    }
+  });
+
+  it("ignores builtByNamespace and the per-module activeMembers", () => {
+    // A second identifier with no resolver is a second thing to keep true, and
+    // re-deriving reach from a per-module denominator could disagree with the
+    // village about a number the village is the authority on.
+    const a = parsed(wire({
+      modules: [mod({ moduleId: "map", builtByNamespace: "somewhere-else", activeMembers: 999, reach: 0.75 })],
+    }));
+    expect(a.modules[0]).not.toHaveProperty("builtByNamespace");
+    expect(a.modules[0].reach).toBe(0.75);
+    expect(a.activeMembers).toBe(4);
   });
 });
 

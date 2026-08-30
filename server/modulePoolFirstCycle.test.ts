@@ -53,13 +53,27 @@ const villageJson = (modules: unknown[], over: Record<string, unknown> = {}) => 
   ...over,
 });
 
+/**
+ * A platform module line, shaped like the real one.
+ *
+ * Copied from what Amora actually serves (`protocol: "module-usage/1"`,
+ * 2026-08-29) rather than from the field list in the brief, which was shorter:
+ * `poolEligible`, `disposition`, `builtByNamespace` and a per-module
+ * `activeMembers` are all really there, and two of them are deliberately not
+ * read. Keeping the extras in the fixture is what proves the reader ignores
+ * them instead of tripping over them.
+ */
 const ours = (moduleId: string, membersReached: number) => ({
   moduleId,
   membersReached,
+  activeMembers: 8,
   reach: membersReached / 8,
-  builtBy: "ReGen Civics",
+  builtBy: null,
   builtByAccount: null,
+  builtByNamespace: null,
   platformBuilt: true,
+  poolEligible: true,
+  disposition: "recycled",
 });
 
 /** Settle a cycle from village JSON the way the job does, minus the network. */
@@ -188,7 +202,7 @@ describe("the pool is a ReGen Civics setting, and no village number reaches it",
       "activeMembers", "cycleId", "cycleNumber", "instanceId", "modules", "sealed", "sealedAt",
     ]);
     expect(Object.keys(out.report.modules[0]).sort()).toEqual([
-      "builtBy", "builtByAccount", "membersReached", "moduleId", "provenance", "reach",
+      "builtBy", "builtByAccount", "membersReached", "moduleId", "poolEligible", "provenance", "reach",
     ]);
   });
 });

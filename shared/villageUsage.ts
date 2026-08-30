@@ -34,6 +34,31 @@
  * Nothing here parses a member, an id, or a name. If a future report starts
  * carrying one, this file is where it must be dropped.
  *
+ * ── WHAT THIS DELIBERATELY DOES NOT READ, MEASURED OFF THE LIVE ENDPOINT ────
+ *
+ * The report carries more than this file consumes (checked against Amora
+ * 2026-08-29, `protocol: "module-usage/1"`). Each omission is a decision:
+ *
+ * - **`disposition`**, the village's own settlement verdict for the module
+ *   ("recycled", and so on). NOT READ, and this is the whole point of the
+ *   boundary. The hub decides what happens to a share; a village that could
+ *   hand down a settlement word would be governing the pool from the Game side,
+ *   which the founder ruled against. It is a useful cross-check for a human
+ *   comparing the two statements and it is never an input.
+ * - **`proof`** (`alg: ed25519`, `kid`, `signedAt`, `signature`) and
+ *   **`protocol`**. NOT VERIFIED, and not claimed to be. Checking a signature
+ *   needs the village's public key and the exact bytes it was taken over, and
+ *   this hub has neither. Inventing a canonicalisation would produce a check
+ *   that passes on anything, which is worse than no check because it reads like
+ *   one. The report is trusted exactly as far as the cap and the one-directional
+ *   provenance rule below allow, and no further, whether or not it is signed.
+ * - **`builtByNamespace`**. Not read, because nothing in the hub resolves a
+ *   namespace yet; `builtByAccount` is the lookup key and a second identifier
+ *   with no resolver would be a second thing to keep true.
+ * - **per-module `activeMembers`**. Not read: `reach` already divides by it,
+ *   and a hub that re-derived the fraction could disagree with the village
+ *   about a number the village is the authority on.
+ *
  * ── WHAT IS MISSING IS SAID, NEVER FILLED IN ────────────────────────────────
  *
  * A village on an older build serves the report without provenance on it. This
@@ -62,6 +87,21 @@ export interface VillageModuleUsage {
    * what an older village build looks like, and is not the same fact as either.
    */
   provenance: "platform" | "third-party" | "unstated";
+  /**
+   * Whether the village says this listing may draw from the pool at all.
+   *
+   * Module Library Contract clause 14: "a listing that declares `pricing` is
+   * not pool-eligible", because a paid module is already being paid by the
+   * villages running it and paying it again out of a common pool would have
+   * every village funding a product only some of them use. The hub cannot see a
+   * price; this field is the only signal it gets, and until the village started
+   * sending it the hub was counting priced modules into the denominator and
+   * diluting everybody else.
+   *
+   * `null` is a real answer meaning the report said nothing, which is what an
+   * older build looks like, and is NOT the same fact as `false`.
+   */
+  poolEligible: boolean | null;
 }
 
 /** One village's whole answer, after this file has finished refusing things. */
@@ -205,7 +245,12 @@ export function readVillageUsage(
     else if (m.platformBuilt === false) provenance = "third-party";
     else provenance = "unstated";
 
-    modules.push({ moduleId, membersReached, reach, builtBy, builtByAccount, provenance });
+    // Strict booleans. Anything else, including the string "false", is read as
+    // "the report did not say", because a field this decides money on must not
+    // be answered by a coercion.
+    const poolEligible = m.poolEligible === true ? true : m.poolEligible === false ? false : null;
+
+    modules.push({ moduleId, membersReached, reach, builtBy, builtByAccount, provenance, poolEligible });
   }
 
   modules.sort((a, b2) => (a.moduleId < b2.moduleId ? -1 : a.moduleId > b2.moduleId ? 1 : 0));
@@ -287,7 +332,11 @@ export function mergeVillageUsage(
 ): PoolUsage[] {
   const acc = new Map<
     string,
-    { reach: number; membersReached: number; villages: number; claimedPlatform: boolean; claimedBuiltBy: string | null; claimedAccount: string | null }
+    {
+      reach: number; membersReached: number; villages: number;
+      claimedPlatform: boolean; claimedBuiltBy: string | null; claimedAccount: string | null;
+      saidEligible: boolean; saidIneligible: boolean;
+    }
   >();
 
   for (const village of villages) {
@@ -300,7 +349,11 @@ export function mergeVillageUsage(
         claimedPlatform: false,
         claimedBuiltBy: null as string | null,
         claimedAccount: null as string | null,
+        saidEligible: false,
+        saidIneligible: false,
       };
+      if (m.poolEligible === true) row.saidEligible = true;
+      if (m.poolEligible === false) row.saidIneligible = true;
       row.reach += m.reach;
       row.membersReached += m.membersReached;
       if (m.reach > 0) row.villages += 1;
@@ -320,6 +373,28 @@ export function mergeVillageUsage(
 
   const out: PoolUsage[] = [];
   for (const [moduleId, row] of acc) {
+    /*
+     * CLAUSE 14: a listing that declares a price is out of the pool by
+     * construction, so it must leave the DENOMINATOR and not merely go unpaid.
+     * Leaving it in dilutes every free module by the reach of something that is
+     * already being paid by the villages running it.
+     *
+     * The rule is UNANIMITY AMONG THOSE THAT SPEAK, and that is deliberate.
+     * Removing a module from the denominator raises everybody else's share,
+     * including the remover's own favourites, so unlike "the platform built
+     * this" it is a claim a village could profit from. Requiring that no
+     * village contradicts it means a single honest deployment keeps a module
+     * in, and disagreement is impossible in practice anyway: every listing is
+     * first-party code in one repository, so its price is the same fact
+     * everywhere.
+     *
+     * Silence is NOT ineligibility. A village on a build that predates the
+     * field says nothing about any of its modules, and reading that as "priced"
+     * would drop every module it runs out of the split and zero its builders.
+     * Silence keeps today's behaviour, which is that the module is counted; it
+     * is still never PAID without an attestation.
+     */
+    if (row.saidIneligible && !row.saidEligible) continue;
     const attested = attestations.get(moduleId);
     if (attested) {
       out.push({
