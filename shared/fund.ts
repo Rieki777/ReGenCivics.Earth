@@ -21,7 +21,11 @@
  *   - Target launch is 2027.
  *   - The economics below are PROPOSED. They are settled at the founding event
  *     by the founding investors, not by this repo.
- *   - No exemption has been chosen. Nothing here may name one.
+ *   - No exemption has been CHOSEN. Rye's ruling of 2026-08-30 is that the
+ *     page may name Regulation D 506(c) as the likely path provided it says
+ *     plainly, in the same breath, that nothing is selected and the founding
+ *     investors may settle on another. One field carries that sentence and
+ *     one surface renders it. Everywhere else the ban still holds.
  *
  * When a number here changes, it changes once, and every surface follows.
  */
@@ -101,15 +105,31 @@ export const FUND = {
     "Intent. Target launch 2027. No capital is accepted yet.",
 
   /**
-   * Already on the page at Opportunity.tsx:628 and reused, not rewritten. This
-   * is the whole of what any surface may say about the offering. Naming an
-   * exemption is a claim nobody has made: counsel has not chosen one, and
-   * "we intend to rely on 506(c)" is still the claim.
+   * Already on the page at Opportunity.tsx:628 and reused, not rewritten.
+   *
+   * This comment used to end: "Naming an exemption is a claim nobody has made:
+   * counsel has not chosen one, and 'we intend to rely on 506(c)' is still the
+   * claim." That reasoning was put to Rye on 2026-08-30 and he ruled the other
+   * way, with a stronger disclosure attached than the one it argued against.
+   * See exemptionIntent below. The objection is kept here because it is the
+   * argument counsel should be shown alongside the line itself.
    */
   offeringDisclaimer:
     "This is not an offer to sell securities. An offering will only be made " +
     "through a confidential private placement memorandum to accredited " +
     "investors in compliance with applicable securities laws.",
+
+  /**
+   * Rye's ruling, 2026-08-30. Names the likely exemption and refuses to let it
+   * read as settled. Rendered once, in the NOT AN OFFER block on Opportunity,
+   * next to the disclaimer that qualifies it. Gate 1d bans these strings on
+   * purpose; this is the one deliberate use, and the suppression carries why.
+   */
+  // fund-claims-allow: Rye's ruling 2026-08-30. Names 506(c) as the likely path and says in the same sentence that nothing is selected. The gate exists to stop this being re-authored by accident, not to stop a decision.
+  exemptionIntent:
+    "No securities exemption has been chosen. Regulation D 506(c) is the " +
+    "likely path, and the founding investors may settle on another when the " +
+    "fund is formed.",
 
   /** Eligibility, in the only tense that is true today. */
   eligibility:

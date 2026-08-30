@@ -629,6 +629,9 @@ export default function Opportunity() {
                     <p className="text-white/80 text-sm leading-relaxed safe-prose">
                       This is not an offer to sell securities. An offering will only be made through a confidential private placement memorandum to accredited investors in compliance with applicable securities laws. Past performance does not guarantee future results. Projected returns are estimates and may not be achieved.
                     </p>
+                    <p className="text-white/80 text-sm leading-relaxed safe-prose mt-3">
+                      {FUND.exemptionIntent}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2212,10 +2215,12 @@ export default function Opportunity() {
 
             {/* ===== STATUS STRIP =====
                 This strip used to name a specific securities exemption and call
-                the fund an exempt offering. No exemption has been chosen, so the
-                page cannot cite one, and a fund that is not yet an entity has no
-                offering to exempt. See FUND_COUNSEL_CHANGELOG.md for the exact
-                text this replaced. */}
+                the fund an exempt offering. A fund that is not yet an entity has
+                no offering to exempt, so the strip does not claim one. The
+                exemption question is answered once, in the NOT AN OFFER block
+                above, where FUND.exemptionIntent names the likely path and says
+                in the same sentence that nothing is settled. See
+                FUND_COUNSEL_CHANGELOG.md for the exact text this replaced. */}
             <div className="text-center py-3 border-t border-white/5 text-xs text-white/70 tracking-wider mb-6">
               {FUND.statusLabel} &nbsp;&middot;&nbsp; Target launch {FUND.launchTarget} &nbsp;&middot;&nbsp; Not an offer to sell securities
             </div>
