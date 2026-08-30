@@ -5873,3 +5873,73 @@ export const modulePoolRecycles = mysqlTable("modulePoolRecycles", {
   uniqueIndex("module_pool_recycle_once").on(table.poolCycleNumber),
 ]));
 export type ModulePoolRecycle = typeof modulePoolRecycles.$inferSelect;
+
+// ─── Second brain command center ──────────────────────────────────────────────
+/**
+ * One work-item table, canonical for STATE (response doc §3). Sections are
+ * filters over `kind`; the vault holds essays and worldview and receives a
+ * regenerated mirror of these rows. `ready` is only ever written by the owner:
+ * readyBy/readyAt/readyHash are the receipt, and trust='external' rows can
+ * never self-promote.
+ */
+export const brainItems = mysqlTable("brain_items", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  kind: mysqlEnum("kind", ["unsorted", "create", "build", "todo", "ask", "decide", "material"]).default("unsorted").notNull(),
+  state: mysqlEnum("state", ["raw", "shaped", "ready", "in_flight", "done_claimed", "done", "parked"]).default("raw").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  body: text("body").notNull(),
+  ask: varchar("ask", { length: 500 }),
+  doneWhen: varchar("done_when", { length: 500 }),
+  blockedOn: varchar("blocked_on", { length: 300 }),
+  due: date("due"),
+  effort: mysqlEnum("effort", ["S", "M", "L"]),
+  priority: mysqlEnum("priority", ["now", "soon", "someday"]).default("soon").notNull(),
+  repo: varchar("repo", { length: 64 }),
+  surface: varchar("surface", { length: 200 }),
+  /** R2 keys under the PRIVATE prefixes harvest/shots/ and harvest/voice/. */
+  attachments: json("attachments").$type<string[]>(),
+  /** Model- or rule-proposed field values, visibly distinct from what Rye typed (17.7). */
+  proposed: json("proposed").$type<Record<string, unknown>>(),
+  followsId: int("follows_id"),
+  supersedesId: int("supersedes_id"),
+  source: varchar("source", { length: 191 }).notNull(),
+  trust: mysqlEnum("trust", ["owner", "external"]).default("owner").notNull(),
+  batchId: int("batch_id"),
+  readyBy: int("ready_by"),
+  readyAt: timestamp("ready_at"),
+  readyHash: char("ready_hash", { length: 64 }),
+  closedBy: varchar("closed_by", { length: 64 }),
+  evidence: text("evidence"),
+  capturedAt: timestamp("captured_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerSourceUnique: uniqueIndex("brain_items_owner_source_unique").on(t.ownerId, t.source),
+  ownerStateKindIdx: index("brain_items_owner_state_kind_idx").on(t.ownerId, t.state, t.kind),
+  ownerDueIdx: index("brain_items_owner_due_idx").on(t.ownerId, t.due),
+  batchIdx: index("brain_items_batch_idx").on(t.batchId),
+  followsIdx: index("brain_items_follows_idx").on(t.followsId),
+}));
+export type BrainItem = typeof brainItems.$inferSelect;
+export type InsertBrainItem = typeof brainItems.$inferInsert;
+
+/** Append-only audit of every item mutation, tagged with the surface that did it. */
+export const brainAudit = mysqlTable("brain_audit", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  itemId: int("item_id").notNull(),
+  action: varchar("action", { length: 40 }).notNull(),
+  detail: json("detail"),
+  via: mysqlEnum("via", ["web", "telegram", "api", "import", "webhook"]).default("web").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  itemIdx: index("brain_audit_item_idx").on(t.itemId, t.createdAt),
+}));
+export type BrainAuditRow = typeof brainAudit.$inferSelect;
+
+/** Telegram update_id dedupe: written before any side effect, so retries are free. */
+export const brainTelegramUpdates = mysqlTable("brain_telegram_updates", {
+  updateId: bigint("update_id", { mode: "number" }).primaryKey(),
+  receivedAt: timestamp("received_at").defaultNow().notNull(),
+});
