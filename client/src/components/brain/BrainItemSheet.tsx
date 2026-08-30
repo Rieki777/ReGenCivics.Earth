@@ -200,8 +200,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
       </div>
 
       <div
-        className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
-        style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+        className="flex-1 space-y-4 overflow-y-auto px-4 pt-4 pb-[calc(1.5rem_+_env(safe-area-inset-bottom,0px))]"
       >
         {item.isLoading ? (
           <div className="flex justify-center py-10">

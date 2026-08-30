@@ -10,7 +10,15 @@
  *
  *  - The tab bar and the capture button both pad by `env(safe-area-inset-bottom)`.
  *    Without it they sit under the home indicator, where the swipe-up gesture
- *    eats the tap.
+ *    eats the tap. The bar reuses `index.css`'s `.safe-area-pb`, which is what
+ *    the site's own `SmartBottomNav` uses; the FAB needs `calc()` on top of the
+ *    inset, so it is a Tailwind arbitrary value. Either way it is a class, not
+ *    an inline style, so the declaration lives in the stylesheet where a CSS
+ *    engine parses it, and always with a `0px` fallback: some iPhone Safari
+ *    cases (PWA mode, embedded web views, landscape) report the inset as 0 or
+ *    not at all, and a bare `env()` with no fallback makes the whole
+ *    declaration invalid there. Both notes are `WizardRadialMenu.tsx`'s,
+ *    learned the hard way.
  *  - `/admin-create` bypasses site chrome (`App.tsx:69`, `isAdminRoute`), so
  *    `SmartBottomNav` and the radial menu are not there to collide with. The
  *    same bypass ALSO means `HarvestCaptureModal` is not mounted
@@ -119,10 +127,7 @@ export function BrainShell({ renderCreate }: BrainShellProps) {
           {renderCreate ? renderCreate() : null}
           {/* The Harvest page ends in pb-24, which is not quite the tab bar plus
               the home indicator. This makes up the difference. */}
-          <div
-            aria-hidden="true"
-            style={{ height: "calc(2rem + env(safe-area-inset-bottom))" }}
-          />
+          <div aria-hidden="true" className="h-[calc(2rem_+_env(safe-area-inset-bottom,0px))]" />
         </>
       ) : (
         <div className="mx-auto max-w-3xl px-4 pb-28 pt-4">
@@ -167,8 +172,7 @@ export function BrainShell({ renderCreate }: BrainShellProps) {
         aria-label="Capture a note"
         data-testid="brain-capture-fab"
         onClick={() => window.dispatchEvent(new CustomEvent(HARVEST_CAPTURE_EVENT))}
-        className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#1a472a] text-white shadow-lg"
-        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        className="fixed right-4 bottom-[calc(5rem_+_env(safe-area-inset-bottom,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#1a472a] text-white shadow-lg"
       >
         <Plus className="h-6 w-6" aria-hidden="true" />
       </button>
@@ -176,8 +180,7 @@ export function BrainShell({ renderCreate }: BrainShellProps) {
       <nav
         aria-label="Command center sections"
         data-testid="brain-tabbar"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1a472a]/15 bg-white"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1a472a]/15 bg-white safe-area-pb"
       >
         <div className="mx-auto flex max-w-3xl">
           {BRAIN_TABS.map(({ key, label, Icon }) => (
