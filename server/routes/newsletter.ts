@@ -598,7 +598,7 @@ export const emailRouter = router({
         </head>
         <body style="margin: 0; padding: 20px; background-color: #f5f5f5; font-family: 'Nunito', Arial, sans-serif;">
           <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: #7dd87d; margin: 0; font-size: 24px;">ReGen Civics</h1>
               <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
             </div>

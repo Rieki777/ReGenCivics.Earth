@@ -174,7 +174,7 @@ export const recordingsRouter = router({
         : "";
 
       const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+        <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
           <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
           <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:12px;">Recording ready</p>
         </div>

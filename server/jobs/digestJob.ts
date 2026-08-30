@@ -257,7 +257,7 @@ async function sendDigestEmails(
 
     const html = `
       <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
-        <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
+        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
           <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
           <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-family: Georgia, serif;">ReGen Civics Community Update</h1>
         </div>

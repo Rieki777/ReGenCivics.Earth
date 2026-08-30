@@ -82,7 +82,7 @@ function renderHtml(text: string): string {
   const unsubUrl = `${ENV.appUrl}/unsubscribe`;
   return `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 26px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 26px 20px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="color: #7dd87d; margin: 0; font-size: 22px;">ReGen Civics</h1>
     </div>
     <div style="padding: 26px 22px; background: #ffffff; border: 1px solid #e8e4de; border-top: none;">
