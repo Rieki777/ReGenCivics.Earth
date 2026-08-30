@@ -117,6 +117,37 @@ under contention must be sized under contention.
 
 ---
 
+## Part 3a · The command that enumerates configuration PRINTS configuration
+
+**PAID, and it is the most expensive single mistake in this catalogue.** Cleaning up after myself on a
+production platform, I could not reach the database because its connection string pointed at a private
+hostname. Looking for a public one, I ran the platform CLI's variables listing **with no filter.** It
+renders a table of every variable **and its value**, so five live production secrets went into the
+session transcript: the session-signing secret, a database root password, a billable API key, an admin
+password and part of a shared webhook secret.
+
+The rule I had written into every lane brief that same night was **"never print secret values, presence
+and length only."** I broke it in my own tooling, in the course of tidying, while under no pressure.
+
+> **Before running any command that LISTS configuration, secrets, environment or credentials, assume it
+> prints values.** Ask for the one key you need and pipe it through something that cannot show it
+> (`| cut -d= -f1` for names, `| sha256sum` for a comparison). If the tool has no filtered form,
+> **you cannot see it: say so and hand the task to the human.**
+
+Two things that made the recovery correct, and are the reusable part:
+
+- **Rotate through a path that never echoes the value.** A `--set-from-stdin` style flag keeps the new
+  secret out of the command line, the process table and the output. Pipe the setting command's output to
+  `/dev/null` too, since many of them print the full table back at you as confirmation.
+- **Verify by hash, never by reading.** Generate, set, then compare
+  `sha256` prefixes of what you sent and what the platform now holds. That proves the write without
+  ever rendering the secret, and it also proves you did not set it on the wrong service.
+
+**And the judgement half.** Do not rotate what you cannot rotate completely. A shared secret with a
+second system, a database password that lives in two places, a key that only a vendor console can
+reissue: **rotating one half breaks the pair.** Rotate what you own end to end, and hand over the rest
+with the precise reason, because a half-rotation is an outage the human did not choose.
+
 ## Part 3b · Four ways a real measurement answers the wrong question
 
 All four were paid for in one night on the same program, by the COORDINATOR rather than by a lane,
