@@ -15,6 +15,40 @@
  *   - Writes (credits AND debits) only touch the private ledger.
  *   - Spend limit checks use PRIVATE only.
  *   - One-way flow private -> public via the Hypha claim bridge.
+ *
+ * ── THE ISSUANCE MODEL. READ THIS BEFORE BUILDING ANY EARNING FEATURE ───────
+ *
+ * R92, the founder, 2026-08-29: "ReGen Civics mints on transfer with all
+ * actions and so do these Games. We may add a different function later to mint
+ * from a treasury but that will be a future optional setting."
+ *
+ * THE HUB MINTS ON TRANSFER, and `creditPrivateTokens` is where that happens.
+ * A private token comes into existence at the moment somebody is credited. No
+ * account is debited to fund it, no supply is drawn down, and there is no
+ * pre-issued pool of tokens waiting to be handed out. The function below takes
+ * a userId and an amount and inserts a row. That is the whole issuance
+ * mechanism, and its being that simple is the design rather than an oversight.
+ *
+ * SO A "POOL" IN THIS CODEBASE IS A CEILING ON ISSUANCE AND NEVER A BALANCE.
+ * `pool.regen_per_cycle`, `gratitude_cycles.poolPerCycle` and
+ * `bounty.season_budget` each cap how much may be created in a period. None of
+ * them is an account, none of them is decremented by a payment, and reading one
+ * as a balance is the mistake this paragraph exists to stop. What a pool leaves
+ * unspent is never minted, so it is never lost either.
+ *
+ * THE HUB MINTS NOTHING ON CHAIN, and the two facts sit together without
+ * conflict. `server/blockchain.ts` opens with "Read-only Base blockchain
+ * queries, no wallet, no signing" and that invariant holds: this repository
+ * holds no key and signs nothing. On-chain $ReGen is issued when a Hypha space
+ * executes a proposal, which is a decision made by that space's own members.
+ * The two halves join at the claim bridge, where `players.requestClaim` debits
+ * the private ledger and Hypha issues the on-chain token.
+ *
+ * A TREASURY HOLDING ALREADY-ISSUED TOKENS IS A LATER, OPTIONAL SETTING. R92
+ * says so in as many words. Nothing here assumes one exists, nothing checks a
+ * treasury balance before crediting, and no feature should be built on the
+ * assumption that one is coming. `server/tokenMintModel.test.ts` fails the day
+ * one appears without this comment changing with it.
  */
 
 import { desc, eq, sql } from "drizzle-orm";
