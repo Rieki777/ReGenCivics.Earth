@@ -225,9 +225,16 @@ the four core modules are not metered at all.
 
 1. **There are no builders.** The hub's builder list is an empty frozen array and no module sets a
    `builtBy`. On purpose: the machinery ships owing nothing.
-2. **The pool amount has no row.** `game_variables` on production holds **one row in total**, and it
-   is not this. The admin page tells an operator the pool "starts paying the cycle after somebody
-   sets this in the admin UI". There is nothing to update.
+2. **The pool amount has no row**, and **CORRECTED 2026-08-29: the coordinator's evidence for this
+   was from the WRONG DATABASE.** The "one row in total" figure was measured on the *village*
+   production database; the *hub* holds **259 rows**. The conclusion survives — `pool.regen_per_cycle`
+   is not among them and the variable writer is UPDATE-only, so no surface could create it — but it
+   was right by luck. **Two products, two databases, and a claim about one measured on the other.**
+   The admin page told an operator the pool "starts paying the cycle after somebody sets this in the
+   admin UI", which **was false in every build that ever shipped.**
+4. **AND A FOURTH NOBODY NAMED: migration 0227 has never been applied to the hub's production
+   database.** `_migrations_applied` ends at `0226`, and none of the pool tables exist. **So the pool
+   has never run at all, in either shape.**
 3. **Nothing transfers, by design.** The last step is an admin button whose own docstring reads
    *"This is a NOTE, not an action... Nothing behind it can move a token."* There is no wallet in the
    codebase. A human downloads a CSV, sends $ReGen on Base by hand, and comes back to record that
