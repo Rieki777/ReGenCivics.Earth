@@ -167,7 +167,7 @@ async function promoteFromWaitlist(eventId: number) {
   const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+    <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
       <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
       <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Good news</p>
     </div>
@@ -347,7 +347,7 @@ export const eventsRouter = router({
 
       const confirmHtml = signupType === "waitlist"
         ? `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
               <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
@@ -357,7 +357,7 @@ export const eventsRouter = router({
             </div>
           </div>`
         : `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
               <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
               <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">You're on the list</p>
             </div>
@@ -882,7 +882,7 @@ export const eventsRouter = router({
       for (const signup of signups) {
         const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
             <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
           </div>
@@ -946,7 +946,7 @@ export const eventsRouter = router({
       }).join("");
 
       const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:40px 20px;text-align:center;border-radius:8px 8px 0 0;">
+        <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:40px 20px;text-align:center;border-radius:8px 8px 0 0;">
           <h1 style="color:#7dd87d;margin:0;font-size:26px;">ReGen Civics</h1>
           <p style="color:#a8e6a8;margin:8px 0 0 0;font-size:16px;">${input.season}: Season Wrap</p>
         </div>
@@ -1209,7 +1209,7 @@ export const eventsRouter = router({
       for (const signup of signups) {
         const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
             <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">How was it?</p>
           </div>
@@ -1295,7 +1295,7 @@ export const eventsRouter = router({
       for (const signup of signups) {
         const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
             <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Guest Speaker Announcement</p>
           </div>

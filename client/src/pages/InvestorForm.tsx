@@ -198,6 +198,26 @@ export default function InvestorForm() {
   }, []);
 
   const [step, setStep] = useState(1);
+
+  
+
+  // Changing step swaps the whole panel while the viewport stays where it
+
+  // was, so on a long step the next one opens mid-form with its heading
+
+  // off-screen. The only scroll in this file fired on submit ERROR, which
+
+  // is the one path a person is already looking at the top for. Both
+
+  // directions go through here; Back had the same problem as Continue.
+
+  const goToStep = (next: (s: number) => number) => {
+
+    setStep(next);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  };
   const savedEmail = localStorage.getItem('investor_email') ?? '';
   const savedName = localStorage.getItem('investor_name') ?? '';
   const [formData, setFormData] = useState<InvestorFormData>(() => {
@@ -1120,7 +1140,7 @@ export default function InvestorForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setStep(s => s - 1)}
+              onClick={() => goToStep(s => s - 1)}
               disabled={step === 1}
               className="rounded-xl border-2 border-[#1a472a]/30 text-[#1a472a]"
             >
@@ -1131,7 +1151,7 @@ export default function InvestorForm() {
             {step < 5 ? (
               <Button
                 type="button"
-                onClick={() => setStep(s => s + 1)}
+                onClick={() => goToStep(s => s + 1)}
                 disabled={!canProceed()}
                 className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}

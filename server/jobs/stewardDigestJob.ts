@@ -147,7 +147,7 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
 
   const html = `
     <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
-      <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 28px 40px;">
+      <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 28px 40px;">
         <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Steward digest</p>
         <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-family: Georgia, serif;">${esc(data.campaignTitle)}</h1>
       </div>

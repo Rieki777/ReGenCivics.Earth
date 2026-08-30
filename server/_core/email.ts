@@ -83,7 +83,7 @@ export interface SendEmailParams {
  */
 function getEmailHeader(): string {
   return `
-    <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="color: #7dd87d; margin: 0; font-family: 'Quicksand', sans-serif; font-size: 24px;">ReGen Civics</h1>
       <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
     </div>
@@ -484,7 +484,7 @@ export const emailTemplates = {
     subject: 'Your ReGen Civics Investor Deck is Ready',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
-        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 28px;">Welcome, ${recipientName}!</h1>
           <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 16px;">Your investor materials are ready.</p>
         </div>
@@ -550,7 +550,7 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${recipientName || 'Friend'}!</h2>
       <p style="color: #333; line-height: 1.6;">You're now part of the ReGen Civics community. Get ready for updates on regenerative land projects, community events, and the infinite game of building a better world.</p>
       
-      <div style="background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <div style="background-color: #f0f7f0; background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <p style="color: #1a472a; font-size: 18px; margin: 0 0 10px 0; font-weight: bold;">What to Expect</p>
         <p style="color: #4a7c59; margin: 0;">Monthly updates, project spotlights, community stories, and invitations to participate in the ReGenerative Renaissance.</p>
       </div>
@@ -631,7 +631,7 @@ export const emailTemplates = {
     subject: 'The ReGen Civics Fund: how the economics are meant to work',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
-        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 22px;">The Economics of Regeneration</h1>
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
         </div>
@@ -660,7 +660,7 @@ export const emailTemplates = {
     subject: 'Inside a ReGen Civics Land Project',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
-        <div style="background: linear-gradient(135deg, #2d5a3d 0%, #1a472a 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background-color: #2d5a3d; background: linear-gradient(135deg, #2d5a3d 0%, #1a472a 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: #d4a574; margin: 0 0 8px 0; font-size: 22px;">What We're Actually Building</h1>
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">For ${recipientName}</p>
         </div>
@@ -694,7 +694,7 @@ export const emailTemplates = {
     subject: 'Common questions from investors  -  and an invitation',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
-        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 22px;">Two Weeks In  -  Your Questions, Answered</h1>
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">For ${recipientName}</p>
         </div>
@@ -726,7 +726,7 @@ export const emailTemplates = {
     subject: 'One month on  -  have you signed your Letter of Intent?',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
-        <div style="background: linear-gradient(135deg, #8a5a00 0%, #5c3a00 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background-color: #8a5a00; background: linear-gradient(135deg, #8a5a00 0%, #5c3a00 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: #ffd700; margin: 0 0 8px 0; font-size: 22px;">Adding Your Name</h1>
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
         </div>
@@ -753,7 +753,7 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
       <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to <strong>"${campaignTitle}"</strong> has been marked as fulfilled!</p>
       
-      <div style="background: linear-gradient(135deg, #f0f7f0 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <div style="background-color: #f0f7f0; background: linear-gradient(135deg, #f0f7f0 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <p style="color: #1a472a; font-size: 20px; margin: 0 0 10px 0; font-weight: bold;">You Made a Difference!</p>
         <p style="color: #4a7c59; margin: 0;">Your contribution has helped bring this regenerative vision closer to reality.</p>
       </div>
