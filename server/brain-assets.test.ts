@@ -20,6 +20,11 @@ import type { Server } from "http";
 import type { AddressInfo } from "net";
 import { Readable } from "stream";
 import { ENV } from "./_core/env";
+// Imported statically, not inside beforeAll: this module pulls in env, sdk, db
+// and the whole schema, and paying for that transform inside a hook made the
+// hook time out at 10s the moment the full suite ran it alongside 96 others.
+// vi.mock below is hoisted above this import, so the storage mock still lands.
+import { brainAssetKey, registerBrainAssetRoutes } from "./webhooks/brain-assets";
 
 const OWNER = 987_654_321;
 const TOKEN = "brain-assets-test-token-0123456789abcdef";
@@ -59,7 +64,6 @@ describe("brain asset route", () => {
     (ENV as { harvestBridgeToken: string }).harvestBridgeToken = TOKEN;
     (ENV as { harvestBridgeTokenNext: string }).harvestBridgeTokenNext = "";
 
-    const { registerBrainAssetRoutes } = await import("./webhooks/brain-assets");
     const app = express();
     registerBrainAssetRoutes(app);
     await new Promise<void>((resolve) => {
@@ -180,7 +184,7 @@ describe("brain asset route", () => {
    */
   it("refuses a traversal that no client normalised on the way in", async () => {
     storageStream.mockClear();
-    const { request } = await import("http");
+    const { request } = await import("node:http");
     const status = await new Promise<number>((resolve, reject) => {
       const req = request(
         {
@@ -269,12 +273,6 @@ describe("brain asset route", () => {
 });
 
 describe("brainAssetKey", () => {
-  let brainAssetKey: typeof import("./webhooks/brain-assets").brainAssetKey;
-
-  beforeAll(async () => {
-    ({ brainAssetKey } = await import("./webhooks/brain-assets"));
-  });
-
   it("accepts the two private prefixes for this owner", () => {
     expect(brainAssetKey(`harvest/shots/7/113853/a.jpg`, 7)).toEqual({
       ok: true,

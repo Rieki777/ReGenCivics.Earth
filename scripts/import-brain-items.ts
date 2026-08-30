@@ -33,8 +33,13 @@
  *     --dry-run
  *
  * `--dry-run` touches neither the database nor R2 and needs no .env, so the
- * mapping can be checked anywhere. Drop it to write. Re-running is safe:
- * inserts are idempotent on (owner_id, source) and the stamp reconverges.
+ * mapping can be checked anywhere. Drop it to write.
+ *
+ * Re-running is safe. Inserts are idempotent on (owner_id, source); an item
+ * still in its imported shape (raw, unsorted, never promoted) is re-stamped,
+ * which repairs a run that crashed halfway; an item Rye has since sorted keeps
+ * everything he changed and only has its attachment keys refreshed, so a
+ * second run can heal a failed photo upload without resetting his work.
  *
  * The photo roots: the plan named `DataExport_2026-08-30/photos/`, which does
  * not exist (that export is a bare result.json). The 382 distinct referenced
@@ -405,6 +410,8 @@ interface Counters {
   rows: number;
   inserted: number;
   updated: number;
+  /** Existing rows Rye had already moved: only their attachments were touched. */
+  preserved: number;
   emptyText: number;
   photosPlanned: number;
   photosResolved: number;
@@ -429,6 +436,7 @@ function report(c: Counters, dryRun: boolean) {
   console.log(`rows read          ${c.rows}`);
   console.log(`inserted           ${c.inserted}`);
   console.log(`updated            ${c.updated}`);
+  console.log(`left as Rye had it ${c.preserved}  (already sorted; only attachments refreshed)`);
   console.log(`empty text         ${c.emptyText}  (imported with a screenshot placeholder body, never skipped)`);
   console.log(`blocked_on set     ${c.blocked}`);
   console.log(
@@ -466,6 +474,7 @@ async function main() {
     rows: planned.length,
     inserted: 0,
     updated: 0,
+    preserved: 0,
     emptyText: 0,
     photosPlanned: 0,
     photosResolved: 0,
@@ -601,6 +610,21 @@ async function main() {
     });
   }
 
+  /** The re-run path for an item Rye has already moved: heal the files, touch nothing else. */
+  async function stampAttachmentsOnly(itemId: number, attachments: string[]): Promise<void> {
+    await db!
+      .update(brainItems)
+      .set({ attachments })
+      .where(and(eq(brainItems.id, itemId), eq(brainItems.ownerId, ownerId)));
+    await db!.insert(brainAudit).values({
+      ownerId,
+      itemId,
+      action: "import:attachments",
+      detail: { attachments: attachments.length },
+      via: "import",
+    });
+  }
+
   for (const p of planned) {
     // 1. Upload this item's screenshots. Done before the row is written so an
     //    item never claims an attachment that is not in the bucket.
@@ -629,11 +653,27 @@ async function main() {
 
     // 2. Create through the shared path, then stamp what it cannot carry.
     const before = await db
-      .select({ id: brainItems.id })
+      .select({
+        id: brainItems.id,
+        state: brainItems.state,
+        kind: brainItems.kind,
+        readyAt: brainItems.readyAt,
+      })
       .from(brainItems)
       .where(and(eq(brainItems.ownerId, ownerId), eq(brainItems.source, p.source)))
       .limit(1);
     const existed = before.length > 0;
+
+    /**
+     * A re-run must repair a crashed one without undoing Rye's work. A row is
+     * still pristine if nobody has sorted it: raw, unsorted, never promoted.
+     * Those get the full stamp, which is idempotent when the first run
+     * finished and corrective when it did not. Anything Rye has moved gets
+     * only its attachments refreshed, so a failed photo upload can be healed
+     * without a re-import resetting his kinds and states to `unsorted`/`raw`.
+     */
+    const pristine =
+      !existed || (before[0].state === "raw" && before[0].kind === "unsorted" && !before[0].readyAt);
 
     const item = await createItem(
       ownerId,
@@ -648,7 +688,12 @@ async function main() {
       },
       "import",
     );
-    await stampImportedFields(item.id, p, attachments);
+    if (pristine) {
+      await stampImportedFields(item.id, p, attachments);
+    } else {
+      await stampAttachmentsOnly(item.id, attachments);
+      c.preserved++;
+    }
 
     if (existed) c.updated++;
     else c.inserted++;

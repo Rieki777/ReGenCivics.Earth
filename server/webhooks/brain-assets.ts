@@ -187,7 +187,10 @@ export function registerBrainAssetRoutes(app: Express) {
       // phone; `Vary` keeps a bearer response from being handed to a cookie
       // request out of the browser's own cache.
       res.setHeader("Cache-Control", "private, max-age=3600");
-      res.setHeader("Vary", "Authorization, Cookie");
+      // append, not set: the /api CORS middleware may already have put Origin
+      // in Vary, and overwriting it would let one origin's response be reused
+      // for another.
+      res.append("Vary", "Authorization, Cookie");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Accept-Ranges", "bytes");
       if (obj.contentLength !== undefined) {
