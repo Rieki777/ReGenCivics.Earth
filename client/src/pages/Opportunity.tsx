@@ -740,7 +740,7 @@ export default function Opportunity() {
                       <Wallet className="w-5 h-5 text-[#7dd87d]" />
                     </div>
                     <h3 className="font-bold text-white text-base mb-1" style={{ fontFamily: 'var(--font-display)' }}>The Fund</h3>
-                    <p className="text-white/60 text-sm">The investment vehicle you're investing in</p>
+                    <p className="text-white/60 text-sm">The investment vehicle, in formation. Not yet a legal entity</p>
                   </div>
                   <div className="bg-white/5 rounded-xl p-5 border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-colors">
                     <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center mb-3">
@@ -754,7 +754,7 @@ export default function Opportunity() {
                       <Workflow className="w-5 h-5 text-[#7dd87d]" />
                     </div>
                     <h3 className="font-bold text-white text-base mb-1" style={{ fontFamily: 'var(--font-display)' }}>The Infrastructure</h3>
-                    <p className="text-white/60 text-sm">Governance technology coordinating billions towards regeneration</p>
+                    <p className="text-white/60 text-sm">Governance technology built to coordinate billions towards regeneration</p>
                   </div>
                 </div>
                 <p className="text-white/70 text-sm mt-4 text-center italic">
@@ -786,7 +786,7 @@ export default function Opportunity() {
                 <div className="mt-px">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 rounded-xl overflow-hidden">
                     <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Asset Allocation" value="60 / 30 / 10" note="Proposed. Land / Alliance / Innovation" /></div>
-                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Geographic Focus" value="Global" note="Multi-jurisdictional diversification" /></div>
+                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Geographic Focus" value="Global" note="Proposed multi-jurisdictional diversification" /></div>
                     <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Fund Structure" value="To be agreed" note="Settled at the founding event, with counsel" /></div>
                     <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Status" value="In formation" note={`Target launch ${FUND.launchTarget}. Accepting non-binding LOIs until ${FUND.loiThreshold} committed`} /></div>
                   </div>
@@ -805,7 +805,7 @@ export default function Opportunity() {
             {/* ===== WHY ON-CHAIN GOVERNANCE (collapsible, default closed) ===== */}
             <CollapsibleSection title="Why On-Chain Governance?" icon={Eye} id="governance">
               <p className="text-white/80 text-[15px] md:text-base leading-relaxed mb-5">
-                Traditional multi-asset funds struggle with transparency and coordination costs across global portfolios. By using blockchain as our single source of truth, we achieve:
+                Traditional multi-asset funds struggle with transparency and coordination costs across global portfolios. The fund is designed to use blockchain as its single source of truth, so that once it is formed it can offer:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
@@ -833,7 +833,7 @@ export default function Opportunity() {
                 <strong className="text-white">Traditional funds:</strong> The General Partner (GP) is a separate entity with full control. Limited Partners (LPs) are passive investors with no operational voice.
               </p>
               <p className="mb-4">
-                <strong className="text-white">ReGen Civics Alliance:</strong> The GP is the ReGen Civics governance system on Hypha, a decentralized structure governed by all RCVoice holders. As an investor, you play dual roles:
+                <strong className="text-white">ReGen Civics, as designed:</strong> the GP would be the ReGen Civics governance system on Hypha, a decentralized structure governed by all RCVoice holders. Once the fund is formed, an investor would play dual roles:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -848,13 +848,13 @@ export default function Opportunity() {
               </p>
               <div className="bg-[#7dd87d]/10 rounded-xl p-4 border border-[#7dd87d]/20 mb-6">
                 <p className="text-sm text-white/90">
-                  <strong className="text-[#7dd87d]">Key insight:</strong> When we say "GP receives 20% carry," we mean the governance treasury receives it. That treasury is controlled by all RCVoice holders (including you) and is used to fund operations, worker proposals, and ecosystem development as determined by collective governance. You're not paying carry to a distant fund manager; you're contributing to a collectively-governed treasury that supports the ecosystem you're invested in.
+                  <strong className="text-[#7dd87d]">Key insight:</strong> When we say "GP receives 20% carry," we mean the governance treasury receives it. That treasury is controlled by all RCVoice holders (including you) and is used to fund operations, worker proposals, and ecosystem development as determined by collective governance. You're not paying carry to a distant fund manager; you would be contributing to a collectively-governed treasury that supports the ecosystem you are invested in.
                 </p>
               </div>
 
               <h3 className="text-base font-bold text-white mb-3">Carried Interest Structure (proposed)</h3>
               <p className="mb-4 text-sm">
-                The General Partner (governance treasury) receives 20% carried interest on profits above an 8% annualized preferred return to Limited Partners. Carry is calculated and distributed in two scenarios only:
+                Under the proposed structure, the General Partner (governance treasury) would receive 20% carried interest on profits above an 8% annualized preferred return to Limited Partners, calculated and distributed in two scenarios only:
               </p>
 
               {/* Tier 1 */}
@@ -904,7 +904,7 @@ export default function Opportunity() {
               </div>
 
               <h4 className="font-bold text-white mb-2 mt-6">On-Chain Transparency</h4>
-              <p className="text-sm mb-3">All carry calculations occur on-chain via smart contract. Every distribution event is publicly verifiable on the Base blockchain. No GP discretion in carry computation; the waterfall executes automatically.</p>
+              <p className="text-sm mb-3">As designed, carry calculations happen on-chain via smart contract, every distribution event is publicly verifiable on the Base blockchain, and there is no GP discretion in the computation because the waterfall executes automatically. No distribution has happened yet; the fund is in formation.</p>
               
               <h4 className="font-bold text-white mb-2 mt-4">Why This Structure</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1151,7 +1151,7 @@ export default function Opportunity() {
             {/* ===== SECTION 1: THE OPPORTUNITY (collapsible, default open) ===== */}
             <CollapsibleSection title="The Opportunity" icon={Sparkles} defaultOpen={true} id="opportunity">
               <p className="mb-5">
-                ReGen Civics Alliance represents a pioneering investment vehicle that combines the best of traditional real estate investment trusts (REITs), venture capital funds, and blockchain technology to create a purpose-built structure for financing the regenerative economy. We are building infrastructure to coordinate billions towards systemic regeneration. Our mission is to provide capital partners with a permanent vehicle to support land-backed systemic change while generating reliable returns through a tokenized structure that enables progressive liquidity without forced liquidations.
+                The ReGen Civics Fund is being built as a pioneering investment vehicle, combining traditional real estate investment trusts (REITs), venture capital funds, and blockchain technology into a purpose-built structure for financing the regenerative economy. It is in formation and is not yet a legal entity. The intent is to give capital partners a permanent vehicle to support land-backed systemic change while targeting durable returns through a tokenized structure that enables progressive liquidity without forced liquidations.
               </p>
               <p className="mb-5">
                 The fund is designed to sit at the intersection of multiple converging mega-trends reshaping how humanity lives on Earth. Beyond regenerative agriculture, the thesis is the fundamental transformation of real estate, community development, housing, infrastructure, energy, education, and sustainable living. The fund will invest in both the <strong className="text-white">land projects</strong> (startup villages, towns, and micro-cities) and the <strong className="text-white">alliance organizations</strong> that support them (those rethinking housing, infrastructure, energy, waste management, governance, and other core services needed for a village or town to thrive regeneratively), creating a synergistic ecosystem with the intention of becoming an <strong className="text-[#7dd87d]">index fund for the transition to regenerative civilizations</strong>.

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   ExternalLink, 
   TrendingUp, 
@@ -6,7 +6,6 @@ import {
   PieChart, 
   ArrowUpRight, 
   ArrowDownRight,
-  RefreshCw,
   Shield,
   Eye,
   Leaf,
@@ -20,7 +19,6 @@ import {
   Droplets,
   Heart
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Sample transaction data representing the types of distributions
@@ -104,22 +102,25 @@ const projectAllocations = [
 ];
 
 export default function TreasuryDashboard() {
-  const [isLoading, setIsLoading] = useState(false);
   const [transparencyOpen, setTransparencyOpen] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
 
+  // MODELLED FIGURES. Not balances, not reads from any chain.
+  //
+  // The ReGen Civics Fund is in formation (shared/fund.ts). Its actual
+  // treasury is zero, it has distributed nothing, and it holds no projects,
+  // because it is not yet a legal entity. Everything below is an illustration
+  // of what the model produces at scale.
+  //
+  // Until 2026-08-30 this component called itself a "Live Treasury Dashboard"
+  // offering "real-time transparency", with a ticking timestamp and a Refresh
+  // button that did nothing but wait 1.5 seconds and restamp the clock. The
+  // MODEL DASHBOARD banner was already there and was doing all the work
+  // against every other signal on the page. The banner stayed; the fake
+  // liveness went.
   const totalFunds = 51115111;
   const totalDistributed = 718500;
   const pendingDistributions = 32000;
   const treasuryAddress = "0x61203bC03b70A6A985a15DE92E1cd381CEA268ac";
-
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setLastUpdated(new Date());
-      setIsLoading(false);
-    }, 1500);
-  };
 
   return (
     <div className="space-y-8">
@@ -129,7 +130,7 @@ export default function TreasuryDashboard() {
           📊 MODEL DASHBOARD
         </p>
         <p className="text-amber-100/90 text-base md:text-lg mt-3 max-w-2xl mx-auto leading-relaxed">
-          This is a projection. Distributions won't begin until the fund reaches $20M committed.
+          Every figure below is modelled, not measured. The ReGen Civics Fund is in formation and is not yet a legal entity: its treasury is zero, it has distributed nothing, and it holds no projects. This is an illustration of how the model behaves at scale. Distributions cannot begin until the fund is formed and reaches $20M committed.
         </p>
       </div>
 
@@ -138,26 +139,16 @@ export default function TreasuryDashboard() {
         <div>
           <h3 className="text-2xl font-bold text-[#7dd87d] flex items-center gap-3" style={{ fontFamily: 'var(--font-display)' }}>
             <Wallet className="w-7 h-7" />
-            Live Treasury Dashboard
+            Illustrative Treasury Model
           </h3>
           <p className="text-white/60 mt-1 text-sm">
-            Real-time transparency into fund distributions and project allocations
+            How distributions and project allocations are designed to work, shown at an illustrative scale
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-white/60">
-            Last updated: {lastUpdated.toLocaleTimeString()}
+          <span className="text-xs text-amber-300/90 font-semibold">
+            Modelled figures, not live data
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="border-[#7dd87d]/30 text-[#7dd87d] hover:bg-[#7dd87d]/10"
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
         </div>
       </div>
 
@@ -200,7 +191,7 @@ export default function TreasuryDashboard() {
           </div>
           <div className="text-xs text-[#7dd87d] mt-1 flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" />
-            +12.5% this quarter
+            +12.5% per quarter (modelled)
           </div>
         </div>
 
@@ -213,7 +204,7 @@ export default function TreasuryDashboard() {
             ${totalDistributed.toLocaleString()}
           </div>
           <div className="text-xs text-white/70 mt-1">
-            Across 8 projects
+            Across 8 projects (modelled)
           </div>
         </div>
 
@@ -248,7 +239,7 @@ export default function TreasuryDashboard() {
       <div className="mt-2">
         <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
           <Globe className="w-5 h-5 text-[#7dd87d]" />
-          Regenerative Impact Metrics
+          Regenerative Impact Metrics (modelled)
         </h4>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
@@ -291,7 +282,7 @@ export default function TreasuryDashboard() {
         <div className="bg-[#0d2818]/80 border border-[#7dd87d]/20 rounded-xl p-6">
           <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <PieChart className="w-5 h-5 text-[#7dd87d]" />
-            Current Allocations
+            Modelled Allocations
           </h4>
           <div className="space-y-3">
             {projectAllocations.map((project, index) => (
@@ -325,7 +316,7 @@ export default function TreasuryDashboard() {
         <div className="bg-[#0d2818]/80 border border-[#7dd87d]/20 rounded-xl p-6">
           <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <Globe className="w-5 h-5 text-[#7dd87d]" />
-            Recent Distributions
+            Illustrative Distributions
           </h4>
           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
             {sampleTransactions.map((tx) => (

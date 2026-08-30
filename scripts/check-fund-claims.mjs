@@ -54,8 +54,18 @@ const RETIRED = [
 ];
 
 const SEARCH_ROOTS = ["client/src", "server", "shared", ".claude/skills"];
-const SEARCH_FILES = ["client/public/llms.txt", "client/public/llms-full.txt"];
-const SEARCH_EXT = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".md", ".txt"];
+const SEARCH_FILES = [
+  "client/public/llms.txt",
+  "client/public/llms-full.txt",
+  // client/index.html carried a THIRD copy of the InvestmentFund schema,
+  // hardcoded in the shell, so it shipped in the HTML of every route before
+  // React mounted. The first version of this gate did not scan .html and
+  // reported a clean tree while that block was still being served. Found by
+  // reading the built page rather than the diff, which is the only reason it
+  // was found at all.
+  "client/index.html",
+];
+const SEARCH_EXT = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".md", ".txt", ".html"];
 
 // shared/fund.ts is the one place allowed to name the retired claims, because
 // naming them is its job: the comments explain what was retired and why.

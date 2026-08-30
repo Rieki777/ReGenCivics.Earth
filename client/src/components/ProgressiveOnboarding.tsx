@@ -264,7 +264,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto text-shadow-subtle">
             {isNewcomer
-              ? "A venture fund and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
+              ? "A fund in formation and an alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
               : "Where would you like to go?"}
           </p>
         </div>
