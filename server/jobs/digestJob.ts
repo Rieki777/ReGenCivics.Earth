@@ -29,7 +29,7 @@ const SITE_HIGHLIGHTS = [
   { label: "The Regenerative Land Map", url: "/map", desc: "Explore land projects from across the globe in an interactive map." },
   { label: "The Bionomics Page", url: "/bionomics", desc: "The economic principles behind how regenerative land projects work." },
   { label: "The Tokenomics Page", url: "/tokenomics", desc: "How $ReGen and RGVoice tokens flow through the system." },
-  { label: "The Fund Page", url: "/fund", desc: "How the ReGen Civics Regenerative Land Fund works and how to participate." },
+  { label: "The Fund Page", url: "/fund", desc: "The ReGen Civics Fund, which is in formation, and how to take part." },
   { label: "The Games and Quests Page", url: "/play", desc: "Complete real-world quests, earn tokens, and contribute to regenerative projects." },
   { label: "The Apply Page", url: "/apply", desc: "Apply to bring your land project into the incubator for Season 2." },
   { label: "Feature Suggestions", url: "/features", desc: "Suggest and vote on new features. Your input shapes what gets built." },

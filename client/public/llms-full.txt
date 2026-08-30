@@ -1,11 +1,13 @@
 # ReGen Civics: Comprehensive Information for AI Language Models
 # https://regencivics.earth
-# Last updated: July 2026
+# Last updated: August 2026
 # For a summary version, see /llms.txt
 
 ## Organization Overview
 
-ReGen Civics is a venture fund and infinite game for regenerative land projects. We help ecovillages, regenerative farms, and sustainable communities succeed through capital, governance tools, and a global support network.
+ReGen Civics is a fund in formation and an infinite game that is live now, both for regenerative land projects. We help ecovillages, regenerative farms, and sustainable communities succeed through capital, governance tools, and a global support network.
+
+The ReGen Civics Fund is in formation. It is not yet a legal entity. We are gathering non-binding Letters of Intent. When they reach critical mass, the founding investors meet to agree the legal structure together, and the fund is formed. Target launch: 2027. Until then no capital is accepted and no money moves.
 
 Founded in 2023, ReGen Civics evolved from the SEEDS regenerative economy movement. We connect impact investors with regenerative land projects worldwide. Our approach integrates ecology, finance, development, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
 
@@ -14,7 +16,9 @@ Healthier lands lead to healthier people and increasing real-world value. That i
 ## Four Paths Into ReGen Civics
 
 ### Investor Path
-Accredited investors put capital to work in the regenerative transition. Options include the ReGen Civics fund (diversified portfolio of land projects) and crowd pooling (direct investment in specific projects through community-centered economic cooperatives).
+Two ways to put capital to work in the regenerative transition. The ReGen Civics Fund (a diversified portfolio of land projects) is in formation, target launch 2027, and is not accepting capital; when formed it will be open to accredited investors only, and today you can sign a non-binding Letter of Intent. Crowd pooling (direct investment in specific projects through community-centered economic cooperatives) is live now.
+
+This is not an offer to sell securities. An offering will only be made through a confidential private placement memorandum to accredited investors in compliance with applicable securities laws.
 
 ### Land Project Path
 Regenerative land projects apply for the 13-week incubator program. Projects build governance structures, design their economic game, access alliance support, and attract investment. Season 2 starts September 2026.
@@ -120,7 +124,7 @@ Anyone can claim a bounty and earn $ReGen tokens for verified work.
 
 ### Revenue Model
 ReGen Civics earns revenue through:
-- Management fees on the investment fund (performance-based)
+- Management fees on the investment fund, once it is formed (proposed, performance-based)
 - Success fees when projects secure funding
 - Premium features in the coordination tools
 - Licensing the platform to other movements

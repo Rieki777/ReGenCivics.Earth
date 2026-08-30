@@ -18,12 +18,14 @@
  *    sentence was banned. Only "this file must read its numbers from the shared
  *    module" catches that.
  *
- * Suppression: put `fund-claims-allow: <reason>` on the same line. Use it where
- * a line legitimately names Regulation D as the source of the accredited
- * investor definition (Disclaimers.tsx, RiskDisclosure.tsx) rather than as an
- * exemption the fund relies on. There are no blanket allowlists and no
- * directory-level opt-outs, on purpose: an allowlist is where a gate goes to
- * die.
+ * Suppression: put `fund-claims-allow: <reason>` on the same line, or on the
+ * line immediately above. The line-above form exists for JSX prose, where an
+ * inline comment would render into the page; scripts/audit-tap-blockers.py
+ * takes the same shape for the same reason. Use it where a line legitimately
+ * names Regulation D as the source of the accredited-investor DEFINITION
+ * (Disclaimers.tsx, RiskDisclosure.tsx) rather than as an exemption the fund
+ * relies on. There are no blanket allowlists and no directory-level opt-outs,
+ * on purpose: an allowlist is where a gate goes to die.
  *
  * Usage: node scripts/check-fund-claims.mjs
  * Wired into scripts/gate.mjs and .github/workflows/ci.yml.
@@ -88,7 +90,10 @@ for (const file of files) {
 
   const lines = readFileSync(file, "utf8").split(/\r?\n/);
   lines.forEach((line, i) => {
+    // Same line, or the line immediately above (for JSX prose, where an inline
+    // comment would render into the page).
     if (line.includes("fund-claims-allow:")) return;
+    if (i > 0 && lines[i - 1].includes("fund-claims-allow:")) return;
     const lower = line.toLowerCase();
     for (const claim of RETIRED) {
       if (lower.includes(claim.toLowerCase())) {

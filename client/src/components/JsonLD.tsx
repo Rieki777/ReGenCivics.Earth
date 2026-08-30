@@ -55,19 +55,12 @@ export const schemas = {
     url: "https://regencivics.earth",
   }),
 
-  investmentFund: () => ({
-    "@context": "https://schema.org",
-    "@type": "FinancialProduct",
-    name: "ReGen Civics Alliance Fund",
-    description:
-      "A venture fund investing in regenerative land projects and alliance organizations globally. Open to accredited investors.",
-    provider: {
-      "@type": "Organization",
-      name: "ReGen Civics",
-      url: "https://regencivics.earth",
-    },
-    url: "https://regencivics.earth/opportunity",
-  }),
+  // investmentFund was removed 2026-08-30. It declared a FinancialProduct,
+  // named after a fund that does not exist under a name nothing else used, and
+  // described as open to accredited investors, to every search engine and AI
+  // crawler that loaded /fund. The fund is in formation and is not a legal
+  // entity, so there is no financial product to describe. An unformed fund
+  // gets no schema. Facts live in shared/fund.ts.
 
   faqPage: (faqs: Array<{ question: string; answer: string }>) => ({
     "@context": "https://schema.org",

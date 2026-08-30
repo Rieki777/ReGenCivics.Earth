@@ -160,14 +160,17 @@ describe('Email Service', () => {
  * actually reaches a person.
  */
 describe('investor emails: formation-stage honesty', () => {
+  // Each line carries fund-claims-allow because this list IS the retired
+  // claims: scripts/check-fund-claims.mjs bans them repo-wide, and a test that
+  // asserts their absence has to name them to do it.
   const RETIRED = [
-    'Alliance Fund',
-    '506(c)',
-    'Reg D',
-    'Regulation D',
-    'fund is open',
-    'first in line when the fund opens',
-    'Offered pursuant',
+    'Alliance Fund', // fund-claims-allow: the string under test
+    '506(c)', // fund-claims-allow: the string under test
+    'Reg D', // fund-claims-allow: the string under test
+    'Regulation D', // fund-claims-allow: the string under test
+    'fund is open', // fund-claims-allow: the string under test
+    'first in line when the fund opens', // fund-claims-allow: the string under test
+    'Offered pursuant', // fund-claims-allow: the string under test
   ];
 
   const rendered = () => [

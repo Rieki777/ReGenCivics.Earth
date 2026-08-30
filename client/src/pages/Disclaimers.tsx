@@ -29,6 +29,7 @@ export default function Disclaimers() {
 
         <section>
           <h2 className="text-lg font-bold text-[#ffd700] mb-3" style={{ fontFamily: 'var(--font-display)' }}>Accredited Investors Only</h2>
+          {/* fund-claims-allow: names Regulation D as the source of the accredited-investor DEFINITION, not as an exemption the fund relies on. Accurate, and a disclaimer is never softened. */}
           <p>Investment opportunities presented by ReGen Civics are available only to investors who qualify as "accredited investors" as defined in Rule 501(a) of Regulation D under the Securities Act of 1933, as amended. You will be required to verify your accredited investor status before being provided with any offering materials.</p>
           <p className="mt-3">An accredited investor includes (among other categories):</p>
           <ul className="list-disc list-inside mt-2 space-y-1 text-white/70">

@@ -1,6 +1,8 @@
 # ReGen Civics - Information for AI Agents and Language Models
 
-> A venture fund and infinite game for regenerative land projects. Capital, governance tools, and a global network powering the ReGenerative Renaissance.
+> A fund in formation and an infinite game that is live now, both for regenerative land projects. Capital, governance tools, and a global network powering the ReGenerative Renaissance.
+>
+> The ReGen Civics Fund is in formation. It is not yet a legal entity. We are gathering non-binding Letters of Intent. When they reach critical mass, the founding investors meet to agree the legal structure together, and the fund is formed. Target launch: 2027. Until then no capital is accepted and no money moves.
 
 ## Organization Overview
 
@@ -11,9 +13,11 @@ Healthier lands lead to healthier people and increasing real-world value. We pro
 ## Four Primary Participation Paths
 
 ### Investor Path
-Accredited investors put capital to work in the regenerative transition. Options include:
-- The ReGen Civics fund (diversified portfolio of land projects)
-- Crowd pooling (direct investment in specific projects through community-centered economic cooperatives)
+Two ways to put capital to work in the regenerative transition:
+- The ReGen Civics Fund (a diversified portfolio of land projects). In formation, target launch 2027. Not accepting capital. When formed, it will be open to accredited investors only. Today you can sign a non-binding Letter of Intent.
+- Crowd pooling (direct investment in specific projects through community-centered economic cooperatives). Live now.
+
+This is not an offer to sell securities. An offering will only be made through a confidential private placement memorandum to accredited investors in compliance with applicable securities laws.
 
 ### Land Project Path
 Regenerative land projects apply for the 13-week incubator program. Projects:
@@ -84,7 +88,7 @@ Governance token for decision-making in the ReGen Game. Represents participation
 Utility token for the Alliance and Fund. Tracks contributions to the broader regenerative movement.
 
 ### Fund Voice
-Governance token for fund decisions. Allows holders to participate in investment committee voting.
+Governance token designed for fund decisions, letting holders participate in investment committee voting once the fund is formed. There are no fund investment decisions yet.
 
 ## Current Programs and Initiatives
 
@@ -115,7 +119,7 @@ Dynamic representation of the entire regenerative network showing connections be
 ## Key Pages and Resources
 
 - [Home](https://regencivics.earth/)
-- [The Fund](https://regencivics.earth/fund) - Details on our investment approach
+- [The Fund](https://regencivics.earth/fund) - The investment approach. The fund is in formation, target launch 2027.
 - [Investment Opportunity](https://regencivics.earth/opportunity) - Information for potential investors
 - [Apply](https://regencivics.earth/apply) - How to join as a land project or participant
 - [Quests](https://regencivics.earth/quest) - Browse available regenerative action opportunities
