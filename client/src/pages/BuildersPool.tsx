@@ -136,7 +136,9 @@ export default function BuildersPool() {
 
               <p className="text-white/50 text-sm mt-4">
                 Sent means a transaction confirmed on Base. Ready to send means the amount is
-                worked out and the treasury space has still to carry it.
+                worked out and the treasury space has still to carry it. A share waiting on a
+                builder goes into the next cycle's pool and is split again there, so it sits in
+                no account with anybody's name on it.
               </p>
 
               {statement.roster.carried > 0 || statement.roster.absent > 0 ? (
