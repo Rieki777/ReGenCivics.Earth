@@ -1,8 +1,11 @@
 /**
  * AllocationCalculator - Personal Investment Return Projector
- * Models hypothetical return scenarios for ReGen Civics Fund investors
- * based on actual fund mechanics: 1.5% mgmt fee, 8% preferred return,
- * 20% carry, quarterly distributions from Year 3.
+ * Models hypothetical return scenarios for the ReGen Civics Fund using its
+ * PROPOSED mechanics: 1.5% mgmt fee, 8% preferred return, 20% carry,
+ * quarterly distributions from Year 3. Those are a proposal to be settled by
+ * the founding investors at the founding event, not agreed terms, and the
+ * fund is not yet a legal entity. The comment used to say "actual fund
+ * mechanics", which is where a reader's assumption starts.
  *
  * DISCLAIMER: All figures are hypothetical projections for illustration only.
  * Past performance does not guarantee future results.
@@ -17,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { FUND } from "@shared/fund";
 const RETURN_SCENARIOS = [
   { label: "Conservative", netIRR: 0.10, cashYield: 0.05, color: "#7dd87d" },
   { label: "Target", netIRR: 0.15, cashYield: 0.07, color: "#d4a574" },
@@ -106,6 +110,9 @@ export default function AllocationCalculator() {
             <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle">
               Project your hypothetical returns across different investment sizes and performance scenarios
             </p>
+            <p className="text-[#d4a574] text-sm max-w-2xl mx-auto mt-3 safe-prose">
+              An illustrative model using proposed terms. {FUND.termsLabel}. The fund is in formation and has no results to model from.
+            </p>
           </AnimatedSection>
 
           {/* Investment Amount */}
@@ -134,7 +141,7 @@ export default function AllocationCalculator() {
                 className="w-full accent-[#7dd87d]"
               />
               <div className="flex justify-between text-white/60 text-xs mt-1">
-                <span>$250K minimum</span>
+                <span>$250K proposed minimum</span>
                 <span>$5M+</span>
               </div>
             </div>

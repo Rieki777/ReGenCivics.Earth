@@ -298,16 +298,16 @@ function HowReturnsFlowToggle() {
 
       {activeTab === 'fees' && (
         <div className="bg-gradient-to-br from-[#d4a574]/20 to-[#d4a574]/20 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
-          <h3 className="text-2xl font-bold text-[#d4a574] text-center">Management Fees Split</h3>
+          <h3 className="text-2xl font-bold text-[#d4a574] text-center">Management Fees Split (proposed)</h3>
           <div className="grid sm:grid-cols-2 gap-6 mt-6">
             <div className="bg-[#1a472a]/60 rounded-xl p-6 border-2 border-[#d4a574]/40">
               <p className="text-[#d4a574] font-bold text-lg mb-3">Council (50%)</p>
-              <p className="text-white/80 mb-4">The Council of Domain Experts receives 50% of management fees for overseeing fund operations and governance.</p>
+              <p className="text-white/80 mb-4">As proposed, the Council of Domain Experts would receive 50% of management fees for overseeing fund operations and governance. The fund is in formation, so no fees exist yet.</p>
               <p className="text-white/60 text-sm">Part of Council fees fund worker proposals to ReGen Civics for ongoing operations and development.</p>
             </div>
             <div className="bg-[#1a472a]/60 rounded-xl p-6 border-2 border-[#d4a574]/40">
               <p className="text-[#d4a574] font-bold text-lg mb-3">RCVoice Holders (50%)</p>
-              <p className="text-white/80 mb-4">50% of management fees are distributed proportionally to all RCVoice holders across all four groups.</p>
+              <p className="text-white/80 mb-4">As proposed, the other 50% would be distributed proportionally to all RCVoice holders across all four groups.</p>
               <p className="text-white/60 text-sm">This rewards those actively governing the fund with a share of management revenue.</p>
             </div>
           </div>
@@ -921,7 +921,7 @@ export default function Governance() {
                     },
                     {
                       dimension: 'Financial Returns',
-                      fund: '$RCivics holders receive proportional portfolio returns & $RCVoice holders receive a share of success and management fees',
+                      fund: 'As designed, $RCivics holders will receive proportional portfolio returns and $RCVoice holders a share of success and management fees, once the fund is formed',
                       game: '$Regen earned through quests, tradable in-game',
                       fundColor: 'text-[#d4a574]',
                       gameColor: 'text-purple-300',

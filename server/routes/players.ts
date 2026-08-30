@@ -8,6 +8,7 @@ import { getGameVariableOr } from "../game";
 import { eq, sql, count, and, or, like, isNotNull } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions, type PlayerProfile } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
+import { FUND } from "@shared/fund";
 import { invokeLLM } from "../_core/llm";
 import { sanitizeInput } from "../_core/security";
 import type { TrpcContext } from "../_core/context";
@@ -1951,8 +1952,10 @@ Current visitor context:
 - Role: ${role}
 
 Your knowledge base:
-- ReGen Civics is a regenerative civilization venture fund + infinite collaborative game
-- Fund: targets 12-18% net IRR + $RCivics token appreciation. Min investment $250K. Quarterly distributions from Year 3. 8% preferred return, 20% carry, 1.5% management fee.
+- ReGen Civics is a regenerative civilization platform: a fund in formation, and an infinite collaborative game that is live now
+- Fund status, say this before any other fund fact: ${FUND.statement}
+- Fund: never state a return target, a fee, a carry rate, a preferred return, a minimum, or a fund size. They exist on /opportunity, labelled as proposals to be settled at the founding event. Point there instead of repeating a number. Never name a securities exemption; none has been chosen.
+- Fund: ${FUND.eligibility} A Letter of Intent is non-binding and carries no obligation.
 - Quests: 13 original quests (gold shimmer) + growing quest library (green shimmer). Earn RVoice + ReGen tokens. Start at /quests.
 - Land projects: regenerative land-backed investments. Apply at /apply. Browse approved projects at /land.
 - Alliance orgs: partner organizations supporting the regenerative ecosystem. Learn at /alliance.

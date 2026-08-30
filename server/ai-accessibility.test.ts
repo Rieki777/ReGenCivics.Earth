@@ -54,8 +54,14 @@ describe('AI Accessibility Files Content', () => {
     expect(content).toContain('Nine Forms of Capital');
     expect(content).toContain('Crowd Pooling');
 
-    // Should have proper update information
-    expect(content).toContain('Last updated: July 2026');
+    // Should have proper update information.
+    //
+    // Asserts the SHAPE, not a frozen date. This used to pin the literal
+    // string "Last updated: July 2026", so the test failed the moment anyone
+    // edited the file and told them to change the date back rather than
+    // forward. A stale-date guard that breaks on every update is a guard
+    // people learn to edit around.
+    expect(content).toMatch(/^# Last updated: (January|February|March|April|May|June|July|August|September|October|November|December) \d{4}$/m);
   });
 
   it('should have enhanced robots.txt', () => {

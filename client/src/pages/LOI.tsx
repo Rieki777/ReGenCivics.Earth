@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { analytics } from "@/lib/analytics";
+import { FUND } from "@shared/fund";
 
 export default function LOI() {
   // Note: previously this page redirected to /investor?returnTo=/loi when the
@@ -52,7 +53,7 @@ export default function LOI() {
 
     const pledgeAmount = parseInt(formData.pledgeAmount);
     if (isNaN(pledgeAmount) || pledgeAmount < 250000) {
-      setError("Minimum investment is $250,000. Please enter a valid pledge amount.");
+      setError("The proposed minimum is $250,000. Please enter a valid pledge amount.");
       return;
     }
 
@@ -246,7 +247,7 @@ export default function LOI() {
                 <div>
                   <label htmlFor="loi-pledge-amount" className="block text-sm font-medium text-[#1a472a] mb-2">
                     Pledge Amount (USD) <span className="text-red-500">*</span>
-                    <span className="text-xs text-[#1a472a]/80 ml-1">($250,000 minimum)</span>
+                    <span className="text-xs text-[#1a472a]/80 ml-1">(${FUND.proposedMinimumUsd.toLocaleString()} proposed minimum)</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>

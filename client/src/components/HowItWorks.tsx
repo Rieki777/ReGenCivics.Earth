@@ -10,6 +10,7 @@ import {
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { FUND } from "@shared/fund";
 
 // Each path is one of the interconnected ways people show up to ReGen
 // Civics. They are not sequential steps. The numbers and "5 steps"
@@ -36,8 +37,8 @@ const steps = [
   },
   {
     title: "Investors Fund the Portfolio",
-    summary: "Accredited investors gain diversified exposure to the regenerative land economy.",
-    detail: "The ReGen Civics Fund pools capital across a curated portfolio of land projects and alliance organizations. This diversified approach reduces risk while maximizing systemic impact. Minimum investment is $250,000.",
+    summary: "Diversified exposure to the regenerative land economy, once the fund is formed.",
+    detail: `${FUND.statement} As designed, it will pool capital across a curated portfolio of land projects and alliance organizations, so the diversification reduces risk while maximizing systemic impact. ${FUND.eligibility} The proposed minimum is $250,000.`,
     icon: Coins,
     color: "text-amber-400",
     bgColor: "bg-amber-400/20",

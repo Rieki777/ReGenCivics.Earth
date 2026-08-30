@@ -19,6 +19,7 @@
  *      a small TTL cache, including DiscussionForumPosting / Project JSON-LD.
  */
 import * as db from "../db";
+import { FUND } from "../../shared/fund";
 import { getNetworkFeed } from "../lib/network-feed";
 import {
   LEARN_ARTICLES,
@@ -73,7 +74,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>ReGen Civics: a fund and a game for the Regenerative Renaissance</h1>
-        <p>ReGen Civics is a venture fund and an in-real-life game that supports regenerative land projects: ecovillages, regenerative farms, intentional communities, and restoration projects healing their land and bioregions. We connect impact investors with land projects, run a 13-week incubator, and operate a quest-based game where anyone can contribute to real-world regeneration and earn tokens for verified work.</p>
+        <p>ReGen Civics is a fund in formation and an in-real-life game that is live now, both supporting regenerative land projects: ecovillages, regenerative farms, intentional communities, and restoration projects healing their land and bioregions. We connect impact investors with land projects, run a 13-week incubator, and operate a quest-based game where anyone can contribute to real-world regeneration and earn tokens for verified work.</p>
         <p>Founded in 2023, ReGen Civics grew out of the SEEDS regenerative economy movement. The thesis is simple: healthier lands lead to healthier people and increasing real-world value.</p>
         <h2>Four ways in</h2>
         <ul>
@@ -90,14 +91,16 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>The ReGen Civics Fund: invest in regenerative land</h1>
-        <p>The ReGen Civics Fund pools capital to invest in regenerative land projects: ecovillages, regenerative farms, agroforestry operations, and community land ventures that restore ecosystems while building durable local economies. Investors get a diversified portfolio of land-backed projects, screened through our HEIST framework (Holistic Ecosystemic Impact and Sustainability Toolkit) and supported by our incubator so their odds of success rise after investment.</p>
+        <p>${FUND.statement}</p>
+        <p>Once formed, the ${FUND.name} will pool capital to invest in regenerative land projects: ecovillages, regenerative farms, agroforestry operations, and community land ventures that restore ecosystems while building durable local economies. The design gives investors a diversified portfolio of land-backed projects, screened through our HEIST framework (Holistic Ecosystemic Impact and Sustainability Toolkit) and supported by our incubator so their odds of success rise after investment.</p>
         <h2>How it works</h2>
-        <p>Projects enter through the incubator, where they build governance structures, design their economics, and prepare for investment. The fund invests in projects that graduate with strong fundamentals. Community members can also invest directly in specific projects through crowd pooling: community-centered economic cooperatives (CCECs) that democratize access to land-based investment.</p>
+        <p>Projects enter through the incubator, where they build governance structures, design their economics, and prepare for investment. The fund will invest in projects that graduate with strong fundamentals. Community members can also invest directly in specific projects through crowd pooling: community-centered economic cooperatives (CCECs) that democratize access to land-based investment.</p>
         <h2>Questions investors ask</h2>
-        <p><strong>What returns can I expect?</strong> Target returns of 8 to 12% annually, blended financial plus impact returns, varying by project maturity.</p>
+        <p><strong>What returns are targeted?</strong> A modelled target of ${FUND.targetNetIrr} net IRR, blended financial plus impact returns, varying by project maturity. That is a target, not a projection of results, and the fund has no track record because it has made no investments.</p>
         <p><strong>How is risk managed?</strong> Diversification across projects, bioregions, and risk profiles, plus due diligence, insurance where possible, and reserve funds.</p>
         <p><strong>Do projects keep ownership?</strong> Yes. We facilitate funding and support; projects remain independently owned and operated.</p>
-        <p>Start with the <a href="/opportunity">investment opportunity overview</a>, the <a href="/investor">investor journey</a>, or submit a <a href="/loi">letter of intent</a>. Full <a href="/risk-disclosure">risk disclosure here</a>.</p>
+        <p>${FUND.offeringDisclaimer}</p>
+        <p>Start with the <a href="/opportunity">investment opportunity overview</a>, the <a href="/investor">investor journey</a>, or submit a non-binding <a href="/loi">letter of intent</a>. Full <a href="/risk-disclosure">risk disclosure here</a>.</p>
       </article>
     `,
   },
@@ -122,7 +125,8 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>The investment opportunity</h1>
-        <p>Regenerative land projects produce real assets: healthy soil, food systems, housing, tourism, timber, carbon, and thriving communities. ReGen Civics packages that value for investors through a fund (diversified portfolio) and crowd pooling (direct investment in specific projects). Both are anchored in land, screened through the HEIST framework, and supported by an incubator that raises project success rates after investment.</p>
+        <p>${FUND.statement}</p>
+        <p>Regenerative land projects produce real assets: healthy soil, food systems, housing, tourism, timber, carbon, and thriving communities. ReGen Civics is building two ways to put capital behind that value: the fund (a diversified portfolio, in formation) and crowd pooling (direct investment in specific projects, live now). Both are anchored in land, screened through the HEIST framework, and supported by an incubator that raises project success rates after investment.</p>
         <p>The regenerative transition is one of the largest reallocation opportunities of this generation: capital moving from extractive systems into systems that rebuild the living world while returning blended financial and impact value. Read the <a href="/fund">fund overview</a>, meet <a href="/land">the land projects</a>, or begin the <a href="/investor">investor journey</a>.</p>
       </article>
     `,
@@ -131,7 +135,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Governance: voice rooted in land and contribution</h1>
-        <p>ReGen Civics uses voice-based governance: decision power flows from verified contribution, not from capital alone. Two governance tokens exist. RGVoice governs the ReGen Game (quests, community, game economics). Fund Voice governs fund investment decisions. Both operate through the Hypha DAO framework on the Base network, so decisions are recorded transparently on chain.</p>
+        <p>ReGen Civics uses voice-based governance: decision power flows from verified contribution, not from capital alone. Two governance tokens exist. RGVoice governs the ReGen Game (quests, community, game economics), which is live. Fund Voice is designed to govern fund investment decisions once the fund is formed; there are no fund investment decisions yet. Both operate through the Hypha DAO framework on the Base network, so decisions are recorded transparently on chain.</p>
         <p>Members raise proposals, the community deliberates in the <a href="/community">forum</a>, and ratified decisions execute through our machine governance pipeline. Anyone can review <a href="/proposals">community proposals</a> or the live <a href="/assembly">assembly</a>. The result is governance that stays accountable to the people doing the regenerative work and to the land itself.</p>
       </article>
     `,
@@ -256,8 +260,9 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>The investor journey</h1>
-        <p>Investing in ReGen Civics means putting capital into regenerative land projects with support structures that raise their odds of success. Start by understanding the <a href="/fund">fund</a> and the <a href="/opportunity">opportunity</a>, review the <a href="/risk-disclosure">risk disclosure</a>, then submit a <a href="/loi">letter of intent</a>. From there we talk through fit: fund participation for diversified exposure, or crowd pooling for direct investment into specific projects you believe in.</p>
-        <p>Target returns are 8 to 12% annually, blended financial and impact returns. Investors also gain voice: Fund Voice governance tokens give participating investors a say in fund decisions.</p>
+        <p>Investing in ReGen Civics means putting capital into regenerative land projects with support structures that raise their odds of success. Start by understanding the <a href="/fund">fund</a> and the <a href="/opportunity">opportunity</a>, review the <a href="/risk-disclosure">risk disclosure</a>, then submit a non-binding <a href="/loi">letter of intent</a>. From there we talk through fit: fund participation for diversified exposure, or crowd pooling for direct investment into specific projects you believe in.</p>
+        <p>${FUND.statement}</p>
+        <p>The modelled target is ${FUND.targetNetIrr} net IRR, blended financial and impact returns. It is a target, not a promise. Once the fund is formed, Fund Voice governance tokens are designed to give participating investors a say in fund decisions.</p>
       </article>
     `,
   },

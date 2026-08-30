@@ -6,6 +6,7 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { useLocation } from 'wouter';
 import { schemas } from "@/components/JsonLD";
+import { FUND } from "@shared/fund";
 
 interface SEOProps {
   title: string;
@@ -175,8 +176,8 @@ export const pageSEO = {
     url: '/team'
   },
   opportunity: {
-    title: 'Investment Opportunity: Regenerative Land Fund',
-    description: 'For accredited investors ready to put capital to work in the regenerative transition. Here\'s the investment opportunity inside ReGen Civics.',
+    title: 'Investment Thesis: the ReGen Civics Fund, in formation',
+    description: `${FUND.statementShort} Read the thesis and the proposed terms.`,
     keywords: 'regenerative investment, impact fund, land investment, sustainable investing, ESG investment, regenerative agriculture investment',
     image: '/og/opportunity.jpg',
     url: '/opportunity'
@@ -197,7 +198,7 @@ export const pageSEO = {
   },
   loi: {
     title: 'Letter of Intent | ReGen Civics',
-    description: 'Submit your Letter of Intent to invest in the ReGen Civics Regenerative Land Fund. Express your commitment to financing the transition to regenerative civilizations.',
+    description: `Submit a non-binding Letter of Intent for the ${FUND.name}, which is in formation. It carries no obligation.`,
     keywords: 'letter of intent, investment commitment, regenerative fund, impact investing, accredited investor',
     image: '/og/opportunity.jpg',
     url: '/loi'
@@ -239,7 +240,7 @@ export const pageSEO = {
   },
   riskDisclosure: {
     title: 'Risk Disclosure | ReGen Civics',
-    description: 'Full risk disclosure for the ReGen Civics Regenerative Land Fund. Understand the risks of investing in regenerative land projects and alliance organizations.',
+    description: `Full risk disclosure for the ${FUND.name}. Understand the risks of investing in regenerative land projects and alliance organizations.`,
     keywords: 'investment risk disclosure, regenerative fund risks, impact investing risks, land investment risks',
     image: '/og/opportunity.jpg',
     url: '/risk-disclosure'
@@ -267,7 +268,7 @@ export const pageSEO = {
   },
   investorForm: {
     title: 'Investor Information | ReGen Civics',
-    description: 'Provide your information to explore the ReGen Civics investment opportunity. Accredited investors seeking to finance the regenerative transition.',
+    description: `Explore the ReGen Civics investment thesis. The fund is in formation, target launch ${FUND.launchTarget}.`,
     keywords: 'investor form, accredited investor, regenerative fund application, impact investment inquiry',
     image: '/og/opportunity.jpg',
     url: '/investor-form'

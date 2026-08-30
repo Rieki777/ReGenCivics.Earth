@@ -7,6 +7,7 @@
 import { Resend } from 'resend';
 import { logger } from './logger';
 import { signTrackedUrl } from '../emailTracking';
+import { FUND } from '../../shared/fund';
 
 const log = logger('email');
 
@@ -489,40 +490,45 @@ export const emailTemplates = {
         </div>
         
         <div style="padding: 30px;">
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">Thank you for your interest in the ReGen Civics Alliance Fund. We've received your inquiry and are excited to share our full investment materials with you.</p>
-          
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">Thank you for your interest in the ${FUND.name}. We've received your inquiry and want to be straight with you about where things stand.</p>
+
           <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
-            <p style="color: #1a472a; margin: 0 0 8px 0; font-weight: bold;">Your Inquiry Summary</p>
-            <p style="color: #555; margin: 0; font-size: 14px;"><strong>Investment Interest:</strong> ${investmentRange}</p>
+            <p style="color: #1a472a; margin: 0 0 8px 0; font-weight: bold;">${FUND.statusLabel}</p>
+            <p style="color: #333; margin: 0 0 12px 0; font-size: 14px; line-height: 1.7;">${FUND.statement}</p>
+            <p style="color: #555; margin: 0; font-size: 14px;"><strong>Your indicated interest:</strong> ${investmentRange}</p>
           </div>
-          
-          <h3 style="color: #1a472a; margin-top: 28px;">Your Investor Materials</h3>
-          
+
+          <h3 style="color: #1a472a; margin-top: 28px;">Your Materials</h3>
+
           <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
             <tr>
               <td style="padding: 12px; background: #f9f9f9; border-radius: 8px; vertical-align: top;">
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">Investor Deck (PDF)</p>
-                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">Our full 16-slide presentation covering the fund thesis, structure, portfolio, governance, and investment terms.</p>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">Investor Deck (PDF) <span style="font-weight: normal; color: #8a5a00;">- ${FUND.deckLabel}</span></p>
+                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">A 16-slide presentation covering the thesis, the intended structure, the kind of projects the fund is designed to back, governance, and the proposed terms. It was written in July 2026, before the founding event, so read it as a proposal. Where it differs from the page, the page is current.</p>
                 <a href="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/regen-civics-investor-deck-v3_b8e3b334.pdf" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">Download Investor Deck</a>
               </td>
             </tr>
           </table>
-          
+
           <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
             <tr>
               <td style="padding: 12px; background: #f9f9f9; border-radius: 8px; vertical-align: top;">
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">Investment Memorandum (Online)</p>
-                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">The full interactive investment memorandum with detailed financials, risk factors, portfolio overview, competitive positioning, and FAQs. Bookmark this link for easy access anytime.</p>
-                <a href="https://regencivics.earth/opportunity" style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">View Investment Memorandum</a>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">The Investment Thesis (Online)</p>
+                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">The full thesis with the proposed terms, risk factors, the kind of portfolio the fund is designed to hold, competitive positioning, and FAQs. This is the current version of the story. Bookmark it.</p>
+                <a href="https://regencivics.earth/opportunity" style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">Read the Thesis</a>
               </td>
             </tr>
           </table>
-          
+
+          <div style="background: #fff8f0; border: 1px solid #d4a574; border-radius: 8px; padding: 16px 20px; margin: 20px 0;">
+            <p style="color: #333; margin: 0; font-size: 13px; line-height: 1.7;">${FUND.offeringDisclaimer}</p>
+          </div>
+
           <h3 style="color: #1a472a; margin-top: 28px;">Next Steps</h3>
           <ol style="color: #555; line-height: 1.9; font-size: 14px; padding-left: 20px;">
-            <li>Review the investor deck and investment memorandum at your own pace</li>
-            <li><a href="https://calendly.com/rieki-cordon/30min" style="color: #1a472a; font-weight: bold;">Schedule a due diligence call</a> when you're ready to go deeper</li>
-            <li><a href="https://regencivics.earth/loi" style="color: #1a472a; font-weight: bold;">Submit a Letter of Intent</a> to secure your place in the founding investor cohort</li>
+            <li>Review the deck and the thesis at your own pace</li>
+            <li><a href="https://calendly.com/rieki-cordon/30min" style="color: #1a472a; font-weight: bold;">Schedule a call</a> when you're ready to go deeper</li>
+            <li><a href="https://regencivics.earth/loi" style="color: #1a472a; font-weight: bold;">Submit a Letter of Intent</a>. It is non-binding and carries no obligation. Signers are invited to the founding event when the threshold is reached</li>
           </ol>
           
           <div style="background: #1a472a; color: rgba(255,255,255,0.7); padding: 16px 20px; border-radius: 8px; margin-top: 28px; font-size: 12px; line-height: 1.6;">
@@ -622,7 +628,7 @@ export const emailTemplates = {
   // ── Investor drip sequence ──────────────────────────────────────────────────
   // Day 3: Fund overview deep-dive
   investorDripDay3: (recipientName: string) => ({
-    subject: 'The ReGen Civics Fund: How the Economics Work',
+    subject: 'The ReGen Civics Fund: how the economics are meant to work',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
         <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -630,23 +636,17 @@ export const emailTemplates = {
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
         </div>
         <div style="padding: 28px 30px;">
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">We wanted to share a bit more about how the fund is structured, because it's genuinely different from a typical alternative investment.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">We wanted to share more about how the fund is designed, and where the design still has to be settled.</p>
           <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin: 20px 0;">
-            <p style="color: #1a472a; margin: 0 0 10px 0; font-weight: bold; font-size: 15px;">Fund Structure at a Glance</p>
-            <ul style="color: #333; margin: 0; padding-left: 20px; line-height: 1.9; font-size: 14px;">
-              <li><strong>Target return:</strong> 12–18% net IRR (Target scenario)</li>
-              <li><strong>Preferred return:</strong> 8% cumulative before carry</li>
-              <li><strong>Carried interest:</strong> 20% above the preferred return</li>
-              <li><strong>Management fee:</strong> 1.5% annually</li>
-              <li><strong>Minimum commitment:</strong> $250,000</li>
-              <li><strong>Distributions:</strong> Quarterly from Year 3</li>
-            </ul>
+            <p style="color: #1a472a; margin: 0 0 10px 0; font-weight: bold; font-size: 15px;">${FUND.statusLabel}</p>
+            <p style="color: #333; margin: 0; font-size: 14px; line-height: 1.7;">${FUND.statement}</p>
           </div>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">The fund deploys into a diversified portfolio of regenerative land projects  -  eco-villages, food forests, and community-owned land  -  that generate returns through land appreciation, community revenue, and alliance services.</p>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">You can explore our full allocation model and scenario projections at <a href="https://regencivics.earth/opportunity" style="color: #4a7c59;">regencivics.earth/opportunity</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">That last part shapes everything else. The fee split, the preferred return, the carry, the minimum commitment and the term are a <strong>proposal</strong>, not a term sheet. ${FUND.termsLabel}. We are not going to send you numbers in an email that the founding investors have not agreed to yet.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The proposal is written out in full, labelled as a proposal, on the thesis page. So is the allocation model, so you can see the assumptions rather than take a figure on trust.</p>
           <div style="text-align: center; margin: 24px 0 8px;">
-            <a href="https://regencivics.earth/opportunity" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #7dd87d;">Read the Full Opportunity</a>
+            <a href="https://regencivics.earth/opportunity#terms" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #7dd87d;">Read the Proposed Terms</a>
           </div>
+          <p style="color: #666; line-height: 1.7; font-size: 13px; margin-top: 20px;">${FUND.offeringDisclaimer}</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
           <p style="color: #999; font-size: 12px; margin: 0;">ReGen Civics · <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a></p>
@@ -665,18 +665,18 @@ export const emailTemplates = {
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">For ${recipientName}</p>
         </div>
         <div style="padding: 28px 30px;">
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">Behind every fund investment is a real place  -  land being stewarded by people committed to regeneration. Here's what a typical Season 2 project looks like.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The fund has not made an investment yet, because it does not exist yet. What does exist is the land, and the people already stewarding it. Here is the kind of project the fund is designed to back.</p>
           <div style="background: #fff8f0; border: 1px solid #d4a574; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <p style="color: #8a5a00; font-weight: bold; margin: 0 0 10px 0;">A Regenerative Land Project in the Fund</p>
+            <p style="color: #8a5a00; font-weight: bold; margin: 0 0 10px 0;">The Kind of Project the Fund Is Designed to Back</p>
             <ul style="color: #333; margin: 0; padding-left: 20px; line-height: 1.9; font-size: 14px;">
-              <li>Community-owned land (1–500+ hectares)</li>
+              <li>Community-owned land (1 to 500+ hectares)</li>
               <li>Mixed-use: residential, food production, ecological restoration</li>
               <li>Governed by a DAO  -  transparent, participatory</li>
               <li>Revenue from membership, produce, services, and events</li>
-              <li>Success fees flow back to fund investors quarterly from Year 3+</li>
+              <li>Success fees planned to flow back to investors quarterly from Year 3, once the fund is formed</li>
             </ul>
           </div>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">We currently have 13+ projects in various stages on the map. Browse them at <a href="https://regencivics.earth/map" style="color: #4a7c59;">regencivics.earth/map</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The projects already in the network are on the map. Browse them at <a href="https://regencivics.earth/map" style="color: #4a7c59;">regencivics.earth/map</a>.</p>
           <p style="color: #333; line-height: 1.7; font-size: 15px;">If you'd like to understand how we evaluate and select projects  -  including our due diligence process  -  come explore our Forum and ask any questions you have. <a href="https://regencivics.earth/community" style="color: #4a7c59;">Join the Forum →</a></p>
           <div style="text-align: center; margin: 24px 0 8px;">
             <a href="https://regencivics.earth/land" style="display: inline-block; background: #2d5a3d; color: #d4a574; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #d4a574;">Explore Land Projects</a>
@@ -702,9 +702,9 @@ export const emailTemplates = {
           <p style="color: #333; line-height: 1.7; font-size: 15px;">It's been two weeks since you expressed interest in ReGen Civics. We thought we'd answer the questions we hear most often at this stage.</p>
           <div style="margin: 20px 0;">
             <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">When does the fund accept capital?</p>
-            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">The fund will not accept capital until we have reached our $20M threshold, ensuring meaningful diversification from day one. We are currently building commitments through Letters of Intent. At this point we'll host a 3-day event where investors, land project stewards, and a council of domain experts will have the opportunity to gather and decide on the final structure of the fund  -  so it best represents the needs and perspectives of all parties it's designed to serve.</p>
+            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">The ${FUND.name} is in formation and is not yet a legal entity. It will not accept capital until we have reached our ${FUND.loiThreshold} threshold, ensuring meaningful diversification from day one. We are currently building commitments through non-binding Letters of Intent. At that point we'll host a 3-day event where investors, land project stewards, and a council of domain experts will have the opportunity to gather and decide on the final structure of the fund  -  so it best represents the needs and perspectives of all parties it's designed to serve. Target launch: ${FUND.launchTarget}.</p>
             <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">Is this a long-term commitment?</p>
-            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">Yes  -  this is a long-term investment aligned with the timelines of land and ecological restoration. Quarterly distributions begin in Year 3. The fund is designed to grow with the regenerative economy.</p>
+            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">Yes  -  this is designed as a long-term investment aligned with the timelines of land and ecological restoration. Quarterly distributions are planned to begin in Year 3 after the fund is formed. The fund is designed to grow with the regenerative economy.</p>
             <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">How do I signal serious interest?</p>
             <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">Sign a non-binding Letter of Intent at <a href="https://regencivics.earth/loi" style="color: #4a7c59;">regencivics.earth/loi</a>. This signals your intent and ensures you're included in our formal launch process. It carries no obligation.</p>
           </div>
@@ -727,18 +727,18 @@ export const emailTemplates = {
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
         <div style="background: linear-gradient(135deg, #8a5a00 0%, #5c3a00 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="color: #ffd700; margin: 0 0 8px 0; font-size: 22px;">Securing Your Position</h1>
+          <h1 style="color: #ffd700; margin: 0 0 8px 0; font-size: 22px;">Adding Your Name</h1>
           <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
         </div>
         <div style="padding: 28px 30px;">
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">It's been a month since you first reached out about ReGen Civics. We want to make sure you haven't missed the chance to secure your position in the fund.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">It's been a month since you first reached out about ReGen Civics. The ${FUND.name} is still in formation, and there is still time to add your name before the founding event.</p>
           <div style="background: #fff8e0; border: 2px solid #ffd700; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
             <p style="color: #8a5a00; font-weight: bold; font-size: 16px; margin: 0 0 8px 0;">Sign Your Letter of Intent</p>
-            <p style="color: #5c3a00; font-size: 14px; margin: 0 0 16px 0;">Non-binding. Takes 2 minutes. Ensures you're first in line when the fund opens.</p>
+            <p style="color: #5c3a00; font-size: 14px; margin: 0 0 16px 0;">Non-binding. Takes 2 minutes. Carries no obligation. Signers are invited to the founding event when the threshold is reached.</p>
             <a href="https://regencivics.earth/loi" style="display: inline-block; background: #8a5a00; color: #ffd700; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 2px solid #ffd700;">Sign the LOI</a>
           </div>
           <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, <a href="https://regencivics.earth/investor/contact" style="color: #4a7c59;">send us a message from your investor profile</a> or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">The ReGenerative Renaissance is underway  -  and your capital can help it accelerate.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The ReGenerative Renaissance is underway. The fund is the part that is still being built, and the founding investors are the ones who get to shape it.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
           <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="${toAbsoluteUrl('/settings')}" style="color: #4a7c59;">Update email preferences</a></p>

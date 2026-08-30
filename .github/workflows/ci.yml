@@ -47,6 +47,15 @@ jobs:
       - name: Env example completeness
         run: node scripts/check-env-example.mjs
 
+      # The fund's story stays true, and stays in one place. Bans twelve
+      # retired claims and requires every surface that describes the fund to
+      # read its facts from shared/fund.ts. The second half is the one that
+      # matters: the crawler prose said "8 to 12%" while the page said
+      # "12 to 18%" for about two years, and no banned-phrase grep would ever
+      # have caught it, because neither sentence was banned.
+      - name: Fund claims guard
+        run: node scripts/check-fund-claims.mjs
+
       # Non-blocking CVE check. Reports findings but does not fail the
       # build, since transitive deps occasionally land moderate CVEs we
       # don't control. Treat as a watchdog signal, follow up out-of-band.

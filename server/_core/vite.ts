@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { FUND } from "../../shared/fund";
 import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
@@ -243,7 +244,7 @@ export function serveStatic(app: Express) {
     image: `${BASE_URL}/og-default.jpg`,
   };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {
-    "/fund":        { title: "ReGen Civics Fund: Invest in Regenerative Land", description: "Invest in the ReGenerative Renaissance. ReGen Civics pools capital to support land projects healing communities and ecosystems.", image: `${BASE_URL}/og/fund.jpg` },
+    "/fund":        { title: "The ReGen Civics Fund: in formation", description: FUND.statementShort, image: `${BASE_URL}/og/fund.jpg` },
     "/game":        { title: "The Infinite Game: ReGen Civics", description: "A real-world game for the ReGenerative Renaissance. Complete quests, earn $ReGen tokens, and help build the world we all want to live in.", image: `${BASE_URL}/og/game.jpg` },
     "/quest":       { title: "Quests: ReGen Civics", description: "Rites of passage, seasonal practices, and community challenges. Complete quests, earn tokens, and deepen your regenerative path.", image: `${BASE_URL}/og/quest.jpg` },
     "/schedule":    { title: "Events & Sessions: ReGen Civics", description: "Live community sessions, open calls, and events. Connect with fellow regenerators and participate in the Infinite Game.", image: `${BASE_URL}/og/schedule.jpg` },
@@ -272,7 +273,7 @@ export function serveStatic(app: Express) {
     "/crowd-pooling-projects": { title: "Crowd Pooling Projects: ReGen Civics", description: "Browse active crowd pooling campaigns for regenerative land projects." },
     "/co-creators-guide": { title: "Co-Creators Guide: ReGen Civics", description: "A guide for co-creators building the ReGenerative Renaissance together." },
     "/claim-seeds": { title: "Claim SEEDS: ReGen Civics", description: "Former SEEDS token holders can claim their $ReGen allocation here." },
-    "/risk-disclosure": { title: "Risk Disclosure: ReGen Civics", description: "Full risk disclosure for the ReGen Civics Regenerative Land Fund." },
+    "/risk-disclosure": { title: "Risk Disclosure: ReGen Civics", description: `Full risk disclosure for the ${FUND.name}.` },
     "/terms-of-use": { title: "Terms of Use: ReGen Civics", description: "Terms governing use of the ReGen Civics platform." },
     "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
     "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },

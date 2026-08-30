@@ -67,7 +67,7 @@ function AnimatedTokenFlow() {
       color: '#7dd87d',
       from: 'ReGen Civics Fund',
       to: 'Land Projects',
-      description: 'The Fund deploys capital to vetted Land Projects: startup villages, eco-communities, and regenerative farms. Each project receives funding to build and grow.',
+      description: 'Once formed, the Fund will deploy capital to vetted Land Projects: startup villages, eco-communities, and regenerative farms, each receiving funding to build and grow. No capital has been deployed yet.',
       tokenFlow: 'RCVoice issued to Land Projects',
     },
     {
@@ -452,7 +452,7 @@ function TokenComparison() {
         </div>
         <div className="bg-[#d4a574]/10 rounded-xl p-4 border border-[#d4a574]/20">
           <p className="text-[#d4a574] text-xs font-semibold mb-1">Management Fee Share</p>
-          <p className="text-white/70 text-sm">50% of management fees distributed proportionally to all RCVoice holders</p>
+          <p className="text-white/70 text-sm">Proposed: 50% of management fees distributed proportionally to all RCVoice holders</p>
         </div>
       </div>
 
@@ -693,7 +693,7 @@ function ReturnsFlowDiagram() {
         Distribution Breakdown
       </h3>
       <p className="text-white/60 text-sm mb-6">
-        Portfolio Distributions go to <strong className="text-[#7dd87d]">$RCivics holders</strong>. Management fees split 50% Council / 50% all RCVoice holders.
+        As designed: Portfolio Distributions go to <strong className="text-[#7dd87d]">$RCivics holders</strong>, and management fees split 50% Council / 50% all RCVoice holders. Proposed, and settled at the founding event.
       </p>
 
       {/* Portfolio source */}
@@ -1145,7 +1145,7 @@ export default function Tokenomics() {
               <div className="flex flex-col items-center mb-8">
                 <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border-2 border-[#7dd87d] rounded-2xl px-8 py-5 text-center shadow-lg shadow-[#7dd87d]/20">
                   <p className="text-[#7dd87d] font-bold text-lg">ReGen Civics Fund</p>
-                  <p className="text-white/60 text-sm">Capital deployed to the network</p>
+                  <p className="text-white/60 text-sm">Capital the fund is designed to deploy to the network</p>
                 </div>
                 <div className="w-0.5 h-8 bg-[#7dd87d]/40" />
                 <div className="text-[#7dd87d] text-xs font-semibold">funds</div>

@@ -124,20 +124,17 @@ const siteNavigationSchema = {
   ]
 };
 
-// Investment Fund schema
-const investmentFundSchema = {
-  "@context": "https://schema.org",
-  "@type": "InvestmentFund",
-  "name": "ReGen Civics Regenerative Land Fund",
-  "description": "A diversified portfolio approach to regenerative land investment, providing capital to ecovillages, regenerative farms, and sustainable communities.",
-  "url": `${BASE_URL}/opportunity`,
-  "provider": {
-    "@type": "Organization",
-    "name": "ReGen Civics Alliance"
-  },
-  "investmentType": "Impact Investment",
-  "feesAndCommissionsSpecification": "Performance-based fees aligned with regenerative outcomes"
-};
+// The InvestmentFund schema was removed 2026-08-30.
+//
+// It was mounted on EVERY non-admin page, not just /fund, and it declared an
+// InvestmentFund entity to every crawler that loaded any route: a third name
+// for the fund, a provider ("ReGen Civics Alliance") that is not a legal
+// entity, and a feesAndCommissionsSpecification for fees nobody has agreed.
+// JsonLD.tsx carried a second, differently named schema for the same thing.
+//
+// The fund is in formation and is not a legal entity. There is nothing to
+// describe as a financial product. The Organization schema for ReGen Civics
+// below stays: that one is true. Facts live in shared/fund.ts.
 
 // FAQ schema for common questions
 const faqSchema = {
@@ -149,7 +146,7 @@ const faqSchema = {
       "name": "What is ReGen Civics?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "ReGen Civics is a venture fund and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities. We connect impact investors with ecovillages, regenerative farms, and sustainable communities worldwide."
+        "text": "ReGen Civics is a platform and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities. We connect impact investors with ecovillages, regenerative farms, and sustainable communities worldwide. The ReGen Civics Fund is in formation and is not yet a legal entity."
       }
     },
     {
@@ -157,7 +154,7 @@ const faqSchema = {
       "name": "How can I invest in regenerative land projects?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You can invest through the ReGen Civics fund, which provides a diversified portfolio approach to regenerative land investment. Visit our Opportunity page to learn more about investment minimums, expected returns, and how to get started."
+        "text": "The ReGen Civics Fund is in formation and is not yet accepting capital. You can sign a non-binding Letter of Intent, or invest directly in specific projects today through crowd pooling. Visit our Opportunity page for the thesis and the proposed terms."
       }
     },
     {
@@ -237,7 +234,6 @@ export function StructuredData() {
       organizationSchema,
       websiteSchema,
       siteNavigationSchema,
-      investmentFundSchema,
       faqSchema,
       eventSchema,
       courseSchema
