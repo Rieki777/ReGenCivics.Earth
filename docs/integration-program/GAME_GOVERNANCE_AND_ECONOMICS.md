@@ -106,22 +106,40 @@ changes nobody's standing relative to anyone else.
 forbidden one is triggered by a judgement about how a member behaved. The permitted ones are
 triggered by time passing, or by the person no longer being here.
 
-### The live defect this exposes, measured 2026-08-29
+### The live defect this exposes, measured and then corrected 2026-08-29
 
-**There is no way to leave a village.** Confirmed against a working control at `a9f55de`:
+**CORRECTED. My first reading of this was wrong and a lane measured it properly.** I reported that
+there is no way to leave a village at all. **There is one, and it works:**
 
-- The member row has **no** departure column. Its fields are id, name, email, passwordHash, paths,
-  recognitionBalance, contributions, quests, journeys, prefs, contactable, isExample,
-  membershipGranted, bio. No `active`, `removed`, `departed`, `ended`, `status`.
-- **No route removes a member from a village.** The only `removeMember` functions in the tree act on
-  conversations and on patterns.
-- `buildElectorate` (`server/index.ts:24977`) takes **every member row with a password hash** that is
-  not an example user, then filters on `hasCapability("ballot.vote")`.
-- `ballot.vote` requires the `member` stage, and **nothing ever revokes a stage.**
+- **Account deletion removes a member from the electorate**, measured rather than read: a ballot with
+  three on the roll, a member leaves through `POST /api/profile/delete-account`, the next ballot reads
+  two. **Control in the same run:** another member, still present and carrying a warning badge, keeps
+  her place, so the drop is departure and nothing else. The already-open ballot keeps its frozen roll,
+  which is the snapshot law working.
+- **The mechanism is one filter nobody knew was load-bearing.** `buildElectorate` skips anyone failing
+  `!isExampleUser(u) && u.passwordHash`, and `anonymizeMember` sets `passwordHash = ""` on both exit
+  doors. **That test reads like a tidy-up and is the only thing keeping departed members out of the
+  quorum denominator.** It now says so in its own comment.
 
-**So once somebody signs the Love Letter they are in the electorate permanently, and the snapshot law
-freezes that roll into every ballot.** The founder's failure mode is not a future risk. It is live,
-and it has no exit. **This is the highest-priority governance build.**
+**The gap that IS real, and it is the founder's case exactly:**
+
+> **"Present" means "has an account", not "still taking part".**
+
+So attrition is **not** live for anyone who leaves through a door, and **is** live for anyone who
+drifts away and keeps their account, which is the common case. There is no departed or inactive
+column on a member row.
+
+**And a worse one, found in the same sweep: a cron job takes a member's vote away every 365 days.**
+`runRetentionSweep` deletes handled form submissions past `retention.submissions_days` (default 365);
+`hasMembership` returns true on an explicit grant **or** an attributed membership submission; so for
+any member whose membership rests only on that submission, **the row is swept at one year, membership
+flips false, their stage drops below `member`, and they fall off every future electorate. Nobody
+performs an act, nobody is told, and no audit row is written.** It is neither waning anyone chose nor
+an act anyone took, so it violates R66 precisely because nobody violates it.
+
+**Useful for whoever builds the confirmation vote: the admin half already exists.**
+`POST /api/admin/exits` takes `kind: "involuntary"`, and the published exit policy already names a
+deciding circle and an appeal circle. **The naming exists as prose. The vote does not.**
 
 ## 4 · How a decision is made
 
