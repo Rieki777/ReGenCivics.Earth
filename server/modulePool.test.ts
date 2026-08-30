@@ -17,6 +17,7 @@ import {
   cycleBoundsFor,
   lastClosedCycle,
 } from "@shared/lunar";
+import { sentOnChain, settlementWord } from "./routes/modulePool";
 
 const ADDR = "0x4E617cd113364193d215d107AdD6fa50418AA2E4";
 
@@ -492,5 +493,65 @@ describe("the export a treasury tool consumes", () => {
       identities: new Map([["a", linked()]]),
     });
     expect(statementCsv(s, 1)).toContain('"Lovelace, Ada"');
+  });
+});
+
+/**
+ * What the public page is entitled to call SENT.
+ *
+ * `settlementWord` decides it one row at a time and `sentOnChain` sums the
+ * same rule, so the total under the word "Sent to builders" and the per-row
+ * status beside each module have to come from one rule. When they drifted the
+ * page said a payable total had been sent to builders, which is the sentence
+ * the row-level word was already careful not to say.
+ */
+describe("sent means confirmed on chain, at the row and at the total", () => {
+  const share = (over: Record<string, unknown>) => ({
+    state: "payable", amount: 10, paidAt: null, ...over,
+  });
+
+  it("counts only a payable line the chain confirmed", () => {
+    expect(sentOnChain([
+      share({ amount: 10, paidAt: new Date() }),
+      share({ amount: 5 }),
+      share({ amount: 100, state: "recycled" }),
+      share({ amount: 7, state: "no-address" }),
+    ])).toEqual({ sent: 10, ready: 5 });
+  });
+
+  it("counts nothing sent before the treasury space executes", () => {
+    expect(sentOnChain([share({ amount: 10 }), share({ amount: 5 })])).toEqual({ sent: 0, ready: 15 });
+  });
+
+  it("splits the payable total and never invents one", () => {
+    // The page prints `sent` and `ready` straight, so their sum has to be the
+    // payable total on its own. It used to subtract a share sum from a
+    // statement column and clamp the result at zero, which would have hidden
+    // any drift between the two.
+    const rows = [
+      share({ amount: 10, paidAt: new Date() }),
+      share({ amount: 5 }),
+      share({ amount: 100, state: "recycled" }),
+    ];
+    const { sent, ready } = sentOnChain(rows);
+    const payable = rows.filter((r) => r.state === "payable").reduce((n, r) => n + Number(r.amount), 0);
+    expect(sent + ready).toBe(payable);
+  });
+
+  it("agrees with the word the same row shows", () => {
+    // Every row sentOnChain counts is a row settlementWord calls "sent", and
+    // every row it skips is a row that word does not. Checked both ways, so a
+    // future edit to one rule cannot pass by narrowing the other.
+    const rows = [
+      share({ amount: 10, paidAt: new Date() }),
+      share({ amount: 5 }),
+      share({ amount: 100, state: "recycled" }),
+      share({ amount: 1, state: "below-floor" }),
+      share({ amount: 7, state: "no-account" }),
+    ];
+    const wordSaysSent = rows.filter((r) => settlementWord(String(r.state), !!r.paidAt) === "sent");
+    expect(wordSaysSent.length).toBe(1);
+    expect(sentOnChain(rows).sent).toBe(wordSaysSent.reduce((n, r) => n + Number(r.amount), 0));
+    expect(sentOnChain(rows.filter((r) => !wordSaysSent.includes(r))).sent).toBe(0);
   });
 });

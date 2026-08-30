@@ -650,6 +650,14 @@ export type InsertPlayerProfile = typeof playerProfiles.$inferInsert;
  * single movement sourced from a game event (seeds_claim,
  * gratitude_received, quest_completion, etc) or a debit from claiming
  * the tokens on-chain via Hypha (claimed_to_base).
+ *
+ * SINGLE-ENTRY BY DESIGN, BECAUSE THE HUB MINTS ON TRANSFER. A positive row
+ * has no matching negative row anywhere, because nothing funds it: the token
+ * comes into existence at the credit (R92, 2026-08-29). So the sum of this
+ * table across all users is the amount ever issued off chain, and it is not
+ * expected to be zero. A future reader looking for the account this came out
+ * of will not find one, and that is the model rather than missing rows. The
+ * long form lives in `server/db/tokens.ts`.
  */
 export const userTokenLedger = mysqlTable("user_token_ledger", {
   id: int("id").autoincrement().primaryKey(),

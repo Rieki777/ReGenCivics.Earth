@@ -91,6 +91,17 @@ Working-style memory has the canonical version. Summary:
 
 ## 5. Token model: private-first, claim bridge to public
 
+**Rule zero, and read it before the other four: the hub MINTS ON TRANSFER.** A private
+token comes into existence at the moment somebody is credited. No account is debited to
+fund it, no supply is drawn down, and there is no pre-issued treasury. A "pool"
+(`pool.regen_per_cycle`, `gratitude_cycles.poolPerCycle`, `bounty.season_budget`) is a
+ceiling on issuance and never a balance, so what it leaves unspent is never minted and
+never lost. On chain the hub mints nothing: it holds no key, and issuance on Base happens
+when a Hypha space executes a proposal. The two halves join at the claim bridge. A treasury
+holding already-issued tokens is a **later, optional setting**; build nothing that assumes
+one. Founder ruling R92, 2026-08-29. Full argument: ADR-52. Asserted by
+`server/tokenMintModel.test.ts`.
+
 From `/CLAUDE.md`. Four absolute rules for every economic feature:
 
 1. **Reads (game logic) use TOTAL = private + public.** Contribution scores, voice weight, citizenship tiers. Use `playerProfiles.getMyTokens` (`{ public, private, total }`).

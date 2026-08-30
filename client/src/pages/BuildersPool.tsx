@@ -105,14 +105,18 @@ export default function BuildersPool() {
                 </span>
               </div>
 
-              <dl className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+              <dl className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
                 <div>
                   <dt className="text-white/50 text-sm">Pool</dt>
                   <dd className="text-xl font-semibold">{fmt(statement.pool)} $ReGen</dd>
                 </div>
                 <div>
                   <dt className="text-white/50 text-sm">Sent to builders</dt>
-                  <dd className="text-xl font-semibold">{fmt(statement.paid)} $ReGen</dd>
+                  <dd className="text-xl font-semibold">{fmt(statement.sent)} $ReGen</dd>
+                </div>
+                <div>
+                  <dt className="text-white/50 text-sm">Ready to send</dt>
+                  <dd className="text-xl font-semibold">{fmt(statement.ready)} $ReGen</dd>
                 </div>
                 <div>
                   <dt className="text-white/50 text-sm">Waiting on a builder</dt>
@@ -129,6 +133,13 @@ export default function BuildersPool() {
                   </dd>
                 </div>
               </dl>
+
+              <p className="text-white/50 text-sm mt-4">
+                Sent means a transaction confirmed on Base. Ready to send means the amount is
+                worked out and the treasury space has still to carry it. A share waiting on a
+                builder goes into the next cycle's pool and is split again there, so it sits in
+                no account with anybody's name on it.
+              </p>
 
               {statement.roster.carried > 0 || statement.roster.absent > 0 ? (
                 <p className="text-white/50 text-sm mt-4">
@@ -232,8 +243,9 @@ export default function BuildersPool() {
               <ul className="text-white/70 space-y-1">
                 {history.data.map((h) => (
                   <li key={h.cycleNumber}>
-                    Cycle {h.cycleNumber}, closed {day(h.cycleEndsAt)}: {fmt(h.paid)} $ReGen to
-                    builders, {fmt(h.recycled)} $ReGen back to the gratitude pool
+                    Cycle {h.cycleNumber}, closed {day(h.cycleEndsAt)}: {fmt(h.sent)} $ReGen sent to
+                    builders, {fmt(h.ready)} $ReGen ready to send,{" "}
+                    {fmt(h.recycled)} $ReGen back to the gratitude pool
                   </li>
                 ))}
               </ul>

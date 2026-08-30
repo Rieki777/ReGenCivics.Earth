@@ -34,8 +34,34 @@ import { POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement }
 import { bridgePageUrl, bridgeToHypha } from "../lib/hypha-bridge";
 import { recycleHistory } from "../lib/gratitude-cycles";
 
+/**
+ * A statement's payable total, split into what the chain confirmed and what is
+ * still waiting on the treasury space.
+ *
+ * The same rule `settlementWord` uses one row at a time, summed. A payable
+ * line with `paidAt` was stamped by the Alchemy webhook off a real
+ * transaction, so it is the only money this hub is entitled to call sent.
+ *
+ * BOTH NUMBERS COME FROM THE SHARE ROWS, and the page subtracts nothing. The
+ * first version had the page compute `paid - sent`, where `paid` is a column on
+ * the statement and `sent` is a sum over the shares. Two sources for one
+ * subtraction is a drift the reader would never see, and the clamp that stopped
+ * it rendering a negative would have been the thing hiding it.
+ */
+export function sentOnChain(shares: any[]): { sent: number; ready: number } {
+  let sent = 0;
+  let ready = 0;
+  for (const s of shares as any[]) {
+    if (s.state !== "payable") continue;
+    if (s.paidAt) sent += Number(s.amount ?? 0);
+    else ready += Number(s.amount ?? 0);
+  }
+  return { sent, ready };
+}
+
 /** One statement's public face: module ids, reach, amounts. No people, no villages. */
 function publicView(statement: any, shares: any[]) {
+  const { sent, ready } = sentOnChain(shares);
   return {
     cycleNumber: statement.cycleNumber,
     cycleStartsAt: statement.cycleStartsAt,
@@ -43,7 +69,24 @@ function publicView(statement: any, shares: any[]) {
     status: statement.status,
     pool: statement.poolAmount,
     carryIn: statement.carryIn,
+    /**
+     * PAYABLE, and the page must say that word. This is the sum of the lines
+     * the hub worked out it could send, which is what the arithmetic identity
+     * `pool + carryIn = paid + accrued + recycled + unallocated` balances on.
+     * Until the treasury's Hypha space executes, none of it has moved.
+     */
     paid: statement.paid,
+    /**
+     * SENT, confirmed on Base, and READY, worked out and still with the
+     * treasury space. Together they are the payable lines, so `sent + ready`
+     * equals `paid` on any statement whose shares and totals agree. Published
+     * beside `paid` because the reader who comes to this page wants to know
+     * whether a builder was actually paid, and a page that showed only `paid`
+     * under the word "sent" was answering that question with a number that was
+     * not true yet.
+     */
+    sent,
+    ready,
     accrued: statement.accrued,
     /**
      * What the platform's own modules earned and handed back to the ReGen
@@ -96,7 +139,7 @@ function publicView(statement: any, shares: any[]) {
  * `paidAt` is written by the Alchemy webhook off a real transaction, so it is
  * the only thing here entitled to the word.
  */
-function settlementWord(state: string, paid: boolean): "sent" | "ready" | "recycled" | "waiting" | "too-small" {
+export function settlementWord(state: string, paid: boolean): "sent" | "ready" | "recycled" | "waiting" | "too-small" {
   if (state === "payable") return paid ? "sent" : "ready";
   if (state === "recycled") return "recycled";
   if (state === "below-floor") return "too-small";
@@ -199,23 +242,60 @@ export const modulePoolRouter = router({
     return publicView(loaded.statement, loaded.shares);
   }),
 
-  /** Recent cycles, newest first, as headline numbers only. */
+  /**
+   * Recent cycles, newest first, as headline numbers only.
+   *
+   * Carries `sent` alongside `paid` for the same reason `current` does: an
+   * older cycle's payable total is not what builders received, and the list
+   * used to print it under the words "to builders".
+   */
   history: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(24).default(12) }).optional())
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
       const rows = await db.select().from(modulePoolStatements)
         .orderBy(desc(modulePoolStatements.cycleNumber)).limit(input?.limit ?? 12);
-      return rows
-        .filter((s: any) => s.status === "computed" || s.status === "executed")
-        .map((s: any) => ({
+      const published = rows.filter((s: any) => s.status === "computed" || s.status === "executed");
+      if (published.length === 0) return [];
+
+      // One grouped read for every listed statement, rather than a query per
+      // row. A statement with no row here has nothing payable at all, so both
+      // numbers are zero, which is the honest answer before the treasury space
+      // has executed anything.
+      const ids = published.map((s: any) => Number(s.id));
+      const splitRows: any = await db.execute(sql`
+        SELECT statementId,
+               COALESCE(SUM(CASE WHEN paidAt IS NOT NULL THEN amount ELSE 0 END), 0) AS sent,
+               COALESCE(SUM(CASE WHEN paidAt IS NULL THEN amount ELSE 0 END), 0) AS ready
+        FROM modulePoolShares
+        WHERE state = 'payable'
+          AND statementId IN (${sql.join(ids.map((id: number) => sql`${id}`), sql`, `)})
+        GROUP BY statementId
+      `);
+      const list: any[] = splitRows?.[0] ?? splitRows?.rows ?? [];
+      const splitById = new Map<number, { sent: number; ready: number }>(
+        (Array.isArray(list) ? list : []).map((r: any) => [
+          Number(r.statementId),
+          { sent: Number(r.sent ?? 0), ready: Number(r.ready ?? 0) },
+        ]),
+      );
+
+      return published.map((s: any) => {
+        const split = splitById.get(Number(s.id)) ?? { sent: 0, ready: 0 };
+        return {
           cycleNumber: s.cycleNumber,
           cycleEndsAt: s.cycleEndsAt,
           pool: s.poolAmount,
+          /** Payable. See the note on `paid` in `publicView`. */
           paid: s.paid,
+          /** Confirmed on Base. */
+          sent: split.sent,
+          /** Payable and still with the treasury space. */
+          ready: split.ready,
           recycled: s.recycled ?? 0,
           status: s.status,
-        }));
+        };
+      });
     }),
 
   /**
