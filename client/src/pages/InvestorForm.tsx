@@ -44,6 +44,7 @@ import { BackButton } from "@/components/BackButton";
 import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
+import { FUND } from "@shared/fund";
 
 // Form data type
 interface InvestorFormData {
@@ -873,7 +874,7 @@ export default function InvestorForm() {
                         >
                           <RadioGroupItem value="alliance_fund" id="alliance_fund" />
                           <Label htmlFor="alliance_fund" className="cursor-pointer flex-1">
-                            <span className="font-medium text-[#1a472a]">ReGen Civics Alliance Fund</span>
+                            <span className="font-medium text-[#1a472a]">{FUND.name}</span>
                             <p className="text-sm text-[#1a472a]/80">Diversified investment across the entire network</p>
                           </Label>
                         </div>

@@ -24,6 +24,7 @@ import {
   Wallet,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
+import { FUND } from "@shared/fund";
 import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
@@ -159,10 +160,9 @@ export default function Fund() {
       ]}
     >
       <SEO {...pageSEO.fund} breadcrumbs={[{ name: "Home", url: "/" }, { name: "The Fund", url: "/fund" }]} />
-      <JsonLD data={schemas.investmentFund()} />
       <JsonLD data={schemas.faqPage([
-        { question: "What is the ReGen Civics Alliance Fund?", answer: "The ReGen Civics Alliance Fund is a venture fund investing in regenerative land projects globally. It pools capital from accredited investors to back projects that heal soil, water, community, and local economy." },
-        { question: "Who can invest in the ReGen Civics Fund?", answer: "The fund is open to accredited investors who meet the eligibility criteria. Submit a Letter of Intent to begin the process." },
+        { question: `What is the ${FUND.name}?`, answer: `${FUND.statement} It is being formed as a venture fund to invest in regenerative land projects globally, pooling capital to back projects that heal soil, water, community, and local economy.` },
+        { question: `Who will be able to invest in the ${FUND.name}?`, answer: `${FUND.eligibility} Today you can submit a non-binding Letter of Intent. ${FUND.loiPromise}` },
         { question: "What is the minimum investment?", answer: "Minimum investment details are shared during the investor qualification process. Contact the team to discuss your allocation." },
         { question: "How is the fund governed?", answer: "The fund uses voice-based governance rooted in land contributions. Token holders participate in key decisions through the ReGen Civics governance model." },
         { question: "What types of land projects does the fund support?", answer: "The fund backs early-stage and mature regenerative land projects including ecovillages, food forests, regenerative farms, and intentional communities with demonstrated community engagement." },
@@ -172,7 +172,7 @@ export default function Fund() {
         sections={FUND_SECTIONS}
         fallbackTitle="Fund"
         actions={[
-          { label: "Pitch Deck", href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
+          { label: `Pitch Deck (${FUND.deckLabel})`, href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
           { label: "Book a Call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true },
         ]}
       />
@@ -236,6 +236,18 @@ export default function Fund() {
             >
               Vision: Billions in resources effectively serving regenerative land projects. A venture
               fund governed by the ecosystem and investors directly, backed by healing land.
+            </p>
+          </AnimatedSection>
+
+          {/* Where the fund actually is, at the first place the page describes
+              it. The status bar above says "in formation"; this says what that
+              means, in the same words every other surface uses. */}
+          <AnimatedSection animation="slide-up" delay={500}>
+            <p
+              className="text-sm md:text-base text-white/70 mb-8 leading-relaxed max-w-2xl mx-auto text-shadow-subtle safe-prose"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              {FUND.statement}
             </p>
           </AnimatedSection>
 
@@ -662,9 +674,10 @@ export default function Fund() {
 
               <h2 ...>Read the <span ...>Thesis</span></h2>
               <p ...>
-                The fund is open. Read the investment thesis, then sign a
-                Letter of Intent so we know you are coming. We will get
-                you onboarded for the next close.
+                The fund is forming. Read the investment thesis, then sign a
+                non-binding Letter of Intent so we know you are coming. You
+                will be invited to the founding event when we reach the
+                threshold.
               </p>
 
             Leaving the live copy untouched per the spec ("draft in
