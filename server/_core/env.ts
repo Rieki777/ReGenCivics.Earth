@@ -155,6 +155,13 @@ export const ENV = {
   harvestBridgeToken: process.env.HARVEST_BRIDGE_TOKEN ?? "",
   harvestBridgeTokenNext: process.env.HARVEST_BRIDGE_TOKEN_NEXT ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
+  // Second-brain Telegram bot: a SECOND bot, never the announcement bot above
+  // (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID), so a message in the announcement
+  // group can never become a capture. The webhook fails closed when any of the
+  // three is unset, and accepts only telegramBrainOwnerId's private chat.
+  telegramBrainBotToken: process.env.TELEGRAM_BRAIN_BOT_TOKEN ?? "",
+  telegramBrainOwnerId: Number(process.env.TELEGRAM_BRAIN_OWNER_ID ?? 0) || 0,
+  telegramBrainWebhookSecret: process.env.TELEGRAM_BRAIN_WEBHOOK_SECRET ?? "",
   // CAN-SPAM postal address for the Harvest announcement footer (Phase 4).
   // Set the real mailing address in Railway before the first send.
   harvestPostalAddress: process.env.HARVEST_POSTAL_ADDRESS ?? "ReGen Civics Alliance, Ashland, Oregon, USA",
