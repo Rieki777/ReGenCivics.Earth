@@ -410,6 +410,14 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
           log.error("cascadeCrowdpoolPassed top-level error", err),
         );
       }
+      // A builders' pool share the treasury space executed. Stamp the share
+      // line paid with the transaction that did it, so the statement says what
+      // happened on chain rather than what somebody typed into a note box.
+      if (bridgeSource === "module_pool") {
+        cascadeModulePoolPassed(bridgeRow, event.txHash).catch((err: any) =>
+          log.error("cascadeModulePoolPassed top-level error", err),
+        );
+      }
       // Assembly ratification arriving machine-to-machine: the binding vote
       // concluded on Hypha and the Evolution Engine takes it from here. Only
       // ProposalExecuted (a governance outcome) triggers this — a bare token
@@ -698,6 +706,46 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
  * CAS upstream already fires this exactly once per bridge. We never mint or move
  * tokens here; issuance happened on chain in the DHO.
  */
+/**
+ * A builders' pool share was executed by the treasury's Hypha space.
+ *
+ * WHAT THIS REPLACED. The last step of the payout used to be an admin typing
+ * transaction hashes into a text box, and the procedure that saved them opened
+ * with "This is a NOTE, not an action". A note is a claim by whoever typed it.
+ * This is the chain saying so: Alchemy reports the space executed the proposal
+ * the bridge created, the bridge key matches it back to one share line, and the
+ * line is stamped with the transaction that paid it.
+ *
+ * Idempotent on `paidAt IS NULL`, because ProposalExecuted and the token
+ * Transfer both signal success, arrive in either order, and get redelivered.
+ *
+ * It still moves nothing. Everything before this point is a handoff and
+ * everything at this point already happened somewhere else.
+ */
+async function cascadeModulePoolPassed(bridgeRow: any, txHash: string | undefined): Promise<void> {
+  if (bridgeRow.source !== "module_pool") return;
+  const db = await getDb();
+  if (!db) {
+    log.warn("cascadeModulePoolPassed: no db connection");
+    return;
+  }
+
+  const { modulePoolShares } = await import("../../../drizzle/schema");
+  const casResult = await db
+    .update(modulePoolShares)
+    .set({ paidAt: new Date(), paidTxHash: txHash ?? null } as any)
+    .where(and(
+      eq(modulePoolShares.bridgeKey, String(bridgeRow.bridgeKey)),
+      sql`paidAt IS NULL`,
+    ));
+  const affected = (casResult as unknown as { affectedRows?: number }[])[0]?.affectedRows
+    ?? (casResult as unknown as { affectedRows?: number })?.affectedRows
+    ?? 0;
+  if (affected > 0) {
+    log.info(`module pool share paid on chain`, { bridgeKey: bridgeRow.bridgeKey, txHash });
+  }
+}
+
 async function cascadeCrowdpoolPassed(bridgeRow: any, txHash: string | undefined): Promise<void> {
   if (bridgeRow.source !== "crowdpool") return;
   const db = await getDb();

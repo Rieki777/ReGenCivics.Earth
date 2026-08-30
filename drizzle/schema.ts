@@ -5752,8 +5752,12 @@ export const modulePoolStatements = mysqlTable("modulePoolStatements", {
   carryIn: int("carryIn").default(0).notNull(),
   paid: int("paid").default(0).notNull(),
   accrued: int("accrued").default(0).notNull(),
+  /** What the platform's own modules earned, going to the ReGen Civics
+   *  gratitude pool rather than to a wallet (R64, 0228). Published, because
+   *  the point of the rule is that the returning share can be SEEN. */
+  recycled: int("recycled").default(0).notNull(),
   /** Dust and sub-floor shares: never minted, never rolled.
-   *  poolAmount + carryIn = paid + accrued + unallocated, always. */
+   *  poolAmount + carryIn = paid + accrued + recycled + unallocated, always. */
   unallocated: int("unallocated").default(0).notNull(),
   /** sha256 of statementSnapshotInput(...), so anybody can recheck the inputs. */
   snapshotHash: varchar("snapshotHash", { length: 64 }),
@@ -5778,18 +5782,37 @@ export const modulePoolShares = mysqlTable("modulePoolShares", {
   builtBy: varchar("builtBy", { length: 200 }),
   /** The builder's ReGen Civics handle. A lookup key, never a wallet address. */
   builtByAccount: varchar("builtByAccount", { length: 40 }),
+  /** The platform built it: it earned on the same footing and its share
+   *  recycles instead of being sent to anybody (0228). */
+  platformBuilt: boolean("platformBuilt").default(false).notNull(),
+  /** A reviewed line in shared/moduleBuilders.ts backs this builder. False
+   *  means the only source is a village manifest, which names a builder and
+   *  never authorises a payment. */
+  attested: boolean("attested").default(false).notNull(),
   userId: int("userId"),
   address: varchar("address", { length: 60 }),
+  /** Reported, and no longer the weight (0228). */
   villages: int("villages").default(0).notNull(),
+  /** THE WEIGHT: summed village reach, each village capped at 1.0. */
+  reach: decimal("reach", { precision: 18, scale: 6 }).default("0").notNull(),
+  membersReached: int("membersReached").default(0).notNull(),
   rawShare: decimal("rawShare", { precision: 18, scale: 6 }).default("0").notNull(),
   amount: int("amount").default(0).notNull(),
-  state: mysqlEnum("state", ["payable", "no-account", "no-address", "unusable-address", "below-floor"]).notNull(),
+  state: mysqlEnum("state", ["payable", "recycled", "unattested", "no-account", "no-address", "unusable-address", "below-floor"]).notNull(),
   /** Which cycle this accrual started waiting in, for the three-cycle lapse. */
   accruedSinceCycle: int("accruedSinceCycle"),
+  /** The Hypha Bridge handoff this line was sent through, and what came back.
+   *  `paidTxHash` is written by the Alchemy webhook when the treasury space
+   *  executes the proposal, never by hand. */
+  bridgeKey: varchar("bridgeKey", { length: 16 }),
+  bridgeOpenedAt: timestamp("bridgeOpenedAt"),
+  paidTxHash: varchar("paidTxHash", { length: 80 }),
+  paidAt: timestamp("paidAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   uniqueIndex("module_pool_share_once").on(table.statementId, table.moduleId),
   index("module_pool_share_state_idx").on(table.state, table.accruedSinceCycle),
+  index("module_pool_share_bridge_idx").on(table.bridgeKey),
 ]));
 export type ModulePoolShare = typeof modulePoolShares.$inferSelect;
 
@@ -5808,9 +5831,37 @@ export const modulePoolVillageSnapshots = mysqlTable("modulePoolVillageSnapshots
   instanceId: varchar("instanceId", { length: 80 }),
   /** Module ids serving at members or above. Counts only, never people. */
   modules: json("modules"),
+  /** The whole parsed usage report (0228). A carried village has to contribute
+   *  the REACH it last reported, and a list of module ids carries none. */
+  usageReport: json("usageReport"),
   fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
   carriedForCycle: int("carriedForCycle"),
 }, (table) => ([
   uniqueIndex("module_pool_village_once").on(table.villageId),
 ]));
 export type ModulePoolVillageSnapshot = typeof modulePoolVillageSnapshots.$inferSelect;
+
+/**
+ * Every amount the platform's own modules earned and handed back to the ReGen
+ * Civics gratitude pool (R64, migration 0228).
+ *
+ * A receipt first and an idempotency key second. R59 says the visibility is the
+ * point rather than a nicety: a village or an author should be able to see the
+ * platform's share going back in rather than into a pocket. `poolCycleNumber`
+ * is unique, so a retry of a settlement that died after writing its statement
+ * cannot credit the community twice.
+ */
+export const modulePoolRecycles = mysqlTable("modulePoolRecycles", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The builders' pool cycle whose platform share this is. */
+  poolCycleNumber: int("poolCycleNumber").notNull(),
+  /** The gratitude cycle it landed in. Not the same lunation: the pool settles
+   *  a closed cycle and the gratitude cycle it lands in is the one open then. */
+  gratitudeCycleId: int("gratitudeCycleId").notNull(),
+  gratitudeCycleNumber: int("gratitudeCycleNumber").notNull(),
+  amount: int("amount").notNull(),
+  appliedAt: timestamp("appliedAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("module_pool_recycle_once").on(table.poolCycleNumber),
+]));
+export type ModulePoolRecycle = typeof modulePoolRecycles.$inferSelect;
