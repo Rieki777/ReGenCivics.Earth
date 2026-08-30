@@ -9,9 +9,9 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
-import { newsletterSubscribers, recordings } from "../../drizzle/schema";
+import { newsletterSubscribers, recordings, applications, users } from "../../drizzle/schema";
 import { pickPublic } from "../lib/public-projection";
-import { and, asc, desc, eq, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, ne, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
@@ -485,6 +485,143 @@ export const eventsRouter = router({
         .from(eventSignups)
         .where(eq(eventSignups.eventId, input.eventId))
         .orderBy(desc(eventSignups.createdAt));
+    }),
+
+  // ── Admin: which applied land projects are coming ─────────
+  /**
+   * Rye's ask, 2026-08-28: "which land projects are set to attend of those
+   * that applied."
+   *
+   * THE JOIN IS WEAKER THAN IT LOOKS, and the groups below exist to say so
+   * rather than to paper over it. event_signups keys on an email somebody
+   * typed. applications key on userId. There is no contact email on an
+   * application, so the only path is signup.email -> users.email ->
+   * applications.userId.
+   *
+   * Measured on production 2026-08-30: of 21 non-draft applications, 13 are
+   * registered under ONE address, rieki.cordon@gmail.com. Those are the ones
+   * Rye entered on behalf of projects rather than founders self-registering,
+   * and every one of them is active/inactive/rejected while all 8 with their
+   * own address are submitted. So for 13 of 21 projects an email match cannot
+   * say which project is coming: it says only that the person who owns that
+   * account signed up.
+   *
+   * Hence four outcomes for a signup, not two:
+   *   0 applications for that address -> unmatched (show them; an inner join
+   *     would hide somebody who is actually coming)
+   *   1 application  -> a real answer
+   *   many           -> ambiguous, listed with its candidates and NEVER
+   *     counted as those projects attending
+   *
+   * An earlier draft of this used Map<email, application>, which silently kept
+   * the last of the 13 and dropped 12. That is the bug this shape prevents.
+   *
+   * Cancelled signups are kept and labelled. Somebody who changed their mind
+   * is not somebody who never answered, and only one is worth chasing.
+   * Drafts are excluded: unsubmitted is not awaiting a reply.
+   */
+  projectRoster: adminProcedure
+    .input(z.object({ eventId: z.number() }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      const empty = {
+        coming: [], cancelled: [], awaiting: [], unmatched: [], ambiguous: [],
+        counts: {
+          appliedTotal: 0, responded: 0, coming: 0, cancelled: 0,
+          unmatched: 0, ambiguous: 0, sharedAccountApplications: 0,
+        },
+      };
+      if (!database) return empty;
+
+      const signups = await database
+        .select()
+        .from(eventSignups)
+        .where(eq(eventSignups.eventId, input.eventId))
+        .orderBy(desc(eventSignups.createdAt));
+
+      const apps = await database
+        .select({
+          applicationId: applications.id,
+          userId: applications.userId,
+          projectName: applications.projectName,
+          location: applications.location,
+          status: applications.status,
+          accountEmail: users.email,
+          accountName: users.name,
+        })
+        .from(applications)
+        .leftJoin(users, eq(users.id, applications.userId))
+        .where(ne(applications.status, "draft"));
+
+      const norm = (e: string | null | undefined) => (e ?? "").trim().toLowerCase();
+
+      // email -> every application on that account, not just the last one seen
+      const appsByEmail = new Map<string, typeof apps>();
+      for (const a of apps) {
+        const k = norm(a.accountEmail);
+        if (!k) continue;
+        const bucket = appsByEmail.get(k);
+        if (bucket) bucket.push(a); else appsByEmail.set(k, [a]);
+      }
+      const sharedAccountApplications = [...appsByEmail.values()]
+        .filter(v => v.length > 1)
+        .reduce((n, v) => n + v.length, 0);
+
+      const coming: any[] = [];
+      const cancelled: any[] = [];
+      const unmatched: any[] = [];
+      const ambiguous: any[] = [];
+      const answeredAppIds = new Set<number>();
+
+      for (const su of signups) {
+        const matches = appsByEmail.get(norm(su.email)) ?? [];
+        const signupFields = {
+          signupId: su.id,
+          signedUpName: su.name,
+          signedUpEmail: su.email,
+          signupType: su.signupType,
+          createdAt: su.createdAt,
+          cancelledAt: su.cancelledAt,
+        };
+
+        if (matches.length === 0) {
+          unmatched.push({ ...signupFields, name: su.name, email: su.email });
+          continue;
+        }
+        if (matches.length > 1) {
+          ambiguous.push({
+            ...signupFields,
+            candidateCount: matches.length,
+            candidates: matches.map(m => ({
+              applicationId: m.applicationId,
+              projectName: m.projectName,
+              location: m.location,
+              status: m.status,
+            })),
+          });
+          continue;
+        }
+        const only = matches[0]!;
+        answeredAppIds.add(only.applicationId);
+        (su.cancelledAt ? cancelled : coming).push({ ...only, ...signupFields });
+      }
+
+      const awaiting = apps
+        .filter(a => !answeredAppIds.has(a.applicationId))
+        .sort((a, b) => a.projectName.localeCompare(b.projectName));
+
+      return {
+        coming, cancelled, awaiting, unmatched, ambiguous,
+        counts: {
+          appliedTotal: apps.length,
+          responded: answeredAppIds.size,
+          coming: coming.length,
+          cancelled: cancelled.length,
+          unmatched: unmatched.length,
+          ambiguous: ambiguous.length,
+          sharedAccountApplications,
+        },
+      };
     }),
 
   // ── Admin: list pending agenda suggestions ────────────────

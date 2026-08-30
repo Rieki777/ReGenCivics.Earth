@@ -52,6 +52,7 @@ export function AdminEventsTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [attendanceEventId, setAttendanceEventId] = useState<number | null>(null);
+  const [rosterEventId, setRosterEventId] = useState<number | null>(null);
   const [attendanceInput, setAttendanceInput] = useState('');
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
@@ -69,6 +70,10 @@ export function AdminEventsTab() {
   );
   const { data: tokenLeaderboard = [] } = trpc.events.tokenLeaderboard.useQuery({ limit: 10 });
 
+  const { data: roster, isLoading: rosterLoading } = trpc.events.projectRoster.useQuery(
+    { eventId: rosterEventId! },
+    { enabled: rosterEventId !== null }
+  );
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
 
   function startEdit(ev: any) {
@@ -259,7 +264,10 @@ export function AdminEventsTab() {
           const signupCount = Number(countMap[ev.id] ?? 0);
           const startDate = ev.startTime ? new Date(ev.startTime) : null;
           const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '-';
-          const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : '';
+          // timeZoneName, not ev.timezone. Formatting in the viewer's zone and
+          // labelling it with a stored string showed "10:00 AM EDT" for a
+          // 17:00Z event to a reader in California. Same bug as EventDetail.
+          const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : '';
           return (
             <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`}>
               <CardContent className="p-4">
@@ -271,7 +279,7 @@ export function AdminEventsTab() {
                       {ev.season && <span className="text-xs text-white/60">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
                     </div>
                     <p className="font-medium text-white text-sm truncate">{ev.title}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
+                    <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/60">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
@@ -283,6 +291,11 @@ export function AdminEventsTab() {
                     <Button size="sm" variant="ghost" onClick={() => startEdit(ev)}
                       className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
                       <Edit size={11} className="mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="ghost"
+                      onClick={() => setRosterEventId(rosterEventId === ev.id ? null : ev.id)}
+                      className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
+                      <Users size={11} className="mr-1" /> {rosterEventId === ev.id ? 'Hide' : "Who's coming"}
                     </Button>
                     {reminderSuccess === ev.id
                       ? <Button size="sm" variant="ghost" disabled className="text-yellow-400 h-7 px-2 text-xs">
@@ -587,6 +600,119 @@ export function AdminEventsTab() {
                         </Dialog>
                       );
                     })()}
+                  </div>
+                )}
+
+                {/* Who's coming, of the projects that applied. Rye's ask, 2026-08-28.
+                    Four groups and all of them visible: an inner join would answer
+                    the question by hiding the people it could not match. */}
+                {rosterEventId === ev.id && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    {rosterLoading && <p className="text-xs text-white/50">Reading signups and applications...</p>}
+                    {!rosterLoading && roster && (
+                      <>
+                        <p className="text-xs text-white/70 mb-3">
+                          <span className="text-white font-medium">{roster.counts.responded} of {roster.counts.appliedTotal}</span> applied projects responded
+                          {' · '}<span className="text-green-400">{roster.counts.coming} coming</span>
+                          {' · '}<span className="text-white/60">{roster.counts.cancelled} cancelled</span>
+                          {' · '}<span className="text-yellow-400">{roster.counts.unmatched} signup{roster.counts.unmatched === 1 ? '' : 's'} not matched to an application</span>
+                          {roster.counts.ambiguous > 0 && <>{' · '}<span className="text-orange-400">{roster.counts.ambiguous} ambiguous</span></>}
+                        </p>
+
+                        {roster.counts.sharedAccountApplications > 0 && (
+                          <p className="text-xs text-orange-300/80 mb-3">
+                            Heads up: <span className="font-medium">{roster.counts.sharedAccountApplications} of {roster.counts.appliedTotal}</span> applications
+                            share an account with another application. An email match cannot say which of those projects is
+                            coming, only that the account holder signed up, so they are reported as ambiguous rather than
+                            counted as attending. To answer this properly those founders need their own accounts, or an
+                            application needs its own contact email.
+                          </p>
+                        )}
+
+                        {roster.counts.appliedTotal > 0 && roster.counts.responded === 0 && (
+                          <p className="text-xs text-white/50 mb-3">
+                            Nobody has answered yet. The event page offers &ldquo;Get Reminder&rdquo; and says no commitment
+                            is required, so there is currently nothing on it that records an intention to attend.
+                          </p>
+                        )}
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div>
+                            <p className="text-xs font-medium text-green-400 mb-1.5">Applied and coming ({roster.coming.length})</p>
+                            {roster.coming.length === 0
+                              ? <p className="text-xs text-white/40">None yet.</p>
+                              : roster.coming.map((r: any) => (
+                                  <div key={r.signupId} className="text-xs text-white/70 mb-1">
+                                    <span className="text-white">{r.projectName}</span>
+                                    <span className="text-white/50"> · {r.location} · {r.status}</span>
+                                    <br />
+                                    <span className="text-white/50">signed up as {r.signedUpName || r.accountName || 'no name given'} ({r.signedUpEmail})</span>
+                                  </div>
+                                ))}
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-medium text-white/70 mb-1.5">Applied, no response yet ({roster.awaiting.length})</p>
+                            {roster.awaiting.length === 0
+                              ? <p className="text-xs text-white/40">Everybody has answered.</p>
+                              : roster.awaiting.map((r: any) => (
+                                  <div key={r.applicationId} className="text-xs text-white/70 mb-1">
+                                    <span className="text-white">{r.projectName}</span>
+                                    <span className="text-white/50"> · {r.location} · {r.status}</span>
+                                    {r.accountEmail && <span className="text-white/40"> · {r.accountEmail}</span>}
+                                  </div>
+                                ))}
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-medium text-yellow-400 mb-1.5">Coming, but not matched to an application ({roster.unmatched.length})</p>
+                            {roster.unmatched.length === 0
+                              ? <p className="text-xs text-white/40">None.</p>
+                              : <>
+                                  <p className="text-xs text-white/40 mb-1">
+                                    Matched by email, so a founder who signed up with a different address than the one on
+                                    their account lands here rather than beside their project.
+                                  </p>
+                                  {roster.unmatched.map((r: any) => (
+                                    <div key={r.signupId} className="text-xs text-white/70 mb-1">
+                                      <span className="text-white">{r.name || 'no name given'}</span>
+                                      <span className="text-white/50"> · {r.email}</span>
+                                      {r.cancelledAt && <span className="text-white/40"> · cancelled</span>}
+                                    </div>
+                                  ))}
+                                </>}
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-medium text-orange-400 mb-1.5">Ambiguous ({roster.ambiguous.length})</p>
+                            {roster.ambiguous.length === 0
+                              ? <p className="text-xs text-white/40">None.</p>
+                              : roster.ambiguous.map((r: any) => (
+                                  <div key={r.signupId} className="text-xs text-white/70 mb-1.5">
+                                    <span className="text-white">{r.signedUpName || 'no name given'}</span>
+                                    <span className="text-white/50"> · {r.signedUpEmail}</span>
+                                    <br />
+                                    <span className="text-white/40">
+                                      that address is on {r.candidateCount} applications: {r.candidates.map((c: any) => c.projectName).join(', ')}
+                                    </span>
+                                  </div>
+                                ))}
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-medium text-white/50 mb-1.5">Cancelled ({roster.cancelled.length})</p>
+                            {roster.cancelled.length === 0
+                              ? <p className="text-xs text-white/40">None.</p>
+                              : roster.cancelled.map((r: any) => (
+                                  <div key={r.signupId} className="text-xs text-white/60 mb-1">
+                                    <span className="text-white/80">{r.projectName}</span>
+                                    <span className="text-white/40"> · changed their mind, not unanswered</span>
+                                  </div>
+                                ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </CardContent>
