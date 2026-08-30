@@ -1,8 +1,13 @@
 /**
  * Second-brain Telegram bot receiver.
  *
- * Every dependency is injected, so these run with no network, no database and
- * no bot token. What each group of tests is defending:
+ * The handler tests inject every dependency, so they touch no database, no bot
+ * and no host. The route tests at the bottom stand up the Express app on a
+ * loopback port, because fail-closed and the timing-safe secret compare live in
+ * that layer and are invisible from the handler; they still reach no database,
+ * because every update they send is dropped by the owner check first.
+ *
+ * What each group is defending:
  *
  *   - owner + private chat only, silent drop otherwise (a prober learns nothing)
  *   - dedupe on update_id before any side effect (Telegram redelivers)
@@ -14,15 +19,19 @@
  *     external-trust item
  *   - nothing that reaches a log carries the bot token
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import express from "express";
+import { createServer, type Server } from "node:http";
 import {
   handleTelegramUpdate,
   keyboardFor,
   normalizeUpdate,
+  registerTelegramBrainRoutes,
   safeErr,
   MAX_CAPTURE_BYTES,
   type Deps,
 } from "./webhooks/telegram-brain";
+import { ENV } from "./_core/env";
 
 const OWNER = 923759041;
 
@@ -403,5 +412,103 @@ describe("safeErr", () => {
   it("caps the length so a note body cannot ride along in an error", () => {
     const out = safeErr(new Error("x".repeat(5000)));
     expect(out.length).toBeLessThanOrEqual(200);
+  });
+});
+
+// ── The route itself ──────────────────────────────────────────────────────────
+//
+// The tests above cover the handler. These cover the three rules that live in
+// the Express layer and are invisible from the handler: fail closed when a
+// variable is unset, verify the secret before doing anything, and answer 200 to
+// a well-formed update whoever sent it, so a prober learns nothing from the
+// status code.
+//
+// An in-process server on a loopback port. No external host, no DNS, no DB:
+// every update below is dropped by the owner check before it reaches one.
+const SECRET = "test-secret-0123456789abcdef";
+let server: Server;
+let origin = "";
+
+beforeAll(async () => {
+  const app = express();
+  registerTelegramBrainRoutes(app);
+  server = createServer(app);
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const addr = server.address();
+  origin = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+});
+
+afterAll(async () => {
+  await new Promise<void>((r) => server.close(() => r()));
+});
+
+const post = (headers: Record<string, string>, body: unknown = { update_id: 1 }) =>
+  fetch(`${origin}/api/telegram/brain`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers },
+    body: JSON.stringify(body),
+  });
+
+function configure(on: boolean) {
+  ENV.telegramBrainBotToken = on ? "123456:test-token-value-not-real" : "";
+  ENV.telegramBrainOwnerId = on ? OWNER : 0;
+  ENV.telegramBrainWebhookSecret = on ? SECRET : "";
+}
+
+describe("POST /api/telegram/brain", () => {
+  it("fails closed with 503 when the bot is not configured", async () => {
+    configure(false);
+    const res = await post({ "x-telegram-bot-api-secret-token": SECRET });
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "unavailable" });
+  });
+
+  it("fails closed when only some of the three variables are set", async () => {
+    configure(true);
+    ENV.telegramBrainWebhookSecret = "";
+    expect((await post({ "x-telegram-bot-api-secret-token": SECRET })).status).toBe(503);
+    configure(true);
+    ENV.telegramBrainOwnerId = 0;
+    expect((await post({ "x-telegram-bot-api-secret-token": SECRET })).status).toBe(503);
+  });
+
+  it("rejects a request with no secret header", async () => {
+    configure(true);
+    expect((await post({})).status).toBe(401);
+  });
+
+  it("rejects a wrong secret, and a right secret of the wrong length", async () => {
+    configure(true);
+    expect((await post({ "x-telegram-bot-api-secret-token": "wrong" })).status).toBe(401);
+    expect((await post({ "x-telegram-bot-api-secret-token": SECRET + "x" })).status).toBe(401);
+    expect((await post({ "x-telegram-bot-api-secret-token": SECRET.slice(0, -1) })).status).toBe(401);
+  });
+
+  it("answers 200 to an update from a stranger, so the status code says nothing", async () => {
+    configure(true);
+    const res = await post(
+      { "x-telegram-bot-api-secret-token": SECRET },
+      { update_id: 991, message: { message_id: 1, chat: { id: 5, type: "private" }, from: { id: 5 }, text: "probe" } },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+
+  it("answers the owner's update with the same 200 and nothing else", async () => {
+    configure(true);
+    const res = await post(
+      { "x-telegram-bot-api-secret-token": SECRET },
+      { update_id: 992, message: { message_id: 2, chat: { id: OWNER, type: "private" }, from: { id: OWNER }, text: "hi" } },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+
+  it("blocks an ip after repeated bad secrets", async () => {
+    configure(true);
+    // The shared limiter allows five failures per minute per ip.
+    let last = 0;
+    for (let i = 0; i < 8; i++) last = (await post({ "x-telegram-bot-api-secret-token": "nope" })).status;
+    expect(last).toBe(429);
   });
 });
