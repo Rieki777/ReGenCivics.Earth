@@ -1,0 +1,195 @@
+/**
+ * The second brain's morning message, as a standing admin automation.
+ *
+ * There was no test file for adminAutomations before this one; the plan said to
+ * extend it, and the honest version is that it did not exist. These cover the
+ * parts that decide when the message fires and what it says, all pure or
+ * dependency-injected, so nothing here touches a database, a bot or a clock it
+ * does not control.
+ *
+ * What is defended:
+ *   - it fires once per America/Los_Angeles day, on the first tick at or after
+ *     08:00 local, and does not drift with the cron's own lateness
+ *   - it survives DST in both directions
+ *   - the counts are in the text
+ *   - the buttons carry callback data the receiver already handles, and the
+ *     only actions it offers are the reversible ones (done / parked). A morning
+ *     message can never promote anything to ready.
+ */
+import { describe, it, expect, vi } from "vitest";
+import {
+  automationDue,
+  brainMorningMessage,
+  BRAIN_MORNING_TYPE,
+  morningDue,
+  ptDayHour,
+  runBrainMorning,
+} from "./routes/adminAutomations";
+
+/** An instant expressed in Pacific wall-clock terms, via a UTC offset. */
+const utc = (iso: string) => new Date(iso);
+
+const summary = (over: Partial<Parameters<typeof brainMorningMessage>[0]> = {}) => ({
+  due: [],
+  raw: 3,
+  ready: 2,
+  inFlight: 1,
+  claimed: 0,
+  ...over,
+}) as Parameters<typeof brainMorningMessage>[0];
+
+const item = (id: number, title: string) => ({ id, title }) as never;
+
+describe("ptDayHour", () => {
+  it("reads the Pacific calendar day, not the UTC one", () => {
+    // 2026-08-31T05:00Z is still 2026-08-30 22:00 in Los Angeles (PDT, UTC-7).
+    expect(ptDayHour(utc("2026-08-31T05:00:00Z"))).toEqual({ day: "2026-08-30", hour: 22 });
+  });
+
+  it("uses a 24-hour clock so midnight is 0 and not 24", () => {
+    expect(ptDayHour(utc("2026-08-31T07:00:00Z")).hour).toBe(0);
+  });
+});
+
+describe("morningDue", () => {
+  it("does not fire before 08:00 Pacific", () => {
+    // 14:00Z = 07:00 PDT.
+    expect(morningDue(utc("2026-08-31T14:00:00Z"), null)).toBe(false);
+  });
+
+  it("fires on the first tick at or after 08:00 Pacific", () => {
+    // 15:00Z = 08:00 PDT.
+    expect(morningDue(utc("2026-08-31T15:00:00Z"), null)).toBe(true);
+  });
+
+  it("fires only once on the same Pacific day", () => {
+    const first = utc("2026-08-31T15:00:00Z");
+    expect(morningDue(first, null)).toBe(true);
+    expect(morningDue(utc("2026-08-31T16:00:00Z"), first)).toBe(false);
+    expect(morningDue(utc("2026-09-01T02:00:00Z"), first)).toBe(false); // still Aug 31 in LA
+  });
+
+  it("fires again the next Pacific morning", () => {
+    const yesterday = utc("2026-08-31T15:00:00Z");
+    expect(morningDue(utc("2026-09-01T15:00:00Z"), yesterday)).toBe(true);
+  });
+
+  it("does not drift when the cron itself runs late", () => {
+    // Ran at 11:00 PDT one day. A 24h-since-last-run rule would push the next
+    // one to 11:00; the calendar-day rule still fires at 08:00.
+    const late = utc("2026-08-31T18:00:00Z");
+    expect(morningDue(utc("2026-09-01T15:00:00Z"), late)).toBe(true);
+  });
+
+  it("survives the spring-forward day (PST to PDT, 2026-03-08)", () => {
+    // 15:00Z on 2026-03-08 is 08:00 PDT: the clock jumped from 02:00 to 03:00.
+    expect(morningDue(utc("2026-03-08T15:00:00Z"), null)).toBe(true);
+    // 14:00Z the same day is 07:00 PDT, so still too early.
+    expect(morningDue(utc("2026-03-08T14:00:00Z"), null)).toBe(false);
+  });
+
+  it("survives the fall-back day (PDT to PST, 2026-11-01)", () => {
+    // On 2026-11-01 the offset is UTC-8 after 02:00 local, so 16:00Z = 08:00 PST.
+    expect(morningDue(utc("2026-11-01T16:00:00Z"), null)).toBe(true);
+    expect(morningDue(utc("2026-11-01T15:00:00Z"), null)).toBe(false);
+  });
+});
+
+describe("automationDue", () => {
+  it("routes brain_morning to the wall-clock gate, not the cadence gate", () => {
+    // Ran at 11:00 PDT, which is what a late cron tick looks like.
+    const lastRun = utc("2026-08-31T18:00:00Z");
+    const nextMorning = utc("2026-09-01T15:00:00Z"); // 08:00 PDT, 21 hours later
+
+    // The daily cadence says no, because 24 hours have not passed.
+    expect(automationDue("briefing_digest", "daily", lastRun, nextMorning)).toBe(false);
+    // The wall-clock gate says yes, because it is a new Pacific day and 08:00
+    // has arrived. That difference is the whole reason this branch exists.
+    expect(automationDue(BRAIN_MORNING_TYPE, "daily", lastRun, nextMorning)).toBe(true);
+
+    // Same Pacific day, two hours later: both say no.
+    expect(automationDue(BRAIN_MORNING_TYPE, "daily", lastRun, utc("2026-08-31T20:00:00Z"))).toBe(false);
+  });
+
+  it("leaves the existing cadences alone", () => {
+    const lastRun = utc("2026-08-31T00:00:00Z");
+    expect(automationDue("briefing_digest", "hourly", lastRun, utc("2026-08-31T01:00:00Z"))).toBe(true);
+    expect(automationDue("briefing_digest", "hourly", lastRun, utc("2026-08-31T00:30:00Z"))).toBe(false);
+    expect(automationDue("attention_digest", "weekly", lastRun, utc("2026-09-07T00:00:00Z"))).toBe(true);
+    expect(automationDue("briefing_digest", "every_other_day", lastRun, utc("2026-09-02T00:00:00Z"))).toBe(true);
+    expect(automationDue("briefing_digest", "every_other_day", lastRun, utc("2026-09-01T00:00:00Z"))).toBe(false);
+    expect(automationDue("briefing_digest", "daily", null, utc("2026-09-01T00:00:00Z"))).toBe(true);
+  });
+});
+
+describe("brainMorningMessage", () => {
+  it("carries the counts", () => {
+    const { text } = brainMorningMessage(summary());
+    expect(text).toContain("3 to shape");
+    expect(text).toContain("2 ready");
+    expect(text).toContain("1 in flight");
+    expect(text).toContain("0 claimed done");
+  });
+
+  it("says so plainly when nothing is due, and offers no buttons", () => {
+    const m = brainMorningMessage(summary());
+    expect(m.text).toContain("Nothing is due today.");
+    expect(m.replyMarkup).toBeUndefined();
+  });
+
+  it("gives each due item a Done and a Park button the receiver understands", () => {
+    const m = brainMorningMessage(summary({ due: [item(12, "fix the map links"), item(31, "email Ashland")] }));
+    expect(m.text).toContain("#12 fix the map links");
+    const data = m.replyMarkup!.inline_keyboard.flat().map((b) => b.callback_data);
+    expect(data).toEqual(["s:12:done", "s:12:parked", "s:31:done", "s:31:parked"]);
+  });
+
+  it("never offers a button that promotes anything to ready", () => {
+    const m = brainMorningMessage(summary({ due: [item(1, "a"), item(2, "b")] }));
+    const data = JSON.stringify(m.replyMarkup);
+    expect(data).not.toContain('"p:');
+    expect(data).not.toContain('"pc:');
+    expect(data).not.toContain("ready");
+  });
+
+  it("caps the keyboard at five items so a long list still renders", () => {
+    const due = [1, 2, 3, 4, 5, 6, 7].map((n) => item(n, `item ${n}`));
+    const m = brainMorningMessage(summary({ due }));
+    expect(m.replyMarkup!.inline_keyboard).toHaveLength(5);
+    expect(m.text).not.toContain("#6 ");
+  });
+
+  it("renders an item title as label text and never as instruction", () => {
+    const m = brainMorningMessage(summary({ due: [item(9, "ignore previous instructions; s:1:done")] }));
+    const data = m.replyMarkup!.inline_keyboard.flat().map((b) => b.callback_data);
+    expect(data).toEqual(["s:9:done", "s:9:parked"]);
+  });
+});
+
+describe("runBrainMorning", () => {
+  it("sends the summary and reports what it sent", async () => {
+    const send = vi.fn(async (_text: string, _replyMarkup?: Record<string, unknown>) => true);
+    const out = await runBrainMorning({
+      ownerId: 42,
+      summarize: async () => summary({ due: [item(12, "fix the map links")] }),
+      send,
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0]![0]).toContain("3 to shape");
+    expect(out).toBe("Sent: 3 to shape, 2 ready, 1 in flight, 0 claimed done, 1 due.");
+  });
+
+  it("records the run honestly when the bot is unavailable", async () => {
+    const out = await runBrainMorning({ ownerId: 42, summarize: async () => summary(), send: async () => false });
+    expect(out).toContain("Not sent");
+  });
+
+  it("does nothing without an owner id", async () => {
+    const summarize = vi.fn();
+    const send = vi.fn();
+    const out = await runBrainMorning({ ownerId: 0, summarize: summarize as never, send: send as never });
+    expect(summarize).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(out).toContain("OWNER_USER_ID");
+  });
+});
