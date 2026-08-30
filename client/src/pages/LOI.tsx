@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SEO, pageSEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,13 +9,18 @@ import { BackButton } from "@/components/BackButton";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { analytics } from "@/lib/analytics";
 import { FUND } from "@shared/fund";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function LOI() {
-  // Note: previously this page redirected to /investor?returnTo=/loi when the
-  // user hadn't completed an investor inquiry. That created a broken loop
-  // (and crashed on /investor for some users) so we now let the LOI form load
-  // directly. Accreditation is asserted via the consent + pledge gate within
-  // this form and on the upstream /opportunity page.
+  // This page used to redirect to /investor?returnTo=/loi and lost that on a
+  // crash fix, after which its comment said the gate lived "on the upstream
+  // /opportunity page" while /opportunity's comment said it lived here. It
+  // lived in neither, and the server had no accreditation check at all.
+  //
+  // Since 2026-08-30 the gate is real and it is on the server: loi.submit
+  // refuses a pledge from an address that has not been through /investor. The
+  // page still loads for everyone, which is the point. Redirecting the page
+  // was what crashed twice, and it guarded the wrong moment anyway.
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -35,6 +40,53 @@ export default function LOI() {
 
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [prefilledFrom, setPrefilledFrom] = useState<null | "account" | "browser">(null);
+
+  const { user } = useAuth();
+
+  // Rye, 2026-08-30: pre-fill so nothing is typed twice. Two sources, and
+  // neither can expose one person's details to another: the server route is
+  // keyed on the session, and the browser fallback only ever reads what this
+  // same browser wrote on /investor.
+  const { data: accountPrefill } = trpc.loi.prefill.useQuery(undefined, { enabled: !!user });
+
+  useEffect(() => {
+    if (prefilledFrom) return;
+
+    const apply = (src: Record<string, unknown>, from: "account" | "browser") => {
+      const pick = (k: string) => {
+        const v = src[k];
+        return typeof v === "string" && v.trim() ? v : undefined;
+      };
+      setFormData(prev => ({
+        ...prev,
+        fullName: pick("fullName") ?? prev.fullName,
+        email: pick("email") ?? prev.email,
+        phone: pick("phone") ?? prev.phone,
+        organization: pick("organization") ?? prev.organization,
+        role: pick("role") ?? prev.role,
+        geographicPreference: pick("geographicPreference") ?? prev.geographicPreference,
+        sectorInterests: pick("sectorInterests") ?? prev.sectorInterests,
+        motivations: pick("motivations") ?? prev.motivations,
+        questionsForTeam: pick("questionsForTeam") ?? prev.questionsForTeam,
+        referralSource: pick("referralSource") ?? prev.referralSource,
+      }));
+      setPrefilledFrom(from);
+    };
+
+    if (accountPrefill) { apply(accountPrefill as Record<string, unknown>, "account"); return; }
+
+    // Signed out, but they may have just completed /investor in this browser.
+    try {
+      const raw = localStorage.getItem("investor_form_draft");
+      if (raw) { apply(JSON.parse(raw), "browser"); return; }
+      const email = localStorage.getItem("investor_email");
+      const name = localStorage.getItem("investor_name");
+      if (email || name) apply({ email, fullName: name }, "browser");
+    } catch {
+      // A blocked or unparseable store is not an error worth showing anybody.
+    }
+  }, [accountPrefill, prefilledFrom]);
 
   const submitLOI = trpc.loi.submit.useMutation({
     onSuccess: () => {
@@ -147,10 +199,32 @@ export default function LOI() {
             Express your interest in becoming a capital partner for the ReGen Civics Fund. This is a non-binding way to tell us you're interested so we can plan accordingly.
           </p>
 
+          {/* The gate refuses with a route to follow, not just a no. A refusal
+              that does not say what to do next reads as a broken form. */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-800 text-sm">{error}</p>
+              <div>
+                <p className="text-red-800 text-sm">{error}</p>
+                {error.includes("/investor") && (
+                  <Link href="/investor">
+                    <a className="inline-block mt-2 text-sm font-semibold text-[#1a472a] underline">
+                      Go to the investor form
+                    </a>
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
+          {prefilledFrom && !submitted && (
+            <div className="mb-6 p-4 bg-[#f0f7f0] border border-[#1a472a]/15 rounded-lg flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#1a472a] flex-shrink-0 mt-0.5" />
+              <p className="text-[#1a472a] text-sm">
+                {prefilledFrom === "account"
+                  ? "Filled in from the investor form you already completed. Check it over, then all that is left is the amount."
+                  : "Filled in from the investor form you completed in this browser. Check it over, then all that is left is the amount."}
+              </p>
             </div>
           )}
 

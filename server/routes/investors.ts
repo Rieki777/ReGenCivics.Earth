@@ -481,8 +481,83 @@ export const generalInquiriesRouter = router({
     }),
 });
 
+/**
+ * Has this address been through the investor qualification step at /investor?
+ *
+ * This is the whole of the accreditation gate, and it is deliberately on the
+ * server. Until 2026-08-30 there was no gate anywhere: /opportunity dropped its
+ * redirect on 2026-04-27 (b8563c8) because it crashed on mobile, /loi dropped
+ * the same redirect in the same period, and each page's comment named the other
+ * as where the gate now lived. Neither did, and this file had no accreditation
+ * check of any kind, so anyone could post a pledge of any size.
+ *
+ * Rye's ruling, 2026-08-30: verification belongs before the pledge rather than
+ * before the page. The exemption the fund is likely to rely on (named once, in
+ * FUND.exemptionIntent, and nowhere else) is one that permits general
+ * solicitation, so a publicly readable /opportunity is not the defect. An
+ * unqualified pledge is.
+ *
+ * Matching on email is an existence oracle: a caller can learn whether an
+ * address has an inquiry. It is behind the same rate limit as submission, and
+ * the alternative is refusing without saying why, which strands the honest
+ * majority. Noted rather than hidden.
+ */
+async function hasInvestorInquiry(email: string): Promise<boolean> {
+  const dbConn = await getDb();
+  if (!dbConn) return false;
+  const { investorInquiries: tbl } = await import("../../drizzle/schema");
+  const { eq, sql: raw } = await import("drizzle-orm");
+  const rows = await dbConn
+    .select({ id: tbl.id })
+    .from(tbl)
+    .where(eq(raw`lower(${tbl.email})`, email.trim().toLowerCase()))
+    .limit(1);
+  return rows.length > 0;
+}
+
 export const loiRouter = router({
-  // Submit LOI (public - no login required)
+  /**
+   * Prefill the pledge form from the inquiry this person already filled in.
+   *
+   * Rye, 2026-08-30: "the LOI submission form is pre-filled with the
+   * information so they don't have to type it twice." The inquiry already
+   * captures every LOI field except the pledge amount itself.
+   *
+   * protectedProcedure, and it takes NO email argument on purpose. A public
+   * prefill-by-email would hand anybody a stranger's name, phone, organisation
+   * and stated investment range for the cost of guessing an address. Identity
+   * comes from the session or not at all. A signed-out visitor who has just
+   * completed /investor in the same browser is prefilled client-side instead.
+   */
+  prefill: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.email) return null;
+    const dbConn = await getDb();
+    if (!dbConn) return null;
+    const { investorInquiries: tbl } = await import("../../drizzle/schema");
+    const { eq, desc: d } = await import("drizzle-orm");
+    const rows = await dbConn
+      .select({
+        fullName: tbl.fullName,
+        email: tbl.email,
+        phone: tbl.phone,
+        organization: tbl.organization,
+        role: tbl.role,
+        investorType: tbl.investorType,
+        investmentTimeline: tbl.investmentTimeline,
+        geographicPreference: tbl.geographicPreference,
+        sectorInterests: tbl.sectorInterests,
+        motivations: tbl.motivations,
+        questionsForTeam: tbl.questionsForTeam,
+        referralSource: tbl.referralSource,
+      })
+      .from(tbl)
+      .where(eq(tbl.email, ctx.user.email))
+      .orderBy(d(tbl.id))
+      .limit(1);
+    return rows[0] ?? null;
+  }),
+
+  // Submit LOI (public - no login required, but qualification IS required)
   submit: publicProcedure
     .input(z.object({
       fullName: z.string().min(1),
@@ -502,6 +577,18 @@ export const loiRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "letter_of_intent");
+
+      // The gate. A pledge is the point where accreditation actually matters,
+      // so qualification is checked here rather than at the page boundary.
+      if (!(await hasInvestorInquiry(input.email))) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Before a Letter of Intent we ask you to complete the investor form at /investor. " +
+            "It takes a couple of minutes and it pre-fills this page, so nothing is typed twice.",
+        });
+      }
+
       const loiId = await db.createLetterOfIntent({
         ...input,
         phone: input.phone || null,
@@ -514,7 +601,8 @@ export const loiRouter = router({
         additionalNotes: input.additionalNotes || null,
         referralSource: input.referralSource || null,
         status: "pending",
-        userId: null,
+        // Was hardcoded null, so a signed-in investor's pledge was an orphan row.
+        userId: ctx.user?.id ?? null,
       });
 
       // Send confirmation email to the investor
