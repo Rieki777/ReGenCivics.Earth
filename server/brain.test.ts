@@ -10,7 +10,7 @@ import { describe, it, expect, vi } from "vitest";
 import { appRouter } from "./routers";
 import { createContext } from "./_core/context";
 import type { Request, Response } from "express";
-import { heartbeatState, HEARTBEAT_CADENCE_MIN } from "./routes/brain";
+import { heartbeatState, HEARTBEAT_CADENCE_MIN, startOfWeek } from "./routes/brain";
 
 const createMockContext = async (user: { id: number; role: string } | null = null) => {
   const mockReq = { cookies: {}, headers: {}, ip: "127.0.0.1" } as unknown as Request;
@@ -40,6 +40,24 @@ describe("heartbeatState", () => {
     const weekly = HEARTBEAT_CADENCE_MIN.digest;
     expect(heartbeatState(new Date("2026-08-22T12:00:00Z"), weekly, now)).toBe("ok");
     expect(heartbeatState(new Date("2026-08-10T12:00:00Z"), weekly, now)).toBe("late");
+  });
+});
+
+describe("startOfWeek", () => {
+  it("lands on Monday 00:00 so the week matches the Monday morning message", () => {
+    // A Wednesday, a Monday, and a Sunday all resolve to the same Monday.
+    const wed = startOfWeek(new Date(2026, 7, 26, 14, 30));
+    const mon = startOfWeek(new Date(2026, 7, 24, 9, 0));
+    const sun = startOfWeek(new Date(2026, 7, 30, 23, 59));
+    expect(wed.getDay()).toBe(1);
+    expect(wed.getHours()).toBe(0);
+    expect(wed.getTime()).toBe(mon.getTime());
+    expect(sun.getTime()).toBe(mon.getTime());
+  });
+
+  it("treats Monday 00:00 itself as the start of its own week, not the previous one", () => {
+    const monday = new Date(2026, 7, 24, 0, 0, 0, 0);
+    expect(startOfWeek(monday).getTime()).toBe(monday.getTime());
   });
 });
 

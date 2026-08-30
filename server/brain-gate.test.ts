@@ -60,6 +60,17 @@ describe("promotionBlockers", () => {
     expect(promotionBlockers({ ...base, repo: null })).toContain("missing repo");
   });
 
+  it("does not demand done_when for a create item (addendum 2 item 7)", () => {
+    expect(promotionBlockers({ ...base, kind: "create", doneWhen: null })).not.toContain("missing done_when");
+    expect(promotionBlockers({ ...base, kind: "create", doneWhen: null, repo: null })).toEqual([]);
+  });
+
+  it("still demands done_when for every other kind", () => {
+    for (const kind of ["build", "todo", "ask", "decide", "material"]) {
+      expect(promotionBlockers({ ...base, kind, doneWhen: null })).toContain("missing done_when");
+    }
+  });
+
   it("does not demand a repo for a non-build kind", () => {
     expect(promotionBlockers({ ...base, kind: "todo", repo: null })).toEqual([]);
   });

@@ -65,7 +65,11 @@ export function promotionBlockers(item: GateView): string[] {
     out.push("external source: rewrite the ask in your own words first");
   }
   if (!item.ask?.trim()) out.push("missing ask");
-  if (!item.doneWhen?.trim()) out.push("missing done_when");
+  // A create item needs no done_when: the angle in `ask` is the whole brief, and
+  // a piece of writing is done when Rye ships it. Demanding one here contradicted
+  // the shaping interview, which exempts create, and left every essay seed
+  // permanently unpromotable (addendum 2, item 7).
+  if (item.kind !== "create" && !item.doneWhen?.trim()) out.push("missing done_when");
   if (item.kind === "unsorted") out.push("missing kind");
   if (item.kind === "build" && !item.repo?.trim()) out.push("missing repo");
   return out;

@@ -5886,6 +5886,13 @@ export const brainItems = mysqlTable("brain_items", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("owner_id").notNull(),
   kind: mysqlEnum("kind", ["unsorted", "create", "build", "todo", "ask", "decide", "material"]).default("unsorted").notNull(),
+  /**
+   * Which half of the brain this belongs to (ADDENDUM-1 item 1). `personal` is
+   * Rye's life-ops lane: owner-gated like everything else, but walled off from
+   * every downstream corpus — never the worldview pack, the voice corpus, the
+   * Harvest, or any public surface.
+   */
+  realm: mysqlEnum("realm", ["regen", "personal"]).default("regen").notNull(),
   state: mysqlEnum("state", ["raw", "shaped", "ready", "in_flight", "done_claimed", "done", "parked"]).default("raw").notNull(),
   title: varchar("title", { length: 300 }).notNull(),
   body: text("body").notNull(),
@@ -5918,6 +5925,7 @@ export const brainItems = mysqlTable("brain_items", {
   ownerSourceUnique: uniqueIndex("brain_items_owner_source_unique").on(t.ownerId, t.source),
   ownerStateKindIdx: index("brain_items_owner_state_kind_idx").on(t.ownerId, t.state, t.kind),
   ownerDueIdx: index("brain_items_owner_due_idx").on(t.ownerId, t.due),
+  ownerRealmStateIdx: index("brain_items_owner_realm_state_idx").on(t.ownerId, t.realm, t.state),
   batchIdx: index("brain_items_batch_idx").on(t.batchId),
   followsIdx: index("brain_items_follows_idx").on(t.followsId),
 }));

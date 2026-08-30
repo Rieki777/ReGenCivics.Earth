@@ -14,10 +14,10 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { sql } from "drizzle-orm";
+import { and, gte, inArray, sql } from "drizzle-orm";
 import { ownerProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { harvestRuns, quickNotes } from "../../drizzle/schema";
+import { brainAudit, harvestRuns, quickNotes } from "../../drizzle/schema";
 import * as items from "../lib/brain-items";
 import { BRAIN_KINDS, BRAIN_STATES } from "../lib/brain-items";
 
@@ -63,6 +63,18 @@ function asDate(v: unknown): Date | null {
   if (!v) return null;
   const d = v instanceof Date ? v : new Date(String(v));
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Monday 00:00 local, so "this week" lines up with the Monday morning message
+ * rather than drifting on a rolling window (addendum 2, item 8).
+ */
+export function startOfWeek(now = new Date()): Date {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // Monday = 0
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 export const brainRouter = router({
@@ -114,7 +126,29 @@ export const brainRouter = router({
       capture: lastCapture,
     };
 
+    // The month-one metric, which the plan named and then never computed
+    // (addendum 2, item 8). Counted from brain_audit, not from current state:
+    // the audit records the EVENT, so reopening an item later cannot rewrite
+    // the week in which it was closed.
+    const weekStart = startOfWeek();
+    let closedThisWeek = 0;
+    let promotedThisWeek = 0;
+    try {
+      const rows = await db
+        .select({ action: brainAudit.action, n: sql<number>`COUNT(*)` })
+        .from(brainAudit)
+        .where(and(gte(brainAudit.createdAt, weekStart), inArray(brainAudit.action, ["state:done", "promote"])))
+        .groupBy(brainAudit.action);
+      closedThisWeek = Number(rows.find((r) => r.action === "state:done")?.n ?? 0);
+      promotedThisWeek = Number(rows.find((r) => r.action === "promote")?.n ?? 0);
+    } catch (err) {
+      if (!isMissingTableError(err)) throw err;
+    }
+
     return {
+      weekStart,
+      closedThisWeek,
+      promotedThisWeek,
       signals: Object.fromEntries(
         (Object.keys(signals) as HeartbeatSignal[]).map((k) => [
           k,
