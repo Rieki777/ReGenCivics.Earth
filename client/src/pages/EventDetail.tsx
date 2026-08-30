@@ -130,10 +130,18 @@ export default function EventDetail() {
   const dateStr = startDate.toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
+  // The number and its timezone label come from ONE formatter, deliberately.
+  // This used to be toLocaleTimeString (which renders in the VIEWER's zone,
+  // because no timeZone option is passed) printed beside event.timezone, a
+  // stored string. Those agree only for a reader who happens to be in the
+  // stored zone. Everyone else got their own local time wearing somebody
+  // else's label: on 2026-08-30 this page showed "10:00 AM EDT" for event 20
+  // to a reader in California, for an event at 17:00Z, which is 1:00 PM EDT.
+  // A reader who trusted the label and converted would have arrived three
+  // hours early. timeZoneName makes the pair impossible to desynchronise.
   const timeStr = startDate.toLocaleTimeString('en-US', {
-    hour: 'numeric', minute: '2-digit',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
   });
-  const tz = event.timezone ?? 'UTC';
 
   return (
     <PageWrapper>
@@ -180,7 +188,7 @@ export default function EventDetail() {
                 </span>
                 <span className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-[#7dd87d]" />
-                  {timeStr} {tz}
+                  {timeStr}
                 </span>
                 {event.signupCount > 0 && (
                   <span className="flex items-center gap-2 text-[#7dd87d]/80">
