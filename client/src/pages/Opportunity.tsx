@@ -593,7 +593,7 @@ export default function Opportunity() {
               }}
             >
               <Download className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Download Slides</span>
+              <span className="hidden sm:inline">Slides ({FUND.deckLabel})</span>
             </Button>
             <Button
               variant="outline"
@@ -1265,8 +1265,8 @@ export default function Opportunity() {
                   {[
                     { title: "Land Market Dynamics", items: ["Prime regenerative land still available at reasonable valuations", "Target regions seeing 15-25% annual appreciation", "Quality projects seeking capital partners before institutional competition intensifies"] },
                     { title: "Regulatory Arbitrage", items: ["On-chain governance frameworks still experimental and flexible", "Opportunity to pioneer before regulatory frameworks crystallize", "First-mover advantage in coordinating regenerative infrastructure"] },
-                    { title: "Ecosystem Maturation", items: ["40+ alliance organizations ready for coordination infrastructure", "50+ pipeline projects seeking support to scale proven models", "rSeeds foundation built on 10 years of SEEDS experimentation with 10,000+ participants"] },
-                    { title: "Competitive Landscape", items: ["BlackRock launched natural capital fund", "Brookfield raised $15B for transition investing", "Window for pioneering coordination infrastructure narrows"] },
+                    { title: "Ecosystem Maturation", items: ["36 alliance organizations in the ecosystem today, named in the Portfolio Overview below", "28 pipeline projects that have expressed interest, named below", "rSeeds foundation built on 10 years of SEEDS experimentation with 10,000+ participants"] },
+                    { title: "Competitive Landscape", items: ["Large asset managers are entering natural capital and transition investing", "Window for pioneering coordination infrastructure narrows"] },
                   ].map((section, i) => (
                     <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10">
                       {/* h3: these sit directly under the section h2 above. */}
@@ -1286,7 +1286,7 @@ export default function Opportunity() {
                   <h3 className="font-bold text-[#ffd700] text-sm mb-2">Early Investor Advantages</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
                     {[
-                      "Lower entry valuation (1 CHF = 1 $RCivics in early years)",
+                      "Lower proposed entry valuation (1 CHF = 1 $RCivics in early years, proposed and settled at the founding event)",
                       "Priority allocation in subsequent fund vintages",
                       "Governance voice while structure is forming",
                       "Access to best land projects before institutional competition",
@@ -1299,7 +1299,7 @@ export default function Opportunity() {
                     ))}
                   </div>
                   <p className="text-xs text-white/70 mt-3 italic text-center">
-                    Early investors gain returns AND control of coordination infrastructure before it becomes obvious.
+                    The intent is that founding investors get both a financial return and a hand in shaping the coordination infrastructure, before either is obvious. Neither is promised.
                   </p>
                 </div>
               </div>
@@ -1335,7 +1335,7 @@ export default function Opportunity() {
                 </div>
                 <p className="text-sm mb-3 text-[#7dd87d] font-semibold">Fund I Focus: Proven, Revenue-Generating Projects</p>
                 <p className="text-sm mb-3">
-                  For the first and potentially the second vehicle, the fund will take minority stakes (typically 10-40%) in existing, operating regenerative land projects with demonstrated revenue and viable models. It won&rsquo;t be building from scratch or investing in startups or ideas; we're partnering with projects that need capital to expand or replicate their proven approaches.
+                  For the first and potentially the second vehicle, the fund will take minority stakes (typically 10-40%) in existing, operating regenerative land projects with demonstrated revenue and viable models. It won&rsquo;t be building from scratch or investing in startups or ideas; the plan is to partner with projects that need capital to expand or replicate their proven approaches.
                 </p>
                 <p className="text-sm mb-2"><strong className="text-white">What They Are:</strong> Established startup villages, regenerative communities, eco-developments, retreat centers, and educational campuses already generating revenue and seeking growth capital.</p>
                 
@@ -1413,8 +1413,8 @@ export default function Opportunity() {
               {[
                 { q: "If land projects fail to generate revenue:", a: "The fund will invest in already-operating, revenue-generating projects. These aren't speculative startups; they're proven models seeking expansion capital. Diversified farmland has had one negative year in the NCREIF Farmland Index's 34-year history, and US farm-credit losses run in basis points. Our alliance support structure and quality control standards further reduce risk. Even if 20% of projects underperform, the portfolio structure absorbs this." },
                 { q: "If a portfolio project doesn't reach maturity:", a: "The land itself is the floor. Every project the fund would invest in spends day to day growing fruit-producing trees, food-foresting, building infrastructure, and developing community, which makes the land more valuable over time. If a project doesn't reach maturity we sell the land. Our intent is that any premature exit still nets profit, and the people from that project are absorbed into other projects across the alliance, where they keep contributing." },
-                { q: "If alliance organizations don't adopt $RCivics:", a: "We're starting with committed partners (40+ already in the ecosystem). Network effects create strong incentives: once critical mass is reached, being outside the alliance means missing access to land project customers, coordination infrastructure, and shared resources. Even without full adoption, land asset backing provides downside protection. The token is a coordination tool, not the entire investment thesis." },
-                { q: "If crypto markets experience severe downturn:", a: "Our returns derive from tangible land and operating communities generating actual revenue, not token speculation. Token price may fluctuate, but underlying asset value and cash distributions continue independently. We're using crypto rails for coordination efficiency, not betting on crypto market sentiment. If blockchain technology disappeared tomorrow, our land projects would still exist, still generate revenue, and still distribute returns." },
+                { q: "If alliance organizations don't adopt $RCivics:", a: "The starting point is the 36 organizations already in the ecosystem, named on this page. Network effects create strong incentives: once critical mass is reached, being outside the alliance means missing access to land project customers, coordination infrastructure, and shared resources. Even without full adoption, land asset backing provides downside protection. The token is a coordination tool, not the entire investment thesis." },
+                { q: "If crypto markets experience severe downturn:", a: "Returns are designed to derive from tangible land and operating communities generating actual revenue, not token speculation. Token price may fluctuate, but underlying asset value and cash distributions would be independent of it. The plan uses crypto rails for coordination efficiency, not a bet on crypto market sentiment. If blockchain technology disappeared tomorrow, the land projects would still exist and still generate revenue." },
                 { q: "If regulations restrict on-chain governance:", a: "The design keeps traditional legal structures (LPs, SPVs) with on-chain governance as a coordination layer. If forced to abandon blockchain tools, we can operate through conventional fund administration (just less efficiently and transparently). Legal compliance is primary, technology is secondary." },
                 { q: "If we can't reach $400M AUM by Year 7:", a: "The path to $400M is sequential fundraising across multiple vintage years, not one giant fund. Token listing prerequisites are flexible; we can list with $200M AUM if ecosystem maturity supports it. The perpetual structure means no forced timeline; we build at the pace the market supports." },
                 { q: "If token liquidity markets don't develop:", a: "We have multiple liquidity pathways: exchange listings (primary plan), annual tender offers (fund buys back at NAV), increased redemption caps, or strategic buyer for entire fund. Token markets are the preferred mechanism but not the only mechanism. Investors should assume limited liquidity and invest with long-term horizon regardless." },
@@ -1431,7 +1431,7 @@ export default function Opportunity() {
             <CollapsibleSection title="Impact Framework" icon={Heart} id="impact">
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Measurable Regeneration</h3>
               <p className="mb-4 text-sm">
-                Our impact isn't aspirational; it's measurable, verified, and core to our investment thesis. Healthier land and communities create more valuable assets.
+                Impact is designed to be measurable and third-party verified rather than aspirational, and it is core to the thesis: healthier land and communities create more valuable assets. Nothing has been measured or verified yet, because the fund has made no investments.
               </p>
               <div className="bg-[#7dd87d]/10 rounded-xl p-5 border border-[#7dd87d]/20 mb-5">
                 <h4 className="font-bold text-white mb-2">Core Philosophy</h4>
@@ -1458,11 +1458,11 @@ export default function Opportunity() {
                 ))}
               </div>
 
-              <h4 className="font-bold text-white mb-2">Measurement & Verification</h4>
+              <h4 className="font-bold text-white mb-2">Measurement &amp; Verification (planned)</h4>
               <div className="space-y-1 text-xs mb-4">
                 {[
-                  "Impact measured using established frameworks (HEIST, IRIS+, GRI, or equivalent)",
-                  "Third-party annual verification by independent auditors",
+                  "Impact to be measured using established frameworks (HEIST, IRIS+, GRI, or equivalent)",
+                  "Third-party annual verification by independent auditors, to be appointed at formation",
                   "Seasonal impact reports alongside financial statements",
                   "On-chain recording of verified metrics (transparent, immutable)",
                   "Community-reported data validated by alliance organizations"
@@ -1492,7 +1492,7 @@ export default function Opportunity() {
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Portfolio Construction</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                 {[
-                  { title: "Geographic", desc: "Global presence across multiple continents and climate zones" },
+                  { title: "Geographic", desc: "Planned across multiple continents and climate zones. The fund has no presence in any jurisdiction today" },
                   { title: "Project Stage", desc: "Majority in operating/expansion phase (Fund I-II), some greenfield (Fund III+)" },
                   { title: "Revenue Mix", desc: "Housing, agriculture, education, retreats balanced across portfolio" },
                   { title: "Project Size", desc: "Range from 5-acre intensive sites to 5000+ acre regenerative farms" },
@@ -1523,7 +1523,7 @@ export default function Opportunity() {
 
               <h4 className="font-bold text-white mb-2">Deal Sourcing & Due Diligence</h4>
               <p className="text-sm mb-3">
-                Our network of 40+ alliance organizations and 50+ pipeline projects creates access institutional investors can't replicate. We have been operating in this space and building relationships since 2011.
+                The network of 36 alliance organizations and 28 interested projects, all named in the Portfolio Overview below, creates access institutional investors can&rsquo;t replicate. The relationships behind it were built over the SEEDS and Hypha years; the lineage is in the timeline at the top of this page.
               </p>
               <div className="space-y-2 mb-5">
                 {[
@@ -1543,10 +1543,10 @@ export default function Opportunity() {
 
               <h4 className="font-bold text-white mb-2">Earmarking Option</h4>
               <p className="text-sm mb-2">
-                Investors can direct up to 90% of capital toward specific land projects (10% remains in diversified fund). If earmarked project passes diligence and council vote, those funds deploy to that project.
+                Proposed, and available only once the fund is formed. No capital is accepted today and no fee is charged today. As proposed, investors could direct up to 90% of their capital toward specific land projects (10% remaining in the diversified fund); if an earmarked project passed diligence and the council vote, those funds would deploy to that project.
               </p>
               <p className="text-xs text-white/70 mb-4">
-                <strong className="text-white/70">Due Diligence Fee:</strong> If earmarked project doesn't pass, we return the majority of funds. We retain 3% or $20,000 (whichever is less) to cover evaluation costs.
+                <strong className="text-white/70">Proposed Due Diligence Fee:</strong> as proposed, if an earmarked project did not pass, the majority of funds would be returned and 3% or $20,000 (whichever is less) retained to cover evaluation costs. Like every other figure here, it is settled at the founding event.
               </p>
             </CollapsibleSection>
 
@@ -1599,7 +1599,7 @@ export default function Opportunity() {
                   Regeneration is our foundation
                 </h3>
                 <p className="text-white/85 text-sm md:text-base leading-relaxed">
-                  Every month we hold a project, we are doing the work. Planting fruiting trees,
+                  This is the design, not a description of a portfolio: the fund owns no land today. Once it holds a project, every month of holding it is a month of doing the work. Planting fruiting trees,
                   healing soil, building infrastructure, making the land more abundant and more
                   valuable. So if any individual project fails to deliver its planned returns,
                   we can sell the land. Because of the regenerative work we have done, the land
@@ -1642,7 +1642,7 @@ export default function Opportunity() {
                       ["Community & Land Management", "Regional operators and community stewards"],
                       ["Impact Verification", "Third-party ESG measurement (to be selected at first close)"],
                       ["Fund Administration", "Institutional-grade administrator (to be selected)"],
-                      ["Alliance Network", "40+ organizations providing infrastructure and services"],
+                      ["Alliance Network", "36 organizations, named in the Portfolio Overview below"],
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-2 px-3 text-white/80 font-medium">{row[0]}</td>
@@ -1654,7 +1654,7 @@ export default function Opportunity() {
               </div>
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Governance: Your Dual Role as LP and GP Participant</h3>
-              <p className="text-sm mb-3 font-semibold text-white">You're an active participant in the alliance.</p>
+              <p className="text-sm mb-3 font-semibold text-white">Once the fund is formed, an investor is an active participant in the alliance, not a passive LP. Here is how that is designed to work.</p>
               <p className="text-sm mb-4">ReGen Civics uses two distinct but complementary governance systems that give you both financial returns AND operational voice:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -1736,13 +1736,13 @@ export default function Opportunity() {
                   <tbody>
                     {[
                       ["Asset Focus", "Public equities or bonds", "Farmland only", "Land + Infrastructure Ecosystem"],
-                      ["Impact Verification", "Self-reported ESG scores", "Organic certification", "On-chain + third-party verified"],
-                      ["Investor Transparency", "Quarterly PDF reports", "Annual statements", "Real-time on-chain dashboard"],
+                      ["Impact Verification", "Self-reported ESG scores", "Organic certification", "On-chain + third-party verified (planned)"],
+                      ["Investor Transparency", "Quarterly PDF reports", "Annual statements", "On-chain dashboard (planned)"],
                       ["Governance Rights", "None", "Limited LP advisory", "Active on-chain voting"],
-                      ["Distribution Speed", "60-90 days post-quarter", "Manual processing", "Automated smart contract"],
+                      ["Distribution Speed", "60-90 days post-quarter", "Manual processing", "Automated smart contract (planned)"],
                       ["Geographic Scope", "Global public markets", "Single country/region", "Multi-jurisdictional coordination"],
                       ["Liquidity", "Daily (if mutual fund)", "10-year lock", "Token markets (Year 7+)"],
-                      ["Fee Structure", "1-2% + 10-20% carry", "1-2% + 20% carry", "1.5% + 20% carry (transparent on-chain)"],
+                      ["Fee Structure", "1-2% + 10-20% carry", "1-2% + 20% carry", "1.5% + 20% carry (proposed)"],
                       ["Ecosystem Play", "Portfolio of separate investments", "Land holdings only", "Network effects between projects"],
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
@@ -1770,10 +1770,10 @@ export default function Opportunity() {
                   <tbody>
                     {[
                       ["Target IRR", "8-12%", "20-30%", "12-18%"],
-                      ["Current Yield", "4-6%", "0%", "6-8%"],
+                      ["Current Yield", "4-6%", "0%", "0% today; 6-8% targeted once formed"],
                       ["Liquidity", "Quarterly", "7-10 yr lock", "Token secondary market (Year 7-10 target)"],
                       ["Downside Protection", "High", "Low", "Medium-High"],
-                      ["Impact Measurement", "Limited", "Variable", "Third-party verified"],
+                      ["Impact Measurement", "Limited", "Variable", "Third-party verified (planned)"],
                       ["Growth Exposure", "Low", "High", "Medium-High"],
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
@@ -1844,12 +1844,12 @@ export default function Opportunity() {
               </div>
               <p className="text-xs text-white/70 mb-5">Portfolio spans multiple countries across multiple continents, providing natural diversification against regional economic, political, and climate risks.</p>
 
-              <h4 className="font-bold text-white mb-2">Pipeline: 50+ Interested Projects</h4>
+              <h4 className="font-bold text-white mb-2">Pipeline: 28 Interested Projects</h4>
               <p className="text-xs text-white/60 mb-5 leading-relaxed">
                 Quantum Cacao, Commons Hub, Ecosphere, Villa Gaia, Sanctura, Granja Tzikin, Neal Columbia, Diamonte Luz, Shanti Vasti, Tahoe NZ, Los Higuerones, Ancient Future, Spirit Land, Eden SD, Sand Angel, New Earth Retreats, Aquarella, New Earth Seed, Forever Green, Harmonia, 7 Springs, Ecopi Island, Egg Temple, Earth Heart, Heart of Being, Laulima, Avano, Regenerosa
               </p>
 
-              <h4 className="font-bold text-white mb-2">Alliance Ecosystem: 40+ Organizations</h4>
+              <h4 className="font-bold text-white mb-2">Alliance Ecosystem: 36 Organizations</h4>
               <p className="text-xs text-white/60 leading-relaxed">
                 Hypha, SEEDS, Nestr.io, Kinship Earth, Open Future Coalition, UP.Game, Gaia Union BioLab, Closer.earth, OASA.earth, Planetary Party, Universe Club, DESA, Permatours, Maptio, LocalScale, Ecophi, WeFi, Sacred Ohms, Vision Development, Leads, Impact Hub, Nera | Unify, Re-Tribalize AI, Impact Ledger, New Earth Summit, Tetra, Luna Capital, Powerbee, Colibri, RCF, LATAM Impact, Gaia Commons, Holomovement, Mettaculture, Global Unity, Rewoven
               </p>
@@ -1983,7 +1983,7 @@ export default function Opportunity() {
                     { step: "Commitment", desc: "Submit subscription agreement, specify any project earmarking preferences" },
                     { step: "Wire Capital", desc: "Transfer funds to custodian account" },
                     { step: "Receive Tokens", desc: "Get $RCivics tokens + RCVoice governance tokens to your wallet" },
-                    { step: "Access Portal", desc: "Real-time portfolio dashboard and on-chain transparency" },
+                    { step: "Access Portal", desc: "Portfolio dashboard and on-chain transparency, built for formation" },
                     { step: "Join Network", desc: "Alliance communication channels, monthly calls, community access" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
@@ -2034,7 +2034,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What is your deal flow advantage?">
-                  <p>Our network of 40+ alliance organizations and 50+ pipeline projects provides proprietary access institutional investors can't replicate independently. Projects seek us out for the coordination infrastructure, the support network, and the capital. We're invited into opportunities because we bring the entire alliance ecosystem.</p>
+                  <p>The network of 36 alliance organizations and 28 interested projects, named in the Portfolio Overview, provides access institutional investors can't replicate independently. Projects seek us out for the coordination infrastructure, the support network, and the capital. We're invited into opportunities because we bring the entire alliance ecosystem.</p>
                 </FAQItem>
 
                 <FAQItem question="How do you value ecological credits given market volatility?">
@@ -2047,11 +2047,11 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What is the 3% due diligence fee?">
-                  <p>If an earmarked project doesn't pass our due diligence or council vote, we return the majority of funds. We retain 3% or $20,000 (whichever is less) to cover evaluation costs including financial analysis, governance review, council presentation, and on-site visits.</p>
+                  <p>It is a proposal, not a live fee: the fund is in formation, accepts no capital, and charges nothing today. As proposed, if an earmarked project did not pass due diligence or the council vote, the majority of funds would be returned and 3% or $20,000 (whichever is less) retained to cover evaluation costs including financial analysis, governance review, council presentation, and on-site visits.</p>
                 </FAQItem>
 
                 <FAQItem question="How does earmarking work?">
-                  <p>Investors can direct up to 90% of their capital toward a specific land project. The remaining 10% stays in the diversified fund. If the earmarked project passes diligence and council vote, those funds are deployed to that project. If the project doesn't pass, funds are returned (less 3% due diligence fee) or can be redirected to another project.</p>
+                  <p>As proposed, once the fund is formed: investors could direct up to 90% of their capital toward a specific land project, with the remaining 10% staying in the diversified fund. If the earmarked project passed diligence and the council vote, those funds would deploy to that project. If it did not, funds would be returned (less the proposed due diligence fee) or redirected to another project. None of this is live; no capital is accepted yet.</p>
                 </FAQItem>
 
                 <FAQItem question="Who manages the communities and land projects day-to-day?">
@@ -2103,7 +2103,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="I don't trust crypto. Why should I invest in something using blockchain?">
-                  <p>Understandable concern. We're a real estate and venture fund with tangible land and operating communities. The blockchain is a coordination tool, not a speculative investment. We use it because coordinating 100+ land projects across global jurisdictions through traditional structures requires armies of lawyers and administrators. On-chain governance provides transparent, auditable, efficient coordination. The practical test: If blockchain technology disappeared tomorrow, our land projects would still exist, still generate revenue, and still distribute returns. You don't need to understand TCP/IP protocols to trust email. You don't need to be a blockchain maximalist to benefit from transparent, automated coordination.</p>
+                  <p>Understandable concern. This is designed as a real estate and venture fund anchored in tangible land and operating communities. The blockchain is a coordination tool, not a speculative investment. We use it because coordinating 100+ land projects across global jurisdictions through traditional structures requires armies of lawyers and administrators. On-chain governance provides transparent, auditable, efficient coordination. The practical test: if blockchain technology disappeared tomorrow, the land projects would still exist and still generate revenue. You don't need to understand TCP/IP protocols to trust email. You don't need to be a blockchain maximalist to benefit from transparent, automated coordination.</p>
                 </FAQItem>
 
                 <FAQItem question="What's the governance event about?">
@@ -2234,7 +2234,7 @@ export default function Opportunity() {
                     <FileText className="w-8 h-8 text-[#7dd87d] group-hover:scale-110 transition-transform" />
                     <div>
                       <p className="font-bold text-white text-sm">Pitch Deck</p>
-                      <p className="text-white/70 text-xs">Download PDF</p>
+                      <p className="text-white/70 text-xs">{FUND.deckLabel}. Where it differs from this page, this page is current.</p>
                     </div>
                   </a>
                   <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center opacity-60 cursor-not-allowed">
@@ -2248,7 +2248,7 @@ export default function Opportunity() {
                     <Lock className="w-8 h-8 text-white/70" />
                     <div>
                       <p className="font-bold text-white text-sm">Term Sheet</p>
-                      <p className="text-white/70 text-xs">Available after LOI submission</p>
+                      <p className="text-white/70 text-xs">Does not exist yet. Terms are agreed by the founding investors at the founding event.</p>
                     </div>
                   </div>
                 </div>
