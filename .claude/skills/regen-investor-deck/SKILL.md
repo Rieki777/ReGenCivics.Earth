@@ -140,12 +140,24 @@ the visual style we use on the site, replicate it on the slide.
 
 ### Slide 6: The fund
 
-- Structure: Venture capital fund (Reg D, 506(c) probably; verify with
-  Rye before locking)
+- **Status first, before anything else on this slide.** The ReGen Civics
+  Fund is in formation. It is not a legal entity. Target launch 2027. It is
+  gathering non-binding Letters of Intent and accepts no capital. Read the
+  exact wording from `shared/fund.ts` (`FUND.statement`) and use it verbatim.
+- **Never name a securities exemption.** Not a rule, not a subsection, not
+  "we intend to rely on" one. Counsel has not chosen one, so naming one is a
+  claim nobody has made, and the softer phrasing is the same claim. Until
+  2026-08-30 this line named a specific exemption and hedged it with
+  "probably", which is how a guess reaches an allocator's inbox. The only
+  permitted sentence about the offering is `FUND.offeringDisclaimer`.
+- Structure: designed as a venture capital fund. The legal structure,
+  jurisdiction, terms and governance are agreed together by the founding
+  investors at the founding event.
 - Investment thesis: "We capitalize land stewards in bioregions where
   governance, ecology, and economy can co-evolve."
-- Hold period, exit model, return target: pull from the live
-  `INVESTMENT_THESIS` doc or ask Rye to confirm before filling in.
+- Hold period, exit model, return target: pull from `shared/fund.ts`, and
+  label every one of them proposed or target. Never present a modelled target
+  as a projection of results.
 - Diversification: across bioregions, project stages, ecological practices
 
 ### Slide 7: The game
@@ -203,13 +215,16 @@ Real people. Real photos. Real roles.
 
 Specific. Not "we're raising." Say:
 
-- Round: e.g. "Fund 1 first close, $2M target"
-- Minimum: e.g. "$25k accredited"
-- Timeline: e.g. "First close August 2026"
-- What an LP gets: structure, terms, voice, governance
+- Stage: "In formation. Gathering non-binding Letters of Intent."
+- Threshold: the founding-event threshold from `FUND.loiThreshold`
+- Minimum: the proposed minimum, labelled proposed
+- Timeline: target launch `FUND.launchTarget`. Not a close date; there is
+  no close to date, because there is no entity to close into.
+- What an LOI signer gets: `FUND.loiPromise`. Nothing beyond it.
 
-If terms are still being shaped, say "Term sheet available under NDA;
-see slide 14 for contact."
+Terms ARE still being shaped, by definition, until the founding event. Say
+so plainly. Do not say "term sheet available under NDA": there is no term
+sheet, and implying one exists is the same error one step removed.
 
 ### Slide 13: Use of funds
 
