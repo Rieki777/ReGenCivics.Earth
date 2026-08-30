@@ -176,3 +176,10 @@ one takes effect."
 - Seating a role holder by direct DB write did not reach the running server's role cache, so a
   capability check refused. That is my setup shortcut, not a product defect.
 - `git grep` was not used for any negative claim anywhere in this pass.
+- **The worst of them, added after the coordinator overturned my R1:** I claimed "there is no mask
+  room in the product" from a line count grouped by directory (1,943 of PR #63's 2,072 lines under
+  `docs/prototypes/`) without ever loading the surface. `docs/prototypes/grounds-v0.html` IS the
+  living map, 5.7 MB, served at `/grounds/index.html` ahead of the SPA catch-all, and
+  `amora-map-mask` is in it. My walk opened `/map` four times and I never searched the artifact.
+  The standing lesson: **on this repo the directory name lies**, and a path is not a lifecycle.
+  Nothing in the ripgrep-NUL trap explains it; the file is clean. I just did not look.

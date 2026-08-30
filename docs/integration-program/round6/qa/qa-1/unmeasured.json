@@ -34,5 +34,11 @@
   "surface": "local",
   "route": "/introductions",
   "why": "My own input mutation did not reach React state, so the field was still null when the save fired. The policy PUT itself was confirmed: PUT /api/intents/policy returned 200 with the stored policy. The topics round trip specifically was not exercised."
+ },
+ {
+  "what": "The mask room's R53 write behaviour (amora-map-mask, inside the living map artifact docs/prototypes/grounds-v0.html, served at /grounds/index.html)",
+  "surface": "live and local",
+  "route": "/map",
+  "why": "NOT MEASURED BY ME, and originally mis-filed as a refusal claiming the feature had not shipped. It had: the artifact is the map itself, not a prototype, and the mask id is present in it. I loaded /map four times and never searched the artifact, because the docs/prototypes/ path convinced me there was nothing there. Round 5 measured it directly and found it R53-compliant: localStorage only, zero entries in the shared edit log, surviving a reload. Recorded here as unmeasured by this pass rather than as a finding either way."
  }
 ]
