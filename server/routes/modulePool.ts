@@ -34,8 +34,22 @@ import { POOL_DUST_FLOOR, statementCsv, type PoolShareLine, type PoolStatement }
 import { bridgePageUrl, bridgeToHypha } from "../lib/hypha-bridge";
 import { recycleHistory } from "../lib/gratitude-cycles";
 
+/**
+ * How much of a statement's payable total the chain has confirmed.
+ *
+ * The same rule `settlementWord` uses one row at a time, summed. A payable
+ * line with `paidAt` was stamped by the Alchemy webhook off a real
+ * transaction, so it is the only money this hub is entitled to call sent.
+ */
+export function sentOnChain(shares: any[]): number {
+  return shares
+    .filter((s: any) => s.state === "payable" && s.paidAt)
+    .reduce((sum: number, s: any) => sum + Number(s.amount ?? 0), 0);
+}
+
 /** One statement's public face: module ids, reach, amounts. No people, no villages. */
 function publicView(statement: any, shares: any[]) {
+  const sent = sentOnChain(shares);
   return {
     cycleNumber: statement.cycleNumber,
     cycleStartsAt: statement.cycleStartsAt,
@@ -43,7 +57,22 @@ function publicView(statement: any, shares: any[]) {
     status: statement.status,
     pool: statement.poolAmount,
     carryIn: statement.carryIn,
+    /**
+     * PAYABLE, and the page must say that word. This is the sum of the lines
+     * the hub worked out it could send, which is what the arithmetic identity
+     * `pool + carryIn = paid + accrued + recycled + unallocated` balances on.
+     * Until the treasury's Hypha space executes, none of it has moved.
+     */
     paid: statement.paid,
+    /**
+     * SENT, confirmed on Base. A subset of `paid`, and the difference between
+     * the two is what is still waiting on the treasury space. Published beside
+     * `paid` because the reader who comes to this page wants to know whether a
+     * builder was actually paid, and a page that showed only `paid` under the
+     * word "sent" was answering a question nobody asked with a number that was
+     * not true yet.
+     */
+    sent,
     accrued: statement.accrued,
     /**
      * What the platform's own modules earned and handed back to the ReGen
@@ -96,7 +125,7 @@ function publicView(statement: any, shares: any[]) {
  * `paidAt` is written by the Alchemy webhook off a real transaction, so it is
  * the only thing here entitled to the word.
  */
-function settlementWord(state: string, paid: boolean): "sent" | "ready" | "recycled" | "waiting" | "too-small" {
+export function settlementWord(state: string, paid: boolean): "sent" | "ready" | "recycled" | "waiting" | "too-small" {
   if (state === "payable") return paid ? "sent" : "ready";
   if (state === "recycled") return "recycled";
   if (state === "below-floor") return "too-small";
@@ -199,23 +228,49 @@ export const modulePoolRouter = router({
     return publicView(loaded.statement, loaded.shares);
   }),
 
-  /** Recent cycles, newest first, as headline numbers only. */
+  /**
+   * Recent cycles, newest first, as headline numbers only.
+   *
+   * Carries `sent` alongside `paid` for the same reason `current` does: an
+   * older cycle's payable total is not what builders received, and the list
+   * used to print it under the words "to builders".
+   */
   history: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(24).default(12) }).optional())
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
       const rows = await db.select().from(modulePoolStatements)
         .orderBy(desc(modulePoolStatements.cycleNumber)).limit(input?.limit ?? 12);
-      return rows
-        .filter((s: any) => s.status === "computed" || s.status === "executed")
-        .map((s: any) => ({
-          cycleNumber: s.cycleNumber,
-          cycleEndsAt: s.cycleEndsAt,
-          pool: s.poolAmount,
-          paid: s.paid,
-          recycled: s.recycled ?? 0,
-          status: s.status,
-        }));
+      const published = rows.filter((s: any) => s.status === "computed" || s.status === "executed");
+      if (published.length === 0) return [];
+
+      // One grouped read for every listed statement, rather than a query per
+      // row. An empty map means nothing is confirmed yet, which is the honest
+      // answer before the treasury space has executed anything.
+      const ids = published.map((s: any) => Number(s.id));
+      const sentRows: any = await db.execute(sql`
+        SELECT statementId, COALESCE(SUM(amount), 0) AS sent
+        FROM modulePoolShares
+        WHERE state = 'payable' AND paidAt IS NOT NULL
+          AND statementId IN (${sql.join(ids.map((id: number) => sql`${id}`), sql`, `)})
+        GROUP BY statementId
+      `);
+      const list: any[] = sentRows?.[0] ?? sentRows?.rows ?? [];
+      const sentById = new Map<number, number>(
+        (Array.isArray(list) ? list : []).map((r: any) => [Number(r.statementId), Number(r.sent ?? 0)]),
+      );
+
+      return published.map((s: any) => ({
+        cycleNumber: s.cycleNumber,
+        cycleEndsAt: s.cycleEndsAt,
+        pool: s.poolAmount,
+        /** Payable. See the note on `paid` in `publicView`. */
+        paid: s.paid,
+        /** Confirmed on Base. A subset of `paid`. */
+        sent: sentById.get(Number(s.id)) ?? 0,
+        recycled: s.recycled ?? 0,
+        status: s.status,
+      }));
     }),
 
   /**
