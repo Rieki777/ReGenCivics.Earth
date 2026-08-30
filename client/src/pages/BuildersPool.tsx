@@ -116,9 +116,7 @@ export default function BuildersPool() {
                 </div>
                 <div>
                   <dt className="text-white/50 text-sm">Ready to send</dt>
-                  <dd className="text-xl font-semibold">
-                    {fmt(Math.max(0, statement.paid - statement.sent))} $ReGen
-                  </dd>
+                  <dd className="text-xl font-semibold">{fmt(statement.ready)} $ReGen</dd>
                 </div>
                 <div>
                   <dt className="text-white/50 text-sm">Waiting on a builder</dt>
@@ -244,7 +242,7 @@ export default function BuildersPool() {
                 {history.data.map((h) => (
                   <li key={h.cycleNumber}>
                     Cycle {h.cycleNumber}, closed {day(h.cycleEndsAt)}: {fmt(h.sent)} $ReGen sent to
-                    builders, {fmt(Math.max(0, h.paid - h.sent))} $ReGen ready to send,{" "}
+                    builders, {fmt(h.ready)} $ReGen ready to send,{" "}
                     {fmt(h.recycled)} $ReGen back to the gratitude pool
                   </li>
                 ))}

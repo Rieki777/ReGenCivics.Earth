@@ -35,21 +35,33 @@ import { bridgePageUrl, bridgeToHypha } from "../lib/hypha-bridge";
 import { recycleHistory } from "../lib/gratitude-cycles";
 
 /**
- * How much of a statement's payable total the chain has confirmed.
+ * A statement's payable total, split into what the chain confirmed and what is
+ * still waiting on the treasury space.
  *
  * The same rule `settlementWord` uses one row at a time, summed. A payable
  * line with `paidAt` was stamped by the Alchemy webhook off a real
  * transaction, so it is the only money this hub is entitled to call sent.
+ *
+ * BOTH NUMBERS COME FROM THE SHARE ROWS, and the page subtracts nothing. The
+ * first version had the page compute `paid - sent`, where `paid` is a column on
+ * the statement and `sent` is a sum over the shares. Two sources for one
+ * subtraction is a drift the reader would never see, and the clamp that stopped
+ * it rendering a negative would have been the thing hiding it.
  */
-export function sentOnChain(shares: any[]): number {
-  return shares
-    .filter((s: any) => s.state === "payable" && s.paidAt)
-    .reduce((sum: number, s: any) => sum + Number(s.amount ?? 0), 0);
+export function sentOnChain(shares: any[]): { sent: number; ready: number } {
+  let sent = 0;
+  let ready = 0;
+  for (const s of shares as any[]) {
+    if (s.state !== "payable") continue;
+    if (s.paidAt) sent += Number(s.amount ?? 0);
+    else ready += Number(s.amount ?? 0);
+  }
+  return { sent, ready };
 }
 
 /** One statement's public face: module ids, reach, amounts. No people, no villages. */
 function publicView(statement: any, shares: any[]) {
-  const sent = sentOnChain(shares);
+  const { sent, ready } = sentOnChain(shares);
   return {
     cycleNumber: statement.cycleNumber,
     cycleStartsAt: statement.cycleStartsAt,
@@ -65,14 +77,16 @@ function publicView(statement: any, shares: any[]) {
      */
     paid: statement.paid,
     /**
-     * SENT, confirmed on Base. A subset of `paid`, and the difference between
-     * the two is what is still waiting on the treasury space. Published beside
-     * `paid` because the reader who comes to this page wants to know whether a
-     * builder was actually paid, and a page that showed only `paid` under the
-     * word "sent" was answering a question nobody asked with a number that was
+     * SENT, confirmed on Base, and READY, worked out and still with the
+     * treasury space. Together they are the payable lines, so `sent + ready`
+     * equals `paid` on any statement whose shares and totals agree. Published
+     * beside `paid` because the reader who comes to this page wants to know
+     * whether a builder was actually paid, and a page that showed only `paid`
+     * under the word "sent" was answering that question with a number that was
      * not true yet.
      */
     sent,
+    ready,
     accrued: statement.accrued,
     /**
      * What the platform's own modules earned and handed back to the ReGen
@@ -245,32 +259,43 @@ export const modulePoolRouter = router({
       if (published.length === 0) return [];
 
       // One grouped read for every listed statement, rather than a query per
-      // row. An empty map means nothing is confirmed yet, which is the honest
-      // answer before the treasury space has executed anything.
+      // row. A statement with no row here has nothing payable at all, so both
+      // numbers are zero, which is the honest answer before the treasury space
+      // has executed anything.
       const ids = published.map((s: any) => Number(s.id));
-      const sentRows: any = await db.execute(sql`
-        SELECT statementId, COALESCE(SUM(amount), 0) AS sent
+      const splitRows: any = await db.execute(sql`
+        SELECT statementId,
+               COALESCE(SUM(CASE WHEN paidAt IS NOT NULL THEN amount ELSE 0 END), 0) AS sent,
+               COALESCE(SUM(CASE WHEN paidAt IS NULL THEN amount ELSE 0 END), 0) AS ready
         FROM modulePoolShares
-        WHERE state = 'payable' AND paidAt IS NOT NULL
+        WHERE state = 'payable'
           AND statementId IN (${sql.join(ids.map((id: number) => sql`${id}`), sql`, `)})
         GROUP BY statementId
       `);
-      const list: any[] = sentRows?.[0] ?? sentRows?.rows ?? [];
-      const sentById = new Map<number, number>(
-        (Array.isArray(list) ? list : []).map((r: any) => [Number(r.statementId), Number(r.sent ?? 0)]),
+      const list: any[] = splitRows?.[0] ?? splitRows?.rows ?? [];
+      const splitById = new Map<number, { sent: number; ready: number }>(
+        (Array.isArray(list) ? list : []).map((r: any) => [
+          Number(r.statementId),
+          { sent: Number(r.sent ?? 0), ready: Number(r.ready ?? 0) },
+        ]),
       );
 
-      return published.map((s: any) => ({
-        cycleNumber: s.cycleNumber,
-        cycleEndsAt: s.cycleEndsAt,
-        pool: s.poolAmount,
-        /** Payable. See the note on `paid` in `publicView`. */
-        paid: s.paid,
-        /** Confirmed on Base. A subset of `paid`. */
-        sent: sentById.get(Number(s.id)) ?? 0,
-        recycled: s.recycled ?? 0,
-        status: s.status,
-      }));
+      return published.map((s: any) => {
+        const split = splitById.get(Number(s.id)) ?? { sent: 0, ready: 0 };
+        return {
+          cycleNumber: s.cycleNumber,
+          cycleEndsAt: s.cycleEndsAt,
+          pool: s.poolAmount,
+          /** Payable. See the note on `paid` in `publicView`. */
+          paid: s.paid,
+          /** Confirmed on Base. */
+          sent: split.sent,
+          /** Payable and still with the treasury space. */
+          ready: split.ready,
+          recycled: s.recycled ?? 0,
+          status: s.status,
+        };
+      });
     }),
 
   /**

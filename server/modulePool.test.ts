@@ -516,11 +516,26 @@ describe("sent means confirmed on chain, at the row and at the total", () => {
       share({ amount: 5 }),
       share({ amount: 100, state: "recycled" }),
       share({ amount: 7, state: "no-address" }),
-    ])).toBe(10);
+    ])).toEqual({ sent: 10, ready: 5 });
   });
 
-  it("counts nothing before the treasury space executes", () => {
-    expect(sentOnChain([share({ amount: 10 }), share({ amount: 5 })])).toBe(0);
+  it("counts nothing sent before the treasury space executes", () => {
+    expect(sentOnChain([share({ amount: 10 }), share({ amount: 5 })])).toEqual({ sent: 0, ready: 15 });
+  });
+
+  it("splits the payable total and never invents one", () => {
+    // The page prints `sent` and `ready` straight, so their sum has to be the
+    // payable total on its own. It used to subtract a share sum from a
+    // statement column and clamp the result at zero, which would have hidden
+    // any drift between the two.
+    const rows = [
+      share({ amount: 10, paidAt: new Date() }),
+      share({ amount: 5 }),
+      share({ amount: 100, state: "recycled" }),
+    ];
+    const { sent, ready } = sentOnChain(rows);
+    const payable = rows.filter((r) => r.state === "payable").reduce((n, r) => n + Number(r.amount), 0);
+    expect(sent + ready).toBe(payable);
   });
 
   it("agrees with the word the same row shows", () => {
@@ -536,7 +551,7 @@ describe("sent means confirmed on chain, at the row and at the total", () => {
     ];
     const wordSaysSent = rows.filter((r) => settlementWord(String(r.state), !!r.paidAt) === "sent");
     expect(wordSaysSent.length).toBe(1);
-    expect(sentOnChain(rows)).toBe(wordSaysSent.reduce((n, r) => n + Number(r.amount), 0));
-    expect(sentOnChain(rows.filter((r) => !wordSaysSent.includes(r)))).toBe(0);
+    expect(sentOnChain(rows).sent).toBe(wordSaysSent.reduce((n, r) => n + Number(r.amount), 0));
+    expect(sentOnChain(rows.filter((r) => !wordSaysSent.includes(r))).sent).toBe(0);
   });
 });
