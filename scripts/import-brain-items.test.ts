@@ -391,8 +391,13 @@ function findTasksJson(): string | undefined {
 }
 const realTasks = findTasksJson();
 
+// `describe.skipIf` skips the TESTS but still evaluates the describe body, so
+// this read has to be guarded rather than merely skipped. Without the guard the
+// suite threw ERR_INVALID_ARG_TYPE at collection on any machine without the
+// untracked tasks.json — which is every CI runner. It passed locally and turned
+// main red, because a failed collection is a failed suite, not a skipped one.
 describe.skipIf(!realTasks)("the real tasks.json", () => {
-  const rows = parseTasks(fs.readFileSync(realTasks!, "utf8"));
+  const rows = realTasks ? parseTasks(fs.readFileSync(realTasks, "utf8")) : [];
 
   it("maps every session slug it contains by hand, none by fallback", () => {
     const seen = [...new Set(rows.map((r) => r.session ?? ""))].filter(Boolean);
