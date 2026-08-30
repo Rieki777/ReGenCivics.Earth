@@ -98,10 +98,10 @@ export default function AdminBuildersPool() {
       */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>The pool amount</CardTitle>
+          <CardTitle>Custom Game Module Creators Pool</CardTitle>
           <CardDescription>
             {poolVariable?.exists
-              ? "Read from game_variables. Change it in Admin, Game Variables, and the next cycle settles at the new amount."
+              ? "The amount this pool pays out each lunar cycle. A ReGen Civics setting and never a village one: change it in Admin, Game Variables, and the next cycle settles at the new amount."
               : "There is no pool.regen_per_cycle row in game_variables."}
           </CardDescription>
         </CardHeader>
