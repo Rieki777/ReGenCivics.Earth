@@ -140,7 +140,7 @@ export function BrainToday({ onGoToCreate }: BrainTodayProps) {
             { label: "in flight", n: counts.inFlight },
             { label: "claimed", n: counts.claimed },
           ].map((c) => (
-            <div key={c.label} className="rounded-xl border border-[#1a472a]/15 bg-white py-2">
+            <div key={c.label} className="rounded-xl border border-[#1a472a]/25 bg-white py-2">
               <div className="text-lg font-bold text-[#1a472a]">{c.n}</div>
               <div className="text-[11px] text-[#2d5a3d]">{c.label}</div>
             </div>
@@ -216,7 +216,7 @@ export function BrainToday({ onGoToCreate }: BrainTodayProps) {
             type="button"
             onClick={onGoToCreate}
             data-testid="brain-ripest"
-            className="w-full min-h-14 rounded-xl border border-[#1a472a]/15 bg-white px-3 py-2.5 text-left"
+            className="w-full min-h-14 rounded-xl border border-[#1a472a]/25 bg-white px-3 py-2.5 text-left"
           >
             <span className="flex items-center gap-1.5 text-sm font-medium text-[#1a472a]">
               <Sprout className="h-4 w-4 text-[#2d5a3d]" aria-hidden="true" />

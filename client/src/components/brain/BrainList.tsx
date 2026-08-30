@@ -95,7 +95,7 @@ function Chip({ children, tone = "quiet" }: { children: React.ReactNode; tone?: 
       ? "border-[#1a472a]/40 bg-[#f0ebe3] text-[#1a472a]"
       : tone === "warn"
         ? "border-amber-400 bg-amber-50 text-amber-900"
-        : "border-[#4a7c59]/35 text-[#2d5a3d]";
+        : "border-[#1a472a]/25 text-[#2d5a3d]";
   return (
     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] leading-4 ${skin}`}>
       {children}
@@ -112,7 +112,7 @@ export function BrainRow({ item, onOpen }: { item: BrainItemView; onOpen: () => 
       type="button"
       onClick={onOpen}
       data-testid={`brain-row-${item.id}`}
-      className="w-full min-h-14 rounded-xl border border-[#1a472a]/15 bg-white px-3 py-2.5 text-left transition-colors hover:border-[#1a472a]/35"
+      className="w-full min-h-14 rounded-xl border border-[#1a472a]/25 bg-white px-3 py-2.5 text-left transition-colors hover:border-[#1a472a]/35"
     >
       <span className="block text-sm font-medium leading-snug text-[#1a472a]">{item.title}</span>
       <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -194,7 +194,7 @@ export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }
           placeholder="Search titles, asks, bodies"
           aria-label="Search items"
           data-testid="brain-search"
-          className="min-h-11 w-full rounded-xl border border-[#1a472a]/20 bg-white pl-9 pr-9 text-sm text-[#1a472a] placeholder:text-[#4a7c59]/70"
+          className="min-h-11 w-full rounded-xl border border-[#1a472a]/25 bg-white pl-9 pr-9 text-sm text-[#1a472a] placeholder:text-[#4a7c59]"
         />
         {typed ? (
           <button

@@ -180,7 +180,7 @@ export function BrainShell({ renderCreate }: BrainShellProps) {
       <nav
         aria-label="Command center sections"
         data-testid="brain-tabbar"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1a472a]/15 bg-white safe-area-pb"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1a472a]/25 bg-white safe-area-pb"
       >
         <div className="mx-auto flex max-w-3xl">
           {BRAIN_TABS.map(({ key, label, Icon }) => (

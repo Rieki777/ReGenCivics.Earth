@@ -78,13 +78,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputSkin =
-  "min-h-11 w-full rounded-lg border border-[#1a472a]/20 bg-white px-3 text-sm text-[#1a472a]";
+  "min-h-11 w-full rounded-lg border border-[#1a472a]/25 bg-white px-3 text-sm text-[#1a472a]";
 
 function Attachment({ k }: { k: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
     return (
-      <span className="block truncate rounded-lg border border-[#1a472a]/15 bg-[#f0ebe3] px-2 py-3 text-[11px] text-[#2d5a3d]">
+      <span className="block truncate rounded-lg border border-[#1a472a]/25 bg-[#f0ebe3] px-2 py-3 text-[11px] text-[#2d5a3d]">
         {k}
       </span>
     );
@@ -95,7 +95,7 @@ function Attachment({ k }: { k: string }) {
       alt={`Attachment ${k}`}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="h-28 w-full rounded-lg border border-[#1a472a]/15 object-cover"
+      className="h-28 w-full rounded-lg border border-[#1a472a]/25 object-cover"
     />
   );
 }
@@ -191,7 +191,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
       aria-label="Item detail"
       data-testid="brain-item-sheet"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-[#1a472a]/15 bg-white px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-b border-[#1a472a]/25 bg-white px-3 py-2">
         <span className="truncate text-sm font-semibold text-[#1a472a]">
           {data ? data.title : `Item #${id}`}
         </span>
@@ -227,7 +227,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
               <span className="rounded-full border border-[#1a472a]/40 bg-[#f0ebe3] px-2 py-0.5">
                 {STATE_LABEL[data.state] ?? data.state}
               </span>
-              <span className="rounded-full border border-[#4a7c59]/35 px-2 py-0.5">
+              <span className="rounded-full border border-[#1a472a]/25 px-2 py-0.5">
                 {KIND_LABEL[data.kind] ?? data.kind}
               </span>
               {data.trust === "external" ? (
@@ -238,7 +238,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
               <span className="truncate">{data.source}</span>
             </div>
 
-            <p className="whitespace-pre-wrap rounded-xl border border-[#1a472a]/15 bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1a472a]">
+            <p className="whitespace-pre-wrap rounded-xl border border-[#1a472a]/25 bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1a472a]">
               {data.body}
             </p>
 
@@ -256,7 +256,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                 onChange={(e) => set("ask", e.target.value)}
                 rows={2}
                 data-testid="brain-field-ask"
-                className="w-full rounded-lg border border-[#1a472a]/20 bg-white p-3 text-sm text-[#1a472a]"
+                className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
               />
             </Field>
 
@@ -266,7 +266,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                 onChange={(e) => set("doneWhen", e.target.value)}
                 rows={2}
                 data-testid="brain-field-donewhen"
-                className="w-full rounded-lg border border-[#1a472a]/20 bg-white p-3 text-sm text-[#1a472a]"
+                className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
               />
             </Field>
 
@@ -408,7 +408,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
               </button>
             </div>
 
-            <div className="space-y-2 border-t border-[#1a472a]/15 pt-3">
+            <div className="space-y-2 border-t border-[#1a472a]/25 pt-3">
               {splitBody === null ? (
                 <button
                   type="button"
@@ -427,7 +427,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                     placeholder="The second item, in your words"
                     aria-label="Second item"
                     data-testid="brain-split-body"
-                    className="w-full rounded-lg border border-[#1a472a]/20 bg-white p-3 text-sm text-[#1a472a]"
+                    className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <button
