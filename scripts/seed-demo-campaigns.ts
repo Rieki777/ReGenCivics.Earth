@@ -971,7 +971,7 @@ async function main() {
     ["SELECT id FROM users WHERE role IN ('admin','superadmin') ORDER BY id LIMIT 1", []] as const,
     ["SELECT id FROM users ORDER BY id LIMIT 1", []] as const,
   ]) {
-    const [rows] = await conn.execute<mysql.RowDataPacket[]>(query[0], query[1] as unknown as unknown[]);
+    const [rows] = await conn.execute<mysql.RowDataPacket[]>(query[0], query[1] as unknown as any[]);
     if (rows.length) { ownerId = rows[0].id as number; break; }
   }
   if (!ownerId) {

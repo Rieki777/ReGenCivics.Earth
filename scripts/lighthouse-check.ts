@@ -74,10 +74,14 @@ const REPORTS_DIR = path.join(process.cwd(), "lighthouse-reports");
       });
 
       const cats = result.lhr.categories;
-      const perf = Math.round(cats.performance.score * 100);
-      const a11y = Math.round(cats.accessibility.score * 100);
-      const bp = Math.round(cats["best-practices"].score * 100);
-      const seo = Math.round(cats.seo.score * 100);
+      // Lighthouse types every category score as `number | null`: null means the
+      // category did not run. Treat that as 0 so a category that silently failed
+      // to run fails the threshold instead of crashing on null.
+      const pct = (c: { score: number | null } | undefined) => Math.round((c?.score ?? 0) * 100);
+      const perf = pct(cats.performance);
+      const a11y = pct(cats.accessibility);
+      const bp = pct(cats["best-practices"]);
+      const seo = pct(cats.seo);
 
       const passed = perf >= 40 && a11y >= 90 && bp >= 90 && seo >= 90;
       const icon = passed ? "✅" : "❌";

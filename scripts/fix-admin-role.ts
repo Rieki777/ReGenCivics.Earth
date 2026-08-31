@@ -40,9 +40,9 @@ async function main() {
 
   // Find user by email
   // Note: column name is openId (camelCase) as defined in drizzle/schema.ts
-  const [rows] = await conn.execute<any[]>(
+  const [rows] = await conn.execute<mysql.RowDataPacket[]>(
     "SELECT id, email, role, openId FROM users WHERE email = ?",
-    [TARGET_EMAIL]
+    [TARGET_EMAIL!] // guarded above; the exit(1) is outside this function, so TS cannot narrow it
   );
 
   if (rows.length === 0) {

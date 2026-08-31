@@ -42,7 +42,9 @@ function dateOrNull(v: string | undefined): string | null {
 
 const usersPath = path.resolve("data/migration/users_20260304_010214.csv");
 const usersRaw = fs.readFileSync(usersPath, "utf-8");
-const users = parse(usersRaw, { columns: true, skip_empty_lines: true });
+// `columns: true` yields one object per row, keyed by header. csv-parse types
+// that as `any`, which strict mode then treats as unknown at every use site.
+const users = parse(usersRaw, { columns: true, skip_empty_lines: true }) as Record<string, string>[];
 
 console.log(`\nMigrating ${users.length} users...`);
 
@@ -73,7 +75,7 @@ for (const u of users) {
 
 const appsPath = path.resolve("data/migration/applications_20260304_010227.csv");
 const appsRaw = fs.readFileSync(appsPath, "utf-8");
-const apps = parse(appsRaw, { columns: true, skip_empty_lines: true, relax_quotes: true });
+const apps = parse(appsRaw, { columns: true, skip_empty_lines: true, relax_quotes: true }) as Record<string, string>[];
 
 console.log(`\nMigrating ${apps.length} applications...`);
 
