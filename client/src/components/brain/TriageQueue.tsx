@@ -8,26 +8,17 @@
  * they are still real. He answers that in seconds, which is why it is three
  * buttons and not a form.
  *
- * WHY THE PROCEDURES ARE TYPED HERE RATHER THAN INFERRED
+ * The three procedures are inferred from `AppRouter` rather than cast, and that
+ * is a deliberate second choice. They were written in parallel with this file
+ * and were uncommitted for most of it, so this shipped against a hand-typed
+ * copy of the contract; once 5f9498b landed the hand copy became the worse
+ * option, because a cast cannot notice `answer` being renamed and a typecheck
+ * can.
  *
- * `brain.triageNext`, `brain.triagePending` and `brain.triageAnswer` are Lane
- * E's, and they are UNCOMMITTED while this is written: they exist in the
- * working tree and not in any commit this branch has. Inferring from
- * `AppRouter` would compile today and leave this commit red on its own, so the
- * three are typed here instead and reached through one cast.
- *
- * The shapes below were read off Lane E's own router rather than guessed, and
- * they match the contract in the brief:
- *
- *     trpc.brain.triageNext.useQuery({ limit: 5 })   // -> BrainItem[]
- *     trpc.brain.triagePending.useQuery()            // -> number
- *     trpc.brain.triageAnswer.useMutation()          // { id, answer }
- *
- * The tRPC react proxy builds a path from any property name, so the call is
- * made either way; a server without the procedure answers NOT_FOUND on that one
- * entry of the batch and the section below says so in words. When the router
- * lands, delete `TriageApi` and the cast and the three hooks type themselves.
- * Nothing else in this file changes.
+ * `isMissingProcedure` stays regardless. It is not about the build, it is about
+ * the deploy: a client that reaches a server without these procedures gets
+ * NOT_FOUND on that one entry of the batch, and "not wired yet" is a truer
+ * sentence there than a red failure box on Today.
  *
  * Titles are UNTRUSTED TEXT (transcripts, forwarded messages). Rendered as
  * text, never as markup.
@@ -45,35 +36,10 @@ export const TRIAGE_ANSWERS = [
 
 export type TriageAnswer = (typeof TRIAGE_ANSWERS)[number]["key"];
 
-interface QueryLike {
-  data?: BrainItemView[];
-  isLoading: boolean;
-  isError: boolean;
-  error: { message: string; data?: { code?: string } | null } | null;
-}
-
-interface TriageApi {
-  triageNext: {
-    useQuery: (
-      input: { limit: number },
-      opts: { retry: boolean; refetchOnWindowFocus: boolean },
-    ) => QueryLike;
-  };
-  triagePending: {
-    useQuery: (
-      input: undefined,
-      opts: { retry: boolean; refetchOnWindowFocus: boolean },
-    ) => { data?: number; isError: boolean };
-  };
-  triageAnswer: {
-    useMutation: () => {
-      mutateAsync: (input: { id: number; answer: TriageAnswer }) => Promise<unknown>;
-    };
-  };
-}
-
 /** True when the server simply has no such procedure, rather than having failed. */
-export function isMissingProcedure(err: { message: string; data?: { code?: string } | null } | null): boolean {
+export function isMissingProcedure(
+  err: { message: string; data?: { code?: string } | null } | null | undefined,
+): boolean {
   if (!err) return false;
   if (err.data?.code === "NOT_FOUND") return true;
   return /no procedure|not_found/i.test(err.message ?? "");
@@ -87,24 +53,23 @@ export interface TriageQueueProps {
 }
 
 export function TriageQueue({ limit = 5, onAnswered }: TriageQueueProps) {
-  const api = trpc.brain as unknown as TriageApi;
-  const queue = api.triageNext.useQuery(
+  const queue = trpc.brain.triageNext.useQuery(
     { limit },
     { retry: false, refetchOnWindowFocus: false },
   );
   // How many are left behind these five. Optional by design: if the count
   // fails or the procedure is not there, the heading simply drops the total
   // rather than the section dropping out.
-  const pending = api.triagePending.useQuery(undefined, {
+  const pending = trpc.brain.triagePending.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
   });
-  const answer = api.triageAnswer.useMutation();
+  const answer = trpc.brain.triageAnswer.useMutation();
 
   const [busyId, setBusyId] = useState<number | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
 
-  const rows = queue.data ?? [];
+  const rows = (queue.data ?? []) as BrainItemView[];
 
   const send = async (id: number, value: TriageAnswer) => {
     setRefusal(null);
