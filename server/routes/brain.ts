@@ -17,7 +17,7 @@ import { TRPCError } from "@trpc/server";
 import { sql } from "drizzle-orm";
 import { ownerProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { harvestRuns, quickNotes } from "../../drizzle/schema";
+import { adminAutomations, harvestRuns, quickNotes } from "../../drizzle/schema";
 import * as items from "../lib/brain-items";
 import { BRAIN_KINDS, BRAIN_STATES, isMissingTableError, startOfWeek } from "../lib/brain-items";
 
@@ -43,6 +43,11 @@ export const HEARTBEAT_CADENCE_MIN = {
   digest: 7 * 24 * 60,
   bridge: 60,
   capture: 7 * 24 * 60, // Rye capturing nothing for a week is worth a glance, not an alarm
+  // The automations runner fires hourly and drives the morning message. It sat
+  // dead from the day it was created until 2026-08-31 because the cron service's
+  // CRON_SECRET was empty, so every call 401'd and nothing recorded a thing.
+  // Nobody noticed for months. That is precisely what this strip is for.
+  automations: 24 * 60,
 } as const;
 
 export type HeartbeatSignal = keyof typeof HEARTBEAT_CADENCE_MIN;
@@ -107,11 +112,25 @@ export const brainRouter = router({
       if (!isMissingTableError(err)) throw err;
     }
 
+    // Sourced from the automations themselves rather than a runs table: if the
+    // hourly runner is being rejected, every lastRunAt stops moving, which is
+    // the symptom the strip should show.
+    let lastAutomation: Date | null = null;
+    try {
+      const [row] = await db
+        .select({ last: sql<unknown>`MAX(${adminAutomations.lastRunAt})` })
+        .from(adminAutomations);
+      lastAutomation = asDate(row?.last);
+    } catch (err) {
+      if (!isMissingTableError(err)) throw err;
+    }
+
     const signals: Record<HeartbeatSignal, Date | null> = {
       generation: lastOf("generation"),
       digest: lastOf("digest"),
       bridge: lastOf("bridge"),
       capture: lastCapture,
+      automations: lastAutomation,
     };
 
     // The month-one metric, which the plan named and then never computed

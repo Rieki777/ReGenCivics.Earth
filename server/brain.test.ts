@@ -72,3 +72,18 @@ describe("brain.status", () => {
     await expect(caller.brain.status()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });
+
+describe("the automations signal", () => {
+  it("has a cadence, so a runner that stops being called goes amber", () => {
+    expect(HEARTBEAT_CADENCE_MIN.automations).toBeGreaterThan(0);
+  });
+
+  it("is late once a day has passed twice over, which is the failure it exists to catch", () => {
+    const now = new Date("2026-08-31T12:00:00Z");
+    const cadence = HEARTBEAT_CADENCE_MIN.automations;
+    // The real case: the hourly runner 401'd for months, so lastRunAt never moved.
+    expect(heartbeatState(new Date("2026-06-01T12:00:00Z"), cadence, now)).toBe("late");
+    expect(heartbeatState(new Date("2026-08-31T06:00:00Z"), cadence, now)).toBe("ok");
+    expect(heartbeatState(null, cadence, now)).toBe("never");
+  });
+});

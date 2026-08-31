@@ -26,6 +26,7 @@ const LABEL: Record<string, string> = {
   bridge: "bridge",
   generation: "generation",
   digest: "digest",
+  automations: "automations",
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
