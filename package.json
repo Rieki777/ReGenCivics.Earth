@@ -25,6 +25,8 @@
     "check:images": "node scripts/check-unoptimized-images.mjs",
     "check:colors": "node scripts/check-hardcoded-colors.mjs",
     "start": "NODE_ENV=production node dist/index.js",
+    "qa:contrast": "node scripts/qa/contrast.mjs",
+    "qa:routes": "node scripts/qa/routes.mjs",
     "check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "ui:harness": "vite --config harness/vite.config.ts",
