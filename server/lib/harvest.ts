@@ -26,17 +26,61 @@ export type HarvestChannel = (typeof HARVEST_CHANNELS)[number];
 /** The channel drafted eagerly on a ripeness transition; the rest draft on demand. */
 export const EAGER_CHANNEL: HarvestChannel = "linkedin";
 
-/** Max new ideas auto-drafted per generation run (plan s1: curated, not spammy). */
-export const MAX_AUTO_DRAFTS_PER_RUN = 3;
+/**
+ * Throughput, and why these are DIALS rather than constants.
+ *
+ * Rye, 2026-08-30: "Increase the amount the Harvest cron can do! Should never
+ * fail to run because of a big cycle."
+ *
+ * What actually happened: the hourly generation cron fired ~816 times over 34
+ * days and drafted NOTHING, because 22 untouched drafts sat against a limit of
+ * 15. Every run reported success. The weekly digest then found no fresh
+ * material and correctly reported zero, so it looked broken too while being a
+ * victim. One number, hardcoded, silently stalled the whole pipeline for a
+ * month and needed a deploy to change.
+ *
+ * So the numbers below are DEFAULTS, and every one is overridable from
+ * game_variables without shipping code. Raised across the board, and the
+ * backpressure limit now accepts 0 to mean "never pause".
+ */
+
+/** Default max new ideas auto-drafted per generation run. Was 3. */
+export const MAX_AUTO_DRAFTS_PER_RUN = 10;
 
 export const RIPENESS_THRESHOLD = 0.6;
 
 /**
- * Feed backpressure (Phase 4): when this many untouched drafts already sit in
- * the ready state, auto-drafting pauses until Rye clears some. A full feed
- * means stop, not accelerate.
+ * Default feed backpressure. Was 15, which is what stalled it against 22.
+ *
+ * The brake is still worth having: a feed full of untouched drafts means stop,
+ * not accelerate, and nobody is helped by ten thousand drafts nobody reads.
+ * But it should bend before a working month does. Set the dial to 0 to remove
+ * the brake entirely.
  */
-export const READY_BACKPRESSURE_LIMIT = 15;
+export const READY_BACKPRESSURE_LIMIT = 100;
+
+/** Default ripe ideas examined per run. Was a bare 500 inline. */
+export const GENERATION_SCAN_LIMIT = 1500;
+
+/**
+ * Should auto-drafting pause right now?
+ *
+ * Extracted so the rule can be tested without a database. It was three inline
+ * operators inside a 90-line function, and it silently held the pipeline shut
+ * for 34 days, which is a lot of consequence for an expression nothing could
+ * reach.
+ */
+export function shouldApplyBackpressure(readyCount: number, limit: number): boolean {
+  if (limit <= 0) return false; // 0 means never pause
+  return readyCount >= limit;
+}
+
+/** game_variables keys, so the dials are findable from the admin surface. */
+export const HARVEST_VARS = {
+  maxDrafts: "harvest.max_auto_drafts_per_run",
+  backpressure: "harvest.ready_backpressure_limit",
+  scan: "harvest.generation_scan_limit",
+} as const;
 
 const CHANNEL_REGISTER: Record<HarvestChannel, string> = {
   linkedin: "A LinkedIn post: 120 to 220 words, professional but warm, line breaks between thoughts, at most 2 hashtags and usually none. Speak to movement builders and aligned investors.",
@@ -247,11 +291,18 @@ export async function runGeneration(): Promise<{ scanned: number; drafted: numbe
   const db = await getDb();
   if (!db || !ENV.ownerUserId) return { scanned: 0, drafted: 0, skipped: 0 };
 
+  // Dials, read per run so a change takes effect on the next hour rather than
+  // on the next deploy.
+  const { getGameVariableOr } = await import("../game");
+  const scanLimit = Math.max(1, Math.round(await getGameVariableOr(HARVEST_VARS.scan, GENERATION_SCAN_LIMIT)));
+  const maxDrafts = Math.max(1, Math.round(await getGameVariableOr(HARVEST_VARS.maxDrafts, MAX_AUTO_DRAFTS_PER_RUN)));
+  const backpressureLimit = Math.max(0, Math.round(await getGameVariableOr(HARVEST_VARS.backpressure, READY_BACKPRESSURE_LIMIT)));
+
   const candidates = await db
     .select()
     .from(harvestIdeas)
     .where(and(eq(harvestIdeas.ownerId, ENV.ownerUserId), eq(harvestIdeas.status, "ripe")))
-    .limit(500);
+    .limit(scanLimit);
 
   // Resurfacing (Phase 4): when a fresh idea clusters with an older ripe one
   // (2+ shared themes), the older idea's why-now names the connection and it
@@ -284,14 +335,22 @@ export async function runGeneration(): Promise<{ scanned: number; drafted: numbe
     .select({ count: sql<number>`count(*)` })
     .from(creationItems)
     .where(and(eq(creationItems.ownerId, ENV.ownerUserId), eq(creationItems.status, "ready")));
-  const backpressure = Number(readyCount[0]?.count ?? 0) >= READY_BACKPRESSURE_LIMIT;
+  // 0 disables the brake outright. Otherwise pause at or above the limit.
+  const readyNow = Number(readyCount[0]?.count ?? 0);
+  const backpressure = shouldApplyBackpressure(readyNow, backpressureLimit);
 
   const transitions = backpressure ? [] : candidates
     .filter((i) => i.ripeness >= RIPENESS_THRESHOLD && !i.draftedAt && (!i.snoozedUntil || i.snoozedUntil < now))
     .sort((a, b) => b.ripeness - a.ripeness)
-    .slice(0, MAX_AUTO_DRAFTS_PER_RUN);
+    .slice(0, maxDrafts);
   if (backpressure) {
-    log.info(`backpressure: ${readyCount[0]?.count} ready drafts, auto-drafting paused`);
+    // Say the limit, not just the count. "22 ready drafts, paused" left the
+    // reader to guess what it was measured against, and the number that
+    // mattered was only visible by reading the source.
+    log.info(
+      `backpressure: ${readyNow} ready drafts at or above the limit of ${backpressureLimit}, auto-drafting paused. ` +
+      `Clear ${readyNow - backpressureLimit + 1} of them, or raise ${HARVEST_VARS.backpressure} (0 disables).`,
+    );
   }
 
   let drafted = 0;
