@@ -65,6 +65,31 @@ export const KIND_LABEL: Record<string, string> = {
   material: "material",
 };
 
+export const BRAIN_REALMS = ["regen", "personal"] as const;
+export type BrainRealm = (typeof BRAIN_REALMS)[number];
+
+/** Rye words it as a personal secretary lane, not a second brain. */
+export const REALM_LABEL: Record<string, string> = {
+  regen: "ReGen",
+  personal: "Personal",
+};
+
+/**
+ * Which half of the brain a row is in, defaulting to regen.
+ *
+ * The default is load-bearing rather than defensive. Migration 0232 added the
+ * column NOT NULL DEFAULT 'regen', so all 749 imported rows are ReGen work; a
+ * client running against a server that predates it reads undefined here, and
+ * filing the entire backlog under Personal on a version skew is the one
+ * genuinely wrong answer.
+ */
+export function realmOf(item: { realm?: string | null }): BrainRealm {
+  return item.realm === "personal" ? "personal" : "regen";
+}
+
+/** Remembered per device, so the tab reopens on the half he was working in. */
+export const BRAIN_REALM_KEY = "brain-realm";
+
 /** The chips above the list. `null` states means "no state filter". */
 const STATE_CHIPS: Array<{ key: string; label: string; states: BrainStateKey[] | null }> = [
   { key: "all", label: "All", states: null },
@@ -89,11 +114,13 @@ export function dueLabel(due: Date | string | null | undefined, now = new Date()
   return `due in ${days}d`;
 }
 
-function Chip({ children, tone = "quiet" }: { children: React.ReactNode; tone?: "quiet" | "loud" | "warn" }) {
+function Chip({ children, tone = "quiet" }: { children: React.ReactNode; tone?: "quiet" | "loud" | "solid" | "warn" }) {
   const skin =
     tone === "loud"
       ? "border-[#1a472a]/40 bg-[#f0ebe3] text-[#1a472a]"
-      : tone === "warn"
+      : tone === "solid"
+        ? "border-[#1a472a] bg-[#1a472a] text-white"
+        : tone === "warn"
         ? "border-amber-400 bg-amber-50 text-amber-900"
         : "border-[#1a472a]/25 text-[#2d5a3d]";
   return (
@@ -121,6 +148,11 @@ export function BrainRow({ item, onOpen }: { item: BrainItemView; onOpen: () => 
         {item.blockedOn ? <Chip tone="warn">blocked: {item.blockedOn}</Chip> : null}
         {item.repo ? <Chip>{item.repo}</Chip> : null}
         {due ? <Chip tone={due.includes("overdue") ? "warn" : "quiet"}>{due}</Chip> : null}
+        {/* Drawn only for the exception. Labelling all 749 ReGen rows would
+            be noise on every row to say the default out loud; labelling the
+            personal ones makes life admin recognisable wherever it surfaces,
+            including on Today, which has no realm filter of its own. */}
+        {realmOf(item) === "personal" ? <Chip tone="solid">personal</Chip> : null}
         {item.trust === "external" ? <Chip tone="warn">external</Chip> : null}
         {shots > 0 ? (
           <Chip>
@@ -142,6 +174,14 @@ export interface BrainListProps {
   emptyHint: string;
   limit?: number;
   /**
+   * Show the ReGen | Personal segmented control and cut the rows by it.
+   *
+   * Off everywhere but the To-do tab (ADDENDUM-1 item 1). Personal life admin
+   * is the thing Rye asked to keep out of the ReGen build list, and to-do is
+   * where it lands.
+   */
+  realmFilter?: boolean;
+  /**
    * Opening an item is the caller's business. The list does NOT import
    * `BrainItemSheet`: the sheet needs this file's kind and state labels, so
    * importing it back would make the two modules a cycle, and a cycle that
@@ -151,10 +191,35 @@ export interface BrainListProps {
   onOpenItem: (id: number) => void;
 }
 
-export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }: BrainListProps) {
+export function BrainList({
+  kinds,
+  heading,
+  emptyHint,
+  limit = 200,
+  realmFilter = false,
+  onOpenItem,
+}: BrainListProps) {
   const [chip, setChip] = useState<string>("all");
   const [typed, setTyped] = useState("");
   const [q, setQ] = useState("");
+  const [realm, setRealmState] = useState<BrainRealm>(() => {
+    if (!realmFilter || typeof window === "undefined") return "regen";
+    try {
+      return localStorage.getItem(BRAIN_REALM_KEY) === "personal" ? "personal" : "regen";
+    } catch {
+      // No storage. ReGen is the right half to open on either way.
+      return "regen";
+    }
+  });
+
+  function setRealm(next: BrainRealm) {
+    setRealmState(next);
+    try {
+      localStorage.setItem(BRAIN_REALM_KEY, next);
+    } catch {
+      // Losing the last half is not worth a crash.
+    }
+  }
 
   // Debounce so a phone keyboard does not fire a query per keystroke.
   useEffect(() => {
@@ -170,6 +235,10 @@ export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }
       ...(states ? { states } : {}),
       ...(q ? { q } : {}),
       limit,
+      // No realm key here on purpose: brain.list does not accept one. The cut
+      // happens below, on rows the server already returned. When the input
+      // gains the field this becomes one more spread and the filter below can
+      // go with it.
     }),
     [kinds, states, q, limit],
   );
@@ -177,10 +246,39 @@ export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }
   const list = trpc.brain.list.useQuery(input, { retry: false, refetchOnWindowFocus: false });
 
   const rows = list.data ?? [];
+  const shown = realmFilter ? rows.filter((r) => realmOf(r) === realm) : rows;
+  // How many rows the realm cut is hiding. Non-zero with an empty list means
+  // "the other half has your work", which is a different sentence from "you
+  // have no work" and the only one of the two that is true.
+  const hiddenByRealm = rows.length - shown.length;
 
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-[#1a472a]">{heading}</h2>
+
+      {realmFilter ? (
+        <div
+          className="flex gap-1 rounded-xl border border-[#1a472a]/25 bg-white p-1"
+          role="group"
+          aria-label="Filter by realm"
+          data-testid="brain-realm-filter"
+        >
+          {BRAIN_REALMS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              aria-pressed={realm === r}
+              data-testid={`brain-realm-${r}`}
+              onClick={() => setRealm(r)}
+              className={`min-h-11 flex-1 rounded-lg text-sm font-semibold transition-colors ${
+                realm === r ? "bg-[#1a472a] text-white" : "text-[#1a472a]"
+              }`}
+            >
+              {REALM_LABEL[r]}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="relative">
         <Search
@@ -242,14 +340,18 @@ export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }
         </p>
       ) : null}
 
-      {!list.isLoading && !list.isError && rows.length === 0 ? (
+      {!list.isLoading && !list.isError && shown.length === 0 ? (
         <p data-testid="brain-list-empty" className="py-6 text-sm text-[#2d5a3d]">
-          {emptyHint}
+          {hiddenByRealm > 0
+            ? `Nothing in ${REALM_LABEL[realm]}. ${hiddenByRealm} ${
+                hiddenByRealm === 1 ? "item is" : "items are"
+              } in the other half.`
+            : emptyHint}
         </p>
       ) : null}
 
       <div className="space-y-2">
-        {rows.map((item) => (
+        {shown.map((item) => (
           <BrainRow
             key={item.id}
             item={item as BrainItemView}
@@ -260,7 +362,9 @@ export function BrainList({ kinds, heading, emptyHint, limit = 200, onOpenItem }
 
       {rows.length >= limit ? (
         <p className="pt-1 text-xs text-[#2d5a3d]" data-testid="brain-list-capped">
-          Showing the {limit} most recently touched. Search or filter to narrow.
+          Showing the {limit} most recently touched
+          {realmFilter ? " across both halves, then cut to " + REALM_LABEL[realm] : ""}. Search or
+          filter to narrow.
         </p>
       ) : null}
     </div>

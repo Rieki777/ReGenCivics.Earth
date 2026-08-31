@@ -239,3 +239,96 @@ describe("assetUrl", () => {
     );
   });
 });
+
+/**
+ * The realm control is the only thing in this sheet that saves on tap, and the
+ * only thing that checks its own result. Both are because of a specific hazard:
+ * `brain.update` does not accept `realm` yet, and a zod object STRIPS an
+ * unknown key rather than rejecting it. Routed through Save, moving an item to
+ * Personal would have printed "Saved." and moved nothing, which is worse than
+ * an error because it looks like success.
+ *
+ * So there are two tests here that must both keep passing, in this order: the
+ * control sends the field, and the control refuses out loud when the field does
+ * not take. When Lane E's input schema gains realm, the second one starts
+ * describing a bug that can no longer happen, and it should stay anyway.
+ */
+describe("BrainItemSheet realm", () => {
+  beforeEach(() => {
+    for (const fn of [getUseQuery, listUseQuery, refetch, updateMutateAsync]) fn.mockReset();
+    refetch.mockResolvedValue(undefined);
+    listUseQuery.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
+    getUseQuery.mockReturnValue(loaded(item()));
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  it("moves the item to the personal half on tap, no Save needed", async () => {
+    getUseQuery.mockReturnValue(loaded(item({ realm: "regen" } as Partial<BrainItemView>)));
+    updateMutateAsync.mockResolvedValue({ ...item(), realm: "personal" });
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+
+    await userEvent.setup().click(screen.getByTestId("brain-sheet-realm-personal"));
+
+    await waitFor(() =>
+      expect(updateMutateAsync).toHaveBeenCalledWith({ id: 7, realm: "personal" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("brain-notice").textContent).toContain("Moved to Personal"),
+    );
+    expect(screen.queryByTestId("brain-refusal")).toBeNull();
+  });
+
+  it("refuses out loud when the server drops the field instead of claiming a save", async () => {
+    // This is the live behaviour today: the update input has no realm key, zod
+    // strips it, the mutation succeeds and the row comes back unchanged.
+    getUseQuery.mockReturnValue(loaded(item({ realm: "regen" } as Partial<BrainItemView>)));
+    updateMutateAsync.mockResolvedValue({ ...item(), realm: "regen" });
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+
+    await userEvent.setup().click(screen.getByTestId("brain-sheet-realm-personal"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("brain-refusal").textContent).toContain(
+        "brain.update needs realm in its input schema",
+      ),
+    );
+    expect(screen.queryByTestId("brain-notice")).toBeNull();
+  });
+
+  it("does nothing when the item is already in that half", async () => {
+    getUseQuery.mockReturnValue(loaded(item({ realm: "personal" } as Partial<BrainItemView>)));
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+
+    expect(screen.getByTestId("brain-sheet-realm-personal").getAttribute("aria-pressed")).toBe("true");
+    await userEvent.setup().click(screen.getByTestId("brain-sheet-realm-personal"));
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("shows ReGen as the half for a row from a server without the column", () => {
+    getUseQuery.mockReturnValue(loaded(item()));
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+    expect(screen.getByTestId("brain-sheet-realm-regen").getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("BrainItemSheet done_when label", () => {
+  beforeEach(() => {
+    for (const fn of [getUseQuery, listUseQuery, refetch, updateMutateAsync]) fn.mockReset();
+    refetch.mockResolvedValue(undefined);
+    listUseQuery.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
+    getUseQuery.mockReturnValue(loaded(item()));
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  it("stops implying done_when is mandatory once the kind is create", async () => {
+    // brain-gate.ts:72 exempts create: the angle in `ask` is the whole brief.
+    // A field that looks required and is not is a field Rye fills in to get
+    // past a door that was already open.
+    getUseQuery.mockReturnValue(loaded(item({ kind: "build" })));
+    render(<BrainItemSheet id={7} onClose={() => {}} />);
+    expect(screen.getByText("Done when (how anyone would know)")).toBeDefined();
+
+    fireEvent.change(screen.getByTestId("brain-field-kind"), { target: { value: "create" } });
+    await waitFor(() => expect(screen.getByText("Done when (optional for create)")).toBeDefined());
+  });
+});

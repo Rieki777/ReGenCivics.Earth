@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BrainList, dueLabel, type BrainItemView } from "./BrainList";
+import { BrainList, dueLabel, realmOf, type BrainItemView } from "./BrainList";
 
 const listUseQuery = vi.fn();
 
@@ -192,5 +192,157 @@ describe("dueLabel", () => {
   it("has nothing to say about an item with no date", () => {
     expect(dueLabel(null, now)).toBeNull();
     expect(dueLabel(undefined, now)).toBeNull();
+  });
+});
+
+/**
+ * The realm filter is the one control here that does NOT change the query, and
+ * that is the thing worth pinning down. `brain.list` has no realm input, so the
+ * cut happens on rows the server already returned, which means two claims the
+ * list makes could quietly become false: "nothing here" when the work is simply
+ * in the other half, and "showing the N most recent" when N was counted before
+ * the cut. Both are asserted below.
+ */
+describe("BrainList realm filter", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    listUseQuery.mockReset();
+    listUseQuery.mockReturnValue(result());
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  const both = [
+    item({ id: 1, title: "ship the RSVP admin", kind: "todo" }),
+    item({ id: 2, title: "renew the car insurance", kind: "todo", realm: "personal" }),
+  ];
+
+  it("is absent unless the tab asks for it", () => {
+    render(<BrainList kinds={["build"]} heading="Build" emptyHint="none" onOpenItem={() => {}} />);
+    expect(screen.queryByTestId("brain-realm-filter")).toBeNull();
+  });
+
+  it("opens on ReGen and hides personal life admin from the build list", () => {
+    listUseQuery.mockReturnValue(result({ data: both }));
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />);
+
+    expect(screen.getByTestId("brain-realm-regen").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("brain-row-1")).toBeDefined();
+    expect(screen.queryByTestId("brain-row-2")).toBeNull();
+  });
+
+  it("switches to the personal half and back", async () => {
+    const user = userEvent.setup();
+    listUseQuery.mockReturnValue(result({ data: both }));
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />);
+
+    await user.click(screen.getByTestId("brain-realm-personal"));
+    expect(screen.getByTestId("brain-row-2")).toBeDefined();
+    expect(screen.queryByTestId("brain-row-1")).toBeNull();
+
+    await user.click(screen.getByTestId("brain-realm-regen"));
+    expect(screen.getByTestId("brain-row-1")).toBeDefined();
+  });
+
+  it("labels a personal row wherever it shows, since Today has no filter", () => {
+    listUseQuery.mockReturnValue(result({ data: [both[1]] }));
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" onOpenItem={() => {}} />);
+    expect(screen.getByTestId("brain-row-2").textContent).toContain("personal");
+  });
+
+  it("does not label the 749 ReGen rows, which would be noise on every row", () => {
+    listUseQuery.mockReturnValue(result({ data: [both[0]] }));
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" onOpenItem={() => {}} />);
+    expect(screen.getByTestId("brain-row-1").textContent).not.toContain("personal");
+  });
+
+  it("says the work is in the other half instead of claiming there is none", async () => {
+    listUseQuery.mockReturnValue(result({ data: [both[0]] }));
+    render(
+      <BrainList
+        kinds={["todo"]}
+        heading="To-do"
+        emptyHint="Nothing here at all."
+        realmFilter
+        onOpenItem={() => {}}
+      />,
+    );
+
+    await userEvent.setup().click(screen.getByTestId("brain-realm-personal"));
+    const text = screen.getByTestId("brain-list-empty").textContent ?? "";
+    expect(text).toContain("Nothing in Personal");
+    expect(text).toContain("1 item is in the other half");
+    expect(text).not.toContain("Nothing here at all.");
+  });
+
+  it("keeps the tab's own empty hint when the server really returned nothing", () => {
+    render(
+      <BrainList
+        kinds={["todo"]}
+        heading="To-do"
+        emptyHint="Nothing here at all."
+        realmFilter
+        onOpenItem={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("brain-list-empty").textContent).toContain("Nothing here at all.");
+  });
+
+  it("admits the cap is counted before the realm cut, not after", () => {
+    // Otherwise "the 5 most recently touched" reads as five ReGen to-dos when
+    // it is five rows of both halves with some of them then hidden.
+    listUseQuery.mockReturnValue(
+      result({ data: Array.from({ length: 5 }, (_, i) => item({ id: i + 10, title: `n${i}` })) }),
+    );
+    render(
+      <BrainList
+        kinds={["todo"]}
+        heading="To-do"
+        emptyHint="none"
+        limit={5}
+        realmFilter
+        onOpenItem={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("brain-list-capped").textContent).toContain("across both halves");
+  });
+
+  it("does not ask the server for a realm it cannot filter on", () => {
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />);
+    expect(lastInput()).not.toHaveProperty("realm");
+  });
+
+  it("reopens on the half he was last working in", async () => {
+    listUseQuery.mockReturnValue(result({ data: both }));
+    const first = render(
+      <BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />,
+    );
+    await userEvent.setup().click(screen.getByTestId("brain-realm-personal"));
+    first.unmount();
+
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />);
+    expect(screen.getByTestId("brain-realm-personal").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("opens on ReGen when storage throws, never filing the backlog under Personal", () => {
+    const boom = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError");
+    });
+    listUseQuery.mockReturnValue(result({ data: both }));
+    render(<BrainList kinds={["todo"]} heading="To-do" emptyHint="none" realmFilter onOpenItem={() => {}} />);
+
+    expect(screen.getByTestId("brain-realm-regen").getAttribute("aria-pressed")).toBe("true");
+    boom.mockRestore();
+  });
+});
+
+describe("realmOf", () => {
+  it("treats a row from a server that predates the column as ReGen work", () => {
+    // Migration 0232 defaults every existing row to regen. A client ahead of
+    // the server reads undefined, and answering "personal" there would file all
+    // 749 items in the lane that is walled off from every downstream corpus.
+    expect(realmOf({})).toBe("regen");
+    expect(realmOf({ realm: null })).toBe("regen");
+    expect(realmOf({ realm: "regen" })).toBe("regen");
+    expect(realmOf({ realm: "personal" })).toBe("personal");
   });
 });

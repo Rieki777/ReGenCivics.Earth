@@ -141,10 +141,15 @@ export function BrainShell({ renderCreate }: BrainShellProps) {
             />
           ) : null}
           {tab === "todo" ? (
+            /* The one tab with a realm filter (ADDENDUM-1 item 1). Personal
+               life admin is a to-do, so this is where it would otherwise sit
+               interleaved with ReGen build work, which is the exact mixing Rye
+               asked to end. */
             <BrainList
               kinds={["todo", "decide"]}
               heading="To-do and decide"
               emptyHint="Nothing here. To-do is what your hands move; decide is what a conversation moves."
+              realmFilter
               onOpenItem={setOpenId}
             />
           ) : null}

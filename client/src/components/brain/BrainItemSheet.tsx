@@ -17,8 +17,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { BRAIN_KIND_KEYS, KIND_LABEL, STATE_LABEL } from "./BrainList";
-import type { BrainItemView, BrainKindKey } from "./BrainList";
+import { BRAIN_KIND_KEYS, BRAIN_REALMS, KIND_LABEL, REALM_LABEL, STATE_LABEL, realmOf } from "./BrainList";
+import type { BrainItemView, BrainKindKey, BrainRealm } from "./BrainList";
 
 /** Known repos until `brain_repos` exists (response doc 17.17). A datalist, not an enum. */
 const REPO_SUGGESTIONS = ["regen-civics", "game-amora", "custom-games", "core-site", "ship"];
@@ -183,6 +183,36 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
     void run("Saved.", () => update.mutateAsync(payload as never));
   };
 
+  /**
+   * Realm saves on tap instead of joining the draft, and it is the one control
+   * here that checks its own result.
+   *
+   * brain.update does not accept realm yet (server/routes/brain.ts, the update
+   * input at 0fb8992). A zod object STRIPS an unknown key rather than
+   * rejecting it, so routing this through Save would send the field, get a
+   * success back, print "Saved." and move nothing: the worst available failure,
+   * because it is indistinguishable from working. So this sends realm and then
+   * reads the row that came back. Until the server takes the field, tapping
+   * Personal says exactly why the item did not move, in the same amber box
+   * every other refusal uses.
+   *
+   * When the input schema gains realm, delete the cast and this check; the
+   * markup does not change.
+   */
+  function moveToRealm(next: BrainRealm) {
+    if (!data || realmOf(data) === next) return;
+    void run(`Moved to ${REALM_LABEL[next]}.`, async () => {
+      const after = (await update.mutateAsync({ id, realm: next } as never)) as
+        | { realm?: string | null }
+        | undefined;
+      if (realmOf(after ?? {}) !== next) {
+        throw new Error(
+          "The server saved but did not change the realm. brain.update needs realm in its input schema before this control can move anything.",
+        );
+      }
+    });
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-[#f8f5f0]"
@@ -260,7 +290,17 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
               />
             </Field>
 
-            <Field label="Done when (how anyone would know)">
+            {/* The gate exempts create: an essay seed promotes on its ask
+                alone (server/lib/brain-gate.ts:72). The label says so, because
+                a field that looks mandatory and is not is a field Rye fills in
+                to get past a door that was already open. */}
+            <Field
+              label={
+                draft.kind === "create"
+                  ? "Done when (optional for create)"
+                  : "Done when (how anyone would know)"
+              }
+            >
               <textarea
                 value={draft.doneWhen}
                 onChange={(e) => set("doneWhen", e.target.value)}
@@ -352,6 +392,38 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                 className={inputSkin}
               />
             </Field>
+
+            <div className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#2d5a3d]">
+                Realm (saves on tap)
+              </span>
+              <div
+                className="flex gap-1 rounded-xl border border-[#1a472a]/25 bg-white p-1"
+                role="group"
+                aria-label="Which half of the brain"
+                data-testid="brain-field-realm"
+              >
+                {BRAIN_REALMS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    disabled={busy}
+                    aria-pressed={realmOf(data) === r}
+                    data-testid={`brain-sheet-realm-${r}`}
+                    onClick={() => moveToRealm(r)}
+                    className={`min-h-11 flex-1 rounded-lg text-sm font-semibold disabled:opacity-50 ${
+                      realmOf(data) === r ? "bg-[#1a472a] text-white" : "text-[#1a472a]"
+                    }`}
+                  >
+                    {REALM_LABEL[r]}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] leading-4 text-[#2d5a3d]">
+                Personal is your own lane. Nothing in it reaches the worldview pack, the voice
+                corpus, or the Harvest.
+              </p>
+            </div>
 
             {refusal ? (
               <p

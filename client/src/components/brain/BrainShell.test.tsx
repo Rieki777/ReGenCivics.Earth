@@ -36,8 +36,16 @@ vi.mock("./BrainToday", () => ({
 }));
 
 vi.mock("./BrainList", () => ({
-  BrainList: ({ heading, kinds }: { heading: string; kinds?: string[] }) => (
-    <div data-testid="list">
+  BrainList: ({
+    heading,
+    kinds,
+    realmFilter,
+  }: {
+    heading: string;
+    kinds?: string[];
+    realmFilter?: boolean;
+  }) => (
+    <div data-testid="list" data-realm-filter={realmFilter ? "on" : "off"}>
       {heading}:{(kinds ?? []).join(",")}
     </div>
   ),
@@ -116,6 +124,22 @@ describe("BrainShell", () => {
 
     await user.click(screen.getByTestId("brain-tab-explore"));
     expect(screen.getByTestId("list").textContent).toBe("Explore:material,ask");
+  });
+
+  it("gives To-do the realm filter, and only To-do", async () => {
+    // ADDENDUM-1 item 1. Personal life admin is a to-do, so To-do is the one
+    // list where it would otherwise sit interleaved with ReGen build work.
+    const user = userEvent.setup();
+    render(<BrainShell />);
+
+    await user.click(screen.getByTestId("brain-tab-todo"));
+    expect(screen.getByTestId("list").getAttribute("data-realm-filter")).toBe("on");
+
+    await user.click(screen.getByTestId("brain-tab-build"));
+    expect(screen.getByTestId("list").getAttribute("data-realm-filter")).toBe("off");
+
+    await user.click(screen.getByTestId("brain-tab-explore"));
+    expect(screen.getByTestId("list").getAttribute("data-realm-filter")).toBe("off");
   });
 
   it("renders The Harvest, unmodified, as the Create tab", async () => {
