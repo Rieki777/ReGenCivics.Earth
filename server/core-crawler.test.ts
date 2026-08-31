@@ -34,6 +34,15 @@ describe("core-crawler: which institution the server thinks it is serving", () =
     expect(CORE_PAGES["/"]!.bodyHtml).toContain("Church of the Regenerative Earth");
   });
 
+  it("never doubles the church's name in a title", () => {
+    // Shipped to production once: "Church of the Regenerative Earth | Church of
+    // the Regenerative Earth". A title is what a search result shows.
+    for (const [path, p] of Object.entries(CORE_PAGES)) {
+      const doubled = p.title.split("Church of the Regenerative Earth").length - 1;
+      expect(doubled, `${path} title: "${p.title}"`).toBe(1);
+    }
+  });
+
   it("returns a page for a real church route and null for anything else", () => {
     const home = getCorePageContent("/");
     expect(home).not.toBeNull();
