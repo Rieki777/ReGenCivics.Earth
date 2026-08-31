@@ -40,6 +40,7 @@ import { storagePut } from "../storage";
 import { transcribe, MAX_AUDIO_BYTES } from "../lib/transcribe";
 import * as items from "../lib/brain-items";
 import { BRAIN_KINDS, BRAIN_STATES } from "../lib/brain-items";
+import { canTransition } from "../lib/brain-gate";
 import type { BrainKind, BrainState } from "../lib/brain-gate";
 
 const log = logger("telegram-brain");
@@ -76,7 +77,7 @@ type Norm =
   | { type: "text"; updateId: number; messageId: number; text: string; forwardedFrom?: string }
   | { type: "voice"; updateId: number; messageId: number; fileId: string; uniqueId: string; mime: string; size?: number }
   | { type: "photo"; updateId: number; messageId: number; fileId: string; uniqueId: string; caption?: string }
-  | { type: "callback"; updateId: number; callbackId: string; messageId: number; data: string }
+  | { type: "callback"; updateId: number; callbackId: string; messageId: number; data: string; rawKeyboard: unknown }
   | { type: "command"; updateId: number; messageId: number; command: string };
 
 /**
@@ -125,6 +126,10 @@ export function normalizeUpdate(u: any, ownerId = ENV.telegramBrainOwnerId): Nor
       callbackId: String(q.id),
       messageId: Number(q.message.message_id),
       data: String(q.data ?? ""),
+      // Telegram echoes the message's current keyboard back with the callback.
+      // Kept so a handler can tell a one-item message from the five-item
+      // morning message before it replaces the whole markup.
+      rawKeyboard: q.message?.reply_markup ?? null,
     };
   }
 
@@ -205,7 +210,14 @@ export function keyboardFor(item: KeyboardItem) {
     actions.push({ text: "Ready", callback_data: `p:${item.id}` });
   }
   actions.push({ text: "Split", callback_data: `x:${item.id}` }, { text: "Park", callback_data: `s:${item.id}:parked` });
-  if (item.state !== "done") actions.push({ text: "Done", callback_data: `s:${item.id}:done` });
+  // Only from a state the machine accepts. `raw -> done` is deliberately not an
+  // edge (server/lib/brain-gate.ts), so offering Done on a fresh capture shipped
+  // a button whose only possible outcome was "Cannot move raw to done". Closing
+  // something that was already done is the triage queue's job, and it has its
+  // own buttons and its own narrow path.
+  if (canTransition(item.state as BrainState, "done")) {
+    actions.push({ text: "Done", callback_data: `s:${item.id}:done` });
+  }
   return { inline_keyboard: [kinds, actions] };
 }
 
@@ -233,6 +245,31 @@ const TRIAGE_ACK: Record<items.TriageAnswer, string> = {
   open: "still open",
   unsure: "back in a week",
 };
+
+/**
+ * True when this message's keyboard is about exactly this item and nothing else.
+ *
+ * `editMessageReplyMarkup` replaces the entire message's keyboard, so a
+ * multi-item message (the morning message carries up to five) must not have its
+ * markup rebuilt from one item: the other four rows would vanish on the first
+ * tap. Reads the ids out of the echoed callback_data and requires that the only
+ * id present is this one. Unparseable markup returns false, which costs a
+ * refresh and never costs a row.
+ */
+export function isSingleItemKeyboard(rawKeyboard: unknown, itemId: number): boolean {
+  const rows = (rawKeyboard as { inline_keyboard?: Array<Array<{ callback_data?: string }>> })
+    ?.inline_keyboard;
+  if (!Array.isArray(rows)) return false;
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (!Array.isArray(row)) return false;
+    for (const btn of row) {
+      const parts = String(btn?.callback_data ?? "").split(":");
+      if (parts.length >= 2 && parts[1]) ids.add(parts[1]);
+    }
+  }
+  return ids.size === 1 && ids.has(String(itemId));
+}
 
 function line(item: { id: number; kind: string; state: string; title: string }) {
   return `#${item.id} · ${item.kind} · ${item.state}\n${item.title}`;
@@ -280,7 +317,13 @@ async function handleCallback(n: Extract<Norm, { type: "callback" }>, d: Deps): 
       }
       const item = await d.setItemState(d.ownerId, id, arg, "telegram");
       await ack(item.state);
-      await d.tg("editMessageReplyMarkup", { chat_id, message_id: n.messageId, reply_markup: keyboardFor(item) });
+      // Only refresh the markup when this message is about this one item.
+      // editMessageReplyMarkup replaces the ENTIRE message's keyboard, so doing
+      // it unconditionally wiped the other four rows off the five-item morning
+      // message: one tap, and the rest of the day's queue vanished.
+      if (isSingleItemKeyboard(n.rawKeyboard, item.id)) {
+        await d.tg("editMessageReplyMarkup", { chat_id, message_id: n.messageId, reply_markup: keyboardFor(item) });
+      }
     } else if (op === "p") {
       // One tap opens the question; only the second tap promotes.
       await ack("confirm below");

@@ -113,6 +113,7 @@ export async function getItem(ownerId: number, id: number): Promise<BrainItem> {
 
 export interface ListFilter {
   kind?: BrainKind;
+  realm?: "regen" | "personal";
   kinds?: BrainKind[];
   state?: BrainState;
   states?: BrainState[];
@@ -125,6 +126,7 @@ export async function listItems(ownerId: number, filter: ListFilter = {}): Promi
   const db = await requireDb();
   const conds = [eq(brainItems.ownerId, ownerId)];
   if (filter.kind) conds.push(eq(brainItems.kind, filter.kind));
+  if (filter.realm) conds.push(eq(brainItems.realm, filter.realm));
   if (filter.kinds?.length) conds.push(inArray(brainItems.kind, filter.kinds));
   if (filter.state) conds.push(eq(brainItems.state, filter.state));
   if (filter.states?.length) conds.push(inArray(brainItems.state, filter.states));
@@ -196,6 +198,7 @@ export async function createItem(
 export interface UpdateInput {
   id: number;
   kind?: BrainKind;
+  realm?: "regen" | "personal";
   title?: string;
   ask?: string | null;
   doneWhen?: string | null;

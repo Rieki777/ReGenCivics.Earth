@@ -24,6 +24,7 @@ import express from "express";
 import { createServer, type Server } from "node:http";
 import {
   handleTelegramUpdate,
+  isSingleItemKeyboard,
   keyboardFor,
   normalizeUpdate,
   triageKeyboardFor,
@@ -594,5 +595,54 @@ describe("telegram brain webhook: the probably-done row", () => {
     await handleTelegramUpdate(cb("t:9:done"), d);
     const acks = (d.tg as any).mock.calls.filter((c: any[]) => c[0] === "answerCallbackQuery");
     expect(String(acks[0]![1].text)).toContain("triage closes raw items");
+  });
+});
+
+describe("isSingleItemKeyboard", () => {
+  const kbFor = (...ids: number[]) => ({
+    inline_keyboard: ids.map((id) => [
+      { text: "Done", callback_data: `t:${id}:done` },
+      { text: "Park", callback_data: `s:${id}:parked` },
+    ]),
+  });
+
+  it("is true when every button on the message names this one item", () => {
+    expect(isSingleItemKeyboard(kbFor(7), 7)).toBe(true);
+  });
+
+  it("is FALSE for the five-item morning message, so one tap cannot wipe the other four", () => {
+    const morning = kbFor(7, 8, 9, 10, 11);
+    expect(isSingleItemKeyboard(morning, 7)).toBe(false);
+    expect(isSingleItemKeyboard(morning, 11)).toBe(false);
+  });
+
+  it("is false when the keyboard is about a different item", () => {
+    expect(isSingleItemKeyboard(kbFor(8), 7)).toBe(false);
+  });
+
+  it("refuses anything it cannot parse, rather than guessing", () => {
+    expect(isSingleItemKeyboard(null, 7)).toBe(false);
+    expect(isSingleItemKeyboard(undefined, 7)).toBe(false);
+    expect(isSingleItemKeyboard({}, 7)).toBe(false);
+    expect(isSingleItemKeyboard({ inline_keyboard: "nope" }, 7)).toBe(false);
+    expect(isSingleItemKeyboard({ inline_keyboard: [[{}]] }, 7)).toBe(false);
+  });
+});
+
+describe("keyboardFor Done button", () => {
+  const base = { id: 5, kind: "build", trust: "owner" } as const;
+
+  it("does not offer Done on a raw capture, because raw to done is not an edge", () => {
+    expect(JSON.stringify(keyboardFor({ ...base, state: "raw" } as never))).not.toContain("s:5:done");
+  });
+
+  it("offers Done once the item is somewhere the machine can close from", () => {
+    for (const state of ["ready", "in_flight", "done_claimed"]) {
+      expect(JSON.stringify(keyboardFor({ ...base, state } as never))).toContain("s:5:done");
+    }
+  });
+
+  it("does not offer Done on an item that is already done", () => {
+    expect(JSON.stringify(keyboardFor({ ...base, state: "done" } as never))).not.toContain("s:5:done");
   });
 });

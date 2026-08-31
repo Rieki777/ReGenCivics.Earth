@@ -139,6 +139,7 @@ export const brainRouter = router({
         .object({
           kind: z.enum(BRAIN_KINDS).optional(),
           kinds: z.array(z.enum(BRAIN_KINDS)).max(7).optional(),
+          realm: z.enum(["regen", "personal"]).optional(),
           state: z.enum(BRAIN_STATES).optional(),
           states: z.array(z.enum(BRAIN_STATES)).max(7).optional(),
           repo: z.string().max(64).optional(),
@@ -173,6 +174,9 @@ export const brainRouter = router({
       z.object({
         id: z.number().int(),
         kind: z.enum(BRAIN_KINDS).optional(),
+        // Without this the sheet's realm control is a lie: zod STRIPS an unknown
+        // key rather than rejecting it, so the save returns 200 and moves nothing.
+        realm: z.enum(["regen", "personal"]).optional(),
         title: z.string().max(300).optional(),
         ask: z.string().max(500).nullable().optional(),
         doneWhen: z.string().max(500).nullable().optional(),
