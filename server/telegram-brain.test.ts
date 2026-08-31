@@ -26,6 +26,7 @@ import {
   handleTelegramUpdate,
   keyboardFor,
   normalizeUpdate,
+  triageKeyboardFor,
   registerTelegramBrainRoutes,
   safeErr,
   MAX_CAPTURE_BYTES,
@@ -59,7 +60,18 @@ function deps(over: Partial<Deps> = {}): Deps & { calls: string[] } {
       calls.push(`split:${id}:${body}`);
       return [{ id, state: "raw" }, { id: id + 1, state: "raw", kind: "unsorted", trust: "owner" }] as any;
     }),
-    summarizeToday: vi.fn(async () => ({ due: [], raw: 3, ready: 2, inFlight: 1, claimed: 0 })),
+    summarizeToday: vi.fn(async () => ({
+      due: [],
+      raw: 3,
+      ready: 2,
+      inFlight: 1,
+      claimed: 0,
+      openByRealm: { regen: 3, personal: 0 },
+    })),
+    answerTriage: vi.fn(async (_o: number, id: number, answer: string) => {
+      calls.push(`triage:${id}:${answer}`);
+      return { id, state: answer === "done" ? "done" : "raw", kind: "build", trust: "owner" } as any;
+    }),
     tg: vi.fn(async (method: string, payload: any) => {
       calls.push(`tg:${method}:${payload.text ?? payload.callback_query_id ?? ""}`);
       return {};
@@ -510,5 +522,77 @@ describe("POST /api/telegram/brain", () => {
     let last = 0;
     for (let i = 0; i < 8; i++) last = (await post({ "x-telegram-bot-api-secret-token": "nope" })).status;
     expect(last).toBe(429);
+  });
+});
+
+/**
+ * The "probably done" row (ADDENDUM-1 item 2). Three answers about the past.
+ *
+ * What these defend, in order of what would hurt:
+ *  - the answer reaching the library is one of exactly three literals, because
+ *    callback_data is a string the client sends and enums are not opinions
+ *  - the row can never promote anything: no `p:` and no `pc:` in it
+ *  - answering does NOT edit the message's keyboard. One morning message can
+ *    carry five triage questions in one keyboard, and editing its markup from a
+ *    single answer would wipe the other four questions off Rye's screen.
+ */
+describe("telegram brain webhook: the probably-done row", () => {
+  it("offers exactly three answers, all under the t: opcode", () => {
+    const k = triageKeyboardFor({ id: 42 });
+    expect(k.inline_keyboard).toHaveLength(1);
+    expect(k.inline_keyboard[0]!.map((b) => b.callback_data)).toEqual([
+      "t:42:done",
+      "t:42:open",
+      "t:42:unsure",
+    ]);
+  });
+
+  it("never offers a way to promote from the triage row", () => {
+    const json = JSON.stringify(triageKeyboardFor({ id: 42 }));
+    expect(json).not.toContain('"p:');
+    expect(json).not.toContain('"pc:');
+    expect(json).not.toContain("ready");
+  });
+
+  it.each(["done", "open", "unsure"] as const)("passes %s through to the library", async (answer) => {
+    const d = deps();
+    await handleTelegramUpdate(cb(`t:9:${answer}`), d);
+    expect(d.calls).toContain(`triage:9:${answer}`);
+    expect(d.answerTriage).toHaveBeenCalledWith(OWNER, 9, answer, "telegram");
+  });
+
+  it("refuses an answer that is not one of the three, without calling the library", async () => {
+    const d = deps();
+    await handleTelegramUpdate(cb("t:9:archived"), d);
+    expect(d.answerTriage).not.toHaveBeenCalled();
+    expect(d.calls.some((c) => c.startsWith("tg:answerCallbackQuery"))).toBe(true);
+  });
+
+  it("leaves the keyboard alone, so the other four questions survive the tap", async () => {
+    const d = deps();
+    await handleTelegramUpdate(cb("t:9:done"), d);
+    const edits = (d.tg as any).mock.calls.filter((c: any[]) => c[0] === "editMessageReplyMarkup");
+    expect(edits).toHaveLength(0);
+  });
+
+  it("acknowledges every tap, so the button never spins on the phone", async () => {
+    for (const answer of ["done", "open", "unsure"] as const) {
+      const d = deps();
+      await handleTelegramUpdate(cb(`t:5:${answer}`), d);
+      const acks = (d.tg as any).mock.calls.filter((c: any[]) => c[0] === "answerCallbackQuery");
+      expect(acks).toHaveLength(1);
+      expect(String(acks[0]![1].text ?? "")).not.toHaveLength(0);
+    }
+  });
+
+  it("reports the library's refusal back to the tap rather than swallowing it", async () => {
+    const d = deps({
+      answerTriage: vi.fn(async () => {
+        throw new Error("triage closes raw items; #9 is shaped");
+      }) as any,
+    });
+    await handleTelegramUpdate(cb("t:9:done"), d);
+    const acks = (d.tg as any).mock.calls.filter((c: any[]) => c[0] === "answerCallbackQuery");
+    expect(String(acks[0]![1].text)).toContain("triage closes raw items");
   });
 });

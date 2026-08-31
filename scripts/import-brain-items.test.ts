@@ -25,6 +25,9 @@ import {
   contentTypeFor,
   isSafePhotoName,
   kindHint,
+  MAYBE_DONE_BEFORE,
+  maybeDone,
+  mergeTriageState,
   normalizePhotoRoot,
   parseArgs,
   parseTasks,
@@ -427,5 +430,141 @@ describe.skipIf(!realTasks)("the real tasks.json", () => {
     for (const r of rows.filter((r) => r.status === "open" || r.status === "needs-rye")) {
       expect(planItem(r).kind).toBe("unsorted");
     }
+  });
+});
+
+/**
+ * The "probably done" flag (ADDENDUM-1 item 2).
+ *
+ * Every clause of this rule is here because it was measured, not because it
+ * read well. The numbers are in the doc comment on `maybeDone`; these tests pin
+ * the clauses so a later "simplification" has to argue with them:
+ *
+ *  - the cutoff, because the one the addendum named flags zero rows
+ *  - the screenshot, because the items without one were 79% wrong
+ *  - STILL BROKEN, because a later pass already answered those
+ *  - raw only, because a closed row is not a question
+ */
+const flaggable = {
+  state: "raw" as const,
+  capturedAt: new Date("2026-06-20T12:00:00Z"),
+  hint: "build" as const,
+  photos: ["shot.jpg"],
+  evidence: null,
+};
+
+describe("maybeDone", () => {
+  it("flags an old raw screenshot item", () => {
+    expect(maybeDone(flaggable)).toBe(true);
+  });
+
+  it("stops at the cutoff, on the day itself", () => {
+    expect(maybeDone({ ...flaggable, capturedAt: new Date(`${MAYBE_DONE_BEFORE}T00:00:00Z`) })).toBe(false);
+    expect(maybeDone({ ...flaggable, capturedAt: new Date("2026-07-31T23:00:00Z") })).toBe(true);
+  });
+
+  it("needs a screenshot: the text-only asks measured 79% wrong", () => {
+    expect(maybeDone({ ...flaggable, photos: [] })).toBe(false);
+  });
+
+  it("never asks about an item a later pass already found broken", () => {
+    expect(maybeDone({ ...flaggable, evidence: "STILL BROKEN 2026-08-30: the button is 1.16:1 on white" })).toBe(false);
+    expect(maybeDone({ ...flaggable, evidence: "Spring export 30 Apr-29 Jul 2026." })).toBe(true);
+  });
+
+  it("only asks about work items, and only raw ones", () => {
+    for (const hint of ["create", "ask", "material", "unsorted"] as const) {
+      expect(maybeDone({ ...flaggable, hint })).toBe(false);
+    }
+    expect(maybeDone({ ...flaggable, hint: "todo" })).toBe(true);
+    for (const state of ["done", "parked"] as const) {
+      expect(maybeDone({ ...flaggable, state })).toBe(false);
+    }
+  });
+
+  it("cannot flag a row with no date at all", () => {
+    expect(maybeDone({ ...flaggable, capturedAt: null })).toBe(false);
+  });
+});
+
+describe("planItem and the flag", () => {
+  it("writes the flag and a reason a human can read", () => {
+    const p = planItem(ROWS["113554"]);
+    expect(p.proposed.maybe_done).toBe(true);
+    expect(String(p.proposed.maybe_done_reason)).toContain(MAYBE_DONE_BEFORE);
+  });
+
+  it("leaves an August capture unflagged", () => {
+    expect(planItem(ROWS["113657"]).proposed.maybe_done).toBeUndefined();
+  });
+
+  it("never flags a row the triage already closed", () => {
+    expect(planItem(ROWS["113853"]).proposed.maybe_done).toBeUndefined();
+  });
+});
+
+/**
+ * The re-run guarantee. The importer has already run twice against production,
+ * and an item Rye answered "still open" is still raw and still unsorted, so it
+ * passes the pristine check and gets re-stamped. Without this merge the second
+ * run would hand him the same question again, forever.
+ */
+describe("mergeTriageState", () => {
+  const fresh = { kind_hint: "build", maybe_done: true, maybe_done_reason: "old" };
+
+  it("lets the fresh flag stand when Rye has not answered", () => {
+    expect(mergeTriageState(fresh, { kind_hint: "build" })).toEqual(fresh);
+    expect(mergeTriageState(fresh, null)).toEqual(fresh);
+  });
+
+  it("keeps the flag off once he has said it is still open", () => {
+    const out = mergeTriageState(fresh, { maybe_done_answer: "open", maybe_done_answered_at: "2026-08-30T10:00:00.000Z" });
+    expect(out.maybe_done).toBeUndefined();
+    expect(out.maybe_done_reason).toBeUndefined();
+    expect(out.maybe_done_answer).toBe("open");
+  });
+
+  it("keeps a not-sure snooze rather than restarting the week", () => {
+    const out = mergeTriageState(fresh, {
+      maybe_done: true,
+      maybe_done_answer: "unsure",
+      maybe_done_snoozed_until: "2026-09-06T10:00:00.000Z",
+    });
+    expect(out.maybe_done).toBe(true);
+    expect(out.maybe_done_snoozed_until).toBe("2026-09-06T10:00:00.000Z");
+  });
+
+  it("recomputes everything that is not the triage's", () => {
+    const out = mergeTriageState(
+      { kind_hint: "todo", session: "new" },
+      { kind_hint: "build", session: "old", maybe_done_answer: "open" },
+    );
+    expect(out.kind_hint).toBe("todo");
+    expect(out.session).toBe("new");
+  });
+});
+
+// Same guard as the suite above: the body runs even when the tests are skipped.
+describe.skipIf(!realTasks)("the flag over the real export", () => {
+  const rows = realTasks ? parseTasks(fs.readFileSync(realTasks, "utf8")) : [];
+
+  it("flags only raw, pre-cutoff, screenshot-bearing work items", () => {
+    const flagged = rows.map(planItem).filter((p) => p.proposed.maybe_done === true);
+    expect(flagged.length).toBeGreaterThan(0);
+    for (const p of flagged) {
+      expect(p.state).toBe("raw");
+      expect(p.photos.length).toBeGreaterThan(0);
+      expect(p.capturedAt!.toISOString().slice(0, 10) < MAYBE_DONE_BEFORE).toBe(true);
+      expect(["build", "todo"]).toContain(p.hint);
+    }
+  });
+
+  it("asks about a minority of the open list, not most of it", () => {
+    const plans = rows.map(planItem);
+    const raw = plans.filter((p) => p.state === "raw");
+    const flagged = raw.filter((p) => p.proposed.maybe_done === true);
+    // 72 of 219 at the time of writing. The assertion is the shape, not the
+    // number: a rule that flags most of the backlog is not a triage queue.
+    expect(flagged.length).toBeLessThan(raw.length / 2);
   });
 });

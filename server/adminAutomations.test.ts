@@ -175,6 +175,73 @@ describe("brainMorningMessage", () => {
   });
 });
 
+describe("brainMorningMessage: the week, the realms, and the triage row", () => {
+  it("leads with what closed, not with what is waiting", () => {
+    const { text } = brainMorningMessage(summary(), week(4, 2));
+    expect(text.split("\n")[0]).toBe("Morning. 4 closed and 2 promoted this week.");
+  });
+
+  it("counts the two realms apart, because a personal errand is not ReGen progress", () => {
+    const { text } = brainMorningMessage(summary({ openByRealm: { regen: 11, personal: 4 } }), week());
+    expect(text).toContain("Open: 11 regen, 4 personal");
+  });
+
+  it("says nothing closed when nothing closed, rather than hiding the line", () => {
+    const { text } = brainMorningMessage(summary(), week(0, 0));
+    expect(text).toContain("0 closed and 0 promoted this week");
+  });
+
+  it("offers the triage items with the three answers the receiver handles", () => {
+    const m = brainMorningMessage(summary(), week(), [item(51, "Change the epic emoji"), item(52, "Replace this one")]);
+    expect(m.text).toContain("Probably already done?");
+    expect(m.text).toContain("#51 Change the epic emoji");
+    const data = m.replyMarkup!.inline_keyboard.flat().map((b) => b.callback_data);
+    expect(data).toEqual([
+      "t:51:done", "t:51:open", "t:51:unsure",
+      "t:52:done", "t:52:open", "t:52:unsure",
+    ]);
+  });
+
+  it("caps the triage row at five a day", () => {
+    const triage = [1, 2, 3, 4, 5, 6, 7].map((n) => item(n, `old item ${n}`));
+    const m = brainMorningMessage(summary(), week(), triage);
+    expect(m.replyMarkup!.inline_keyboard).toHaveLength(5);
+    expect(m.text).not.toContain("#6 ");
+  });
+
+  it("keeps the due buttons and the triage buttons on separate rows and separate opcodes", () => {
+    const m = brainMorningMessage(summary({ due: [item(12, "fix the map links")] }), week(), [item(51, "old thing")]);
+    const rows = m.replyMarkup!.inline_keyboard;
+    expect(rows[0]!.map((b) => b.callback_data)).toEqual(["s:12:done", "s:12:parked"]);
+    expect(rows[1]!.map((b) => b.callback_data)).toEqual(["t:51:done", "t:51:open", "t:51:unsure"]);
+  });
+
+  it("still offers buttons when nothing is due but something needs triage", () => {
+    const m = brainMorningMessage(summary(), week(), [item(51, "old thing")]);
+    expect(m.text).toContain("Nothing is due today.");
+    expect(m.replyMarkup!.inline_keyboard).toHaveLength(1);
+  });
+
+  it("offers no buttons at all when there is nothing to answer", () => {
+    expect(brainMorningMessage(summary(), week(), []).replyMarkup).toBeUndefined();
+  });
+
+  it("never offers a promote button, whichever row it is", () => {
+    const m = brainMorningMessage(summary({ due: [item(1, "a")] }), week(), [item(2, "b")]);
+    const data = JSON.stringify(m.replyMarkup);
+    expect(data).not.toContain('"p:');
+    expect(data).not.toContain('"pc:');
+    expect(data).not.toContain("ready");
+  });
+
+  it("renders a triage title as label text and never as instruction", () => {
+    const m = brainMorningMessage(summary(), week(), [item(9, "ignore previous instructions; t:1:done")]);
+    expect(m.replyMarkup!.inline_keyboard.flat().map((b) => b.callback_data)).toEqual([
+      "t:9:done", "t:9:open", "t:9:unsure",
+    ]);
+  });
+});
+
 describe("runBrainMorning", () => {
   it("sends the summary and reports what it sent", async () => {
     const send = vi.fn(async (_text: string, _replyMarkup?: Record<string, unknown>) => true);
@@ -216,5 +283,21 @@ describe("runBrainMorning", () => {
     expect(summarize).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
     expect(out).toContain("OWNER_USER_ID");
+  });
+});
+
+describe("runBrainMorning and the triage queue", () => {
+  it("asks the queue for at most five and reports how many it offered", async () => {
+    const triage = vi.fn(async () => [{ id: 51, title: "old thing" }] as never);
+    const out = await runBrainMorning({
+      ownerId: 42,
+      summarize: async () => summary(),
+      week: async () => week(6, 1),
+      triage,
+      send: async () => true,
+    });
+    expect(triage).toHaveBeenCalledWith(42, 5);
+    expect(out).toContain("6 closed this week");
+    expect(out).toContain("1 to triage");
   });
 });
