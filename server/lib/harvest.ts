@@ -388,6 +388,17 @@ export async function runWeeklyDigest(): Promise<{ proposals: number; notesDue: 
     .sort((a, b) => b.ripeness - a.ripeness)
     .slice(0, 40);
   if (freshIdeas.length < 3) {
+    // Record the run even though it proposes nothing. Until 2026-08-31 this
+    // path returned without a harvest_runs row, so a digest that had fired
+    // and succeeded every Monday since July looked, to anything reading the
+    // table, like a digest that had stopped in July. The heartbeat strip read
+    // exactly that and showed a false alarm. A run that happened is a run,
+    // and the stats say why it was quiet: material is upstream of this, and
+    // it is thin because generation is backpressured.
+    await db.insert(harvestRuns).values({
+      kind: "digest",
+      stats: { proposals: 0, material: freshIdeas.length, reason: "not enough fresh material" },
+    });
     log.info("weekly digest: not enough fresh material this week");
     return { proposals: 0, notesDue };
   }

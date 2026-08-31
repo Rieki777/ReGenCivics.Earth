@@ -17,6 +17,7 @@ import {
   Sprout, RefreshCw, Loader2, ChevronDown, ChevronUp, Copy, Check,
   Send, Moon, Ban, Compass, Sparkles, ExternalLink, ArrowLeft, Mail, Share2,
 } from "lucide-react";
+import { BrainShell, brainV2Enabled } from "@/components/brain/BrainShell";
 
 const CHANNELS = [
   { key: "linkedin", label: "LinkedIn" },
@@ -471,7 +472,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
   );
 }
 
-export default function AdminCreate() {
+export function HarvestPage() {
   const feed = trpc.harvest.listFeed.useQuery({ tier: "all" }, { retry: false, refetchOnWindowFocus: false });
   const refresh = trpc.harvest.refresh.useMutation();
   const publicationsList = trpc.harvest.listPublications.useQuery(undefined, { retry: false, refetchOnWindowFocus: false });
@@ -576,4 +577,21 @@ export default function AdminCreate() {
       </div>
     </div>
   );
+}
+
+/**
+ * The route component. One branch, no hooks, so the plain path is the same page
+ * it has always been: `HarvestPage` above is the previous default export with
+ * its signature renamed and nothing else touched.
+ *
+ * `?v=2` (or a sticky `brain-v2` key) mounts the second-brain command center
+ * instead; `?v=1` forces the classic page back and clears the sticky key. The
+ * flag exists because slice 1 must be able to go wrong without anything in
+ * production being worse than today (response doc 17.15).
+ */
+export default function AdminCreate() {
+  if (brainV2Enabled()) {
+    return <BrainShell renderCreate={() => <HarvestPage />} />;
+  }
+  return <HarvestPage />;
 }

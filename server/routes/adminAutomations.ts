@@ -3,14 +3,18 @@
  * the CEO on a cadence.
  *
  * v1 routines are read-only digests that PREPARE an update, so nothing mutates
- * on a timer (the safety floor again). Two types ship:
+ * on a timer (the safety floor again). Three types ship:
  *   - briefing_digest : a quick deterministic state-of-the-ecosystem summary.
  *   - attention_digest: what currently needs the CEO's review.
+ *   - brain_morning   : the second brain's morning message, sent to Rye's
+ *                       Telegram bot with Done / Park buttons per due item.
+ *                       It reads and sends; the buttons are what change state,
+ *                       and they go back through the receiver's owner check.
  *
  * The cron endpoint (POST /api/cron/admin-automations) calls runDueAutomations()
- * which runs every enabled automation whose cadence is due. runNow lets the
- * admin trigger one immediately. Results are stored on the row (lastResult) and
- * surfaced in the Overview.
+ * which runs every enabled automation that is due. runNow lets the admin trigger
+ * one immediately. Results are stored on the row (lastResult) and surfaced in
+ * the Overview.
  */
 import { adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
@@ -20,8 +24,105 @@ import { getDb } from "../db";
 import { adminAutomations } from "../../drizzle/schema";
 import { computeEcosystemSnapshot } from "./admin";
 import { runRegistryAction } from "./adminActions";
+import { summarizeToday, type TodaySummary } from "../lib/brain-items";
+import { notifyOwner } from "../webhooks/telegram-brain";
+import { ENV } from "../_core/env";
 
 type AutomationRow = typeof adminAutomations.$inferSelect;
+
+// ── The second brain's morning message ───────────────────────────────────────
+//
+// A standing routine like the digests, but gated on wall-clock time rather than
+// on time-since-last-run: it fires on the first hourly cron tick at or after
+// 08:00 America/Los_Angeles, once per calendar day in that zone. A `daily`
+// cadence would drift an hour later every time the cron ran late, and a morning
+// message that arrives at 3pm is worse than none.
+//
+// `brain_morning` is not in the Drizzle enum for admin_automations.type (that
+// file is owned elsewhere), so the type is read as a widened string here. The
+// database enum gains the value in drizzle/0231_admin_automation_brain_morning.sql
+// and the row is seeded by scripts/seed-brain-morning-automation.ts.
+
+export const BRAIN_MORNING_TYPE = "brain_morning";
+const BRAIN_MORNING_HOUR_PT = 8;
+const BRAIN_MORNING_ZONE = "America/Los_Angeles";
+
+/** Calendar day (YYYY-MM-DD) and 0-23 hour of an instant, in Rye's zone. */
+export function ptDayHour(at: Date): { day: string; hour: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BRAIN_MORNING_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return { day: `${get("year")}-${get("month")}-${get("day")}`, hour: Number(get("hour")) };
+}
+
+/** True on the first tick at or after 08:00 PT on a day it has not run yet. */
+export function morningDue(now: Date, lastRunAt: Date | null): boolean {
+  const here = ptDayHour(now);
+  if (here.hour < BRAIN_MORNING_HOUR_PT) return false;
+  if (!lastRunAt) return true;
+  return ptDayHour(new Date(lastRunAt)).day !== here.day;
+}
+
+/**
+ * The message and its buttons. Pure, so the copy and the callback data are
+ * testable without a bot. The callback data matches what the receiver in
+ * server/webhooks/telegram-brain.ts already handles: `s:<id>:done` and
+ * `s:<id>:parked`. Titles are item titles, which are untrusted text, so they
+ * are only ever rendered as label text and never parsed.
+ */
+export function brainMorningMessage(t: TodaySummary): {
+  text: string;
+  replyMarkup?: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
+} {
+  const counts = `${t.raw} to shape, ${t.ready} ready, ${t.inFlight} in flight, ${t.claimed} claimed done`;
+  const shown = t.due.slice(0, 5);
+  const lines = shown.length
+    ? ["", "Due today", ...shown.map((i) => `#${i.id} ${i.title}`)]
+    : ["", "Nothing is due today."];
+  const text = [`Morning. ${counts}.`, ...lines].join("\n");
+  if (!shown.length) return { text };
+  return {
+    text,
+    replyMarkup: {
+      inline_keyboard: shown.map((i) => [
+        { text: `#${i.id} Done`, callback_data: `s:${i.id}:done` },
+        { text: `#${i.id} Park`, callback_data: `s:${i.id}:parked` },
+      ]),
+    },
+  };
+}
+
+export interface BrainMorningDeps {
+  ownerId: number;
+  summarize: (ownerId: number) => Promise<TodaySummary>;
+  send: (text: string, replyMarkup?: Record<string, unknown>) => Promise<boolean>;
+}
+
+/**
+ * Returns the summary string stored on the row. The run is recorded even when
+ * the send fails, so a missing bot token costs one morning message and shows up
+ * as text in the Overview rather than retrying every hour and arriving at 3pm.
+ */
+export async function runBrainMorning(deps?: Partial<BrainMorningDeps>): Promise<string> {
+  const d: BrainMorningDeps = {
+    ownerId: ENV.ownerUserId,
+    summarize: summarizeToday,
+    send: notifyOwner,
+    ...deps,
+  };
+  if (!d.ownerId) return "Not sent: OWNER_USER_ID is unset.";
+  const t = await d.summarize(d.ownerId);
+  const { text, replyMarkup } = brainMorningMessage(t);
+  const sent = await d.send(text, replyMarkup);
+  const counts = `${t.raw} to shape, ${t.ready} ready, ${t.inFlight} in flight, ${t.claimed} claimed done, ${t.due.length} due`;
+  return sent ? `Sent: ${counts}.` : `Not sent (telegram brain bot unavailable): ${counts}.`;
+}
 
 /** Build the digest text for an automation from the current snapshot. */
 async function runDigest(type: string): Promise<string> {
@@ -52,8 +153,13 @@ async function runDigest(type: string): Promise<string> {
 /** Run one automation and persist the result. Returns the summary. */
 async function runAutomation(auto: AutomationRow): Promise<string> {
   const db = await getDb();
+  // Widened: brain_morning is a database enum value that the Drizzle type does
+  // not carry yet, so a direct comparison would be a type error.
+  const type: string = auto.type;
   let summary: string;
-  if (auto.type === "registry_action") {
+  if (type === BRAIN_MORNING_TYPE) {
+    summary = await runBrainMorning();
+  } else if (auto.type === "registry_action") {
     // The standing automation row is the implicit approval; the registry
     // helper still rejects blocked-tier actions and zod-validates input.
     if (!auto.actionId) {
@@ -79,9 +185,20 @@ async function runAutomation(auto: AutomationRow): Promise<string> {
   return summary;
 }
 
-function cadenceDue(cadence: string, lastRunAt: Date | null): boolean {
+/** Whether this row is due now. brain_morning has its own wall-clock gate. */
+export function automationDue(
+  type: string,
+  cadence: string,
+  lastRunAt: Date | null,
+  now: Date = new Date(),
+): boolean {
+  if (type === BRAIN_MORNING_TYPE) return morningDue(now, lastRunAt);
+  return cadenceDue(cadence, lastRunAt, now);
+}
+
+function cadenceDue(cadence: string, lastRunAt: Date | null, now: Date = new Date()): boolean {
   if (!lastRunAt) return true;
-  const ms = Date.now() - new Date(lastRunAt).getTime();
+  const ms = now.getTime() - new Date(lastRunAt).getTime();
   if (cadence === "hourly") return ms >= 60 * 60 * 1000;
   if (cadence === "weekly") return ms >= 7 * 24 * 60 * 60 * 1000;
   if (cadence === "every_other_day") return ms >= 48 * 60 * 60 * 1000;
@@ -95,7 +212,7 @@ export async function runDueAutomations(): Promise<{ ran: number; results: { id:
   const all = await db.select().from(adminAutomations).where(eq(adminAutomations.enabled, 1));
   const results: { id: number; name: string; summary: string }[] = [];
   for (const auto of all) {
-    if (!cadenceDue(auto.cadence, auto.lastRunAt ?? null)) continue;
+    if (!automationDue(auto.type, auto.cadence, auto.lastRunAt ?? null)) continue;
     try {
       const summary = await runAutomation(auto);
       results.push({ id: auto.id, name: auto.name, summary });
