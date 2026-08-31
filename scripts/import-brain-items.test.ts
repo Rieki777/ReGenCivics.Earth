@@ -24,6 +24,7 @@ import {
   assertImportableState,
   contentTypeFor,
   isSafePhotoName,
+  keepAttachments,
   kindHint,
   MAYBE_DONE_BEFORE,
   maybeDone,
@@ -566,5 +567,28 @@ describe.skipIf(!realTasks)("the flag over the real export", () => {
     // 72 of 219 at the time of writing. The assertion is the shape, not the
     // number: a rule that flags most of the backlog is not a triage queue.
     expect(flagged.length).toBeLessThan(raw.length / 2);
+  });
+});
+
+/**
+ * The importer writes `attachments` from photos found ON DISK, so a re-run from
+ * a machine without the two ChatExport directories would blank all 384 uploaded
+ * keys. That was survivable while nobody had a reason to re-run it. The
+ * `maybe_done` flag gives them one.
+ */
+describe("keepAttachments", () => {
+  it("keeps what the database already has when this run found nothing", () => {
+    expect(keepAttachments([], ["harvest/shots/1/112019/a.jpg"])).toEqual(["harvest/shots/1/112019/a.jpg"]);
+  });
+
+  it("lets a run that found photos write them", () => {
+    expect(keepAttachments(["new.jpg"], ["old.jpg"])).toEqual(["new.jpg"]);
+  });
+
+  it("writes an empty list when there was nothing to keep", () => {
+    expect(keepAttachments([], [])).toEqual([]);
+    expect(keepAttachments([], null)).toEqual([]);
+    expect(keepAttachments([], undefined)).toEqual([]);
+    expect(keepAttachments([], "not an array")).toEqual([]);
   });
 });

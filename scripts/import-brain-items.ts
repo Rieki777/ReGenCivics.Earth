@@ -290,6 +290,26 @@ export function shippedLogSignal(): null {
 }
 
 /**
+ * Never trade a real attachment for an empty list.
+ *
+ * Both stamp paths write `attachments` unconditionally, and the list is built
+ * from photos found ON DISK. So a re-run from a machine without the two
+ * ChatExport directories, or with `--photos` simply forgotten, computes an
+ * empty list for every row and blanks all 384 uploaded keys. The screenshots
+ * are the reason this importer exists (17.6): 134 of the open items ARE a
+ * screenshot, and the R2 objects would survive while every row pointing at
+ * them would not.
+ *
+ * This became worth guarding when the `maybe_done` flag landed, because that
+ * gives someone a reason to re-run the importer who has no reason to think
+ * about photos at all.
+ */
+export function keepAttachments(fresh: string[], existing: unknown): string[] {
+  if (fresh.length > 0) return fresh;
+  return Array.isArray(existing) && existing.length > 0 ? (existing as string[]) : fresh;
+}
+
+/**
  * Re-run safety for the flag.
  *
  * `stampImportedFields` overwrites `proposed` wholesale, and an item Rye
@@ -556,6 +576,8 @@ interface Counters {
   blocked: number;
   /** Raw items the triage queue will ask about. See `maybeDone`. */
   maybeDone: number;
+  /** Keys a run left alone because it found no photo on disk. See `keepAttachments`. */
+  attachmentsKept: number;
 }
 
 function bump(m: Record<string, number>, k: string) {
@@ -578,6 +600,9 @@ function report(c: Counters, dryRun: boolean) {
       `${dryRun ? "" : `, ${c.photosUploaded} uploaded`}, ` +
       `${c.photosMissing} missing, ${c.photosSkipped} unsafe  (${mb} MB)`,
   );
+  if (c.attachmentsKept) {
+    console.log(`attachments kept   ${c.attachmentsKept}  (already in the database; this run found no photo on disk)`);
+  }
   console.log(`by state           ${JSON.stringify(c.byState)}`);
   console.log(`by kind            ${JSON.stringify(c.byKind)}`);
   console.log(`by repo            ${JSON.stringify(c.byRepo)}`);
@@ -621,6 +646,7 @@ async function main() {
     byRepo: {},
     blocked: 0,
     maybeDone: 0,
+    attachmentsKept: 0,
   };
 
   // Resolve every photo first, so a dry run reports exactly what a real run
@@ -722,8 +748,10 @@ async function main() {
     p: PlannedItem,
     attachments: string[],
     existingProposed?: Record<string, unknown> | null,
+    existingAttachments?: unknown,
   ): Promise<void> {
     assertImportableState(p.state);
+    const keys = keepAttachments(attachments, existingAttachments);
     await db!
       .update(brainItems)
       .set({
@@ -733,7 +761,7 @@ async function main() {
         blockedOn: p.blockedOn,
         evidence: p.evidence,
         closedBy: p.closedBy,
-        attachments,
+        attachments: keys,
         proposed: mergeTriageState(p.proposed, existingProposed),
         capturedAt: p.capturedAt,
       })
@@ -742,22 +770,27 @@ async function main() {
       ownerId,
       itemId,
       action: "import:stamp",
-      detail: { state: p.state, kind: p.kind, repo: p.repo, attachments: attachments.length },
+      detail: { state: p.state, kind: p.kind, repo: p.repo, attachments: keys.length },
       via: "import",
     });
   }
 
   /** The re-run path for an item Rye has already moved: heal the files, touch nothing else. */
-  async function stampAttachmentsOnly(itemId: number, attachments: string[]): Promise<void> {
+  async function stampAttachmentsOnly(
+    itemId: number,
+    attachments: string[],
+    existingAttachments?: unknown,
+  ): Promise<void> {
+    const keys = keepAttachments(attachments, existingAttachments);
     await db!
       .update(brainItems)
-      .set({ attachments })
+      .set({ attachments: keys })
       .where(and(eq(brainItems.id, itemId), eq(brainItems.ownerId, ownerId)));
     await db!.insert(brainAudit).values({
       ownerId,
       itemId,
       action: "import:attachments",
-      detail: { attachments: attachments.length },
+      detail: { attachments: keys.length },
       via: "import",
     });
   }
@@ -796,6 +829,7 @@ async function main() {
         kind: brainItems.kind,
         readyAt: brainItems.readyAt,
         proposed: brainItems.proposed,
+        attachments: brainItems.attachments,
       })
       .from(brainItems)
       .where(and(eq(brainItems.ownerId, ownerId), eq(brainItems.source, p.source)))
@@ -826,10 +860,17 @@ async function main() {
       },
       "import",
     );
+    const hadAttachments = before[0]?.attachments ?? null;
+    if (attachments.length === 0 && Array.isArray(hadAttachments) && hadAttachments.length > 0) {
+      c.attachmentsKept += hadAttachments.length;
+      console.warn(
+        `keeping ${hadAttachments.length} existing attachment key(s) for ${p.source}: this run found none on disk`,
+      );
+    }
     if (pristine) {
-      await stampImportedFields(item.id, p, attachments, before[0]?.proposed ?? null);
+      await stampImportedFields(item.id, p, attachments, before[0]?.proposed ?? null, hadAttachments);
     } else {
-      await stampAttachmentsOnly(item.id, attachments);
+      await stampAttachmentsOnly(item.id, attachments, hadAttachments);
       c.preserved++;
     }
 
