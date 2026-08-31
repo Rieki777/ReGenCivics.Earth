@@ -70,7 +70,11 @@ export interface CorePage {
 }
 
 const page = (title: string, description: string, bodyHtml: string): CorePage => ({
-  title: `${title} | ${CHURCH.name}`,
+  // Do not suffix the church's name onto the church's name. The home entry's
+  // title IS "Church of the Regenerative Earth", and the naive template shipped
+  // "Church of the Regenerative Earth | Church of the Regenerative Earth" to
+  // production, which is what a search result would have shown.
+  title: title === CHURCH.name ? title : `${title} | ${CHURCH.name}`,
   description,
   bodyHtml,
 });
