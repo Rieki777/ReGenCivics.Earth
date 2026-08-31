@@ -178,7 +178,16 @@ export function serveStatic(app: Express) {
   // for `/` directly so the static middleware does not return the raw file
   // with placeholders. The catch-all below handles every other SPA route.
   let rootIndexHtmlCache: string | null = null;
-  app.get("/", (_req, res) => {
+  app.get("/", (_req, res, next) => {
+    // The church's front door goes to the catch-all, which is the only handler
+    // that knows about hosts. This one substitutes a nonce and nothing else: no
+    // meta, no JSON-LD, no crawler body. So when core-crawler landed, every
+    // church SUBPAGE answered as a church and `core.regencivics.earth/` still
+    // answered as ReGen Civics — the one URL anybody types. Found by probing
+    // the deployed site rather than by reading the diff, which showed nothing
+    // wrong because nothing in the diff was wrong.
+    if (isCoreHost(_req.headers.host)) return next();
+
     const indexPath = path.resolve(distPath, "index.html");
     if (!rootIndexHtmlCache || process.env.NODE_ENV === "development") {
       try { rootIndexHtmlCache = fs.readFileSync(indexPath, "utf-8"); } catch { /* fall through */ }
