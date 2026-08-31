@@ -17,6 +17,8 @@ import { trpc } from "@/lib/trpc";
 import { HeartbeatStrip } from "./HeartbeatStrip";
 import { BrainRow, type BrainItemView } from "./BrainList";
 import { BrainItemSheet } from "./BrainItemSheet";
+import { WeekOneCard } from "./WeekOneCard";
+import { TriageQueue } from "./TriageQueue";
 
 const PRIORITY_ORDER: Record<string, number> = { now: 0, soon: 1, someday: 2 };
 
@@ -123,6 +125,10 @@ export function BrainToday({ onGoToCreate }: BrainTodayProps) {
         <HeartbeatStrip />
       </div>
 
+      {/* Above the work, because it is the instruction for how to do the work,
+          and dismissible, because it stops being that after a week. */}
+      <WeekOneCard />
+
       {today.isError ? (
         <p
           data-testid="brain-today-error"
@@ -153,6 +159,12 @@ export function BrainToday({ onGoToCreate }: BrainTodayProps) {
           <Loader2 className="h-5 w-5 animate-spin text-[#1a472a]" aria-label="Loading today" />
         </div>
       ) : null}
+
+      {/* Before the dated work on purpose. The protocol above puts the five
+          done-triage answers first in the morning, and this is the section that
+          moves the 219-item number: nine of ten items in Rye's calibration
+          sample were already finished. */}
+      <TriageQueue onAnswered={() => void utils.brain.invalidate()} />
 
       <Section title="Due and now" count={due.length}>
         {due.length === 0 ? (
