@@ -7,7 +7,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
-import { resolveCrawlerContent, escapeHtml, type CrawlerContent } from "./crawler-content";
+import { resolveCrawlerContent, escapeHtml, wrapForInjection, type CrawlerContent } from "./crawler-content";
+import { isCoreHost, getCorePageContent } from "./core-crawler";
 import { LEARN_SLUGS } from "@shared/learnContent";
 import { matchesAppRoute } from "@shared/appRoutes";
 
@@ -416,9 +417,31 @@ export function serveStatic(app: Express) {
     // HTML without executing JS, so without this they see an empty shell.
     // Never block page serving on it.
     let crawlerContent: CrawlerContent | null = null;
-    try {
-      crawlerContent = await resolveCrawlerContent(reqPath);
-    } catch { /* serve the plain shell on any failure */ }
+
+    // HOST FIRST, then path. core.regencivics.earth is a different institution
+    // from regencivics.earth, and until 2026-08-30 nothing on the server knew
+    // that: `isCoreHost()` lives in App.tsx and reads window.location, so the
+    // church branch was chosen in the BROWSER and a reader without JS got the
+    // platform's title, the platform's description and Organization schema on
+    // a church. Measured on production that day: zero occurrences of "Church
+    // of the Regenerative Earth" in the served HTML.
+    //
+    // resolveCrawlerContent keys on path alone, so `core.…/` and `regencivics
+    // .earth/` resolved to the same entry by construction. Host is part of the
+    // key now, and it has to be checked first or `/` collides immediately.
+    const corePage = isCoreHost(_req.headers.host) ? getCorePageContent(reqPath) : null;
+    if (corePage) {
+      crawlerContent = {
+        title: corePage.title,
+        description: corePage.description,
+        bodyHtml: wrapForInjection(corePage.bodyHtml),
+        jsonld: corePage.jsonld,
+      };
+    } else {
+      try {
+        crawlerContent = await resolveCrawlerContent(reqPath);
+      } catch { /* serve the plain shell on any failure */ }
+    }
     if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
     if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
 

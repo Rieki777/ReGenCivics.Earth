@@ -25,7 +25,13 @@ export default function CoreJsonLd({ id, data }: { id: string; data: Record<stri
 
 export const CHURCH_ORG_JSONLD: Record<string, unknown> = {
   "@context": "https://schema.org",
-  "@type": "Organization",
+  // Church, not Organization. schema.org/Church is a subtype of PlaceOfWorship,
+  // which is what this is; Organization is true of every incorporated body on
+  // earth and therefore tells a crawler nothing. Kept byte-identical in shape
+  // to server/_core/core-crawler.ts CHURCH_JSONLD, which is what a reader
+  // WITHOUT JavaScript gets — this constant only ever reaches readers who run
+  // the useEffect below, which crawlers do not.
+  "@type": "Church",
   name: "Church of the Regenerative Earth",
   alternateName: "CORE",
   url: "https://core.regencivics.earth",
