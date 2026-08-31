@@ -11,7 +11,7 @@ description: |
   "digest these fixes and assign them", "get all of this to the finish line", "swarm mode",
   "run the lanes", "dispatch the work", "swarm this", "be the coordinator", "triage this batch".
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   provenance: |
     Distilled from Anthropic's orchestrator-worker engineering notes, the MAST failure
     taxonomy (1600+ annotated multi-agent traces), Cognition's argument against parallel
@@ -376,6 +376,45 @@ Two sharpenings from the sibling coordinator (round 4, Sonnet), same class of wa
    RIGHT directory, one health probe), and take that measurement inline first. Round 4's
    near-misses were all coordinator reads skipped or misdirected, never lane work.
 
+## 4c · Ask what your number reads when the check did not run
+
+**PAID three times in one day, in three different files, by three different sessions.** One shape,
+and none of the three was found by reading the code:
+
+- `describe.skipIf(cond)` skips the TESTS but still evaluates the describe BODY. A
+  `readFileSync` inside it ran even when skipped, threw at collection on every runner without an
+  untracked fixture, and turned the auto-deploying branch red. It had been green locally every time,
+  because locally the file was there.
+- A contrast checker printed `NAVIGATION FAILED` and never counted it, so a run where every single
+  navigation failed exited 0 and reported no problems.
+- `harvest_runs` got a row only on the path where the job PRODUCED something. Every reader took the
+  table to mean the job RAN, so a weekly job that had succeeded every Monday for five weeks read as
+  five weeks of silence — and the heartbeat built to make silence visible showed a false alarm.
+
+The rule underneath: **a guard that prevents an ACTION does not prevent EVALUATION**, and an early
+return that skips the WORK usually skips the RECORD too.
+
+**The tell is the summary line, not the guard.** Each of these printed a number that was
+arithmetically correct and semantically meaningless: "0 failures" after measuring nothing, "green"
+after collecting nothing, "last run: July" for a job that ran on Monday. The guard hides; the summary
+is where it surfaces, if anyone looks. So:
+
+> **For every count a check reports, ask what value it takes when the check did not run. If that is
+> the same value as success, the check has no failure mode.**
+
+Two disciplines follow, and they are cheap:
+
+- **Run every gate once against something guaranteed broken** — a host that does not exist, a fixture
+  deliberately deleted, a deliberately failing case. The NAVIGATION FAILED bug was found that way and
+  could not have been found by reading. If the gate stays green, you have a gate that cannot fail.
+- **Prove a fix in both directions.** Reproduce the mechanism in isolation, then re-run with the fix
+  and with the failing condition still present. That is stronger evidence than a green CI run, which
+  only tells you the condition was absent this time.
+
+Applies equally to observability: a table whose name promises one thing and whose write path delivers
+another is this bug with a longer fuse. When you fix one, change the RECORD and leave the BEHAVIOUR
+alone — an observability bug is not a licence to alter what the job does.
+
 ## 5 · Land, then verify live
 
 A green gate is not a shipped feature. The ladder is **CODED** (the lane committed; gates
@@ -611,6 +650,12 @@ updating the skill while updating the ledger; this is believing it while updatin
 skill.
 
 ## Changelog
+
+**1.4.0** (2026-08-31) — added §4c, from three instances of one shape in a single day across three
+sessions: a guard that prevents an action does not prevent evaluation, and the tell is the summary
+line rather than the guard. Carries the counter-question (what does this count read when the check
+did not run?) and the two disciplines that catch it — run every gate once against something
+guaranteed broken, and prove a fix in both directions.
 
 **1.3.0** (2026-08-29) — **unified two diverged installs into one file** and folded in program
 four: ten lanes and three QA passes in a night, seven PRs, four migrations onto production.
