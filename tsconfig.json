@@ -4,12 +4,6 @@
     "node_modules",
     "build",
     "dist",
-    // Dead since a Wave 6 commit: imports `glob`, which is not a dependency and
-    // is not installed, so it cannot run at all. Its own header names
-    // scripts/check-contrast.mjs as the replacement, and nothing references it.
-    // Excluded rather than deleted because contrast tooling is being reworked
-    // elsewhere right now; delete the file and this line together.
-    "scripts/check-contrast.ts"
   ],
   "compilerOptions": {
     "target": "ES2020",
