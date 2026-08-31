@@ -74,6 +74,7 @@ import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
 import { registerHarvestBridgeRoutes } from "../webhooks/harvest-bridge";
 import { registerTelegramBrainRoutes } from "../webhooks/telegram-brain";
 import { registerBrainAssetRoutes } from "../webhooks/brain-assets";
+import { registerBrainExportRoutes } from "../webhooks/brain-export";
 import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
 import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
@@ -672,6 +673,9 @@ async function startServer() {
   // PRIVATE R2 prefixes behind owner session or bridge token. Never storageGet:
   // that returns a public URL when STORAGE_PUBLIC_URL is set.
   registerBrainAssetRoutes(app);
+  // Second-brain export: the vault pulls new and changed items over the bridge
+  // token so bot-era captures are never single-copy in one database.
+  registerBrainExportRoutes(app);
   // Worldview Pack upload: the Mycelium's distribution endpoint (token auth)
   registerWorldviewUploadRoutes(app);
   // OIDC provider for shared auth with the ReGen Gov app at gov.regencivics.earth
