@@ -64,6 +64,7 @@ export interface Deps {
   promoteItem: typeof items.promoteItem;
   splitItem: typeof items.splitItem;
   summarizeToday: typeof items.summarizeToday;
+  answerTriage: typeof items.answerTriage;
   tg: (method: string, payload: Record<string, unknown>) => Promise<unknown>;
   downloadFile: (fileId: string) => Promise<Buffer>;
   transcribe: (buf: Buffer, mime: string) => Promise<string>;
@@ -208,6 +209,31 @@ export function keyboardFor(item: KeyboardItem) {
   return { inline_keyboard: [kinds, actions] };
 }
 
+/**
+ * The "probably done" row (ADDENDUM-1 item 2). Three answers, one tap each,
+ * same `op:id:arg` shape every other button here uses. `t` is the only free
+ * opcode: k, s, p, pc, pn and x are taken.
+ *
+ * No Ready button and no state names in the labels. This row asks one question
+ * about the past, and the only reachable state from it is `done`.
+ */
+export function triageKeyboardFor(item: { id: number }) {
+  return {
+    inline_keyboard: [[
+      { text: "Done", callback_data: `t:${item.id}:done` },
+      { text: "Still open", callback_data: `t:${item.id}:open` },
+      { text: "Not sure", callback_data: `t:${item.id}:unsure` },
+    ]],
+  };
+}
+
+/** What a triage answer says back, so the tap is acknowledged in Rye's words. */
+const TRIAGE_ACK: Record<items.TriageAnswer, string> = {
+  done: "archived",
+  open: "still open",
+  unsure: "back in a week",
+};
+
 function line(item: { id: number; kind: string; state: string; title: string }) {
   return `#${item.id} · ${item.kind} · ${item.state}\n${item.title}`;
 }
@@ -274,6 +300,21 @@ async function handleCallback(n: Extract<Norm, { type: "callback" }>, d: Deps): 
       await d.tg("sendMessage", { chat_id, text: `#${id} is ready.`, reply_markup: keyboardFor(item) });
     } else if (op === "pn") {
       await ack("left as is");
+    } else if (op === "t") {
+      // The triage answer. `arg` is owner-supplied callback data, so it is
+      // checked against the three literals before it reaches the database.
+      if (arg !== "done" && arg !== "open" && arg !== "unsure") {
+        await ack("unknown answer");
+        return;
+      }
+      await d.answerTriage(d.ownerId, id, arg, "telegram");
+      // Acknowledge and stop. Deliberately NO editMessageReplyMarkup: one
+      // morning message carries up to five triage questions in one keyboard,
+      // and editing its markup from a single answer would wipe the other four.
+      // A second tap is safe instead: answering `done` twice returns the item
+      // unchanged and writes no second `state:done`, so the week's count cannot
+      // be inflated by a fat finger.
+      await ack(TRIAGE_ACK[arg]);
     } else if (op === "x") {
       pendingSplit.set(d.ownerId, { itemId: id, until: Date.now() + 10 * 60_000 });
       await ack("send the second half");
@@ -499,6 +540,7 @@ export function liveDeps(): Deps {
     promoteItem: items.promoteItem,
     splitItem: items.splitItem,
     summarizeToday: items.summarizeToday,
+    answerTriage: items.answerTriage,
     tg: tgClient(ENV.telegramBrainBotToken),
     downloadFile: fileDownloader(ENV.telegramBrainBotToken),
     transcribe,

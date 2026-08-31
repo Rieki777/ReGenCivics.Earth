@@ -24,7 +24,14 @@ import { getDb } from "../db";
 import { adminAutomations } from "../../drizzle/schema";
 import { computeEcosystemSnapshot } from "./admin";
 import { runRegistryAction } from "./adminActions";
-import { summarizeToday, type TodaySummary } from "../lib/brain-items";
+import {
+  summarizeToday,
+  triageQueue,
+  weekMetrics,
+  type BrainItem,
+  type TodaySummary,
+  type WeekMetrics,
+} from "../lib/brain-items";
 import { notifyOwner } from "../webhooks/telegram-brain";
 import { ENV } from "../_core/env";
 
@@ -69,38 +76,73 @@ export function morningDue(now: Date, lastRunAt: Date | null): boolean {
   return ptDayHour(new Date(lastRunAt)).day !== here.day;
 }
 
+/** Up to five "probably done" questions a day, offered with the morning message. */
+export const MORNING_TRIAGE_LIMIT = 5;
+
 /**
  * The message and its buttons. Pure, so the copy and the callback data are
  * testable without a bot. The callback data matches what the receiver in
- * server/webhooks/telegram-brain.ts already handles: `s:<id>:done` and
- * `s:<id>:parked`. Titles are item titles, which are untrusted text, so they
- * are only ever rendered as label text and never parsed.
+ * server/webhooks/telegram-brain.ts already handles: `s:<id>:done`,
+ * `s:<id>:parked`, and `t:<id>:done|open|unsure` for the triage rows. Titles
+ * are item titles, which are untrusted text, so they are only ever rendered as
+ * label text and never parsed.
+ *
+ * It leads with what CLOSED, not with what is waiting. The open count has gone
+ * up for months and reading it first teaches Rye to stop opening the message;
+ * the week's closes and promotions are the number this whole command center
+ * exists to move (addendum 2, item 8). ReGen and personal are counted apart,
+ * because a personal errand is not ReGen progress (ADDENDUM-1 item 1).
  */
-export function brainMorningMessage(t: TodaySummary): {
+export function brainMorningMessage(
+  t: TodaySummary,
+  week: WeekMetrics,
+  triage: BrainItem[] = [],
+): {
   text: string;
   replyMarkup?: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
 } {
+  const realm = t.openByRealm ?? { regen: 0, personal: 0 };
   const counts = `${t.raw} to shape, ${t.ready} ready, ${t.inFlight} in flight, ${t.claimed} claimed done`;
   const shown = t.due.slice(0, 5);
-  const lines = shown.length
-    ? ["", "Due today", ...shown.map((i) => `#${i.id} ${i.title}`)]
-    : ["", "Nothing is due today."];
-  const text = [`Morning. ${counts}.`, ...lines].join("\n");
-  if (!shown.length) return { text };
-  return {
-    text,
-    replyMarkup: {
-      inline_keyboard: shown.map((i) => [
-        { text: `#${i.id} Done`, callback_data: `s:${i.id}:done` },
-        { text: `#${i.id} Park`, callback_data: `s:${i.id}:parked` },
-      ]),
-    },
-  };
+  const asked = triage.slice(0, MORNING_TRIAGE_LIMIT);
+
+  const lines: string[] = [
+    `Morning. ${week.closedThisWeek} closed and ${week.promotedThisWeek} promoted this week.`,
+    `Open: ${realm.regen} regen, ${realm.personal} personal. ${counts}.`,
+    "",
+    ...(shown.length
+      ? ["Due today", ...shown.map((i) => `#${i.id} ${i.title}`)]
+      : ["Nothing is due today."]),
+  ];
+  if (asked.length) {
+    lines.push(
+      "",
+      "Probably already done? Answer and they leave the list.",
+      ...asked.map((i) => `#${i.id} ${i.title}`),
+    );
+  }
+
+  const inline_keyboard = [
+    ...shown.map((i) => [
+      { text: `#${i.id} Done`, callback_data: `s:${i.id}:done` },
+      { text: `#${i.id} Park`, callback_data: `s:${i.id}:parked` },
+    ]),
+    ...asked.map((i) => [
+      { text: `#${i.id} Done`, callback_data: `t:${i.id}:done` },
+      { text: `#${i.id} Still open`, callback_data: `t:${i.id}:open` },
+      { text: `#${i.id} Not sure`, callback_data: `t:${i.id}:unsure` },
+    ]),
+  ];
+  const text = lines.join("\n");
+  if (!inline_keyboard.length) return { text };
+  return { text, replyMarkup: { inline_keyboard } };
 }
 
 export interface BrainMorningDeps {
   ownerId: number;
   summarize: (ownerId: number) => Promise<TodaySummary>;
+  week: (ownerId: number) => Promise<WeekMetrics>;
+  triage: (ownerId: number, limit: number) => Promise<BrainItem[]>;
   send: (text: string, replyMarkup?: Record<string, unknown>) => Promise<boolean>;
 }
 
@@ -113,14 +155,21 @@ export async function runBrainMorning(deps?: Partial<BrainMorningDeps>): Promise
   const d: BrainMorningDeps = {
     ownerId: ENV.ownerUserId,
     summarize: summarizeToday,
+    week: weekMetrics,
+    triage: triageQueue,
     send: notifyOwner,
     ...deps,
   };
   if (!d.ownerId) return "Not sent: OWNER_USER_ID is unset.";
   const t = await d.summarize(d.ownerId);
-  const { text, replyMarkup } = brainMorningMessage(t);
+  const w = await d.week(d.ownerId);
+  const triage = await d.triage(d.ownerId, MORNING_TRIAGE_LIMIT);
+  const { text, replyMarkup } = brainMorningMessage(t, w, triage);
   const sent = await d.send(text, replyMarkup);
-  const counts = `${t.raw} to shape, ${t.ready} ready, ${t.inFlight} in flight, ${t.claimed} claimed done, ${t.due.length} due`;
+  const counts =
+    `${w.closedThisWeek} closed this week, ${w.promotedThisWeek} promoted, ` +
+    `${t.raw} to shape, ${t.ready} ready, ${t.inFlight} in flight, ${t.claimed} claimed done, ` +
+    `${t.due.length} due, ${triage.length} to triage`;
   return sent ? `Sent: ${counts}.` : `Not sent (telegram brain bot unavailable): ${counts}.`;
 }
 

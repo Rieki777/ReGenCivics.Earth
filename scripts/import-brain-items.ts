@@ -193,6 +193,128 @@ export function kindHint(text: string, hasScreenshot: boolean): KindHint {
   return "unsorted";
 }
 
+// ── The "probably done" flag ─────────────────────────────────────────────────
+
+/**
+ * Items captured before this date were never checked; their `open` status was
+ * read off a list, not verified. See `maybeDone` for the measurement.
+ *
+ * ADDENDUM-1 item 2 wrote this cutoff as 2026-05-01. That flags NOTHING: the
+ * oldest row in tasks.json still open is 2026-06-14, and the whole 30 Apr - 29
+ * Jul window it was reaching for is what the export calls the Spring batches.
+ * 2026-08-01 is the real seam in the data. Everything before it comes from the
+ * Spring export, whose own triage note says "Status auto-derived: 'open' means
+ * it is listed in WHATS_LEFT.md"; everything after it was read by the
+ * 2026-08-29 verdict pass. Only the first group is a genuine open question.
+ */
+export const MAYBE_DONE_BEFORE = "2026-08-01";
+
+/**
+ * A verdict from a later pass that ALREADY checked and found the thing broken.
+ * Five rows carry it. Asking "is this still real?" about an item somebody
+ * verified as broken this month is the one flag that is definitely wrong.
+ */
+const VERIFIED_STILL_BROKEN = "STILL BROKEN";
+
+export interface MaybeDoneView {
+  state: ImportState;
+  capturedAt: Date | null;
+  hint: KindHint;
+  photos: string[];
+  evidence: string | null;
+}
+
+/**
+ * Is this item probably already finished?
+ *
+ * Measured, not assumed. Of 20 hand-checked flagged items I could reach a
+ * verdict on 10: 6 were already shipped, 4 were not, a 40% false-positive rate.
+ * All four misses were items with NO screenshot, and all six hits had one. A
+ * second, larger check held the split: of the 15 no-screenshot candidates, 14
+ * were decidable and 11 of those were still genuinely open (79% wrong), while
+ * a fresh sample of the screenshot ones ran 6 done to 1 open. So the screenshot
+ * is part of the rule, not decoration.
+ *
+ * The mechanism behind the split, which is why it is a rule and not a fit: a
+ * screenshot-anchored one-liner ("change the epic emoji from swords to a
+ * mountain") is a nit against a page that has been rebuilt several times since,
+ * and it was listed as open by a script rather than by a person. A paragraph of
+ * text with no screenshot is a project brief ("add sign in with GitHub", "make
+ * our ecosystem survive an Anthropic outage"), and a project ships only if
+ * somebody ran it. Nobody did.
+ *
+ * What is NOT in this rule, and why, is in `SHIPPED_LOG.md` cross-checking:
+ * see the note on `shippedLogSignal` below.
+ */
+export function maybeDone(v: MaybeDoneView): boolean {
+  if (v.state !== "raw") return false;
+  if (!v.capturedAt) return false;
+  if (v.capturedAt.toISOString().slice(0, 10) >= MAYBE_DONE_BEFORE) return false;
+  if (v.hint !== "build" && v.hint !== "todo") return false;
+  if (v.photos.length === 0) return false;
+  if ((v.evidence ?? "").startsWith(VERIFIED_STILL_BROKEN)) return false;
+  return true;
+}
+
+/**
+ * The keyword cross-check against SHIPPED_LOG.md that ADDENDUM-1 item 2 asks
+ * for is NOT implemented, because it was measured and it carries no signal.
+ *
+ * The test that settled it: run the matcher twice, once against log entries
+ * dated AFTER an item was captured (where "shipped since" is possible) and once
+ * against entries dated BEFORE it (where it is impossible). A rule that detects
+ * completion must fire far more often in the first direction. It did not. With
+ * two-corpus rarity filtering and a two-term co-occurrence threshold, 23 of 167
+ * items matched forward against an average of 15.2 available entries, and 62 of
+ * 167 matched backward against 34.8 entries: the same rate per entry examined,
+ * slightly worse forward. An exact-bigram variant was worse still, 4 forward
+ * against 14 backward. The apparent hits are topical coincidence in Rye's own
+ * vocabulary, and the eyeballed output says the same thing ("create a new song"
+ * matched the assembly-examples entry on "create, title, parts, isolation").
+ *
+ * Three reasons it cannot work on this corpus, all structural:
+ *   1. SHIPPED_LOG.md runs 2026-07-01 to 2026-08-15 and covers regen-civics
+ *      only. Most old open items are game-amora or predate the log entirely.
+ *   2. The item bodies are screenshot captions. "Replace this one" and "And the
+ *      architect" have no terms to match on; 52 of 219 share no distinctive
+ *      word with the log at all.
+ *   3. The log is prose in the same voice as the captures, so what overlaps is
+ *      the vocabulary Rye always uses, not the work that got done.
+ *
+ * Shipping it anyway would put a wrong "probably done" on roughly half the
+ * queue, which is the failure ADDENDUM-1 names. The function is left here as a
+ * signpost so the next person does not re-derive the same negative result.
+ */
+export function shippedLogSignal(): null {
+  return null;
+}
+
+/**
+ * Re-run safety for the flag.
+ *
+ * `stampImportedFields` overwrites `proposed` wholesale, and an item Rye
+ * answered "still open" or "not sure" is still raw and still unsorted, so it
+ * passes the pristine check and gets re-stamped. Without this, a second import
+ * would put `maybe_done` straight back on an item he has already answered, and
+ * the queue would hand him the same question forever.
+ *
+ * The contract with the triage code is a prefix, not a list, so a future key
+ * cannot be forgotten here: every `proposed` key beginning `maybe_done` belongs
+ * to the triage once `maybe_done_answer` is present, and the importer copies
+ * them across verbatim instead of recomputing. "Not sure" keeps its flag and
+ * its snooze; "still open" keeps the flag off.
+ */
+export function mergeTriageState(
+  fresh: Record<string, unknown>,
+  existing: Record<string, unknown> | null | undefined,
+): Record<string, unknown> {
+  const out = { ...fresh };
+  if (!existing || typeof existing.maybe_done_answer !== "string") return out;
+  for (const k of Object.keys(out)) if (k.startsWith("maybe_done")) delete out[k];
+  for (const [k, v] of Object.entries(existing)) if (k.startsWith("maybe_done")) out[k] = v;
+  return out;
+}
+
 // ── Photo resolution ─────────────────────────────────────────────────────────
 
 /** Extensions we will upload, mapped to the content type storagePut allows. */
@@ -316,6 +438,15 @@ export function planItem(row: TaskRow): PlannedItem {
   if (bodyIsPlaceholder) proposed.body_placeholder = true;
 
   const capturedAt = row.date ? new Date(`${row.date}T12:00:00Z`) : null;
+  const captured = capturedAt && !Number.isNaN(capturedAt.getTime()) ? capturedAt : null;
+  const evidence = typeof row.note === "string" && row.note.trim() ? row.note.trim() : null;
+
+  // The triage queue's entry condition. `raw` only: a closed row is not a
+  // question, and a parked one is a decision Rye already made.
+  if (maybeDone({ state, capturedAt: captured, hint, photos, evidence })) {
+    proposed.maybe_done = true;
+    proposed.maybe_done_reason = `captured before ${MAYBE_DONE_BEFORE}; open status was auto-derived, never checked`;
+  }
 
   return {
     source: `telegram:${row.id}`,
@@ -325,9 +456,9 @@ export function planItem(row: TaskRow): PlannedItem {
     state,
     blockedOn: blockedOn ?? null,
     closedBy: closedBy ?? null,
-    evidence: typeof row.note === "string" && row.note.trim() ? row.note.trim() : null,
+    evidence,
     repo: repoFor(row.session),
-    capturedAt: capturedAt && !Number.isNaN(capturedAt.getTime()) ? capturedAt : null,
+    capturedAt: captured,
     photos,
     unsafePhotos: referenced.length - photos.length,
     proposed,
@@ -423,6 +554,8 @@ interface Counters {
   byKind: Record<string, number>;
   byRepo: Record<string, number>;
   blocked: number;
+  /** Raw items the triage queue will ask about. See `maybeDone`. */
+  maybeDone: number;
 }
 
 function bump(m: Record<string, number>, k: string) {
@@ -439,6 +572,7 @@ function report(c: Counters, dryRun: boolean) {
   console.log(`left as Rye had it ${c.preserved}  (already sorted; only attachments refreshed)`);
   console.log(`empty text         ${c.emptyText}  (imported with a screenshot placeholder body, never skipped)`);
   console.log(`blocked_on set     ${c.blocked}`);
+  console.log(`maybe_done flagged ${c.maybeDone}  (raw, pre-${MAYBE_DONE_BEFORE}, screenshot, build/todo; the triage queue)`);
   console.log(
     `screenshots        ${c.photosPlanned} referenced, ${c.photosResolved} found on disk` +
       `${dryRun ? "" : `, ${c.photosUploaded} uploaded`}, ` +
@@ -486,6 +620,7 @@ async function main() {
     byKind: {},
     byRepo: {},
     blocked: 0,
+    maybeDone: 0,
   };
 
   // Resolve every photo first, so a dry run reports exactly what a real run
@@ -517,6 +652,7 @@ async function main() {
     bump(c.byRepo, p.repo ?? "(none)");
     if (p.bodyIsPlaceholder) c.emptyText++;
     if (p.blockedOn) c.blocked++;
+    if (p.proposed.maybe_done === true) c.maybeDone++;
   }
 
   if (args.dryRun) {
@@ -585,6 +721,7 @@ async function main() {
     itemId: number,
     p: PlannedItem,
     attachments: string[],
+    existingProposed?: Record<string, unknown> | null,
   ): Promise<void> {
     assertImportableState(p.state);
     await db!
@@ -597,7 +734,7 @@ async function main() {
         evidence: p.evidence,
         closedBy: p.closedBy,
         attachments,
-        proposed: p.proposed,
+        proposed: mergeTriageState(p.proposed, existingProposed),
         capturedAt: p.capturedAt,
       })
       .where(and(eq(brainItems.id, itemId), eq(brainItems.ownerId, ownerId)));
@@ -658,6 +795,7 @@ async function main() {
         state: brainItems.state,
         kind: brainItems.kind,
         readyAt: brainItems.readyAt,
+        proposed: brainItems.proposed,
       })
       .from(brainItems)
       .where(and(eq(brainItems.ownerId, ownerId), eq(brainItems.source, p.source)))
@@ -689,7 +827,7 @@ async function main() {
       "import",
     );
     if (pristine) {
-      await stampImportedFields(item.id, p, attachments);
+      await stampImportedFields(item.id, p, attachments, before[0]?.proposed ?? null);
     } else {
       await stampAttachmentsOnly(item.id, attachments);
       c.preserved++;

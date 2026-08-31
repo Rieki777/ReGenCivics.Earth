@@ -14,17 +14,17 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, gte, inArray, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { ownerProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { brainAudit, harvestRuns, quickNotes } from "../../drizzle/schema";
+import { harvestRuns, quickNotes } from "../../drizzle/schema";
 import * as items from "../lib/brain-items";
-import { BRAIN_KINDS, BRAIN_STATES } from "../lib/brain-items";
+import { BRAIN_KINDS, BRAIN_STATES, isMissingTableError, startOfWeek } from "../lib/brain-items";
 
-function isMissingTableError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  return /ER_NO_SUCH_TABLE|doesn't exist|no such table/i.test(msg);
-}
+// Re-exported because the week boundary is a rule about this router's numbers,
+// and server/brain.test.ts pins it here. The implementation lives beside the
+// query that uses it so the morning message cannot drift from the status tile.
+export { startOfWeek };
 
 async function requireDb() {
   const drizzle = await getDb();
@@ -65,24 +65,12 @@ function asDate(v: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/**
- * Monday 00:00 local, so "this week" lines up with the Monday morning message
- * rather than drifting on a rolling window (addendum 2, item 8).
- */
-export function startOfWeek(now = new Date()): Date {
-  const d = new Date(now);
-  const dow = (d.getDay() + 6) % 7; // Monday = 0
-  d.setDate(d.getDate() - dow);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 export const brainRouter = router({
   /**
    * Four signals with honest ages. Read-only, fail-soft per signal: one missing
    * table must not blank the whole strip.
    */
-  status: ownerProcedure.query(async () => {
+  status: ownerProcedure.query(async ({ ctx }) => {
     const db = await requireDb();
 
     let runs: Array<{ kind: string; last: unknown }> = [];
@@ -127,23 +115,9 @@ export const brainRouter = router({
     };
 
     // The month-one metric, which the plan named and then never computed
-    // (addendum 2, item 8). Counted from brain_audit, not from current state:
-    // the audit records the EVENT, so reopening an item later cannot rewrite
-    // the week in which it was closed.
-    const weekStart = startOfWeek();
-    let closedThisWeek = 0;
-    let promotedThisWeek = 0;
-    try {
-      const rows = await db
-        .select({ action: brainAudit.action, n: sql<number>`COUNT(*)` })
-        .from(brainAudit)
-        .where(and(gte(brainAudit.createdAt, weekStart), inArray(brainAudit.action, ["state:done", "promote"])))
-        .groupBy(brainAudit.action);
-      closedThisWeek = Number(rows.find((r) => r.action === "state:done")?.n ?? 0);
-      promotedThisWeek = Number(rows.find((r) => r.action === "promote")?.n ?? 0);
-    } catch (err) {
-      if (!isMissingTableError(err)) throw err;
-    }
+    // (addendum 2, item 8). The query lives in the item library so the morning
+    // message reports the same two numbers this tile does, from one place.
+    const { weekStart, closedThisWeek, promotedThisWeek } = await items.weekMetrics(ctx.user.id);
 
     return {
       weekStart,
@@ -232,6 +206,28 @@ export const brainRouter = router({
   promote: ownerProcedure
     .input(z.object({ id: z.number().int() }))
     .mutation(({ ctx, input }) => items.promoteItem(ctx.user.id, input.id, "web")),
+
+  /**
+   * The "probably done" queue (ADDENDUM-1 item 2). Raw items flagged
+   * `proposed.maybe_done`, oldest capture first, snoozed ones held back. The
+   * flag is set at import time and never recomputed here; its rule and its
+   * measured error rate are in scripts/import-brain-items.ts.
+   */
+  triageNext: ownerProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(20).default(5) }).optional())
+    .query(({ ctx, input }) => items.triageQueue(ctx.user.id, input?.limit ?? 5)),
+
+  /** How many questions are left, so a caller can say "3 more" without fetching them. */
+  triagePending: ownerProcedure.query(({ ctx }) => items.triagePending(ctx.user.id)),
+
+  /**
+   * done   -> state done, closed_by rye-triage, one `state:done` audit row
+   * open   -> flag cleared, state untouched
+   * unsure -> flag kept, parked a week
+   */
+  triageAnswer: ownerProcedure
+    .input(z.object({ id: z.number().int(), answer: z.enum(["done", "open", "unsure"]) }))
+    .mutation(({ ctx, input }) => items.answerTriage(ctx.user.id, input.id, input.answer, "web")),
 
   split: ownerProcedure
     .input(z.object({ id: z.number().int(), secondBody: z.string().min(1).max(20_000) }))

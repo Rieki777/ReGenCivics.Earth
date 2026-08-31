@@ -16,7 +16,7 @@
  * or lets it choose its own state.
  */
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { brainAudit, brainItems, type BrainItem } from "../../drizzle/schema";
 import {
@@ -29,6 +29,9 @@ import {
 } from "./brain-gate";
 
 export type Via = "web" | "telegram" | "api" | "import" | "webhook";
+
+/** Re-exported so callers of these operations need not reach into the schema. */
+export type { BrainItem };
 
 export const BRAIN_KINDS = [
   "unsorted",
@@ -345,6 +348,12 @@ export interface TodaySummary {
   ready: number;
   inFlight: number;
   claimed: number;
+  /**
+   * Open items per half of the brain (ADDENDUM-1 item 1). Reported separately
+   * everywhere they are shown: the personal lane is Rye's ops queue and it is
+   * never mixed into a ReGen number.
+   */
+  openByRealm: { regen: number; personal: number };
 }
 
 /**
@@ -382,11 +391,264 @@ export async function summarizeToday(ownerId: number): Promise<TodaySummary> {
     .groupBy(brainItems.state);
   const n = (s: BrainState) => Number(counts.find((c) => c.state === s)?.n ?? 0);
 
+  const realms = await db
+    .select({ realm: brainItems.realm, n: sql<number>`COUNT(*)` })
+    .from(brainItems)
+    .where(and(eq(brainItems.ownerId, ownerId), inArray(brainItems.state, open)))
+    .groupBy(brainItems.realm);
+  const r = (v: "regen" | "personal") => Number(realms.find((x) => x.realm === v)?.n ?? 0);
+
   return {
     due,
     raw: n("raw"),
     ready: n("ready"),
     inFlight: n("in_flight"),
     claimed: n("done_claimed"),
+    openByRealm: { regen: r("regen"), personal: r("personal") },
   };
+}
+
+// ── The "probably done" triage queue (ADDENDUM-1 item 2) ─────────────────────
+//
+// Nine of the ten items Rye archived in the calibration sample were "this work
+// was already done". For the old imported rows that is the dominant open
+// question, and he answers it in seconds when he is shown the screenshot and
+// three buttons. This is the queue that asks.
+//
+// The flag itself is set at import time; the rule and its measured error rate
+// live in `scripts/import-brain-items.ts` (`maybeDone`). Everything here reads
+// the flag, never recomputes it.
+
+/** How long "not sure" parks an item before it comes back around. */
+export const TRIAGE_SNOOZE_DAYS = 7;
+
+/** Stamped on `closed_by` so a triage close is distinguishable from every other. */
+export const TRIAGE_CLOSED_BY = "rye-triage";
+
+export type TriageAnswer = "done" | "open" | "unsure";
+
+/**
+ * Snoozes are stored as an ISO 8601 UTC string, and the comparison below is a
+ * string comparison. That is only correct because ISO 8601 UTC sorts
+ * lexicographically the same way it sorts chronologically; a locale format
+ * would silently compare wrong. Written here so nobody "tidies" the format.
+ */
+function isoNow(): string {
+  return new Date().toISOString();
+}
+
+const maybeDoneTrue = sql`JSON_EXTRACT(${brainItems.proposed}, '$.maybe_done') = CAST('true' AS JSON)`;
+
+/**
+ * Absent, JSON null, or in the past all mean "ask me about this now". Both null
+ * cases are spelled out: a missing path gives SQL NULL, a literal `null` in the
+ * JSON gives the string "null", which would otherwise sort after any date and
+ * park the item forever.
+ */
+function notSnoozed(now: string) {
+  const p = sql`JSON_EXTRACT(${brainItems.proposed}, '$.maybe_done_snoozed_until')`;
+  return sql`(${p} IS NULL OR JSON_TYPE(${p}) = 'NULL' OR JSON_UNQUOTE(${p}) <= ${now})`;
+}
+
+/**
+ * What the triage queue serves: raw items flagged `maybe_done`, oldest capture
+ * first, snoozed ones held back. Oldest first because age is the whole reason
+ * the item is here, and the June rows are the ones most likely already shipped.
+ */
+export async function triageQueue(ownerId: number, limit = 5): Promise<BrainItem[]> {
+  const db = await requireDb();
+  return db
+    .select()
+    .from(brainItems)
+    .where(
+      and(
+        eq(brainItems.ownerId, ownerId),
+        eq(brainItems.state, "raw"),
+        maybeDoneTrue,
+        notSnoozed(isoNow()),
+      ),
+    )
+    .orderBy(asc(brainItems.capturedAt), asc(brainItems.id))
+    .limit(Math.min(Math.max(limit, 1), 20));
+}
+
+/** How many questions the queue still has, snoozed ones excluded. */
+export async function triagePending(ownerId: number): Promise<number> {
+  const db = await requireDb();
+  const [row] = await db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(brainItems)
+    .where(
+      and(
+        eq(brainItems.ownerId, ownerId),
+        eq(brainItems.state, "raw"),
+        maybeDoneTrue,
+        notSnoozed(isoNow()),
+      ),
+    );
+  return Number(row?.n ?? 0);
+}
+
+/**
+ * Every triage key shares the `maybe_done` prefix, and the importer's
+ * `mergeTriageState` preserves exactly that prefix on a re-run. Keep the names
+ * in step or a re-import will resurrect a question Rye already answered.
+ */
+function withAnswer(
+  proposed: Record<string, unknown> | null,
+  answer: TriageAnswer,
+  extra: Record<string, unknown> = {},
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...(proposed ?? {}) };
+  delete next.maybe_done;
+  delete next.maybe_done_snoozed_until;
+  next.maybe_done_answer = answer;
+  next.maybe_done_answered_at = isoNow();
+  return { ...next, ...extra };
+}
+
+/**
+ * Close a raw item as already-finished.
+ *
+ * NOT through `setItemState`: the state machine has no `raw` -> `done` edge, on
+ * purpose, and a test in server/brain-gate.test.ts says so out loud. A live
+ * item earns `done` by going through the gate. This is the same exception the
+ * importer takes for the 529 archived rows, for the same reason: the owner is
+ * saying the work was finished before it was ever filed, which is a fact about
+ * the past, not a move through the pipeline. So it writes the one column pair
+ * directly, refuses every state but `raw`, cannot express `ready`, and files
+ * the `state:done` audit row itself, because `brain.status` counts the week's
+ * closes from exactly that string.
+ */
+async function closeFromRaw(
+  db: Db,
+  ownerId: number,
+  item: BrainItem,
+  proposed: Record<string, unknown>,
+  via: Via,
+): Promise<void> {
+  if (item.state !== "raw") {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: `triage closes raw items; #${item.id} is ${item.state}`,
+    });
+  }
+  await db
+    .update(brainItems)
+    .set({ state: "done", closedBy: TRIAGE_CLOSED_BY, proposed: proposed as never })
+    .where(and(eq(brainItems.id, item.id), eq(brainItems.ownerId, ownerId)));
+  await audit(db, ownerId, item.id, "state:done", { from: item.state, via: "triage" }, via);
+}
+
+/**
+ * The three answers. One audit row each, and the `done` row is `state:done` so
+ * the week's closed-count in `brain.status` sees it.
+ *
+ *   done   -> state done, closed_by rye-triage
+ *   open   -> flag cleared, state untouched; the item goes back to the normal
+ *             queue as an ordinary raw item
+ *   unsure -> flag kept, parked for a week
+ *
+ * Answering is idempotent in the direction that matters: an item already `done`
+ * is returned unchanged rather than closed twice, so a double-tap on Telegram
+ * cannot write a second `state:done` and inflate the metric.
+ */
+export async function answerTriage(
+  ownerId: number,
+  id: number,
+  answer: TriageAnswer,
+  via: Via = "web",
+): Promise<BrainItem> {
+  const db = await requireDb();
+  const item = await loadOwned(db, ownerId, id);
+  const proposed = (item.proposed as Record<string, unknown> | null) ?? null;
+
+  if (answer === "done") {
+    if (item.state === "done") return item;
+    await closeFromRaw(db, ownerId, item, withAnswer(proposed, "done"), via);
+    return loadOwned(db, ownerId, id);
+  }
+
+  const next =
+    answer === "unsure"
+      ? withAnswer(proposed, "unsure", {
+          maybe_done: true,
+          maybe_done_snoozed_until: new Date(
+            Date.now() + TRIAGE_SNOOZE_DAYS * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+        })
+      : withAnswer(proposed, "open");
+
+  await db
+    .update(brainItems)
+    .set({ proposed: next as never })
+    .where(and(eq(brainItems.id, id), eq(brainItems.ownerId, ownerId)));
+  await audit(db, ownerId, id, `triage:${answer}`, { state: item.state }, via);
+  return loadOwned(db, ownerId, id);
+}
+
+// ── The week's metric ────────────────────────────────────────────────────────
+
+/**
+ * A missing table is a deployment state, not a bug: migration 0230 may not be
+ * applied yet on a given environment, and a heartbeat that crashes the page is
+ * worse than one that reports zero.
+ */
+export function isMissingTableError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /ER_NO_SUCH_TABLE|doesn't exist|no such table/i.test(msg);
+}
+
+/**
+ * Monday 00:00 local, so "this week" lines up with the Monday morning message
+ * rather than drifting on a rolling window (addendum 2, item 8).
+ */
+export function startOfWeek(now = new Date()): Date {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // Monday = 0
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export interface WeekMetrics {
+  weekStart: Date;
+  closedThisWeek: number;
+  promotedThisWeek: number;
+}
+
+/**
+ * The month-one metric. Counted from `brain_audit`, not from current state: the
+ * audit records the EVENT, so reopening an item later cannot rewrite the week
+ * in which it was closed. `state:done` is the exact action string every closer
+ * writes, triage included; change it in one place and this silently reads zero.
+ *
+ * Scoped to the owner, which the first version of this query in the router was
+ * not. Single-owner today, wrong the day it is not.
+ */
+export async function weekMetrics(ownerId: number, now = new Date()): Promise<WeekMetrics> {
+  const weekStart = startOfWeek(now);
+  const empty = { weekStart, closedThisWeek: 0, promotedThisWeek: 0 };
+  const db = await requireDb();
+  try {
+    const rows = await db
+      .select({ action: brainAudit.action, n: sql<number>`COUNT(*)` })
+      .from(brainAudit)
+      .where(
+        and(
+          eq(brainAudit.ownerId, ownerId),
+          gte(brainAudit.createdAt, weekStart),
+          inArray(brainAudit.action, ["state:done", "promote"]),
+        ),
+      )
+      .groupBy(brainAudit.action);
+    return {
+      weekStart,
+      closedThisWeek: Number(rows.find((r) => r.action === "state:done")?.n ?? 0),
+      promotedThisWeek: Number(rows.find((r) => r.action === "promote")?.n ?? 0),
+    };
+  } catch (err) {
+    if (!isMissingTableError(err)) throw err;
+    return empty;
+  }
 }
