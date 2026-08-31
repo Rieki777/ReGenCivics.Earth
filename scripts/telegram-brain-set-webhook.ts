@@ -103,6 +103,7 @@ async function main(): Promise<void> {
   const cmds = await api("setMyCommands", {
     commands: [
       { command: "today", description: "What is due, ready, in flight" },
+    { command: "triage", description: "Was this already done? with the screenshot" },
       { command: "start", description: "How to use this bot" },
     ],
   });

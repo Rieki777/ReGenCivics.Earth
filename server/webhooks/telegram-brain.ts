@@ -36,7 +36,7 @@ import { timingSafeEqualStr, recordWebhookFailure, isWebhookFailureBlocked } fro
 import { logger } from "../_core/logger";
 import { getDb } from "../db";
 import { brainTelegramUpdates } from "../../drizzle/schema";
-import { storagePut } from "../storage";
+import { storagePut, storageStream } from "../storage";
 import { transcribe, MAX_AUDIO_BYTES } from "../lib/transcribe";
 import * as items from "../lib/brain-items";
 import { BRAIN_KINDS, BRAIN_STATES } from "../lib/brain-items";
@@ -66,10 +66,24 @@ export interface Deps {
   splitItem: typeof items.splitItem;
   summarizeToday: typeof items.summarizeToday;
   answerTriage: typeof items.answerTriage;
+  triageQueue: typeof items.triageQueue;
   tg: (method: string, payload: Record<string, unknown>) => Promise<unknown>;
   downloadFile: (fileId: string) => Promise<Buffer>;
   transcribe: (buf: Buffer, mime: string) => Promise<string>;
   storagePut: (key: string, buf: Buffer, mime: string) => Promise<unknown>;
+  /** Read a PRIVATE attachment back out of R2. Never a public URL: these keys
+   *  live under harvest/shots/ and harvest/voice/ and must not become links. */
+  storageRead: (key: string) => Promise<Buffer>;
+  /** Multipart sendPhoto. Telegram cannot fetch our private keys, so the bytes
+   *  go up with the request. Returns the file_id Telegram assigns, which is
+   *  reusable and free on any later send. */
+  sendPhoto: (payload: {
+    chat_id: number;
+    photo: Buffer;
+    filename: string;
+    caption: string;
+    reply_markup: unknown;
+  }) => Promise<string | null>;
   rememberUpdate: (updateId: number) => Promise<boolean>;
 }
 
@@ -358,6 +372,10 @@ async function handleCallback(n: Extract<Norm, { type: "callback" }>, d: Deps): 
       // unchanged and writes no second `state:done`, so the week's count cannot
       // be inflated by a fat finger.
       await ack(TRIAGE_ACK[arg]);
+      // Serve the next question so the queue is a loop rather than a lookup.
+      // Answering is the whole point; making him type /triage between each one
+      // is how a 72-item queue stays a 72-item queue.
+      await serveTriage(d, 1);
     } else if (op === "x") {
       pendingSplit.set(d.ownerId, { itemId: id, until: Date.now() + 10 * 60_000 });
       await ack("send the second half");
@@ -374,6 +392,80 @@ async function handleCallback(n: Extract<Norm, { type: "callback" }>, d: Deps): 
   }
 }
 
+/** How many triage cards one `/triage` burst sends. Five is the morning quota. */
+export const TRIAGE_BURST = 3;
+
+/** Telegram rejects a photo send whose caption exceeds this. */
+export const TELEGRAM_CAPTION_MAX = 1024;
+
+/** The caption under a triage card: what it is, when it was said, and where. */
+export function triageCaption(item: {
+  id: number;
+  body: string;
+  capturedAt?: Date | string | null;
+  repo?: string | null;
+}): string {
+  const when = item.capturedAt ? new Date(item.capturedAt).toISOString().slice(0, 10) : "";
+  const where = [when, item.repo].filter(Boolean).join(" · ");
+  const head = `#${item.id}${where ? ` · ${where}` : ""}\nAlready done?\n\n`;
+  const body = item.body.trim().replace(/\s+/g, " ");
+  // Telegram caps a photo caption at 1024 characters and rejects the whole
+  // send if it is over, so measure the head rather than estimating it. A
+  // guess of "about twenty" was one character too generous and the test
+  // caught it at 1025.
+  const room = TELEGRAM_CAPTION_MAX - head.length;
+  const shown = body.length > room ? `${body.slice(0, Math.max(0, room - 3))}...` : body;
+  return head + shown;
+}
+
+/**
+ * One triage question, as its own message so its keyboard belongs to it alone.
+ *
+ * With a screenshot it goes as a photo card, because 15 of the flagged items
+ * say things like "Replace this one" and are answerable only by looking. The
+ * bytes are uploaded rather than linked: these keys are private, and handing
+ * Telegram a URL would mean publishing them.
+ *
+ * A photo that cannot be read or sent degrades to the text card rather than
+ * dropping the question. Losing the picture costs Rye a trip to the web UI;
+ * dropping the item costs him the item.
+ */
+export async function sendTriageCard(item: items.BrainItem, d: Deps): Promise<void> {
+  const keys = (item.attachments as string[] | null) ?? [];
+  const caption = triageCaption(item);
+  const keyboard = triageKeyboardFor(item);
+
+  if (keys.length > 0) {
+    try {
+      const buf = await d.storageRead(keys[0]!);
+      await d.sendPhoto({
+        chat_id: d.ownerId,
+        photo: buf,
+        filename: `item-${item.id}.jpg`,
+        caption,
+        reply_markup: keyboard,
+      });
+      return;
+    } catch (err) {
+      log.warn(`triage photo failed item=${item.id}: ${safeErr(err)}`);
+    }
+  }
+  await d.tg("sendMessage", {
+    chat_id: d.ownerId,
+    text: keys.length ? `${caption}
+
+(screenshot did not send; open it on the web)` : caption,
+    reply_markup: keyboard,
+  });
+}
+
+/** Serve the next `limit` questions, one message each. Returns how many went. */
+export async function serveTriage(d: Deps, limit = TRIAGE_BURST): Promise<number> {
+  const queue = await d.triageQueue(d.ownerId, limit);
+  for (const item of queue) await sendTriageCard(item, d);
+  return queue.length;
+}
+
 export async function handleTelegramUpdate(u: unknown, d: Deps): Promise<void> {
   const n = normalizeUpdate(u, d.ownerId);
   if (!n) return;
@@ -386,10 +478,18 @@ export async function handleTelegramUpdate(u: unknown, d: Deps): Promise<void> {
     if (n.command === "/today") {
       const t = await d.summarizeToday(d.ownerId);
       await d.tg("sendMessage", { chat_id, text: todayText(t) });
+    } else if (n.command === "/triage") {
+      const sent = await serveTriage(d);
+      if (sent === 0) {
+        await d.tg("sendMessage", { chat_id, text: "Nothing waiting. The probably-done queue is empty." });
+      }
     } else {
       await d.tg("sendMessage", {
         chat_id,
-        text: "Talk, send a voice note, a screenshot, or forward anything. I file it and give you buttons. /today for the summary.",
+        text:
+          "Talk, send a voice note, a screenshot, or forward anything. I file it and give you buttons." +
+          "\n\n/today   what is due, ready and in flight" +
+          "\n/triage  the next few was-this-already-done questions, screenshot included",
       });
     }
     return;
@@ -584,10 +684,13 @@ export function liveDeps(): Deps {
     splitItem: items.splitItem,
     summarizeToday: items.summarizeToday,
     answerTriage: items.answerTriage,
+    triageQueue: items.triageQueue,
     tg: tgClient(ENV.telegramBrainBotToken),
     downloadFile: fileDownloader(ENV.telegramBrainBotToken),
     transcribe,
     storagePut,
+    storageRead: storageReadBuffer,
+    sendPhoto: photoSender(ENV.telegramBrainBotToken),
     rememberUpdate,
   };
 }
@@ -618,6 +721,60 @@ export async function notifyOwner(text: string, replyMarkup?: Record<string, unk
     log.error(`notifyOwner failed: ${safeErr(err)}`);
     return false;
   }
+}
+
+/** Read a private attachment out of R2 into memory for upload to Telegram. */
+async function storageReadBuffer(key: string): Promise<Buffer> {
+  const { body } = await storageStream(key);
+  const chunks: Buffer[] = [];
+  for await (const chunk of body) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
+
+/**
+ * sendPhoto as multipart. Telegram will happily fetch a URL instead, but ours
+ * are private R2 keys behind auth: handing over a link would either fail or,
+ * worse, publish the screenshot. So the bytes go up with the request.
+ */
+function photoSender(token: string) {
+  return async (payload: {
+    chat_id: number;
+    photo: Buffer;
+    filename: string;
+    caption: string;
+    reply_markup: unknown;
+  }): Promise<string | null> => {
+    const form = new FormData();
+    form.append("chat_id", String(payload.chat_id));
+    form.append("caption", payload.caption);
+    form.append("reply_markup", JSON.stringify(payload.reply_markup));
+    form.append(
+      "photo",
+      new Blob([new Uint8Array(payload.photo)], { type: "image/jpeg" }),
+      payload.filename,
+    );
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30_000);
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        body: form,
+        signal: ctrl.signal,
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        result?: { photo?: Array<{ file_id?: string }> };
+      };
+      if (!res.ok || !json.ok) {
+        log.warn(`telegram sendPhoto -> ${res.status}`);
+        throw new Error(`sendPhoto ${res.status}`);
+      }
+      const sizes = json.result?.photo ?? [];
+      return sizes.length ? (sizes[sizes.length - 1]!.file_id ?? null) : null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 }
 
 export function registerTelegramBrainRoutes(app: Express) {

@@ -25,6 +25,9 @@ import { createServer, type Server } from "node:http";
 import {
   handleTelegramUpdate,
   isSingleItemKeyboard,
+  sendTriageCard,
+  triageCaption,
+  serveTriage,
   keyboardFor,
   normalizeUpdate,
   triageKeyboardFor,
@@ -80,6 +83,15 @@ function deps(over: Partial<Deps> = {}): Deps & { calls: string[] } {
     downloadFile: vi.fn(async () => Buffer.from("ogg")),
     transcribe: vi.fn(async () => "this is a voice note"),
     storagePut: vi.fn(async () => undefined),
+    triageQueue: vi.fn(async () => []) as any,
+    storageRead: vi.fn(async (key: string) => {
+      calls.push("read:" + key);
+      return Buffer.from("jpegbytes");
+    }) as any,
+    sendPhoto: vi.fn(async (p: any) => {
+      calls.push(`photo:${p.chat_id}:${p.filename}:${String(p.caption).slice(0, 40)}`);
+      return "tg-file-id";
+    }) as any,
     rememberUpdate: vi.fn(async () => true), // true = first time seen
     calls,
     ...over,
@@ -644,5 +656,85 @@ describe("keyboardFor Done button", () => {
 
   it("does not offer Done on an item that is already done", () => {
     expect(JSON.stringify(keyboardFor({ ...base, state: "done" } as never))).not.toContain("s:5:done");
+  });
+});
+
+describe("triage cards with screenshots", () => {
+  const withShot = (over: Record<string, unknown> = {}) => ({
+    id: 366, body: "Replace this one", attachments: ["harvest/shots/1/366/photo_9.jpg"],
+    capturedAt: new Date("2026-06-19T12:00:00Z"), repo: "regen-civics", ...over,
+  }) as never;
+
+  it("uploads the bytes rather than handing Telegram a link to a private key", async () => {
+    const d = deps();
+    await sendTriageCard(withShot(), d);
+    expect(d.calls).toContain("read:harvest/shots/1/366/photo_9.jpg");
+    expect(d.sendPhoto).toHaveBeenCalledWith(
+      expect.objectContaining({ chat_id: OWNER, filename: "item-366.jpg", photo: expect.any(Buffer) }),
+    );
+    // No sendMessage fallback when the photo went.
+    expect(d.calls.some((c) => c.startsWith("tg:sendMessage"))).toBe(false);
+  });
+
+  it("carries the three triage buttons on the photo itself", async () => {
+    const d = deps();
+    await sendTriageCard(withShot(), d);
+    const arg = (d.sendPhoto as unknown as { mock: { calls: any[][] } }).mock.calls[0]![0];
+    const kb = JSON.stringify(arg.reply_markup);
+    expect(kb).toContain("t:366:done");
+    expect(kb).toContain("t:366:open");
+    expect(kb).toContain("t:366:unsure");
+  });
+
+  it("falls back to text when the screenshot cannot be read, rather than dropping the question", async () => {
+    const d = deps({ storageRead: vi.fn(async () => { throw new Error("r2 down"); }) as never });
+    await sendTriageCard(withShot(), d);
+    expect(d.sendPhoto).not.toHaveBeenCalled();
+    const sent = d.calls.find((c) => c.startsWith("tg:sendMessage"));
+    expect(sent).toBeTruthy();
+    expect(sent).toContain("#366");
+  });
+
+  it("falls back to text when sendPhoto itself fails", async () => {
+    const d = deps({ sendPhoto: vi.fn(async () => { throw new Error("413"); }) as never });
+    await sendTriageCard(withShot(), d);
+    expect(d.calls.some((c) => c.startsWith("tg:sendMessage"))).toBe(true);
+  });
+
+  it("sends a plain card for an item with no screenshot", async () => {
+    const d = deps();
+    await sendTriageCard(withShot({ attachments: [] }), d);
+    expect(d.sendPhoto).not.toHaveBeenCalled();
+    expect(d.calls.some((c) => c.startsWith("tg:sendMessage"))).toBe(true);
+  });
+
+  it("serves one message per question, so each keyboard owns its own item", async () => {
+    const q = [withShot({ id: 1 }), withShot({ id: 2 }), withShot({ id: 3 })];
+    const d = deps({ triageQueue: vi.fn(async () => q) as never });
+    const n = await serveTriage(d, 3);
+    expect(n).toBe(3);
+    expect(d.sendPhoto).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("triageCaption", () => {
+  it("leads with the id and the question, then the body", () => {
+    const c = triageCaption({ id: 42, body: "Replace this one", capturedAt: new Date("2026-06-19T12:00:00Z"), repo: "regen-civics" });
+    expect(c).toContain("#42");
+    expect(c).toContain("2026-06-19");
+    expect(c).toContain("regen-civics");
+    expect(c).toContain("Already done?");
+    expect(c).toContain("Replace this one");
+  });
+
+  it("stays inside Telegram's 1024-character caption cap", () => {
+    const c = triageCaption({ id: 1, body: "x".repeat(4000), capturedAt: new Date("2026-06-19T12:00:00Z"), repo: "regen-civics" });
+    expect(c.length).toBeLessThanOrEqual(1024);
+    expect(c.endsWith("...")).toBe(true);
+  });
+
+  it("collapses the whitespace a dictated note arrives with", () => {
+    const c = triageCaption({ id: 1, body: "one\n\n   two", capturedAt: null, repo: null });
+    expect(c).toContain("one two");
   });
 });
