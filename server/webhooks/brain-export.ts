@@ -160,15 +160,20 @@ export function parseExportQuery(query: Record<string, unknown>): { ok: true; va
 }
 
 /**
- * Timestamps come back from mysql2 as a Date built from the stored WALL CLOCK
- * in the Node process's local timezone, so the ISO string carries that
- * process's offset, not necessarily the column's UTC value. Measured
- * 2026-08-30: row 1's stored `2026-08-30 22:26:19` serialises to
- * `2026-08-31T05:26:19.000Z` on a UTC-7 laptop. This is how every timestamp
- * this app returns over JSON already behaves (see harvest-bridge's
- * `created_at`), and it round-trips: a value handed back in `since` is bound
- * the same way it was read, so the cursor is exact either way. Do not "fix" it
- * here alone; that would desynchronise this route from the rest of the API.
+ * These ISO strings are the mirror's idempotency key (`id@updated_at`), so
+ * they have to mean the same thing in every process that ever calls this
+ * route. They do: drizzle's timestamp mapping reads the column as UTC
+ * (`new Date(value + "+0000")`), so `toISOString()` returns the stored wall
+ * clock whatever the server's timezone is.
+ *
+ * Worth stating because raw mysql2 does NOT behave this way. Its default
+ * `timezone: "local"` builds the Date from the process's own offset, so a
+ * hand-rolled query on a UTC-7 laptop reads row 1 as
+ * `2026-08-31T05:26:19.000Z` where this route reads `2026-08-30T22:26:19Z`,
+ * which is what the database actually stores. Measured both ways
+ * 2026-08-30, and pinned in server/brain-export.test.ts. Do not "simplify"
+ * the read path onto the raw driver; the keys would shift with the timezone
+ * and a mirror seeded before the shift would duplicate wholesale after it.
  */
 function toIso(value: unknown): string | null {
   if (value === null || value === undefined) return null;

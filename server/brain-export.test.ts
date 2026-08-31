@@ -421,6 +421,24 @@ describe("serializeItem", () => {
     expect(item.title).toBeNull();
     expect(item.updated_at).toBeNull();
   });
+
+  /**
+   * The exported `updated_at` is half of the mirror's idempotency key, so it
+   * has to mean the same thing in every process that calls the route. Drizzle
+   * reads the column as UTC rather than through mysql2's default
+   * `timezone: "local"`, which is what makes that true. If someone swaps this
+   * read onto the raw driver, the keys start moving with the server's
+   * timezone and a mirror seeded before the move duplicates wholesale after
+   * it. This pins the mapping, not the wiring.
+   */
+  it("reads a stored timestamp as UTC, so the key does not move with the server", () => {
+    const column = getTableColumns(brainItems).updatedAt as unknown as {
+      mapFromDriverValue: (v: string) => Date;
+    };
+    const mapped = column.mapFromDriverValue("2026-08-30 22:26:19");
+    expect(mapped.toISOString()).toBe("2026-08-30T22:26:19.000Z");
+    expect(serializeItem({ updatedAt: mapped }).updated_at).toBe("2026-08-30T22:26:19.000Z");
+  });
 });
 
 describe("parseExportQuery", () => {
