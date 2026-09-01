@@ -398,7 +398,17 @@ export function serveStatic(app: Express) {
     const learnSlugMatch = reqPath.match(/^\/learn\/(.+)$/);
     const unknownLearnSlug =
       learnSlugMatch !== null && !LEARN_SLUGS.includes(learnSlugMatch[1]);
-    const unknownRoute = !matchesAppRoute(reqPath);
+    // A church route is a real route, on the church host.
+    //
+    // matchesAppRoute reads the HUB's route table, and /faith, /elders and the
+    // rest are not in it, so six of the seven church pages answered 404 while
+    // serving perfectly correct church content. A soft 404 is worse than a
+    // wrong page: search engines drop 404s from the index outright, so the
+    // whole point of server-rendering the church was defeated by the status
+    // line. Measured on production after it shipped, and invisible in the diff
+    // because this code was never touched by the change that caused it.
+    const coreRoute = isCoreHost(_req.headers.host) && getCorePageContent(reqPath) !== null;
+    const unknownRoute = !coreRoute && !matchesAppRoute(reqPath);
     const isNotFound = unknownRoute || unknownLearnSlug;
 
     // A page that does not exist must not nominate itself as canonical.
