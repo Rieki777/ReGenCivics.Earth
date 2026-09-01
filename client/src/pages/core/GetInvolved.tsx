@@ -53,7 +53,7 @@ export default function GetInvolved() {
               <div>
                 <h3>Take up your first quest</h3>
                 <p>Our practices take the form of quests: land connection, food growing, community care, and more. Each one is a step of the path and a way to root yourself in the work.</p>
-                <p style={{ marginTop: 8 }}><a href="https://regencivics.earth/quests">Explore quests</a></p>
+                <p style={{ marginTop: 8 }}><a href="https://regencivics.earth/quest">Explore quests</a></p>
               </div>
             </div>
             <div className="step">
