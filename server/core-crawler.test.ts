@@ -57,6 +57,23 @@ describe("core-crawler: which institution the server thinks it is serving", () =
     expect(getCorePageContent("/faith?utm_source=x")).not.toBeNull();
   });
 
+  it("every church route is one the hub route table does NOT know", async () => {
+    // This is why the 404 happened. matchesAppRoute reads the HUB's table, so
+    // six of seven church pages answered 404 while serving correct church
+    // content. A soft 404 is worse than a wrong page: search engines drop 404s
+    // from the index, which defeated the whole point of rendering the church.
+    // The status now consults getCorePageContent as well, and this test pins
+    // the premise: these paths are real on the church host and absent from the
+    // hub's table, so BOTH checks are required.
+    const { matchesAppRoute } = await import("@shared/appRoutes");
+    for (const path of Object.keys(CORE_PAGES)) {
+      expect(getCorePageContent(path), path + " must be a real church route").not.toBeNull();
+      if (path !== "/") {
+        expect(matchesAppRoute(path), path + " is not a hub route, which is the trap").toBe(false);
+      }
+    }
+  });
+
   it("gives the Fund no structured data and no mention", () => {
     // Rye's entity model, 2026-08-30: the Fund has no legal entity, so it gets
     // no schema. An unformed entity has no schema. The church is not the fund
