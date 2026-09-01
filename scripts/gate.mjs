@@ -111,6 +111,14 @@ if (existsSync(TOUCH_AUDIT)) {
 // line above.
 run("gate 1d: fund claims", process.execPath, ["scripts/check-fund-claims.mjs"]);
 
+// Gate 1e: every address this hub publishes has something that answers it.
+// Amora forks POSTed to hub.regencivics.earth/api/feedback/ingest every fifteen
+// minutes and nothing here ever listened: no handler for the path, and no DNS
+// record for the host, so it was never even a 404. Nothing checked that an
+// address we publish is an address we answer. Anything the checker cannot
+// decide is printed and counted rather than dropped.
+run("gate 1e: advertised endpoints", process.execPath, ["scripts/check-advertised-endpoints.mjs"]);
+
 // Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
