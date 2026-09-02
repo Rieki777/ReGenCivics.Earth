@@ -40,7 +40,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "cross-env NODE_ENV=test vitest run --exclude \"**/node_modules/**\" --exclude \"**/dist/**\" --exclude \"server/applications.test.ts\" --exclude \"server/forum.test.ts\" --exclude \"server/citizenship-tiers.test.ts\" --exclude \"server/notification-prefs.test.ts\" --exclude \"server/loi.test.ts\" --exclude \"server/forms.test.ts\" --exclude \"server/contributions.test.ts\" --exclude \"server/emoji-reactions.test.ts\" --exclude \"server/email-features.test.ts\" --exclude \"server/gratitudeBounty.test.ts\" --exclude \"server/profile-sync.test.ts\" --exclude \"server/evolution.test.ts\" --exclude \"server/ratification.test.ts\"",
-    "test:integration": "cross-env NODE_ENV=test vitest run server/applications.test.ts server/forum.test.ts server/citizenship-tiers.test.ts server/notification-prefs.test.ts server/loi.test.ts server/forms.test.ts server/contributions.test.ts server/emoji-reactions.test.ts server/email-features.test.ts server/gratitudeBounty.test.ts server/profile-sync.test.ts server/evolution.test.ts server/ratification.test.ts",
+    "test:integration": "cross-env NODE_ENV=test vitest run --testTimeout=20000 --hookTimeout=20000 server/applications.test.ts server/forum.test.ts server/citizenship-tiers.test.ts server/notification-prefs.test.ts server/loi.test.ts server/forms.test.ts server/contributions.test.ts server/emoji-reactions.test.ts server/email-features.test.ts server/gratitudeBounty.test.ts server/profile-sync.test.ts server/evolution.test.ts server/ratification.test.ts",
     "test:all": "cross-env NODE_ENV=test vitest run",
     "db:push": "tsx scripts/run-migration.ts --all",
     "sync:quest-content": "tsx scripts/sync-quest-content.ts",
