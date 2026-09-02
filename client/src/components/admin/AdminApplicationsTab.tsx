@@ -28,6 +28,7 @@ import { trpc } from "@/lib/trpc";
 import { BulkActionBar } from "./BulkActionBar";
 import { ApplicationTimeline } from "./ApplicationTimeline";
 import { ImpactDataPanel } from "./ImpactDataPanel";
+import { ADMIN_SEASON_CHIP, adminStatusChipClass } from "@/lib/adminContrast";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -306,12 +307,9 @@ export function AdminApplicationsTab({
                             <p className="text-sm text-[#1a472a]/80">{app.location}</p>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {app.season != null && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs bg-[#f0ebe3] border-[#1a472a]/20 text-[#1a472a]"
-                                >
+                                <span className={ADMIN_SEASON_CHIP}>
                                   Season {app.season}
-                                </Badge>
+                                </span>
                               )}
                               {app.projectSizeHectares && (
                                 <Badge
@@ -331,21 +329,11 @@ export function AdminApplicationsTab({
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          <Badge
-                            className={
-                              app.status === "submitted"
-                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                : app.status === "under_review"
-                                ? "bg-blue-100 text-blue-800 border-blue-200"
-                                : app.status === "approved"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : app.status === "rejected"
-                                ? "bg-red-100 text-red-800 border-red-200"
-                                : "bg-gray-100 text-gray-700 border-gray-200"
-                            }
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(app.status)}`}
                           >
                             {app.status?.replace(/_/g, " ")}
-                          </Badge>
+                          </span>
                           <span
                             className={`text-xs px-1.5 py-0.5 rounded border font-medium ${ageApp.bg} ${ageApp.color}`}
                           >
@@ -356,17 +344,17 @@ export function AdminApplicationsTab({
                       </div>
                     </div>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-                    <SheetHeader>
+                  <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col h-full overflow-hidden bg-[#f8f5f0] text-[#1a472a]">
+                    <SheetHeader className="shrink-0 px-6 pt-6">
                       <SheetTitle
                         className="text-[#1a472a]"
                         style={{ fontFamily: "var(--font-display)" }}
                       >
                         {app.projectName}
                       </SheetTitle>
-                      <SheetDescription>{app.location}</SheetDescription>
+                      <SheetDescription className="text-[#1a472a]/80">{app.location}</SheetDescription>
                     </SheetHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-6 py-4">
                       {app.vision && (
                         <div>
                           <Label className="text-sm font-semibold text-[#1a472a]">Vision</Label>
@@ -423,7 +411,7 @@ export function AdminApplicationsTab({
                       <ContactTagsPanel contactType="project_application" contactId={app.id} />
                       <ReminderPanel contactType="project_application" contactId={app.id} />
                     </div>
-                    <SheetFooter className="flex-col gap-2">
+                    <SheetFooter className="shrink-0 border-t border-[#1a472a]/10 px-6 py-4 flex-col gap-2 bg-[#f8f5f0]">
                       <AssigneeSelect contactType="project_application" contactId={app.id} />
                       <div className="flex flex-col sm:flex-row gap-2">
                         <EmailTemplateSelector

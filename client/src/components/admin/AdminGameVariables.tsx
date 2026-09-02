@@ -55,7 +55,7 @@ export function AdminGameVariables() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search variables..."
-              className="pl-9 bg-white/5 border-white/10 text-white text-sm"
+              className="pl-9 bg-white/10 border-white/25 text-white placeholder:text-white/70 text-sm"
             />
           </div>
           <select
@@ -96,7 +96,7 @@ export function AdminGameVariables() {
                     <Input
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      className="w-24 h-7 text-sm bg-white/10 border-white/20 text-white"
+                      className="w-24 h-7 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/70"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {

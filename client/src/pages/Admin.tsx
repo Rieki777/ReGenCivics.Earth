@@ -67,6 +67,7 @@ import { Link } from "wouter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { toast } from "sonner";
 import { EmailTemplateSelector, emailTemplates } from "@/components/EmailTemplateSelector";
+import { formatClaimant } from "@/lib/adminContrast";
 import { AdminAnalytics } from "@/components/AdminAnalytics";
 import { EmailSettings } from "@/components/EmailSettings";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
@@ -273,17 +274,17 @@ function AdminCustomGameWaitlist() {
   );
 
   const STATUS_COLORS: Record<string, string> = {
-    waitlist: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    intro_scheduled: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    in_progress: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    declined: "bg-red-500/20 text-red-300 border-red-500/30",
-    completed: "bg-green-500/20 text-green-300 border-green-500/30",
+    waitlist: "bg-[#1a3a5c] text-[#f8f5f0] border-[#1a3a5c]",
+    intro_scheduled: "bg-[#6b3f12] text-[#f8f5f0] border-[#6b3f12]",
+    in_progress: "bg-[#3d2a5c] text-[#f8f5f0] border-[#3d2a5c]",
+    declined: "bg-[#8b1e1e] text-[#f8f5f0] border-[#8b1e1e]",
+    completed: "bg-[#1a472a] text-[#f8f5f0] border-[#1a472a]",
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Custom Game Waitlist</h2>
+        <h2 className="text-lg font-bold text-[#1a472a]">Custom Game Waitlist</h2>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -299,56 +300,56 @@ function AdminCustomGameWaitlist() {
       </div>
 
       {!filtered.length && (
-        <p className="text-white/75 text-sm py-8 text-center">No submissions yet.</p>
+        <p className="text-[#1a472a]/75 text-sm py-8 text-center">No submissions yet.</p>
       )}
 
       <div className="space-y-3">
         {filtered.map((inq: any) => (
           <div
             key={inq.id}
-            className="bg-white/5 border border-white/10 rounded-xl overflow-hidden"
+            className="bg-white border border-[#1a472a]/15 rounded-xl overflow-hidden"
           >
             <div
-              className="p-4 cursor-pointer hover:bg-white/8 transition-colors"
+              className="p-4 cursor-pointer hover:bg-[#f0ebe3]/60 transition-colors"
               onClick={() => setExpanded(expanded === inq.id ? null : inq.id)}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white text-sm">{inq.fullName}</p>
-                  <a href={`mailto:${inq.email}`} className="text-[#7dd87d] text-xs hover:underline">{inq.email}</a>
-                  <p className="text-white/80 text-sm mt-0.5">{inq.projectName}{inq.websiteOrSocial && <a href={inq.websiteOrSocial} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#7dd87d] hover:underline text-xs">↗ site</a>}</p>
+                  <p className="font-semibold text-[#1a472a] text-sm">{inq.fullName}</p>
+                  <a href={`mailto:${inq.email}`} className="text-[#1a472a] text-xs underline">{inq.email}</a>
+                  <p className="text-[#1a472a]/80 text-sm mt-0.5">{inq.projectName}{inq.websiteOrSocial && <a href={inq.websiteOrSocial} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#1a472a] underline text-xs">↗ site</a>}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[inq.status] ?? "bg-white/10 text-white/60 border-white/10"}`}>
                     {inq.status}
                   </span>
-                  <span className="text-white/80 text-sm">{inq.timeline}</span>
+                  <span className="text-[#1a472a]/80 text-sm">{inq.timeline}</span>
                   {inq.budgetConfirmed ? <span className="text-green-400 text-xs">✓ Budget</span> : <span className="text-red-400 text-xs">✗ Budget</span>}
                 </div>
               </div>
 
               {expanded === inq.id && (
-                <div className="mt-4 space-y-3 border-t border-white/10 pt-3">
+                <div className="mt-4 space-y-3 border-t border-[#1a472a]/10 pt-3">
                   <div>
-                    <p className="text-white/75 text-sm font-medium mb-1">Land Status</p>
-                    <p className="text-white/90 text-sm">{inq.landStatus}</p>
+                    <p className="text-[#1a472a]/80 text-sm font-medium mb-1">Land Status</p>
+                    <p className="text-[#1a472a] text-sm">{inq.landStatus}</p>
                   </div>
                   <div>
-                    <p className="text-white/75 text-sm font-medium mb-1">Community Stage</p>
-                    <p className="text-white/90 text-sm">{inq.communityStage}</p>
+                    <p className="text-[#1a472a]/80 text-sm font-medium mb-1">Community Stage</p>
+                    <p className="text-[#1a472a] text-sm">{inq.communityStage}</p>
                   </div>
                   <div>
-                    <p className="text-white/75 text-sm font-medium mb-1">Primary Goal</p>
-                    <p className="text-white/90 text-sm leading-relaxed">{inq.primaryGoal}</p>
+                    <p className="text-[#1a472a]/80 text-sm font-medium mb-1">Primary Goal</p>
+                    <p className="text-[#1a472a] text-sm leading-relaxed">{inq.primaryGoal}</p>
                   </div>
                   {inq.additionalNotes && (
                     <div>
-                      <p className="text-white/75 text-sm font-medium mb-1">Additional Notes</p>
-                      <p className="text-white/90 text-sm">{inq.additionalNotes}</p>
+                      <p className="text-[#1a472a]/80 text-sm font-medium mb-1">Additional Notes</p>
+                      <p className="text-[#1a472a] text-sm">{inq.additionalNotes}</p>
                     </div>
                   )}
                   <div className="flex items-center gap-3 pt-2">
-                    <label className="text-white/75 text-sm">Status:</label>
+                    <label className="text-[#1a472a]/80 text-sm">Status:</label>
                     <select
                       value={inq.status}
                       onChange={(e) => updateMut.mutate({ id: inq.id, status: e.target.value })}
@@ -396,12 +397,12 @@ function AdminCustomGameApplications() {
     );
 
   const STATUS_COLORS: Record<string, string> = {
-    draft: "bg-white/10 text-white/60 border-white/10",
-    submitted: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    reviewing: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    in_conversation: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    accepted: "bg-green-500/20 text-green-300 border-green-500/30",
-    declined: "bg-red-500/20 text-red-300 border-red-500/30",
+    draft: "bg-[#3d4a3d] text-[#f8f5f0] border-[#3d4a3d]",
+    submitted: "bg-[#1a3a5c] text-[#f8f5f0] border-[#1a3a5c]",
+    reviewing: "bg-[#6b3f12] text-[#f8f5f0] border-[#6b3f12]",
+    in_conversation: "bg-[#3d2a5c] text-[#f8f5f0] border-[#3d2a5c]",
+    accepted: "bg-[#1a472a] text-[#f8f5f0] border-[#1a472a]",
+    declined: "bg-[#8b1e1e] text-[#f8f5f0] border-[#8b1e1e]",
   };
 
   const STATUS_OPTIONS = [
@@ -414,7 +415,7 @@ function AdminCustomGameApplications() {
   ];
 
   const scoreColor = (score: number) =>
-    score >= 70 ? "text-green-400" : score >= 40 ? "text-amber-300" : "text-white/60";
+    score >= 70 ? "text-[#1a472a]" : score >= 40 ? "text-[#6b3f12]" : "text-[#1a472a]/70";
 
   /** Pull the reviewable facts out of a blueprint draft. */
   const draftSummary = (bp: any): Array<{ label: string; value: string }> => {
@@ -463,7 +464,7 @@ function AdminCustomGameApplications() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-white">Custom Game Applications</h2>
+        <h2 className="text-lg font-bold text-[#1a472a]">Custom Game Applications</h2>
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
@@ -487,82 +488,82 @@ function AdminCustomGameApplications() {
       </div>
 
       {!filtered.length && (
-        <p className="text-white/75 text-sm py-8 text-center">No applications yet.</p>
+        <p className="text-[#1a472a]/75 text-sm py-8 text-center">No applications yet.</p>
       )}
 
       <div className="space-y-3">
         {filtered.map((app: any) => (
           <div
             key={app.id}
-            className="bg-white/5 border border-white/10 rounded-xl overflow-hidden"
+            className="bg-white border border-[#1a472a]/15 rounded-xl overflow-hidden"
           >
             <div
-              className="p-4 cursor-pointer hover:bg-white/8 transition-colors"
+              className="p-4 cursor-pointer hover:bg-[#f0ebe3]/60 transition-colors"
               onClick={() => setExpanded(expanded === app.id ? null : app.id)}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white text-sm">{app.applicantName} <span className="text-white/60 font-normal">({app.applicantRole})</span></p>
-                  <a href={`mailto:${app.applicantEmail}`} onClick={(e) => e.stopPropagation()} className="text-[#7dd87d] text-xs hover:underline">{app.applicantEmail}</a>
-                  <p className="text-white/80 text-sm mt-0.5">{app.projectName}</p>
+                  <p className="font-semibold text-[#1a472a] text-sm">{app.applicantName} <span className="text-[#1a472a]/70 font-normal">({app.applicantRole})</span></p>
+                  <a href={`mailto:${app.applicantEmail}`} onClick={(e) => e.stopPropagation()} className="text-[#1a472a] text-xs underline">{app.applicantEmail}</a>
+                  <p className="text-[#1a472a]/80 text-sm mt-0.5">{app.projectName}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-sm font-bold ${scoreColor(app.score ?? 0)}`}>{app.score ?? 0}/100</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[app.status] ?? "bg-white/10 text-white/60 border-white/10"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[app.status] ?? "bg-[#3d4a3d] text-[#f8f5f0]"}`}>
                     {app.status}
                   </span>
-                  <span className="text-white/60 text-xs">{new Date(app.createdAt).toLocaleDateString()}</span>
+                  <span className="text-[#1a472a]/70 text-xs">{new Date(app.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
               {expanded === app.id && (
-                <div className="mt-4 space-y-4 border-t border-white/10 pt-3" onClick={(e) => e.stopPropagation()}>
+                <div className="mt-4 space-y-4 border-t border-[#1a472a]/10 pt-3" onClick={(e) => e.stopPropagation()}>
                   <div>
-                    <p className="text-white/75 text-sm font-medium mb-2">Blueprint draft</p>
+                    <p className="text-[#1a472a]/80 text-sm font-medium mb-2">Blueprint draft</p>
                     {draftSummary(app.blueprintDraft).length === 0 && (
-                      <p className="text-white/60 text-sm">No draft fields captured.</p>
+                      <p className="text-[#1a472a]/75 text-sm">No draft fields captured.</p>
                     )}
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
                       {draftSummary(app.blueprintDraft).map(({ label, value }) => (
                         <div key={label} className="text-sm">
-                          <span className="text-white/60">{label}: </span>
-                          <span className="text-white/90 break-words">{value}</span>
+                          <span className="text-[#1a472a]/75">{label}: </span>
+                          <span className="text-[#1a472a] break-words">{value}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-white/75 text-sm font-medium mb-2">Sylva transcript</p>
+                    <p className="text-[#1a472a]/80 text-sm font-medium mb-2">Sylva transcript</p>
                     {expandedApp && expandedApp.id === app.id ? (
                       parseTranscript(expandedApp.transcript).length > 0 ? (
-                        <div className="max-h-80 overflow-y-auto space-y-1.5 bg-black/20 border border-white/10 rounded-lg p-3">
+                        <div className="max-h-80 overflow-y-auto space-y-1.5 bg-[#f0ebe3] border border-[#1a472a]/15 rounded-lg p-3">
                           {parseTranscript(expandedApp.transcript).map((t, i) => (
                             <p key={i} className="text-sm leading-relaxed">
-                              <span className={t.role === "assistant" ? "text-[#7dd87d] font-medium" : "text-amber-300 font-medium"}>
+                              <span className={t.role === "assistant" ? "text-[#1a472a] font-medium" : "text-[#6b3f12] font-medium"}>
                                 {t.role === "assistant" ? "Sylva" : "Applicant"}:
                               </span>{" "}
-                              <span className="text-white/85">{t.content}</span>
+                              <span className="text-[#1a472a]">{t.content}</span>
                             </p>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-white/60 text-sm">No conversation; they typed the form.</p>
+                        <p className="text-[#1a472a]/75 text-sm">No conversation; they typed the form.</p>
                       )
                     ) : (
-                      <p className="text-white/60 text-sm">Loading transcript...</p>
+                      <p className="text-[#1a472a]/75 text-sm">Loading transcript...</p>
                     )}
                   </div>
 
                   {app.internalNotes && (
                     <div>
-                      <p className="text-white/75 text-sm font-medium mb-1">Internal notes</p>
-                      <p className="text-white/90 text-sm whitespace-pre-wrap">{app.internalNotes}</p>
+                      <p className="text-[#1a472a]/80 text-sm font-medium mb-1">Internal notes</p>
+                      <p className="text-[#1a472a] text-sm whitespace-pre-wrap">{app.internalNotes}</p>
                     </div>
                   )}
 
                   <div className="flex items-center gap-3 pt-2 flex-wrap">
-                    <label className="text-white/75 text-sm">Status:</label>
+                    <label className="text-[#1a472a]/80 text-sm">Status:</label>
                     <select
                       value={app.status}
                       onChange={(e) => updateMut.mutate({ id: app.id, status: e.target.value as any })}
@@ -574,7 +575,7 @@ function AdminCustomGameApplications() {
                     </select>
                     <a
                       href={`mailto:${app.applicantEmail}?subject=${encodeURIComponent(`Your custom game: ${app.projectName}`)}`}
-                      className="text-[#7dd87d] text-xs hover:underline"
+                      className="text-[#1a472a] text-xs underline"
                     >
                       Email {app.applicantName.split(" ")[0]}
                     </a>
@@ -2780,18 +2781,18 @@ function AdminAMAPanel() {
         <CardDescription>Manage live Ask Me Anything sessions shown in the site banner.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/70" />}
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#1a472a]/70" />}
         {!isLoading && amas && amas.length === 0 && (
-          <p className="text-white/70 text-sm">No AMAs scheduled.</p>
+          <p className="text-[#1a472a]/75 text-sm">No AMAs scheduled.</p>
         )}
         {amas?.map(ama => (
-          <div key={ama.id} className="flex items-start gap-3 p-3 bg-white/4 rounded-xl border border-white/8">
+          <div key={ama.id} className="flex items-start gap-3 p-3 bg-[#f8f5f0] rounded-xl border border-[#1a472a]/15">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-white text-sm">{ama.projectName}</p>
-              <p className="text-white/75 text-xs">{ama.date} at {ama.time} ({ama.timezone})</p>
-              <p className="text-white/70 text-xs">Host: {ama.hostName}</p>
+              <p className="font-semibold text-[#1a472a] text-sm">{ama.projectName}</p>
+              <p className="text-[#1a472a]/80 text-xs">{ama.date} at {ama.time} ({ama.timezone})</p>
+              <p className="text-[#1a472a]/75 text-xs">Host: {ama.hostName}</p>
               {ama.forumThreadUrl && (
-                <a href={ama.forumThreadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7dd87d]/70 hover:text-[#7dd87d] underline">
+                <a href={ama.forumThreadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#1a472a] underline">
                   Forum thread
                 </a>
               )}
@@ -2799,13 +2800,13 @@ function AdminAMAPanel() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => toggleMut.mutate({ id: ama.id, isActive: !ama.isActive })}
-                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#7dd87d] border-[#7dd87d]/25" : "bg-white/5 text-white/70 border-white/15"}`}
+                className={`text-xs px-2 py-1 rounded-full border font-semibold ${ama.isActive ? "bg-[#1a472a] text-[#f8f5f0] border-[#1a472a]" : "bg-[#f0ebe3] text-[#1a472a] border-[#1a472a]/30"}`}
               >
                 {ama.isActive ? "Active" : "Inactive"}
               </button>
               <button
                 onClick={() => { if (confirm("Delete this AMA?")) deleteMut.mutate({ id: ama.id }); }}
-                className="text-white/65 hover:text-red-400 transition-colors"
+                className="text-[#8b1e1e] hover:text-red-700 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -2814,32 +2815,32 @@ function AdminAMAPanel() {
         ))}
 
         {showForm ? (
-          <div className="bg-white/4 border border-white/12 rounded-xl p-4 space-y-3">
-            <p className="text-white/70 text-sm font-semibold">Schedule AMA</p>
+          <div className="bg-[#f8f5f0] border border-[#1a472a]/15 rounded-xl p-4 space-y-3">
+            <p className="text-[#1a472a] text-sm font-semibold">Schedule AMA</p>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-white/60 text-xs">Project Name</Label>
-                <Input value={form.projectName} onChange={e => setForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Amora Costa Rica" className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Project Name</Label>
+                <Input value={form.projectName} onChange={e => setForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Amora Costa Rica" className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
               <div>
-                <Label className="text-white/60 text-xs">Host Name</Label>
-                <Input value={form.hostName} onChange={e => setForm(f => ({ ...f, hostName: e.target.value }))} placeholder="Maria Santos" className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Host Name</Label>
+                <Input value={form.hostName} onChange={e => setForm(f => ({ ...f, hostName: e.target.value }))} placeholder="Maria Santos" className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
               <div>
-                <Label className="text-white/60 text-xs">Date (YYYY-MM-DD)</Label>
-                <Input value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-04-26" className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Date (YYYY-MM-DD)</Label>
+                <Input value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-04-26" className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
               <div>
-                <Label className="text-white/60 text-xs">Time</Label>
-                <Input value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} placeholder="11:00 AM EST" className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Time</Label>
+                <Input value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} placeholder="11:00 AM EST" className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
               <div>
-                <Label className="text-white/60 text-xs">Timezone</Label>
-                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Timezone</Label>
+                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
               <div>
-                <Label className="text-white/60 text-xs">Forum Thread URL (optional)</Label>
-                <Input value={form.forumThreadUrl} onChange={e => setForm(f => ({ ...f, forumThreadUrl: e.target.value }))} placeholder="https://..." className="mt-1" />
+                <Label className="text-[#1a472a] text-xs">Forum Thread URL (optional)</Label>
+                <Input value={form.forumThreadUrl} onChange={e => setForm(f => ({ ...f, forumThreadUrl: e.target.value }))} placeholder="https://..." className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60" />
               </div>
             </div>
             <div className="flex gap-2">
@@ -2899,7 +2900,15 @@ function OrgClaimsAdminPanel() {
             <div key={claim.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0]">
               <div>
                 <p className="font-medium text-[#1a472a] text-sm">{claim.orgName}</p>
-                <p className="text-xs text-[#1a472a]/75">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
+                {(() => {
+                  const who = formatClaimant(claim);
+                  return (
+                    <p className="text-xs text-[#1a472a] font-medium">
+                      {who.primary} · {who.secondary}
+                    </p>
+                  );
+                })()}
+                <p className="text-xs text-[#1a472a]/75">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · org {claim.orgId}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={
@@ -3585,7 +3594,7 @@ function AdminDashboard() {
       <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
       <AdminCommandPalette onSelectTab={setActiveTab} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] text-white py-4 md:py-6">
         <div className="container px-4">
@@ -3689,30 +3698,6 @@ function AdminDashboard() {
               </Link>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* The Harvest: the daily driver. The header chip is easy to miss, so the
-          content pipeline gets a front door you cannot walk past. */}
-      <div className="bg-white border-b border-[#1a472a]/10">
-        <div className="container px-4 py-4">
-          <Link
-            href="/admin-create"
-            className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-5 md:px-7 md:py-6 shadow-sm transition-all hover:from-[#2d5a3d] hover:to-[#4a7c59] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#7dd87d]/40"
-          >
-            <span className="flex-shrink-0 inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 text-[#7dd87d]">
-              <Sprout className="w-6 h-6 md:w-7 md:h-7" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                The Harvest
-              </span>
-              <span className="block text-sm md:text-base text-white/85">
-                Compose, fact-check, and publish. Your content pipeline.
-              </span>
-            </span>
-            <ArrowRight className="hidden sm:block w-6 h-6 flex-shrink-0 text-[#7dd87d] transition-transform group-hover:translate-x-1" />
-          </Link>
         </div>
       </div>
 
@@ -3835,34 +3820,9 @@ function AdminDashboard() {
       {/* The old alert banner is replaced by the richer "Needs you" queue at
           the top of the Overview tab (AdminNeedsYou). */}
       {/* Scrollable main content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
       {/* Stats */}
       <div className="container py-8">
-        {/* Funding Pipeline: the primary way into /admin/funding. The header
-            chip is easy to miss, and this is the surface Rye works from most
-            during a raise, so it gets a full-width card instead of a button in
-            a row of six. White on #1a472a measures 10.6:1. */}
-        <Link href="/admin/funding">
-          <a className="group block mb-6 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/30 p-5 md:p-6 hover:border-[#7dd87d]/70 hover:shadow-xl transition-all">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 border border-[#7dd87d]/40 flex items-center justify-center flex-shrink-0">
-                <Landmark className="w-6 h-6 md:w-7 md:h-7 text-[#7dd87d]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-white">Funding Pipeline</h2>
-                <p className="text-white/85 text-sm md:text-base">
-                  All 117 researched funders, where each application stands, and the positioning generator. Prepare an
-                  application to get a Cowork prompt you can run.
-                </p>
-              </div>
-              <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold px-5 py-3 min-h-11 flex-shrink-0 group-hover:bg-[#a8e6a8] transition-colors">
-                Open
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </div>
-          </a>
-        </Link>
-
         {/* The clickable KPI row inside the Overview tab is the single stat
             surface now; the old duplicate summary cards were removed. */}
 

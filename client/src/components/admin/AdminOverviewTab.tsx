@@ -12,7 +12,10 @@ import {
   Sprout,
   BarChart2,
   Coins,
+  Landmark,
+  ArrowRight,
 } from "lucide-react";
+import { Link } from "wouter";
 import { ActivitySparkline } from "./ActivitySparkline";
 import { AdminGovernancePanel } from "./AdminGovernancePanel";
 import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
@@ -71,6 +74,45 @@ export function AdminOverviewTab({
 }: Props) {
   return (
     <div className="space-y-6">
+      <Link
+        href="/admin-create"
+        className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-5 md:px-7 md:py-6 shadow-sm transition-all hover:from-[#2d5a3d] hover:to-[#4a7c59] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#7dd87d]/40"
+      >
+        <span className="flex-shrink-0 inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 text-[#7dd87d]">
+          <Sprout className="w-6 h-6 md:w-7 md:h-7" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+            The Harvest
+          </span>
+          <span className="block text-sm md:text-base text-white/85">
+            Compose, fact-check, and publish. Your content pipeline.
+          </span>
+        </span>
+        <ArrowRight className="hidden sm:block w-6 h-6 flex-shrink-0 text-[#7dd87d] transition-transform group-hover:translate-x-1" />
+      </Link>
+
+      <Link
+        href="/admin/funding"
+        className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/30 px-5 py-5 md:px-7 md:py-6 hover:border-[#7dd87d]/70 hover:shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-[#7dd87d]/40"
+      >
+        <span className="flex-shrink-0 inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d]">
+          <Landmark className="w-6 h-6 md:w-7 md:h-7" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+            Funding Pipeline
+          </span>
+          <span className="block text-sm md:text-base text-white/85">
+            All 117 researched funders, where each application stands, and the positioning generator. Prepare an application to get a Cowork prompt you can run.
+          </span>
+        </span>
+        <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold px-5 py-3 min-h-11 flex-shrink-0 group-hover:bg-[#a8e6a8] transition-colors">
+          Open
+          <ArrowRight className="w-4 h-4" />
+        </span>
+      </Link>
+
       {/* One prioritized action queue: what is waiting on the operator, first. */}
       <AdminNeedsYou onSelectTab={setActiveTab} />
 
@@ -347,7 +389,7 @@ export function AdminOverviewTab({
             <Sparkles className="w-5 h-5 text-[#7dd87d]" />
             Impact Stats (All Projects Applied)
           </CardTitle>
-          <CardDescription className="text-white/60">
+          <CardDescription className="text-white/85">
             Aggregate data from all land project applications
           </CardDescription>
         </CardHeader>

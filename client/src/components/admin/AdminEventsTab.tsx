@@ -138,8 +138,8 @@ export function AdminEventsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Events</h2>
-          <p className="text-sm text-white/70">Manage schedule events. Events appear on the Schedule page automatically.</p>
+          <h2 className="text-xl font-bold text-[#1a472a]">Events</h2>
+          <p className="text-sm text-[#1a472a]/80">Manage schedule events. Events appear on the Schedule page automatically.</p>
         </div>
         <Button onClick={() => { setShowCreate(true); setEditingId(null); setFormData(defaultForm); }}
           className="bg-green-600 hover:bg-green-700 text-white">
@@ -158,17 +158,17 @@ export function AdminEventsTab() {
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">Title *</Label>
                 <Input value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Week 1: Selection Day" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="Week 1: Selection Day" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">Description</Label>
                 <Textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                  rows={3} placeholder="What will this session cover?" className="bg-white/5 border-white/20 text-white mt-1 resize-none" />
+                  rows={3} placeholder="What will this session cover?" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1 resize-none" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Type</Label>
                 <Select value={formData.type} onValueChange={v => setFormData(f => ({ ...f, type: v as any }))}>
-                  <SelectTrigger className="bg-white/5 border-white/20 text-white mt-1">
+                  <SelectTrigger className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -181,47 +181,47 @@ export function AdminEventsTab() {
               <div>
                 <Label className="text-white/70 text-xs">Timezone display (e.g., EDT)</Label>
                 <Input value={formData.timezone} onChange={e => setFormData(f => ({ ...f, timezone: e.target.value }))}
-                  placeholder="EDT" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="EDT" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Start Time (local, stored as UTC)</Label>
                 <Input type="datetime-local" value={formData.startTime} onChange={e => setFormData(f => ({ ...f, startTime: e.target.value }))}
-                  className="bg-white/5 border-white/20 text-white mt-1" />
+                  className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">End Time (optional)</Label>
                 <Input type="datetime-local" value={formData.endTime} onChange={e => setFormData(f => ({ ...f, endTime: e.target.value }))}
-                  className="bg-white/5 border-white/20 text-white mt-1" />
+                  className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Season (e.g., Season 2)</Label>
                 <Input value={formData.season} onChange={e => setFormData(f => ({ ...f, season: e.target.value }))}
-                  placeholder="Season 2" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="Season 2" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Episode Number</Label>
                 <Input type="number" value={formData.episodeNumber} onChange={e => setFormData(f => ({ ...f, episodeNumber: e.target.value }))}
-                  placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="1" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/70 font-normal">(leave blank for unlimited)</span></Label>
                 <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
-                  placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Riverside Room URL <span className="text-purple-400 font-normal">(primary join link)</span></Label>
                 <Input value={formData.riversideRoomUrl} onChange={e => setFormData(f => ({ ...f, riversideRoomUrl: e.target.value }))}
-                  placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="https://riverside.fm/studio/..." className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/70 font-normal">(fallback, only shown if no Riverside)</span></Label>
                 <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
-                  placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="https://us06web.zoom.us/..." className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
                 <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
-                  placeholder="https://youtube.com/live/..." className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="https://youtube.com/live/..." className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               {/* #25. Guest Speaker Fields */}
               <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
@@ -230,17 +230,17 @@ export function AdminEventsTab() {
               <div>
                 <Label className="text-white/70 text-xs">Speaker Name</Label>
                 <Input value={formData.guestSpeakerName} onChange={e => setFormData(f => ({ ...f, guestSpeakerName: e.target.value }))}
-                  placeholder="Jane Doe" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="Jane Doe" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Speaker Topic</Label>
                 <Input value={formData.guestSpeakerTopic} onChange={e => setFormData(f => ({ ...f, guestSpeakerTopic: e.target.value }))}
-                  placeholder="Regenerative land economics" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="Regenerative land economics" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">Speaker Bio</Label>
                 <Textarea value={formData.guestSpeakerBio} onChange={e => setFormData(f => ({ ...f, guestSpeakerBio: e.target.value }))}
-                  rows={2} placeholder="Brief bio for the introduction email" className="bg-white/5 border-white/20 text-white mt-1 resize-none" />
+                  rows={2} placeholder="Brief bio for the introduction email" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1 resize-none" />
               </div>
             </div>
             <div className="flex gap-2 pt-2">
@@ -257,7 +257,7 @@ export function AdminEventsTab() {
       )}
 
       {/* Events List */}
-      {isLoading && <div className="text-center py-8 text-white/60"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
+      {isLoading && <div className="text-center py-8 text-[#1a472a]/70"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
 
       <div className="space-y-2">
         {allEvents.map(ev => {
@@ -409,7 +409,7 @@ export function AdminEventsTab() {
                       <Input
                         value={customSubject}
                         onChange={e => setCustomSubject(e.target.value)}
-                        className="bg-white/5 border-white/20 text-white text-sm mt-1"
+                        className="bg-white/10 border-white/25 text-white placeholder:text-white/70 text-sm mt-1"
                         placeholder={`Reminder: ${ev.title} is tomorrow`}
                       />
                     </div>
@@ -419,7 +419,7 @@ export function AdminEventsTab() {
                         value={customBody}
                         onChange={e => setCustomBody(e.target.value)}
                         rows={4}
-                        className="bg-white/5 border-white/20 text-white text-sm mt-1 resize-none"
+                        className="bg-white/10 border-white/25 text-white placeholder:text-white/70 text-sm mt-1 resize-none"
                         placeholder="What do you want people to know before they join? Leave blank to use the event description."
                       />
                     </div>
@@ -472,7 +472,7 @@ export function AdminEventsTab() {
                             type="datetime-local"
                             value={scheduleFor}
                             onChange={e => setScheduleFor(e.target.value)}
-                            className="bg-white/5 border-white/20 text-white text-xs h-8 mt-0.5 w-48"
+                            className="bg-white/10 border-white/25 text-white placeholder:text-white/70 text-xs h-8 mt-0.5 w-48"
                           />
                         </div>
                         <Button

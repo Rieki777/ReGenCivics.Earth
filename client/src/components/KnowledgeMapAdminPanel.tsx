@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+const fieldClass =
+  "bg-white text-[#1a472a] placeholder:text-[#1a472a]/60 border-[#1a472a]/25 text-sm";
+
 export default function KnowledgeMapAdminPanel() {
   const utils = trpc.useUtils();
 
@@ -52,26 +55,25 @@ export default function KnowledgeMapAdminPanel() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <BookOpen className="w-5 h-5 text-[#7dd87d]" />
-        <h3 className="text-lg font-semibold text-white">Knowledge Map</h3>
-        <span className="text-xs text-white/70 ml-1">Curated entry points per forum category</span>
+        <BookOpen className="w-5 h-5 text-[#1a472a]" />
+        <h3 className="text-lg font-semibold text-[#1a472a]">Knowledge Map</h3>
+        <span className="text-xs text-[#1a472a]/75 ml-1">Curated entry points per forum category</span>
       </div>
 
-      {/* AI Suggest */}
-      <div className="bg-[#0d2818]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-white/80 flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-[#7dd87d]" />
+      <div className="bg-white border border-[#1a472a]/15 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-[#1a472a] flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4 text-[#4a7c59]" />
           Ask Claude to suggest entries
         </p>
         <div className="flex gap-2">
           <select
             value={suggestCatId}
             onChange={e => setSuggestCatId(Number(e.target.value))}
-            className="flex-1 bg-[#1a472a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
+            className="flex-1 bg-white border border-[#1a472a]/25 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
           >
-            <option value={0} className="bg-[#1a472a] text-white">Select category…</option>
+            <option value={0}>Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id} className="bg-[#1a472a] text-white">{c.name}</option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
           <Button
@@ -82,25 +84,24 @@ export default function KnowledgeMapAdminPanel() {
               if (!cat) return;
               suggestMut.mutate({ categoryId: cat.id, categoryName: cat.name });
             }}
-            className="bg-[#4a7c59] hover:bg-[#3d7a52] text-white"
+            className="bg-[#1a472a] hover:bg-[#2d5a3d] text-[#f8f5f0]"
           >
             {suggestMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Suggest"}
           </Button>
         </div>
       </div>
 
-      {/* Pending AI Suggestions */}
       {pendingApproval.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-amber-400 font-semibold uppercase tracking-wider">
+          <p className="text-xs text-[#6b3f12] font-semibold uppercase tracking-wider">
             Pending AI suggestions ({pendingApproval.length})
           </p>
           {pendingApproval.map(entry => (
-            <div key={entry.id} className="flex items-start gap-3 bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
+            <div key={entry.id} className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white font-medium">{entry.title}</p>
-                {entry.summary && <p className="text-xs text-white/70 mt-0.5">{entry.summary}</p>}
-                <p className="text-xs text-white/70 mt-1">
+                <p className="text-sm text-[#1a472a] font-medium">{entry.title}</p>
+                {entry.summary && <p className="text-xs text-[#1a472a]/75 mt-0.5">{entry.summary}</p>}
+                <p className="text-xs text-[#1a472a]/75 mt-1">
                   {entry.postId ? `Post #${entry.postId}` : entry.url ?? "No link"}
                   {" · "}Cat #{entry.categoryId}
                 </p>
@@ -108,14 +109,14 @@ export default function KnowledgeMapAdminPanel() {
               <div className="flex gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => approveMut.mutate({ id: entry.id })}
-                  className="p-1.5 rounded-md bg-[#4a7c59]/40 hover:bg-[#4a7c59] text-[#7dd87d] transition-colors"
+                  className="p-1.5 rounded-md bg-[#1a472a]/10 hover:bg-[#1a472a] text-[#1a472a] hover:text-[#f8f5f0] transition-colors"
                   title="Approve"
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => deleteMut.mutate({ id: entry.id })}
-                  className="p-1.5 rounded-md bg-red-900/30 hover:bg-red-800/60 text-red-400 transition-colors"
+                  className="p-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
                   title="Delete"
                   aria-label="Delete entry"
                 >
@@ -127,74 +128,72 @@ export default function KnowledgeMapAdminPanel() {
         </div>
       )}
 
-      {/* Add manually */}
-      <div className="bg-[#0d2818]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-white/80 flex items-center gap-1.5">
-          <Plus className="w-4 h-4 text-[#7dd87d]" />
+      <div className="bg-white border border-[#1a472a]/15 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-[#1a472a] flex items-center gap-1.5">
+          <Plus className="w-4 h-4 text-[#4a7c59]" />
           Add entry manually
         </p>
         <div className="grid grid-cols-2 gap-2">
           <select
             value={form.categoryId}
             onChange={e => setForm(f => ({ ...f, categoryId: Number(e.target.value) }))}
-            className="col-span-2 bg-[#1a472a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
+            className="col-span-2 bg-white border border-[#1a472a]/25 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
           >
-            <option value={0} className="bg-[#1a472a] text-white">Select category…</option>
+            <option value={0}>Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id} className="bg-[#1a472a] text-white">{c.name}</option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
           <Input
             placeholder="Title"
             value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            className="col-span-2 bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
+            className={`col-span-2 ${fieldClass}`}
           />
           <Textarea
             placeholder="Short summary (optional)"
             value={form.summary}
             onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
             rows={2}
-            className="col-span-2 bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm resize-none"
+            className={`col-span-2 ${fieldClass} resize-none`}
           />
           <Input
             placeholder="Post ID (if forum post)"
             value={form.postId}
             onChange={e => setForm(f => ({ ...f, postId: e.target.value }))}
-            className="bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
+            className={fieldClass}
           />
           <Input
             placeholder="URL (if external)"
             value={form.url}
             onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-            className="bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
+            className={fieldClass}
           />
         </div>
         <Button
           size="sm"
           disabled={addMut.isPending}
           onClick={handleAdd}
-          className="bg-[#4a7c59] hover:bg-[#3d7a52] text-white"
+          className="bg-[#1a472a] hover:bg-[#2d5a3d] text-[#f8f5f0]"
         >
           {addMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Entry"}
         </Button>
       </div>
 
-      {/* All approved entries */}
       <div className="space-y-2">
-        <p className="text-xs text-white/70 font-semibold uppercase tracking-wider">
+        <p className="text-xs text-[#1a472a]/80 font-semibold uppercase tracking-wider">
           Approved entries ({approved.length})
         </p>
-        {isLoading && <p className="text-sm text-white/60">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/75">Loading…</p>}
         {!isLoading && approved.length === 0 && (
-          <p className="text-sm text-white/70">No entries yet. Use AI or add manually.</p>
+          <p className="text-sm text-[#1a472a]/75">No entries yet. Use AI or add manually.</p>
         )}
         {approved.map(entry => (
-          <div key={entry.id} className="flex items-start gap-3 bg-[#0d2818]/40 border border-[#7dd87d]/15 rounded-lg p-3">
+          <div key={entry.id} className="flex items-start gap-3 bg-white border border-[#1a472a]/15 rounded-lg p-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white">{entry.title}</p>
-              {entry.summary && <p className="text-xs text-white/60 mt-0.5">{entry.summary}</p>}
-              <p className="text-xs text-white/70 mt-1">
+              <p className="text-sm text-[#1a472a] font-medium">{entry.title}</p>
+              {entry.summary && <p className="text-xs text-[#1a472a]/75 mt-0.5">{entry.summary}</p>}
+              <p className="text-xs text-[#1a472a]/75 mt-1">
                 {entry.postId ? `Post #${entry.postId}` : entry.url ?? "-"}
                 {" · "}Cat #{entry.categoryId}
                 {" · "}Order {entry.sortOrder}
@@ -202,7 +201,7 @@ export default function KnowledgeMapAdminPanel() {
             </div>
             <button
               onClick={() => deleteMut.mutate({ id: entry.id })}
-              className="p-1.5 rounded-md hover:bg-red-800/40 text-white/70 hover:text-red-400 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-md hover:bg-red-50 text-[#1a472a]/70 hover:text-red-700 transition-colors flex-shrink-0"
               title="Remove"
             >
               <Trash2 className="w-3.5 h-3.5" />

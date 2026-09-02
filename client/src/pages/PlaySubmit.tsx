@@ -516,7 +516,7 @@ export default function PlaySubmit() {
                                 }))
                           }
                           placeholder={`Describe ${label.toLowerCase()}...`}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
                         />
                       </div>
                     );
@@ -583,7 +583,7 @@ export default function PlaySubmit() {
                         onChange={(e) => setRobustnessNote(e.target.value)}
                         placeholder="Where is your play fragile? What would you shore up first?"
                         maxLength={2000}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[60px]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[60px]"
                       />
                     </div>
                   </div>

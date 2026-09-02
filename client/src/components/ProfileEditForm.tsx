@@ -119,7 +119,7 @@ export function ProfileEditForm() {
       {/* Common fields */}
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="displayName" className="text-white/70">Display Name</Label>
+          <Label htmlFor="displayName" className="text-white">Display Name</Label>
           <Input
             id="displayName"
             value={form.displayName}
@@ -130,7 +130,7 @@ export function ProfileEditForm() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="location" className="text-white/70">Location</Label>
+          <Label htmlFor="location" className="text-white">Location</Label>
           <Input
             id="location"
             value={form.location}
@@ -143,7 +143,7 @@ export function ProfileEditForm() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="website" className="text-white/70">Website</Label>
+        <Label htmlFor="website" className="text-white">Website</Label>
         <Input
           id="website"
           value={form.website}

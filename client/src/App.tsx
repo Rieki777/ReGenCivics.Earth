@@ -523,7 +523,7 @@ function MainApp() {
     <ErrorBoundary fallback={<TaoErrorState />}>
       <AudioProvider>
       <ReGenGuideProvider>
-      <ThemeProvider defaultTheme="dark" switchable={false}>
+      <ThemeProvider defaultTheme={adminMode ? "light" : "dark"} switchable={false}>
         <TooltipProvider>
           <Toaster />
           {!adminMode && <StructuredData />}
@@ -544,7 +544,16 @@ function MainApp() {
           )}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content" className="pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]">
+          <main
+            id="main-content"
+            className={
+              adminMode && location === "/admin"
+                ? "h-[100dvh] overflow-hidden p-0"
+                : adminMode
+                ? "p-0"
+                : "pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]"
+            }
+          >
             <Router />
           </main>
           {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (

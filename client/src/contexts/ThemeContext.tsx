@@ -29,6 +29,15 @@ export function ThemeProvider({
     return defaultTheme;
   });
 
+  // Admin is a light-theme island inside a dark public site. When the
+  // provider is not switchable, follow defaultTheme so /admin drops `.dark`
+  // (and portaled sheets/dialogs inherit the light tokens).
+  useEffect(() => {
+    if (!switchable) {
+      setTheme(defaultTheme);
+    }
+  }, [defaultTheme, switchable]);
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -36,6 +45,7 @@ export function ThemeProvider({
     } else {
       root.classList.remove("dark");
     }
+    root.style.colorScheme = theme;
 
     if (switchable) {
       localStorage.setItem("theme", theme);

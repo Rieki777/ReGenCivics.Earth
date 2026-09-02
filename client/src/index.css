@@ -217,6 +217,12 @@
   --radius: 1rem;
 }
 
+/* Admin is a cream island. color-scheme helps native date/select controls
+   match the light tokens after ThemeProvider drops `.dark` on /admin. */
+.admin-root {
+  color-scheme: light;
+}
+
 .dark {
   --primary: oklch(0.60 0.15 145);
   --primary-foreground: oklch(0.15 0.02 145);
