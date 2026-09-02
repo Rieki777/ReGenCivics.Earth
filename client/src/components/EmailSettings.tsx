@@ -828,6 +828,7 @@ function BulkEmailSender() {
       templateType: bulkTemplate as any,
       customSubject: bulkTemplate === "custom" ? customSubject : undefined,
       customBody: bulkTemplate === "custom" ? customBody : undefined,
+      bodyFormat: bulkTemplate === "custom" ? "html" : undefined,
       mergeFields: Object.keys(mergeFields).length > 0 ? mergeFields : undefined,
     });
   };

@@ -7,12 +7,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Send, X, Loader2, CheckCircle, XCircle, Clock, HelpCircle, Calendar, MessageSquare, Zap, AlarmClock } from "lucide-react";
+import { EmailMarkdownComposer, EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
+import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 
 const QUICK_REPLIES = [
   "We'll be in touch within 48 hours.",
@@ -312,6 +313,7 @@ export function EmailTemplateSelector({
         customSubject: subject,
         customBody: body,
         inquiryType,
+        bodyFormat: "markdown",
       });
       toast({ title: "Email Sent!", description: `Successfully sent to ${recipientName || recipientEmail}` });
       localStorage.removeItem(draftKey);
@@ -348,7 +350,7 @@ export function EmailTemplateSelector({
               value={selectedTemplateId}
               onValueChange={(v) => loadTemplate(v as TemplateType)}
             >
-              <SelectTrigger className="h-8 text-xs bg-white">
+              <SelectTrigger className={`h-8 text-xs ${EMAIL_FIELD_CLASS}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -372,7 +374,7 @@ export function EmailTemplateSelector({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Subject line..."
-              className="h-8 text-xs bg-white"
+              className={`h-8 text-xs ${EMAIL_FIELD_CLASS}`}
             />
           </div>
         </div>
@@ -380,7 +382,7 @@ export function EmailTemplateSelector({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <Label className="text-[10px] text-[#1a472a]/80 uppercase tracking-wide">
-              Body (editable)
+              Body (markdown)
             </Label>
             <span className="text-[10px] text-[#1a472a]/80 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5" /> Quick inserts:
@@ -399,13 +401,27 @@ export function EmailTemplateSelector({
               </button>
             ))}
           </div>
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            className="bg-white text-xs min-h-[120px] resize-y font-mono"
-            placeholder="Email body..."
+          <EmailMarkdownComposer
+            subject={subject}
+            body={body}
+            onSubjectChange={setSubject}
+            onBodyChange={setBody}
+            showSubject={false}
+            minHeightClass="min-h-[140px]"
+            bodyId="email-direct-body"
           />
         </div>
+
+        <EmailDraftAgent
+          currentSubject={subject}
+          currentBody={body}
+          statusLabel="one contact"
+          recipientCount={1}
+          onApply={({ subject: nextSubject, body: nextBody }) => {
+            setSubject(nextSubject);
+            setBody(nextBody);
+          }}
+        />
 
         {/* Schedule toggle */}
         <div className="flex items-center gap-2">

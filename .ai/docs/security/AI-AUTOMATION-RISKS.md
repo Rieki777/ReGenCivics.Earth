@@ -2,7 +2,7 @@
 
 The risk surface specific to AI-driven features in ReGen Civics. Read this before adding any place where user-generated content reaches a model, an agent, or where the system writes content on a user's behalf.
 
-Last reviewed: 2026-04-25.
+Last reviewed: 2026-09-02.
 
 ---
 
@@ -15,6 +15,7 @@ Last reviewed: 2026-04-25.
 | Video summary on forum post | Forum post contains a YouTube URL with auto-captions | Video transcript (stripped XML), URL | 2-3 sentence summary + bullet takeaways |
 | Image generation per forum post | Every new forum post | Title + first 150 chars of content | A generated banner image stored on R2 |
 | ReGen Guide chat (passport / ask a question) | User chat input | User message + system prompt | Streaming response, no storage |
+| Admin email writing partner (`email.draftWithAgent`) | Admin compose dialog | Status label + recipient count + current draft (PII stripped) | Conversational reply + optional markdown subject/body. Never sends. |
 
 Each one has its own risk shape. Below covers the cross-cutting risks.
 
@@ -78,6 +79,7 @@ Each one has its own risk shape. Below covers the cross-cutting risks.
 - Forum posts are public. Sending public content to a model is no worse than the content already being on the site.
 - User profile bios + handles are public.
 - Email addresses and phone numbers are NOT sent to LLMs.
+- Admin email writing partner (`email.draftWithAgent`) receives a recipient count and status label only. The draft is wrapped in `<draft>` tags and treated as data. Emails and phone numbers are stripped before the call. The procedure never sends mail.
 
 **Open / monitored**:
 - Internal admin features that touch private user data (LOI submissions, investor forms, application content) MUST NOT pass that data to LLMs without explicit user consent. Track in CHECKLIST.

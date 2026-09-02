@@ -1,5 +1,5 @@
 // server/routes/newsletter.ts
-import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, adminProcedure, router, rateLimited } from "../_core/trpc";
 import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
@@ -11,6 +11,15 @@ import { notifyOwner } from "../_core/notification";
 import { ENV } from "../_core/env";
 import { SignJWT, jwtVerify } from "jose";
 import { applyRecipientMergeFields } from "../lib/applicationEmailRecipients";
+import { emailDocumentFromBody } from "../lib/emailHtml";
+import { invokeLLM, isLLMConfigured } from "../_core/llm";
+import {
+  attachDraftToLastUserMessage,
+  buildDraftAgentSystemPrompt,
+  DRAFT_AGENT_SCHEMA,
+  parseDraftAgentOutput,
+  stripEmailPii,
+} from "../lib/emailDraftAgent";
 
 export const newsletterRouter = router({
   // Subscribe to newsletter, creates pending subscriber (isActive=0) and sends confirmation email
@@ -245,8 +254,11 @@ export const emailRouter = router({
       to: z.string().email(),
       recipientName: z.string(),
       templateType: z.enum(["follow_up", "acceptance", "not_selected", "request_info", "schedule_call", "custom", "land_project_accepted"]),
-      customSubject: z.string().optional(),
-      customBody: z.string().optional(),
+      customSubject: z.string().max(300).optional(),
+      customBody: z.string().max(50000).optional(),
+      // markdown = convert then wrap (composers). html = already a document
+      // (EmailSettings custom templates). plain = wrap newlines as paragraphs.
+      bodyFormat: z.enum(["markdown", "plain", "html"]).optional(),
       inquiryType: z.enum(["investor", "alliance", "project", "general"]).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -257,15 +269,9 @@ export const emailRouter = router({
       // If the caller passes custom subject + body (from compose dialog), always use them.
       // This respects admin edits regardless of the template type label used for logging.
       if (input.customSubject && input.customBody) {
-        const htmlBody = input.customBody
-          .split(/\n\n+/)
-          .map((para: string) => para.trim())
-          .filter(Boolean)
-          .map((para: string) => `<p style="color: #333; line-height: 1.6;">${para.replace(/\n/g, "<br/>")}</p>`)
-          .join("");
         emailContent = {
           subject: input.customSubject,
-          html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">${htmlBody}<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p></div></div>`,
+          html: emailDocumentFromBody(input.customBody, input.bodyFormat ?? "plain"),
         };
       } else if (input.templateType === "land_project_accepted") {
         emailContent = emailTemplates.landProjectAccepted("Project Name", input.recipientName);
@@ -667,8 +673,9 @@ export const emailRouter = router({
         projectName: z.string().max(255).optional(),
       })).min(1).max(100),
       templateType: z.enum(["follow_up", "acceptance", "not_selected", "request_info", "schedule_call", "custom", "land_project_accepted", "newsletter_welcome", "investor_welcome"]),
-      customSubject: z.string().optional(),
-      customBody: z.string().optional(),
+      customSubject: z.string().max(300).optional(),
+      customBody: z.string().max(50000).optional(),
+      bodyFormat: z.enum(["markdown", "plain", "html"]).optional(),
       mergeFields: z.record(z.string(), z.string()).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -688,16 +695,12 @@ export const emailRouter = router({
               name,
               projectName: recipient.projectName,
             };
-            const rawBody = applyRecipientMergeFields(input.customBody, merge);
-            const htmlBody = rawBody
-              .split(/\n\n+/)
-              .map((para: string) => para.trim())
-              .filter(Boolean)
-              .map((para: string) => `<p style="color: #333; line-height: 1.6;">${para.replace(/\n/g, "<br/>")}</p>`)
-              .join("");
             emailContent = {
               subject: applyRecipientMergeFields(input.customSubject, merge),
-              html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">${htmlBody}<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p></div></div>`,
+              html: applyRecipientMergeFields(
+                emailDocumentFromBody(input.customBody, input.bodyFormat ?? "plain"),
+                merge,
+              ),
             };
           } else switch (input.templateType) {
             case "newsletter_welcome":
@@ -786,5 +789,63 @@ export const emailRouter = router({
       }
 
       return { results, totalSent: successCount, totalFailed: input.recipients.length - successCount };
+    }),
+
+  /**
+   * Draft (never send) an email with the writing partner.
+   * Recipients are a count + status label only. No emails or phones go to the model.
+   */
+  draftWithAgent: adminProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 20 }))
+    .input(z.object({
+      messages: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().max(8000),
+      })).min(1).max(20),
+      currentSubject: z.string().max(300).optional(),
+      currentBody: z.string().max(20000).optional(),
+      statusLabel: z.string().max(80).optional(),
+      recipientCount: z.number().int().min(0).max(100).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (!isLLMConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "The writing partner is not configured on this server.",
+        });
+      }
+
+      const messages = input.messages.map((m) => ({
+        role: m.role,
+        content: stripEmailPii(m.content).slice(0, 8000),
+      }));
+      const withDraft = attachDraftToLastUserMessage(
+        messages,
+        input.currentSubject ?? "",
+        input.currentBody ?? "",
+      );
+
+      const res = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: buildDraftAgentSystemPrompt({
+              statusLabel: input.statusLabel ?? "applicants",
+              recipientCount: input.recipientCount ?? 0,
+            }),
+          },
+          ...withDraft,
+        ],
+        maxTokens: 2000,
+        task: "standard",
+        outputSchema: DRAFT_AGENT_SCHEMA,
+      });
+
+      const parsed = parseDraftAgentOutput(res.choices[0]?.message?.content ?? "{}");
+      return {
+        reply: parsed.reply || "Here's an updated draft. Apply it when you are ready, then send yourself.",
+        subject: parsed.subject,
+        body: parsed.body,
+      };
     }),
 });

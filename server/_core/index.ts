@@ -80,6 +80,7 @@ import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { sendEmail } from "./email";
+import { emailDocumentFromMarkdown } from "../lib/emailHtml";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { cronAuthOk } from "./cronAuth";
 import { isCacheAvailable } from "../cache";
@@ -1454,14 +1455,10 @@ async function processScheduledEmails() {
     for (const item of due) {
       if (new Date(item.scheduledFor) > now) continue; // not yet due
       try {
-        const htmlBody = item.body
-          .split(/\n\n+/)
-          .map((p: string) => `<p style="margin:0 0 12px 0">${p.trim().replace(/\n/g, '<br/>')}</p>`)
-          .join('');
         await sendEmail({
           to: item.recipientEmail,
           subject: item.subject,
-          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">${htmlBody}</div>`,
+          html: emailDocumentFromMarkdown(item.body),
           // No replyTo: replies route through /connect, not into an inbox.
         });
         await db.updateScheduledEmailStatus(item.id, 'sent', new Date());
