@@ -77,7 +77,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] System prompts contain no secrets. (2026-04-25: ok)
 - [x] LLM output rendered through same sanitizer as user content. (2026-04-25: ok)
 - [x] Bot replies include provenance line. (2026-04-25: ok)
-- [x] Per-feature rate limits on LLM calls. (2026-04-25: ok per `server/lib/videoSummary.ts` + `server/lib/regenGuide.ts`)
+- [x] Per-feature rate limits on LLM calls. (2026-09-02: ok per `server/lib/videoSummary.ts` + `server/lib/regenGuide.ts` + `email.draftWithAgent` 20/hour)
 - [ ] Pre-filter user input for prompt injection patterns. (2026-04-25: open, deferred until first observed exploit)
 - [ ] Cost circuit-breaker. (2026-04-25: open)
 - [ ] Quarterly system prompt review. (next: 2026-07-25)

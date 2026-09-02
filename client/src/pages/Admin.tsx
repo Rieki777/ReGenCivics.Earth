@@ -81,6 +81,7 @@ import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCen
 import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
 import { AdminCitizenshipTiers } from "@/components/admin/AdminCitizenshipTiers";
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
+import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
 // Tab bodies load on demand — only the active tab's chunk is fetched, keeping
 // the initial /admin payload small. The Overview tab stays eager (it is the
 // landing view). Named exports are unwrapped to the default lazy() expects.
@@ -2087,13 +2088,16 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
               />
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-blue-700">Body (use {'{{name}}'} for recipient name)</Label>
-            <Textarea
-              value={bulkEmailBody}
-              onChange={(e) => setBulkEmailBody(e.target.value)}
-              className="bg-white text-xs min-h-[100px] resize-y"
-              placeholder="Email body..."
+          <div className="space-y-1 apply-form-dark">
+            <Label className="text-xs text-blue-700">Body (markdown. Use {'{{name}}'} for recipient name.)</Label>
+            <EmailMarkdownComposer
+              subject={bulkEmailSubject}
+              body={bulkEmailBody}
+              onSubjectChange={setBulkEmailSubject}
+              onBodyChange={setBulkEmailBody}
+              showSubject={false}
+              minHeightClass="min-h-[120px]"
+              bodyId="admin-bulk-email-body"
             />
           </div>
           <div className="flex gap-2">
@@ -2114,6 +2118,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   templateType: 'custom',
                   customSubject: bulkEmailSubject,
                   customBody: bulkEmailBody,
+                  bodyFormat: "markdown",
                 });
               }}
               disabled={sendBulkEmailMutation.isPending || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}

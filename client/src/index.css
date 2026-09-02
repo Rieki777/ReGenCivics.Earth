@@ -2741,8 +2741,11 @@ html[data-contrast="high"] *:focus-visible {
 .apply-form-dark textarea,
 .apply-form-dark select,
 .apply-form-dark [data-slot="select-trigger"],
-.apply-form-dark [data-slot="select-value"] {
+.apply-form-dark [data-slot="select-value"],
+.apply-form-dark [data-slot="input"],
+.apply-form-dark [data-slot="textarea"] {
   color: #14331f;
+  background-color: #ffffff;
 }
 .apply-form-dark input::placeholder,
 .apply-form-dark textarea::placeholder {

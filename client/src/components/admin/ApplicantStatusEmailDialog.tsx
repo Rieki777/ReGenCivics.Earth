@@ -5,8 +5,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -21,6 +19,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { emailTemplates, type TemplateType } from "@/components/EmailTemplateSelector";
 import { sourceIdForStatus } from "@/lib/applicationEmailSources";
+import { EmailMarkdownComposer, EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
+import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { Loader2, Mail, Send } from "lucide-react";
 
 const DEFAULT_TEMPLATE: Record<string, TemplateType> = {
@@ -122,6 +122,7 @@ export function ApplicantStatusEmailDialog({
           | "land_project_accepted",
         customSubject: subject,
         customBody: body,
+        bodyFormat: "markdown",
       });
       toast.success(`Sent ${result.totalSent} of ${result.totalSent + result.totalFailed} emails.`);
       if (result.totalFailed === 0) onOpenChange(false);
@@ -135,7 +136,7 @@ export function ApplicantStatusEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white">
+      <DialogContent className="sm:max-w-4xl max-w-4xl max-h-[90vh] overflow-y-auto bg-white apply-form-dark">
         <DialogHeader>
           <DialogTitle className="text-[#1a472a] flex items-center gap-2">
             <Mail className="w-4 h-4" />
@@ -143,7 +144,7 @@ export function ApplicantStatusEmailDialog({
           </DialogTitle>
           <DialogDescription className="text-[#1a472a]/75">
             Draft a message to the land projects in this status. Each contact gets their own copy.
-            Use {"{{name}}"}, {"{{email}}"}, and {"{{projectName}}"} to fill in their details.
+            Write in markdown. Use {"{{name}}"}, {"{{email}}"}, and {"{{projectName}}"} to fill in their details.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,56 +154,59 @@ export function ApplicantStatusEmailDialog({
             Loading contact emails...
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-[#1a472a]">
-              {capped.length} recipient{capped.length === 1 ? "" : "s"} with a contact email
-              {skipped > 0 ? `. ${skipped} skipped (no email on the applicant account).` : "."}
-              {overCap ? " Only the first 100 will be sent." : ""}
-            </p>
-            {capped.length > 0 && (
-              <textarea
-                readOnly
-                value={recipientPreview}
-                className="w-full h-24 text-xs font-mono bg-[#f8faf8] border border-[#4a7c59]/20 rounded-md p-2 text-[#1a472a]"
-                aria-label="Recipient list"
-              />
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_280px] gap-4">
+            <div className="space-y-3 min-w-0">
+              <p className="text-sm text-[#1a472a]">
+                {capped.length} recipient{capped.length === 1 ? "" : "s"} with a contact email
+                {skipped > 0 ? `. ${skipped} skipped (no email on the applicant account).` : "."}
+                {overCap ? " Only the first 100 will be sent." : ""}
+              </p>
+              {capped.length > 0 && (
+                <textarea
+                  readOnly
+                  value={recipientPreview}
+                  className="w-full h-24 text-xs font-mono bg-[#f8faf8] border border-[#4a7c59]/20 rounded-md p-2 text-[#1a472a]"
+                  aria-label="Recipient list"
+                />
+              )}
 
-            <div className="space-y-1">
-              <Label className="text-[#1a472a]">Template</Label>
-              <Select value={templateId} onValueChange={(v) => loadTemplate(v as TemplateType)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {emailTemplates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-1">
+                <Label className="text-[#1a472a]">Template</Label>
+                <Select value={templateId} onValueChange={(v) => loadTemplate(v as TemplateType)}>
+                  <SelectTrigger className={EMAIL_FIELD_CLASS}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {emailTemplates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="applicant-email-subject" className="text-[#1a472a]">Subject</Label>
-              <Input
-                id="applicant-email-subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="bg-white"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="applicant-email-body" className="text-[#1a472a]">Body</Label>
-              <Textarea
-                id="applicant-email-body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="bg-white min-h-[180px] text-sm"
+              <EmailMarkdownComposer
+                subject={subject}
+                body={body}
+                onSubjectChange={setSubject}
+                onBodyChange={setBody}
+                subjectId="applicant-email-subject"
+                bodyId="applicant-email-body"
               />
             </div>
+
+            <EmailDraftAgent
+              currentSubject={subject}
+              currentBody={body}
+              statusLabel={statusLabel}
+              recipientCount={capped.length}
+              onApply={({ subject: nextSubject, body: nextBody }) => {
+                setSubject(nextSubject);
+                setBody(nextBody);
+                toast.success("Draft applied. Review it, then send.");
+              }}
+            />
           </div>
         )}
 
