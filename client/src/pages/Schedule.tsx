@@ -31,13 +31,16 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from '@/lib/trpc';
 import { cdnImg } from "@/lib/utils";
 import { useAuth } from '@/_core/hooks/useAuth';
-import { AddToCalendarButtons } from "@/components/AddToCalendarButtons";
+import { CalendarCta, CalendarSubscribeButton } from "@/components/CalendarCta";
 import {
   RIVERSIDE_INFO,
   upcomingEventsFallback,
   upcomingOpenAccessSessions as listUpcomingOpenAccessSessions,
   formatSessionLong,
   formatSessionMonthDay,
+  formatOpenAccessWhen,
+  formatOpenAccessStart,
+  formatDualZoneStart,
   openAccessGoogleUrl,
   openAccessIcsUrl,
   buildGoogleCalendarUrl,
@@ -391,7 +394,7 @@ export default function Schedule() {
       {nextOpenAccessSession && (
         <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
           <p className="text-[#7dd87d] font-medium text-sm md:text-base">
-            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 PM {nextOpenAccessSession.timezone}. Every new moon, open to all.
+            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessStart(nextOpenAccessSession)}. Every new moon, open to all.
           </p>
         </div>
       )}
@@ -451,11 +454,11 @@ export default function Schedule() {
                   </div>
                 </div>
                 <p className="text-white/70 text-sm mb-1">
-                  {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 - 3:00 PM {nextOpenAccessSession.timezone}
+                  {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessWhen(nextOpenAccessSession)}
                 </p>
                 <p className="text-white/70 text-xs mb-4">Every new moon. Open to anyone curious about the ReGenerative Renaissance.</p>
                 <div className="mb-4">
-                  <AddToCalendarButtons
+                  <CalendarCta
                     googleUrl={openAccessGoogleUrl(nextOpenAccessSession)}
                     appleUrl={openAccessIcsUrl(nextOpenAccessSession)}
                     appleDownload="regen-civics-open-session.ics"
@@ -467,7 +470,7 @@ export default function Schedule() {
                     <ul className="text-white/60 text-xs space-y-0.5">
                       {followingOpenAccessSessions.map(s => (
                         <li key={s.date}>
-                          {s.dayName}, {formatSessionMonthDay(s.date)} - 1:00 PM {s.timezone}
+                          {s.dayName}, {formatSessionMonthDay(s.date)} · {formatOpenAccessStart(s)}
                         </li>
                       ))}
                     </ul>
@@ -484,41 +487,9 @@ export default function Schedule() {
                 </div>
                 <h3 className="text-lg font-bold text-white">All Events</h3>
               </div>
-              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically. No re-downloading needed.</p>
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href="https://calendar.google.com/calendar/u/0?cid=63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
-                    <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Google Calendar
-                </a>
-                <a
-                  href="webcal://calendar.google.com/calendar/ical/63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com/public/basic.ics"
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V5C19 3.9 18.1 3 17 3ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM15 14H9V6H15V14Z"/>
-                  </svg>
-                  Apple/Outlook
-                </a>
-                <a
-                  href="/regen-civics-all-events.ics"
-                  download="regen-civics-all-events.ics"
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-4 py-2 rounded-xl font-medium transition-colors text-xs border border-white/10"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                  </svg>
-                  Download .ics
-                </a>
-              </div>
-              <p className="text-white/70 text-xs mt-3">Live subscription updates automatically as new events are added</p>
+              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically.</p>
+              <CalendarSubscribeButton />
+              <p className="text-white/70 text-xs mt-3">Live calendar. Times stay current if they change.</p>
             </div>
 
             {/* Season 2 Episodes (last card) */}
@@ -529,8 +500,8 @@ export default function Schedule() {
                 </div>
                 <h3 className="text-lg font-bold text-white">Season 2 Episodes</h3>
               </div>
-              <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, Sept-Dec 2026</p>
-              <AddToCalendarButtons
+              <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, 11:00 AM Pacific, 2:00 PM Eastern, Sept-Dec 2026</p>
+              <CalendarCta
                 googleUrl={SEASON_2_SERIES_GOOGLE_URL}
                 appleUrl={SEASON_2_SERIES_ICS_URL}
                 appleDownload="regen-civics-season-2.ics"
@@ -699,12 +670,11 @@ export default function Schedule() {
                           <Clock className="w-4 h-4" />
                           {(event as any).startTime ? (() => {
                             const d = new Date((event as any).startTime);
-                            const stored = `${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${(event as any).timezone ?? 'UTC'}`;
-                            // #12, show user's local time if different timezone
+                            const dual = formatDualZoneStart(d);
                             const localTime = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: userTz, timeZoneName: 'short' });
-                            const storedTz = (event as any).timezone ?? 'UTC';
                             const localTzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: userTz, timeZoneName: 'short' }).format(d).split(' ').pop() ?? '';
-                            return storedTz !== localTzAbbr ? `${stored} (${localTime} your time)` : stored;
+                            const alreadyShown = dual.includes(localTzAbbr);
+                            return alreadyShown ? dual : `${dual} (${localTime} your time)`;
                           })()
                             : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
                         </span>
@@ -753,34 +723,15 @@ export default function Schedule() {
                     )}
                     
                     <div className="flex flex-wrap gap-3">
-                      {/* #5. Save to Calendar buttons, more prominent */}
                       {event.googleCalendarUrl ? (
-                        <a
-                          href={event.googleCalendarUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors"
-                        >
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                            <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
-                            <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
-                          Save to Calendar
-                        </a>
+                        <div className="w-full">
+                          <CalendarCta
+                            googleUrl={event.googleCalendarUrl}
+                            appleUrl={event.appleCalendarUrl || event.googleCalendarUrl}
+                            appleDownload={`${event.title.replace(/\s+/g, '-')}.ics`}
+                          />
+                        </div>
                       ) : null}
-
-                      {event.appleCalendarUrl && (
-                        <a
-                          href={event.appleCalendarUrl}
-                          download={`${event.title.replace(/\s+/g, '-')}.ics`}
-                          className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                        >
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V5C19 3.9 18.1 3 17 3ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM15 14H9V6H15V14Z"/>
-                          </svg>
-                          Add to Apple Calendar
-                        </a>
-                      )}
                       
                       {/* Watch Recording (shows once recording is linked) */}
                       {(event as any).youtubeUrl && (event as any).status === 'completed' && (

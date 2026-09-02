@@ -4,178 +4,253 @@ PRODID:-//ReGen Civics//All Events//EN
 X-WR-CALNAME:ReGen Civics All Events
 X-WR-CALDESC:All ReGen Civics sessions and events
 BEGIN:VEVENT
-DTSTART:20260516T170000Z
-DTEND:20260516T190000Z
+UID:open-access-2026-05-16@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260516T180000Z
+DTEND:20260516T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260614T170000Z
-DTEND:20260614T190000Z
+UID:open-access-2026-06-14@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260614T180000Z
+DTEND:20260614T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260714T170000Z
-DTEND:20260714T190000Z
+UID:open-access-2026-07-14@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260714T180000Z
+DTEND:20260714T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260812T170000Z
-DTEND:20260812T190000Z
+UID:open-access-2026-08-12@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260812T180000Z
+DTEND:20260812T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260910T170000Z
-DTEND:20260910T190000Z
+UID:open-access-2026-09-10@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260910T180000Z
+DTEND:20260910T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261010T170000Z
-DTEND:20261010T190000Z
+UID:open-access-2026-10-10@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261010T180000Z
+DTEND:20261010T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261109T180000Z
-DTEND:20261109T200000Z
+UID:open-access-2026-11-09@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261109T190000Z
+DTEND:20261109T210000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261208T180000Z
-DTEND:20261208T200000Z
+UID:open-access-2026-12-08@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261208T190000Z
+DTEND:20261208T210000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20270107T180000Z
-DTEND:20270107T200000Z
+UID:open-access-2027-01-07@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20270107T190000Z
+DTEND:20270107T210000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20270206T180000Z
-DTEND:20270206T200000Z
+UID:open-access-2027-02-06@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20270206T190000Z
+DTEND:20270206T210000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20270308T180000Z
-DTEND:20270308T200000Z
+UID:open-access-2027-03-08@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20270308T190000Z
+DTEND:20270308T210000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20270406T170000Z
-DTEND:20270406T190000Z
+UID:open-access-2027-04-06@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20270406T180000Z
+DTEND:20270406T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260926T150000Z
-DTEND:20260926T170000Z
+UID:season2-week-1@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20260926T180000Z
+DTEND:20260926T200000Z
 SUMMARY:ReGen Civics Week 1: Selection Day
 DESCRIPTION:First steps of the ReGen Civics Incubator. Meet the selected projects\, set intentions\, and begin mapping your regenerative vision together.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261003T150000Z
-DTEND:20261003T170000Z
+UID:season2-week-2@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261003T180000Z
+DTEND:20261003T200000Z
 SUMMARY:ReGen Civics Week 2: Incubator Overview
-DESCRIPTION:Deep dive into the incubator structure\, expectations\, and how we'll journey together over the next 13 weeks.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Starting Season 2! Deep dive into the incubator structure\, expectations\, and how we'll journey together over the next 13 episodes.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261010T150000Z
-DTEND:20261010T170000Z
+UID:season2-week-3@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261010T180000Z
+DTEND:20261010T200000Z
 SUMMARY:ReGen Civics Week 3: DAO/DHO/Org Co-Creation Part 1
-DESCRIPTION:Introduction to decentralized autonomous organizations and how to structure your community.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Designing the structure of our projects. Introduction to decentralized autonomous organizations and how to structure your community.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261017T150000Z
-DTEND:20261017T170000Z
+UID:season2-week-4@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261017T180000Z
+DTEND:20261017T200000Z
 SUMMARY:ReGen Civics Week 4: DAO/DHO/Org Co-Creation Part 2
-DESCRIPTION:Practical implementation of governance frameworks and community design.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Continuing to design the structure of our projects. Practical implementation of governance frameworks and community design.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261024T150000Z
-DTEND:20261024T170000Z
+UID:season2-week-5@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261024T180000Z
+DTEND:20261024T200000Z
 SUMMARY:ReGen Civics Week 5: Game Guides & Economic Systems
-DESCRIPTION:Co-creating project Game Guides and kickstarting our economic systems.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Co-creating project 'Game Guides' and kickstarting our economic systems. How to document your project's unique plays and patterns.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261031T150000Z
-DTEND:20261031T170000Z
+UID:season2-week-6@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261031T180000Z
+DTEND:20261031T200000Z
 SUMMARY:ReGen Civics Week 6: Intro to the ReGen Civics DHO
-DESCRIPTION:Introduction to the ReGen Civics DHO and the first steps in setting up yours.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Introduction to the ReGen Civics DHO and the first steps in setting up yours. How our alliance operates and how you can participate.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261107T160000Z
-DTEND:20261107T180000Z
+UID:season2-week-7@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261107T190000Z
+DTEND:20261107T210000Z
 SUMMARY:ReGen Civics Week 7: Ecosystem Map & Policies
-DESCRIPTION:Evolving our culture through ecosystem mapping and policy design.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Evolving our culture through ecosystem mapping and policy design. How we co-create the rules of our regenerative game.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261114T160000Z
-DTEND:20261114T180000Z
+UID:season2-week-8@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261114T190000Z
+DTEND:20261114T210000Z
 SUMMARY:ReGen Civics Week 8: Tokenomics Part 1
-DESCRIPTION:The art and science of token-assisted land-based economies.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:The art and science of our token-assisted land-based economies. Understanding how tokens can support regenerative projects.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261121T160000Z
-DTEND:20261121T180000Z
+UID:season2-week-9@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261121T190000Z
+DTEND:20261121T210000Z
 SUMMARY:ReGen Civics Week 9: Tokenomics Part 2
-DESCRIPTION:Practical token design for your project.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Continuing the art and theory of our token-assisted land-based economies. Practical token design for your project.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261128T160000Z
-DTEND:20261128T180000Z
+UID:season2-week-10@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261128T190000Z
+DTEND:20261128T210000Z
 SUMMARY:ReGen Civics Week 10: Legal Structures Part 1
-DESCRIPTION:Exploring the expansive world of legal structures.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Exploring the expansive world of legal structures. How do our projects relate to nation states and existing legal frameworks?\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261205T160000Z
-DTEND:20261205T180000Z
+UID:season2-week-11@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261205T190000Z
+DTEND:20261205T210000Z
 SUMMARY:ReGen Civics Week 11: Legal Structures Part 2
-DESCRIPTION:Practical considerations for land ownership and compliance.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Continuing to explore legal structures. Practical considerations for land ownership\, community agreements\, and compliance.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261212T160000Z
-DTEND:20261212T180000Z
+UID:season2-week-12@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261212T190000Z
+DTEND:20261212T210000Z
 SUMMARY:ReGen Civics Week 12: Coordination & Minimum Viable Economies
-DESCRIPTION:Creating minimum viable regenerative economies.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:Meeting our needs through coordination structures. How do we create minimum viable regenerative economies? How do we thrive?\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20261219T160000Z
-DTEND:20261219T180000Z
+UID:season2-week-13@regencivics.earth
+SEQUENCE:1
+DTSTAMP:20260902T040000Z
+DTSTART:20261219T190000Z
+DTEND:20261219T210000Z
 SUMMARY:ReGen Civics Week 13: Season Overview & Project Updates
-DESCRIPTION:Season finale. Project stewards share updates and celebrate collective achievements.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
+DESCRIPTION:A complete overview of the ReGen Civics Incubator journey. Project stewards share updates on their progress and celebrate our collective achievements.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b
 LOCATION:Online via Riverside
 END:VEVENT
 END:VCALENDAR
