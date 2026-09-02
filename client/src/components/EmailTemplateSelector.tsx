@@ -14,6 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Send, X, Loader2, CheckCircle, XCircle, Clock, HelpCircle, Calendar, MessageSquare, Zap, AlarmClock } from "lucide-react";
 import { EmailMarkdownComposer, EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
+import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
+import {
+  defaultLayoutForTemplate,
+  isLetterLayout,
+  isMarkdownEmailTemplateRow,
+  type LetterLayout,
+} from "@shared/letterLayout";
 
 const QUICK_REPLIES = [
   "We'll be in touch within 48 hours.",
@@ -164,14 +171,16 @@ What this means:
 - Final participation in the season is dependent on the community governance process
 - We highly encourage you to follow along the journey regardless of the final selection
 
-Important: If you complete all the steps in our process, you may still be eligible for joining the alliance even if not selected in this round!
+> Important: If you complete all the steps in our process, you may still be eligible for joining the alliance even if not selected in this round.
 
 Next steps:
 1. Join our Open Sessions to stay connected
 2. Complete any remaining application materials
 3. Participate in the governance process
+   - bring your questions
+   - bring anyone from your project who should hear the next steps
 
-Schedule a call to discuss: https://calendly.com/rieki-cordon/30min
+[Schedule a call](https://calendly.com/rieki-cordon/30min)
 
 We are excited about your project and look forward to the journey ahead!
 
@@ -221,9 +230,10 @@ export function EmailTemplateSelector({
   inquiryType = "general",
 }: EmailTemplateSelectorProps) {
   const [isComposing, setIsComposing] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<TemplateType>("follow_up");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("follow_up");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [layout, setLayout] = useState<LetterLayout>("plain");
   const [isSending, setIsSending] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
   const [isScheduleMode, setIsScheduleMode] = useState(false);
@@ -236,22 +246,36 @@ export function EmailTemplateSelector({
   // Persist draft to localStorage while composing
   useEffect(() => {
     if (!isComposing || (!subject && !body)) return;
-    localStorage.setItem(draftKey, JSON.stringify({ subject, body, templateId: selectedTemplateId }));
-  }, [isComposing, subject, body, selectedTemplateId, draftKey]);
+    localStorage.setItem(draftKey, JSON.stringify({ subject, body, templateId: selectedTemplateId, layout }));
+  }, [isComposing, subject, body, selectedTemplateId, layout, draftKey]);
 
   const sendEmailMutation = trpc.email.sendDirect.useMutation();
   const scheduleEmailMutation = trpc.scheduledEmails.schedule.useMutation();
+  const savedQuery = trpc.email.getCustomTemplates.useQuery(undefined, { enabled: isComposing });
+  const savedLetters = (savedQuery.data ?? []).filter((row) => isMarkdownEmailTemplateRow(row));
+  const extraTemplates = savedLetters.filter((row) => !emailTemplates.some((t) => t.id === row.templateKey));
 
-  const loadTemplate = (templateId: TemplateType) => {
+  const loadTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
+    const saved = savedLetters.find((row) => row.templateKey === templateId);
+    const name = recipientName || "there";
+    if (saved?.customBody) {
+      const subj = contextSubject
+        ? `${saved.customSubject || "ReGen Civics"} - ${contextSubject}`
+        : (saved.customSubject || "");
+      setSubject(subj);
+      setBody(saved.customBody.replace(/\{\{name\}\}/g, name));
+      setLayout(isLetterLayout(saved.layout) ? saved.layout : defaultLayoutForTemplate(templateId));
+      return;
+    }
     const tpl = emailTemplates.find((t) => t.id === templateId);
     if (tpl) {
-      const name = recipientName || "there";
       const subj = contextSubject
         ? `${tpl.subject} - ${contextSubject}`
         : tpl.subject;
       setSubject(subj);
       setBody(tpl.body.replace(/\{\{name\}\}/g, name));
+      setLayout(defaultLayoutForTemplate(templateId));
     }
   };
 
@@ -264,6 +288,7 @@ export function EmailTemplateSelector({
         setSubject(draft.subject || '');
         setBody(draft.body || '');
         setSelectedTemplateId(draft.templateId || 'custom');
+        setLayout(isLetterLayout(draft.layout) ? draft.layout : "plain");
         setDraftRestored(true);
         setTimeout(() => setDraftRestored(false), 3000);
         return;
@@ -314,6 +339,7 @@ export function EmailTemplateSelector({
         customBody: body,
         inquiryType,
         bodyFormat: "markdown",
+        layout,
       });
       toast({ title: "Email Sent!", description: `Successfully sent to ${recipientName || recipientEmail}` });
       localStorage.removeItem(draftKey);
@@ -348,7 +374,7 @@ export function EmailTemplateSelector({
             <Label className="text-[10px] text-[#1a472a]/80 uppercase tracking-wide">Template</Label>
             <Select
               value={selectedTemplateId}
-              onValueChange={(v) => loadTemplate(v as TemplateType)}
+              onValueChange={(v) => loadTemplate(v)}
             >
               <SelectTrigger className={`h-8 text-xs ${EMAIL_FIELD_CLASS}`}>
                 <SelectValue />
@@ -360,11 +386,16 @@ export function EmailTemplateSelector({
                     <SelectItem key={t.id} value={t.id}>
                       <span className="flex items-center gap-2">
                         <Icon className="w-3 h-3" />
-                        {t.label}
+                        {savedLetters.some((row) => row.templateKey === t.id) ? `${t.label} (saved)` : t.label}
                       </span>
                     </SelectItem>
                   );
                 })}
+                {extraTemplates.map((row) => (
+                  <SelectItem key={row.templateKey} value={row.templateKey}>
+                    {row.label || row.templateKey}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -404,22 +435,34 @@ export function EmailTemplateSelector({
           <EmailMarkdownComposer
             subject={subject}
             body={body}
+            layout={layout}
+            onLayoutChange={setLayout}
             onSubjectChange={setSubject}
             onBodyChange={setBody}
             showSubject={false}
             minHeightClass="min-h-[140px]"
             bodyId="email-direct-body"
           />
+          <EmailSaveTemplateBar
+            subject={subject}
+            body={body}
+            layout={layout}
+            builtinTemplates={emailTemplates}
+            currentKey={selectedTemplateId}
+            onSaved={setSelectedTemplateId}
+          />
         </div>
 
         <EmailDraftAgent
           currentSubject={subject}
           currentBody={body}
+          currentLayout={layout}
           statusLabel="one contact"
           recipientCount={1}
-          onApply={({ subject: nextSubject, body: nextBody }) => {
+          onApply={({ subject: nextSubject, body: nextBody, layout: nextLayout }) => {
             setSubject(nextSubject);
             setBody(nextBody);
+            if (nextLayout) setLayout(nextLayout);
           }}
         />
 

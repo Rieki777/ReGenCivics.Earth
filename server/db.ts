@@ -1875,6 +1875,9 @@ export async function upsertCustomTemplate(data: {
   customBody?: string | null;
   isActive?: number;
   lastEditedBy?: string;
+  bodyFormat?: string;
+  layout?: string | null;
+  label?: string | null;
 }): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -1885,12 +1888,18 @@ export async function upsertCustomTemplate(data: {
       customBody: data.customBody ?? null,
       isActive: data.isActive ?? 1,
       lastEditedBy: data.lastEditedBy ?? null,
+      bodyFormat: data.bodyFormat ?? "html",
+      layout: data.layout ?? null,
+      label: data.label ?? null,
     }).onDuplicateKeyUpdate({
       set: {
         customSubject: data.customSubject ?? null,
         customBody: data.customBody ?? null,
         isActive: data.isActive ?? 1,
         lastEditedBy: data.lastEditedBy ?? null,
+        bodyFormat: data.bodyFormat ?? "html",
+        layout: data.layout ?? null,
+        label: data.label ?? null,
       },
     });
   } catch (error) {

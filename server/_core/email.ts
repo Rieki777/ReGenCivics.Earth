@@ -76,6 +76,11 @@ export interface SendEmailParams {
   recipientName?: string;
   // Email log ID for tracking (if pre-created)
   emailLogId?: number;
+  /**
+   * Announcement and one-pager HTML already include forest chrome.
+   * Skip the generic branded wrap so the letter header is not doubled.
+   */
+  skipBrandedWrap?: boolean;
 }
 
 /**
@@ -302,14 +307,15 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       inquiryType,
       inquiryId,
       recipientName,
-      emailLogId
+      emailLogId,
+      skipBrandedWrap = false,
     } = params;
     // params.replyTo is intentionally ignored. All replies route through
     // the Connect form on the site instead of into a personal inbox.
     void params.replyTo;
     
-    // Wrap content with branded template
-    let processedHtml = wrapWithBrandedTemplate(html);
+    // Wrap content with branded template unless the caller already did.
+    let processedHtml = skipBrandedWrap ? html : wrapWithBrandedTemplate(html);
     
     // Add tracking if emailLogId is provided
     if (emailLogId) {

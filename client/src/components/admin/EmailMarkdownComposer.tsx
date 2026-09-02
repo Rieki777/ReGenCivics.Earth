@@ -1,6 +1,6 @@
 /**
  * Markdown email body editor: toolbar, write/preview tabs, forest-on-white fields.
- * Preview uses the same markdownEmailDocument converter as send.
+ * Preview uses the same converter as send, including letter layout chrome.
  */
 
 import { useRef, useState } from "react";
@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   applyMarkdownLinePrefix,
   applyMarkdownWrap,
-  markdownEmailDocument,
 } from "@shared/emailMarkdown";
-import { Bold, Heading2, Italic, Link, List, ListOrdered, Quote } from "lucide-react";
+import { markdownLetterDocument } from "@shared/letterHtml";
+import type { LetterLayout } from "@shared/letterLayout";
+import { Bold, CornerDownRight, Heading2, Italic, Link, List, ListOrdered, Quote } from "lucide-react";
 
 export const EMAIL_FIELD_CLASS =
   "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]/30";
@@ -26,9 +28,12 @@ interface Props {
   body: string;
   onSubjectChange: (value: string) => void;
   onBodyChange: (value: string) => void;
+  layout?: LetterLayout;
+  onLayoutChange?: (layout: LetterLayout) => void;
   subjectId?: string;
   bodyId?: string;
   showSubject?: boolean;
+  showLayout?: boolean;
   minHeightClass?: string;
 }
 
@@ -37,9 +42,12 @@ export function EmailMarkdownComposer({
   body,
   onSubjectChange,
   onBodyChange,
+  layout = "plain",
+  onLayoutChange,
   subjectId = "email-subject",
   bodyId = "email-body",
   showSubject = true,
+  showLayout = true,
   minHeightClass = "min-h-[180px]",
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,7 +94,7 @@ export function EmailMarkdownComposer({
     applyWrap("[", `](${href.trim()})`, "link text");
   };
 
-  const previewHtml = markdownEmailDocument(body || "_Nothing to preview yet._");
+  const previewHtml = markdownLetterDocument(body || "_Nothing to preview yet._", layout);
 
   return (
     <div className="space-y-3 apply-form-dark">
@@ -99,6 +107,29 @@ export function EmailMarkdownComposer({
             onChange={(e) => onSubjectChange(e.target.value)}
             className={EMAIL_FIELD_CLASS}
           />
+        </div>
+      )}
+
+      {showLayout && onLayoutChange && (
+        <div className="space-y-1">
+          <Label htmlFor={`${bodyId}-layout`} className="text-[#1a472a]">Letter layout</Label>
+          <Select value={layout} onValueChange={(v) => onLayoutChange(v as LetterLayout)}>
+            <SelectTrigger id={`${bodyId}-layout`} className={EMAIL_FIELD_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="plain">Plain letter</SelectItem>
+              <SelectItem value="announcement">Announcement (header, buttons, callouts)</SelectItem>
+              <SelectItem value="one_pager">One-pager (PDF page)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-[#1a472a]/70">
+            {layout === "plain"
+              ? "Text links stay in the sentence. The send path adds the usual forest header."
+              : layout === "announcement"
+                ? "A forest header, logo, and footer. A link on its own line becomes a button. Quotes become callouts."
+                : "Same as announcement, tighter, meant for a one-page PDF."}
+          </p>
         </div>
       )}
 
@@ -128,6 +159,9 @@ export function EmailMarkdownComposer({
                 <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("- ")} aria-label="Bullet list">
                   <List className="w-3.5 h-3.5" />
                 </button>
+                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("  - ")} aria-label="Nested bullet">
+                  <CornerDownRight className="w-3.5 h-3.5" />
+                </button>
                 <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("1. ")} aria-label="Numbered list">
                   <ListOrdered className="w-3.5 h-3.5" />
                 </button>
@@ -150,7 +184,7 @@ export function EmailMarkdownComposer({
               placeholder="Write markdown. Use {{name}}, {{email}}, and {{projectName}}."
             />
             <p className="text-xs text-[#1a472a]/70 mt-1">
-              Markdown: **bold**, *italic*, lists, [links](https://), ## headings. Tokens stay as {"{{name}}"}.
+              Markdown: **bold**, *italic*, lists, [links](https://), ## headings. A link on its own line becomes a button in announcement layout. Tokens stay as {"{{name}}"}.
             </p>
           </TabsContent>
           <TabsContent value="preview" className="mt-2">

@@ -32,11 +32,25 @@ describe("parseDraftAgentOutput", () => {
     expect(out.subject).toBe("Hello - friend");
     expect(out.body).toBe("Hi {{name}}-welcome.");
     expect(out.reply).toBe("Warmed it up.");
+    expect(out.layout).toBe("");
+  });
+
+  it("accepts a layout recipe", () => {
+    const out = parseDraftAgentOutput(
+      JSON.stringify({
+        reply: "Made the links into buttons.",
+        subject: "",
+        body: "[Open](https://regencivics.earth)",
+        layout: "announcement",
+      }),
+    );
+    expect(out.layout).toBe("announcement");
+    expect(out.body).toContain("[Open]");
   });
 
   it("returns empty strings on invalid JSON", () => {
     const out = parseDraftAgentOutput("not json");
-    expect(out).toEqual({ reply: "", subject: "", body: "" });
+    expect(out).toEqual({ reply: "", subject: "", body: "", layout: "" });
   });
 });
 
@@ -50,6 +64,7 @@ describe("buildDraftAgentSystemPrompt", () => {
     expect(prompt).toContain("{{email}}");
     expect(prompt).not.toMatch(/zgeist@gmail\.com/);
     expect(prompt).not.toContain("\u2014");
+    expect(prompt).toContain("announcement");
   });
 });
 
@@ -64,6 +79,7 @@ describe("attachDraftToLastUserMessage", () => {
     expect(out[0].content).toContain("Make it shorter.");
     expect(out[0].content).toContain("<draft>");
     expect(out[0].content).toContain("Hi {{name}}");
+    expect(out[0].content).toContain("layout: plain");
   });
 
   it("appends a draft turn when the last message is from the assistant", () => {

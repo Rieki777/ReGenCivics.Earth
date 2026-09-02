@@ -20,6 +20,10 @@ import {
   parseDraftAgentOutput,
   stripEmailPii,
 } from "../lib/emailDraftAgent";
+import { letterSkipsSendWrap, TEMPLATE_KEY_RE } from "../../shared/letterLayout";
+import { renderLetterPdfBase64 } from "../lib/letterPdf";
+
+const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 
 export const newsletterRouter = router({
   // Subscribe to newsletter, creates pending subscriber (isActive=0) and sends confirmation email
@@ -259,6 +263,7 @@ export const emailRouter = router({
       // markdown = convert then wrap (composers). html = already a document
       // (EmailSettings custom templates). plain = wrap newlines as paragraphs.
       bodyFormat: z.enum(["markdown", "plain", "html"]).optional(),
+      layout: letterLayoutZ.optional(),
       inquiryType: z.enum(["investor", "alliance", "project", "general"]).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -271,7 +276,11 @@ export const emailRouter = router({
       if (input.customSubject && input.customBody) {
         emailContent = {
           subject: input.customSubject,
-          html: emailDocumentFromBody(input.customBody, input.bodyFormat ?? "plain"),
+          html: emailDocumentFromBody(
+            input.customBody,
+            input.bodyFormat ?? "plain",
+            input.layout ?? "plain",
+          ),
         };
       } else if (input.templateType === "land_project_accepted") {
         emailContent = emailTemplates.landProjectAccepted("Project Name", input.recipientName);
@@ -347,6 +356,7 @@ export const emailRouter = router({
         subject: emailContent.subject,
         html: emailContent.html,
         emailLogId: logId,
+        skipBrandedWrap: letterSkipsSendWrap(input.layout ?? "plain") && input.bodyFormat === "markdown",
         // No replyTo: replies route through /connect, not to an inbox.
       });
 
@@ -643,14 +653,33 @@ export const emailRouter = router({
   // Save or update a custom template
   saveCustomTemplate: adminProcedure
     .input(z.object({
-      templateKey: z.string(),
+      templateKey: z.string().min(1).max(64).regex(TEMPLATE_KEY_RE),
       customSubject: z.string().nullable().optional(),
       customBody: z.string().nullable().optional(),
       isActive: z.number().min(0).max(1).optional(),
+      bodyFormat: z.enum(["html", "markdown", "plain"]).optional(),
+      layout: letterLayoutZ.nullable().optional(),
+      label: z.string().max(120).nullable().optional(),
+      createOnly: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      if (input.createOnly) {
+        const existing = await db.getCustomTemplate(input.templateKey);
+        if (existing) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "A template with that name already exists. Pick another name, or save over the existing one.",
+          });
+        }
+      }
       await db.upsertCustomTemplate({
-        ...input,
+        templateKey: input.templateKey,
+        customSubject: input.customSubject,
+        customBody: input.customBody,
+        isActive: input.isActive,
+        bodyFormat: input.bodyFormat,
+        layout: input.layout,
+        label: input.label,
         lastEditedBy: ctx.user.name || ctx.user.email || "Admin",
       });
       return { success: true };
@@ -676,6 +705,7 @@ export const emailRouter = router({
       customSubject: z.string().max(300).optional(),
       customBody: z.string().max(50000).optional(),
       bodyFormat: z.enum(["markdown", "plain", "html"]).optional(),
+      layout: letterLayoutZ.optional(),
       mergeFields: z.record(z.string(), z.string()).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -698,7 +728,11 @@ export const emailRouter = router({
             emailContent = {
               subject: applyRecipientMergeFields(input.customSubject, merge),
               html: applyRecipientMergeFields(
-                emailDocumentFromBody(input.customBody, input.bodyFormat ?? "plain"),
+                emailDocumentFromBody(
+                  input.customBody,
+                  input.bodyFormat ?? "plain",
+                  input.layout ?? "plain",
+                ),
                 merge,
               ),
             };
@@ -766,6 +800,7 @@ export const emailRouter = router({
             to: recipient.email,
             subject: emailContent.subject,
             html: emailContent.html,
+            skipBrandedWrap: letterSkipsSendWrap(input.layout ?? "plain") && input.bodyFormat === "markdown",
           });
 
           results.push({ email: recipient.email, success: !!result.id });
@@ -792,6 +827,23 @@ export const emailRouter = router({
     }),
 
   /**
+   * Download a PDF of the current markdown letter. Same blocks as the HTML preview.
+   */
+  renderPdf: adminProcedure
+    .input(z.object({
+      subject: z.string().max(300),
+      body: z.string().max(50000),
+      layout: letterLayoutZ.optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return renderLetterPdfBase64({
+        subject: input.subject,
+        body: input.body,
+        layout: input.layout ?? "plain",
+      });
+    }),
+
+  /**
    * Draft (never send) an email with the writing partner.
    * Recipients are a count + status label only. No emails or phones go to the model.
    */
@@ -804,6 +856,7 @@ export const emailRouter = router({
       })).min(1).max(20),
       currentSubject: z.string().max(300).optional(),
       currentBody: z.string().max(20000).optional(),
+      currentLayout: letterLayoutZ.optional(),
       statusLabel: z.string().max(80).optional(),
       recipientCount: z.number().int().min(0).max(100).optional(),
     }))
@@ -823,6 +876,7 @@ export const emailRouter = router({
         messages,
         input.currentSubject ?? "",
         input.currentBody ?? "",
+        input.currentLayout ?? "plain",
       );
 
       const res = await invokeLLM({
@@ -832,6 +886,7 @@ export const emailRouter = router({
             content: buildDraftAgentSystemPrompt({
               statusLabel: input.statusLabel ?? "applicants",
               recipientCount: input.recipientCount ?? 0,
+              currentLayout: input.currentLayout ?? "plain",
             }),
           },
           ...withDraft,
@@ -846,6 +901,7 @@ export const emailRouter = router({
         reply: parsed.reply || "Here's an updated draft. Apply it when you are ready, then send yourself.",
         subject: parsed.subject,
         body: parsed.body,
+        layout: parsed.layout,
       };
     }),
 });
