@@ -1063,7 +1063,7 @@ function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
             <CardTitle className="text-2xl text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               Admin Access
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-[#1a472a]">
               Enter the password to access the admin dashboard
             </CardDescription>
           </CardHeader>
@@ -1078,7 +1078,7 @@ function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
                     setPassword(e.target.value);
                     setError(false);
                   }}
-                  className={`text-center text-lg ${error ? 'border-red-500 focus:ring-red-500' : 'border-[#1a472a]/30 focus:ring-[#7dd87d]'}`}
+              className={`text-center text-lg bg-white text-[#1a472a] placeholder:text-[#1a472a] ${error ? 'border-red-500 focus:ring-red-500' : 'border-[#1a472a]/50 focus:ring-[#7dd87d]'}`}
                 />
                 {error && (
                   <p className="text-red-500 text-sm mt-2 text-center">
@@ -3483,10 +3483,10 @@ function AdminDashboard() {
   }, []);
 
   // Fetch all data
-  const { data: applications, isLoading: loadingApps } = trpc.applications.list.useQuery();
-  const { data: draftApplications } = trpc.applications.listDrafts.useQuery();
-  const { data: investors, isLoading: loadingInvestors } = trpc.investorInquiries.list.useQuery();
-  const { data: inquiries, isLoading: loadingInquiries } = trpc.generalInquiries.list.useQuery();
+  const { data: applications } = trpc.applications.list.useQuery(undefined, { retry: false });
+  const { data: draftApplications } = trpc.applications.listDrafts.useQuery(undefined, { retry: false });
+  const { data: investors } = trpc.investorInquiries.list.useQuery(undefined, { retry: false });
+  const { data: inquiries } = trpc.generalInquiries.list.useQuery(undefined, { retry: false });
 
   const utils = trpc.useUtils();
   const auditNote = trpc.contactNotes.create.useMutation();
@@ -3515,9 +3515,6 @@ function AdminDashboard() {
     },
   });
 
-  const isLoading = loadingApps || loadingInvestors || loadingInquiries;
-
-  // Calculate stats
   const stats = {
     totalApplications: applications?.length || 0,
     totalInvestors: investors?.length || 0,
@@ -3584,10 +3581,9 @@ function AdminDashboard() {
     return acc;
   }, {});
 
-  if (isLoading) {
-    return <TaoSpinner fullPage size={72} />;
-  }
-
+  // Show the admin chrome immediately. List queries can 403 or hang without
+  // a database; a full-page spinner hid Harvest, Funding, and the rest of
+  // the dashboard while they retried.
   return (
     <div className={`admin-root flex h-[100dvh] overflow-hidden bg-[#f0ebe3] ${compact ? 'admin-compact' : ''}`}>
       <ShortcutHelpOverlay />
@@ -3632,25 +3628,25 @@ function AdminDashboard() {
                 </Button>
               </Link>
               <Link href="/admin/calls">
-                <Button variant="outline" size="sm" className="border-[#7dd87d]/60 text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
                   <Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Calls
                 </Button>
               </Link>
               <Link href="/admin/funding">
-                <Button variant="outline" size="sm" className="border-[#7dd87d]/60 text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
                   <Landmark className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Funding
                 </Button>
               </Link>
               <Link href="/admin/applications">
-                <Button variant="outline" size="sm" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/20 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
                   <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Application </span>Reviews
                 </Button>
               </Link>
               <Link href="/admin/moderation">
-                <Button variant="outline" size="sm" className="border-[#d4a574] text-[#d4a574] hover:bg-[#d4a574]/20 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
                   <Shield className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Forum </span>Moderation
                 </Button>
@@ -3728,7 +3724,7 @@ function AdminDashboard() {
                   if (first) first();
                 }
               }}
-              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/40 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/40 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/70 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
               aria-label="Search contacts, projects, posts"
             />
             {globalSearch && (

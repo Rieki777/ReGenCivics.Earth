@@ -85,7 +85,7 @@ export function AdminOverviewTab({
           <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
             The Harvest
           </span>
-          <span className="block text-sm md:text-base text-white/85">
+          <span className="block text-sm md:text-base text-white">
             Compose, fact-check, and publish. Your content pipeline.
           </span>
         </span>
@@ -103,7 +103,7 @@ export function AdminOverviewTab({
           <span className="block text-lg md:text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
             Funding Pipeline
           </span>
-          <span className="block text-sm md:text-base text-white/85">
+          <span className="block text-sm md:text-base text-white">
             All 117 researched funders, where each application stands, and the positioning generator. Prepare an application to get a Cowork prompt you can run.
           </span>
         </span>
