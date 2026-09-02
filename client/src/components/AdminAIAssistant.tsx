@@ -244,8 +244,9 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
         onClick={openAssistant}
         data-testid="admin-fab"
         style={{ touchAction: "manipulation" }}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+        className="fixed z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group right-4 md:right-6 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"
         title="Open AI Assistant"
+        aria-label="Open AI assistant"
       >
         <Bot className="w-6 h-6 text-[#7dd87d] group-hover:scale-110 transition-transform" />
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#7dd87d] rounded-full animate-pulse" />
@@ -257,7 +258,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 w-full max-w-[380px] rounded-2xl shadow-2xl border border-[#4a7c59]/30 bg-white flex flex-col overflow-hidden"
+      className="fixed z-50 w-full max-w-[380px] rounded-2xl shadow-2xl border border-[#4a7c59]/30 bg-white flex flex-col overflow-hidden right-4 md:right-6 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"
       style={{ height: panelHeight, maxWidth: "min(380px, calc(100vw - 2rem))" }}
     >
       {/* Header */}

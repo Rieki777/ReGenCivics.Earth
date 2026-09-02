@@ -1,5 +1,4 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,6 +19,8 @@ import { ActivitySparkline } from "./ActivitySparkline";
 import { AdminGovernancePanel } from "./AdminGovernancePanel";
 import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
 import { AdminNeedsYou } from "./AdminNeedsYou";
+import { AdminContinueRow } from "./AdminContinueRow";
+import { inquiryTabForPath } from "@/lib/adminNav";
 
 // Path type config subset needed for the overview
 const pathTypeConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -74,6 +75,11 @@ export function AdminOverviewTab({
 }: Props) {
   return (
     <div className="space-y-6">
+      {/* Work waiting on you first. Everything else is context. */}
+      <AdminNeedsYou onSelectTab={setActiveTab} />
+
+      <AdminContinueRow onSelectTab={setActiveTab} />
+
       <Link
         href="/admin-create"
         className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-5 md:px-7 md:py-6 shadow-sm transition-all hover:from-[#2d5a3d] hover:to-[#4a7c59] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#7dd87d]/40"
@@ -113,44 +119,8 @@ export function AdminOverviewTab({
         </span>
       </Link>
 
-      {/* One prioritized action queue: what is waiting on the operator, first. */}
-      <AdminNeedsYou onSelectTab={setActiveTab} />
-
-      {/* C-suite briefing + ecosystem KPIs: the AI-assisted front door. */}
+      {/* C-suite briefing + ecosystem KPIs. */}
       <AdminCSuiteBriefing onSelectTab={setActiveTab} />
-
-      {/* Pending Items Alert */}
-      {stats.pendingReview > 0 && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="font-semibold text-amber-800">
-              {stats.pendingReview} item{stats.pendingReview !== 1 ? "s" : ""} pending review
-            </p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              Review and respond to keep your community engaged
-            </p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
-              onClick={() => setActiveTab("applications")}
-            >
-              Applications
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
-              onClick={() => setActiveTab("investors")}
-            >
-              Investors
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Today's Focus */}
       {(() => {
@@ -200,7 +170,7 @@ export function AdminOverviewTab({
             )}
             {overdueInquiries.length > 0 && (
               <button
-                onClick={() => setActiveTab("live")}
+                onClick={() => setActiveTab(inquiryTabForPath("live"))}
                 className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors"
               >
                 <AlertTriangle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
@@ -244,7 +214,7 @@ export function AdminOverviewTab({
             <button
               key={action.label}
               onClick={() => setActiveTab(action.tab)}
-              className="p-4 rounded-xl bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 hover:shadow-md transition-all text-left group"
+              className="p-4 rounded-xl bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 hover:shadow-md transition-all text-left group min-h-11"
             >
               <div
                 className={`w-9 h-9 rounded-lg ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
@@ -446,17 +416,21 @@ export function AdminOverviewTab({
             {applications && applications.length > 0 ? (
               <div className="divide-y divide-[#1a472a]/10">
                 {applications.slice(0, 5).map((app: any) => (
-                  <div key={app.id} className="p-4 hover:bg-[#f0ebe3]/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
-                        <p className="text-sm text-[#1a472a]/80">{app.location}</p>
+                  <Link
+                    key={app.id}
+                    href={`/admin/application/${app.id}`}
+                    className="block p-4 min-h-11 hover:bg-[#f0ebe3]/50"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#1a472a] truncate">{app.projectName}</p>
+                        <p className="text-sm text-[#1a472a]/80 truncate">{app.location}</p>
                       </div>
-                      <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300">
+                      <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex-shrink-0">
                         {app.status}
                       </Badge>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -480,14 +454,11 @@ export function AdminOverviewTab({
               {Object.entries(pathTypeConfig).map(([key, config]) => {
                 const count = inquiriesByPath[key] || 0;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={key}
-                    className="p-4 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors cursor-pointer"
-                    onClick={() =>
-                      setActiveTab(
-                        key === "finance" || key === "learn" ? "other" : key
-                      )
-                    }
+                    className="p-4 min-h-11 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors text-left"
+                    onClick={() => setActiveTab(inquiryTabForPath(key))}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -498,7 +469,7 @@ export function AdminOverviewTab({
                         <p className="text-xs text-[#1a472a]/80">{config.label}</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

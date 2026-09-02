@@ -63,7 +63,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { toast } from "sonner";
 import { EmailTemplateSelector, emailTemplates } from "@/components/EmailTemplateSelector";
@@ -77,6 +77,8 @@ import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
+import { AdminApplicationsSection } from "@/components/admin/AdminApplicationsSection";
+import { inquiryTabForPath, navItemById, navItemForShortcut, writeAdminContinue, writeAdminContinueFromTab } from "@/lib/adminNav";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
 import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
 import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
@@ -934,7 +936,7 @@ function AssigneeSelect({ contactType, contactId }: { contactType: string; conta
     <div className="flex items-center gap-2">
       <span className="text-xs text-[#1a472a]/80 shrink-0">Assigned to:</span>
       <Select value={currentAssignee || 'unassigned'} onValueChange={handleChange}>
-        <SelectTrigger className="h-7 text-xs flex-1 max-w-[160px]">
+        <SelectTrigger className="min-h-11 text-xs flex-1 max-w-[160px]">
           <SelectValue placeholder="Unassigned" />
         </SelectTrigger>
         <SelectContent>
@@ -2072,7 +2074,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
             <div className="space-y-1">
               <Label className="text-xs text-blue-700">Template</Label>
               <Select value={bulkEmailTemplate} onValueChange={loadBulkTemplate}>
-                <SelectTrigger className="h-8 text-xs bg-white">
+                <SelectTrigger className="min-h-11 text-xs bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -2589,7 +2591,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       });
                     }}
                   >
-                    <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectTrigger className="min-h-11 text-xs flex-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -3077,7 +3079,7 @@ function JoinRequestsAdminPanel() {
 // Keyboard shortcuts help content
 const SHORTCUTS = [
   { key: '/', desc: 'Focus search' },
-  { key: '1–9', desc: 'Jump to tab (1=Overview, 2=Apps, 3=Investors…)' },
+  { key: '1–9', desc: 'Jump to the first nine sidebar items (1=Overview, 2=Applications…)' },
   { key: 'Esc', desc: 'Close dialog / clear search' },
 ];
 
@@ -3414,6 +3416,7 @@ function AdminPlayersTab() {
 }
 
 function AdminDashboard() {
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("tab") || "overview"; } catch { return "overview"; }
   });
@@ -3431,6 +3434,9 @@ function AdminDashboard() {
         window.history.pushState(null, "", next);
       }
     } catch { /* history unavailable */ }
+  }, [activeTab]);
+  useEffect(() => {
+    writeAdminContinueFromTab(activeTab);
   }, [activeTab]);
   useEffect(() => {
     const onPop = () => {
@@ -3480,26 +3486,23 @@ function AdminDashboard() {
     { enabled: debouncedSearch.length >= 2 }
   );
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts. 1–9 follow the sidebar so they never jump to a
+  // hidden tab. Search is a visible field; "/" just focuses it.
   useEffect(() => {
-    const TAB_KEYS: Record<string, string> = {
-      '1': 'overview', '2': 'applications', '3': 'investors',
-      '4': 'alliance', '5': 'live', '6': 'create', '7': 'other',
-      '8': 'broadcast', '9': 'kanban',
-    };
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      // '?' is handled by ShortcutHelpOverlay
       if (e.key === '/' ) { e.preventDefault(); (document.querySelector('[data-global-search]') as HTMLInputElement)?.focus(); }
-      if (TAB_KEYS[e.key] && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const item = navItemForShortcut(e.key);
+      if (item && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
-        setActiveTab(TAB_KEYS[e.key]);
+        if (item.route) navigate(item.route);
+        else setActiveTab(item.id);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [navigate]);
 
   // Fetch all data
   const { data: applications } = trpc.applications.list.useQuery(undefined, { retry: false });
@@ -3640,34 +3643,22 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-              <Link href="/admin-create">
-                <Button size="sm" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#a8e6a8] font-semibold text-xs md:text-sm">
+              <Link href="/admin-create" onClick={() => { const item = navItemById("harvest"); if (item) writeAdminContinue(item); }}>
+                <Button size="sm" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#a8e6a8] font-semibold text-xs md:text-sm min-h-11">
                   <Sprout className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   The Harvest
                 </Button>
               </Link>
-              <Link href="/admin/calls">
-                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
+              <Link href="/admin/calls" onClick={() => { const item = navItemById("calls"); if (item) writeAdminContinue(item); }}>
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm min-h-11">
                   <Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Calls
                 </Button>
               </Link>
-              <Link href="/admin/funding">
-                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
+              <Link href="/admin/funding" onClick={() => { const item = navItemById("funding"); if (item) writeAdminContinue(item); }}>
+                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm min-h-11">
                   <Landmark className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Funding
-                </Button>
-              </Link>
-              <Link href="/admin/applications">
-                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
-                  <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Application </span>Reviews
-                </Button>
-              </Link>
-              <Link href="/admin/moderation">
-                <Button variant="outline" size="sm" className="border-[#f8f5f0]/70 text-[#f8f5f0] hover:bg-white/10 text-xs md:text-sm">
-                  <Shield className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Forum </span>Moderation
                 </Button>
               </Link>
               <button
@@ -3681,7 +3672,7 @@ function AdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`border-white/30 text-white hover:bg-white/10 text-xs ${compact ? 'bg-white/10' : ''}`}
+                className={`border-white/30 text-white hover:bg-white/10 text-xs min-h-11 ${compact ? 'bg-white/10' : ''}`}
                 onClick={() => {
                   const next = !compact;
                   setCompact(next);
@@ -3695,7 +3686,7 @@ function AdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-white/30 text-white hover:bg-white/10 text-xs md:text-sm"
+                className="border-white/30 text-white hover:bg-white/10 text-xs md:text-sm min-h-11"
                 onClick={() => {
                   localStorage.removeItem("admin_authenticated");
                   window.location.reload();
@@ -3705,7 +3696,7 @@ function AdminDashboard() {
                 Logout
               </Button>
               <Link href="/">
-                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 text-xs md:text-sm min-h-11">
                   <HomeIcon className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Back to Site</span>
                   <span className="sm:hidden">Home</span>
@@ -3724,7 +3715,7 @@ function AdminDashboard() {
             <input
               type="text"
               data-global-search
-              placeholder='Search contacts, projects, posts… (press "/" to focus)'
+              placeholder="Search contacts, projects, posts"
               value={globalSearch}
               onChange={(e) => { setGlobalSearch(e.target.value); setGlobalSearchOpen(true); }}
               onFocus={() => setGlobalSearchOpen(true)}
@@ -3736,14 +3727,14 @@ function AdminDashboard() {
                   const first =
                     globalResults.investors[0] ? (() => { setInvestorSearch(globalResults.investors[0].email || globalResults.investors[0].fullName); setActiveTab('investors'); setGlobalSearch(''); }) :
                     globalResults.applications[0] ? (() => { setAppSearch(globalResults.applications[0].projectName); setActiveTab('applications'); setGlobalSearch(''); }) :
-                    globalResults.inquiries[0] ? (() => { setActiveTab(globalResults.inquiries[0].pathType || 'live'); setGlobalSearch(''); }) :
+                    globalResults.inquiries[0] ? (() => { setActiveTab(inquiryTabForPath(globalResults.inquiries[0].pathType)); setGlobalSearch(''); }) :
                     globalResults.campaigns[0] ? (() => { window.open(globalResults.campaigns[0].url, '_blank'); setGlobalSearch(''); }) :
                     globalResults.forumPosts[0] ? (() => { window.open(globalResults.forumPosts[0].url, '_blank'); setGlobalSearch(''); }) :
                     null;
                   if (first) first();
                 }
               }}
-              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/40 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full min-h-11 pl-9 pr-8 py-2 text-sm border border-[#1a472a]/40 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
               aria-label="Search contacts, projects, posts"
             />
             {globalSearch && (
@@ -3788,7 +3779,7 @@ function AdminDashboard() {
                         <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/75 uppercase tracking-wide bg-purple-50">Inquiries</p>
                         {globalResults.inquiries.map((i: any) => (
                           <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
-                            onClick={() => { setActiveTab(i.pathType || 'live'); setGlobalSearch(''); }}>
+                            onClick={() => { setActiveTab(inquiryTabForPath(i.pathType)); setGlobalSearch(''); }}>
                             <MessageSquare className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName || i.email}</span>
                             <span className="text-xs text-[#1a472a]/75">{i.pathType?.replace(/_/g, ' ')}</span>
@@ -3837,7 +3828,7 @@ function AdminDashboard() {
       {/* Scrollable main content */}
       <div className="flex-1 min-h-0 overflow-y-auto">
       {/* Stats */}
-      <div className="container py-8">
+      <div className="container py-8 pb-24">
         {/* The clickable KPI row inside the Overview tab is the single stat
             surface now; the old duplicate summary cards were removed. */}
 
@@ -3862,6 +3853,8 @@ function AdminDashboard() {
 
           {/* Project Applications Tab */}
           <TabsContent value="applications">
+            <AdminApplicationsSection
+              list={
             <AdminApplicationsTab
               applications={applications}
               draftApplications={draftApplications}
@@ -3875,6 +3868,8 @@ function AdminDashboard() {
               ReminderPanel={ReminderPanel}
               AssigneeSelect={AssigneeSelect}
               EmailHistoryPanelComp={EmailHistoryPanel}
+            />
+              }
             />
           </TabsContent>
 

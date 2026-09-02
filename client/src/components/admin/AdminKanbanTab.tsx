@@ -18,7 +18,7 @@ export function AdminKanbanTab({ investors, inquiries, applications }: Props) {
           <Filter className="w-5 h-5" />
           Kanban Board
         </CardTitle>
-        <CardDescription>Drag cards between columns to update status</CardDescription>
+        <CardDescription>Tap a card&apos;s status to move it.</CardDescription>
       </CardHeader>
       <CardContent>
         <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/75">Loading board…</div>}>

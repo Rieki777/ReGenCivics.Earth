@@ -1,10 +1,9 @@
 /**
- * AdminCommandPalette: ⌘K / Ctrl+K jump-to-section for the admin.
+ * AdminCommandPalette: optional desktop jump-to-section (⌘K / Ctrl+K).
  *
- * The public CommandPalette is disabled in admin mode, so this gives the
- * operator the same fast keyboard navigation across every admin section.
- * Sections come from the shared AdminSidebar NAV_GROUPS, so the palette and
- * the sidebar never drift. Route items open their page; tab items switch tabs.
+ * This is a power-user extra. Every destination is also a sidebar row and a
+ * tap target, because admin has to work on a phone. Sections come from the
+ * shared NAV_GROUPS list so the palette and the drawer never drift.
  */
 import { useEffect, useState } from "react";
 import { Command } from "cmdk";

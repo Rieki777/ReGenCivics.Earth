@@ -74,7 +74,7 @@ export function AdminInvestorsTab({
           <Button
             variant="outline"
             size="sm"
-            className="border-[#7dd87d] text-[#1a472a] w-fit"
+            className="border-[#7dd87d] text-[#1a472a] w-fit min-h-11"
             onClick={() => exportToCSV(investors || [], 'investor_inquiries')}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -104,11 +104,11 @@ export function AdminInvestorsTab({
               placeholder="Search by name, email, range, or org..."
               value={investorSearch}
               onChange={(e) => setInvestorSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
           <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>
-            <SelectTrigger className="sm:w-44 h-9 text-sm">
+            <SelectTrigger className="sm:w-44 min-h-11 text-sm">
               <Filter className="w-3 h-3 mr-1" />
               <SelectValue />
             </SelectTrigger>
@@ -351,7 +351,7 @@ export function AdminInvestorsTab({
                           });
                         }}
                       >
-                        <SelectTrigger className="h-8 text-xs flex-1">
+                        <SelectTrigger className="min-h-11 text-xs flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

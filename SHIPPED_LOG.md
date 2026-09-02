@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-02 (admin): Click-first admin, one Applications workspace, phone drawer
+
+- **Applications is one place.** `/admin/applications` redirects to `/admin?tab=applications`. Reviews (status cards, email, open a project) and List, search, export share a toggle. Detail back goes to that tab.
+- **The sidebar is the map.** Live, Create, Other, Role Applications, Pipeline Board, Harvest, Funding, and Calls are rows you can tap. Number keys 1–9 follow the first nine rows. Inquiries needing a reply open the Pipeline Board.
+- **Overview starts with work.** Needs you, then Continue (last section you were in), then Harvest and Funding. Duplicate pending-review banner is gone. Recent applications open the detail page.
+- **Phone taps.** 44px status menus on pipeline cards and inquiry rows. Header dropped the extra Reviews and Forum chips (those live in the drawer). Cmd+K stays available on desktop. The drawer and the buttons are how you move around.
+- Source: admin UX pass after the letter-system / contrast / clickable-review cards landing on main (`1e4d22ef`).
+
+Carryover: `Admin.tsx` is still a 5k-line shell; Harvest/Funding/Calls/application detail still leave the admin drawer; Overview still stacks C-suite, Today's Focus, and Quick Actions under Needs you.
+
 ## 2026-08-15 (qa): The dimension QA round: example containment, crawler presence, and the forms screen readers could not read
 
 - **Three parallel audits swept production** (functional over all 131 sitemap routes, accessibility and responsive over 12 key routes at two viewports, content and data integrity around the new example proposals). Clean across: HTTP status and titles on every route, zero console errors on 10 key pages, zero broken same-origin links, JSON-LD validity, mobile horizontal overflow on all 12 routes, image alt coverage, member directory and leaderboard containment of the demo accounts, and the demo Hypha bridge's unmatchability (all four webhook paths verified excluding it, not assumed).
