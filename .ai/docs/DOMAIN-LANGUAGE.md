@@ -161,6 +161,8 @@ Source of truth for any future edit: `shared/capitals.ts`.
 
 **FIXES_TO_MAKE doc**. A handoff document with a specific structure (Handoff Breakdown table, status vocabulary). Created via the `regen-fixes-handoff` skill. See `~/.claude/skills/regen-fixes-handoff/SKILL.md`.
 
+**Letter layout**. Code chrome around a markdown email: `plain`, `announcement` (forest header, logo, standalone links as buttons, quotes as callouts), or `one_pager` (same as announcement, sized for a PDF page). Markdown stays the source. The writing partner may name a layout. It never emits HTML or PDF. Saved composer letters live on `emailTemplates` with `bodyFormat=markdown`, separate from EmailSettings HTML overrides.
+
 ---
 
 ## People + audiences

@@ -22,6 +22,14 @@ describe("emailDocumentFromMarkdown", () => {
     expect(html).toContain("one");
     expect(html).toContain("The ReGen Civics Team");
   });
+
+  it("keeps announcement tables and buttons after sanitize", () => {
+    const html = emailDocumentFromMarkdown("[Open Session](https://regencivics.earth/schedule)", "announcement");
+    expect(html).toContain("<table");
+    expect(html).toContain("Open Session");
+    expect(html).toContain("regencivics.earth/schedule");
+    expect(html).toContain("ReGen Civics");
+  });
 });
 
 describe("emailDocumentFromBody", () => {

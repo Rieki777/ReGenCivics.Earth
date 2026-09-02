@@ -32,6 +32,28 @@ describe("markdownToEmailHtml", () => {
     expect(html).toContain("first");
   });
 
+  it("renders nested lists", () => {
+    const html = markdownToEmailHtml("Next:\n1. Join\n2. Complete\n3. Participate\n   - bring questions\n   - bring a neighbor");
+    expect(html).toContain("<ol");
+    expect(html).toContain("<ul");
+    expect(html).toContain("bring questions");
+    expect(html).toMatch(/<li[^>]*>Participate<ul/);
+  });
+
+  it("turns a standalone link into a button in announcement layout", () => {
+    const html = markdownToEmailHtml("[Schedule a call](https://calendly.com/rieki-cordon/30min)", "announcement");
+    expect(html).toContain('bgcolor="#4a7c59"');
+    expect(html).toContain("Schedule a call");
+    expect(html).toContain("https://calendly.com/rieki-cordon/30min");
+    expect(html).not.toContain("javascript:");
+  });
+
+  it("keeps a standalone link as a text link in plain layout", () => {
+    const html = markdownToEmailHtml("[Schedule a call](https://calendly.com/rieki-cordon/30min)", "plain");
+    expect(html).not.toContain('bgcolor="#4a7c59"');
+    expect(html).toContain("Schedule a call");
+  });
+
   it("renders headings, quotes, and rules", () => {
     const html = markdownToEmailHtml("## Important\n\n> Hold the land first.\n\n---\n\nDone.");
     expect(html).toContain("<h2");

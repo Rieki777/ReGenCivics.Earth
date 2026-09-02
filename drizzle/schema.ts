@@ -1601,8 +1601,17 @@ export const emailTemplates = mysqlTable("emailTemplates", {
   // Custom subject line (null = use default)
   customSubject: varchar("customSubject", { length: 500 }),
   
-  // Custom HTML body content (null = use default)
+  // Custom HTML body content (null = use default). Markdown letters store markdown here.
   customBody: text("customBody"),
+
+  // html = EmailSettings override. markdown = composer letter. Existing rows are html.
+  bodyFormat: varchar("bodyFormat", { length: 16 }).default("html").notNull(),
+
+  // Letter chrome: plain | announcement | one_pager. Null on HTML overrides.
+  layout: varchar("layout", { length: 32 }),
+
+  // Display name for saved composer letters.
+  label: varchar("label", { length: 120 }),
   
   // Whether this custom template is active (1 = use custom, 0 = use default)
   isActive: tinyint("isActive").default(1).notNull(),

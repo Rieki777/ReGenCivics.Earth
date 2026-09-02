@@ -82,6 +82,8 @@ import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
 import { AdminCitizenshipTiers } from "@/components/admin/AdminCitizenshipTiers";
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
+import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
+import { defaultLayoutForTemplate, type LetterLayout } from "@shared/letterLayout";
 // Tab bodies load on demand — only the active tab's chunk is fetched, keeping
 // the initial /admin payload small. The Overview tab stays eager (it is the
 // landing view). Named exports are unwrapped to the default lazy() expects.
@@ -1675,6 +1677,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
   const [bulkEmailTemplate, setBulkEmailTemplate] = useState('follow_up');
   const [bulkEmailSubject, setBulkEmailSubject] = useState('');
   const [bulkEmailBody, setBulkEmailBody] = useState('');
+  const [bulkEmailLayout, setBulkEmailLayout] = useState<LetterLayout>('plain');
 
   const utils = trpc.useUtils();
   const auditNote = trpc.contactNotes.create.useMutation();
@@ -1706,6 +1709,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
     if (tpl) {
       setBulkEmailSubject(tpl.subject);
       setBulkEmailBody(tpl.body); // Keep {{name}} placeholder for per-recipient merge
+      setBulkEmailLayout(defaultLayoutForTemplate(templateId));
     }
   };
   
@@ -2093,11 +2097,21 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
             <EmailMarkdownComposer
               subject={bulkEmailSubject}
               body={bulkEmailBody}
+              layout={bulkEmailLayout}
+              onLayoutChange={setBulkEmailLayout}
               onSubjectChange={setBulkEmailSubject}
               onBodyChange={setBulkEmailBody}
               showSubject={false}
               minHeightClass="min-h-[120px]"
               bodyId="admin-bulk-email-body"
+            />
+            <EmailSaveTemplateBar
+              subject={bulkEmailSubject}
+              body={bulkEmailBody}
+              layout={bulkEmailLayout}
+              builtinTemplates={emailTemplates}
+              currentKey={bulkEmailTemplate}
+              onSaved={() => {}}
             />
           </div>
           <div className="flex gap-2">
@@ -2119,6 +2133,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   customSubject: bulkEmailSubject,
                   customBody: bulkEmailBody,
                   bodyFormat: "markdown",
+                  layout: bulkEmailLayout,
                 });
               }}
               disabled={sendBulkEmailMutation.isPending || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}

@@ -10,12 +10,13 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
+import type { LetterLayout } from "@shared/letterLayout";
 
 const STARTERS = [
   "Write a warmer version of this draft.",
   "Shorten this. Keep the next steps.",
   "Turn the next steps into a numbered list.",
-  "Rewrite in my voice: direct, first person, contractions.",
+  "Use announcement layout. Put each link on its own line so they become buttons.",
 ];
 
 interface ChatTurn {
@@ -23,19 +24,22 @@ interface ChatTurn {
   content: string;
   proposedSubject?: string;
   proposedBody?: string;
+  proposedLayout?: LetterLayout;
 }
 
 interface Props {
   currentSubject: string;
   currentBody: string;
+  currentLayout?: LetterLayout;
   statusLabel: string;
   recipientCount: number;
-  onApply: (draft: { subject: string; body: string }) => void;
+  onApply: (draft: { subject: string; body: string; layout?: LetterLayout }) => void;
 }
 
 export function EmailDraftAgent({
   currentSubject,
   currentBody,
+  currentLayout = "plain",
   statusLabel,
   recipientCount,
   onApply,
@@ -60,6 +64,7 @@ export function EmailDraftAgent({
         messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
         currentSubject,
         currentBody,
+        currentLayout,
         statusLabel,
         recipientCount,
       });
@@ -70,6 +75,7 @@ export function EmailDraftAgent({
           content: result.reply,
           proposedSubject: result.subject || undefined,
           proposedBody: result.body || undefined,
+          proposedLayout: result.layout || undefined,
         },
       ]);
     } catch (error: unknown) {
@@ -118,7 +124,7 @@ export function EmailDraftAgent({
             >
               {turn.content}
             </div>
-            {turn.role === "assistant" && (turn.proposedSubject || turn.proposedBody) && (
+            {turn.role === "assistant" && (turn.proposedSubject || turn.proposedBody || turn.proposedLayout) && (
               <div className="mt-1.5">
                 <Button
                   type="button"
@@ -127,6 +133,7 @@ export function EmailDraftAgent({
                     onApply({
                       subject: turn.proposedSubject || currentSubject,
                       body: turn.proposedBody || currentBody,
+                      layout: turn.proposedLayout,
                     })
                   }
                   className="bg-[#4a7c59] hover:bg-[#3d6849] text-white h-8"

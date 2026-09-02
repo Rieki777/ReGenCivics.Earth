@@ -317,7 +317,8 @@ function EmailTemplatePreview() {
   
   // Check if selected template has a custom version saved
   const customVersion = customTemplatesQuery.data?.find(
-    (ct: { templateKey: string }) => ct.templateKey === selectedTemplate
+    (ct: { templateKey: string; bodyFormat?: string | null }) =>
+      ct.templateKey === selectedTemplate && (!ct.bodyFormat || ct.bodyFormat === "html")
   );
   
   // Group templates by category for the browse view
@@ -353,6 +354,8 @@ function EmailTemplatePreview() {
       customSubject: editingSubject,
       customBody: editingBody,
       isActive: 1,
+      bodyFormat: "html",
+      layout: null,
     });
   };
   
@@ -396,7 +399,8 @@ function EmailTemplatePreview() {
                   {groupedTemplates[category]?.map((t) => {
                     const Icon = t.icon;
                     const hasCustom = customTemplatesQuery.data?.some(
-                      (ct: { templateKey: string }) => ct.templateKey === t.id
+                      (ct: { templateKey: string; bodyFormat?: string | null }) =>
+                        ct.templateKey === t.id && (!ct.bodyFormat || ct.bodyFormat === "html")
                     );
                     return (
                       <div
