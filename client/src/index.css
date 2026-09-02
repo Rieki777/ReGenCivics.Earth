@@ -2769,12 +2769,12 @@ html[data-contrast="high"] *:focus-visible {
 .apply-form-dark textarea::placeholder,
 .light-form-island input::placeholder,
 .light-form-island textarea::placeholder {
-  color: rgba(26, 71, 42, 0.75);
+  color: #1a472a;
   opacity: 1;
 }
 .apply-form-dark [data-slot="select-value"][data-placeholder],
 .light-form-island [data-slot="select-value"][data-placeholder] {
-  color: rgba(26, 71, 42, 0.75);
+  color: #1a472a;
   opacity: 1;
 }
 .apply-form-dark [data-slot="card-description"],

@@ -171,16 +171,27 @@ await metrics("events");
 
 await page.goto(`${BASE}/connect`, { waitUntil: "domcontentloaded", timeout: 30000 });
 await page.waitForTimeout(1500);
+const skip = page.getByRole("button", { name: /skip/i });
+if (await skip.count()) await skip.first().click().catch(() => {});
+await page.waitForTimeout(400);
 await shot("06-connect");
 const connect = await metrics("connect");
 
 await page.goto(`${BASE}/apply`, { waitUntil: "domcontentloaded", timeout: 30000 });
 await page.waitForTimeout(1500);
+if (await page.getByRole("button", { name: /skip/i }).count()) {
+  await page.getByRole("button", { name: /skip/i }).first().click().catch(() => {});
+  await page.waitForTimeout(400);
+}
 await shot("07-apply");
 const apply = await metrics("apply");
 
 await page.goto(`${BASE}/investor`, { waitUntil: "domcontentloaded", timeout: 30000 });
 await page.waitForTimeout(1500);
+if (await page.getByRole("button", { name: /skip/i }).count()) {
+  await page.getByRole("button", { name: /skip/i }).first().click().catch(() => {});
+  await page.waitForTimeout(400);
+}
 await shot("08-investor");
 const investor = await metrics("investor");
 

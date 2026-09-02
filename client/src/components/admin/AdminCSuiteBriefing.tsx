@@ -117,7 +117,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
             onChange={(e) => setFocus(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") runBrief(); }}
             placeholder="Optional: focus this briefing (e.g. the fund pipeline)"
-            className="flex-1 min-w-0 rounded-xl bg-white/10 border border-white/25 px-3 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]"
+            className="flex-1 min-w-0 rounded-xl bg-white border border-white/40 px-3 py-2.5 text-sm text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:border-[#7dd87d]"
           />
         </div>
       </div>

@@ -17,7 +17,7 @@ export const ADMIN_DARK_FIELD =
 
 /** Inputs sitting on cream/white admin cards. */
 export const ADMIN_LIGHT_FIELD =
-  "bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/20";
+  "bg-white text-[#1a472a] placeholder:text-[#1a472a] border-[#1a472a]/20";
 
 /** Secondary copy on cream. `/75` reads as disabled; keep this as the floor. */
 export const ADMIN_SECONDARY_TEXT = "text-[#1a472a]/85";

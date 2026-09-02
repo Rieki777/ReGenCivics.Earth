@@ -23,7 +23,7 @@ describe("adminStatusChipClass", () => {
   });
 
   it("keeps light-field placeholders at 75% forest, not pale gray", () => {
-    expect(ADMIN_LIGHT_FIELD).toContain("placeholder:text-[#1a472a]/75");
+    expect(ADMIN_LIGHT_FIELD).toContain("placeholder:text-[#1a472a]");
     expect(ADMIN_DARK_FIELD).toContain("placeholder:text-white/70");
   });
 });

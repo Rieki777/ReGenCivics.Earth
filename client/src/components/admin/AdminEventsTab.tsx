@@ -744,13 +744,13 @@ export function AdminEventsTab() {
           <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-xs text-white/60">Sends a "here's what we built together" digest to all event signups + newsletter subscribers for a completed season.</p>
+          <p className="text-xs text-white/80">Sends a "here's what we built together" digest to all event signups + newsletter subscribers for a completed season.</p>
           <div className="flex items-center gap-2">
             <input
               value={rollupSeason}
               onChange={e => setRollupSeason(e.target.value)}
               placeholder="Season name (e.g. Season 2)"
-              className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
             />
             <button
               onClick={() => {
