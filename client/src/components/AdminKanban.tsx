@@ -43,21 +43,42 @@ function KanbanCard({
   id,
   name,
   subtitle,
-  onDragStart,
+  status,
+  columns,
+  onMove,
 }: {
   id: string;
   name: string;
   subtitle?: string;
-  onDragStart: (e: React.DragEvent) => void;
+  status: string;
+  columns: { id: string; label: string }[];
+  onMove: (colId: string, itemId: string) => void;
 }) {
   return (
     <div
       draggable
-      onDragStart={onDragStart}
+      onDragStart={(e) => e.dataTransfer.setData("text/plain", id)}
       className="bg-white border border-[#1a472a]/10 rounded-lg p-2.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow select-none"
     >
       <p className="text-xs font-semibold text-[#1a472a] truncate">{name}</p>
       {subtitle && <p className="text-[10px] text-[#1a472a]/80 truncate mt-0.5">{subtitle}</p>}
+      <label className="sr-only" htmlFor={`kanban-status-${id}`}>
+        Status for {name}
+      </label>
+      <select
+        id={`kanban-status-${id}`}
+        value={status}
+        onChange={(e) => onMove(e.target.value, id)}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="mt-2 w-full min-h-11 text-xs border border-[#1a472a]/20 rounded-md bg-white text-[#1a472a] px-2"
+      >
+        {columns.map((col) => (
+          <option key={col.id} value={col.id}>
+            {col.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -67,17 +88,19 @@ function KanbanCard({
 function KanbanColumn({
   col,
   items,
+  columns,
   onDrop,
 }: {
   col: { id: string; label: string; color: string };
-  items: { id: string; name: string; subtitle?: string }[];
+  items: { id: string; name: string; subtitle?: string; status: string }[];
+  columns: { id: string; label: string }[];
   onDrop: (colId: string, itemId: string) => void;
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   return (
     <div
-      className={`flex-shrink-0 w-48 rounded-xl border-2 ${col.color} ${isDragOver ? 'ring-2 ring-[#7dd87d]' : ''} transition-all`}
+      className={`flex-shrink-0 w-56 rounded-xl border-2 ${col.color} ${isDragOver ? 'ring-2 ring-[#7dd87d]' : ''} transition-all`}
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={(e) => {
@@ -98,7 +121,9 @@ function KanbanColumn({
             id={item.id}
             name={item.name}
             subtitle={item.subtitle}
-            onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
+            status={item.status}
+            columns={columns}
+            onMove={onDrop}
           />
         ))}
         {items.length === 0 && (
@@ -139,7 +164,13 @@ function InvestorBoard({ investors }: { investors: any[] }) {
           col={col}
           items={investors
             .filter((i) => (i.status || 'new') === col.id)
-            .map((i) => ({ id: String(i.id), name: i.fullName || i.email, subtitle: i.investmentRange }))}
+            .map((i) => ({
+              id: String(i.id),
+              name: i.fullName || i.email,
+              subtitle: i.investmentRange,
+              status: i.status || "new",
+            }))}
+          columns={INVESTOR_COLS}
           onDrop={handleDrop}
         />
       ))}
@@ -173,7 +204,13 @@ function InquiryBoard({ inquiries }: { inquiries: any[] }) {
           col={col}
           items={inquiries
             .filter((i) => (i.status || 'new') === col.id)
-            .map((i) => ({ id: String(i.id), name: i.fullName || i.email, subtitle: i.pathType?.replace(/_/g, ' ') }))}
+            .map((i) => ({
+              id: String(i.id),
+              name: i.fullName || i.email,
+              subtitle: i.pathType?.replace(/_/g, ' '),
+              status: i.status || "new",
+            }))}
+          columns={INQUIRY_COLS}
           onDrop={handleDrop}
         />
       ))}
@@ -207,7 +244,13 @@ function ApplicationBoard({ applications }: { applications: any[] }) {
           col={col}
           items={applications
             .filter((a) => (a.status || 'submitted') === col.id)
-            .map((a) => ({ id: String(a.id), name: a.projectName || a.contactName || 'Unknown', subtitle: a.location }))}
+            .map((a) => ({
+              id: String(a.id),
+              name: a.projectName || a.contactName || 'Unknown',
+              subtitle: a.location,
+              status: a.status || "submitted",
+            }))}
+          columns={APP_COLS}
           onDrop={handleDrop}
         />
       ))}

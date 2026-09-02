@@ -100,7 +100,7 @@ export default function AdminApplicationDetail() {
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Application Not Found</h2>
           <Button
-            onClick={() => navigate("/admin/applications")}
+            onClick={() => navigate("/admin?tab=applications")}
             className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Back to Applications
@@ -147,8 +147,8 @@ export default function AdminApplicationDetail() {
         <div className="mb-8">
           <Button
             variant="outline"
-            onClick={() => navigate("/admin/applications")}
-            className="mb-4"
+            onClick={() => navigate("/admin?tab=applications")}
+            className="mb-4 min-h-11"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Applications

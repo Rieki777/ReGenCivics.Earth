@@ -19,7 +19,7 @@ const SHORTCUT_GROUPS = [
   {
     label: 'Actions',
     shortcuts: [
-      { key: '1–9', action: 'Jump to admin tab' },
+      { key: '1–9', action: 'Jump to the first nine sidebar items' },
       { key: '[', action: 'Toggle sidebar' },
       { key: 'N', action: 'New post (Community)' },
       { key: 'v', action: 'Verify selected player' },
@@ -29,7 +29,7 @@ const SHORTCUT_GROUPS = [
     label: 'Overlays',
     shortcuts: [
       { key: '/', action: 'Focus search' },
-      { key: '⌘K', action: 'Command palette' },
+      { key: '⌘K', action: 'Jump to a section (desktop)' },
       { key: '?', action: 'Show shortcuts' },
       { key: 'Esc', action: 'Close modal / overlay' },
     ],

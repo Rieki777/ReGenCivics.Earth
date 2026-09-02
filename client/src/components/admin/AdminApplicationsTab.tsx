@@ -221,19 +221,11 @@ export function AdminApplicationsTab({
             <Button
               variant="outline"
               size="sm"
-              className="border-[#7dd87d] text-[#1a472a] w-fit"
+              className="border-[#7dd87d] text-[#1a472a] w-fit min-h-11"
               onClick={() => exportToCSV(applications || [], "project_applications")}
             >
               <Download className="w-4 h-4 mr-2" />
               Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#1a472a]/30 text-[#1a472a]"
-              asChild
-            >
-              <a href="/admin/applications">Full Review Page</a>
             </Button>
           </div>
         </div>
@@ -245,7 +237,7 @@ export function AdminApplicationsTab({
               placeholder="Search by project name, location, or vision..."
               value={appSearch}
               onChange={(e) => setAppSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
           <select

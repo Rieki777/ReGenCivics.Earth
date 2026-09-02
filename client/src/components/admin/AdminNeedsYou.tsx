@@ -22,7 +22,7 @@ export function AdminNeedsYou({ onSelectTab }: { onSelectTab?: (tab: string) => 
   const items = [
     { key: "apps", label: "Applications to review", count: snap.applications.pending, target: "applications", icon: Building2 },
     { key: "mod", label: "Forum reports open", count: snap.moderation?.pendingReports ?? 0, target: "/admin/moderation", icon: Shield },
-    { key: "inq", label: "Inquiries needing a reply", count: snap.inquiries.needsReview, target: "live", icon: Inbox },
+    { key: "inq", label: "Inquiries needing a reply", count: snap.inquiries.needsReview, target: "kanban", icon: Inbox },
     { key: "inv", label: "New investors to contact", count: snap.investors.new, target: "investors", icon: TrendingUp },
     { key: "gov", label: "Governance proposals live", count: snap.governance?.openProposals ?? 0, target: "/assembly", icon: Vote },
   ].filter((i) => i.count > 0);

@@ -163,7 +163,7 @@ export function AdminOtherInquiriesTab({
                           });
                         }}
                       >
-                        <SelectTrigger className="h-8 text-xs flex-1">
+                        <SelectTrigger className="min-h-11 text-xs flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
