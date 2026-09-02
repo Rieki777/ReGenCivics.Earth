@@ -13,6 +13,7 @@ import { useLocation, useRoute } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useToast } from "@/hooks/use-toast";
 import { adminStatusChipClass } from "@/lib/adminContrast";
+import { AdminChrome } from "@/components/admin/AdminChrome";
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 
@@ -140,7 +141,8 @@ export default function AdminApplicationDetail() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f0ebe3] py-12">
+    <AdminChrome activeTab="applications">
+    <div className="pb-8">
       <BackButton />
       <div className="container max-w-6xl">
         {/* Header */}
@@ -550,5 +552,6 @@ export default function AdminApplicationDetail() {
         </div>
       </div>
     </div>
+    </AdminChrome>
   );
 }

@@ -19,7 +19,6 @@ const SHORTCUT_GROUPS = [
   {
     label: 'Actions',
     shortcuts: [
-      { key: '1–9', action: 'Jump to the first nine sidebar items' },
       { key: '[', action: 'Toggle sidebar' },
       { key: 'N', action: 'New post (Community)' },
       { key: 'v', action: 'Verify selected player' },

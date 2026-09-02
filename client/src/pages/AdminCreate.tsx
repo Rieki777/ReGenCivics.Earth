@@ -18,6 +18,7 @@ import {
   Send, Moon, Ban, Compass, Sparkles, ExternalLink, ArrowLeft, Mail, Share2,
 } from "lucide-react";
 import { BrainShell, brainV2Enabled } from "@/components/brain/BrainShell";
+import { AdminChrome } from "@/components/admin/AdminChrome";
 
 const CHANNELS = [
   { key: "linkedin", label: "LinkedIn" },
@@ -510,7 +511,7 @@ export function HarvestPage() {
   const staleWarning = data.status.generationStale;
 
   return (
-    <div className="min-h-screen bg-[#f8f5f0] pb-24">
+    <div className="pb-8">
       <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -590,8 +591,8 @@ export function HarvestPage() {
  * production being worse than today (response doc 17.15).
  */
 export default function AdminCreate() {
-  if (brainV2Enabled()) {
-    return <BrainShell renderCreate={() => <HarvestPage />} />;
-  }
-  return <HarvestPage />;
+  const body = brainV2Enabled()
+    ? <BrainShell renderCreate={() => <HarvestPage />} />
+    : <HarvestPage />;
+  return <AdminChrome activeTab="harvest">{body}</AdminChrome>;
 }

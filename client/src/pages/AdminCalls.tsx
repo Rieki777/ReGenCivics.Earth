@@ -16,6 +16,7 @@ import {
   ArrowLeft, Loader2, Phone, Check, X, ExternalLink,
   Lightbulb, Sparkles, Gavel, HandHeart, UserCog, Compass,
 } from "lucide-react";
+import { AdminChrome } from "@/components/admin/AdminChrome";
 
 const KIND_META: Record<string, { label: string; icon: typeof Lightbulb; tone: string }> = {
   wisdom: { label: "Wisdom", icon: Lightbulb, tone: "bg-[#7dd87d]/15 text-[#1a472a]" },
@@ -113,7 +114,8 @@ export default function AdminCalls() {
   const openSuggestions = open.data?.suggestions ?? [];
 
   return (
-    <div className="min-h-screen bg-[#f8f5f0] pb-24">
+    <AdminChrome activeTab="calls">
+    <div className="pb-8">
       <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -173,5 +175,6 @@ export default function AdminCalls() {
         </section>
       </div>
     </div>
+    </AdminChrome>
   );
 }

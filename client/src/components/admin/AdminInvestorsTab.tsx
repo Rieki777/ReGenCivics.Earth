@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ interface Props {
   ContactTagsPanelComp: React.ComponentType<{ contactType: string; contactId: number }>;
   ReminderPanelComp: React.ComponentType<{ contactType: string; contactId: number }>;
   AssigneeSelectComp: React.ComponentType<{ contactType: string; contactId: number }>;
+  openId?: number | null;
 }
 
 export function AdminInvestorsTab({
@@ -57,7 +58,10 @@ export function AdminInvestorsTab({
   ContactTagsPanelComp,
   ReminderPanelComp,
   AssigneeSelectComp,
+  openId = null,
 }: Props) {
+  const [openRecord, setOpenRecord] = useState<number | null>(openId);
+  useEffect(() => { setOpenRecord(openId ?? null); }, [openId]);
   return (
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
@@ -142,7 +146,7 @@ export function AdminInvestorsTab({
           ) : (
           <div className="divide-y divide-[#1a472a]/10">
             {filteredInvestors.map((investor: any) => (
-              <Sheet key={investor.id}>
+              <Sheet key={investor.id} open={openRecord === investor.id} onOpenChange={(open) => setOpenRecord(open ? investor.id : null)}>
                 <SheetTrigger asChild>
                   <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
                     <div className="flex items-start justify-between">

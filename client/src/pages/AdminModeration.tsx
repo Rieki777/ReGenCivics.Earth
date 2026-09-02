@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { AdminChrome } from "@/components/admin/AdminChrome";
 import {
   Shield, Users, Flag, Ban, ArrowLeft, Plus,
   Trash2, Check, X, AlertTriangle, Eye, Clock, Lock
@@ -150,10 +151,11 @@ export default function AdminModeration() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
+    <AdminChrome activeTab="moderation">
+    <div className="rounded-2xl bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] -mx-4 md:-mx-6 px-4 md:px-6 py-6">
       <SEO title="Forum Moderation | Admin | ReGen Civics" description="Moderate the community forum" />
 
-      <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
+      <div className="max-w-4xl mx-auto pb-8">
         <Link href="/admin" className="inline-flex items-center gap-2 text-[#7dd87d]/70 hover:text-[#7dd87d] text-sm mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Admin
         </Link>
@@ -447,5 +449,6 @@ export default function AdminModeration() {
         )}
       </div>
     </div>
+    </AdminChrome>
   );
 }

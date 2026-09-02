@@ -81,7 +81,7 @@ export function AdminRoleTab() {
       <CardHeader>
         <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
           <UserCheck className="w-5 h-5" />
-          Role Applications
+          Role inquiries
         </CardTitle>
         <CardDescription>
           Enhanced view for exploring and managing role submissions

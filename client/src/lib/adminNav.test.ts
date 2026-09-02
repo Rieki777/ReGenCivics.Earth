@@ -3,44 +3,30 @@ import {
   NAV_GROUPS,
   NAV_ITEMS_FLAT,
   inquiryTabForPath,
-  navItemForShortcut,
   navItemById,
   readAdminContinue,
   writeAdminContinueFromTab,
   ADMIN_CONTINUE_KEY,
+  adminTabHref,
 } from "./adminNav";
 
 describe("admin nav", () => {
-  it("keeps Overview, Applications, and Investors in the first nine sidebar items", () => {
-    const firstNine = NAV_ITEMS_FLAT.slice(0, 9).map((item) => item.id);
-    expect(firstNine).toEqual([
-      "overview",
-      "applications",
-      "alliance",
-      "roles",
-      "citizenship-tiers",
-      "investors",
-      "loi",
-      "crowdpooling",
-      "seeds-claims",
-    ]);
+  it("keeps Overview, Applications, and Inquiries at the top of the sidebar", () => {
+    const first = NAV_ITEMS_FLAT.slice(0, 4).map((item) => item.id);
+    expect(first).toEqual(["overview", "applications", "inquiries", "alliance"]);
   });
 
-  it("maps number keys 1–9 to those same items", () => {
-    expect(navItemForShortcut("1")?.id).toBe("overview");
-    expect(navItemForShortcut("2")?.id).toBe("applications");
-    expect(navItemForShortcut("6")?.id).toBe("investors");
-    expect(navItemForShortcut("9")?.id).toBe("seeds-claims");
-    expect(navItemForShortcut("0")).toBeUndefined();
-    expect(navItemForShortcut("a")).toBeUndefined();
+  it("renames the twin labels so they do not collide", () => {
+    expect(navItemById("roles")?.label).toBe("Player accounts");
   });
 
-  it("puts inquiry and work destinations in the sidebar so they are tappable", () => {
-    const ids = NAV_ITEMS_FLAT.map((item) => item.id);
-    expect(ids).toEqual(expect.arrayContaining(["live", "create", "other", "role", "kanban"]));
+  it("puts work destinations in the sidebar so they are tappable", () => {
     expect(navItemById("harvest")?.route).toBe("/admin-create");
     expect(navItemById("funding")?.route).toBe("/admin/funding");
     expect(navItemById("calls")?.route).toBe("/admin/calls");
+    expect(NAV_ITEMS_FLAT.map((item) => item.id)).not.toEqual(
+      expect.arrayContaining(["live", "create", "kanban"]),
+    );
   });
 
   it("has a unique id for every sidebar row", () => {
@@ -49,14 +35,19 @@ describe("admin nav", () => {
     expect(NAV_GROUPS.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("sends inquiry form paths to a real tab", () => {
-    expect(inquiryTabForPath("live")).toBe("live");
-    expect(inquiryTabForPath("create")).toBe("create");
+  it("sends inquiry form paths to the inquiries hub", () => {
+    expect(inquiryTabForPath("live")).toBe("inquiries");
+    expect(inquiryTabForPath("create")).toBe("inquiries");
     expect(inquiryTabForPath("alliance")).toBe("alliance");
-    expect(inquiryTabForPath("finance")).toBe("other");
-    expect(inquiryTabForPath("learn")).toBe("other");
-    expect(inquiryTabForPath("mystery")).toBe("other");
-    expect(inquiryTabForPath(undefined)).toBe("live");
+    expect(inquiryTabForPath("finance")).toBe("inquiries");
+    expect(inquiryTabForPath("mystery")).toBe("inquiries");
+    expect(inquiryTabForPath(undefined)).toBe("inquiries");
+  });
+
+  it("builds a deep link for a hub record", () => {
+    expect(adminTabHref("inquiries", { type: "live", open: "12" })).toBe(
+      "/admin?tab=inquiries&type=live&open=12",
+    );
   });
 
   it("remembers the last non-overview section for Continue", () => {

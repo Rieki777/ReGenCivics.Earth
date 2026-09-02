@@ -78,6 +78,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
     else onSelectTab?.(target);
   };
 
+  const [showNumbers, setShowNumbers] = useState(false);
   const [focus, setFocus] = useState("");
 
   const snap = (brief.data?.snapshot ?? snapQuery.data) as Snapshot | null | undefined;
@@ -132,12 +133,20 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
         </div>
       )}
 
-      {/* KPI grid */}
-      {snap && (
+      <button
+        type="button"
+        onClick={() => setShowNumbers((v) => !v)}
+        className="text-sm font-semibold text-[#1a472a] underline-offset-2 hover:underline px-1 min-h-11 text-left"
+      >
+        {showNumbers ? "Hide numbers" : "Show numbers"}
+      </button>
+
+      {/* KPI grid stays behind a tap so Overview stays a queue. */}
+      {showNumbers && snap && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <Kpi icon={Building2} label="Applications" value={snap.applications.total} sub={`${snap.applications.pending} pending review`} attention={snap.applications.pending > 0} onClick={() => go("applications")} />
           <Kpi icon={TrendingUp} label="Investors" value={snap.investors.total} sub={`${snap.investors.new} new`} attention={snap.investors.new > 0} onClick={() => go("investors")} />
-          <Kpi icon={Inbox} label="Inquiries" value={snap.inquiries.total} sub={`${snap.inquiries.needsReview} need review`} attention={snap.inquiries.needsReview > 0} onClick={() => go("kanban")} />
+          <Kpi icon={Inbox} label="Inquiries" value={snap.inquiries.total} sub={`${snap.inquiries.needsReview} need review`} attention={snap.inquiries.needsReview > 0} onClick={() => go("inquiries")} />
           <Kpi icon={Shield} label="Moderation" value={snap.moderation?.pendingReports ?? 0} sub={`${snap.moderation?.pendingReports ?? 0} reports open`} attention={(snap.moderation?.pendingReports ?? 0) > 0} onClick={() => go("/admin/moderation")} />
           <Kpi icon={Users} label="Players" value={snap.community.players} sub={`${snap.community.forumPosts.toLocaleString()} forum posts`} onClick={() => go("roles")} />
           <Kpi icon={Vote} label="Governance" value={snap.governance?.openProposals ?? 0} sub="open proposals" attention={(snap.governance?.openProposals ?? 0) > 0} onClick={() => go("/assembly")} />

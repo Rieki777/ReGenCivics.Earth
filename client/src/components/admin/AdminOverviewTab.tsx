@@ -20,7 +20,7 @@ import { AdminGovernancePanel } from "./AdminGovernancePanel";
 import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
 import { AdminNeedsYou } from "./AdminNeedsYou";
 import { AdminContinueRow } from "./AdminContinueRow";
-import { inquiryTabForPath } from "@/lib/adminNav";
+import { inquiryTypeForPath } from "@/lib/adminInquiry";
 
 // Path type config subset needed for the overview
 const pathTypeConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -60,7 +60,7 @@ interface Props {
   investors: any[] | undefined;
   inquiries: any[] | undefined;
   inquiriesByPath: Record<string, number>;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: string, extras?: { type?: string; open?: string }) => void;
   setInvestorStatusFilter: (filter: string) => void;
 }
 
@@ -76,7 +76,7 @@ export function AdminOverviewTab({
   return (
     <div className="space-y-6">
       {/* Work waiting on you first. Everything else is context. */}
-      <AdminNeedsYou onSelectTab={setActiveTab} />
+      <AdminNeedsYou onSelectTab={setActiveTab} inquiries={inquiries} applications={applications} />
 
       <AdminContinueRow onSelectTab={setActiveTab} />
 
@@ -119,113 +119,7 @@ export function AdminOverviewTab({
         </span>
       </Link>
 
-      {/* C-suite briefing + ecosystem KPIs. */}
       <AdminCSuiteBriefing onSelectTab={setActiveTab} />
-
-      {/* Today's Focus */}
-      {(() => {
-        const now = Date.now();
-        const h48 = now - 48 * 3_600_000;
-        const h24 = now - 24 * 3_600_000;
-        const overdueInvestors = (investors || []).filter(
-          (i: any) => (!i.status || i.status === "new") && new Date(i.createdAt).getTime() < h48
-        );
-        const overdueInquiries = (inquiries || []).filter(
-          (i: any) => (!i.status || i.status === "new") && new Date(i.createdAt).getTime() < h48
-        );
-        const newToday = [
-          ...(investors || [])
-            .filter((i: any) => new Date(i.createdAt).getTime() > h24)
-            .map((i: any) => ({ type: "investor", name: i.fullName || i.email })),
-          ...(applications || [])
-            .filter((a: any) => new Date(a.submittedAt || a.createdAt).getTime() > h24)
-            .map((a: any) => ({ type: "application", name: a.projectName || a.contactName })),
-          ...(inquiries || [])
-            .filter((i: any) => new Date(i.createdAt).getTime() > h24)
-            .map((i: any) => ({ type: "inquiry", name: i.fullName || i.email })),
-        ];
-        const hasItems =
-          overdueInvestors.length > 0 || overdueInquiries.length > 0 || newToday.length > 0;
-        if (!hasItems) return null;
-        return (
-          <div className="bg-white border-2 border-[#1a472a]/10 rounded-xl p-4 space-y-2">
-            <h3 className="text-sm font-semibold text-[#1a472a] flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Today's Focus
-            </h3>
-            {overdueInvestors.length > 0 && (
-              <button
-                onClick={() => {
-                  setInvestorStatusFilter("new");
-                  setActiveTab("investors");
-                }}
-                className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
-              >
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                <span className="text-xs text-red-700">
-                  <strong>{overdueInvestors.length}</strong> investor
-                  {overdueInvestors.length !== 1 ? "s" : ""} in "new" status for 48+ hours, follow up now
-                </span>
-              </button>
-            )}
-            {overdueInquiries.length > 0 && (
-              <button
-                onClick={() => setActiveTab(inquiryTabForPath("live"))}
-                className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors"
-              >
-                <AlertTriangle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-                <span className="text-xs text-orange-700">
-                  <strong>{overdueInquiries.length}</strong>{" "}
-                  {overdueInquiries.length !== 1 ? "inquiries" : "inquiry"} waiting 48+ hours for a response
-                </span>
-              </button>
-            )}
-            {newToday.length > 0 && (
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                <Sparkles className="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-green-700">
-                  <strong>{newToday.length}</strong> new submission{newToday.length !== 1 ? "s" : ""} in
-                  the last 24h:{" "}
-                  <span className="text-green-600">
-                    {newToday
-                      .slice(0, 3)
-                      .map((n) => n.name)
-                      .filter(Boolean)
-                      .join(", ")}
-                    {newToday.length > 3 ? ` +${newToday.length - 3} more` : ""}
-                  </span>
-                </span>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Send Newsletter", icon: Mail, color: "bg-blue-500", tab: "newsletter" },
-          { label: "Review Applications", icon: FileText, color: "bg-[#4a7c59]", tab: "applications" },
-          { label: "Email Templates", icon: Sparkles, color: "bg-purple-500", tab: "settings" },
-          { label: "View Analytics", icon: TrendingUp, color: "bg-amber-500", tab: "analytics" },
-        ].map((action) => {
-          const ActionIcon = action.icon;
-          return (
-            <button
-              key={action.label}
-              onClick={() => setActiveTab(action.tab)}
-              className="p-4 rounded-xl bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 hover:shadow-md transition-all text-left group min-h-11"
-            >
-              <div
-                className={`w-9 h-9 rounded-lg ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
-              >
-                <ActionIcon className="w-5 h-5 text-white" />
-              </div>
-              <p className="text-sm font-semibold text-[#1a472a]">{action.label}</p>
-            </button>
-          );
-        })}
-      </div>
 
       {/* Analytics Charts Row */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -458,7 +352,7 @@ export function AdminOverviewTab({
                     type="button"
                     key={key}
                     className="p-4 min-h-11 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors text-left"
-                    onClick={() => setActiveTab(inquiryTabForPath(key))}
+                    onClick={() => setActiveTab("inquiries", { type: inquiryTypeForPath(key) })}
                   >
                     <div className="flex items-center gap-3">
                       <div

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { NAV_GROUPS, writeAdminContinue, type NavItem } from "@/lib/adminNav";
+import { recordAdminVisit } from "@/lib/adminUsage";
 
 export type { NavItem };
 export { NAV_GROUPS };
@@ -13,6 +14,7 @@ interface AdminSidebarProps {
   /** Mobile drawer state, owned by Admin.tsx (the hamburger lives in its header). */
   mobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
+  footer?: ReactNode;
 }
 
 /** Shared nav list. `large` renders 44px touch rows for the mobile drawer. */
@@ -67,6 +69,7 @@ export function AdminSidebar({
   onTabChange,
   mobileOpen = false,
   onMobileOpenChange,
+  footer,
 }: AdminSidebarProps) {
   const [, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
@@ -96,6 +99,7 @@ export function AdminSidebar({
   }, []);
 
   const select = (item: NavItem) => {
+    recordAdminVisit(item.id);
     writeAdminContinue(item);
     if (item.route) {
       navigate(item.route);
@@ -127,6 +131,7 @@ export function AdminSidebar({
           </button>
         </div>
         <NavList activeTab={activeTab} onSelect={select} collapsed={collapsed} />
+        {footer && !collapsed && <div className="border-t border-white/10 py-2">{footer}</div>}
       </aside>
 
       {/* Mobile: left drawer via the base Sheet (portal, focus trap, Esc, swipe
@@ -143,6 +148,7 @@ export function AdminSidebar({
             <SheetDescription className="sr-only">Admin navigation</SheetDescription>
           </SheetHeader>
           <NavList activeTab={activeTab} onSelect={select} collapsed={false} large />
+          {footer && <div className="border-t border-white/10 py-2 mt-auto">{footer}</div>}
         </SheetContent>
       </Sheet>
     </>

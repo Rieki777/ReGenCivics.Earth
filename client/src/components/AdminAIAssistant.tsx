@@ -143,7 +143,11 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
       setPendingPrompt(detail.prompt);
     };
     window.addEventListener("admin-ea-prompt", handler);
-    return () => window.removeEventListener("admin-ea-prompt", handler);
+    window.addEventListener("admin-ea-open", openAssistant as EventListener);
+    return () => {
+      window.removeEventListener("admin-ea-prompt", handler);
+      window.removeEventListener("admin-ea-open", openAssistant as EventListener);
+    };
   }, []);
   useEffect(() => {
     if (pendingPrompt && open) {
@@ -244,7 +248,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
         onClick={openAssistant}
         data-testid="admin-fab"
         style={{ touchAction: "manipulation" }}
-        className="fixed z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group right-4 md:right-6 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"
+        className="hidden md:flex fixed z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#1a472a] to-[#4a7c59] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 items-center justify-center group right-4 md:right-6 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"
         title="Open AI Assistant"
         aria-label="Open AI assistant"
       >

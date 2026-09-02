@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { cleanField } from "@shared/funding";
+import { AdminChrome } from "@/components/admin/AdminChrome";
 import {
   AlertTriangle,
   ChevronDown,
@@ -347,7 +348,8 @@ export default function AdminFunding() {
   const filtersActive = Boolean(priority || appStatus || category || search.trim());
 
   return (
-    <div className="min-h-screen bg-[#f0ebe3] py-6 md:py-10">
+    <AdminChrome activeTab="funding">
+    <div className="pb-4">
       <div className="container max-w-[1500px] px-4">
         <BackButton />
 
@@ -522,6 +524,7 @@ export default function AdminFunding() {
         )}
       </div>
     </div>
+    </AdminChrome>
   );
 }
 

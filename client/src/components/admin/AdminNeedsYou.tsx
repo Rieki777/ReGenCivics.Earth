@@ -1,30 +1,86 @@
 /**
  * AdminNeedsYou: one prioritized action queue for the admin landing.
  *
- * Merges every "something is waiting on you" signal (pending applications,
- * inquiries to reply to, open forum reports, new investors, live governance)
- * into a single list so the operator never has to hunt tab by tab. Each row
- * deep-links to the section that clears it. Reuses the cached ecosystem
- * snapshot (same query the C-suite briefing runs), so it costs no extra fetch.
+ * Each row opens the first record that is waiting, on the card you tapped.
  */
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Building2, Inbox, Shield, TrendingUp, Vote, ChevronRight, CheckCircle2 } from "lucide-react";
+import { inquiryTypeForPath } from "@/lib/adminInquiry";
 
-export function AdminNeedsYou({ onSelectTab }: { onSelectTab?: (tab: string) => void }) {
+type SelectTab = (tab: string, extras?: { type?: string; open?: string }) => void;
+
+export function AdminNeedsYou({
+  onSelectTab,
+  inquiries,
+  applications,
+}: {
+  onSelectTab?: SelectTab;
+  inquiries?: any[];
+  applications?: any[];
+}) {
   const { data: snap } = trpc.admin.ecosystemSnapshot.useQuery(undefined, { staleTime: 60_000 });
   const [, navigate] = useLocation();
   if (!snap) return null;
 
-  const go = (target: string) => (target.startsWith("/") ? navigate(target) : onSelectTab?.(target));
+  const oldestInquiry = [...(inquiries || [])]
+    .filter((i: any) => !i.status || i.status === "new" || i.status === "pending")
+    .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
 
-  // Fixed priority order, most time-sensitive first. Only non-empty buckets show.
+  const oldestApp = [...(applications || [])]
+    .filter((a: any) => a.status === "submitted" || a.status === "pending" || a.status === "under_review")
+    .sort((a: any, b: any) => new Date(a.submittedAt || a.createdAt).getTime() - new Date(b.submittedAt || b.createdAt).getTime())[0];
+
+  const go = (target: string, extras?: { type?: string; open?: string }) => {
+    if (target.startsWith("/")) {
+      navigate(target);
+      return;
+    }
+    onSelectTab?.(target, extras);
+  };
+
   const items = [
-    { key: "apps", label: "Applications to review", count: snap.applications.pending, target: "applications", icon: Building2 },
-    { key: "mod", label: "Forum reports open", count: snap.moderation?.pendingReports ?? 0, target: "/admin/moderation", icon: Shield },
-    { key: "inq", label: "Inquiries needing a reply", count: snap.inquiries.needsReview, target: "kanban", icon: Inbox },
-    { key: "inv", label: "New investors to contact", count: snap.investors.new, target: "investors", icon: TrendingUp },
-    { key: "gov", label: "Governance proposals live", count: snap.governance?.openProposals ?? 0, target: "/assembly", icon: Vote },
+    {
+      key: "apps",
+      label: "Applications to review",
+      count: snap.applications.pending,
+      run: () => {
+        if (oldestApp) navigate(`/admin/application/${oldestApp.id}`);
+        else go("applications");
+      },
+      icon: Building2,
+    },
+    {
+      key: "mod",
+      label: "Forum reports open",
+      count: snap.moderation?.pendingReports ?? 0,
+      run: () => go("/admin/moderation"),
+      icon: Shield,
+    },
+    {
+      key: "inq",
+      label: "Inquiries needing a reply",
+      count: snap.inquiries.needsReview,
+      run: () =>
+        go("inquiries", oldestInquiry
+          ? { type: inquiryTypeForPath(oldestInquiry.pathType), open: String(oldestInquiry.id) }
+          : { type: "live" }),
+      icon: Inbox,
+    },
+    {
+      key: "inv",
+      label: "New investors to contact",
+      count: snap.investors.new,
+      run: () => go("investors"),
+      icon: TrendingUp,
+    },
+    {
+      key: "gov",
+      label: "Governance proposals live",
+      count: snap.governance?.openProposals ?? 0,
+      run: () => go("/assembly"),
+      icon: Vote,
+    },
   ].filter((i) => i.count > 0);
 
   const total = items.reduce((s, i) => s + i.count, 0);
@@ -51,7 +107,7 @@ export function AdminNeedsYou({ onSelectTab }: { onSelectTab?: (tab: string) => 
               <li key={i.key}>
                 <button
                   type="button"
-                  onClick={() => go(i.target)}
+                  onClick={i.run}
                   className="w-full flex items-center gap-3 py-3 px-2 -mx-2 rounded-xl text-left hover:bg-[#1a472a]/[0.03] transition-colors group min-h-[52px]"
                 >
                   <span className="flex-shrink-0 w-9 h-9 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">

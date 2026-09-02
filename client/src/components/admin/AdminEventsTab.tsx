@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Edit,
@@ -147,14 +148,16 @@ export function AdminEventsTab() {
         </Button>
       </div>
 
-      {/* Create / Edit Form */}
-      {(showCreate || editingId !== null) && (
-        <Card className="bg-[#0d2818] border-green-800/40">
-          <CardHeader>
-            <CardTitle className="text-white text-base">{editingId !== null ? 'Edit Event' : 'New Event'}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Create / Edit Form: one-column sheet attached to Add Event */}
+      <Sheet open={showCreate || editingId !== null} onOpenChange={(open) => {
+        if (!open) { setShowCreate(false); setEditingId(null); }
+      }}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0 bg-[#0d2818] border-green-800/40 text-white">
+          <SheetHeader className="p-4 border-b border-white/10 text-left">
+            <SheetTitle className="text-white text-base">{editingId !== null ? "Edit Event" : "New Event"}</SheetTitle>
+          </SheetHeader>
+          <div className="p-4 space-y-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">Title *</Label>
                 <Input value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
@@ -245,16 +248,16 @@ export function AdminEventsTab() {
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={!formData.title || !formData.startTime || createMutation.isPending || updateMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white">
+                className="bg-green-600 hover:bg-green-700 text-white min-h-11">
                 {(createMutation.isPending || updateMutation.isPending) ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
                 {editingId !== null ? 'Save Changes' : 'Create Event'}
               </Button>
               <Button variant="ghost" onClick={() => { setShowCreate(false); setEditingId(null); setFormData(defaultForm); }}
-                className="text-white/60 hover:text-white">Cancel</Button>
+                className="text-white/60 hover:text-white min-h-11">Cancel</Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Events List */}
       {isLoading && <div className="text-center py-8 text-[#1a472a]/70"><Loader2 size={24} className="animate-spin mx-auto" /></div>}

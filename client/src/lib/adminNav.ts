@@ -1,6 +1,6 @@
 /**
- * Admin navigation: one list drives the sidebar, number keys, continue row,
- * and command palette. Click and tap first. Keyboard is a shortcut, not the UI.
+ * Admin navigation: one list drives the sidebar, continue row, speed dial,
+ * and command palette. Click and tap first.
  */
 import type { LucideIcon } from "lucide-react";
 import {
@@ -13,10 +13,7 @@ import {
   FileText,
   Globe2,
   Coins,
-  Home,
-  Palette,
-  HelpCircle,
-  Columns3,
+  Inbox,
   Sprout,
   Landmark,
   Phone,
@@ -48,8 +45,9 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { id: "overview", label: "Overview", icon: LayoutDashboard },
       { id: "applications", label: "Applications", icon: Building2 },
+      { id: "inquiries", label: "Inquiries", icon: Inbox },
       { id: "alliance", label: "Alliance", icon: Handshake },
-      { id: "roles", label: "Players", icon: UserCheck },
+      { id: "roles", label: "Player accounts", icon: UserCheck },
       { id: "citizenship-tiers", label: "Citizenship Tiers", icon: Award },
     ],
   },
@@ -60,16 +58,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { id: "loi", label: "LOIs", icon: FileText },
       { id: "crowdpooling", label: "Crowd Pooling", icon: Globe2 },
       { id: "seeds-claims", label: "SEEDS Claims", icon: Coins },
-    ],
-  },
-  {
-    label: "Inquiries",
-    items: [
-      { id: "live", label: "Live in Land", icon: Home },
-      { id: "create", label: "Create with ReGens", icon: Palette },
-      { id: "other", label: "Other Inquiries", icon: HelpCircle },
-      { id: "role", label: "Role Applications", icon: UserCheck },
-      { id: "kanban", label: "Pipeline Board", icon: Columns3 },
     ],
   },
   {
@@ -114,21 +102,16 @@ export function navItemById(id: string): NavItem | undefined {
   return NAV_ITEMS_FLAT.find((item) => item.id === id);
 }
 
-/** Keys 1–9 follow the sidebar from the top, same order as the drawer. */
-export function navItemForShortcut(key: string): NavItem | undefined {
-  if (!/^[1-9]$/.test(key)) return undefined;
-  return NAV_ITEMS_FLAT[Number(key) - 1];
-}
-
 /**
- * Inquiry form paths that are not their own tab land on Other.
- * Unknown paths stay on Other so a tap always opens a real section.
+ * Inquiry form paths that are not their own tab land on the Inquiries hub.
+ * Unknown paths stay on the hub so a tap always opens a real section.
  */
 export function inquiryTabForPath(pathType: string | undefined | null): string {
-  if (!pathType) return "live";
-  if (pathType === "finance" || pathType === "learn") return "other";
-  if (TAB_ID_SET.has(pathType)) return pathType;
-  return "other";
+  if (!pathType) return "inquiries";
+  if (TAB_ID_SET.has(pathType) && pathType !== "live" && pathType !== "create" && pathType !== "role" && pathType !== "other" && pathType !== "kanban") {
+    return pathType;
+  }
+  return "inquiries";
 }
 
 export const ADMIN_CONTINUE_KEY = "admin_continue";
@@ -168,4 +151,15 @@ export function writeAdminContinue(item: NavItem): void {
 export function writeAdminContinueFromTab(tab: string): void {
   const item = navItemById(tab);
   if (item) writeAdminContinue(item);
+}
+
+export function adminTabHref(tab: string, extras?: { type?: string; open?: string }): string {
+  const item = navItemById(tab);
+  if (item?.route) return item.route;
+  const q = new URLSearchParams();
+  if (tab !== "overview") q.set("tab", tab);
+  if (extras?.type) q.set("type", extras.type);
+  if (extras?.open) q.set("open", extras.open);
+  const qs = q.toString();
+  return qs ? `/admin?${qs}` : "/admin";
 }
