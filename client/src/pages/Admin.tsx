@@ -4821,7 +4821,7 @@ function AdminEventsTab() {
               value={rollupSeason}
               onChange={e => setRollupSeason(e.target.value)}
               placeholder="Season name (e.g. Season 2)"
-              className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
             />
             <button
               onClick={() => {
