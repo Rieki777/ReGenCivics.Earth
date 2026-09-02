@@ -37,8 +37,11 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      # Workspace root: `pnpm add -D` without -w exits 1 (ERR_PNPM_ADDING_TO_ROOT)
+      # and the audit never runs. Playwright is already a dep; puppeteer is only
+      # for this script, so install it onto the workspace root for the job.
       - name: Install puppeteer
-        run: pnpm add -D puppeteer
+        run: pnpm add -D puppeteer -w
 
       - name: Build site
         run: pnpm build
