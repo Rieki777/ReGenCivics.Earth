@@ -55,10 +55,10 @@ LOCATION:Online via Riverside
 END:VEVENT
 BEGIN:VEVENT
 UID:open-access-2026-10-10@regencivics.earth
-SEQUENCE:1
+SEQUENCE:2
 DTSTAMP:20260902T040000Z
-DTSTART:20261010T180000Z
-DTEND:20261010T200000Z
+DTSTART:20261011T180000Z
+DTEND:20261011T200000Z
 SUMMARY:ReGen Civics Open Access Session
 DESCRIPTION:Open community session for the ReGenerative Renaissance. Drop in\, meet the community\, ask questions\, no commitment required.\n\nRiverside: https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
 LOCATION:Online via Riverside
