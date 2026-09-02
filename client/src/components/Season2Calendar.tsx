@@ -5,12 +5,15 @@
 import { Calendar, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { AddToCalendarButtons } from "@/components/AddToCalendarButtons";
+import { CalendarCta } from "@/components/CalendarCta";
 import {
+  formatDualZoneStart,
+  formatOpenAccessWhen,
   formatSessionLong,
   openAccessGoogleUrl,
   openAccessIcsUrl,
   season2EpisodeEvents,
+  sessionStartUtc,
   SEASON_2_SERIES_GOOGLE_URL,
   SEASON_2_SERIES_ICS_URL,
   upcomingOpenAccessSessions,
@@ -41,7 +44,7 @@ export function Season2Calendar() {
           Put Season Two <span className="italic text-[#a8e6a8]">on your calendar</span>
         </h2>
         <p className="text-white/75 text-lg leading-relaxed mb-10">
-          Google Calendar and Apple/Outlook for every Open Access Session and each weekly episode.
+          Subscribe once and the live feed stays current. Google Calendar and Apple/Outlook add one date at a time.
         </p>
 
         <div className="flex items-center gap-2 mb-3">
@@ -51,7 +54,7 @@ export function Season2Calendar() {
           </h3>
         </div>
         <p className="text-white/70 text-sm mb-5">
-          Every new moon, 1:00 to 3:00 PM Eastern. Open to anyone curious about the ReGenerative Renaissance.
+          Every new moon, 11:00 AM Pacific, 2:00 PM Eastern. Open to anyone curious about the ReGenerative Renaissance.
         </p>
 
         <div className="space-y-4 mb-12">
@@ -71,9 +74,9 @@ export function Season2Calendar() {
               )}
               <div className="text-white font-semibold mb-1">Open Access Session</div>
               <div className="text-white/70 text-sm mb-4">
-                {s.dayName}, {formatSessionLong(s.date)} at 1:00 - 3:00 PM {s.timezone}
+                {s.dayName}, {formatSessionLong(s.date)}, {formatOpenAccessWhen(s)}
               </div>
-              <AddToCalendarButtons
+              <CalendarCta
                 googleUrl={openAccessGoogleUrl(s)}
                 appleUrl={openAccessIcsUrl(s)}
                 appleDownload={`regen-civics-open-session-${s.date}.ics`}
@@ -89,13 +92,13 @@ export function Season2Calendar() {
           </h3>
         </div>
         <p className="text-white/70 text-sm mb-5">
-          Weekly incubator sessions, 11:00 AM Eastern, September through December 2026.
+          Weekly incubator sessions, 11:00 AM Pacific, 2:00 PM Eastern, September through December 2026.
         </p>
 
         <div className="rounded-xl border border-[#7dd87d]/30 bg-[#7dd87d]/8 p-5 mb-6">
           <div className="text-white font-semibold mb-1">All 13 weekly episodes</div>
-          <p className="text-white/65 text-sm mb-4">Add the series in one step.</p>
-          <AddToCalendarButtons
+          <p className="text-white/65 text-sm mb-4">Subscribe for the series. Times stay current if they change.</p>
+          <CalendarCta
             googleUrl={SEASON_2_SERIES_GOOGLE_URL}
             appleUrl={SEASON_2_SERIES_ICS_URL}
             appleDownload="regen-civics-season-2.ics"
@@ -110,9 +113,9 @@ export function Season2Calendar() {
             >
               <div className="text-white font-semibold mb-1">{ep.title}</div>
               <div className="text-white/70 text-sm mb-4">
-                {formatEpisodeDate(ep.date)} · {ep.time} {ep.timezone}
+                {formatEpisodeDate(ep.date)} · {formatDualZoneStart(sessionStartUtc(ep.date))}
               </div>
-              <AddToCalendarButtons
+              <CalendarCta
                 googleUrl={ep.googleCalendarUrl}
                 appleUrl={ep.appleCalendarUrl}
                 appleDownload={`${ep.title.replace(/\s+/g, "-")}.ics`}

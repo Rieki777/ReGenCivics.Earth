@@ -79,18 +79,31 @@ const SEED_EVENTS = [
       "Preparing your project for Demo Day. Synthesizing your journey and articulating your next steps.",
       "Final presentations from all Season 2 incubator projects. Celebration, feedback, and next steps.",
     ];
-    // Season 2 starts Sept 26, 2026. Each episode is 7 days apart.
-    const startBase = new Date("2026-09-26T15:00:00Z");
-    startBase.setDate(startBase.getDate() + i * 7);
-    const endDate = new Date(startBase);
-    endDate.setHours(endDate.getHours() + 2);
+    // 11:00 America/Los_Angeles. DST dates are 18:00Z, standard-time dates are 19:00Z.
+    const startIso = [
+      "2026-09-26T18:00:00.000Z",
+      "2026-10-03T18:00:00.000Z",
+      "2026-10-10T18:00:00.000Z",
+      "2026-10-17T18:00:00.000Z",
+      "2026-10-24T18:00:00.000Z",
+      "2026-10-31T18:00:00.000Z",
+      "2026-11-07T19:00:00.000Z",
+      "2026-11-14T19:00:00.000Z",
+      "2026-11-21T19:00:00.000Z",
+      "2026-11-28T19:00:00.000Z",
+      "2026-12-05T19:00:00.000Z",
+      "2026-12-12T19:00:00.000Z",
+      "2026-12-19T19:00:00.000Z",
+    ][i]!;
+    const startTime = new Date(startIso);
+    const endTime = new Date(startTime.getTime() + 2 * 3_600_000);
     return {
       title: titles[i],
       description: descriptions[i],
       type: "episode" as const,
-      startTime: new Date(startBase),
-      endTime: endDate,
-      timezone: "EDT",
+      startTime,
+      endTime,
+      timezone: i < 6 ? "PDT" : "PST",
       season: "Season 2",
       episodeNumber: weekNum,
       status: "upcoming" as const,
