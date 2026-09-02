@@ -8,8 +8,9 @@ import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye, Mail } from "
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApplicantStatusEmailDialog } from "@/components/admin/ApplicantStatusEmailDialog";
+import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
   submitted: {
@@ -43,16 +44,31 @@ const STATUS_CONFIG = {
   changes_requested: {
     icon: AlertCircle,
     label: "Changes Requested",
-    color: "text-orange-600",
+    color: "text-orange-700",
     bgColor: "bg-orange-100",
     count: 0,
   },
 };
 
+const STATUS_KEYS = Object.keys(STATUS_CONFIG) as (keyof typeof STATUS_CONFIG)[];
+
+function statusFromSearch(): keyof typeof STATUS_CONFIG | null {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("status");
+    if (raw && raw in STATUS_CONFIG) return raw as keyof typeof STATUS_CONFIG;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 export default function AdminApplications() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<keyof typeof STATUS_CONFIG>("submitted");
+  const [activeTab, setActiveTab] = useState<keyof typeof STATUS_CONFIG>(
+    () => statusFromSearch() || "submitted",
+  );
+  const autoPicked = useRef(Boolean(statusFromSearch()));
   const [emailOpen, setEmailOpen] = useState(false);
   const { data: applications, isLoading } = trpc.applications.list.useQuery(
     undefined,
@@ -108,6 +124,19 @@ export default function AdminApplications() {
     }
     return acc;
   }, {} as Record<string, number>) || {};
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("status", activeTab);
+    window.history.replaceState({}, "", url.toString());
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (autoPicked.current || !applications) return;
+    const firstWithItems = STATUS_KEYS.find((key) => (statusCounts[key] || 0) > 0);
+    if (firstWithItems) setActiveTab(firstWithItems);
+    autoPicked.current = true;
+  }, [applications, statusCounts]);
 
   const filterByStatus = (status: string) => {
     return applications?.filter(app => app.status === status) || [];
@@ -202,52 +231,52 @@ export default function AdminApplications() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 mb-6 md:mb-8">
-          {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-            const count = statusCounts[status] || 0;
-            const StatusIcon = config.icon;
-            
-            return (
-              <Card key={status} className="p-3 md:p-4 bg-white">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
-                    <StatusIcon className={`w-4 h-4 md:w-5 md:h-5 ${config.color}`} />
-                  </div>
-                  <div>
-                    <div className="text-xl md:text-2xl font-bold text-[#1a472a]">{count}</div>
-                    <div className="text-[10px] md:text-xs text-[#1a472a]/80 leading-tight">{config.label}</div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Tabs by Status */}
+        {/* Status cards are the filter. Counts live here so the pill bar is gone. */}
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as keyof typeof STATUS_CONFIG)}
           className="w-full"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-            <TabsList className="flex flex-wrap w-full sm:w-auto gap-1 h-auto p-1">
-            <TabsTrigger value="submitted" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
-              <span className="hidden sm:inline">Submitted</span><span className="sm:hidden">New</span> ({statusCounts.submitted || 0})
-            </TabsTrigger>
-            <TabsTrigger value="under_review" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
-              <span className="hidden sm:inline">Under Review</span><span className="sm:hidden">Review</span> ({statusCounts.under_review || 0})
-            </TabsTrigger>
-            <TabsTrigger value="changes_requested" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
-              Changes ({statusCounts.changes_requested || 0})
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
-              Approved ({statusCounts.approved || 0})
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
-              Rejected ({statusCounts.rejected || 0})
-            </TabsTrigger>
-            </TabsList>
+          <TabsList
+            aria-label="Filter applications by review status"
+            className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 w-full h-auto bg-transparent p-0 mb-4 md:mb-6"
+          >
+            {STATUS_KEYS.map((status) => {
+              const config = STATUS_CONFIG[status];
+              const count = statusCounts[status] || 0;
+              const StatusIcon = config.icon;
+              return (
+                <TabsTrigger
+                  key={status}
+                  value={status}
+                  className={cn(
+                    "h-auto min-h-11 w-full flex-none p-3 md:p-4 rounded-xl border bg-white shadow-none",
+                    "flex items-center justify-start gap-2 md:gap-3 text-left whitespace-normal",
+                    "text-[#1a472a] hover:bg-[#f8faf8]",
+                    "dark:text-[#1a472a] dark:bg-white dark:hover:bg-[#f8faf8]",
+                    "data-[state=active]:bg-[#f0f7f0] data-[state=active]:text-[#1a472a]",
+                    "dark:data-[state=active]:bg-[#f0f7f0] dark:data-[state=active]:text-[#1a472a]",
+                    "data-[state=active]:border-[#1a472a] data-[state=active]:ring-2 data-[state=active]:ring-[#1a472a]/25",
+                    "data-[state=inactive]:border-[#1a472a]/15",
+                    "[&_svg]:size-4 md:[&_svg]:size-5",
+                  )}
+                >
+                  <span className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
+                    <StatusIcon className={`w-4 h-4 md:w-5 md:h-5 ${config.color}`} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xl md:text-2xl font-bold tabular-nums leading-none">{count}</span>
+                    <span className="block text-[10px] md:text-xs font-medium text-[#1a472a] leading-tight mt-1">{config.label}</span>
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <p className="text-sm md:text-base text-[#1a472a] font-medium">
+              {STATUS_CONFIG[activeTab].label}: {statusCounts[activeTab] || 0}
+            </p>
             <Button
               type="button"
               variant="outline"
