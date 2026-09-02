@@ -182,3 +182,25 @@ export function inquiryTypeForPath(pathType: string | undefined | null): Inquiry
   if ((INQUIRY_HUB_TYPES as readonly string[]).includes(pathType)) return pathType as InquiryHubType;
   return "other";
 }
+
+type WaitingRow = {
+  id: number;
+  status?: string | null;
+  createdAt?: string | Date | null;
+  submittedAt?: string | Date | null;
+};
+
+function waitingTime(row: WaitingRow): number {
+  return new Date(row.submittedAt || row.createdAt || 0).getTime();
+}
+
+/** Oldest row whose status is in `statuses`. Missing status counts as `fallback`. */
+export function oldestWaiting<T extends WaitingRow>(
+  rows: T[] | undefined,
+  statuses: string[],
+  fallback = "new",
+): T | undefined {
+  return [...(rows || [])]
+    .filter((row) => statuses.includes(row.status || fallback))
+    .sort((a, b) => waitingTime(a) - waitingTime(b))[0];
+}

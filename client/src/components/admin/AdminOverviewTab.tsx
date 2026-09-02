@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -73,10 +73,11 @@ export function AdminOverviewTab({
   setActiveTab,
   setInvestorStatusFilter,
 }: Props) {
+  const [showStats, setShowStats] = useState(false);
   return (
     <div className="space-y-6">
       {/* Work waiting on you first. Everything else is context. */}
-      <AdminNeedsYou onSelectTab={setActiveTab} inquiries={inquiries} applications={applications} />
+      <AdminNeedsYou onSelectTab={setActiveTab} inquiries={inquiries} applications={applications} investors={investors} onInvestorFilter={setInvestorStatusFilter} />
 
       <AdminContinueRow onSelectTab={setActiveTab} />
 
@@ -121,6 +122,55 @@ export function AdminOverviewTab({
 
       <AdminCSuiteBriefing onSelectTab={setActiveTab} />
 
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Recent Applications */}
+        <Card className="bg-white border-2 border-[#1a472a]/10">
+          <CardHeader>
+            <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
+              Recent Project Applications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {applications && applications.length > 0 ? (
+              <div className="divide-y divide-[#1a472a]/10">
+                {applications.slice(0, 5).map((app: any) => (
+                  <Link
+                    key={app.id}
+                    href={`/admin/application/${app.id}`}
+                    className="block p-4 min-h-11 hover:bg-[#f0ebe3]/50"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#1a472a] truncate">{app.projectName}</p>
+                        <p className="text-sm text-[#1a472a]/80 truncate">{app.location}</p>
+                      </div>
+                      <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex-shrink-0">
+                        {app.status}
+                      </Badge>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-[#1a472a]/75">
+                <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>No applications yet</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowStats((v) => !v)}
+        className="text-sm font-semibold text-[#1a472a] underline-offset-2 hover:underline min-h-11 text-left"
+      >
+        {showStats ? "Hide extra stats" : "Show extra stats"}
+      </button>
+
+      {showStats && (
+      <>
       {/* Analytics Charts Row */}
       <div className="grid lg:grid-cols-3 gap-6">
         <ActivitySparkline />
@@ -298,78 +348,39 @@ export function AdminOverviewTab({
         </CardContent>
       </Card>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Applications */}
-        <Card className="bg-white border-2 border-[#1a472a]/10">
-          <CardHeader>
-            <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-              Recent Project Applications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {applications && applications.length > 0 ? (
-              <div className="divide-y divide-[#1a472a]/10">
-                {applications.slice(0, 5).map((app: any) => (
-                  <Link
-                    key={app.id}
-                    href={`/admin/application/${app.id}`}
-                    className="block p-4 min-h-11 hover:bg-[#f0ebe3]/50"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[#1a472a] truncate">{app.projectName}</p>
-                        <p className="text-sm text-[#1a472a]/80 truncate">{app.location}</p>
-                      </div>
-                      <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex-shrink-0">
-                        {app.status}
-                      </Badge>
+      {/* Inquiry Summary by Type */}
+      <Card className="bg-white border-2 border-[#1a472a]/10">
+        <CardHeader>
+          <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
+            Inquiries by Type
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(pathTypeConfig).map(([key, config]) => {
+              const count = inquiriesByPath[key] || 0;
+              return (
+                <button
+                  type="button"
+                  key={key}
+                  className="p-4 min-h-11 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors text-left"
+                  onClick={() => setActiveTab("inquiries", { type: inquiryTypeForPath(key) })}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full ${config.color} flex items-center justify-center`}
+                    />
+                    <div>
+                      <p className="text-2xl font-bold text-[#1a472a]">{count}</p>
+                      <p className="text-xs text-[#1a472a]/80">{config.label}</p>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-[#1a472a]/75">
-                <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No applications yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Inquiry Summary by Type */}
-        <Card className="bg-white border-2 border-[#1a472a]/10">
-          <CardHeader>
-            <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-              Inquiries by Type
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(pathTypeConfig).map(([key, config]) => {
-                const count = inquiriesByPath[key] || 0;
-                return (
-                  <button
-                    type="button"
-                    key={key}
-                    className="p-4 min-h-11 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors text-left"
-                    onClick={() => setActiveTab("inquiries", { type: inquiryTypeForPath(key) })}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-full ${config.color} flex items-center justify-center`}
-                      />
-                      <div>
-                        <p className="text-2xl font-bold text-[#1a472a]">{count}</p>
-                        <p className="text-xs text-[#1a472a]/80">{config.label}</p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Season Overview */}
       {(() => {
@@ -453,6 +464,8 @@ export function AdminOverviewTab({
         </h2>
         <AdminGovernancePanel />
       </div>
+      </>
+      )}
     </div>
   );
 }

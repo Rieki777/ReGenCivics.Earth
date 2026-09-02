@@ -25,6 +25,8 @@ import {
   Megaphone,
   Search,
   Image,
+  Images,
+  AppWindow,
   GitFork,
   Gamepad2,
   BarChart3,
@@ -85,6 +87,8 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Operations",
     items: [
       { id: "banners", label: "Banners", icon: Image },
+      { id: "images", label: "Image studio", icon: Images },
+      { id: "widgets", label: "Widgets", icon: AppWindow },
       { id: "governance-forks", label: "Governance Forks", icon: GitFork, route: "/admin/governance-forks" },
       { id: "custom-games", label: "Custom Games", icon: Gamepad2 },
       { id: "analytics", label: "Analytics", icon: BarChart3 },

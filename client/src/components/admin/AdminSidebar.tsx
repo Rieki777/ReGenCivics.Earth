@@ -1,9 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { useLocation } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { NAV_GROUPS, writeAdminContinue, type NavItem } from "@/lib/adminNav";
-import { recordAdminVisit } from "@/lib/adminUsage";
+import { NAV_GROUPS, type NavItem } from "@/lib/adminNav";
 
 export type { NavItem };
 export { NAV_GROUPS };
@@ -71,7 +69,6 @@ export function AdminSidebar({
   onMobileOpenChange,
   footer,
 }: AdminSidebarProps) {
-  const [, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("admin_sidebar_collapsed") === "true";
@@ -99,13 +96,7 @@ export function AdminSidebar({
   }, []);
 
   const select = (item: NavItem) => {
-    recordAdminVisit(item.id);
-    writeAdminContinue(item);
-    if (item.route) {
-      navigate(item.route);
-    } else {
-      onTabChange(item.id);
-    }
+    onTabChange(item.id);
     onMobileOpenChange?.(false);
   };
 

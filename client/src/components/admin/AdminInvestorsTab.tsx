@@ -39,6 +39,7 @@ interface Props {
   ReminderPanelComp: React.ComponentType<{ contactType: string; contactId: number }>;
   AssigneeSelectComp: React.ComponentType<{ contactType: string; contactId: number }>;
   openId?: number | null;
+  onOpenIdChange?: (id: number | null) => void;
 }
 
 export function AdminInvestorsTab({
@@ -59,9 +60,14 @@ export function AdminInvestorsTab({
   ReminderPanelComp,
   AssigneeSelectComp,
   openId = null,
+  onOpenIdChange,
 }: Props) {
   const [openRecord, setOpenRecord] = useState<number | null>(openId);
   useEffect(() => { setOpenRecord(openId ?? null); }, [openId]);
+  const setSheet = (id: number | null) => {
+    setOpenRecord(id);
+    onOpenIdChange?.(id);
+  };
   return (
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
@@ -146,7 +152,7 @@ export function AdminInvestorsTab({
           ) : (
           <div className="divide-y divide-[#1a472a]/10">
             {filteredInvestors.map((investor: any) => (
-              <Sheet key={investor.id} open={openRecord === investor.id} onOpenChange={(open) => setOpenRecord(open ? investor.id : null)}>
+              <Sheet key={investor.id} open={openRecord === investor.id} onOpenChange={(open) => setSheet(open ? investor.id : null)}>
                 <SheetTrigger asChild>
                   <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
                     <div className="flex items-start justify-between">
@@ -202,6 +208,9 @@ export function AdminInvestorsTab({
                             Duplicate email
                           </Badge>
                         )}
+                        <span className="min-h-11 px-3 rounded-lg bg-[#1a472a] text-white text-xs font-semibold inline-flex items-center">
+                          Contact
+                        </span>
                         <ChevronRight className="w-4 h-4 text-[#1a472a]/75" />
                       </div>
                     </div>

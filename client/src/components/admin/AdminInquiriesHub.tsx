@@ -33,15 +33,24 @@ export function AdminInquiriesHub({
   applications,
   openId,
   initialType,
+  onOpenIdChange,
+  onTypeChange,
 }: {
   inquiries: any[] | undefined;
   investors: any[] | undefined;
   applications: any[] | undefined;
   openId?: number | null;
   initialType?: string | null;
+  onOpenIdChange?: (id: number | null) => void;
+  onTypeChange?: (type: string | null) => void;
 }) {
   const rows = inquiries || [];
   const [openType, setOpenType] = useState<string | null>(() => initialType || "live");
+
+  const selectType = (id: string | null) => {
+    setOpenType(id);
+    onTypeChange?.(id);
+  };
 
   useEffect(() => {
     if (initialType) setOpenType(initialType);
@@ -80,7 +89,7 @@ export function AdminInquiriesHub({
           >
             <button
               type="button"
-              onClick={() => setOpenType(expanded ? null : card.id)}
+              onClick={() => selectType(expanded ? null : card.id)}
               className="w-full min-h-11 px-4 py-3 flex items-center gap-3 text-left"
               aria-expanded={expanded}
             >
@@ -117,6 +126,7 @@ export function AdminInquiriesHub({
                           .map((i: any) => ({ ...i, pathType: "other" }))
                       : rows}
                     openId={openId}
+                    onOpenIdChange={onOpenIdChange}
                   />
                 )}
               </div>

@@ -267,6 +267,7 @@ function AdminDashboard() {
               ReminderPanelComp={ReminderPanel}
               AssigneeSelectComp={AssigneeSelect}
               openId={activeTab === "investors" ? openRecordId : null}
+              onOpenIdChange={setOpenRecordId}
             />
           </TabsContent>
 
@@ -281,6 +282,8 @@ function AdminDashboard() {
               applications={applications}
               openId={openRecordId}
               initialType={inquiryType}
+              onOpenIdChange={setOpenRecordId}
+              onTypeChange={setInquiryType}
             />
           </TabsContent>
 

@@ -24,6 +24,8 @@ describe("admin nav", () => {
     expect(navItemById("harvest")?.route).toBe("/admin-create");
     expect(navItemById("funding")?.route).toBe("/admin/funding");
     expect(navItemById("calls")?.route).toBe("/admin/calls");
+    expect(navItemById("images")?.label).toBe("Image studio");
+    expect(navItemById("widgets")?.label).toBe("Widgets");
     expect(NAV_ITEMS_FLAT.map((item) => item.id)).not.toEqual(
       expect.arrayContaining(["live", "create", "kanban"]),
     );

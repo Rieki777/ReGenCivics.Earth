@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminSpeedDial } from "@/components/admin/AdminSpeedDial";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
-import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
 import { navItemById, writeAdminContinue, writeAdminContinueFromTab, adminTabHref, type NavItem } from "@/lib/adminNav";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { trpc } from "@/lib/trpc";
@@ -97,7 +96,7 @@ function AdminChromeSearch({
         aria-label="Search contacts, projects, posts"
       />
       {q && (
-        <button type="button" onClick={() => { setQ(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#1a472a]">
+        <button type="button" onClick={() => { setQ(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 min-h-11 min-w-11 inline-flex items-center justify-center text-[#1a472a]/75 hover:text-[#1a472a]">
           <X className="w-3.5 h-3.5" />
         </button>
       )}
@@ -157,34 +156,44 @@ export function AdminChrome({
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
-    recordAdminVisit(activeTab);
     writeAdminContinueFromTab(activeTab);
   }, [activeTab]);
 
   const goItem = (item: NavItem) => {
-    recordAdminVisit(item.id);
-    writeAdminContinue(item);
-    if (item.route) navigate(item.route);
-    else if (onTabChange) onTabChange(item.id);
-    else navigate(adminTabHref(item.id));
+    if (item.route) {
+      recordAdminVisit(item.id);
+      writeAdminContinue(item);
+      navigate(item.route);
+    } else if (onTabChange) {
+      onTabChange(item.id);
+    } else {
+      recordAdminVisit(item.id);
+      writeAdminContinue(item);
+      navigate(adminTabHref(item.id));
+    }
     setMobileNavOpen(false);
   };
 
   const handleTab = (tab: string, extras?: { type?: string; open?: string }) => {
-    recordAdminVisit(tab);
-    writeAdminContinueFromTab(tab);
     const item = navItemById(tab);
     if (item?.route) {
+      recordAdminVisit(tab);
+      writeAdminContinueFromTab(tab);
       navigate(item.route);
+      setMobileNavOpen(false);
       return;
     }
     if (onTabChange) onTabChange(tab, extras);
-    else navigate(adminTabHref(tab, extras));
+    else {
+      recordAdminVisit(tab);
+      writeAdminContinueFromTab(tab);
+      navigate(adminTabHref(tab, extras));
+    }
+    setMobileNavOpen(false);
   };
 
   return (
     <div className="admin-root flex h-[100dvh] overflow-hidden bg-[#f0ebe3]">
-      <ShortcutHelpOverlay />
       <AdminSidebar
         activeTab={activeTab}
         onTabChange={(tab) => handleTab(tab)}

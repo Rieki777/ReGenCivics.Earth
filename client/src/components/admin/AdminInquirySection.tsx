@@ -33,7 +33,10 @@ export function InquirySection({
   openId?: number | null;
   onOpenIdChange?: (id: number | null) => void;
 }) {
-  const [internalOpen, setInternalOpen] = useState<number | null>(null);
+  const [internalOpen, setInternalOpen] = useState<number | null>(openId ?? null);
+  useEffect(() => {
+    if (openId != null) setInternalOpen(openId);
+  }, [openId]);
   const activeOpen = onOpenIdChange ? (openId ?? null) : internalOpen;
   const setOpen = (id: number | null) => {
     if (onOpenIdChange) onOpenIdChange(id);
@@ -47,8 +50,6 @@ export function InquirySection({
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
-  const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
-  const [currentReviewNote, setCurrentReviewNote] = useState('');
   const [search, setSearch] = useState('');
   const [showBulkEmail, setShowBulkEmail] = useState(false);
   const [bulkEmailTemplate, setBulkEmailTemplate] = useState('follow_up');
@@ -148,14 +149,7 @@ export function InquirySection({
     setShowExportDropdown(false);
   };
 
-  if (filteredInquiries.length === 0) {
-    return (
-      <div className="text-center py-8 text-[#1a472a]/75">
-        <Icon className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        <p>No {config.label.toLowerCase()} inquiries yet</p>
-      </div>
-    );
-  }
+  const noneSubmitted = baseFilteredInquiries.length === 0;
 
   // Toggle item selection
   const toggleItemSelection = (id: number) => {
@@ -546,6 +540,25 @@ export function InquirySection({
       )}
 
       {/* Inquiry List */}
+      {filteredInquiries.length === 0 ? (
+        <div className="text-center py-8 text-[#1a472a]/75">
+          <Icon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p>
+            {noneSubmitted
+              ? `No ${config.label.toLowerCase()} inquiries yet`
+              : "No inquiries match this search"}
+          </p>
+          {!noneSubmitted && (
+            <button
+              type="button"
+              onClick={() => { setSearch(""); setActiveFilter(null); }}
+              className="mt-2 min-h-11 px-3 text-sm font-semibold text-[#1a472a] underline-offset-2 hover:underline"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      ) : (
       <div className="divide-y divide-[#1a472a]/10">
       {filteredInquiries.map((inquiry: any, currentIndex: number) => {
         // Parse form data
@@ -1096,6 +1109,7 @@ export function InquirySection({
         );
       })}
       </div>
+      )}
     </div>
   );
 }

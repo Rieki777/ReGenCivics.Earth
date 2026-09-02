@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { Command } from "cmdk";
 import { useLocation } from "wouter";
 import { Search, X } from "lucide-react";
-import { NAV_GROUPS, type NavItem } from "./AdminSidebar";
+import { NAV_GROUPS, type NavItem } from "@/lib/adminNav";
 
 export function AdminCommandPalette({ onSelectTab }: { onSelectTab: (tab: string) => void }) {
   const [open, setOpen] = useState(false);

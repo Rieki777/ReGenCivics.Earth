@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inquiryTypeForPath, getAgeInfo, filterByProject } from "./adminInquiry";
+import { inquiryTypeForPath, getAgeInfo, filterByProject, oldestWaiting } from "./adminInquiry";
 
 describe("admin inquiry helpers", () => {
   it("maps form paths onto hub types", () => {
@@ -27,5 +27,15 @@ describe("admin inquiry helpers", () => {
     ];
     expect(filterByProject(rows, "la_tierra").map((r) => r.id)).toEqual([1]);
     expect(filterByProject(rows, "hypha").map((r) => r.id)).toEqual([3]);
+  });
+
+  it("picks the oldest waiting row so Needs you opens a real record", () => {
+    const rows = [
+      { id: 2, status: "new", createdAt: "2026-09-02T12:00:00Z" },
+      { id: 1, status: "new", createdAt: "2026-08-01T12:00:00Z" },
+      { id: 3, status: "contacted", createdAt: "2026-07-01T12:00:00Z" },
+    ];
+    expect(oldestWaiting(rows, ["new", "pending"])?.id).toBe(1);
+    expect(oldestWaiting([{ id: 9, status: null, createdAt: "2026-01-01T00:00:00Z" }], ["new"])?.id).toBe(9);
   });
 });

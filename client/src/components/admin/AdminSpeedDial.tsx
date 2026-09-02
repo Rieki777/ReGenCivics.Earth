@@ -25,6 +25,15 @@ export function AdminSpeedDial({
   };
 
   return (
+    <>
+      {open && (
+        <button
+          type="button"
+          className="md:hidden fixed inset-0 z-40 bg-black/20"
+          aria-label="Close quick access"
+          onClick={() => setOpen(false)}
+        />
+      )}
     <div className="md:hidden fixed z-50 right-4 bottom-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-end gap-2">
       {open && (
         <div className="flex flex-col items-end gap-2 mb-1">
@@ -63,5 +72,6 @@ export function AdminSpeedDial({
         {open ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
       </button>
     </div>
+    </>
   );
 }

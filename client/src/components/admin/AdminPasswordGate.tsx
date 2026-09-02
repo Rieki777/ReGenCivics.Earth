@@ -45,6 +45,7 @@ export function AdminPasswordGate({ onAuthenticated }: { onAuthenticated: () => 
                   type="password"
                   placeholder="Enter password"
                   value={password}
+                  aria-label="Admin password"
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setError(false);

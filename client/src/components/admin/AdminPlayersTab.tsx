@@ -79,27 +79,27 @@ export function AdminPlayersTab() {
                   {player.isVerified !== 1 ? (
                     <button
                       onClick={() => verifyMut.mutate({ id: player.id })}
-                      className="text-[10px] px-2 py-1 rounded border border-green-300 text-green-700 hover:bg-green-50 transition-colors"
+                      className="text-xs min-h-11 px-3 rounded border border-green-300 text-green-700 hover:bg-green-50 transition-colors"
                     >Verify</button>
                   ) : (
                     <button
                       onClick={() => unverifyMut.mutate({ profileId: player.id })}
-                      className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
+                      className="text-xs min-h-11 px-3 rounded border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
                     >Unverify</button>
                   )}
                   {player.walletAddress && (
                     <button
                       onClick={() => syncMut.mutate({ profileId: player.id })}
-                      className="text-[10px] px-2 py-1 rounded border border-[#7dd87d] text-[#4a7c59] hover:bg-green-50 transition-colors"
+                      className="text-xs min-h-11 px-3 rounded border border-[#7dd87d] text-[#4a7c59] hover:bg-green-50 transition-colors"
                     >Sync Tokens</button>
                   )}
                   <button
                     onClick={() => { if (window.confirm('Ban this player?')) banMut.mutate({ profileId: player.id }); }}
-                    className="text-[10px] px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    className="text-xs min-h-11 px-3 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                   >Ban</button>
                   <button
                     onClick={() => { if (window.confirm('Delete this profile? This cannot be undone.')) deleteMut.mutate({ profileId: player.id }); }}
-                    className="text-[10px] px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 transition-colors"
+                    className="text-xs min-h-11 px-3 rounded border border-red-300 text-red-700 hover:bg-red-50 transition-colors"
                   >Delete</button>
                 </div>
               </div>

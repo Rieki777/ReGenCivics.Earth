@@ -6,7 +6,7 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Building2, Inbox, Shield, TrendingUp, Vote, ChevronRight, CheckCircle2 } from "lucide-react";
-import { inquiryTypeForPath } from "@/lib/adminInquiry";
+import { inquiryTypeForPath, oldestWaiting } from "@/lib/adminInquiry";
 
 type SelectTab = (tab: string, extras?: { type?: string; open?: string }) => void;
 
@@ -14,22 +14,22 @@ export function AdminNeedsYou({
   onSelectTab,
   inquiries,
   applications,
+  investors,
+  onInvestorFilter,
 }: {
   onSelectTab?: SelectTab;
   inquiries?: any[];
   applications?: any[];
+  investors?: any[];
+  onInvestorFilter?: (filter: string) => void;
 }) {
   const { data: snap } = trpc.admin.ecosystemSnapshot.useQuery(undefined, { staleTime: 60_000 });
   const [, navigate] = useLocation();
   if (!snap) return null;
 
-  const oldestInquiry = [...(inquiries || [])]
-    .filter((i: any) => !i.status || i.status === "new" || i.status === "pending")
-    .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
-
-  const oldestApp = [...(applications || [])]
-    .filter((a: any) => a.status === "submitted" || a.status === "pending" || a.status === "under_review")
-    .sort((a: any, b: any) => new Date(a.submittedAt || a.createdAt).getTime() - new Date(b.submittedAt || b.createdAt).getTime())[0];
+  const oldestInquiry = oldestWaiting(inquiries, ["new", "pending"]);
+  const oldestApp = oldestWaiting(applications, ["submitted", "pending", "under_review"]);
+  const oldestInvestor = oldestWaiting(investors, ["new", "pending"]);
 
   const go = (target: string, extras?: { type?: string; open?: string }) => {
     if (target.startsWith("/")) {
@@ -71,7 +71,10 @@ export function AdminNeedsYou({
       key: "inv",
       label: "New investors to contact",
       count: snap.investors.new,
-      run: () => go("investors"),
+      run: () => {
+        onInvestorFilter?.("all");
+        go("investors", oldestInvestor ? { open: String(oldestInvestor.id) } : undefined);
+      },
       icon: TrendingUp,
     },
     {
