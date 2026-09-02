@@ -112,7 +112,11 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     about:
       "ReGen Civics did not emerge overnight. It grew from more than a decade of asking hard questions about land, money, governance, and what healing a civilisation actually takes. This quest invites you to watch the Foundational Series: four short videos that distil that journey and illuminate the vision we are building toward together. After watching, you will understand not just what ReGen Civics is, but why it has to exist. Then share what you found with the people in your life who are also searching.",
     steps: [
-      "Watch the Foundational Series (4 videos) at: regencivics.earth/foundations",
+      // Was "at: regencivics.earth/foundations", which 404s. That page does not
+      // exist and the videos are nowhere else on the site, so this step sent
+      // every new member to a dead URL. Rye's call, 2026-09-01: send them to
+      // the forum thread for now, which this quest already links below.
+      "Head to the forum post below for the Foundational Series (4 videos).",
       "Write a reflection, summary, or creative response. It could be a paragraph, an article, a poem, a thread. Even a single sentence of genuine insight counts.",
       "Share your reflection in the forum post below and post it on social media. Include the link in your forum comment.",
     ],

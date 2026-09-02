@@ -192,7 +192,7 @@ When we name our gifts, they become real. When we witness each other's gifts, a 
   {
     title: "Foundational Series Watch Party: Questions and Reactions",
     categorySlug: "learning-resources",
-    body: `This is where we share what struck us from the Foundational Series. Watch the four videos at [regencivics.earth/foundations](https://regencivics.earth/foundations), then come back here to share your reflections.
+    body: `This is where we share what struck us from the Foundational Series. The four videos are posted in this thread. Watch them, then share your reflections below.
 
 What resonated? What surprised you? What questions did it open up? What would you share with a friend to bring them into this world?
 
