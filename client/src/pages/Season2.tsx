@@ -44,6 +44,8 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { SEO } from "@/components/SEO";
+import { Season2Calendar } from "@/components/Season2Calendar";
+import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -55,8 +57,6 @@ function prefersReducedMotion() {
 }
 
 // ─── Countdown to application close ─────────────────────────────────────
-const APPLICATIONS_CLOSE = new Date("2026-09-01T23:59:59");
-
 function Countdown() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -455,8 +455,8 @@ const SELECTION: {
   cta?: { href: string; label: string; external?: boolean };
 }[] = [
   {
-    title: "Apply by September 1st",
-    body: "Applications close September 1st. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
+    title: "Apply by September 11th",
+    body: "Applications close September 11th. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
   },
   {
     title: "Shortlisted projects make a pitch video",
@@ -581,6 +581,8 @@ export default function Season2() {
           <ChevronDown className="w-6 h-6 animate-bounce" />
         </a>
       </section>
+
+      <Season2Calendar />
 
       {/* ── WHAT ── */}
       <AnimatedSection as="section" animation="slide-up" id="what" className="py-20 md:py-28 px-4">
@@ -1365,7 +1367,7 @@ export default function Season2() {
               the honest baseline we look for.
             </FaqItem>
             <FaqItem q="When do applications close and when does the season start?">
-              Applications close September 1st, and we approve shortlisted
+              Applications close September 11th, and we approve shortlisted
               projects on a rolling basis, so applying earlier gives you more
               time to prepare. We'll let you know by September 5th (or sooner if
               you apply early) whether you're shortlisted, and you'll have until
@@ -1423,7 +1425,7 @@ export default function Season2() {
           {/* What happens next */}
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
             {[
-              { icon: CheckCircle2, t: "Apply by September 1st", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
+              { icon: CheckCircle2, t: "Apply by September 11th", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
               { icon: Clock, t: "Pitch by September 14th", d: "We let shortlisted projects know by September 5th, then you have until September 14th to submit a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
               { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins." },
             ].map((s) => {
@@ -1439,7 +1441,7 @@ export default function Season2() {
           </div>
 
           <p className="mt-8 text-sm text-[#d4a574]/80 font-medium tracking-wide">
-            Applications close September 1st · Thirteen seats · Rolling shortlisting
+            Applications close September 11th · Thirteen seats · Rolling shortlisting
           </p>
 
           {/* Newsletter fallback */}
