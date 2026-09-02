@@ -23,7 +23,7 @@
  * Claude in Chrome; see CONTRAST_AUDIT_2026-05-29.md for the baseline.
  */
 
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 
@@ -166,9 +166,9 @@ async function main() {
   console.log(`Running contrast audit against ${BASE_URL}`);
   console.log(`Routes: ${PUBLIC_ROUTES.length}`);
 
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: 1280, height: 800 });
 
   const allFindings = {};
   let totalFailures = 0;
@@ -176,7 +176,7 @@ async function main() {
   for (const route of PUBLIC_ROUTES) {
     const url = BASE_URL.replace(/\/$/, '') + route;
     try {
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30_000 });
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
       await new Promise(r => setTimeout(r, 800));
       const result = await page.evaluate(CHECKER_SRC);
       allFindings[route] = result.items;
