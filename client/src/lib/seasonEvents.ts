@@ -22,6 +22,8 @@ export const SESSION_DURATION_HOURS = 2;
 
 /** Bumped when published times moved from 8:00 AM PT / 1:00 PM ET to 11:00 AM PT. */
 export const ICS_SEQUENCE = 1;
+/** Extra bump when an Open Access session moves off a Season 2 Saturday. */
+export const ICS_SEQUENCE_OA_RESCHEDULE = ICS_SEQUENCE + 1;
 
 export const CALENDAR_FEED_PATH = "/regen-civics-all-events.ics";
 export const CALENDAR_FEED_HTTPS = "https://regencivics.earth/regen-civics-all-events.ics";
@@ -34,6 +36,9 @@ const ICS_DTSTAMP = "20260902T040000Z";
 export type OpenAccessSession = {
   date: string;
   dayName: string;
+  /** First-published / new-moon date. Stays on the ICS UID if the session moves. */
+  publishedDate: string;
+  sequence: number;
   startUtc: string;
   endUtc: string;
 };
@@ -150,10 +155,34 @@ function sessionPair(ymd: string): { startUtc: string; endUtc: string } {
   };
 }
 
-export const NEW_MOON_SESSIONS: OpenAccessSession[] = OPEN_ACCESS_DATES.map((row) => ({
-  ...row,
-  ...sessionPair(row.date),
-}));
+function ymdWeekdayUtc(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0)).toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+}
+
+function addUtcDays(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days, 12, 0, 0)).toISOString().slice(0, 10);
+}
+
+/**
+ * Move a same-day clash off the Season 2 Saturday onto Sunday.
+ * Saturday + 1 day. Any other weekday walks forward to the next Sunday.
+ */
+export function sundayAfterSeason2Saturday(clashDate: string): string {
+  const name = ymdWeekdayUtc(clashDate);
+  if (name === "Saturday") return addUtcDays(clashDate, 1);
+  const tomorrow = addUtcDays(clashDate, 1);
+  if (ymdWeekdayUtc(tomorrow) === "Sunday") return tomorrow;
+  let cursor = tomorrow;
+  while (ymdWeekdayUtc(cursor) !== "Sunday") {
+    cursor = addUtcDays(cursor, 1);
+  }
+  return cursor;
+}
 
 export function openAccessUid(date: string): string {
   return `open-access-${date}@regencivics.earth`;
@@ -236,11 +265,12 @@ export function openAccessGoogleUrl(session: OpenAccessSession): string {
 
 export function openAccessIcsUrl(session: OpenAccessSession): string {
   return icsDataUrl({
-    uid: openAccessUid(session.date),
+    uid: openAccessUid(session.publishedDate),
     summary: OPEN_ACCESS_TITLE,
     startUtc: session.startUtc,
     endUtc: session.endUtc,
     description: OPEN_ACCESS_DESC,
+    sequence: session.sequence,
   });
 }
 
@@ -347,6 +377,21 @@ export const SEASON2_EPISODE_DEFS: EpisodeDef[] = [
     description: "A complete overview of the ReGen Civics Incubator journey. Project stewards share updates on their progress and celebrate our collective achievements.",
   },
 ];
+
+const SEASON2_DATES = new Set(SEASON2_EPISODE_DEFS.map((e) => e.date));
+
+export const NEW_MOON_SESSIONS: OpenAccessSession[] = OPEN_ACCESS_DATES.map((row) => {
+  const publishedDate = row.date;
+  const clashes = SEASON2_DATES.has(publishedDate);
+  const date = clashes ? sundayAfterSeason2Saturday(publishedDate) : publishedDate;
+  return {
+    date,
+    dayName: clashes ? "Sunday" : row.dayName,
+    publishedDate,
+    sequence: clashes ? ICS_SEQUENCE_OA_RESCHEDULE : ICS_SEQUENCE,
+    ...sessionPair(date),
+  };
+});
 
 function episodeFallback(def: EpisodeDef) {
   const { startUtc, endUtc } = sessionPair(def.date);
@@ -482,11 +527,11 @@ export function formatOpenAccessStart(session: OpenAccessSession): string {
 export function buildAllEventsIcs(): string {
   const openAccess = NEW_MOON_SESSIONS.map((session) =>
     buildIcsEvent({
-      uid: openAccessUid(session.date),
+      uid: openAccessUid(session.publishedDate),
       summary: OPEN_ACCESS_TITLE,
       startUtc: session.startUtc,
       endUtc: session.endUtc,
-      sequence: ICS_SEQUENCE,
+      sequence: session.sequence,
       description: calendarDetails(OPEN_ACCESS_DESC),
       location: "Online via Riverside",
     }),

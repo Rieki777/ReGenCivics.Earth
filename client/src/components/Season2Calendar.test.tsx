@@ -55,6 +55,7 @@ describe("Season2Calendar", () => {
     const sep10 = NEW_MOON_SESSIONS.find((s) => s.date === "2026-09-10")!;
     expect(hrefs).toContain(openAccessGoogleUrl(sep10));
     expect(hrefs.some((h) => h.includes("dates=20261010T180000Z/20261010T200000Z"))).toBe(true);
+    expect(hrefs.some((h) => h.includes("dates=20261011T180000Z/20261011T200000Z"))).toBe(true);
     expect(hrefs.some((h) => h.includes("dates=20260926T180000Z/20260926T200000Z"))).toBe(true);
     expect(hrefs.some((h) => h.includes("dates=20261219T190000Z/20261219T210000Z"))).toBe(true);
 

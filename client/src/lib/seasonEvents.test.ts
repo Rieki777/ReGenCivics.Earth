@@ -24,6 +24,8 @@ import {
   buildIcsEvent,
   buildAllEventsIcs,
   ICS_SEQUENCE,
+  ICS_SEQUENCE_OA_RESCHEDULE,
+  sundayAfterSeason2Saturday,
   CALENDAR_SUBSCRIBE_WEBCAL,
   CALENDAR_FEED_PATH,
 } from "./seasonEvents";
@@ -164,8 +166,40 @@ describe("Open Access Sessions", () => {
     expect(before[0]?.date).toBe("2026-09-10");
 
     const after = upcomingOpenAccessSessions(Date.parse("2026-09-10T18:00:01.000Z"));
-    expect(after[0]?.date).toBe("2026-10-10");
+    expect(after[0]?.date).toBe("2026-10-11");
     expect(after.some((s) => s.date === "2026-09-10")).toBe(false);
+  });
+
+  it("does not share a calendar day with any Season 2 episode", () => {
+    const season2Dates = new Set(season2EpisodeEvents().map((e) => e.date));
+    expect(season2Dates.has("2026-10-10")).toBe(true);
+    for (const session of NEW_MOON_SESSIONS) {
+      expect(season2Dates.has(session.date), `OA ${session.date} clashes with Season 2`).toBe(false);
+    }
+  });
+
+  it("moves the Oct 10 clash to Sunday Oct 11 at 11:00 PT and keeps the original UID", () => {
+    expect(sundayAfterSeason2Saturday("2026-10-10")).toBe("2026-10-11");
+    const oct = NEW_MOON_SESSIONS.find((s) => s.publishedDate === "2026-10-10");
+    expect(oct).toBeDefined();
+    expect(oct?.date).toBe("2026-10-11");
+    expect(oct?.dayName).toBe("Sunday");
+    expect(oct?.startUtc).toBe("20261011T180000Z");
+    expect(oct?.endUtc).toBe("20261011T200000Z");
+    expect(oct?.sequence).toBe(ICS_SEQUENCE_OA_RESCHEDULE);
+    expect(openAccessUid(oct!.publishedDate)).toBe("open-access-2026-10-10@regencivics.earth");
+    assertElevenPtTwoEt(parseCompactUtc(oct!.startUtc), "OA Oct 11");
+
+    const google = openAccessGoogleUrl(oct!);
+    expect(google).toContain("dates=20261011T180000Z/20261011T200000Z");
+    expect(google).not.toContain("20261010T180000Z");
+
+    const ics = decodeIcsDataUrl(openAccessIcsUrl(oct!));
+    expect(ics).toContain("UID:open-access-2026-10-10@regencivics.earth");
+    expect(ics).toContain(`SEQUENCE:${ICS_SEQUENCE_OA_RESCHEDULE}`);
+    expect(ics).toContain("DTSTART:20261011T180000Z");
+    expect(ics).not.toContain("DTSTART:20261010T180000Z");
+    expect(ics).not.toContain("UID:open-access-2026-10-11@regencivics.earth");
   });
 });
 
@@ -281,6 +315,20 @@ describe("ICS UID + SEQUENCE", () => {
     expect(ics).toContain("DTSTART:20260926T180000Z");
     expect(ics).not.toContain("DTSTART:20260926T150000Z");
     expect(ics).not.toContain("DTSTART:20260910T170000Z");
+  });
+
+  it("keeps the Oct 10 Open Access UID and points DTSTART at Sunday", () => {
+    const ics = buildAllEventsIcs();
+    const vevents = ics.split("BEGIN:VEVENT").slice(1);
+    const oaOct = vevents.find((v) => v.includes("UID:open-access-2026-10-10@regencivics.earth"));
+    expect(oaOct).toBeDefined();
+    expect(oaOct).toContain("DTSTART:20261011T180000Z");
+    expect(oaOct).toContain(`SEQUENCE:${ICS_SEQUENCE_OA_RESCHEDULE}`);
+    expect(oaOct).not.toContain("DTSTART:20261010T180000Z");
+    expect(ics).not.toContain("UID:open-access-2026-10-11@regencivics.earth");
+
+    const week3 = vevents.find((v) => v.includes("UID:season2-week-3@regencivics.earth"));
+    expect(week3).toContain("DTSTART:20261010T180000Z");
   });
 
   it("keeps client/public/regen-civics-all-events.ics in lockstep with the generator", () => {
