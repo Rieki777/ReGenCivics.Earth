@@ -124,12 +124,19 @@ jobs:
             lines.push('');
             lines.push('_Job fails when this PR adds contrast failures compared to main._');
             const body = lines.join('\n');
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body,
-            });
+            core.info(body);
+            if (context.issue && context.issue.number) {
+              try {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body,
+                });
+              } catch (err) {
+                core.warning(`Could not comment on the PR (${err.message}). Contrast delta is still ${delta}.`);
+              }
+            }
             if (delta > 0) {
               core.setFailed(`This PR introduces ${delta} new contrast failures versus main.`);
             }
