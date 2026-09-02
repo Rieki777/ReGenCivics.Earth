@@ -15,6 +15,13 @@ export const ADMIN_SEASON_CHIP =
 export const ADMIN_DARK_FIELD =
   "bg-white/10 border-white/25 text-white placeholder:text-white/70";
 
+/** Inputs sitting on cream/white admin cards. */
+export const ADMIN_LIGHT_FIELD =
+  "bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/20";
+
+/** Secondary copy on cream. `/75` reads as disabled; keep this as the floor. */
+export const ADMIN_SECONDARY_TEXT = "text-[#1a472a]/85";
+
 const STATUS_CHIPS: Record<string, string> = {
   approved: "bg-[#1a472a] text-[#f8f5f0]",
   rejected: "bg-[#8b1e1e] text-[#f8f5f0]",
@@ -27,6 +34,8 @@ const STATUS_CHIPS: Record<string, string> = {
   new: "bg-[#5c4a12] text-[#f8f5f0]",
   contacted: "bg-[#1a3a5c] text-[#f8f5f0]",
   in_discussion: "bg-[#3d2a5c] text-[#f8f5f0]",
+  in_progress: "bg-[#3d2a5c] text-[#f8f5f0]",
+  reviewing: "bg-[#5c4a12] text-[#f8f5f0]",
   committed: "bg-[#1a472a] text-[#f8f5f0]",
   declined: "bg-[#8b1e1e] text-[#f8f5f0]",
   completed: "bg-[#1a472a] text-[#f8f5f0]",

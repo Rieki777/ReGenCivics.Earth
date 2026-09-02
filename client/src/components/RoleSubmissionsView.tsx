@@ -134,7 +134,7 @@ export function RoleSubmissionsView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-[#1a472a]">Role Submissions</h2>
-          <p className="text-sm text-gray-600 mt-1">Manage and review role applications</p>
+          <p className="text-sm text-[#1a472a]/85 mt-1">Manage and review role applications</p>
         </div>
         <Button onClick={handleExportCSV} variant="outline" size="sm">
           <Download className="w-4 h-4 mr-2" />
@@ -146,7 +146,7 @@ export function RoleSubmissionsView() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/85">Total</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[#1a472a]">{stats.total}</div>
@@ -190,12 +190,12 @@ export function RoleSubmissionsView() {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-300" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#1a472a]/70" />
             <Input
               placeholder="Search by email or name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/20"
             />
           </div>
         </div>
@@ -234,7 +234,7 @@ export function RoleSubmissionsView() {
         </CardHeader>
         <CardContent>
           {filteredSubmissions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-[#1a472a]/85">
               <Filter className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>No role submissions match your filters</p>
             </div>
@@ -243,11 +243,11 @@ export function RoleSubmissionsView() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Applicant</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Roles</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Applied</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Action</th>
+                    <th className="text-left py-3 px-4 font-semibold text-[#1a472a]">Applicant</th>
+                    <th className="text-left py-3 px-4 font-semibold text-[#1a472a]">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold text-[#1a472a]">Roles</th>
+                    <th className="text-left py-3 px-4 font-semibold text-[#1a472a]">Applied</th>
+                    <th className="text-right py-3 px-4 font-semibold text-[#1a472a]">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -256,7 +256,7 @@ export function RoleSubmissionsView() {
                       <td className="py-3 px-4">
                         <div>
                           <div className="font-medium text-gray-900">{submission.fullName || "Unknown"}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <div className="text-xs text-[#1a472a]/85 flex items-center gap-1 mt-1">
                             <Mail className="w-3 h-3" />
                             {submission.email}
                           </div>
@@ -282,7 +282,7 @@ export function RoleSubmissionsView() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-xs text-gray-500">
+                      <td className="py-3 px-4 text-xs text-[#1a472a]/85">
                         {formatDistanceToNow(safeDate(submission.createdAt), { addSuffix: true })}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -325,21 +325,21 @@ export function RoleSubmissionsView() {
                 <TabsContent value="info" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Name</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Name</label>
                       <p className="text-sm font-medium mt-1">{selectedSubmission.fullName || "Not provided"}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Email</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Email</label>
                       <p className="text-sm font-medium mt-1">{selectedSubmission.email}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Status</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Status</label>
                       <Badge className={statusColors[selectedSubmission.status] || "bg-gray-100 text-gray-800"} >
                         {selectedSubmission.status}
                       </Badge>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Applied</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Applied</label>
                       <p className="text-sm font-medium mt-1">
                         {safeDate(selectedSubmission.createdAt).toLocaleDateString()}
                       </p>
@@ -352,7 +352,7 @@ export function RoleSubmissionsView() {
                     <div className="space-y-3">
                       {selectedSubmission.roleArchetypes && parseRoleArchetypes(selectedSubmission.roleArchetypes).length > 0 && (
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">Interested Roles</label>
+                          <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Interested Roles</label>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {parseRoleArchetypes(selectedSubmission.roleArchetypes).map((role: string) => {
                               const roleData = roleArchetypes.find((r) => r.id === role);
@@ -367,19 +367,19 @@ export function RoleSubmissionsView() {
                       )}
                       {selectedSubmission.roleInterest && (
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">Role Interest</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.roleInterest}</p>
+                          <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Role Interest</label>
+                          <p className="text-sm mt-1 text-[#1a472a]">{selectedSubmission.roleInterest}</p>
                         </div>
                       )}
                       {selectedSubmission.whyIdeal && (
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">Why Ideal</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.whyIdeal}</p>
+                          <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Why Ideal</label>
+                          <p className="text-sm mt-1 text-[#1a472a]">{selectedSubmission.whyIdeal}</p>
                         </div>
                       )}
                       {selectedSubmission.cvWebsite && (
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">CV / Website</label>
+                          <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">CV / Website</label>
                           <a
                             href={selectedSubmission.cvWebsite}
                             target="_blank"
@@ -393,28 +393,28 @@ export function RoleSubmissionsView() {
                       )}
                       {selectedSubmission.additionalNotes && (
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">Additional Notes</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.additionalNotes}</p>
+                          <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Additional Notes</label>
+                          <p className="text-sm mt-1 text-[#1a472a]">{selectedSubmission.additionalNotes}</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No additional details provided</p>
+                    <p className="text-sm text-[#1a472a]/85">No additional details provided</p>
                   )}
                 </TabsContent>
 
                 <TabsContent value="metadata" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Submission ID</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Submission ID</label>
                       <p className="font-mono text-xs mt-1">{selectedSubmission.id}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Created</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Created</label>
                       <p className="text-xs mt-1">{safeDate(selectedSubmission.createdAt).toLocaleString()}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 uppercase">Updated</label>
+                      <label className="text-xs font-semibold text-[#1a472a]/85 uppercase">Updated</label>
                       <p className="text-xs mt-1">{safeDate(selectedSubmission.updatedAt).toLocaleString()}</p>
                     </div>
                   </div>

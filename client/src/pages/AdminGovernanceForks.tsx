@@ -39,7 +39,7 @@ import {
  */
 const FIELD_CLASS =
   "[color-scheme:light] bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] " +
-  "placeholder:text-[#1a472a]/60 dark:placeholder:text-[#1a472a]/60 " +
+  "placeholder:text-[#1a472a]/75 dark:placeholder:text-[#1a472a]/75 " +
   "border-[#1a472a]/30 focus-visible:ring-[#1a472a]/40";
 
 /** Outline buttons inherit dark-theme tokens; on the light surface they need the brand tint spelled out. */

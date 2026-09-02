@@ -302,13 +302,13 @@ export function ContributionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white text-[#1a472a]">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white text-[#1a472a] apply-form-dark light-form-island">
         <DialogHeader>
           <DialogTitle className="text-[#1a472a]">
             {step === 'success' ? 'Contribution Submitted!' :
               need ? `Claim: ${need.title}` : 'Contribute to Campaign'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-[#1a472a]/85">
             {step === 'type' && 'Select what type of contribution you want to make'}
             {step === 'details' && (need
               ? `Claiming a ${(KIND_LABELS[need.kind] || 'need').toLowerCase()} need on ${campaignTitle}`
@@ -592,7 +592,7 @@ export function ContributionModal({
                     onChange={(e) => setSessionLength(e.target.value)}
                     placeholder="e.g., 2"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[#1a472a]/85">
                     How long a session are you offering?
                   </p>
                 </div>
@@ -611,7 +611,7 @@ export function ContributionModal({
                     }}
                     placeholder="e.g., 10000"
                   />
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-[#1a472a]/85">
                     {CRYPTO_PAYMENT_CONTEXT.helperText} National currency goes through recommended funders: Ma Earth for donations, GoSteward for loans.
                   </p>
                 </div>
@@ -642,7 +642,7 @@ export function ContributionModal({
                     onChange={(e) => setEstimatedValue(e.target.value)}
                     placeholder="e.g., 5000"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[#1a472a]/85">
                     {need ? 'Prefilled from the need. Adjust if your figure is better.' : 'Estimate the monetary value of your contribution'}
                   </p>
                 </div>
@@ -699,15 +699,15 @@ export function ContributionModal({
             <div className="text-left max-w-sm mx-auto space-y-3 mb-6">
               <div className="flex items-start gap-3">
                 <UserCheck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-600">The steward reviews your pledge and confirms the details with you.</p>
+                <p className="text-sm text-[#1a472a]/85">The steward reviews your pledge and confirms the details with you.</p>
               </div>
               <div className="flex items-start gap-3">
                 <Truck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-600">Delivery is when it counts. Progress and recognition land when your contribution arrives.</p>
+                <p className="text-sm text-[#1a472a]/85">Delivery is when it counts. Progress and recognition land when your contribution arrives.</p>
               </div>
               <div className="flex items-start gap-3">
                 <Gift className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-600">You'll get a thank-you from the project once it's in.</p>
+                <p className="text-sm text-[#1a472a]/85">You'll get a thank-you from the project once it's in.</p>
               </div>
             </div>
             {need?.kind === 'shift' && need.shiftStartsAt && need.shiftEndsAt && (

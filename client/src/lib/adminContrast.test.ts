@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { adminStatusChipClass, formatClaimant } from "./adminContrast";
+import {
+  adminStatusChipClass,
+  formatClaimant,
+  ADMIN_LIGHT_FIELD,
+  ADMIN_DARK_FIELD,
+} from "./adminContrast";
 
 describe("adminStatusChipClass", () => {
   it("maps known statuses to solid forest chips, not pale pastels", () => {
@@ -7,6 +12,7 @@ describe("adminStatusChipClass", () => {
     expect(adminStatusChipClass("approved")).toContain("text-[#f8f5f0]");
     expect(adminStatusChipClass("rejected")).toContain("bg-[#8b1e1e]");
     expect(adminStatusChipClass("under_review")).toContain("bg-[#1a3a5c]");
+    expect(adminStatusChipClass("in_discussion")).toContain("bg-[#3d2a5c]");
   });
 
   it("does not emit Badge-fighting pastel utilities", () => {
@@ -14,6 +20,11 @@ describe("adminStatusChipClass", () => {
     expect(cls).not.toContain("bg-green-100");
     expect(cls).not.toContain("text-green-800");
     expect(cls).not.toContain("text-primary-foreground");
+  });
+
+  it("keeps light-field placeholders at 75% forest, not pale gray", () => {
+    expect(ADMIN_LIGHT_FIELD).toContain("placeholder:text-[#1a472a]/75");
+    expect(ADMIN_DARK_FIELD).toContain("placeholder:text-white/70");
   });
 });
 

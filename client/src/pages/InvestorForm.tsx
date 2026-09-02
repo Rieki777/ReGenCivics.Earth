@@ -361,7 +361,7 @@ export default function InvestorForm() {
         <SEO {...pageSEO.investorForm} />
         <BackButton fallbackPath="/fund" />
         <div className="max-w-lg w-full">
-          <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl">
+          <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl apply-form-dark light-form-island">
             <CardContent className="pt-12 pb-8 text-center">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-white" />
@@ -437,7 +437,7 @@ export default function InvestorForm() {
       <SEO {...pageSEO.investorForm} />
       <BackButton fallbackPath="/fund" />
         <div className="max-w-lg w-full">
-          <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl">
+          <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl apply-form-dark light-form-island">
             <CardContent className="pt-12 pb-8 text-center">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-white" />
@@ -563,7 +563,7 @@ export default function InvestorForm() {
         </div>
 
         {/* Form Card */}
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
+        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden apply-form-dark light-form-island">
           <div key={step}>
               {/* Step 1: Contact Information */}
               {step === 1 && (

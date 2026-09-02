@@ -2731,31 +2731,67 @@ html[data-contrast="high"] *:focus-visible {
 }
 
 /* ════════════════════════════════════════════════════════════
-   Apply form contrast override
+   Light form island (cream/white cards on the dark public site)
    ════════════════════════════════════════════════════════════
    The shared shadcn Label/Input/Select tokens are tuned for dark
-   surfaces (--foreground / --muted-foreground sit light). On the
-   parchment Apply page that renders as near-invisible gray on
-   cream. Scope a dark-on-light override to .apply-form-dark so
-   labels, headings, field text, and placeholders are legible. */
+   surfaces (--foreground / --muted-foreground sit light). On a
+   parchment or white card that renders as near-invisible gray.
+   Scope dark-on-light overrides so labels, headings, field text,
+   descriptions, and placeholders stay at WCAG AA (4.5:1).
+   `.apply-form-dark` is the historical class name; `.light-form-island`
+   is the same rule for any white-card form (investor, contribution
+   dialog, waitlist, donate). */
+.apply-form-dark,
+.light-form-island {
+  color: #1a472a;
+}
 .apply-form-dark label,
 .apply-form-dark h2,
-.apply-form-dark h3 {
+.apply-form-dark h3,
+.light-form-island label,
+.light-form-island h2,
+.light-form-island h3 {
   color: #1a472a;
 }
 .apply-form-dark input,
 .apply-form-dark textarea,
 .apply-form-dark select,
 .apply-form-dark [data-slot="select-trigger"],
-.apply-form-dark [data-slot="select-value"] {
+.apply-form-dark [data-slot="select-value"],
+.light-form-island input,
+.light-form-island textarea,
+.light-form-island select,
+.light-form-island [data-slot="select-trigger"],
+.light-form-island [data-slot="select-value"] {
   color: #14331f;
 }
 .apply-form-dark input::placeholder,
-.apply-form-dark textarea::placeholder {
-  color: rgba(26, 71, 42, 0.55);
+.apply-form-dark textarea::placeholder,
+.light-form-island input::placeholder,
+.light-form-island textarea::placeholder {
+  color: rgba(26, 71, 42, 0.75);
+  opacity: 1;
 }
-.apply-form-dark [data-slot="select-value"][data-placeholder] {
-  color: rgba(26, 71, 42, 0.55);
+.apply-form-dark [data-slot="select-value"][data-placeholder],
+.light-form-island [data-slot="select-value"][data-placeholder] {
+  color: rgba(26, 71, 42, 0.75);
+  opacity: 1;
+}
+.apply-form-dark [data-slot="card-description"],
+.apply-form-dark [data-slot="dialog-description"],
+.light-form-island [data-slot="card-description"],
+.light-form-island [data-slot="dialog-description"] {
+  color: rgba(26, 71, 42, 0.85);
+}
+.apply-form-dark .text-muted-foreground,
+.apply-form-dark .text-gray-500,
+.apply-form-dark .text-gray-600,
+.apply-form-dark .text-gray-700,
+.light-form-island .text-muted-foreground,
+.light-form-island .text-gray-500,
+.light-form-island .text-gray-600,
+.light-form-island .text-gray-700 {
+  color: #1a472a;
 }
 
 /* ════════════════════════════════════════════════════════════

@@ -219,7 +219,7 @@ export function SiteTour() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything about ReGen Civics..."
-            className="flex-1 bg-[#1a472a]/60 border border-[#7dd87d]/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 outline-none focus:border-[#7dd87d]/50 transition-colors"
+            className="flex-1 bg-[#1a472a]/60 border border-[#7dd87d]/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 outline-none focus:border-[#7dd87d]/50 transition-colors"
             disabled={chatMutation.isPending}
           />
           <button

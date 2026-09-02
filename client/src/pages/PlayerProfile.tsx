@@ -805,7 +805,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setDreaming(e.target.value)}
           placeholder="A food forest in the highlands, a new form of school, a way of living that heals rather than harms..."
           rows={2}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
         />
       </div>
 
@@ -816,7 +816,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setWorkingOn(e.target.value)}
           placeholder="Building a seed library, writing a grant, planting trees..."
           maxLength={200}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 focus:outline-none focus:border-[#7dd87d]/40"
         />
         <p className="text-white/70 text-[10px]">Shows on your profile card. 200 chars max.</p>
       </div>
@@ -949,7 +949,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you can offer..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/55 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
             />
             <div className="flex gap-2">
               <button
@@ -1004,7 +1004,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you are looking for..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/55 resize-none focus:outline-none focus:border-[#d4a574]/40"
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#d4a574]/40"
             />
             <div className="flex gap-2">
               <button
@@ -1171,44 +1171,44 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={landForm.yourRole}
                 onChange={e => setLandForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, steward, project lead)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.landStatus}
                 onChange={e => setLandForm(f => ({ ...f, landStatus: e.target.value }))}
                 placeholder="Land status (e.g. owned, leased, in negotiation)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.communityStage}
                 onChange={e => setLandForm(f => ({ ...f, communityStage: e.target.value }))}
                 placeholder="Community stage (e.g. forming, established, 3 years running)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.annualBudget}
                 onChange={e => setLandForm(f => ({ ...f, annualBudget: e.target.value }))}
                 placeholder="Rough annual budget range (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.governanceModel}
                 onChange={e => setLandForm(f => ({ ...f, governanceModel: e.target.value }))}
                 placeholder="Governance model (e.g. sociocracy, consensus, steward)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.website}
                 onChange={e => setLandForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Project website (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={landForm.whyClaimNow}
                 onChange={e => setLandForm(f => ({ ...f, whyClaimNow: e.target.value }))}
                 placeholder="Why are you claiming this listing now? What would you like to do with it?"
                 rows={3}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}
@@ -1221,27 +1221,27 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={orgForm.yourRole}
                 onChange={e => setOrgForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, community manager, ambassador)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={orgForm.website}
                 onChange={e => setOrgForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Organisation website"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={orgForm.orgDescription}
                 onChange={e => setOrgForm(f => ({ ...f, orgDescription: e.target.value }))}
                 placeholder="Brief description of what this org does and your connection to it"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
               <textarea
                 value={orgForm.collaborationInterest}
                 onChange={e => setOrgForm(f => ({ ...f, collaborationInterest: e.target.value }))}
                 placeholder="What kind of collaboration are you hoping to find here?"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}

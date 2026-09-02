@@ -63,7 +63,7 @@ export function AdminAutomationsPanel() {
       <p className="text-[#1a472a]/75 text-xs mb-3">Updates your assistants prepare for you on a schedule. Read-only, never auto-changes data.</p>
 
       {rows.length === 0 ? (
-        <p className="text-[#1a472a]/75 text-sm py-4 text-center">No routines yet. Add one above and it runs on its cadence.</p>
+        <p className="text-[#1a472a] text-sm py-4 text-center">No routines yet. Add one above and it runs on its cadence.</p>
       ) : (
         <div className="space-y-2">
           {rows.map((a) => (

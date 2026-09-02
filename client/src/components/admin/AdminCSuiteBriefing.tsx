@@ -95,7 +95,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
             <h2 className="text-2xl md:text-3xl font-bold leading-tight" style={{ fontFamily: "var(--font-display, serif)" }}>
               Your ecosystem at a glance
             </h2>
-            <p className="text-white/60 text-sm mt-1">
+            <p className="text-white/80 text-sm mt-1">
               Tap Brief me and your team reports what changed, what needs you, and what to do next.
             </p>
           </div>
@@ -117,7 +117,7 @@ export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: strin
             onChange={(e) => setFocus(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") runBrief(); }}
             placeholder="Optional: focus this briefing (e.g. the fund pipeline)"
-            className="flex-1 min-w-0 rounded-xl bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white placeholder-white/45 focus:outline-none focus:border-[#7dd87d]"
+            className="flex-1 min-w-0 rounded-xl bg-white/10 border border-white/25 px-3 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]"
           />
         </div>
       </div>

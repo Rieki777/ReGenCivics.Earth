@@ -131,7 +131,7 @@ export function AdminEventsTab() {
     upcoming: 'bg-yellow-500/20 text-yellow-300',
     live: 'bg-red-500/20 text-red-300 animate-pulse',
     completed: 'bg-gray-500/20 text-gray-300',
-    cancelled: 'bg-gray-700/30 text-gray-500',
+    cancelled: 'bg-[#3d4a3d] text-[#f8f5f0]',
   };
 
   return (
@@ -433,12 +433,12 @@ export function AdminEventsTab() {
                       <div className="bg-white px-5 py-5 space-y-2">
                         <p className="text-gray-300 text-xs m-0">Starting in ~24 hours</p>
                         <p className="text-[#1a472a] font-bold text-base m-0">{ev.title}</p>
-                        <p className="text-gray-500 text-sm m-0">
+                        <p className="text-white/80 text-sm m-0">
                           {ev.startTime ? new Date(ev.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}
                           {ev.startTime ? ` at ${new Date(ev.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${ev.timezone ?? ''}` : ''}
                         </p>
                         {(customBody || ev.description) && (
-                          <p className="text-gray-600 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
+                          <p className="text-white/85 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
                         )}
                         <div className="flex gap-2 pt-1 flex-wrap">
                           <span className="bg-[#0a66c2] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>

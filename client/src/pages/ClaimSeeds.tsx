@@ -493,12 +493,12 @@ export default function ClaimSeeds() {
                     {/* Adjusted Amount. Card is always white, so pin dark text
                         instead of theme foreground tokens (which are light in the
                         dark theme and wash out on white). */}
-                    <div className="bg-white rounded-lg p-3 space-y-2">
-                      <p className="text-xs font-medium text-gray-600">Adjusted USD Amount</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="bg-white rounded-lg p-3 space-y-2 light-form-island">
+                      <p className="text-xs font-medium text-[#1a472a]/85">Adjusted USD Amount</p>
+                      <p className="text-2xl font-bold text-[#1a472a]">
                         ${formData.adjustedUsd.toFixed(2)}
                       </p>
-                      <p className="text-xs font-medium text-gray-600">
+                      <p className="text-xs font-medium text-[#1a472a]/85">
                         {regenAmount.toLocaleString()} $ReGen tokens
                       </p>
                     </div>

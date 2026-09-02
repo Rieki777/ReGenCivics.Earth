@@ -877,7 +877,7 @@ export default function CrowdPoolingTool() {
         
         {/* Save Dialog */}
         <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-          <DialogContent className="bg-white md:max-w-md md:rounded-2xl">
+          <DialogContent className="bg-white md:max-w-md md:rounded-2xl apply-form-dark light-form-island">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Save Contribution Form
@@ -929,7 +929,7 @@ export default function CrowdPoolingTool() {
         
         {/* Load Dialog */}
         <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
-          <DialogContent className="bg-white md:max-w-lg md:rounded-2xl">
+          <DialogContent className="bg-white md:max-w-lg md:rounded-2xl apply-form-dark light-form-island">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Load Saved Contribution Form

@@ -12,7 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 const fieldClass =
-  "bg-white text-[#1a472a] placeholder:text-[#1a472a]/60 border-[#1a472a]/25 text-sm";
+  "bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/25 text-sm";
 
 export default function KnowledgeMapAdminPanel() {
   const utils = trpc.useUtils();

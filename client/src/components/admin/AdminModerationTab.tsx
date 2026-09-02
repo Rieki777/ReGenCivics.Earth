@@ -1,6 +1,5 @@
 import React, { Suspense, lazy } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { RoleSubmissionsView } from "@/components/RoleSubmissionsView";
+import { adminStatusChipClass } from "@/lib/adminContrast";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -161,9 +161,9 @@ export function AdminModerationTab({
                       <p className="text-sm text-[#1a472a]/80">{inquiry.email}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs">
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(inquiry.status)}`}>
                         {inquiry.status?.replace(/_/g, " ")}
-                      </Badge>
+                      </span>
                       <span className={`text-xs ${ageInq.color}`}>{ageInq.label}</span>
                     </div>
                   </div>
@@ -219,9 +219,9 @@ export function AdminModerationTab({
                         <div>
                           <p className="font-semibold text-[#1a472a]">{inquiry.fullName}</p>
                           <p className="text-sm text-[#1a472a]/80">{inquiry.email}</p>
-                          <Badge variant="outline" className="mt-1 text-xs capitalize">
+                          <span className="mt-1 text-xs capitalize inline-flex items-center rounded-md px-2 py-0.5 font-semibold bg-[#1a472a] text-[#f8f5f0]">
                             {inquiry.pathType?.replace(/_/g, " ") || "General"}
-                          </Badge>
+                          </span>
                           {inquiry.message && (
                             <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
                               {inquiry.message}
@@ -230,17 +230,9 @@ export function AdminModerationTab({
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge
-                          className={
-                            inquiry.status === "new" || inquiry.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                              : inquiry.status === "contacted"
-                              ? "bg-blue-100 text-blue-800 border-blue-200"
-                              : "bg-gray-100 text-gray-700 border-gray-200"
-                          }
-                        >
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(inquiry.status)}`}>
                           {inquiry.status?.replace(/_/g, " ")}
-                        </Badge>
+                        </span>
                         <span
                           className={`text-xs px-1.5 py-0.5 rounded border font-medium ${ageOther.bg} ${ageOther.color}`}
                         >
@@ -252,7 +244,7 @@ export function AdminModerationTab({
                     </div>
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#f8f5f0] text-[#1a472a] apply-form-dark light-form-island">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
                       <div

@@ -438,7 +438,7 @@ export default function AdminApplicationDetail() {
                     onChange={(e) => setComments(e.target.value)}
                     placeholder="Provide feedback that will be shared with the applicant..."
                     rows={5}
-                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60 border-[#1a472a]/30"
+                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
                   />
                 </div>
 
@@ -450,7 +450,7 @@ export default function AdminApplicationDetail() {
                     onChange={(e) => setInternalNotes(e.target.value)}
                     placeholder="Private notes for internal use..."
                     rows={3}
-                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/60 border-[#1a472a]/30"
+                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
                   />
                 </div>
 

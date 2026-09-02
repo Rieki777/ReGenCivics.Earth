@@ -77,7 +77,7 @@ function NavList({ activeTab, onSelect, collapsed, large }: {
       {NAV_GROUPS.map(group => (
         <div key={group.label} className="mb-2">
           {!collapsed && (
-            <div className="px-3 py-1 text-xs font-semibold text-white/70 uppercase tracking-wider">{group.label}</div>
+            <div className="px-3 py-1 text-xs font-semibold text-white/80 uppercase tracking-wider">{group.label}</div>
           )}
           {group.items.map(item => {
             const Icon = item.icon
@@ -87,7 +87,7 @@ function NavList({ activeTab, onSelect, collapsed, large }: {
                 key={item.id}
                 onClick={() => onSelect(item)}
                 className={`w-full flex items-center gap-3 px-3 text-sm transition-colors ${large ? 'min-h-11 py-2.5' : 'py-2'} ${
-                  active ? 'bg-green-600/20 text-green-400 border-r-2 border-green-400' : 'text-white/60 hover:text-white hover:bg-white/5'
+                  active ? 'bg-green-600/20 text-green-400 border-r-2 border-green-400' : 'text-white/85 hover:text-white hover:bg-white/5'
                 } ${collapsed ? 'justify-center' : ''}`}
                 title={collapsed ? item.label : undefined}
               >
@@ -133,7 +133,7 @@ export function AdminSidebar({ activeTab, onTabChange, mobileOpen = false, onMob
           nav renders as an overlay drawer so content gets the full width. */}
       <aside className={`hidden md:flex flex-shrink-0 flex-col bg-[#0a1f14] border-r border-white/10 transition-all duration-200 ${collapsed ? 'w-16' : 'w-56'}`}>
         <div className="flex items-center justify-between p-3 border-b border-white/10">
-          {!collapsed && <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">Admin</span>}
+          {!collapsed && <span className="text-sm font-semibold text-white/85 uppercase tracking-wider">Admin</span>}
           <button
             onClick={() => setCollapsed(c => !c)}
             className="p-1.5 rounded hover:bg-white/10 text-white/70 hover:text-white transition-colors ml-auto"

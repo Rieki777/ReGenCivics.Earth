@@ -469,7 +469,7 @@ export function AdminApplicationsTab({
                         {new Date(app.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 flex-shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0 bg-[#3d4a3d] text-[#f8f5f0]">
                       draft
                     </span>
                   </div>
