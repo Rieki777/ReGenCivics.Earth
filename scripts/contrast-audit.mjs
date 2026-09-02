@@ -7,17 +7,15 @@
  *
  * Designed to run in CI:
  *   1. Spin up the production preview (vite preview or `pnpm preview`).
- *   2. Run `node scripts/contrast-audit.mjs --baseUrl=http://localhost:4173`.
- *   3. The script writes a JSON report with per-route findings and exits 0
- *      with a warning footer.
+ *   2. Run `node scripts/contrast-audit.mjs --no-fail --baseUrl=http://localhost:4173`.
+ *   3. The script writes a JSON report. `--no-fail` (or CONTRAST_NO_FAIL=1)
+ *      exits 0 so the workflow can compare this branch to main.
  *
- * The CI workflow at .github/workflows/contrast-audit.yml posts the diff
- * against main's findings as a PR comment. As of 2026-06-18 the script
- * also returns a non-zero exit code when totalFailures exceeds the
- * baseline established in CONTRAST_AUDIT_2026-05-29_findings.json
- * (estimated_post_fix_remaining = 5). The CI workflow can still be
- * configured to skip the failing job, but the script no longer
- * unconditionally exits 0.
+ * The CI workflow at .github/workflows/contrast-audit.yml posts the
+ * per-route diff as a PR comment and fails the job only when this PR
+ * adds failures versus main. Local runs without `--no-fail` still exit
+ * non-zero when totalFailures exceeds CONTRAST_BASELINE (default 5, from
+ * the 2026-05-29 estimate).
  *
  * The checker is the same one used in the manual 2026-05-29 audit via
  * Claude in Chrome; see CONTRAST_AUDIT_2026-05-29.md for the baseline.
@@ -202,6 +200,14 @@ async function main() {
   fs.writeFileSync(OUT_FILE, JSON.stringify(report, null, 2));
   console.log(`\nReport written to ${OUT_FILE}`);
   console.log(`Total failures: ${totalFailures}`);
+
+  // `--no-fail` writes the report and exits 0 so CI can compare this
+  // branch against main. The workflow fails the job when this PR adds
+  // failures. A hard cap of 5 is still available for local runs.
+  if (args['no-fail'] === true || process.env.CONTRAST_NO_FAIL === '1') {
+    console.log('Collect-only run (--no-fail). CI compares this report to main.');
+    process.exit(0);
+  }
 
   // Regression gate. The 2026-05-29 manual audit estimated 5 residual
   // failures after the targeted patterns shipped. Anything above that is

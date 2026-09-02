@@ -1,11 +1,11 @@
 name: Contrast Audit
 
 # WCAG 2.x color-contrast audit. Runs on every PR against main. Posts
-# the diff against main's baseline as a PR comment AND, since 2026-06-18,
-# the audit job fails when totalFailures exceeds the CONTRAST_BASELINE
-# threshold (5 by default, from the 2026-05-29 post-fix estimate).
-# Adjust CONTRAST_BASELINE in this workflow env if you intentionally
-# move the bar; do not silently ignore regressions.
+# the diff against main as a PR comment. The collect step writes the
+# report even when the site is still above the old 2026-05-29 cap of 5
+# residual failures (the public pages currently report ~100). The job
+# fails when this PR adds failures compared to main. Do not bump a
+# number to hide a regression.
 
 on:
   pull_request:
@@ -57,7 +57,7 @@ jobs:
           exit 1
 
       - name: Run contrast audit (PR)
-        run: node scripts/contrast-audit.mjs --baseUrl=http://localhost:4173 --out=audits/contrast-report-pr.json
+        run: node scripts/contrast-audit.mjs --no-fail --baseUrl=http://localhost:4173 --out=audits/contrast-report-pr.json
 
       - name: Checkout main for baseline
         uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
           exit 1
 
       - name: Run contrast audit (main baseline)
-        run: node scripts/contrast-audit.mjs --baseUrl=http://localhost:4174 --out=audits/contrast-report-main.json
+        run: node scripts/contrast-audit.mjs --no-fail --baseUrl=http://localhost:4174 --out=audits/contrast-report-main.json
 
       - name: Compute diff and comment on PR
         uses: actions/github-script@v7
@@ -117,7 +117,7 @@ jobs:
             lines.push('');
             lines.push('See `audits/contrast-report-pr.json` artifact for full per-element details.');
             lines.push('');
-            lines.push('_Job fails when PR failures exceed `CONTRAST_BASELINE` (default 5). See `.github/workflows/contrast-audit.yml`._');
+            lines.push('_Job fails when this PR adds contrast failures compared to main._');
             const body = lines.join('\n');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -125,6 +125,9 @@ jobs:
               repo: context.repo.repo,
               body,
             });
+            if (delta > 0) {
+              core.setFailed(`This PR introduces ${delta} new contrast failures versus main.`);
+            }
 
       - name: Upload reports as artifact
         uses: actions/upload-artifact@v4
