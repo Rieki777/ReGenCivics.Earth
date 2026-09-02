@@ -11,6 +11,10 @@ import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
+import {
+  APPLICATION_EMAIL_STATUSES,
+  mapApplicationEmailRecipients,
+} from "../lib/applicationEmailRecipients";
 
 export const applicationsRouter = router({
   // Create a new draft application
@@ -325,6 +329,19 @@ export const applicationsRouter = router({
   list: adminProcedure.query(async () => {
     return db.getAllApplications();
   }),
+
+  // Admin: contact emails for land-project applicants in one review status.
+  // Used by Application Reviews "Email these applicants" and the bulk
+  // composer's Load from Database menu (Approved Projects and the other
+  // status groups). Emails come from the applicant's user account.
+  listEmailRecipients: adminProcedure
+    .input(z.object({
+      status: z.enum(APPLICATION_EMAIL_STATUSES),
+    }))
+    .query(async ({ input }) => {
+      const rows = await db.getApplicationsByStatus(input.status);
+      return mapApplicationEmailRecipients(rows);
+    }),
 
   // Admin: Get draft applications separately
   listDrafts: adminProcedure.query(async () => {

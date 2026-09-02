@@ -428,7 +428,7 @@ export function AdminApplicationsTab({
                       <div className="flex flex-col sm:flex-row gap-2">
                         <EmailTemplateSelector
                           recipientEmail={app.contactEmail || ""}
-                          recipientName={app.contactName || ""}
+                          recipientName={app.contactName || app.projectName || ""}
                           contextSubject={app.projectName}
                           inquiryType="project"
                           className="w-full sm:w-auto"

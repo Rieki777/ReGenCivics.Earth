@@ -10,6 +10,7 @@ import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { ENV } from "../_core/env";
 import { SignJWT, jwtVerify } from "jose";
+import { applyRecipientMergeFields } from "../lib/applicationEmailRecipients";
 
 export const newsletterRouter = router({
   // Subscribe to newsletter, creates pending subscriber (isActive=0) and sends confirmation email
@@ -663,6 +664,7 @@ export const emailRouter = router({
       recipients: z.array(z.object({
         email: z.string().email(),
         name: z.string(),
+        projectName: z.string().max(255).optional(),
       })).min(1).max(100),
       templateType: z.enum(["follow_up", "acceptance", "not_selected", "request_info", "schedule_call", "custom", "land_project_accepted", "newsletter_welcome", "investor_welcome"]),
       customSubject: z.string().optional(),
@@ -679,11 +681,14 @@ export const emailRouter = router({
           const name = recipient.name || "Friend";
 
           // If caller passes custom subject + body, always use them (respects compose-dialog edits).
-          // {{name}} and {{email}} are merged per-recipient.
+          // {{name}}, {{email}}, and {{projectName}} are merged per-recipient.
           if (input.customSubject && input.customBody) {
-            const rawBody = input.customBody
-              .replace(/\{\{name\}\}/g, name)
-              .replace(/\{\{email\}\}/g, recipient.email);
+            const merge = {
+              email: recipient.email,
+              name,
+              projectName: recipient.projectName,
+            };
+            const rawBody = applyRecipientMergeFields(input.customBody, merge);
             const htmlBody = rawBody
               .split(/\n\n+/)
               .map((para: string) => para.trim())
@@ -691,7 +696,7 @@ export const emailRouter = router({
               .map((para: string) => `<p style="color: #333; line-height: 1.6;">${para.replace(/\n/g, "<br/>")}</p>`)
               .join("");
             emailContent = {
-              subject: input.customSubject,
+              subject: applyRecipientMergeFields(input.customSubject, merge),
               html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">${htmlBody}<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p></div></div>`,
             };
           } else switch (input.templateType) {
@@ -730,8 +735,15 @@ export const emailRouter = router({
               break;
             case "custom":
               emailContent = {
-                subject: input.customSubject || "Message from ReGen Civics",
-                html: (input.customBody || `<p>Hello ${name},</p><p>Thank you for being part of the ReGenerative Renaissance.</p>`).replace(/\{\{name\}\}/g, name).replace(/\{\{email\}\}/g, recipient.email),
+                subject: applyRecipientMergeFields(input.customSubject || "Message from ReGen Civics", {
+                  email: recipient.email,
+                  name,
+                  projectName: recipient.projectName,
+                }),
+                html: applyRecipientMergeFields(
+                  input.customBody || `<p>Hello ${name},</p><p>Thank you for being part of the ReGenerative Renaissance.</p>`,
+                  { email: recipient.email, name, projectName: recipient.projectName },
+                ),
               };
               break;
             default:

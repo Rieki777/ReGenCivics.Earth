@@ -4,7 +4,7 @@
  * template persistence (save/revert), and bulk email sending
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,13 @@ import {
   AlertTriangle,
   Database,
   Download,
+  Sprout,
+  AlertCircle,
 } from "lucide-react";
+import {
+  APPLICATION_EMAIL_SOURCES,
+  statusForSourceId,
+} from "@/lib/applicationEmailSources";
 
 // Complete email template options - all form types
 const EMAIL_TEMPLATES = [
@@ -631,7 +637,7 @@ function EmailTemplatePreview() {
  * Bulk Email Sender Section
  */
 function BulkEmailSender() {
-  const [recipients, setRecipients] = useState<{ email: string; name: string }[]>([]);
+  const [recipients, setRecipients] = useState<{ email: string; name: string; projectName?: string }[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
   const [bulkTemplate, setBulkTemplate] = useState("newsletter_welcome");
@@ -643,17 +649,27 @@ function BulkEmailSender() {
   const [bulkInput, setBulkInput] = useState("");
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [loadingSource, setLoadingSource] = useState<string | null>(null);
+  const autoloadedSource = useRef(false);
   
   // Queries for loading recipients from database
   const newsletterQuery = trpc.newsletter.listActive.useQuery(undefined, { enabled: false });
   const investorQuery = trpc.investorInquiries.list.useQuery(undefined, { enabled: false });
   const loiQuery = trpc.loi.list.useQuery(undefined, { enabled: false });
   const generalInquiriesQuery = trpc.generalInquiries.list.useQuery(undefined, { enabled: false });
+  const utils = trpc.useUtils();
+
+  const sourceLabels: Record<string, string> = {
+    newsletter: "newsletter subscribers",
+    investors: "investor inquiries",
+    loi: "letters of intent",
+    inquiries: "general inquiries",
+    ...Object.fromEntries(APPLICATION_EMAIL_SOURCES.map((s) => [s.id, s.label.toLowerCase()])),
+  };
   
   const handleLoadFromDatabase = async (source: string) => {
     setLoadingSource(source);
     try {
-      let newRecipients: { email: string; name: string }[] = [];
+      let newRecipients: { email: string; name: string; projectName?: string }[] = [];
       
       if (source === "newsletter") {
         const result = await newsletterQuery.refetch();
@@ -683,6 +699,16 @@ function BulkEmailSender() {
             .filter((g: any) => g.email)
             .map((g: any) => ({ email: g.email, name: g.fullName || g.email.split("@")[0] }));
         }
+      } else {
+        const appStatus = statusForSourceId(source);
+        if (appStatus) {
+          const data = await utils.applications.listEmailRecipients.fetch({ status: appStatus });
+          newRecipients = data.map((r) => ({
+            email: r.email,
+            name: r.name,
+            projectName: r.projectName,
+          }));
+        }
       }
       
       // Deduplicate against existing recipients
@@ -693,7 +719,7 @@ function BulkEmailSender() {
         toast.info(newRecipients.length === 0 ? "No recipients found in this list." : "All recipients from this list are already added.");
       } else {
         setRecipients(prev => [...prev, ...uniqueNew].slice(0, 100));
-        toast.success(`Loaded ${uniqueNew.length} recipient(s) from ${source}`);
+        toast.success(`Loaded ${uniqueNew.length} recipient(s) from ${sourceLabels[source] || source}`);
       }
     } catch (error: any) {
       toast.error(`Failed to load recipients: ${error.message || "Unknown error"}`);
@@ -766,6 +792,21 @@ function BulkEmailSender() {
       setBulkInput("");
     }
   };
+  
+  useEffect(() => {
+    if (autoloadedSource.current) return;
+    try {
+      const source = new URLSearchParams(window.location.search).get("emailSource");
+      if (source) {
+        autoloadedSource.current = true;
+        void handleLoadFromDatabase(source);
+      }
+    } catch {
+      /* ignore malformed search */
+    }
+    // Load once on mount when arriving from Application Reviews.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const handleRemoveRecipient = (email: string) => {
     setRecipients(recipients.filter(r => r.email !== email));
@@ -861,7 +902,7 @@ function BulkEmailSender() {
             <div className="space-y-2">
               <Label className="text-[#1a472a]">Custom Body (HTML)</Label>
               <Textarea
-                placeholder={"<h2>Hello {{name}},</h2>\n<p>Your message here...</p>\n<p>Use {{name}} and {{email}} as merge fields.</p>"}
+                placeholder={"<h2>Hello {{name}},</h2>\n<p>Your message here...</p>\n<p>Use {{name}}, {{email}}, and {{projectName}} as merge fields.</p>"}
                 value={customBody}
                 onChange={(e) => setCustomBody(e.target.value)}
                 className="bg-white min-h-[150px] font-mono text-xs"
@@ -891,9 +932,10 @@ function BulkEmailSender() {
                     <><Database className="w-3 h-3 mr-1" /> Load from Database</>
                   )}
                 </Button>
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden group-hover:block group-focus-within:block">
+                <div className="absolute right-0 top-full mt-1 w-64 max-h-[28rem] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden group-hover:block group-focus-within:block">
                   <div className="p-1">
                     <button
+                      type="button"
                       onClick={() => handleLoadFromDatabase("newsletter")}
                       className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[#f0f7f0] flex items-center gap-2 text-[#1a472a]"
                       disabled={!!loadingSource}
@@ -902,6 +944,7 @@ function BulkEmailSender() {
                       Newsletter Subscribers
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleLoadFromDatabase("investors")}
                       className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[#f0f7f0] flex items-center gap-2 text-[#1a472a]"
                       disabled={!!loadingSource}
@@ -910,6 +953,7 @@ function BulkEmailSender() {
                       Investor Inquiries
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleLoadFromDatabase("loi")}
                       className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[#f0f7f0] flex items-center gap-2 text-[#1a472a]"
                       disabled={!!loadingSource}
@@ -918,6 +962,7 @@ function BulkEmailSender() {
                       Letters of Intent
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleLoadFromDatabase("inquiries")}
                       className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[#f0f7f0] flex items-center gap-2 text-[#1a472a]"
                       disabled={!!loadingSource}
@@ -925,6 +970,33 @@ function BulkEmailSender() {
                       <Mail className="w-4 h-4 text-purple-500" />
                       General Inquiries
                     </button>
+                    <div className="h-px bg-gray-100 my-1" role="separator" />
+                    <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-[#1a472a]/50">Land projects</p>
+                    {APPLICATION_EMAIL_SOURCES.map((source) => {
+                      const Icon =
+                        source.status === "approved" ? Sprout
+                        : source.status === "rejected" ? XCircle
+                        : source.status === "changes_requested" ? AlertCircle
+                        : Clock;
+                      const iconClass =
+                        source.status === "approved" ? "text-green-600"
+                        : source.status === "rejected" ? "text-red-400"
+                        : source.status === "changes_requested" ? "text-orange-500"
+                        : source.status === "submitted" ? "text-blue-500"
+                        : "text-amber-600";
+                      return (
+                        <button
+                          key={source.id}
+                          type="button"
+                          onClick={() => handleLoadFromDatabase(source.id)}
+                          className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[#f0f7f0] flex items-center gap-2 text-[#1a472a]"
+                          disabled={!!loadingSource}
+                        >
+                          <Icon className={`w-4 h-4 ${iconClass}`} />
+                          {source.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

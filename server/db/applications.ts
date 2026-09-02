@@ -7,10 +7,16 @@
  * `import { ... } from "./db"` keeps working, and typecheck proves the move.
  * Anything transactional follows server/db/tokens.ts instead.
  */
-import { and, desc, eq, lt, ne } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, ne } from "drizzle-orm";
 import { applications, InsertApplication, users } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { asMutationResult } from "./_shared";
+
+const applicationWithContact = {
+  ...getTableColumns(applications),
+  contactEmail: users.email,
+  contactName: users.name,
+};
 
 export async function createApplication(data: InsertApplication) {
   const db = await getDb();
@@ -31,24 +37,13 @@ export async function getApplicationById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select()
+  const result = await db.select(applicationWithContact)
     .from(applications)
+    .leftJoin(users, eq(users.id, applications.userId))
     .where(eq(applications.id, id))
     .limit(1);
 
-  if (result.length === 0) return undefined;
-
-  // Get user email separately
-  const app = result[0];
-  const userResult = await db.select({ email: users.email })
-    .from(users)
-    .where(eq(users.id, app.userId))
-    .limit(1);
-
-  return {
-    ...app,
-    contactEmail: userResult.length > 0 ? userResult[0].email : null,
-  };
+  return result[0];
 }
 
 export async function getApplicationsByUserId(userId: number) {
@@ -64,8 +59,11 @@ export async function getAllApplications() {
   const db = await getDb();
   if (!db) return [];
 
-  // Exclude drafts from the admin review queue
-  return db.select().from(applications)
+  // Exclude drafts from the admin review queue.
+  // contactEmail/contactName come from the applicant's user account.
+  return db.select(applicationWithContact)
+    .from(applications)
+    .leftJoin(users, eq(users.id, applications.userId))
     .where(ne(applications.status, "draft"))
     .orderBy(desc(applications.submittedAt));
 }
@@ -93,7 +91,9 @@ export async function getApplicationsByStatus(status: string) {
   const db = await getDb();
   if (!db) return [];
 
-  return db.select().from(applications)
+  return db.select(applicationWithContact)
+    .from(applications)
+    .leftJoin(users, eq(users.id, applications.userId))
     .where(eq(applications.status, status as any))
     .orderBy(desc(applications.submittedAt));
 }

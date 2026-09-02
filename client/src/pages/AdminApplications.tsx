@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye } from "lucide-react";
+import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye, Mail } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { useState } from "react";
+import { ApplicantStatusEmailDialog } from "@/components/admin/ApplicantStatusEmailDialog";
 
 const STATUS_CONFIG = {
   submitted: {
@@ -50,6 +52,8 @@ const STATUS_CONFIG = {
 export default function AdminApplications() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<keyof typeof STATUS_CONFIG>("submitted");
+  const [emailOpen, setEmailOpen] = useState(false);
   const { data: applications, isLoading } = trpc.applications.list.useQuery(
     undefined,
     { enabled: !!user && user.role === "admin" }
@@ -221,8 +225,13 @@ export default function AdminApplications() {
         </div>
 
         {/* Tabs by Status */}
-        <Tabs defaultValue="submitted" className="w-full">
-          <TabsList className="flex flex-wrap w-full gap-1 mb-4 md:mb-6 h-auto p-1">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as keyof typeof STATUS_CONFIG)}
+          className="w-full"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+            <TabsList className="flex flex-wrap w-full sm:w-auto gap-1 h-auto p-1">
             <TabsTrigger value="submitted" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
               <span className="hidden sm:inline">Submitted</span><span className="sm:hidden">New</span> ({statusCounts.submitted || 0})
             </TabsTrigger>
@@ -238,7 +247,19 @@ export default function AdminApplications() {
             <TabsTrigger value="rejected" className="text-xs md:text-sm px-2 md:px-3 py-1.5">
               Rejected ({statusCounts.rejected || 0})
             </TabsTrigger>
-          </TabsList>
+            </TabsList>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#1a472a]/30 text-[#1a472a] w-full sm:w-auto"
+              disabled={(statusCounts[activeTab] || 0) === 0}
+              onClick={() => setEmailOpen(true)}
+              aria-label={`Email ${STATUS_CONFIG[activeTab].label} applicants`}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Email these applicants ({statusCounts[activeTab] || 0})
+            </Button>
+          </div>
 
           {Object.keys(STATUS_CONFIG).map((status) => (
             <TabsContent key={status} value={status} className="space-y-4">
@@ -257,6 +278,13 @@ export default function AdminApplications() {
             </TabsContent>
           ))}
         </Tabs>
+        <ApplicantStatusEmailDialog
+          open={emailOpen}
+          onOpenChange={setEmailOpen}
+          status={activeTab}
+          statusLabel={STATUS_CONFIG[activeTab].label}
+          applicationCount={statusCounts[activeTab] || 0}
+        />
       </div>
     </div>
   );
