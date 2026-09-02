@@ -865,7 +865,7 @@ export default function Schedule() {
                             placeholder="+1 555 000 0000 (optional, get a text reminder too)"
                             value={reminderPhone}
                             onChange={(e) => setReminderPhone(e.target.value)}
-                            className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/55 text-xs focus:outline-none focus:border-[#7dd87d]/40"
+                            className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/70 text-xs focus:outline-none focus:border-[#7dd87d]/40"
                             autoComplete="tel"
                             inputMode="tel"
                             enterKeyHint="go"

@@ -62,7 +62,7 @@ export function AssistTab({ onClose }: Props = {}) {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask anything..."
           aria-label="Ask the ReGen Guide a question"
-          className="flex-1 min-w-0 bg-white/5 border border-white/10 focus:border-[#7dd87d]/60 focus:bg-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/40 outline-none transition-colors"
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 focus:border-[#7dd87d]/60 focus:bg-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/70 outline-none transition-colors"
         />
         <button
           type="submit"

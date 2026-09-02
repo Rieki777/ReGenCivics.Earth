@@ -124,7 +124,7 @@ export function SubmitToDAOModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md apply-form-dark light-form-island">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export function SubmitToDAOModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
+            className="p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-[#1a472a]/10 transition-colors text-[#1a472a]"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -157,7 +157,7 @@ export function SubmitToDAOModal({
                 <LogIn className="w-6 h-6 text-[#4a7c59]" />
               </div>
               <h3 className="font-bold text-[#1a472a] mb-2">Sign in to earn and submit</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-[#1a472a]/85 mb-4">
                 You'll earn +{regenReward} $ReGen when your Hypha proposal is confirmed. Sign in first to submit your deliverable.
               </p>
               <button
@@ -174,7 +174,7 @@ export function SubmitToDAOModal({
                 <AlertCircle className="w-6 h-6 text-amber-600" />
               </div>
               <h3 className="font-bold text-[#1a472a] mb-2">Come back when you have your link</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-[#1a472a]/85 mb-4">
                 Finish your video or article first, post it somewhere (YouTube,
                 a blog, Notion, anywhere public), then come back here and we'll
                 copy everything over for you so submitting to the DAO takes

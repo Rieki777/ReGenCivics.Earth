@@ -45,19 +45,19 @@ export function AdminRecordingsTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Recordings</h2>
-          <p className="text-muted-foreground text-sm mt-1">Recordings received from Riverside.fm via webhook. Add YouTube URLs and send email summaries from here.</p>
+          <h2 className="text-2xl font-bold text-[#1a472a]">Recordings</h2>
+          <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from Riverside.fm via webhook. Add YouTube URLs and send email summaries from here.</p>
         </div>
       </div>
 
-      {isLoading && <div className="text-muted-foreground">Loading recordings…</div>}
+      {isLoading && <div className="text-[#1a472a]/85">Loading recordings…</div>}
 
       {!isLoading && recs.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <Radio className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No recordings yet.</p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <Radio className="w-12 h-12 mx-auto text-[#1a472a]/85 mb-4" />
+            <p className="text-[#1a472a]/85">No recordings yet.</p>
+            <p className="text-sm text-[#1a472a]/85 mt-2">
               Once you set up the Riverside webhook at <code className="bg-muted px-1 rounded text-xs">https://regencivics.earth/api/webhooks/riverside</code>, recordings will appear here automatically after each session.
             </p>
           </CardContent>
@@ -89,11 +89,11 @@ export function AdminRecordingsTab() {
             {editingId === rec.id ? (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">YouTube URL</Label>
+                  <Label className="text-xs text-[#1a472a]/85 mb-1 block">YouTube URL</Label>
                   <Input value={editYoutubeUrl} onChange={e => setEditYoutubeUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">AI Summary</Label>
+                  <Label className="text-xs text-[#1a472a]/85 mb-1 block">AI Summary</Label>
                   <Textarea value={editSummary} onChange={e => setEditSummary(e.target.value)} rows={4} placeholder="Paste or edit the summary shown in the email..." />
                 </div>
                 <div className="flex gap-2">
@@ -121,7 +121,7 @@ export function AdminRecordingsTab() {
                   )}
                 </div>
                 {rec.aiSummary && (
-                  <p className="text-sm text-muted-foreground line-clamp-3">{rec.aiSummary}</p>
+                  <p className="text-sm text-[#1a472a]/85 line-clamp-3">{rec.aiSummary}</p>
                 )}
               </div>
             )}
@@ -173,10 +173,10 @@ export function AdminRecordingsTab() {
 
       <Card className="border-dashed">
         <CardContent className="py-6">
-          <p className="text-sm text-muted-foreground font-medium mb-2">Webhook setup</p>
-          <p className="text-xs text-muted-foreground">In Riverside: Settings → Integrations → Webhooks → add URL:</p>
+          <p className="text-sm text-[#1a472a]/85 font-medium mb-2">Webhook setup</p>
+          <p className="text-xs text-[#1a472a]/85">In Riverside: Settings → Integrations → Webhooks → add URL:</p>
           <code className="text-xs bg-muted px-2 py-1 rounded block mt-1 break-all">https://regencivics.earth/api/webhooks/riverside</code>
-          <p className="text-xs text-muted-foreground mt-2">Set <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> in Railway to the signing secret from Riverside.</p>
+          <p className="text-xs text-[#1a472a]/85 mt-2">Set <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> in Railway to the signing secret from Riverside.</p>
         </CardContent>
       </Card>
     </div>

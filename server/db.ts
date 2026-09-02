@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
@@ -2747,10 +2747,23 @@ export async function getOrgClaimsByUser(userId: number): Promise<OrgClaim[]> {
   return db.select().from(orgClaims).where(eq(orgClaims.userId, userId));
 }
 
-export async function getAllOrgClaims(): Promise<OrgClaim[]> {
+export type OrgClaimWithClaimant = OrgClaim & {
+  claimantName: string | null;
+  claimantEmail: string | null;
+};
+
+export async function getAllOrgClaims(): Promise<OrgClaimWithClaimant[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orgClaims).orderBy(desc(orgClaims.createdAt));
+  return db
+    .select({
+      ...getTableColumns(orgClaims),
+      claimantName: users.name,
+      claimantEmail: users.email,
+    })
+    .from(orgClaims)
+    .leftJoin(users, eq(users.id, orgClaims.userId))
+    .orderBy(desc(orgClaims.createdAt));
 }
 
 export async function updateOrgClaimStatus(

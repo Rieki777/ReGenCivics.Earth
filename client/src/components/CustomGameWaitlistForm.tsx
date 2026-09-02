@@ -134,7 +134,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
             value={form.fullName}
             onChange={(e) => set("fullName", e.target.value)}
             placeholder="Your name"
-            className="bg-white/5 border-white/20 text-white placeholder-white/55 focus:border-[#7dd87d]/50"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
           />
         </div>
         <div className="space-y-1.5">
@@ -146,7 +146,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
             value={form.email}
             onChange={(e) => set("email", e.target.value)}
             placeholder="you@example.com"
-            className="bg-white/5 border-white/20 text-white placeholder-white/55 focus:border-[#7dd87d]/50"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
           />
         </div>
       </div>
@@ -159,7 +159,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           value={form.projectName}
           onChange={(e) => set("projectName", e.target.value)}
           placeholder="The name of your land project or community"
-          className="bg-white/5 border-white/20 text-white placeholder-white/55 focus:border-[#7dd87d]/50"
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
         />
       </div>
 
@@ -170,7 +170,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           value={form.websiteOrSocial}
           onChange={(e) => set("websiteOrSocial", e.target.value)}
           placeholder="https://..."
-          className="bg-white/5 border-white/20 text-white placeholder-white/55 focus:border-[#7dd87d]/50"
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
         />
       </div>
 
@@ -219,7 +219,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           onChange={(e) => set("primaryGoal", e.target.value)}
           rows={3}
           placeholder="What do you most want this Game to do for your community?"
-          className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/55 focus:border-[#7dd87d]/50 focus:outline-none resize-none"
+          className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/70 focus:border-[#7dd87d]/50 focus:outline-none resize-none"
         />
       </div>
 
@@ -258,7 +258,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           value={form.referralSource}
           onChange={(e) => set("referralSource", e.target.value)}
           placeholder="Word of mouth, social media, event..."
-          className="bg-white/5 border-white/20 text-white placeholder-white/55 focus:border-[#7dd87d]/50"
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
         />
       </div>
 
@@ -270,7 +270,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           onChange={(e) => set("additionalNotes", e.target.value)}
           rows={2}
           placeholder="Any context that would help us understand your project..."
-          className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/55 focus:border-[#7dd87d]/50 focus:outline-none resize-none"
+          className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/70 focus:border-[#7dd87d]/50 focus:outline-none resize-none"
         />
       </div>
 

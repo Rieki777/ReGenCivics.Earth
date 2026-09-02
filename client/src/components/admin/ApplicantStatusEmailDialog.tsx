@@ -184,7 +184,7 @@ export function ApplicantStatusEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-w-4xl max-h-[90vh] overflow-y-auto bg-white apply-form-dark">
+      <DialogContent className="sm:max-w-4xl max-w-4xl max-h-[90vh] overflow-y-auto bg-white apply-form-dark light-form-island">
         <DialogHeader>
           <DialogTitle className="text-[#1a472a] flex items-center gap-2">
             <Mail className="w-4 h-4" />

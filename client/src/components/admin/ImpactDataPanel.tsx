@@ -86,7 +86,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
           <div className="grid grid-cols-2 gap-3">
             {NUMBER_FIELDS.map((f) => (
               <div key={f.key as string}>
-                <label className="block text-xs text-[#1a472a]/75 mb-0.5">
+                <label className="block text-xs text-[#1a472a] mb-0.5">
                   {f.label}
                   {f.hint ? ` (${f.hint})` : ""}
                 </label>
@@ -100,7 +100,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             ))}
           </div>
           <div>
-            <label className="block text-xs text-[#1a472a]/75 mb-0.5">Governance maturity</label>
+            <label className="block text-xs text-[#1a472a] font-medium mb-0.5">Governance maturity</label>
             <select
               value={governance}
               onChange={(e) => setGovernance(e.target.value)}
@@ -115,7 +115,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-[#1a472a]/75 mb-0.5">Context (methods, measurement notes)</label>
+            <label className="block text-xs text-[#1a472a] font-medium mb-0.5">Context (methods, measurement notes)</label>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value.slice(0, 4000))}
@@ -132,7 +132,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             <Button
               onClick={save}
               disabled={saveMutation.isPending}
-              className="bg-[#4a7c59] text-white hover:bg-[#5a8c69] rounded-md px-4 h-8 text-sm"
+              className="bg-[#1a472a] text-[#f8f5f0] hover:bg-[#2d5a3d] rounded-md px-4 h-8 text-sm"
             >
               {saveMutation.isPending ? "Saving…" : "Save impact data"}
             </Button>

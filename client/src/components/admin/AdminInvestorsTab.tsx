@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger
 import { TrendingUp, Download, Search, Filter, DollarSign, Clock, ChevronRight, CheckCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
+import { adminStatusChipClass } from "@/lib/adminContrast";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -172,16 +173,9 @@ export function AdminInvestorsTab({
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
-                        <Badge className={
-                          investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                          investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                          investor.status === 'in_discussion' ? 'bg-purple-100 text-purple-800 border-purple-200' :
-                          investor.status === 'committed' ? 'bg-green-100 text-green-800 border-green-200' :
-                          investor.status === 'declined' ? 'bg-red-100 text-red-800 border-red-200' :
-                          'bg-gray-100 text-gray-700 border-gray-200'
-                        }>
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(investor.status)}`}>
                           {investor.status?.replace(/_/g, ' ')}
-                        </Badge>
+                        </span>
                         {(() => {
                           const age = getAgeInfo(investor.createdAt);
                           return (
@@ -209,8 +203,8 @@ export function AdminInvestorsTab({
                     </div>
                   </div>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-                  <SheetHeader>
+                <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col h-full overflow-hidden bg-[#f8f5f0] text-[#1a472a]">
+                  <SheetHeader className="shrink-0 px-6 pt-6">
                     <SheetTitle className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-amber-600" />
@@ -222,7 +216,7 @@ export function AdminInvestorsTab({
                     </SheetTitle>
                   </SheetHeader>
 
-                  <div className="space-y-6 py-4">
+                  <div className="flex-1 min-h-0 overflow-y-auto space-y-6 px-6 py-4">
                     {/* Contact Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -233,16 +227,9 @@ export function AdminInvestorsTab({
                       </div>
                       <div>
                         <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
-                        <Badge className={
-                          investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                          investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                          investor.status === 'in_discussion' ? 'bg-purple-100 text-purple-800 border-purple-200' :
-                          investor.status === 'committed' ? 'bg-green-100 text-green-800 border-green-200' :
-                          investor.status === 'declined' ? 'bg-red-100 text-red-800 border-red-200' :
-                          'bg-gray-100 text-gray-700 border-gray-200'
-                        }>
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(investor.status)}`}>
                           {investor.status?.replace(/_/g, ' ')}
-                        </Badge>
+                        </span>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Submitted</p>
@@ -291,9 +278,9 @@ export function AdminInvestorsTab({
                     {investor.primaryInterest && (
                       <div>
                         <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Primary Interest</p>
-                        <Badge className="bg-green-100 text-green-800 border-green-200 capitalize">
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass("committed")}`}>
                           {investor.primaryInterest?.replace(/_/g, ' ')}
-                        </Badge>
+                        </span>
                       </div>
                     )}
 
@@ -347,7 +334,7 @@ export function AdminInvestorsTab({
                     <ReminderPanelComp contactType="investor" contactId={investor.id} />
                   </div>
 
-                  <SheetFooter className="flex-col gap-3">
+                  <SheetFooter className="shrink-0 border-t border-[#1a472a]/10 px-6 py-4 flex-col gap-3 bg-[#f8f5f0]">
                     {/* Assignee */}
                     <AssigneeSelectComp contactType="investor" contactId={investor.id} />
                     {/* Status update */}

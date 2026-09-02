@@ -404,7 +404,7 @@ export default function PlaySubmit() {
                     value={analyzeInput}
                     onChange={(e) => setAnalyzeInput(e.target.value)}
                     placeholder="Paste your community's documentation here..."
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60 min-h-[150px] mb-3"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[150px] mb-3"
                   />
                   <Button
                     onClick={handleAnalyze}
@@ -516,7 +516,7 @@ export default function PlaySubmit() {
                                 }))
                           }
                           placeholder={`Describe ${label.toLowerCase()}...`}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
                         />
                       </div>
                     );
@@ -583,7 +583,7 @@ export default function PlaySubmit() {
                         onChange={(e) => setRobustnessNote(e.target.value)}
                         placeholder="Where is your play fragile? What would you shore up first?"
                         maxLength={2000}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[60px]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[60px]"
                       />
                     </div>
                   </div>
@@ -627,7 +627,7 @@ export default function PlaySubmit() {
                         ? "e.g., The Watershed Commons Play"
                         : "e.g., Earthaven Ecovillage Play"
                     }
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -644,7 +644,7 @@ export default function PlaySubmit() {
                         ? "The heart of your design: which needs it serves and how it coordinates meeting them."
                         : "A brief overview of what this Play covers and what makes your community's approach distinctive."
                     }
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60 min-h-[80px]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
                     maxLength={2000}
                   />
                   <p className="text-white/30 text-xs mt-1 text-right">
@@ -667,7 +667,7 @@ export default function PlaySubmit() {
                         ? "Your name, or the group designing this play"
                         : "Name of the community or organization"
                     }
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -680,7 +680,7 @@ export default function PlaySubmit() {
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://yourcommunity.org"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -693,7 +693,7 @@ export default function PlaySubmit() {
                     value={coverImageUrl}
                     onChange={(e) => setCoverImageUrl(e.target.value)}
                     placeholder="https://example.com/cover.jpg"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/60"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -786,7 +786,7 @@ export default function PlaySubmit() {
                             )
                           }
                           placeholder="e.g., 100"
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/60 max-w-[200px]"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/70 max-w-[200px]"
                         />
                       </div>
                       <div>
@@ -799,7 +799,7 @@ export default function PlaySubmit() {
                             setExternalPaymentUrl(e.target.value)
                           }
                           placeholder="https://buy.stripe.com/..."
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/60"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                         />
                       </div>
                       <div>
@@ -813,7 +813,7 @@ export default function PlaySubmit() {
                           }
                           placeholder="e.g., $25 / community"
                           maxLength={100}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/60 max-w-[250px]"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/70 max-w-[250px]"
                         />
                       </div>
                     </div>

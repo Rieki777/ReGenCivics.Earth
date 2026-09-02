@@ -26,7 +26,7 @@ export function AdminLOITab() {
 export function AdminBannersTab() {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">Manage banners per page. Active banners appear at the top of their target page. The global banner shows on all pages.</p>
+      <p className="text-sm text-[#1a472a]/85">Manage banners per page. Active banners appear at the top of their target page. The global banner shows on all pages.</p>
       {[
         { key: 'main-banner', label: 'Global (all pages)' },
         { key: 'home-banner', label: 'Home' },

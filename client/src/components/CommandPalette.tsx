@@ -163,7 +163,7 @@ export function CommandPalette() {
               autoFocus
               value={query}
               onValueChange={setQuery}
-              className="flex-1 bg-transparent text-white placeholder-white/55 text-sm outline-none"
+              className="flex-1 bg-transparent text-white placeholder-white/70 text-sm outline-none"
             />
             <button
               onClick={() => setOpen(false)}

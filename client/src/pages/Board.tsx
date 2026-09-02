@@ -129,7 +129,7 @@ export default function Board() {
             value={filterTag}
             onChange={(e) => setFilterTag(e.target.value)}
             placeholder="Filter by tag"
-            className="rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40 w-40"
+            className="rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40 w-40"
           />
           {isAuthenticated ? (
             <Button
@@ -174,7 +174,7 @@ export default function Board() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value.slice(0, 200))}
                 placeholder={formKind === "need" ? "A welder for two days in September" : "Grant writing, two hours a week"}
-                className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
               />
             </div>
             <div>
@@ -183,7 +183,7 @@ export default function Board() {
                 value={body}
                 onChange={(e) => setBody(e.target.value.slice(0, 5000))}
                 rows={3}
-                className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
               />
             </div>
             <div className="grid md:grid-cols-3 gap-4">
@@ -193,7 +193,7 @@ export default function Board() {
                   value={tagsText}
                   onChange={(e) => setTagsText(e.target.value)}
                   placeholder="welding, fencing, water"
-                  className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                  className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
                 />
               </div>
               <div>
@@ -206,7 +206,7 @@ export default function Board() {
                   value={timeWindow}
                   onChange={(e) => setTimeWindow(e.target.value.slice(0, 200))}
                   placeholder="September, weekends"
-                  className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/30 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                  className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
                 />
               </div>
             </div>

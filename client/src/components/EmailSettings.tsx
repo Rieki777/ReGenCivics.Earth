@@ -604,10 +604,10 @@ function EmailTemplatePreview() {
               <div className="space-y-2">
                 <Label className="text-[#1a472a]">Email Body (HTML)</Label>
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-gray-100 px-3 py-1.5 border-b flex items-center gap-2">
-                    <span className="text-xs text-gray-500">HTML Source</span>
-                    <span className="text-xs text-gray-300">|</span>
-                    <span className="text-xs text-gray-300">Tip: Edit the HTML below and see changes in the live preview</span>
+                  <div className="bg-[#f0ebe3] px-3 py-1.5 border-b flex items-center gap-2">
+                    <span className="text-xs text-[#1a472a]/85">HTML Source</span>
+                    <span className="text-xs text-[#1a472a]/40">|</span>
+                    <span className="text-xs text-[#1a472a]/85">Tip: Edit the HTML below and see changes in the live preview</span>
                   </div>
                   <Textarea
                     value={editingBody}

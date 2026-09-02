@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useToast } from "@/hooks/use-toast";
+import { adminStatusChipClass } from "@/lib/adminContrast";
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 
@@ -173,8 +174,8 @@ export default function AdminApplicationDetail() {
 
             <div className="text-right">
               <div className="text-sm text-[#1a472a]/80 mb-1">Status</div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-[#1a472a]/20 font-medium text-[#1a472a]">
-                {application.status.replace("_", " ").toUpperCase()}
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold uppercase tracking-wide ${adminStatusChipClass(application.status)}`}>
+                {application.status.replace("_", " ")}
               </div>
             </div>
           </div>
@@ -400,9 +401,9 @@ export default function AdminApplicationDetail() {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="decision">Decision *</Label>
+                  <Label htmlFor="decision" className="text-[#1a472a] font-medium">Decision *</Label>
                   <Select value={decision} onValueChange={(value: any) => setDecision(value)}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 bg-white text-[#1a472a] border-[#1a472a]/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -430,26 +431,26 @@ export default function AdminApplicationDetail() {
                 </div>
 
                 <div>
-                  <Label htmlFor="comments">Comments for Applicant *</Label>
+                  <Label htmlFor="comments" className="text-[#1a472a] font-medium">Comments for Applicant *</Label>
                   <Textarea
                     id="comments"
                     value={comments}
                     onChange={(e) => setComments(e.target.value)}
                     placeholder="Provide feedback that will be shared with the applicant..."
                     rows={5}
-                    className="mt-1"
+                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="internalNotes">Internal Notes (Admin Only)</Label>
+                  <Label htmlFor="internalNotes" className="text-[#1a472a] font-medium">Internal Notes (Admin Only)</Label>
                   <Textarea
                     id="internalNotes"
                     value={internalNotes}
                     onChange={(e) => setInternalNotes(e.target.value)}
                     placeholder="Private notes for internal use..."
                     rows={3}
-                    className="mt-1"
+                    className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
                   />
                 </div>
 
