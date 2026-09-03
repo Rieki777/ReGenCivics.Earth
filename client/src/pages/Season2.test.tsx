@@ -157,6 +157,14 @@ describe("Season2 page", () => {
     expect(screen.getByRole("heading", { name: /Every game is made of\s+quests/i })).toBeTruthy();
   });
 
+  it("shows the ReGen Game Journey map on the roadmap", () => {
+    const img = screen.getByAltText(/ReGen Game Journey map/i) as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/season2/game-journey.jpg");
+    // The old portrait art was capped at 280px; the journey map runs full width.
+    expect(img.className).toMatch(/w-full/);
+    expect(img.className).not.toMatch(/max-w-\[280px\]/);
+  });
+
   it("keeps the copy free of em-dashes", () => {
     expect(body()).not.toContain("—");
   });

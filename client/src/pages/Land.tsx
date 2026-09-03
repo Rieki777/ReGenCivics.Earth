@@ -931,13 +931,15 @@ export default function Land() {
           {/* Game Board Animation Video */}
           <AnimatedSection animation="scale-in" delay={200}>
             <div className="mb-8 rounded-2xl overflow-hidden border-4 border-[#4a7c59]/60 shadow-2xl">
-              <video
-                src={"https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4"}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
+              {/*
+                33.7 MB, the largest asset on the site. As a bare autoPlay
+                <video> it began downloading and playing on page load whether or
+                not it was on screen. Viewport-gated like every other video here,
+                so it costs nothing until the reader reaches it.
+              */}
+              <ViewportTriggeredVideo
+                src="https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4"
+                ariaLabel="The ReGen game board coming to life: paths, quests, and gathering places across a regenerative village"
                 className="w-full h-auto"
                 poster={cdnImg("https://assets.regencivics.earth/ACFKZcufsmYBYHhs.jpg")}
               />

@@ -17,6 +17,12 @@ export interface ViewportTriggeredVideoProps {
   ariaLabel?: string;
   /** className applied to the <video> element. */
   className?: string;
+  /**
+   * Poster frame shown before playback starts. Worth setting whenever the
+   * video is large: preload="metadata" means the first frame is not fetched,
+   * so without a poster the element renders as an empty box until it plays.
+   */
+  poster?: string;
   style?: CSSProperties;
   /** Loop the video. Default: true. */
   loop?: boolean;
@@ -37,6 +43,7 @@ export function ViewportTriggeredVideo({
   ariaLabel,
   className,
   style,
+  poster,
   loop = true,
   threshold = 0.5,
   resetOnExit = true,
@@ -78,6 +85,7 @@ export function ViewportTriggeredVideo({
       playsInline
       loop={loop}
       preload="metadata"
+      poster={poster}
       aria-label={ariaLabel}
       className={className}
       style={style}

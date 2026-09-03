@@ -858,16 +858,19 @@ export default function Season2() {
             </Link>
           </div>
 
-          <img
-            src="/season2/roadmap.jpg"
-            alt="A seedling growing into a full canopy across the season"
-            loading="lazy"
-            className="w-full max-w-[280px] mx-auto mb-12 select-none drop-shadow-[0_0_40px_rgba(125,216,125,0.16)]"
-            style={{
-              WebkitMaskImage: "linear-gradient(to bottom, #000 82%, transparent)",
-              maskImage: "linear-gradient(to bottom, #000 82%, transparent)",
-            }}
-          />
+          <figure className="mb-12">
+            <img
+              src="/season2/game-journey.jpg"
+              alt="The ReGen Game Journey map: Vision Values and Image, Patterns of Co-Creation, Legal, Initial Circles Roles and Quests, Membership Criteria and Conflict Evolution Processes, Crowd Pooling Structure, and Governance Process, drawn as a glowing river winding through a landscape"
+              width={960}
+              height={540}
+              loading="lazy"
+              className="w-full rounded-2xl border-2 border-[#7dd87d]/30 shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
+            />
+            <figcaption className="mt-3 text-center text-white/60 text-sm">
+              The journey every project walks across the season.
+            </figcaption>
+          </figure>
 
           <GrowingTimeline>
             {STEPS.map((s) => (
