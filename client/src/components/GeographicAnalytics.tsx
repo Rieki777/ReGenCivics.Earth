@@ -137,7 +137,10 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ country, percentage }) => `${country} (${percentage}%)`}
+                  label={(props) => {
+                    const slice = props.payload as { country?: string; percentage?: number };
+                    return `${slice.country ?? props.name} (${slice.percentage ?? 0}%)`;
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="count"
@@ -191,10 +194,13 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
                       border: "1px solid #4a7c59", 
                       borderRadius: "8px" 
                     }}
-                    formatter={(value: any, name: string, props: any) => [
-                      `${value} submissions`,
-                      `${props.payload.city}, ${props.payload.country}`
-                    ]}
+                    formatter={(value, _name, item) => {
+                      const row = item.payload as { city?: string; country?: string };
+                      return [
+                        `${value} submissions`,
+                        `${row.city ?? ""}, ${row.country ?? ""}`,
+                      ];
+                    }}
                   />
                   <Bar dataKey="count" fill="#7dd87d" radius={[0, 4, 4, 0]} />
                 </BarChart>
