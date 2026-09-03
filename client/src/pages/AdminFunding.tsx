@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { cleanField } from "@shared/funding";
+import { isAdminRole } from "@shared/adminRole";
 import { AdminChrome } from "@/components/admin/AdminChrome";
 import {
   AlertTriangle,
@@ -262,7 +263,7 @@ export default function AdminFunding() {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
 
-  const isAdmin = !!user && (user.role === "admin" || user.role === "superadmin");
+  const isAdmin = isAdminRole(user?.role);
 
   const filters = useMemo(
     () => ({

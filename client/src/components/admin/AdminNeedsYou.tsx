@@ -7,8 +7,9 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Building2, Inbox, Shield, TrendingUp, Vote, ChevronRight, CheckCircle2 } from "lucide-react";
 import { inquiryTypeForPath, oldestWaiting } from "@/lib/adminInquiry";
+import type { AdminHrefExtras } from "@/lib/adminNav";
 
-type SelectTab = (tab: string, extras?: { type?: string; open?: string }) => void;
+type SelectTab = (tab: string, extras?: AdminHrefExtras) => void;
 
 export function AdminNeedsYou({
   onSelectTab,
@@ -31,7 +32,7 @@ export function AdminNeedsYou({
   const oldestApp = oldestWaiting(applications, ["submitted", "pending", "under_review"]);
   const oldestInvestor = oldestWaiting(investors, ["new", "pending"]);
 
-  const go = (target: string, extras?: { type?: string; open?: string }) => {
+  const go = (target: string, extras?: AdminHrefExtras) => {
     if (target.startsWith("/")) {
       navigate(target);
       return;
@@ -45,8 +46,13 @@ export function AdminNeedsYou({
       label: "Applications to review",
       count: snap.applications.pending,
       run: () => {
-        if (oldestApp) navigate(`/admin/application/${oldestApp.id}`);
-        else go("applications");
+        if (oldestApp) {
+          go("applications", {
+            open: String(oldestApp.id),
+            status: oldestApp.status,
+            view: "reviews",
+          });
+        } else go("applications");
       },
       icon: Building2,
     },

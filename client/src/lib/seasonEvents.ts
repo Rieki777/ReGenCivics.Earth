@@ -15,10 +15,28 @@ export const RIVERSIDE_INFO = {
   roomUrl: "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b",
 };
 
-export const SESSION_TIME_ZONE = "America/Los_Angeles";
-export const SESSION_EASTERN_ZONE = "America/New_York";
-export const SESSION_START_HOUR_PT = 11;
-export const SESSION_DURATION_HOURS = 2;
+export {
+  SESSION_TIME_ZONE,
+  SESSION_EASTERN_ZONE,
+  SESSION_START_HOUR_PT,
+  SESSION_DURATION_HOURS,
+  OPEN_ACCESS_TITLE,
+  sessionStartUtc,
+  sessionEndUtc,
+  wallTimeInZoneToUtc,
+  sundayAfterSeason2Saturday,
+} from "@shared/sessionClock";
+import {
+  OPEN_ACCESS_PUBLISHED_DATES,
+  OPEN_ACCESS_TITLE as SHARED_OA_TITLE,
+  SESSION_DURATION_HOURS,
+  SESSION_EASTERN_ZONE,
+  SESSION_TIME_ZONE,
+  sessionEndUtc,
+  sessionStartUtc,
+  sundayAfterSeason2Saturday,
+  zoneName,
+} from "@shared/sessionClock";
 
 /** Bumped when published times moved from 8:00 AM PT / 1:00 PM ET to 11:00 AM PT. */
 export const ICS_SEQUENCE = 1;
@@ -43,24 +61,8 @@ export type OpenAccessSession = {
   endUtc: string;
 };
 
-export const OPEN_ACCESS_TITLE = "ReGen Civics Open Access Session";
 export const OPEN_ACCESS_DESC =
   "Open community session for the ReGenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
-
-const OPEN_ACCESS_DATES: Array<{ date: string; dayName: string }> = [
-  { date: "2026-05-16", dayName: "Saturday" },
-  { date: "2026-06-14", dayName: "Sunday" },
-  { date: "2026-07-14", dayName: "Tuesday" },
-  { date: "2026-08-12", dayName: "Wednesday" },
-  { date: "2026-09-10", dayName: "Thursday" },
-  { date: "2026-10-10", dayName: "Saturday" },
-  { date: "2026-11-09", dayName: "Monday" },
-  { date: "2026-12-08", dayName: "Tuesday" },
-  { date: "2027-01-07", dayName: "Thursday" },
-  { date: "2027-02-06", dayName: "Saturday" },
-  { date: "2027-03-08", dayName: "Monday" },
-  { date: "2027-04-06", dayName: "Tuesday" },
-];
 
 export function parseCompactUtc(stamp: string): Date {
   return new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z"));
@@ -68,31 +70,6 @@ export function parseCompactUtc(stamp: string): Date {
 
 export function toCompactUtc(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
-}
-
-export function wallTimeInZoneToUtc(ymd: string, hour: number, minute: number, timeZone: string): Date {
-  const [year, month, day] = ymd.split("-").map(Number);
-  let utc = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const wanted = Date.UTC(year, month - 1, day, hour, minute, 0);
-
-  for (let i = 0; i < 4; i++) {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(new Date(utc));
-    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
-    const asZone = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
-    const delta = wanted - asZone;
-    if (delta === 0) return new Date(utc);
-    utc += delta;
-  }
-  return new Date(utc);
 }
 
 export function hourInZone(d: Date, timeZone: string): number {
@@ -125,13 +102,6 @@ function formatClockInZone(d: Date, timeZone: string): string {
   }).format(d);
 }
 
-function zoneName(d: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    timeZoneName: "short",
-  }).formatToParts(d).find((p) => p.type === "timeZoneName")?.value ?? "";
-}
-
 export function formatDualZoneRange(start: Date, end: Date): string {
   const ptZone = zoneName(start, SESSION_TIME_ZONE);
   const etZone = zoneName(start, SESSION_EASTERN_ZONE);
@@ -140,48 +110,11 @@ export function formatDualZoneRange(start: Date, end: Date): string {
   return `${pt}, ${et}`;
 }
 
-export function sessionStartUtc(ymd: string): Date {
-  return wallTimeInZoneToUtc(ymd, SESSION_START_HOUR_PT, 0, SESSION_TIME_ZONE);
-}
-
-export function sessionEndUtc(ymd: string): Date {
-  return new Date(sessionStartUtc(ymd).getTime() + SESSION_DURATION_HOURS * 3_600_000);
-}
-
 function sessionPair(ymd: string): { startUtc: string; endUtc: string } {
   return {
     startUtc: toCompactUtc(sessionStartUtc(ymd)),
     endUtc: toCompactUtc(sessionEndUtc(ymd)),
   };
-}
-
-function ymdWeekdayUtc(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0)).toLocaleDateString("en-US", {
-    weekday: "long",
-    timeZone: "UTC",
-  });
-}
-
-function addUtcDays(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days, 12, 0, 0)).toISOString().slice(0, 10);
-}
-
-/**
- * Move a same-day clash off the Season 2 Saturday onto Sunday.
- * Saturday + 1 day. Any other weekday walks forward to the next Sunday.
- */
-export function sundayAfterSeason2Saturday(clashDate: string): string {
-  const name = ymdWeekdayUtc(clashDate);
-  if (name === "Saturday") return addUtcDays(clashDate, 1);
-  const tomorrow = addUtcDays(clashDate, 1);
-  if (ymdWeekdayUtc(tomorrow) === "Sunday") return tomorrow;
-  let cursor = tomorrow;
-  while (ymdWeekdayUtc(cursor) !== "Sunday") {
-    cursor = addUtcDays(cursor, 1);
-  }
-  return cursor;
 }
 
 export function openAccessUid(date: string): string {
@@ -256,7 +189,7 @@ export function icsDataUrl(opts: {
 
 export function openAccessGoogleUrl(session: OpenAccessSession): string {
   return googleCalUrl({
-    title: OPEN_ACCESS_TITLE,
+    title: SHARED_OA_TITLE,
     startUtc: session.startUtc,
     endUtc: session.endUtc,
     description: OPEN_ACCESS_DESC,
@@ -266,7 +199,7 @@ export function openAccessGoogleUrl(session: OpenAccessSession): string {
 export function openAccessIcsUrl(session: OpenAccessSession): string {
   return icsDataUrl({
     uid: openAccessUid(session.publishedDate),
-    summary: OPEN_ACCESS_TITLE,
+    summary: SHARED_OA_TITLE,
     startUtc: session.startUtc,
     endUtc: session.endUtc,
     description: OPEN_ACCESS_DESC,
@@ -278,7 +211,7 @@ export function openAccessFallbackEvent(session: OpenAccessSession, idx: number)
   const start = parseCompactUtc(session.startUtc);
   return {
     id: 200 + idx,
-    title: OPEN_ACCESS_TITLE,
+    title: SHARED_OA_TITLE,
     date: session.date,
     time: "11:00 AM",
     timezone: zoneName(start, SESSION_TIME_ZONE),
@@ -380,7 +313,7 @@ export const SEASON2_EPISODE_DEFS: EpisodeDef[] = [
 
 const SEASON2_DATES = new Set(SEASON2_EPISODE_DEFS.map((e) => e.date));
 
-export const NEW_MOON_SESSIONS: OpenAccessSession[] = OPEN_ACCESS_DATES.map((row) => {
+export const NEW_MOON_SESSIONS: OpenAccessSession[] = OPEN_ACCESS_PUBLISHED_DATES.map((row) => {
   const publishedDate = row.date;
   const clashes = SEASON2_DATES.has(publishedDate);
   const date = clashes ? sundayAfterSeason2Saturday(publishedDate) : publishedDate;
@@ -528,7 +461,7 @@ export function buildAllEventsIcs(): string {
   const openAccess = NEW_MOON_SESSIONS.map((session) =>
     buildIcsEvent({
       uid: openAccessUid(session.publishedDate),
-      summary: OPEN_ACCESS_TITLE,
+      summary: SHARED_OA_TITLE,
       startUtc: session.startUtc,
       endUtc: session.endUtc,
       sequence: session.sequence,

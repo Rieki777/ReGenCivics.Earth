@@ -19,6 +19,7 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { isAdminRole } from "@shared/adminRole";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +81,7 @@ function SectionError({ message, onRetry }: { message: string; onRetry: () => vo
 
 export default function AdminGovernanceForks() {
   const { user, loading: authLoading } = useAuth();
-  const isAdmin = !!user && (user.role === "admin" || user.role === "superadmin");
+  const isAdmin = isAdminRole(user?.role);
   const utils = trpc.useUtils();
 
   const [showCreate, setShowCreate] = useState(false);

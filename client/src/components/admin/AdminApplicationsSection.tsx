@@ -10,8 +10,25 @@ type View = "reviews" | "list";
  * Reviews is the daily path (status cards, email, open a project).
  * List is search, CSV, notes, and drafts.
  */
-export function AdminApplicationsSection({ list }: { list: ReactNode }) {
+export function AdminApplicationsSection({
+  list,
+  openId,
+  onOpenIdChange,
+  status,
+  onStatusChange,
+  view: viewFromUrl,
+  onViewChange,
+}: {
+  list: ReactNode;
+  openId?: number | null;
+  onOpenIdChange?: (id: number | null) => void;
+  status?: string | null;
+  onStatusChange?: (status: string | null) => void;
+  view?: string | null;
+  onViewChange?: (view: string | null) => void;
+}) {
   const [view, setView] = useState<View>(() => {
+    if (viewFromUrl === "list" || viewFromUrl === "reviews") return viewFromUrl;
     try {
       return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "reviews";
     } catch {
@@ -20,12 +37,18 @@ export function AdminApplicationsSection({ list }: { list: ReactNode }) {
   });
 
   useEffect(() => {
+    if (viewFromUrl === "list" || viewFromUrl === "reviews") setView(viewFromUrl);
+  }, [viewFromUrl]);
+
+  const setAndRemember = (next: View) => {
+    setView(next);
+    onViewChange?.(next);
     try {
-      localStorage.setItem(VIEW_KEY, view);
+      localStorage.setItem(VIEW_KEY, next);
     } catch {
       /* storage blocked */
     }
-  }, [view]);
+  };
 
   const tabClass = (active: boolean) =>
     `min-h-11 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
@@ -40,7 +63,7 @@ export function AdminApplicationsSection({ list }: { list: ReactNode }) {
         <button
           type="button"
           className={tabClass(view === "reviews")}
-          onClick={() => setView("reviews")}
+          onClick={() => setAndRemember("reviews")}
           aria-pressed={view === "reviews"}
         >
           Reviews
@@ -48,13 +71,20 @@ export function AdminApplicationsSection({ list }: { list: ReactNode }) {
         <button
           type="button"
           className={tabClass(view === "list")}
-          onClick={() => setView("list")}
+          onClick={() => setAndRemember("list")}
           aria-pressed={view === "list"}
         >
           List, search, export
         </button>
       </div>
-      {view === "reviews" ? <AdminApplicationsReview /> : list}
+      {view === "reviews" ? (
+        <AdminApplicationsReview
+          openId={openId}
+          onOpenIdChange={onOpenIdChange}
+          status={status}
+          onStatusChange={onStatusChange}
+        />
+      ) : list}
     </div>
   );
 }

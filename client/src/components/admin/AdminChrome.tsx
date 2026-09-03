@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminSpeedDial } from "@/components/admin/AdminSpeedDial";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
-import { navItemById, writeAdminContinue, writeAdminContinueFromTab, adminTabHref, type NavItem } from "@/lib/adminNav";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { navItemById, writeAdminContinue, writeAdminContinueFromTab, adminTabHref, type AdminHrefExtras, type NavItem } from "@/lib/adminNav";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { trpc } from "@/lib/trpc";
 import { inquiryTypeForPath } from "@/lib/adminInquiry";
@@ -17,9 +18,8 @@ function openAssistant() {
 function AdminChromeSearch({
   onSelectTab,
 }: {
-  onSelectTab: (tab: string, extras?: { type?: string; open?: string }) => void;
+  onSelectTab: (tab: string, extras?: AdminHrefExtras) => void;
 }) {
-  const [, navigate] = useLocation();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [debounced, setDebounced] = useState("");
@@ -75,8 +75,12 @@ function AdminChromeSearch({
     setQ("");
     setOpen(false);
   };
-  const pickApplication = (app: any) => {
-    navigate(`/admin/application/${app.id}`);
+  const pickApplication = (app: { id: number; status: string }) => {
+    onSelectTab("applications", {
+      open: String(app.id),
+      status: app.status,
+      view: "reviews",
+    });
     setQ("");
     setOpen(false);
   };
@@ -146,11 +150,12 @@ export function AdminChrome({
   onNotif,
 }: {
   activeTab: string;
-  onTabChange?: (tab: string, extras?: { type?: string; open?: string }) => void;
+  onTabChange?: (tab: string, extras?: AdminHrefExtras) => void;
   children: React.ReactNode;
   pendingCount?: number;
   onNotif?: () => void;
 }) {
+  const { logout } = useAuth();
   const [, navigate] = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -174,7 +179,7 @@ export function AdminChrome({
     setMobileNavOpen(false);
   };
 
-  const handleTab = (tab: string, extras?: { type?: string; open?: string }) => {
+  const handleTab = (tab: string, extras?: AdminHrefExtras) => {
     const item = navItemById(tab);
     if (item?.route) {
       recordAdminVisit(tab);
@@ -203,8 +208,13 @@ export function AdminChrome({
           <button
             type="button"
             onClick={() => {
-              localStorage.removeItem("admin_authenticated");
-              window.location.reload();
+              try {
+                localStorage.removeItem("admin_authenticated");
+                localStorage.removeItem("moderation_authenticated");
+              } catch {
+                /* storage blocked */
+              }
+              void logout();
             }}
             className="w-full flex items-center gap-3 px-3 min-h-11 text-sm text-white/85 hover:text-white hover:bg-white/5"
           >
@@ -277,8 +287,13 @@ export function AdminChrome({
               size="sm"
               className="hidden md:inline-flex border-white/30 text-white hover:bg-white/10 min-h-11"
               onClick={() => {
-                localStorage.removeItem("admin_authenticated");
-                window.location.reload();
+                try {
+                  localStorage.removeItem("admin_authenticated");
+                  localStorage.removeItem("moderation_authenticated");
+                } catch {
+                  /* storage blocked */
+                }
+                void logout();
               }}
             >
               <Lock className="w-4 h-4 mr-2" />

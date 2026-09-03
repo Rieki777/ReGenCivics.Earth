@@ -35,6 +35,7 @@ import { HarvestCaptureModal } from "./components/HarvestCaptureModal";
 import { MobileMoreMenu } from "./components/mobile/MobileMoreMenu";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
+import { AdminAuthGate } from "./components/admin/AdminAuthGate";
 import { TaoErrorState } from "./components/TaoErrorState";
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
 import AnalyticsLoader from "./components/AnalyticsLoader";
@@ -68,6 +69,10 @@ const RegenIntroGate = lazy(() => import("./components/RegenIntroGate").then(m =
 const ADMIN_ROUTES = ["/admin", "/admin/"];
 function isAdminRoute(path: string) {
   return path === "/admin" || path.startsWith("/admin/") || path === "/admin-create";
+}
+
+function AdminLocked({ children }: { children: ReactNode }) {
+  return <AdminAuthGate>{children}</AdminAuthGate>;
 }
 
 /**
@@ -299,7 +304,7 @@ function Router() {
       <Route path={"/ship/crew-list/unsubscribe"}><EB><ShipCrewListAction mode="unsubscribe" /></EB></Route>
       {/* The Love Voyage article lives in the blog; /ship/honeymoon is the friendly shortcut. */}
       <Route path={"/ship/honeymoon"}>{() => { window.location.replace('/blog/more-than-one-honeymoon'); return null; }}</Route>
-      <Route path={"/admin/ship"}><EB><ShipAdmin /></EB></Route>
+      <Route path={"/admin/ship"}><EB><AdminLocked><ShipAdmin /></AdminLocked></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
       <Route path={"/land"}><EB><Land /></EB></Route>
       <Route path={"/ally"}><EB><Ally /></EB></Route>
@@ -330,19 +335,19 @@ function Router() {
       <Route path={"/apply/success"}><EB><ApplySuccess /></EB></Route>
       <Route path={"/apply/status"}><EB><ApplyStatus /></EB></Route>
       <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>
-      <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
-      <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
+      <Route path={"/admin/applications"}><EB><AdminLocked><AdminApplications /></AdminLocked></EB></Route>
+      <Route path={"/admin/application/:id"}><EB><AdminLocked><AdminApplicationDetail /></AdminLocked></EB></Route>
       <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
       <Route path={"/investor/contact"}><EB><InvestorContact /></EB></Route>
       <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
       <Route path={"/connect"}><EB><Connect /></EB></Route>
-      <Route path={"/admin"}><EB><Admin /></EB></Route>
-      <Route path={"/admin-create"}><EB><AdminCreate /></EB></Route>
-      <Route path={"/admin/voice-rules"}><EB><AdminVoiceRules /></EB></Route>
-      <Route path={"/admin/calls"}><EB><AdminCalls /></EB></Route>
-      <Route path={"/admin/funding"}><EB><AdminFunding /></EB></Route>
-      <Route path={"/admin/governance-forks"}><EB><AdminGovernanceForks /></EB></Route>
-      <Route path={"/admin/builders-pool"}><EB><AdminBuildersPool /></EB></Route>
+      <Route path={"/admin"}><EB><AdminLocked><Admin /></AdminLocked></EB></Route>
+      <Route path={"/admin-create"}><EB><AdminLocked><AdminCreate /></AdminLocked></EB></Route>
+      <Route path={"/admin/voice-rules"}><EB><AdminLocked><AdminVoiceRules /></AdminLocked></EB></Route>
+      <Route path={"/admin/calls"}><EB><AdminLocked><AdminCalls /></AdminLocked></EB></Route>
+      <Route path={"/admin/funding"}><EB><AdminLocked><AdminFunding /></AdminLocked></EB></Route>
+      <Route path={"/admin/governance-forks"}><EB><AdminLocked><AdminGovernanceForks /></AdminLocked></EB></Route>
+      <Route path={"/admin/builders-pool"}><EB><AdminLocked><AdminBuildersPool /></AdminLocked></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
@@ -384,7 +389,7 @@ function Router() {
       <Route path={"/community/offering-support"}>{() => <Redirect to="/community/tag/offering-support" />}</Route>
       <Route path={"/community/quests"}><EB><QuestSuggestions /></EB></Route>
       <Route path={"/community/user/:id"}><EB><UserForumProfile /></EB></Route>
-      <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
+      <Route path={"/admin/moderation"}><EB><AdminLocked><AdminModeration /></AdminLocked></EB></Route>
       <Route path={"/accessibility"}><EB><Accessibility /></EB></Route>
       <Route path={"/glossary"}><EB><Glossary /></EB></Route>
       <Route path={"/learn/:slug"}><EB><LearnArticle /></EB></Route>

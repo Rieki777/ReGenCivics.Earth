@@ -19,6 +19,7 @@ import { notifyNewEvent } from "../_core/notify";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
+import { syncCatalogEvents } from "../lib/syncCatalogEvents";
 
 // ─────────────────────────────────────────────────────────────
 // Seed data, used to pre-populate the DB if it's empty
@@ -122,6 +123,7 @@ async function ensureEventsSeed() {
     if (Number(count) === 0) {
       await database.insert(events).values(SEED_EVENTS as any);
     }
+    await syncCatalogEvents();
   } catch {
     // Non-fatal, seed runs once, fails silently if table not ready yet
   }

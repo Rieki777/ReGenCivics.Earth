@@ -21,6 +21,7 @@ import {
   Navigation, Mail, Search, User, Minimize2, Maximize2, StickyNote
 } from "lucide-react";
 import { HarvestNoteComposer } from "./HarvestNoteComposer";
+import { isAdminRole } from "@shared/adminRole";
 
 export interface AdminAIContext {
   activeTab?: string;
@@ -104,7 +105,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   // mode. canCapture gates only that toggle. Save stays owner-only server-side.
   const [mode, setMode] = useState<"assistant" | "note">("assistant");
   const { user } = useAuth();
-  const canCapture = user?.role === "admin" || user?.role === "superadmin";
+  const canCapture = isAdminRole(user?.role);
 
   const harvestStatus = trpc.quickNotes.status.useQuery(undefined, {
     retry: false,

@@ -21,6 +21,7 @@ import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
 import { AdminNeedsYou } from "./AdminNeedsYou";
 import { AdminContinueRow } from "./AdminContinueRow";
 import { inquiryTypeForPath } from "@/lib/adminInquiry";
+import { applicationHref, type AdminHrefExtras } from "@/lib/adminNav";
 
 // Path type config subset needed for the overview
 const pathTypeConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -60,7 +61,7 @@ interface Props {
   investors: any[] | undefined;
   inquiries: any[] | undefined;
   inquiriesByPath: Record<string, number>;
-  setActiveTab: (tab: string, extras?: { type?: string; open?: string }) => void;
+  setActiveTab: (tab: string, extras?: AdminHrefExtras) => void;
   setInvestorStatusFilter: (filter: string) => void;
 }
 
@@ -136,7 +137,7 @@ export function AdminOverviewTab({
                 {applications.slice(0, 5).map((app: any) => (
                   <Link
                     key={app.id}
-                    href={`/admin/application/${app.id}`}
+                    href={applicationHref(app.id, app.status)}
                     className="block p-4 min-h-11 hover:bg-[#f0ebe3]/50"
                   >
                     <div className="flex items-center justify-between gap-3">

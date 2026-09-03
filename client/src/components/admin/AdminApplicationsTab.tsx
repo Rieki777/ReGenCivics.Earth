@@ -19,10 +19,9 @@ import {
   Clock,
   Globe,
   ExternalLink,
-  FileText,
 } from "lucide-react";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
-import { Link } from "wouter";
+import { AdminApplicationReviewForm } from "@/components/admin/AdminApplicationReviewForm";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { BulkActionBar } from "./BulkActionBar";
@@ -413,12 +412,9 @@ export function AdminApplicationsTab({
                           inquiryType="project"
                           className="w-full sm:w-auto"
                         />
-                        <Link href={`/admin/application/${app.id}`}>
-                          <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
-                            <FileText className="w-4 h-4 mr-2" />
-                            Review Project
-                          </Button>
-                        </Link>
+                        <div className="w-full">
+                          <AdminApplicationReviewForm applicationId={app.id} />
+                        </div>
                       </div>
                     </SheetFooter>
                   </SheetContent>

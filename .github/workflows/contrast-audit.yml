@@ -4,8 +4,10 @@ name: Contrast Audit
 # the diff against main as a PR comment. The collect step writes the
 # report even when the site is still above the old 2026-05-29 cap of 5
 # residual failures (the public pages currently report ~100). The job
-# fails when this PR adds failures compared to main. Do not bump a
-# number to hide a regression.
+# fails when this PR adds failures on routes that both reports crawled.
+# A newly added route (for example /admin) is reported and does not
+# fail the job on first appearance. Do not bump a number to hide a
+# regression.
 
 on:
   pull_request:
@@ -93,19 +95,38 @@ jobs:
             const fs = require('fs');
             const pr = JSON.parse(fs.readFileSync('audits/contrast-report-pr.json', 'utf8'));
             const main = JSON.parse(fs.readFileSync('audits/contrast-report-main.json', 'utf8'));
+            const count = (report, route) => {
+              const items = report.findings[route];
+              return Array.isArray(items) ? items.length : 0;
+            };
+            const mainRoutes = new Set(main.routes || []);
+            const shared = (pr.routes || []).filter((r) => mainRoutes.has(r));
+            const newRoutes = (pr.routes || []).filter((r) => !mainRoutes.has(r));
+            let sharedPr = 0;
+            let sharedMain = 0;
+            for (const route of shared) {
+              sharedPr += count(pr, route);
+              sharedMain += count(main, route);
+            }
+            const delta = sharedPr - sharedMain;
             const lines = [];
             lines.push('## Contrast Audit');
             lines.push('');
             lines.push(`PR: **${pr.totalFailures}** failures across ${pr.routes.length} routes.`);
             lines.push(`Main: **${main.totalFailures}** failures across ${main.routes.length} routes.`);
+            lines.push(`Shared routes: PR **${sharedPr}** / main **${sharedMain}**.`);
             lines.push('');
-            const delta = pr.totalFailures - main.totalFailures;
             if (delta > 0) {
-              lines.push(`⚠️ This PR introduces **${delta}** new contrast failures.`);
+              lines.push(`This PR introduces **${delta}** new contrast failures on routes both reports crawled.`);
             } else if (delta < 0) {
-              lines.push(`✅ This PR resolves **${-delta}** contrast failures.`);
+              lines.push(`This PR resolves **${-delta}** contrast failures on shared routes.`);
             } else {
-              lines.push(`No change in total failures.`);
+              lines.push(`No change in failures on shared routes.`);
+            }
+            if (newRoutes.length) {
+              const newFails = newRoutes.reduce((sum, route) => sum + count(pr, route), 0);
+              lines.push('');
+              lines.push(`New routes (reported, not in the fail gate): ${newRoutes.join(', ')} (${newFails} findings).`);
             }
             lines.push('');
             lines.push('Per-route delta:');
@@ -113,16 +134,16 @@ jobs:
             lines.push('| Route | Main | PR | Δ |');
             lines.push('|---|---|---|---|');
             for (const route of pr.routes) {
-              const m = (main.findings[route]?.length) ?? 0;
-              const p = (pr.findings[route]?.length) ?? 0;
-              const d = p - m;
-              const dStr = d === 0 ? '0' : (d > 0 ? `+${d}` : String(d));
+              const m = mainRoutes.has(route) ? count(main, route) : 'n/a';
+              const p = count(pr, route);
+              const d = typeof m === 'number' ? p - m : 'new';
+              const dStr = d === 0 ? '0' : (typeof d === 'number' && d > 0 ? `+${d}` : String(d));
               lines.push(`| ${route} | ${m} | ${p} | ${dStr} |`);
             }
             lines.push('');
             lines.push('See `audits/contrast-report-pr.json` artifact for full per-element details.');
             lines.push('');
-            lines.push('_Job fails when this PR adds contrast failures compared to main._');
+            lines.push('_Job fails when this PR adds contrast failures on routes that both reports crawled._');
             const body = lines.join('\n');
             core.info(body);
             if (context.issue && context.issue.number) {
@@ -134,11 +155,11 @@ jobs:
                   body,
                 });
               } catch (err) {
-                core.warning(`Could not comment on the PR (${err.message}). Contrast delta is still ${delta}.`);
+                core.warning(`Could not comment on the PR (${err.message}). Shared-route contrast delta is still ${delta}.`);
               }
             }
             if (delta > 0) {
-              core.setFailed(`This PR introduces ${delta} new contrast failures versus main.`);
+              core.setFailed(`This PR introduces ${delta} new contrast failures on shared routes versus main.`);
             }
 
       - name: Upload reports as artifact

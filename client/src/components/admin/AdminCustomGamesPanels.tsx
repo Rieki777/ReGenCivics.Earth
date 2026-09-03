@@ -333,5 +333,3 @@ export function AdminCustomGameApplications() {
   );
 }
 
-const ADMIN_PASSWORD = "333";
-

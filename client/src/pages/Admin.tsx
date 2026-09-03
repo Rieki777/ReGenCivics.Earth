@@ -15,10 +15,10 @@ import { ContactNotesPanel, ContactTagsPanel, ReminderPanel, AssigneeSelect } fr
 import { NewsletterSubscribersList } from "@/components/admin/AdminSettingsPanels";
 import { AdminPlayersTab } from "@/components/admin/AdminPlayersTab";
 import { AdminCustomGameWaitlist, AdminCustomGameApplications } from "@/components/admin/AdminCustomGamesPanels";
-import { AdminPasswordGate } from "@/components/admin/AdminPasswordGate";
+import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
-import { writeAdminContinueFromTab } from "@/lib/adminNav";
+import { writeAdminContinueFromTab, type AdminHrefExtras } from "@/lib/adminNav";
 import { InquirySection } from "@/components/admin/AdminInquirySection";
 
 const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
@@ -63,6 +63,8 @@ function AdminDashboard() {
     const open = params.get("open");
     return open ? Number(open) : null;
   });
+  const [appStatus, setAppStatus] = useState<string | null>(() => params.get("status"));
+  const [appView, setAppView] = useState<string | null>(() => params.get("view"));
   const [investorSearch, setInvestorSearch] = useState("");
   const [appSearch, setAppSearch] = useState("");
   const [investorStatusFilter, setInvestorStatusFilter] = useState<string>("all");
@@ -70,7 +72,7 @@ function AdminDashboard() {
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [notifCenterOpen, setNotifCenterOpen] = useState(false);
 
-  const setActiveTab = (tab: string, extras?: { type?: string; open?: string }) => {
+  const setActiveTab = (tab: string, extras?: AdminHrefExtras) => {
     const nextTab = LEGACY_INQUIRY_TABS.has(tab) ? "inquiries" : tab;
     setActiveTabState(nextTab);
     if (LEGACY_INQUIRY_TABS.has(tab)) {
@@ -80,6 +82,8 @@ function AdminDashboard() {
     }
     if (extras?.open) setOpenRecordId(Number(extras.open));
     else if (nextTab !== activeTab) setOpenRecordId(null);
+    if (extras?.status !== undefined) setAppStatus(extras.status || null);
+    if (extras?.view !== undefined) setAppView(extras.view || null);
     recordAdminVisit(nextTab);
     writeAdminContinueFromTab(nextTab);
   };
@@ -93,12 +97,16 @@ function AdminDashboard() {
       else url.searchParams.delete("type");
       if (openRecordId) url.searchParams.set("open", String(openRecordId));
       else url.searchParams.delete("open");
+      if (activeTab === "applications" && appStatus) url.searchParams.set("status", appStatus);
+      else if (activeTab !== "applications") url.searchParams.delete("status");
+      if (activeTab === "applications" && appView) url.searchParams.set("view", appView);
+      else if (activeTab !== "applications") url.searchParams.delete("view");
       const next = url.pathname + url.search;
       if (next !== window.location.pathname + window.location.search) {
         window.history.pushState(null, "", next);
       }
     } catch { /* history unavailable */ }
-  }, [activeTab, inquiryType, openRecordId]);
+  }, [activeTab, inquiryType, openRecordId, appStatus, appView]);
 
   useEffect(() => {
     const onPop = () => {
@@ -108,6 +116,8 @@ function AdminDashboard() {
       setInquiryType(LEGACY_INQUIRY_TABS.has(tab) ? (tab === "kanban" ? "kanban" : tab) : p.get("type"));
       const open = p.get("open");
       setOpenRecordId(open ? Number(open) : null);
+      setAppStatus(p.get("status"));
+      setAppView(p.get("view"));
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -229,6 +239,12 @@ function AdminDashboard() {
 
           <TabsContent value="applications">
             <AdminApplicationsSection
+              openId={activeTab === "applications" ? openRecordId : null}
+              onOpenIdChange={setOpenRecordId}
+              status={appStatus}
+              onStatusChange={setAppStatus}
+              view={appView}
+              onViewChange={setAppView}
               list={
                 <AdminApplicationsTab
                   applications={applications}
@@ -335,14 +351,12 @@ function AdminDashboard() {
 }
 
 export default function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try { return localStorage.getItem("admin_authenticated") === "true"; } catch { return false; }
-  });
-
   return (
     <>
       <SEO title="Admin | ReGen Civics" description="Admin dashboard" noIndex />
-      {isAuthenticated ? <AdminDashboard /> : <AdminPasswordGate onAuthenticated={() => setIsAuthenticated(true)} />}
+      <AdminAuthGate>
+        <AdminDashboard />
+      </AdminAuthGate>
     </>
   );
 }

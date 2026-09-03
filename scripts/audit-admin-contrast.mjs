@@ -138,14 +138,15 @@ async function metrics(label) {
 
 await page.goto(`${BASE}/admin`, { waitUntil: "domcontentloaded", timeout: 30000 });
 await page.waitForTimeout(1500);
-await shot("01-admin-login");
+await shot("01-admin-gate");
 
-const pwd = page.locator('input[type="password"]');
-if (await pwd.count()) {
-  await pwd.fill("333");
-  await page.getByRole("button", { name: /access dashboard/i }).click();
+const hasRoot = await page.locator(".admin-root").count();
+if (!hasRoot) {
+  await metrics("signin");
+  console.log("No admin session. Sign-in surface audited. Stop.");
+  await browser.close();
+  process.exit(0);
 }
-await page.waitForSelector(".admin-root", { timeout: 25000 });
 await shot("02-admin-after-login");
 const overview = await metrics("overview");
 

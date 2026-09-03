@@ -8,6 +8,7 @@ import {
   writeAdminContinueFromTab,
   ADMIN_CONTINUE_KEY,
   adminTabHref,
+  applicationHref,
 } from "./adminNav";
 
 describe("admin nav", () => {
@@ -49,6 +50,12 @@ describe("admin nav", () => {
   it("builds a deep link for a hub record", () => {
     expect(adminTabHref("inquiries", { type: "live", open: "12" })).toBe(
       "/admin?tab=inquiries&type=live&open=12",
+    );
+  });
+
+  it("keeps application scoring on the applications tab with status in the URL", () => {
+    expect(applicationHref(44, "submitted")).toBe(
+      "/admin?tab=applications&open=44&status=submitted&view=reviews",
     );
   });
 

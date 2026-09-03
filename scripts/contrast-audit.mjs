@@ -39,6 +39,10 @@ const PUBLIC_ROUTES = [
   '/tools', '/hymn-book', '/economy', '/local-food-economy',
   '/tokenomics', '/glossary', '/socials', '/co-creators-guide',
   '/schedule', '/loi', '/investor', '/claim-seeds', '/connect',
+  // Sign-in / denied surface when unauthenticated. CI compares this
+  // route only against other branches that also crawl it. Adding it
+  // must not fail the job against a main report that never visited it.
+  '/admin',
 ];
 
 const CHECKER_SRC = `(function runContrastAudit() {

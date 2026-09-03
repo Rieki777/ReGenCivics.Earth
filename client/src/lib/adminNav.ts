@@ -157,13 +157,30 @@ export function writeAdminContinueFromTab(tab: string): void {
   if (item) writeAdminContinue(item);
 }
 
-export function adminTabHref(tab: string, extras?: { type?: string; open?: string }): string {
+export type AdminHrefExtras = {
+  type?: string;
+  open?: string;
+  status?: string;
+  view?: string;
+};
+
+export function adminTabHref(tab: string, extras?: AdminHrefExtras): string {
   const item = navItemById(tab);
   if (item?.route) return item.route;
   const q = new URLSearchParams();
   if (tab !== "overview") q.set("tab", tab);
   if (extras?.type) q.set("type", extras.type);
   if (extras?.open) q.set("open", extras.open);
+  if (extras?.status) q.set("status", extras.status);
+  if (extras?.view) q.set("view", extras.view);
   const qs = q.toString();
   return qs ? `/admin?${qs}` : "/admin";
+}
+
+export function applicationHref(id: number | string, status?: string): string {
+  return adminTabHref("applications", {
+    open: String(id),
+    ...(status ? { status } : {}),
+    view: "reviews",
+  });
 }

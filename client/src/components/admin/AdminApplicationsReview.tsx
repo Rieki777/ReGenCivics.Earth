@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye, Mail, Search } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
-import { useLocation } from "wouter";
 import { ApplicantStatusEmailDialog } from "@/components/admin/ApplicantStatusEmailDialog";
+import { AdminApplicationReviewForm } from "@/components/admin/AdminApplicationReviewForm";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
@@ -59,11 +60,21 @@ function statusFromSearch(): keyof typeof STATUS_CONFIG | null {
   return null;
 }
 
-export function AdminApplicationsReview() {
-  const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<keyof typeof STATUS_CONFIG>(
-    () => statusFromSearch() || "submitted",
-  );
+export function AdminApplicationsReview({
+  openId,
+  onOpenIdChange,
+  status,
+  onStatusChange,
+}: {
+  openId?: number | null;
+  onOpenIdChange?: (id: number | null) => void;
+  status?: string | null;
+  onStatusChange?: (status: string | null) => void;
+} = {}) {
+  const initialStatus = (status && status in STATUS_CONFIG
+    ? status
+    : statusFromSearch() || "submitted") as keyof typeof STATUS_CONFIG;
+  const [activeTab, setActiveTab] = useState<keyof typeof STATUS_CONFIG>(initialStatus);
   const autoPicked = useRef(Boolean(statusFromSearch()));
   const [emailOpen, setEmailOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -81,14 +92,14 @@ export function AdminApplicationsReview() {
     ) || {};
 
   useEffect(() => {
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("status", activeTab);
-      window.history.replaceState({}, "", url.pathname + url.search);
-    } catch {
-      /* history unavailable */
+    onStatusChange?.(activeTab);
+  }, [activeTab, onStatusChange]);
+
+  useEffect(() => {
+    if (status && status in STATUS_CONFIG && status !== activeTab) {
+      setActiveTab(status as keyof typeof STATUS_CONFIG);
     }
-  }, [activeTab]);
+  }, [status]);
 
   useEffect(() => {
     if (autoPicked.current || !applications) return;
@@ -124,7 +135,7 @@ export function AdminApplicationsReview() {
     return (
       <Card
         className="p-4 md:p-6 bg-white hover:shadow-lg transition-shadow cursor-pointer"
-        onClick={() => navigate(`/admin/application/${app.id}`)}
+        onClick={() => onOpenIdChange?.(app.id)}
       >
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -163,7 +174,7 @@ export function AdminApplicationsReview() {
             className="border-[#7dd87d] text-[#4a7c59] w-full md:w-auto md:ml-4 min-h-11"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/admin/application/${app.id}`);
+              onOpenIdChange?.(app.id);
             }}
           >
             <Eye className="w-4 h-4 mr-2" />
@@ -275,6 +286,30 @@ export function AdminApplicationsReview() {
         statusLabel={STATUS_CONFIG[activeTab].label}
         applicationCount={statusCounts[activeTab] || 0}
       />
+      <Sheet open={Boolean(openId)} onOpenChange={(open) => { if (!open) onOpenIdChange?.(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto bg-[#f8f5f0] text-[#1a472a]">
+          {(() => {
+            const app = applications?.find((a) => a.id === openId);
+            if (!app) {
+              return <p className="p-6 text-sm text-[#1a472a]">Application not in this list.</p>;
+            }
+            return (
+              <>
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-[#1a472a]">{app.projectName}</SheetTitle>
+                  <SheetDescription className="text-[#1a472a]/80">
+                    {app.location} · {app.projectType?.replace("_", " ")}
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="px-1 pt-4 space-y-4">
+                  {app.vision && <p className="text-sm text-[#1a472a] whitespace-pre-wrap">{app.vision}</p>}
+                  <AdminApplicationReviewForm applicationId={app.id} />
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
