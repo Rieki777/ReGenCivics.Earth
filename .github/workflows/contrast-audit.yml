@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # pnpm must be installed before setup-node so the pnpm cache resolves.
       # Version comes from packageManager in package.json (audit Phase 1 fix:
@@ -67,7 +67,7 @@ jobs:
         run: node scripts/contrast-audit.mjs --no-fail --baseUrl=http://localhost:4173 --out=audits/contrast-report-pr.json
 
       - name: Checkout main for baseline
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: main-checkout
