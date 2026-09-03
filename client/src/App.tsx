@@ -335,8 +335,8 @@ function Router() {
       <Route path={"/apply/success"}><EB><ApplySuccess /></EB></Route>
       <Route path={"/apply/status"}><EB><ApplyStatus /></EB></Route>
       <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>
-      <Route path={"/admin/applications"}><EB><AdminLocked><AdminApplications /></AdminLocked></EB></Route>
-      <Route path={"/admin/application/:id"}><EB><AdminLocked><AdminApplicationDetail /></AdminLocked></EB></Route>
+      <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
+      <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
       <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
       <Route path={"/investor/contact"}><EB><InvestorContact /></EB></Route>
       <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
