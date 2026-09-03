@@ -41,27 +41,13 @@ export function AnimationLayer() {
   useGlobalMagnetic();
   useGlobalRipple();
 
-  // Re-run ink-reveal and blur-up on route changes
+  // Re-run blur-up on route changes. Ink reveal handles late-mounted elements
+  // itself via the MutationObserver in useInkReveal, so it is not repeated
+  // here; a per-navigation IntersectionObserver was also never disconnected.
   useEffect(() => {
     const onRouteChange = () => {
-      // Re-observe newly mounted .ink-reveal elements after a tick
       window.setTimeout(() => {
-        const els = document.querySelectorAll<HTMLElement>(".ink-reveal:not(.ink-reveal-on)");
-        if (els.length === 0) return;
-        if (typeof IntersectionObserver === "undefined") return;
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (entry.isIntersecting) {
-                entry.target.classList.add("ink-reveal-on");
-                io.unobserve(entry.target);
-              }
-            }
-          },
-          { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
-        );
-        els.forEach((el) => io.observe(el));
-        // Also re-flip blur-up images that have loaded
+        // Re-flip blur-up images that have loaded
         const imgs = document.querySelectorAll<HTMLImageElement>("img.blur-up:not(.blur-up-loaded)");
         imgs.forEach((img) => {
           if (img.complete && img.naturalWidth > 0) img.classList.add("blur-up-loaded");

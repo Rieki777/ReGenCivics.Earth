@@ -115,11 +115,18 @@ export function useRipple() {
 
 export function useInkReveal() {
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (prefersReducedMotion()) return;
-    if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
 
-    const els = Array.from(document.querySelectorAll<HTMLElement>(".ink-reveal"));
-    if (els.length === 0) return;
+    const scan = () =>
+      Array.from(document.querySelectorAll<HTMLElement>(".ink-reveal:not(.ink-reveal-on)"));
+
+    // No IntersectionObserver means no way to time the brush-in, and the mask
+    // in index.css hides the text until .ink-reveal-on lands. Show it instead.
+    if (!("IntersectionObserver" in window)) {
+      scan().forEach((el) => el.classList.add("ink-reveal-on"));
+      return;
+    }
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -132,8 +139,27 @@ export function useInkReveal() {
       },
       { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
     );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    const observeAll = () => scan().forEach((el) => io.observe(el));
+    observeAll();
+
+    // Hero pages hold their content behind HeroPageLoader for up to 3s, and
+    // route changes swap the whole tree, so most .ink-reveal elements mount
+    // long after this effect runs. Watch for them instead of scanning once.
+    let queued = false;
+    const mo = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      window.setTimeout(() => {
+        queued = false;
+        observeAll();
+      }, 100);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mo.disconnect();
+      io.disconnect();
+    };
   }, []);
 }
 
