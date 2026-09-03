@@ -6,6 +6,7 @@ import { validateCSRFToken } from "./security";
 import { ENV } from "./env";
 import { isCacheAvailable, redisRateLimit } from "../cache";
 import { getBountyPermission } from "../db/bounties";
+import { isAdminRole } from "@shared/adminRole";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -118,7 +119,7 @@ export const adminProcedure = t.procedure.use(csrfProtection).use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || (ctx.user.role !== 'admin' && ctx.user.role !== 'superadmin')) {
+    if (!ctx.user || !isAdminRole(ctx.user.role)) {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 

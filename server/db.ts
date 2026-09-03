@@ -5,7 +5,7 @@ import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
 import { applications, InsertUser, playerProfiles, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignUpdates, CampaignUpdate, campaignFollowers, InsertCampaignFollower, userFollows, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, forumPostTags, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { emailGrantsAdmin } from "@shared/adminRole";
+import { emailGrantsAdmin, isAdminRole, shouldWriteAdminOnUpsert } from "@shared/adminRole";
 
 // Moved to server/db/_shared.ts so the extracted domain modules can use it
 // too. Imported (not re-exported) because it stays internal to server/db/.
@@ -69,15 +69,27 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.lastSignedIn = user.lastSignedIn;
       updateSet.lastSignedIn = user.lastSignedIn;
     }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId || emailGrantsAdmin(user.email)) {
-      const [existing] = await db.select({ role: users.role }).from(users).where(eq(users.openId, user.openId)).limit(1);
-      if (!existing || existing.role === "user") {
+    const mightPromote = user.openId === ENV.ownerOpenId || emailGrantsAdmin(user.email);
+    if (mightPromote) {
+      const [existingForRole] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.openId, user.openId))
+        .limit(1);
+      if (
+        shouldWriteAdminOnUpsert({
+          existingRole: existingForRole?.role,
+          email: user.email,
+          openId: user.openId,
+          ownerOpenId: ENV.ownerOpenId,
+        })
+      ) {
         values.role = "admin";
         updateSet.role = "admin";
       }
+    } else if (user.role !== undefined && !isAdminRole(user.role)) {
+      values.role = user.role;
+      updateSet.role = user.role;
     }
 
     if (!values.lastSignedIn) {

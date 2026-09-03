@@ -1,3 +1,4 @@
+import { normalizeReturnTo } from "@shared/oauthReturnTo";
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 /**
@@ -20,7 +21,7 @@ function withReturnTo(base: string, returnTo?: string | null): string {
 
 function resolveReturnTo(returnTo?: string | null): string | null {
   if (returnTo === null) return null;
-  if (typeof returnTo === "string") return stripErrorParams(returnTo);
+  if (typeof returnTo === "string") return normalizeReturnTo(stripErrorParams(returnTo));
   if (typeof window === "undefined") return null;
   const url = new URL(window.location.href);
   // Strip transient error params before encoding into the OAuth state.
@@ -32,7 +33,7 @@ function resolveReturnTo(returnTo?: string | null): string | null {
   url.searchParams.delete("auth_failed");
   const path = url.pathname + url.search;
   if (!path || path === "/" || path.startsWith("/login")) return null;
-  return path;
+  return normalizeReturnTo(path);
 }
 
 /**

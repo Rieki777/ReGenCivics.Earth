@@ -25,3 +25,18 @@ export function emailGrantsAdmin(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   return (FOUNDER_ADMIN_EMAILS as readonly string[]).includes(normalized);
 }
+
+/**
+ * Whether a sign-in upsert should write role=admin.
+ * Superadmin and admin are left alone. A payload role is never trusted here.
+ */
+export function shouldWriteAdminOnUpsert(args: {
+  existingRole?: string | null;
+  email?: string | null;
+  openId?: string | null;
+  ownerOpenId?: string | null;
+}): boolean {
+  if (isAdminRole(args.existingRole)) return false;
+  const ownerHit = Boolean(args.openId && args.ownerOpenId && args.openId === args.ownerOpenId);
+  return ownerHit || emailGrantsAdmin(args.email);
+}

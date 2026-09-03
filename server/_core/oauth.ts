@@ -9,6 +9,7 @@ import { ENV } from "./env";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email";
 import { linkPendingMembersByEmail } from "../routes/roleHolders";
+import { normalizeReturnTo } from "@shared/oauthReturnTo";
 
 /**
  * Fire-and-forget: link any crowdpool contributions someone made anonymously
@@ -88,29 +89,6 @@ Lead with the status: the fund is in formation and the terms are a proposal, not
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
-}
-
-/**
- * Only accept same-origin relative paths as return targets. Everything else
- * (absolute URLs, protocol-relative URLs, schemes) is dropped silently so a
- * malicious state param can't redirect the player off-site after login.
- */
-function normalizeReturnTo(raw: string | undefined | null): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (!trimmed.startsWith("/")) return null;
-  if (trimmed.startsWith("//")) return null; // protocol-relative
-  if (trimmed.startsWith("/\\")) return null; // some browsers normalize to protocol-relative
-  if (/[\r\n\t]/.test(trimmed)) return null;
-  // Defense against the OAuth state error-recycle loop: a returnTo that
-  // contains `error=auth_failed` (or similar) usually means the user clicked
-  // Sign In while sitting on an error page from a previous failed attempt.
-  // Honoring it would bounce them BACK to the error page after OAuth
-  // succeeds, making the new login look broken. Drop these and fall through
-  // to the post-OAuth default ("/"). Client also strips this in
-  // resolveReturnTo, but we belt-and-suspender it here for safety.
-  if (/[?&](error|auth_failed)=/i.test(trimmed)) return null;
-  return trimmed;
 }
 
 // ─── Signed OAuth state (login-CSRF binding) ─────────────────────────────────

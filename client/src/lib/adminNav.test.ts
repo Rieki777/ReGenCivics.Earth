@@ -59,6 +59,30 @@ describe("admin nav", () => {
     );
   });
 
+  it("encodes hostile extras so they cannot escape /admin", () => {
+    const href = applicationHref("44/../../funding", "submitted&view=hack");
+    expect(href.startsWith("/admin?")).toBe(true);
+    expect(href).not.toContain("/funding");
+    expect(href).not.toMatch(/status=submitted&view=hack/);
+    const url = new URL(href, "https://regencivics.earth");
+    expect(url.pathname).toBe("/admin");
+    expect(url.searchParams.get("open")).toBe("44/../../funding");
+    expect(url.searchParams.get("status")).toBe("submitted&view=hack");
+    expect(url.searchParams.get("view")).toBe("reviews");
+  });
+
+  it("does not turn a javascript or off-site status into a new destination", () => {
+    const href = adminTabHref("applications", {
+      open: "1",
+      status: "javascript:alert(1)",
+      view: "https://evil.example",
+    });
+    const url = new URL(href, "https://regencivics.earth");
+    expect(url.origin).toBe("https://regencivics.earth");
+    expect(url.pathname).toBe("/admin");
+    expect(url.searchParams.get("status")).toBe("javascript:alert(1)");
+  });
+
   it("remembers the last non-overview section for Continue", () => {
     localStorage.removeItem(ADMIN_CONTINUE_KEY);
     writeAdminContinueFromTab("overview");
