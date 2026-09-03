@@ -651,7 +651,7 @@ export default function Fund() {
           <AnimatedSection animation="fade-in">
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-amber-400/20">
               <ViewportTriggeredVideo
-                src={cdnImg("https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4")}
+                src={"https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4"}
                 className="w-full h-auto"
               />
             </div>

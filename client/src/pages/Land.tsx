@@ -712,7 +712,7 @@ export default function Land() {
           <AnimatedSection animation="fade-in">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-[#7dd87d]/20">
               <ViewportTriggeredVideo
-                src={cdnImg("https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4")}
+                src={"https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4"}
                 ariaLabel="Regenerative landscape transformation"
                 className="w-full aspect-video object-cover"
               />
@@ -932,7 +932,7 @@ export default function Land() {
           <AnimatedSection animation="scale-in" delay={200}>
             <div className="mb-8 rounded-2xl overflow-hidden border-4 border-[#4a7c59]/60 shadow-2xl">
               <video
-                src={cdnImg("https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4")}
+                src={"https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4"}
                 autoPlay
                 loop
                 muted

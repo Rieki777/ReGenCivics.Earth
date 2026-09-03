@@ -559,7 +559,7 @@ export default function Game() {
                 </div>
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-[#7dd87d]/30">
                   <ViewportTriggeredVideo
-                    src={cdnImg("https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4")}
+                    src={"https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4"}
                     className="w-full h-auto"
                   />
                 </div>
@@ -573,7 +573,7 @@ export default function Game() {
                 </div>
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400/30">
                   <ViewportTriggeredVideo
-                    src={cdnImg("https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4")}
+                    src={"https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4"}
                     className="w-full h-auto"
                   />
                 </div>

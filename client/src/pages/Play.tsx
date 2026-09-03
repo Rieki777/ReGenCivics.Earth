@@ -308,7 +308,7 @@ function QuestAnimationVideo() {
             ) : (
               <video
                 ref={videoRef}
-                src={cdnImg("https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4")}
+                src={"https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4"}
                 loop
                 muted
                 playsInline
