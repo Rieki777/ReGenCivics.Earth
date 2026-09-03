@@ -98,6 +98,25 @@ describe("Season2 page", () => {
     expect(body()).toMatch(/earmark investment through the ReGen Civics Fund/i);
   });
 
+  it("names ReGen Civics as the body, with land projects as the first organs", () => {
+    expect(body()).toMatch(/ReGen Civics is the body we're building/i);
+    expect(body()).toMatch(/Thirteen land projects are not the body on their own/i);
+    expect(body()).toMatch(/other organs in the same body, and we grow\s+those in a future season/i);
+    expect(body()).toMatch(/Today we start with land/i);
+    // The cohort was never the body. This claim was wrong and must not return.
+    expect(body()).not.toMatch(/projects presenting themselves as a network[\s\S]{0,40}is a body/i);
+  });
+
+  it("offers travel paths across the network", () => {
+    expect(screen.getByRole("heading", { name: /Travel Paths Across the Network/i })).toBeTruthy();
+    expect(body()).toMatch(/see the\s+world and stay among their own the whole way/i);
+  });
+
+  it("links the live campaigns page from the crowdpooling story", () => {
+    const link = screen.getByRole("link", { name: /Browse live campaigns/i });
+    expect(link.getAttribute("href")).toBe("/campaigns");
+  });
+
   it("selects for range across maturity levels rather than ranking applicants", () => {
     expect(body()).toMatch(/different maturity levels/i);
     // An earlier-stage project is a real candidate, never "behind".

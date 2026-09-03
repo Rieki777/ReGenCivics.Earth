@@ -14,6 +14,13 @@
  *    happen. We want all 13.
  *  - Crowdpooling is the second filter. The public decides what to pool into.
  *  - Graduated + pooled projects are the foundation of the index fund.
+ *  - ORGAN METAPHOR, exact shape: ReGen Civics is the BODY. Land projects are
+ *    the first organs, grown this season. The alliance of organizations that
+ *    support land projects are OTHER organs, grown in a FUTURE season. Thirteen
+ *    land projects are not themselves the body. Do not restate this as
+ *    "the cohort is a body"; that was wrong and was corrected 2026-09-02.
+ *  - Networking the projects creates travel paths between them: members can
+ *    see the world and stay inside the network.
  * Say "play" and "game", never "caliber". Never imply an early-stage project
  * is competing from behind; it is a real candidate.
  *
@@ -56,6 +63,7 @@ import {
   Sparkles,
   Users,
   Rocket,
+  Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -457,6 +465,11 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
     body: "Access to the full ReGen Civics alliance: Global Ecovillage Network, Foundation for Intentional Communities, SEEDS, Hypha, Universe Land Trust, and dozens of other regenerative organizations and tools.",
   },
   {
+    icon: Route,
+    title: "Travel Paths Across the Network",
+    body: "Networking the projects together creates paths between them. Members can travel, stay, and work at other projects in the alliance, so your people can see the world and stay among their own network the whole way.",
+  },
+  {
     icon: UnlockIcon,
     title: "Open Source Everything",
     body: "Every tool, template, and framework built during the season gets open-sourced. Your work becomes infrastructure for every project that comes after you.",
@@ -678,8 +691,8 @@ export default function Season2() {
             Getting selected puts you in the season. Graduating puts you in the
             shared launch. What the world pools into is what becomes the
             foundation of the fund. An investor backing one land project on its own
-            is backing a single organ, and the network is what makes each project
-            investable.
+            is backing a single organ, and the network around it is what makes that
+            project investable.
           </p>
         </div>
       </AnimatedSection>
@@ -1113,13 +1126,23 @@ export default function Season2() {
             </div>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/crowd-pooling">
               <Button
                 size="lg"
                 className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
               >
                 See how crowdpooling works
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/campaigns">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl px-8 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                Browse live campaigns
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -1220,16 +1243,27 @@ export default function Season2() {
 
             <blockquote className="border-l-2 border-[#7dd87d] bg-[#7dd87d]/8 rounded-r-lg pl-6 pr-5 py-5 my-2">
               <p className="italic text-[#a8e6a8] text-xl leading-relaxed" style={display}>
-                "One project presenting itself alone is an organ. Thirteen
-                projects presenting themselves as a network, each with the systems
-                to work and a public that already backed them, is a body."
+                "ReGen Civics is the body we're building. Season Two grows its
+                first organs, and those are land projects."
               </p>
             </blockquote>
 
             <p>
+              Thirteen land projects are not the body on their own. They are the
+              first organs, and Season Two is where they get connected, fed, and
+              playing their roles together. The alliance of organizations that
+              support land projects are other organs in the same body, and we grow
+              those in a future season. Today we start with land.
+            </p>
+            <p>
               Every project in the cohort becomes a more investable vehicle by
               being part of the network. That is the whole point of doing this
               together.
+            </p>
+            <p>
+              Connecting the projects also creates paths between them. Members
+              travel, stay, and work across the network, so your people can see the
+              world and stay among their own the whole way.
             </p>
             <p>
               ReGen Civics is building the index fund for the ReGenerative
