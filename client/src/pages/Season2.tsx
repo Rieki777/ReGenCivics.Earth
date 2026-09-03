@@ -1,6 +1,22 @@
 /**
  * Season Two: public invitation / landing page (/season2)
  *
+ * 2026-09 remake. The page now leads with the season arc rather than a
+ * remedial "fix your project" frame:
+ *   Selected -> Built -> Graduated -> Pooled and funded
+ * Load-bearing intentions this page has to carry (Rye, 2026-09-02):
+ *  - Showcase framing. We invite the strongest plays, and we select for RANGE:
+ *    different maturity levels, scales, and approaches to regeneration.
+ *  - Mutual qualification. Thirteen teams hold each other to the standard the
+ *    public will apply at launch.
+ *  - The graduation gate is at the END of the season, not per roadmap step.
+ *    At least 9 projects must graduate for the shared crowdpooling launch to
+ *    happen. We want all 13.
+ *  - Crowdpooling is the second filter. The public decides what to pool into.
+ *  - Graduated + pooled projects are the foundation of the index fund.
+ * Say "play" and "game", never "caliber". Never imply an early-stage project
+ * is competing from behind; it is a real candidate.
+ *
  * Reskinned from the Season Two invitation concept into the ReGen Civics
  * design system: forest-green palette, Quicksand/Nunito type, lucide icons,
  * AnimatedSection reveals, ReadableScrim over the hero image, glass panels.
@@ -38,6 +54,8 @@ import {
   Clock,
   CheckCircle2,
   Sparkles,
+  Users,
+  Rocket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -220,17 +238,17 @@ const ENCOURAGED_ITEMS = [
 function readinessMessage(req: number): { headline: string; body: string } {
   if (req === REQUIRED_ITEMS.length)
     return {
-      headline: "Your project is ready for this season.",
-      body: "Get your application in early. Shortlisting is rolling, and applying sooner gives you more time to prepare your pitch video.",
+      headline: "Your play is ready to go live.",
+      body: "You have everything the season builds on. Get your application in early. Shortlisting is rolling, and applying sooner gives you more time on your pitch video.",
     };
   if (req >= 3)
     return {
-      headline: "You're close.",
-      body: "Most of the baseline is in place, and the season itself is designed to help you build the rest. Apply now and keep growing the missing pieces.",
+      headline: "Your play is taking shape.",
+      body: "You have most of what the season builds on, and the accelerator covers the rest. We select across maturity levels on purpose, so a project at your stage is a real candidate. Apply and tell us what you are still putting in place.",
     };
   return {
-    headline: "Early is welcome here.",
-    body: "Passion and a real team count for more than polish. Apply at the stage you're actually at, and tell us where you're headed.",
+    headline: "Early plays get selected too.",
+    body: "We build each cohort across stages and scales, so an early project with a real team and a clear game can win a seat next to a project that has been building for a decade. Apply at the stage you're actually at and tell us where you're headed.",
   };
 }
 
@@ -362,8 +380,8 @@ const STEPS: { n: string; title: string; body: string }[] = [
   },
   {
     n: "05",
-    title: "Co-create your Crowdpooling event",
-    body: "Crowdpooling gathers all 9+ forms of capital: land, equipment, expertise, labor, relationships, knowledge. Design contribution tiers, acknowledgment systems, and thresholds, then launch to the world together.",
+    title: "Co-create your crowdpooling campaign",
+    body: "Crowdpooling gathers all nine forms of capital: money, land, equipment, expertise, labor, relationships, knowledge, and more. Design your contribution tiers, acknowledgment systems, and thresholds. Every graduating project launches in one shared campaign, so the whole cohort goes to the world at once.",
   },
   {
     n: "06",
@@ -372,8 +390,8 @@ const STEPS: { n: string; title: string; body: string }[] = [
   },
   {
     n: "07",
-    title: "Graduate into member status and keep going",
-    body: "Projects that complete the season move into alliance member status. You keep co-creating and coordinating as the next cohort of thirteen projects comes through. Everything you built gets templated and open-sourced.",
+    title: "Graduate, then keep playing",
+    body: "Projects that finish the season with everything they need graduate into alliance member status and into the shared crowdpooling launch. You keep co-creating and coordinating as the next cohort comes through, and everything you built gets templated and open-sourced.",
   },
 ];
 
@@ -456,7 +474,7 @@ const SELECTION: {
 }[] = [
   {
     title: "Apply by September 11th",
-    body: "Applications close September 11th. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
+    body: "Applications close September 11th. Every project that applies is taken seriously regardless of scale, geography, or stage. Season One took 13 projects out of the 46 that applied. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
   },
   {
     title: "Shortlisted projects make a pitch video",
@@ -465,12 +483,44 @@ const SELECTION: {
   },
   {
     title: "The season council selects 13 on the Equinox",
-    body: "Season Two opens on the Equinox with a selection day held in public. A season council, made up of members from previous seasons' projects, chooses the thirteen projects for the season. As the alliance grows, the wider community takes on more of this choice each season.",
+    body: "Season Two opens on the Equinox with a selection day held in public. A season council, made up of members from previous seasons' projects, chooses the thirteen. These are operators who have played the season themselves, and they are choosing the projects they will be co-invested with. They build each cohort for range: different maturity levels, different scales, different approaches to regeneration. As the alliance grows, the wider community takes on more of this choice each season.",
   },
   {
     title: "The season opens",
     body: "The thirteen selected projects are introduced in a recording that kicks off the season, used for the crowdpooling campaigns and to get word out about what's about to be built.",
-    cta: { href: "/crowd-pooling", label: "See our crowdpooling page" },
+  },
+  {
+    title: "Graduating projects go live together",
+    body: "At the end of the season, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. From there the world decides which projects to pool into.",
+    cta: { href: "/crowd-pooling", label: "See how crowdpooling works" },
+  },
+];
+
+// ─── The season arc: what happens to a project that gets in ─────────────
+const ARC: { n: string; icon: React.ElementType; title: string; body: string }[] = [
+  {
+    n: "01",
+    icon: Sparkles,
+    title: "Selected",
+    body: "A season council of players from past seasons picks thirteen projects on the Equinox, built for range across maturity, scale, and approach to regeneration.",
+  },
+  {
+    n: "02",
+    icon: Users,
+    title: "Built",
+    body: "Thirteen teams design their governance, legal, economic, and financial models together, reviewing each other's work against the standard an investor will actually apply.",
+  },
+  {
+    n: "03",
+    icon: Rocket,
+    title: "Graduated",
+    body: "After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and we want all thirteen.",
+  },
+  {
+    n: "04",
+    icon: Coins,
+    title: "Pooled and funded",
+    body: "The world decides which projects to pool their money, land, equipment, and labor into. What comes through becomes the foundation of the index fund.",
   },
 ];
 
@@ -504,8 +554,8 @@ export default function Season2() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
-        title="Season Two: Apply to the ReGen Civics Incubator"
-        description="Season Two opens thirteen seats for regenerative land projects. Design the governance, economic, legal, and financial systems that let your project actually work, alongside an alliance building it in public."
+        title="Season Two: Show Us Your Play in the Infinite Game"
+        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort into one shared crowdpooling campaign. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance."
         image="/og/season2.jpg"
       />
 
@@ -528,7 +578,7 @@ export default function Season2() {
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 backdrop-blur-sm px-4 py-2 rounded-full mb-8 border border-[#7dd87d]/30">
             <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
             <span className="text-white/90 text-sm font-medium tracking-wide">
-              Season Two · 13 seats open · begins September 2026
+              Season Two · 13 seats · selected on the Equinox
             </span>
           </div>
 
@@ -537,13 +587,16 @@ export default function Season2() {
               className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6"
               style={display}
             >
-              Help your land project answer the questions it can't afford to{" "}
-              <span className="italic text-[#7dd87d]">ignore.</span>
+              Thirteen of the strongest plays in the{" "}
+              <span className="italic text-[#7dd87d]">Infinite Game.</span>
             </h1>
             <p className="text-lg md:text-xl text-white/85 leading-relaxed max-w-2xl mx-auto">
-              An alliance of global organizations running an incubator for
-              regenerative land projects. We help each one build the governance,
-              economic, and legal systems to actually work.
+              Season Two selects thirteen regenerative land projects across every
+              stage, scale, and approach to regeneration. We build your models
+              together, then launch the whole cohort into one shared crowdpooling
+              campaign where the world decides what to pool into. Projects that
+              graduate become the foundation of the index fund for the
+              ReGenerative Renaissance.
             </p>
           </ReadableScrim>
 
@@ -557,13 +610,13 @@ export default function Season2() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <a href="#what">
+            <a href="#arc">
               <Button
                 size="lg"
                 variant="outline"
                 className="rounded-xl px-8 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
               >
-                Learn what this is
+                See how the season works
               </Button>
             </a>
           </div>
@@ -574,13 +627,62 @@ export default function Season2() {
         </AnimatedSection>
 
         <a
-          href="#what"
+          href="#arc"
           aria-label="Scroll to learn more"
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[#7dd87d]/50 hover:text-[#7dd87d] transition-colors"
         >
           <ChevronDown className="w-6 h-6 animate-bounce" />
         </a>
       </section>
+
+      {/* -- THE SEASON ARC: selected, built, graduated, pooled and funded -- */}
+      <AnimatedSection as="section" animation="slide-up" id="arc" className="py-16 md:py-24 px-4 bg-[#0d2818]/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4 text-center">
+            How a season works
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5 text-center" style={display}>
+            Selected, built, <span className="italic text-[#a8e6a8]">then proven in public</span>
+          </h2>
+          <p className="text-white/75 text-lg leading-relaxed mb-12 max-w-2xl mx-auto text-center">
+            A season council picks the thirteen. The world decides what happens
+            next.
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {ARC.map((a) => {
+              const Icon = a.icon;
+              return (
+                <div
+                  key={a.n}
+                  className="relative p-6 rounded-2xl border border-[#7dd87d]/20 bg-[#0d2818]/60 hover:border-[#7dd87d]/45 transition-colors"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-4 right-5 text-3xl font-bold text-[#7dd87d]/15 leading-none"
+                    style={display}
+                  >
+                    {a.n}
+                  </span>
+                  <Icon className="w-7 h-7 text-[#7dd87d] mb-4" />
+                  <h3 className="text-white font-bold text-lg mb-2" style={display}>
+                    {a.title}
+                  </h3>
+                  <p className="text-white/70 text-sm leading-relaxed">{a.body}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mt-10 text-center text-white/75 leading-relaxed max-w-2xl mx-auto">
+            Getting selected puts you in the season. Graduating puts you in the
+            shared launch. What the world pools into is what becomes the
+            foundation of the fund. An investor backing one land project on its own
+            is backing a single organ, and the network is what makes each project
+            investable.
+          </p>
+        </div>
+      </AnimatedSection>
 
       <Season2Calendar />
 
@@ -680,7 +782,7 @@ export default function Season2() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
         <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
           <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
-            A movement to prototype something better, thirteen projects at a time.
+            A movement to prototype something better, thirteen plays at a time.
           </p>
         </figcaption>
       </figure>
@@ -692,21 +794,41 @@ export default function Season2() {
             The incubation roadmap
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
-            Seven steps, <span className="italic text-[#a8e6a8]">one season</span>
+            Seven steps, thirteen weeks,{" "}
+            <span className="italic text-[#a8e6a8]">thirteen projects</span>
           </h2>
           <p className="text-white/75 text-lg leading-relaxed mb-4">
             Each season follows a living roadmap, updated as we learn. Weekly
             sessions move through three patterns: we explain the next step, teams
-            work on it, then each project showcases where they're at. Once nine
-            projects have finalized their models for a given step, the whole
-            cohort moves forward together.
+            work on it, then each project showcases where they're at and the other
+            twelve review it. The season ends when the cohort is ready to go out
+            together. At least nine projects need to graduate with everything they
+            need before the shared crowdpooling campaign launches, and we want all
+            thirteen.
           </p>
-          <p className="inline-flex items-center gap-2 text-[#7dd87d] text-sm font-medium mb-8">
-            <Clock className="w-4 h-4" />
-            Plan for one live weekly session, plus a few to many more hours of
-            project work between sessions depending on how prepared and advanced
-            your team and project already are.
+          <p className="inline-flex items-start gap-2 text-[#7dd87d] text-sm font-medium mb-8">
+            <Clock className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Thirteen weekly sessions, September 26 through December 19. Plan for
+              one live session a week, plus a few to many more hours of project
+              work between sessions depending on how prepared and advanced your
+              team and project already are.
+            </span>
           </p>
+
+          <div className="mb-10 p-6 md:p-7 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/22">
+            <h3 className="text-white font-semibold text-lg mb-1.5" style={display}>
+              Not every project graduates
+            </h3>
+            <p className="text-white/75 leading-relaxed">
+              Thirteen weeks is enough to get a project ready to go live, and some
+              teams will need longer. Everyone who plays the season comes out with
+              more maturity and clarity than they came in with, real progress
+              toward their vision and goals, and twelve other teams who know their
+              project well. Projects that need another season keep going with the
+              alliance.
+            </p>
+          </div>
 
           <div className="mb-10">
             <Link href="/schedule">
@@ -814,10 +936,14 @@ export default function Season2() {
             together
           </h2>
           <p className="text-white/75 text-lg leading-relaxed mb-10 max-w-2xl">
-            Season Two is open to a wide range of projects. What matters is that
-            you're building with other people, on or with the land, and you're
-            ready to design the systems that make it work. Projects of every scale
-            are welcome.
+            We select for a strong play, at every stage and scale. A two-acre
+            food commons and a bioregional DAO coordinating a whole watershed can
+            both be a strong play. What earns a seat is a real team, land or
+            assets you're working with, and a game that meets the needs of the
+            people who play it in a powerful way. We build each cohort for range
+            on purpose, because thirteen projects at different maturity levels
+            taking different approaches to regeneration teach each other more than
+            thirteen of the same.
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -894,12 +1020,13 @@ export default function Season2() {
             What we're looking for
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
-            What to bring <span className="italic text-[#a8e6a8]">when you apply</span>
+            What makes a <span className="italic text-[#a8e6a8]">strong play</span>
           </h2>
           <p className="text-white/75 text-lg leading-relaxed mb-8">
             An honest look at what we're looking for in Season Two. You don't need
-            to finish all of this before applying. Apply at whatever stage you're
-            actually at. Tap what you already have and see where you stand.
+            to finish all of this before applying, and we select across maturity
+            levels on purpose. Tap what you already have and see where your play
+            stands.
           </p>
 
           <figure className="relative mb-10 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
@@ -918,10 +1045,84 @@ export default function Season2() {
           <ReadinessCheck />
 
           <div className="mt-10 p-6 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/20 text-white/75 leading-relaxed">
-            <strong className="text-white font-semibold">A note on scale:</strong>{" "}
+            <strong className="text-white font-semibold">A note on range:</strong>{" "}
             We look for regenerative diversity across housing, food, wellbeing, and
-            more. A small garden with clear purpose and a real team can score
-            higher than a large project without a regenerative mindset.
+            more, and we build each cohort across maturity levels and scales. A
+            small garden with clear purpose and a real team can score higher than a
+            large project without a regenerative mindset.
+          </div>
+        </div>
+      </AnimatedSection>
+
+      {/* ── CROWDPOOLING: the second filter, decided in public ── */}
+      <AnimatedSection as="section" animation="slide-up" id="crowdpooling" className="py-20 md:py-28 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
+            The second filter
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+            The world decides which projects are{" "}
+            <span className="italic text-[#a8e6a8]">worth pooling into</span>
+          </h2>
+
+          <div className="space-y-6 text-white/75 text-lg leading-relaxed">
+            <p>
+              Getting selected puts you in the season. Crowdpooling is where
+              people decide what your project is worth to them.
+            </p>
+            <p>
+              Every project that graduates launches its campaign in one shared
+              event at the end of the season. People bring what they have: money,
+              land, equipment, tools, expertise, labor, relationships, time. All{" "}
+              <Link
+                href="/learn/nine-forms-of-capital"
+                className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2"
+              >
+                nine forms of capital
+              </Link>{" "}
+              count, so someone with a decade of building experience and no money
+              can contribute as meaningfully as an investor.
+            </p>
+            <p>
+              <strong className="text-white font-semibold">
+                A pool is hard to fake.
+              </strong>{" "}
+              A pitch can be polished in a week. Two hundred people putting real
+              value into your project is a market telling you the model works.
+              Projects that pool well finish the season with capital in hand, a
+              committed community, and a track record that an investor can read.
+            </p>
+          </div>
+
+          <div className="mt-8 p-6 md:p-7 rounded-xl bg-[#7dd87d]/10 border border-[#7dd87d]/30">
+            <div className="flex items-start gap-4">
+              <Rocket className="w-6 h-6 text-[#7dd87d] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold text-lg mb-1.5" style={display}>
+                  We go live together, or we wait
+                </h3>
+                <p className="text-white/75 leading-relaxed">
+                  The shared launch needs at least nine projects to graduate with
+                  everything they need. We want all thirteen, and not every project
+                  gets there in thirteen weeks. Going out as a cohort is what gives
+                  every project an audience larger than its own, and it is why the
+                  standard the cohort holds each other to matters to everyone in
+                  it.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <Link href="/crowd-pooling">
+              <Button
+                size="lg"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+              >
+                See how crowdpooling works
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </AnimatedSection>
@@ -996,6 +1197,116 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
+      {/* ── THE FUND: what the pooled cohort adds up to ── */}
+      <AnimatedSection as="section" animation="slide-up" id="fund" className="py-20 md:py-28 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
+            Why the standard matters
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+            The cohort becomes{" "}
+            <span className="italic text-[#a8e6a8]">the fund</span>
+          </h2>
+
+          <div className="space-y-6 text-white/75 text-lg leading-relaxed">
+            <p>
+              An investor putting money into a single land project is investing in
+              one organ and hoping it survives out in the world on its own. An
+              organ needs other organs. It needs circulation, a nervous system, a
+              way to get fed, and other parts around it playing their roles. This
+              is what the regenerative movement has been missing to become
+              investable.
+            </p>
+
+            <blockquote className="border-l-2 border-[#7dd87d] bg-[#7dd87d]/8 rounded-r-lg pl-6 pr-5 py-5 my-2">
+              <p className="italic text-[#a8e6a8] text-xl leading-relaxed" style={display}>
+                "One project presenting itself alone is an organ. Thirteen
+                projects presenting themselves as a network, each with the systems
+                to work and a public that already backed them, is a body."
+              </p>
+            </blockquote>
+
+            <p>
+              Every project in the cohort becomes a more investable vehicle by
+              being part of the network. That is the whole point of doing this
+              together.
+            </p>
+            <p>
+              ReGen Civics is building the index fund for the ReGenerative
+              Renaissance. The projects that graduate a season and pool real value
+              are its foundation. Each one swaps tokens with the alliance, so the
+              fund holds a piece of every project and every project holds a piece
+              of the fund.
+            </p>
+            <p>
+              That structure has one consequence:{" "}
+              <strong className="text-white font-semibold">
+                your project's strength is now everyone's, and everyone's is
+                yours.
+              </strong>{" "}
+              An investor buying into the alliance buys the whole cohort at once,
+              and every holding in it has already been chosen by a crowd that put
+              its own money, land, and labor on the line.
+            </p>
+            <p>
+              So the season runs as a mutual qualification. Thirteen teams put
+              their models in front of each other, review each other's numbers,
+              legal structures, and capital plans, and hold each other to the
+              standard the public will apply at launch. Everyone leaves with a
+              stronger play than they came in with. The cohort leaves able to
+              raise together.
+            </p>
+            <p>
+              We build each cohort for range on purpose. Thirteen projects at
+              different maturity levels, at different scales, taking different
+              approaches to regeneration, teach each other far more than thirteen
+              versions of the same project would, and they make a stronger
+              foundation to invest in.
+            </p>
+          </div>
+
+          <div className="mt-8 p-6 md:p-7 rounded-xl bg-[#7dd87d]/10 border border-[#7dd87d]/30">
+            <div className="flex items-start gap-4">
+              <Coins className="w-6 h-6 text-[#7dd87d] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold text-lg mb-1.5" style={display}>
+                  Your own investors can still back you
+                </h3>
+                <p className="text-white/75 leading-relaxed">
+                  You keep raising personal investment the way you always could.
+                  You can also earmark investment through the ReGen Civics Fund, so
+                  someone who wants to support your project specifically can do
+                  that and get exposure to a global basket of projects that all
+                  came through the same accelerator gauntlet. Your raise gets
+                  easier, because your investor stops betting on one organ.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/opportunity">
+              <Button
+                variant="outline"
+                className="rounded-xl px-6 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                Read the fund thesis
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/bionomics">
+              <Button
+                variant="outline"
+                className="rounded-xl px-6 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                See the economics behind it
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </AnimatedSection>
+
       {/* Cohort constellation — a band leading into how thirteen get chosen */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
         <img
@@ -1007,7 +1318,7 @@ export default function Season2() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
         <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
           <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
-            Thirteen projects. One season. One growing network.
+            Thirteen projects. One season. One shared launch.
           </p>
         </figcaption>
       </figure>
@@ -1329,7 +1640,7 @@ export default function Season2() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
         <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
           <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
-            There is a place in this for your project.
+            Bring your play.
           </p>
         </figcaption>
       </figure>
@@ -1351,10 +1662,10 @@ export default function Season2() {
               our last free-to-participate season, so this is a good one to be in.
             </FaqItem>
             <FaqItem q="How much time does the season take?">
-              Plan for one live weekly session across the season, plus a few to
-              many more hours of project work between sessions depending on how
-              prepared and advanced your team and project are. Projects move
-              forward together as a cohort.
+              Thirteen weeks. Thirteen live weekly sessions, September 26 through
+              December 19, plus a few to many more hours of project work between
+              sessions depending on how prepared and advanced your team and project
+              are. Projects move forward together as a cohort.
             </FaqItem>
             <FaqItem q="Do we need crypto or DAO experience?">
               No. We help you choose and set up your tooling (Hypha, Gardens,
@@ -1362,9 +1673,47 @@ export default function Season2() {
               is normal.
             </FaqItem>
             <FaqItem q="We're early-stage. Is it too soon to apply?">
-              Apply at whatever stage you're actually at. A small project with a
-              real team and clear purpose can be a strong fit. The required list is
-              the honest baseline we look for.
+              Apply at whatever stage you're actually at. We build each cohort
+              across maturity levels on purpose, so an early project with a real
+              team and a clear game can win a seat next to a project that has been
+              building for a decade. Range is part of what makes a cohort work. The
+              required list is the baseline we look for.
+            </FaqItem>
+            <FaqItem q="What is crowdpooling and when does it happen?">
+              Crowdpooling is how a project gathers all nine forms of capital at
+              once: money, land, equipment, tools, expertise, labor, relationships,
+              knowledge, and time. You design your campaign during the season, and
+              every project that graduates launches together in one shared event at
+              the end of it. From there the public decides which projects to pool
+              into.
+            </FaqItem>
+            <FaqItem q="What does it mean to graduate?">
+              A project graduates when it finishes the season with everything it
+              needs: governance, legal structure, economic model, financial plan,
+              and a crowdpooling campaign ready to run. The shared launch needs at
+              least nine projects to graduate, and we want all thirteen.
+              Graduating projects move into alliance member status. Not every
+              project gets there in thirteen weeks, and that is a normal outcome.
+              Every team that plays the season leaves with more maturity and
+              clarity than it came in with, and projects that need more time keep
+              going with the alliance into the next season.
+            </FaqItem>
+            <FaqItem q="Can our own investors still back us directly?">
+              Yes. You keep raising personal investment the way you always could.
+              You can also earmark investment through the ReGen Civics Fund, so
+              someone who wants to back your project specifically can do that and
+              get exposure to the whole basket of projects that came through the
+              accelerator. An investor backing one land project on its own is
+              backing a single organ. The network is what makes each project
+              investable.
+            </FaqItem>
+            <FaqItem q="How does this connect to the index fund?">
+              ReGen Civics is building the index fund for the ReGenerative
+              Renaissance. Projects that graduate and pool real value are its
+              foundation. Each swaps tokens with the alliance, so the fund holds a
+              piece of every project and every project holds a piece of the fund.
+              An investor buying into the alliance is buying a cohort the public
+              already chose to put money, land, and labor into.
             </FaqItem>
             <FaqItem q="When do applications close and when does the season start?">
               Applications close September 11th, and we approve shortlisted
@@ -1404,12 +1753,13 @@ export default function Season2() {
             <span className="text-white/90 text-sm font-medium">Season Two · 13 seats</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5" style={display}>
-            Your project belongs <span className="italic text-[#a8e6a8]">in this game</span>
+            Show us your play in the Infinite Game to{" "}
+            <span className="italic text-[#a8e6a8]">regenerate our Earth</span>
           </h2>
           <p className="text-white/75 text-lg leading-relaxed mb-8">
-            If you're building with other people, on the land, and you've been
-            putting off the hard questions about how to organize, govern, fund, and
-            sustain it, this is where you work through them.
+            If you're building with other people, on the land, and you want your
+            model held to the standard the world will apply when you go out and
+            raise, bring it to the season. Season One took 13 projects out of 46.
           </p>
 
           <Link href="/apply">
@@ -1427,7 +1777,7 @@ export default function Season2() {
             {[
               { icon: CheckCircle2, t: "Apply by September 11th", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
               { icon: Clock, t: "Pitch by September 14th", d: "We let shortlisted projects know by September 5th, then you have until September 14th to submit a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
-              { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins." },
+              { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins. Graduating projects go live together in one shared crowdpooling campaign at the end." },
             ].map((s) => {
               const Icon = s.icon;
               return (
@@ -1444,8 +1794,13 @@ export default function Season2() {
             Applications close September 11th · Thirteen seats · Rolling shortlisting
           </p>
 
-          {/* Newsletter fallback */}
-          <div className="mt-10 pt-8 border-t border-[#7dd87d]/15">
+          {/* Nominate + newsletter fallback */}
+          <div className="mt-10 pt-8 border-t border-[#7dd87d]/15 space-y-4">
+            <p className="text-white/75">
+              <Sparkles className="inline w-4 h-4 text-[#7dd87d] mr-1 -mt-0.5" />
+              Know a project that should be in Season Two? Send them this page. The
+              strongest cohorts come from players nominating each other.
+            </p>
             <p className="text-white/70">
               <Heart className="inline w-4 h-4 text-[#7dd87d] mr-1 -mt-0.5" />
               Not ready this season?{" "}
