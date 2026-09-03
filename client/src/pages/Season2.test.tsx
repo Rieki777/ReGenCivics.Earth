@@ -26,6 +26,13 @@ vi.mock("@/components/ReadableScrim", () => ({
 }));
 
 vi.mock("@/components/StickyThumbCta", () => ({ StickyThumbCta: () => null }));
+
+// jsdom cannot play media; render the real src so placement stays assertable.
+vi.mock("@/components/ViewportTriggeredVideo", () => ({
+  ViewportTriggeredVideo: ({ src, ariaLabel, className }: { src: string; ariaLabel?: string; className?: string }) => (
+    <video data-testid="vtv" src={src} aria-label={ariaLabel} className={className} />
+  ),
+}));
 vi.mock("@/components/SEO", () => ({ SEO: () => null }));
 vi.mock("@/components/Season2Calendar", () => ({ Season2Calendar: () => null }));
 
@@ -131,6 +138,23 @@ describe("Season2 page", () => {
     expect(
       screen.getByRole("heading", { name: /Show us your play in the Infinite Game to\s+regenerate our Earth/i }),
     ).toBeTruthy();
+  });
+
+  it("showcases the /land and /game animations in their spots", () => {
+    const srcs = screen.getAllByTestId("vtv").map((v) => v.getAttribute("src"));
+
+    // The game-board film sits where the static Infinite Games art used to be.
+    expect(srcs).toContain("https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4");
+    // Both quest animations from /game.
+    expect(srcs).toContain("https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4");
+    expect(srcs).toContain("https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4");
+    // The land-transformation film carries the Renaissance band.
+    expect(srcs).toContain("https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4");
+
+    // Videos go direct to R2: /api/img only 302-redirects for mp4.
+    for (const src of srcs) expect(src).not.toMatch(/\/api\/img/);
+
+    expect(screen.getByRole("heading", { name: /Every game is made of\s+quests/i })).toBeTruthy();
   });
 
   it("keeps the copy free of em-dashes", () => {

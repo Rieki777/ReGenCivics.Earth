@@ -71,6 +71,7 @@ import { ReadableScrim } from "@/components/ReadableScrim";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { SEO } from "@/components/SEO";
 import { Season2Calendar } from "@/components/Season2Calendar";
+import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
 
 const display = { fontFamily: "var(--font-display)" } as const;
@@ -740,16 +741,19 @@ export default function Season2() {
               </p>
             </blockquote>
 
-            <img
-              src="/season2/infinite-games.jpg"
-              alt="An endless regenerative loop with no finish line"
-              loading="lazy"
-              className="w-full max-w-lg mx-auto my-4 select-none drop-shadow-[0_0_45px_rgba(125,216,125,0.18)]"
-              style={{
-                WebkitMaskImage: "radial-gradient(ellipse at center, #000 55%, transparent 78%)",
-                maskImage: "radial-gradient(ellipse at center, #000 55%, transparent 78%)",
-              }}
-            />
+            <figure className="my-6">
+              <div className="rounded-2xl overflow-hidden border-2 border-[#7dd87d]/30 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+                <ViewportTriggeredVideo
+                  src="https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4"
+                  ariaLabel="A regenerative village board game coming to life, players gathered around a glowing map of paths, quests, and gathering places"
+                  className="w-full h-auto"
+                />
+              </div>
+              <figcaption className="mt-3 text-center text-white/60 text-sm">
+                An Infinite Game made visible: the paths, roles, and quests that
+                let a community coordinate itself.
+              </figcaption>
+            </figure>
 
             <p>
               The dominant ones were designed with flaws built in. Incentives to
@@ -786,10 +790,9 @@ export default function Season2() {
 
       {/* Regenerative Renaissance — cinematic band between the story and the roadmap */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
-        <img
-          src="/season2/regenerative-renaissance.webp"
-          alt="Barren land healing across the scene into abundant regenerated forest, gardens, clean water, and people planting and celebrating together beneath a banner reading The Regenerative Renaissance"
-          loading="lazy"
+        <ViewportTriggeredVideo
+          src="https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4"
+          ariaLabel="Barren land healing across the scene into abundant regenerated forest, gardens, clean water, and people planting together"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
@@ -922,6 +925,65 @@ export default function Season2() {
                 className="w-full rounded-2xl border border-[#7dd87d]/20 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
               />
             </div>
+          </div>
+        </div>
+      </AnimatedSection>
+
+      {/* ── QUESTS IN PLAY: the two animations from /game ── */}
+      <AnimatedSection as="section" animation="slide-up" id="quests" className="py-16 md:py-24 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
+            What your players do
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+            Every game is made of <span className="italic text-[#a8e6a8]">quests</span>
+          </h2>
+          <p className="text-white/75 text-lg leading-relaxed mb-10 max-w-2xl">
+            A quest turns work that needs doing into something a person can pick
+            up, finish, and be acknowledged for. These are two from our own game.
+            Yours get designed around your land and the needs of your community.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="mb-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d]/20 text-[#7dd87d] rounded-full text-xs font-bold w-fit">
+                <Sparkles className="w-3 h-3" />
+                Heal the Watershed
+              </div>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-[#7dd87d]/30">
+                <ViewportTriggeredVideo
+                  src="https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4"
+                  ariaLabel="Heal the Watershed quest: a degraded waterway restored into a living stream"
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#d4a574]/20 text-[#d4a574] rounded-full text-xs font-bold w-fit">
+                <Sparkles className="w-3 h-3" />
+                Epic Quest: Cornfield to Hemp to Ecovillage
+              </div>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-[#d4a574]/30">
+                <ViewportTriggeredVideo
+                  src="https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4"
+                  ariaLabel="Epic Quest: a monoculture cornfield becoming hemp fields and then a full ecovillage"
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <Link href="/game">
+              <Button
+                variant="outline"
+                className="rounded-xl px-6 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                See more of the game
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </AnimatedSection>

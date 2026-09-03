@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Season2Calendar } from "./Season2Calendar";
 import { openAccessGoogleUrl, NEW_MOON_SESSIONS, CALENDAR_SUBSCRIBE_WEBCAL } from "@/lib/seasonEvents";
 
@@ -23,8 +23,38 @@ describe("Season2Calendar", () => {
     vi.useRealTimers();
   });
 
+  /** Both lists ship collapsed; open them so the sweeping assertions see every card. */
+  function expandAll() {
+    for (const re of [/Show \d+ more sessions/i, /Show \d+ more episodes/i]) {
+      fireEvent.click(screen.getByRole("button", { name: re }));
+    }
+  }
+
+  it("collapses every date after the first by default", () => {
+    render(<Season2Calendar />);
+
+    // One Open Access card (the next one) and one episode card (Week 1).
+    expect(screen.getAllByText("Open Access Session").length).toBe(1);
+    expect(screen.getByText("Week 1: Selection Day")).toBeInTheDocument();
+    expect(screen.queryByText("Week 13: Season Overview & Project Updates")).toBeNull();
+
+    // The subscribe-once CTA stays the primary action while collapsed.
+    expect(screen.getByText("All 13 weekly episodes")).toBeInTheDocument();
+
+    const sessionsToggle = screen.getByRole("button", { name: /Show \d+ more sessions/i });
+    expect(sessionsToggle).toHaveAttribute("aria-expanded", "false");
+
+    expandAll();
+
+    expect(screen.getAllByText("Open Access Session").length).toBeGreaterThan(1);
+    expect(screen.getByText("Week 13: Season Overview & Project Updates")).toBeInTheDocument();
+    expect(sessionsToggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("button", { name: /Show fewer dates/i }).length).toBe(2);
+  });
+
   it("renders Subscribe as the primary CTA on Open Access and Season 2 cards", () => {
     render(<Season2Calendar />);
+    expandAll();
 
     const subscribe = screen.getAllByRole("link", { name: "Subscribe" });
     const google = screen.getAllByRole("link", { name: "Google Calendar" });
@@ -48,6 +78,7 @@ describe("Season2Calendar", () => {
 
   it("points one-shot Google links at the 11:00 PT instants, not 8am PT or 1pm ET", () => {
     render(<Season2Calendar />);
+    expandAll();
 
     const google = screen.getAllByRole("link", { name: "Google Calendar" });
     const hrefs = google.map((a) => a.getAttribute("href") ?? "");

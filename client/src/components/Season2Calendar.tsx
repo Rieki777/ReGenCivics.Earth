@@ -1,8 +1,15 @@
 /**
  * Add-to-calendar block for /season2.
  * Event titles, times, and ICS/Google URLs come from the same module /schedule uses.
+ *
+ * Each list shows only its FIRST date and keeps the rest collapsed by default
+ * (Rye, 2026-09-02). Rendering all 4 open sessions plus all 13 episodes pushed
+ * ~1,700px of near-identical cards between the season arc and the rest of the
+ * story. The subscribe-once CTA is the primary action anyway; the per-date
+ * buttons are the fallback.
  */
-import { Calendar, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Calendar, ArrowRight, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { CalendarCta } from "@/components/CalendarCta";
@@ -30,9 +37,41 @@ function formatEpisodeDate(dateStr: string): string {
   });
 }
 
+/** Toggle for the dates held back after the first one. */
+function MoreDatesToggle({
+  open,
+  count,
+  label,
+  onToggle,
+}: {
+  open: boolean;
+  count: number;
+  label: string;
+  onToggle: () => void;
+}) {
+  if (count < 1) return null;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#7dd87d]/30 bg-[#0d2818]/40 px-5 py-2.5 text-sm font-semibold text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-white transition-colors"
+    >
+      {open ? "Show fewer dates" : `Show ${count} more ${label}`}
+      <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+    </button>
+  );
+}
+
 export function Season2Calendar() {
   const sessions = upcomingOpenAccessSessions();
   const episodes = season2EpisodeEvents();
+
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [episodesOpen, setEpisodesOpen] = useState(false);
+
+  const shownSessions = sessionsOpen ? sessions : sessions.slice(0, 1);
+  const shownEpisodes = episodesOpen ? episodes : episodes.slice(0, 1);
 
   return (
     <AnimatedSection as="section" animation="slide-up" id="dates" className="py-16 md:py-24 px-4">
@@ -57,8 +96,8 @@ export function Season2Calendar() {
           Every new moon, 11:00 AM Pacific, 2:00 PM Eastern. Open to anyone curious about the ReGenerative Renaissance.
         </p>
 
-        <div className="space-y-4 mb-12">
-          {sessions.map((s, i) => (
+        <div className="space-y-4">
+          {shownSessions.map((s, i) => (
             <div
               key={s.date}
               className={`rounded-xl p-5 border ${
@@ -85,7 +124,14 @@ export function Season2Calendar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 mb-3">
+        <MoreDatesToggle
+          open={sessionsOpen}
+          count={Math.max(0, sessions.length - 1)}
+          label="sessions"
+          onToggle={() => setSessionsOpen((v) => !v)}
+        />
+
+        <div className="flex items-center gap-2 mb-3 mt-12">
           <Calendar className="w-5 h-5 text-[#7dd87d]" />
           <h3 className="text-white font-semibold text-lg" style={display}>
             Season Two episodes
@@ -106,7 +152,7 @@ export function Season2Calendar() {
         </div>
 
         <div className="space-y-3">
-          {episodes.map((ep) => (
+          {shownEpisodes.map((ep) => (
             <div
               key={ep.id}
               className="rounded-xl border border-[#7dd87d]/20 bg-[#0d2818]/40 p-5"
@@ -123,6 +169,13 @@ export function Season2Calendar() {
             </div>
           ))}
         </div>
+
+        <MoreDatesToggle
+          open={episodesOpen}
+          count={Math.max(0, episodes.length - 1)}
+          label="episodes"
+          onToggle={() => setEpisodesOpen((v) => !v)}
+        />
 
         <div className="mt-10">
           <Link href="/schedule">
