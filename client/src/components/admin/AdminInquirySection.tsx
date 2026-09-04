@@ -15,7 +15,7 @@ import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer"
 import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
 import { defaultLayoutForTemplate, type LetterLayout } from "@shared/letterLayout";
 import {
-  pathTypeConfig, landProjectsList, allianceOrgsList, filterByProject, exportToCSV, getAgeInfo,
+  pathTypeConfig, landProjectsList, allianceOrgsList, filterByProject, exportToCSV, getAgeInfo, inquiryListBlurb,
 } from "@/lib/adminInquiry";
 import { ContactNotesPanel, ContactTagsPanel, ReminderPanel, AssigneeSelect } from "./AdminContactPanels";
 import { EmailHistoryPanel } from "./EmailHistoryPanel";
@@ -110,12 +110,15 @@ export function InquirySection({
 
   // Apply search filter
   const searchFiltered = search
-    ? baseFilteredInquiries.filter((i: any) =>
-        i.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-        i.email?.toLowerCase().includes(search.toLowerCase()) ||
-        i.message?.toLowerCase().includes(search.toLowerCase()) ||
-        i.location?.toLowerCase().includes(search.toLowerCase())
-      )
+    ? baseFilteredInquiries.filter((i: any) => {
+        const q = search.toLowerCase();
+        return (
+          i.fullName?.toLowerCase().includes(q) ||
+          i.email?.toLowerCase().includes(q) ||
+          i.location?.toLowerCase().includes(q) ||
+          inquiryListBlurb(i).toLowerCase().includes(q)
+        );
+      })
     : baseFilteredInquiries;
 
   // Apply active filter
@@ -576,6 +579,7 @@ export function InquirySection({
         const contributionTypes = formData.contributionTypes || [];
         
         const isOpen = activeOpen === inquiry.id;
+        const blurb = inquiryListBlurb(inquiry);
         return (
           <div key={inquiry.id} id={`inquiry-${inquiry.id}`} className="border-b border-[#1a472a]/10 last:border-b-0">
               <div
@@ -590,8 +594,8 @@ export function InquirySection({
                 }}
                 className={`p-4 hover:bg-[#f0ebe3]/50 transition-colors cursor-pointer ${isOpen ? "bg-[#f0ebe3]/70" : ""}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     <Checkbox
                       checked={selectedItems.has(inquiry.id)}
                       onCheckedChange={() => toggleItemSelection(inquiry.id)}
@@ -601,7 +605,7 @@ export function InquirySection({
                     <div className={`w-10 h-10 rounded-full ${config.color}/20 flex items-center justify-center`}>
                       <Icon className="w-5 h-5 text-[#1a472a]" />
                     </div>
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-[#1a472a]">{inquiry.fullName || 'Anonymous'}</p>
                         {inquiry.location && (
@@ -643,15 +647,14 @@ export function InquirySection({
                         ))}
                       </div>
                       
-                      {/* Preview of message */}
-                      {(inquiry.message || formData.additionalNotes) && (
+                      {blurb ? (
                         <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
-                          {inquiry.message || formData.additionalNotes}
+                          {blurb}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
                       {inquiry.status}
                     </Badge>

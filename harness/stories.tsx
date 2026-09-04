@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import { mockData } from "./trpc-stub";
 import { PublicationReview } from "@/components/HarvestCompose";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
+import { AdminAllianceTab } from "@/components/admin/AdminAllianceTab";
+import { InquirySection } from "@/components/admin/AdminInquirySection";
 
 export type Story = {
   title: string;
@@ -89,6 +91,38 @@ function BottomNavStandIn() {
   );
 }
 
+const ALLIANCE_INQUIRIES = [
+  {
+    id: 1,
+    pathType: "alliance",
+    fullName: "Rye",
+    email: "rieki@pm.me",
+    status: "new",
+    createdAt: new Date(Date.now() - 208 * 24 * 3_600_000).toISOString(),
+    allianceSupportDescription:
+      "We help land projects set up governance councils, shared treasuries, and the legal wrappers they need to hold land together.",
+    partnershipDescription: "Longer partnership vision that should stay inside the opened row.",
+  },
+  {
+    id: 2,
+    pathType: "alliance",
+    fullName: "Anonymous",
+    email: "partner@example.org",
+    status: "new",
+    createdAt: new Date(Date.now() - 12 * 24 * 3_600_000).toISOString(),
+    partnershipDescription: "We provide sustainable building materials and on-site training for regenerative villages.",
+  },
+  {
+    id: 3,
+    pathType: "alliance",
+    fullName: "Maya Chen",
+    email: "maya@bioregional.coop",
+    status: "contacted",
+    createdAt: new Date(Date.now() - 6 * 3_600_000).toISOString(),
+    allianceSupportCategories: JSON.stringify(["legal", "land_tenure", "governance_consulting"]),
+  },
+];
+
 export const STORIES: Record<string, Story> = {
   /**
    * The first-run quest intro over the bottom nav. Two things to check:
@@ -104,6 +138,16 @@ export const STORIES: Record<string, Story> = {
         <QuestGameIntro onEnter={() => undefined} />
         <BottomNavStandIn />
       </>
+    ),
+  },
+
+  "alliance-inquiry-list": {
+    title: "Admin Alliance Partner Inquiries: application blurb on each row",
+    render: () => (
+      <AdminAllianceTab
+        inquiries={ALLIANCE_INQUIRIES}
+        InquirySectionComp={InquirySection}
+      />
     ),
   },
 

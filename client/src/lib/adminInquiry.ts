@@ -54,6 +54,80 @@ export const allianceOrgsList = [
   { id: "local_scale", name: "LocalScale" },
 ];
 
+export type InquiryBlurbSource = {
+  allianceSupportDescription?: string | null;
+  partnershipDescription?: string | null;
+  valueContribution?: string | null;
+  whyIdealFit?: string | null;
+  projectInspiration?: string | null;
+  roleInterest?: string | null;
+  uniqueContribution?: string | null;
+  additionalNotes?: string | null;
+  message?: string | null;
+  otherAllianceSupport?: string | null;
+  allianceSupportCategories?: string | null;
+  organizationRole?: string | null;
+  formData?: string | null;
+};
+
+const BLURB_TEXT_FIELDS = [
+  "allianceSupportDescription",
+  "partnershipDescription",
+  "valueContribution",
+  "whyIdealFit",
+  "projectInspiration",
+  "roleInterest",
+  "uniqueContribution",
+  "additionalNotes",
+  "message",
+] as const;
+
+function collapseBlurbText(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function jsonListBlurb(value: unknown): string {
+  const raw = collapseBlurbText(value);
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return raw;
+    return parsed
+      .map((item) => collapseBlurbText(String(item)).replace(/_/g, " "))
+      .filter(Boolean)
+      .join(", ");
+  } catch {
+    return raw;
+  }
+}
+
+function formDataNotes(formData: string | null | undefined): string {
+  if (!formData) return "";
+  try {
+    const parsed = JSON.parse(formData);
+    return collapseBlurbText(parsed?.additionalNotes);
+  } catch {
+    return "";
+  }
+}
+
+/** Visible 1-2 line summary for an admin inquiry row. Alliance apps store the body in dedicated columns, not `message`. */
+export function inquiryListBlurb(inquiry: InquiryBlurbSource | null | undefined): string {
+  if (!inquiry) return "";
+  for (const key of BLURB_TEXT_FIELDS) {
+    const text = collapseBlurbText(inquiry[key]);
+    if (text) return text;
+  }
+  const notes = formDataNotes(inquiry.formData);
+  if (notes) return notes;
+  const otherSupport = collapseBlurbText(inquiry.otherAllianceSupport);
+  if (otherSupport) return otherSupport;
+  const categories = jsonListBlurb(inquiry.allianceSupportCategories);
+  if (categories) return categories;
+  return jsonListBlurb(inquiry.organizationRole);
+}
+
 export function getAgeInfo(createdAt: string | Date): {
   label: string;
   color: string;

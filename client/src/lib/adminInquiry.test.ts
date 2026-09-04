@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inquiryTypeForPath, getAgeInfo, filterByProject, oldestWaiting } from "./adminInquiry";
+import { inquiryTypeForPath, getAgeInfo, filterByProject, oldestWaiting, inquiryListBlurb } from "./adminInquiry";
 
 describe("admin inquiry helpers", () => {
   it("maps form paths onto hub types", () => {
@@ -27,6 +27,31 @@ describe("admin inquiry helpers", () => {
     ];
     expect(filterByProject(rows, "la_tierra").map((r) => r.id)).toEqual([1]);
     expect(filterByProject(rows, "hypha").map((r) => r.id)).toEqual([3]);
+  });
+
+  it("builds a visible alliance-row blurb from application fields, not message", () => {
+    expect(inquiryListBlurb({
+      partnershipDescription: "We provide sustainable building materials",
+      allianceSupportDescription: "Governance consulting for land projects that are forming councils.",
+    })).toBe("Governance consulting for land projects that are forming councils.");
+    expect(inquiryListBlurb({
+      partnershipDescription: "We provide sustainable building materials",
+    })).toBe("We provide sustainable building materials");
+    expect(inquiryListBlurb({
+      message: "legacy catch-all",
+      additionalNotes: "  extra notes  ",
+    })).toBe("extra notes");
+    expect(inquiryListBlurb({
+      formData: JSON.stringify({ additionalNotes: "Imported from the old form" }),
+    })).toBe("Imported from the old form");
+    expect(inquiryListBlurb({
+      allianceSupportCategories: JSON.stringify(["governance_consulting", "legal"]),
+    })).toBe("governance consulting, legal");
+    expect(inquiryListBlurb({
+      allianceSupportDescription: "Line one.\n\nLine two.",
+    })).toBe("Line one. Line two.");
+    expect(inquiryListBlurb({})).toBe("");
+    expect(inquiryListBlurb(undefined)).toBe("");
   });
 
   it("picks the oldest waiting row so Needs you opens a real record", () => {
