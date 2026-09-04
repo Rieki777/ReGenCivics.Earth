@@ -98,6 +98,15 @@ the village side is `pledgedTotal / totalValue`
 that value from the number the ring divides. Measured: $10,000 delivered then $5,000
 accepted reports $5,000. The village ring shrinks at the moment a village succeeds.
 
+**Over-delivery makes a need vanish from the village shelf.** The hub's fulfil path
+is not idempotent (gap analysis 3.4), so `quantityDelivered` can pass
+`quantityWanted`. Measured on the village page at wanted 1, claimed 1, delivered 2:
+their open-needs filter takes delivered below wanted, their met-needs filter takes
+delivered at or above it, so the need fails the first, passes the second, and leaves
+the shelf as one silent tick in a completed count. A villager sees one card fewer and
+nothing saying why. Ours stay on the page greyed and labelled Filled, so the hub does
+not share it, but the cause is a hub defect and the fix is ours.
+
 **The village is NOT exposed to the hub's double-count.** The hub stores a financial
 pledge in both `pledgedTotal` and `pledgedFinancial`, and three hub surfaces add the
 two together and show double. The village reads them as separate fields and divides
@@ -161,7 +170,36 @@ this paragraph becomes a requirement.
 
 ---
 
-## 8. Housekeeping
+## 8. Two enums on one table, and how they get confused
+
+`campaign_items` carries **both** of these, and they are not the same taxonomy:
+
+- `category` &mdash; `land | equipment | role | resource`. The pre-needs-registry
+  taxonomy, kept for back-compat reads. `campaigns.totalValue` is still derived by
+  grouping item values on it (`server/db.ts:893-897`).
+- `kind` &mdash; `item | role | shift | loan | knowledge | crypto | financial_link`.
+  Seven values, canonical in `shared/crowdpoolingTaxonomy.ts:20-28` as `NEED_KINDS`.
+  This is the one the needs registry keys off, and the one the village bridge reads.
+
+`land` is a **category**, never a kind. The village module's field comment listed
+`land` as a kind and omitted `financial_link`, so its list was the right length with
+two wrong members, which is the hardest kind of wrong to notice.
+
+**One arithmetic note that belongs with this.** On the goal side, `totalValue` and
+`financialTarget` are disjoint by construction: `totalValue` is derived from item
+values grouped by `category`, and `financialTarget` is entered separately by the
+steward and stored as given (`server/db.ts:906`). Adding them is correct. On the
+raised side, `pledgedFinancial` is a subset of `pledgedTotal`, so adding those is a
+double count. Both sums sit on adjacent lines in
+`CampaignProgressTracker.tsx:61-62`. A rule against summing has to name the fields,
+because the shape is legitimate one line up.
+
+Disjoint by construction is not disjoint by enforcement: nothing stops a steward
+entering a crypto need whose value lands in `totalValue` while the same cash also
+sits in `financialTarget`. That is an operator convention, not a code guarantee, so
+it is deliberately not pinned by a test on either side.
+
+## 9. Housekeeping
 
 The count of procedures was written as "four" in three places while five were listed
 directly beneath: `village-os docs/modules/crowdpool.md`, `village-os

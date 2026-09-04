@@ -96,6 +96,22 @@ then measured on a real database. All four reproduce 100% of the time.
 **Measured:** a $10,000 crypto pledge stores `pledgedTotal = 10000` and
 `pledgedFinancial = 10000`, and every one of those surfaces shows **$20,000**.
 
+**Why it survived review, which is the useful part.** Look at
+`CampaignProgressTracker.tsx` lines 61 and 62, adjacent:
+
+```js
+const totalGoal   = totalValue  + financialTarget;   // correct: disjoint
+const totalRaised = pledgedTotal + pledgedFinancial; // wrong: overlapping
+```
+
+Two identical-looking sums, one right and one a double count. On the goal side
+`totalValue` is derived from item values grouped by category (`server/db.ts:897`)
+and `financialTarget` is entered separately by the steward (`:906`), so they are
+siblings and adding them is correct. On the raised side `pledgedFinancial` is a
+subset of `pledgedTotal`, so adding them counts the same money twice. The
+legitimate line above is doing the work of making the wrong line look fine. Any
+guard against this has to name the fields, because the shape is valid one line up.
+
 ### 3.2 Delivering a pledge deletes its value from the campaign total
 
 `getCampaignPledgedTotals` filters `status = 'accepted'` and nothing else
@@ -128,6 +144,25 @@ The existing test only proves the ordered case: `server/contributions.test.ts:46
 accepts the first claim before submitting the second, so it asserts the guard works
 after acceptance and never covers the pending pile-up.
 
+**The UI invites it, for the same root cause.** `CampaignDetail.tsx:1247` computes
+`const filled = claimed >= wanted` and `:1363` disables the Claim button on it. That
+reads correctly, and it keys off `quantityClaimed`, which does not move until a
+steward accepts. So a one-slot need with five pending claims still shows
+`claimed = 0`, still reads Claim rather than Filled, and still invites a sixth
+person. The member-visible path into the overclaim is the button, not an API call.
+
+Two smaller things in the same path. `ContributionModal.tsx:135-137` computes
+`Math.max(1, wanted - claimed)`, so the floor is one slot rather than zero: the
+quantity field's `max` (`:449`) and its "up to N" label (`:444`) can never offer
+zero, even on a need with nothing left. And `:359` renders
+`{quantityDelivered} of {quantityWanted} filled`, which prints "2 of 1 filled" once
+the payoff race in 3.4 has fired.
+
+**We do not share the disappearing-need bug the village side found.** Their filters
+split on delivered versus wanted, so an over-delivered need left the shelf entirely.
+Our needs stay on the page, greyed and labelled Filled. Worth keeping that way: any
+future filter here that splits on `delivered < wanted` reintroduces it.
+
 ### 3.4 The payoff block is not idempotent, and its comment says it is
 
 `campaigns.ts:725-726` reads "Idempotent: the whole payoff block is skipped when
@@ -146,7 +181,19 @@ and `LOCK IN SHARE` across `server/` returns exactly one hit, in
 | Living Tree rows written | 10 | **20** |
 | Score events fired | 10 | **20** |
 
-Every contributor is credited twice. The correct pattern already exists in this
+Every contributor is credited twice.
+
+**What over-delivery does downstream, which is worse than a cosmetic overflow.**
+`quantityDelivered` passing `quantityWanted` is not just a number that reads oddly.
+Measured by the village-os session on their own page with a need at wanted 1,
+claimed 1, delivered 2: **the need vanishes from the shelf.** Their open-needs
+filter takes delivered below wanted and their met-needs filter takes delivered at
+or above it, so an over-delivered need fails the first, passes the second, and
+becomes one silent tick in a completed count. A villager looking for something to
+help with sees one card fewer and nothing saying why. Any filter here that splits
+on `delivered < wanted` has the same hole, so check ours when this is fixed.
+
+The correct pattern already exists in this
 codebase at `server/routes/batchJobs.ts:460-464`, which does
 `UPDATE ... WHERE id = ? AND status = ?` and checks `affectedRows`. `campaigns.ts`
 does not use it. `updateContributionStatus` also has no rate limit, so the number of
