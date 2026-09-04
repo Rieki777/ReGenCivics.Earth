@@ -19,6 +19,7 @@ export default defineConfig({
     // broader "@" alias, and Vite takes the first matching prefix.
     alias: [
       { find: "@/lib/trpc", replacement: path.resolve(here, "trpc-stub.tsx") },
+      { find: "@shared", replacement: path.resolve(here, "..", "shared") },
       { find: "@", replacement: path.resolve(here, "..", "client", "src") },
     ],
   },
