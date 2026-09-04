@@ -14,6 +14,8 @@ import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
 import { maybePostVideoSummary } from "../lib/videoSummary";
 import { pingIndexNow } from "../lib/indexnow";
+import { isAdminRole } from "@shared/adminRole";
+import { getOrCreateTeamUserId, LAND_PROJECTS_CATEGORY_SLUG, landProjectTeamAttribution } from "../lib/team-user";
 import {
   handleForumPostCreated,
   handleForumPostEdited,
@@ -210,16 +212,21 @@ export const forumRouter = router({
       const bioregionMap = new Map(allBioregions.map(b => [b.id, b]));
       // Batch-fetch all authors in one query (eliminates N+1)
       const authorIds = posts.map(p => p.authorId);
-      const authorsMap = await db.getUsersByIds(authorIds);
+      const [authorsMap, cats] = await Promise.all([
+        db.getUsersByIds(authorIds),
+        getCachedCategories(),
+      ]);
+      const slugById = new Map(cats.map((c) => [c.id, c.slug]));
       const enriched = posts.map((post) => {
         const author = authorsMap[post.authorId];
+        const team = landProjectTeamAttribution(slugById.get(post.categoryId));
         const bioregionName = post.bioregionId
           ? (bioregionMap.get(post.bioregionId)?.name ?? null)
           : null;
         return {
           ...post,
-          authorName: author?.name || 'Anonymous',
-          authorAvatar: null,
+          authorName: team?.authorName || author?.name || 'Anonymous',
+          authorAvatar: team?.authorAvatar ?? null,
           bioregionName,
         };
       });
@@ -239,10 +246,11 @@ export const forumRouter = router({
       const cats = await getCachedCategories();
       return rows.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
+        const team = landProjectTeamAttribution(category?.slug);
         return {
           ...post,
-          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
-          authorAvatar: null,
+          authorName: team?.authorName || authorsMap[post.authorId]?.name || 'Anonymous',
+          authorAvatar: team?.authorAvatar ?? null,
           categorySlug: category?.slug || 'general',
           categoryName: category?.name || 'Unknown',
         };
@@ -263,14 +271,15 @@ export const forumRouter = router({
       const authorBadges: string[] = (() => {
         try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
       })();
+      const team = landProjectTeamAttribution(category?.slug);
       return {
         ...post,
-        authorName: author?.name || 'Anonymous',
-        authorHandle: author?.handle || null,
-        authorAvatar: authorProfile?.avatarUrl || null,
-        authorBadges,
-        authorCitizenshipTier: authorProfile?.citizenshipTier || 'explorer',
-        authorContributionTier: authorProfile?.currentTier || 'Seedling',
+        authorName: team?.authorName || author?.name || 'Anonymous',
+        authorHandle: team?.authorHandle || author?.handle || null,
+        authorAvatar: team?.authorAvatar || authorProfile?.avatarUrl || null,
+        authorBadges: team ? [] : authorBadges,
+        authorCitizenshipTier: team ? 'explorer' : (authorProfile?.citizenshipTier || 'explorer'),
+        authorContributionTier: team ? 'Seedling' : (authorProfile?.currentTier || 'Seedling'),
         categoryName: category?.name || 'Unknown',
         categorySlug: category?.slug || 'general',
       };
@@ -446,9 +455,10 @@ export const forumRouter = router({
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
+        const team = landProjectTeamAttribution(category?.slug);
         return {
           ...post,
-          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          authorName: team?.authorName || authorsMap[post.authorId]?.name || 'Anonymous',
           categorySlug: category?.slug || 'general',
           categoryName: category?.name || 'Unknown',
         };
@@ -470,9 +480,10 @@ export const forumRouter = router({
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
+        const team = landProjectTeamAttribution(category?.slug);
         return {
           ...post,
-          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          authorName: team?.authorName || authorsMap[post.authorId]?.name || 'Anonymous',
           categorySlug: category?.slug || 'general',
           categoryName: category?.name || 'Unknown',
         };
@@ -490,9 +501,10 @@ export const forumRouter = router({
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
+        const team = landProjectTeamAttribution(category?.slug);
         return {
           ...post,
-          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          authorName: team?.authorName || authorsMap[post.authorId]?.name || 'Anonymous',
           categorySlug: category?.slug || 'general',
           categoryName: category?.name || 'Unknown',
         };
@@ -520,9 +532,20 @@ export const forumRouter = router({
       }
       const cleanTitle = sanitizeInput(input.title);
       const cleanContent = sanitizeInput(input.content);
+      // Admin/import posts in Land Projects are team catalog threads.
+      // Community members posting in that category keep their own name.
+      let authorId = ctx.user.id;
+      if (isAdminRole(ctx.user.role)) {
+        const cats = await getCachedCategories();
+        const cat = cats.find((c) => c.id === input.categoryId);
+        if (cat?.slug === LAND_PROJECTS_CATEGORY_SLUG) {
+          const teamAuthorId = await getOrCreateTeamUserId();
+          if (teamAuthorId) authorId = teamAuthorId;
+        }
+      }
       const postId = await db.createForumPost({
         categoryId: input.categoryId,
-        authorId: ctx.user.id,
+        authorId,
         title: cleanTitle,
         content: cleanContent,
         tags,
@@ -534,7 +557,7 @@ export const forumRouter = router({
       // Fire-and-forget notification fan-out (@mentions, author auto-follow).
       handleForumPostCreated({
         postId,
-        authorId: ctx.user.id,
+        authorId,
         title: cleanTitle,
         content: cleanContent,
       }).catch((err) => console.error(`[forum.createPost] notify fan-out failed for ${postId}`, err));

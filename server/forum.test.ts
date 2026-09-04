@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { LAND_PROJECTS_CATEGORY_SLUG, TEAM_USER_NAME } from "./lib/team-user";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -163,6 +164,24 @@ describe("forum.postById", () => {
     await expect(
       caller.forum.postById({ id: 999999 })
     ).rejects.toThrow();
+  });
+});
+
+describe("forum land-projects authorship", () => {
+  it.skipIf(skipIfNoDb)("lists Land Projects catalog threads as the ReGen Civics Team", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    const category = await caller.forum.categoryBySlug({ slug: LAND_PROJECTS_CATEGORY_SLUG });
+    if (!category) return;
+    const result = await caller.forum.posts({ categoryId: category.id, limit: 50 });
+    for (const post of result.posts) {
+      expect(post.authorName).toBe(TEAM_USER_NAME);
+    }
+    const lapa = result.posts.find((p) => p.title.includes("Lapa do Beijo"));
+    if (!lapa) return;
+    const detail = await caller.forum.postById({ id: lapa.id });
+    expect(detail.authorName).toBe(TEAM_USER_NAME);
+    expect(detail.authorHandle).toBe("regen-civics-team");
   });
 });
 

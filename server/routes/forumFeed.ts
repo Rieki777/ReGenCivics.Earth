@@ -20,6 +20,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { forumPostReads, userFollows, bioregions } from "../../drizzle/schema";
 import { getGameVariableOr, citizenshipTierRank } from "../game";
+import { landProjectTeamAttribution } from "../lib/team-user";
 import {
   FEED_WEIGHTS as W,
   FEED_CANDIDATE_DAYS,
@@ -55,9 +56,10 @@ async function enrich(posts: any[]) {
   const bioregionMap = new Map(allBioregions.map((b: any) => [b.id, b.name]));
   return posts.map((p) => {
     const category = cats.find((c) => c.id === p.categoryId);
+    const team = landProjectTeamAttribution(category?.slug);
     return {
       ...p,
-      authorName: authorsMap[p.authorId]?.name || "Anonymous",
+      authorName: team?.authorName || authorsMap[p.authorId]?.name || "Anonymous",
       categoryName: category?.name || "Unknown",
       categorySlug: category?.slug || "general",
       bioregionName: p.bioregionId ? bioregionMap.get(p.bioregionId) ?? null : null,

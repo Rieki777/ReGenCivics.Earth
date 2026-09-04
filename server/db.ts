@@ -2800,6 +2800,8 @@ export async function updateOrgClaimStatus(
  * Ensure a forum thread exists for a land project or alliance org.
  * Called on claim approval. Idempotent, safe to call multiple times.
  * Checks by title in the relevant category, creates if missing.
+ * Land project threads are authored by the ReGen Civics Team.
+ * `authorId` is used for alliance partner threads and as a fallback.
  */
 export async function ensureEntityForumThread(
   entityType: 'land_project' | 'alliance_org',
@@ -2821,6 +2823,15 @@ export async function ensureEntityForumThread(
     .limit(1);
   if (existing.length) return existing[0].id;
 
+  // Land project catalog threads belong to the ReGen Civics Team.
+  // Alliance partner spaces keep the claimant/admin as author.
+  let threadAuthorId = authorId;
+  if (entityType === 'land_project') {
+    const { getOrCreateTeamUserId } = await import("./lib/team-user");
+    const teamAuthorId = await getOrCreateTeamUserId();
+    if (teamAuthorId) threadAuthorId = teamAuthorId;
+  }
+
   // Create the thread
   const isLandProject = entityType === 'land_project';
   const content = isLandProject
@@ -2829,7 +2840,7 @@ export async function ensureEntityForumThread(
 
   const [result] = await db.insert(forumPosts).values({
     categoryId,
-    authorId,
+    authorId: threadAuthorId,
     title: entityName,
     content,
     isPinned: 1,
@@ -2837,7 +2848,7 @@ export async function ensureEntityForumThread(
     viewCount: 0,
     replyCount: 0,
     lastReplyAt: new Date(),
-    lastReplyBy: authorId,
+    lastReplyBy: threadAuthorId,
   });
   return asMutationResult(result).insertId ?? null;
 }

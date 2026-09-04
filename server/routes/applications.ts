@@ -15,6 +15,7 @@ import {
   APPLICATION_EMAIL_STATUSES,
   mapApplicationEmailRecipients,
 } from "../lib/applicationEmailRecipients";
+import { getOrCreateTeamUserId } from "../lib/team-user";
 
 export const applicationsRouter = router({
   // Create a new draft application
@@ -515,14 +516,19 @@ export const applicationsRouter = router({
                 `[Apply to support this project](/apply) | [View on map](/map)`,
               ].filter(l => l !== null && l !== undefined && !(l === "" && false)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
-              await db.createForumPost({
-                categoryId: landProjectsCat.id,
-                authorId: 1,
-                title: `${updatedApp.projectName} - ${updatedApp.location}`,
-                content: threadContent,
-                isPinned: 1,
-                postType: "discussion",
-              });
+              const teamAuthorId = await getOrCreateTeamUserId();
+              if (!teamAuthorId) {
+                console.warn("Failed to resolve ReGen Civics Team user; skipping land project forum thread");
+              } else {
+                await db.createForumPost({
+                  categoryId: landProjectsCat.id,
+                  authorId: teamAuthorId,
+                  title: `${updatedApp.projectName} - ${updatedApp.location}`,
+                  content: threadContent,
+                  isPinned: 1,
+                  postType: "discussion",
+                });
+              }
             }
           } catch (e) {
             console.warn("Failed to auto-create forum thread for approved project:", e);
@@ -794,7 +800,8 @@ export const orgClaimsRouter = router({
         formData: input.formData ?? null,
       });
       // Create (or find existing) forum thread for this entity immediately on claim.
-      // The claimant is the author so they can introduce themselves right away.
+      // Land project catalog threads are attributed to the ReGen Civics Team.
+      // Alliance partner threads keep the claimant as author.
       const forumThreadId = await db.ensureEntityForumThread(
         input.orgType,
         input.orgName,
