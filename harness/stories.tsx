@@ -9,6 +9,7 @@ import { PublicationReview } from "@/components/HarvestCompose";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
 import { AdminAllianceTab } from "@/components/admin/AdminAllianceTab";
 import { InquirySection } from "@/components/admin/AdminInquirySection";
+import { AdminEventAnalytics } from "@/components/AdminEventAnalytics";
 
 export type Story = {
   title: string;
@@ -123,6 +124,45 @@ const ALLIANCE_INQUIRIES = [
   },
 ];
 
+function volumeDaysFrom(startIso: string, count: number): string[] {
+  const start = Date.parse(`${startIso}T00:00:00.000Z`);
+  return Array.from({ length: count }, (_, i) =>
+    new Date(start + i * 86_400_000).toISOString().slice(0, 10),
+  );
+}
+
+/** Approximate the live 30d curve: quiet early August, a late-August bump, taper into September. */
+const CURRENT_VOLUME_FIXTURE = volumeDaysFrom("2026-08-07", 28).flatMap((day, i) => {
+  const bump = Math.max(0, Math.round(10 * Math.exp(-((i - 18) ** 2) / 32)));
+  if (bump === 0) return [];
+  const rows: Array<{ day: string; event: string; count: number }> = [
+    { day, event: "apply_started", count: Math.max(1, Math.round(bump * 0.4)) },
+  ];
+  if (i % 3 === 0) rows.push({ day, event: "apply_form_submitted", count: 1 });
+  if (i % 4 === 0) rows.push({ day, event: "newsletter_signup", count: 1 });
+  if (i % 5 === 0) rows.push({ day, event: "share_clicked", count: 1 });
+  if (i >= 12 && i <= 22 && i % 2 === 0) {
+    rows.push({ day, event: "apply_step_2", count: 1 });
+  }
+  return rows;
+});
+
+const RICH_VOLUME_FIXTURE = volumeDaysFrom("2026-08-05", 30).flatMap((day, i) => {
+  const views = 4 + ((i * 5) % 9);
+  const cta = i % 3 === 0 ? 1 : i % 7 === 0 ? 2 : 0;
+  const started = i % 4 === 0 ? 1 : 0;
+  const submitted = i % 8 === 0 ? 1 : 0;
+  const rows: Array<{ day: string; event: string; count: number }> = [
+    { day, event: "page_view", count: views },
+  ];
+  if (cta) rows.push({ day, event: "cta_click", count: cta });
+  if (started) rows.push({ day, event: "apply_started", count: started });
+  if (submitted) rows.push({ day, event: "apply_form_submitted", count: submitted });
+  if (i === 20) rows.push({ day, event: "loi_submitted", count: 1 });
+  if (i % 5 === 0) rows.push({ day, event: "newsletter_signup", count: 1 });
+  return rows;
+});
+
 export const STORIES: Record<string, Story> = {
   /**
    * The first-run quest intro over the bottom nav. Two things to check:
@@ -159,6 +199,71 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="max-w-3xl">
         <PublicationReview publicationId={1} />
+      </div>
+    ),
+  },
+
+  /**
+   * Matches the live 30d snapshot: page views and CTA clicks are 0, apply /
+   * share / newsletter events are present. Use this to check empty-card
+   * treatment and the apply conversion strip.
+   */
+  "behavior-analytics": {
+    title: "Behavior analytics, current 30d shape (zeros + apply funnel)",
+    setup: () => {
+      mockData["analytics.funnel"] = {
+        pageViews: 0,
+        ctaClicks: 0,
+        applySubmitted: 3,
+        loiSubmitted: 0,
+      };
+      mockData["analytics.top"] = [
+        { event: "apply_started", count: 7 },
+        { event: "apply_form_submitted", count: 3 },
+        { event: "newsletter_signup", count: 3 },
+        { event: "share_clicked", count: 3 },
+        { event: "apply_step_2", count: 2 },
+        { event: "apply_step_3", count: 2 },
+        { event: "apply_step_4", count: 2 },
+        { event: "apply_step_5", count: 2 },
+      ];
+      mockData["analytics.volume"] = CURRENT_VOLUME_FIXTURE;
+    },
+    render: () => (
+      <div className="max-w-6xl">
+        <AdminEventAnalytics />
+      </div>
+    ),
+  },
+
+  /**
+   * A fuller series so the multi-line volume chart and live sparklines
+   * are visible, including page views and CTA clicks.
+   */
+  "behavior-analytics-rich": {
+    title: "Behavior analytics, richer series (page views + CTA + apply)",
+    setup: () => {
+      mockData["analytics.funnel"] = {
+        pageViews: 184,
+        ctaClicks: 22,
+        applySubmitted: 5,
+        loiSubmitted: 1,
+      };
+      mockData["analytics.top"] = [
+        { event: "page_view", count: 184 },
+        { event: "cta_click", count: 22 },
+        { event: "apply_started", count: 11 },
+        { event: "apply_form_submitted", count: 5 },
+        { event: "newsletter_signup", count: 8 },
+        { event: "share_clicked", count: 6 },
+        { event: "apply_step_2", count: 9 },
+        { event: "loi_submitted", count: 1 },
+      ];
+      mockData["analytics.volume"] = RICH_VOLUME_FIXTURE;
+    },
+    render: () => (
+      <div className="max-w-6xl">
+        <AdminEventAnalytics />
       </div>
     ),
   },
