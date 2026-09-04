@@ -66,10 +66,21 @@ export function ShareButtons({
   return (
     <Popover>
       <PopoverTrigger asChild>
+        {/*
+          Solid deep forest, not an outline. This button sits on a white card
+          between an outlined Follow and a sage Contribute; as `variant="outline"`
+          with a 30%-opacity spring border it was very nearly invisible, which is
+          what Rye reported. Sharing is the action that grows a campaign, so it
+          gets the darkest weight in the row rather than the lightest.
+
+          #1a472a / #0d2818 are forest.base and forest.deep from
+          client/src/lib/design-tokens.ts, so scripts/check-palette.ts stays
+          clean. White on #1a472a is about 11:1, comfortably past AA.
+          `className` is applied last so a caller can still override.
+        */}
         <Button
-          variant="outline"
           size="sm"
-          className={`border-[#7dd87d]/30 ${className}`}
+          className={`bg-[#1a472a] text-white hover:bg-[#0d2818] border border-[#1a472a] shadow-sm ${className}`}
         >
           <Share2 className="w-4 h-4 mr-2" />
           Share

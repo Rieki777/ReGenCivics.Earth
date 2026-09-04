@@ -238,6 +238,14 @@ export default function CampaignDetail() {
   const maEarthLink = partnerLinks.find((p) => p.partner === 'maearth');
   const goStewardLink = partnerLinks.find((p) => p.partner === 'gosteward');
 
+  // Setting up a Ma Earth or Steward account is the campaign creator's job, and
+  // it is not something we can do for them. A campaign whose steward has not
+  // done it must not show a button that sends a would-be funder to a page with
+  // no campaign on it. So these render only where a real link exists: no
+  // partner rows, no panel, and no funder quiz recommending funders this
+  // project cannot receive from. Rye, 2026-09-04.
+  const hasPartnerFunders = Boolean(maEarthLink || goStewardLink);
+
   // Capital stack: the whole project's funding across layers. In-kind and
   // crypto come from delivered contributions on-platform; gift, debt, and
   // grants come from the funders' cached numbers. Zero-value layers drop out.
@@ -759,22 +767,28 @@ export default function CampaignDetail() {
           }}
         />
 
-        {/* Eligibility quiz: routes projects to the funder that fits before the
-            recommended-funder cards below. Deterministic, recommendation only. */}
-        <EligibilityQuiz />
+        {/* Eligibility quiz: routes projects to the funder that fits. It only
+            recommends Ma Earth and Steward, so it is gated on this campaign
+            actually having one of them set up. */}
+        {hasPartnerFunders && <EligibilityQuiz />}
 
-        {/* Recommended funders: ways to fund this project we point people to.
-            We collect zero fiat; you finish on the funder's own site. */}
+        {/* Additional funders, shown only where this campaign has an account.
+            These are not the core fundraise and must not read as though they
+            are: what is pooled on this page is the project's whole ask, in cash
+            and in kind. These cover money we don't hold. We collect zero fiat;
+            you finish on the funder's own site. */}
+        {hasPartnerFunders && (
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
           <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <Heart className="w-5 h-5 text-[#4a7c59]" />
-            Recommended ways to fund this project
+            Additional ways to fund this project
           </h2>
           <p className="text-sm text-[#1a472a]/75 mb-6">
-            Some needs take money we don't hold. These are the funders we point projects to. You give on their site and they get it to the project.
+            Alongside what this project is pooling here, some needs take money we don't hold. These are funders this project already works with. You give on their site and they get it to the project.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${maEarthLink && goStewardLink ? 'md:grid-cols-2' : ''}`}>
             {/* Ma Earth: gift funding with matching */}
+            {maEarthLink && (
             <div className="flex flex-col bg-[#f0f7f0] rounded-2xl p-5 border border-[#1a472a]/10">
               <div className="flex items-center gap-2 mb-2">
                 <Gift className="w-5 h-5 text-[#4a7c59]" />
@@ -801,7 +815,7 @@ export default function CampaignDetail() {
                 Donations run through Ma Earth. We recommend them and don't take a cut.
               </p>
               <div className="mt-auto">
-                <a href={maEarthLink?.url || 'https://maearth.com'} target="_blank" rel="noopener noreferrer">
+                <a href={maEarthLink.url} target="_blank" rel="noopener noreferrer">
                   <Button size="sm" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Give on Ma Earth
@@ -810,7 +824,9 @@ export default function CampaignDetail() {
                 <p className="text-xs text-[#1a472a]/75 mt-2 text-center">You'll finish this on their site.</p>
               </div>
             </div>
+            )}
             {/* GoSteward: regenerative loans */}
+            {goStewardLink && (
             <div className="flex flex-col bg-[#f0f7f0] rounded-2xl p-5 border border-[#1a472a]/10">
               <div className="flex items-center gap-2 mb-2">
                 <Landmark className="w-5 h-5 text-[#4a7c59]" />
@@ -837,7 +853,7 @@ export default function CampaignDetail() {
                 Loans run through Steward, who also help projects design their whole capital stack.
               </p>
               <div className="mt-auto">
-                <a href={goStewardLink?.url || 'https://gosteward.com/borrow'} target="_blank" rel="noopener noreferrer">
+                <a href={goStewardLink.url} target="_blank" rel="noopener noreferrer">
                   <Button size="sm" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Lend through Steward
@@ -846,8 +862,10 @@ export default function CampaignDetail() {
                 <p className="text-xs text-[#1a472a]/75 mt-2 text-center">You'll finish this on their site.</p>
               </div>
             </div>
+            )}
           </div>
         </div>
+        )}
 
         {/* Pledge simulator: a pure-client "what does my pledge unlock" widget,
             grounded in the same coach numbers as the wizard. */}
