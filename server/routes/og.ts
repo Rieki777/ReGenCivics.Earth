@@ -9,7 +9,8 @@ import { Resvg } from "@resvg/resvg-js";
 import * as db from "../db";
 import { getDb } from "../db";
 import { desc, eq } from "drizzle-orm";
-import { forumPosts, recordings, gratitudeLog } from "../../drizzle/schema";
+import { forumPosts, recordings, gratitudeLog, forumCategories } from "../../drizzle/schema";
+import { landProjectTeamAttribution } from "../lib/team-user";
 import { extractThemes, validThemeKeys, labelForThemeKey } from "../../shared/gratitude-themes";
 import fs from "fs";
 import path from "path";
@@ -291,11 +292,19 @@ export function registerOgRoutes(app: Express) {
           if (!database) break;
           const [post] = await database.select().from(forumPosts).where(eq(forumPosts.id, Number(id))).limit(1);
           if (!post) break;
-          const authors = await db.getUsersByIds([post.authorId]);
+          const [authors, [category]] = await Promise.all([
+            db.getUsersByIds([post.authorId]),
+            database.select({ slug: forumCategories.slug, name: forumCategories.name })
+              .from(forumCategories)
+              .where(eq(forumCategories.id, post.categoryId))
+              .limit(1),
+          ]);
+          const team = landProjectTeamAttribution(category?.slug);
           element = forumTemplate({
             title: post.title,
-            authorName: authors[post.authorId]?.name || "Anonymous",
+            authorName: team?.authorName || authors[post.authorId]?.name || "Anonymous",
             replyCount: post.replyCount,
+            categoryName: category?.name,
           });
           break;
         }

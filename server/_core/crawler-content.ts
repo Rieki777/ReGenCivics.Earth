@@ -19,6 +19,7 @@
  *      a small TTL cache, including DiscussionForumPosting / Project JSON-LD.
  */
 import * as db from "../db";
+import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
 import { FUND } from "../../shared/fund";
 import { getNetworkFeed } from "../lib/network-feed";
 import {
@@ -539,8 +540,14 @@ export async function getForumPostContent(id: number): Promise<CrawlerContent | 
     if (post) {
       const replies = await db.listForumReplies(id);
       const authorIds = [post.authorId, ...replies.map((r) => r.authorId)];
-      const authors = await db.getUsersByIds(authorIds);
+      const [authors, cats] = await Promise.all([
+        db.getUsersByIds(authorIds),
+        db.listForumCategories(),
+      ]);
+      const categorySlug = cats.find((c) => c.id === post.categoryId)?.slug;
+      const team = landProjectTeamAttribution(categorySlug);
       const authorName = (uid: number) => authors[uid]?.name || "Anonymous";
+      const postAuthorName = team?.authorName || authorName(post.authorId);
       const url = `${SITE}/community/post/${id}`;
       const iso = (d: Date | string | null | undefined) =>
         d ? new Date(d).toISOString() : undefined;
@@ -558,7 +565,7 @@ export async function getForumPostContent(id: number): Promise<CrawlerContent | 
       const inner = `
         <article>
           <h1>${escapeHtml(post.title)}</h1>
-          <p>Posted by ${escapeHtml(authorName(post.authorId))} in the ReGen Civics community forum.</p>
+          <p>Posted by ${escapeHtml(postAuthorName)} in the ReGen Civics community forum.</p>
           ${textToHtml(post.content)}
           ${replies.length ? `<h2>${replies.length} ${replies.length === 1 ? "reply" : "replies"}</h2>` : ""}
           ${repliesHtml}
@@ -572,13 +579,15 @@ export async function getForumPostContent(id: number): Promise<CrawlerContent | 
         text: post.content.slice(0, 2000),
         url,
         mainEntityOfPage: { "@type": "WebPage", "@id": url },
-        author: { "@type": "Person", name: authorName(post.authorId) },
+        author: team
+          ? { "@type": "Organization", name: TEAM_USER_NAME }
+          : jsonLdAuthor(authors[post.authorId]),
         datePublished: iso(post.createdAt),
         commentCount: replies.length,
         comment: replies.slice(0, 50).map((r) => ({
           "@type": "Comment",
           text: r.content.slice(0, 1000),
-          author: { "@type": "Person", name: authorName(r.authorId) },
+          author: jsonLdAuthor(authors[r.authorId]),
           dateCreated: iso(r.createdAt),
         })),
         publisher: { "@type": "Organization", name: "ReGen Civics", url: SITE },
