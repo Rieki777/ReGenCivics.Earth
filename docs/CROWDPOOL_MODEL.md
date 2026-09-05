@@ -136,23 +136,47 @@ platform never produces anything receipt-shaped.
 
 ---
 
-## Open questions
+## The two things you hold, and why they are different
 
-Three things in this document are not settled yet, and they are marked here rather
-than guessed at.
+This is the part worth reading twice, because the two are easy to confuse and they
+behave nothing alike.
 
-**What is $RCivics worth, in what currency?** The example above uses one token per
-franc. The earlier ruling said one dollar. Those are not the same, and if two people
-contribute the same number in different currencies they cannot both be right.
+**A routing signal** says where you want your share to go. It cannot be sold or
+transferred, it moves freely between projects until a campaign closes, and it carries
+no rights. It is a message to ReGen Civics. It lives in its own ledger and it is not a
+token in the sense the rest of the platform uses that word.
 
-**When is $RCivics issued?** Two answers have been given: at the moment of
-contribution, and at the moment a campaign closes. The difference matters, because it
-decides whether someone holds standing while their money is still waiting.
+**$RCivics** is your standing in what the community built. One token per Swiss franc
+contributed. **The franc is the unit of account at launch**, until the market prices
+the token itself.
 
-**Is the treasury held or spent?** If the ten per cent pays roles and running costs
-then it is spent, and it is not a holding anyone owns a share of. If it is a reserve
-then it is. The worked example above reads as the second, and the earlier ruling as
-the first.
+$RCivics arrives in two stages, and the first is only a record.
+
+**At contribution** you see your $RCivics in your profile immediately. It is a
+tracking balance: **not spendable and not tradable on the platform.** It exists so you
+can see where you stand from the first day. Because it is only a record, it can be
+removed cleanly if your money is refunded.
+
+**At close**, once the deals have completed, the projects hold their own tokens and a
+refund is no longer possible, you go to Hypha and claim **the real tokens on the Base
+blockchain**. That is the moment the holding becomes a holding.
+
+Nothing about that second step is new machinery. It is the same one-way claim bridge
+the platform already uses for its other tokens: the balance is held privately here,
+you claim, the chain confirms, and the confirmation comes back.
+
+---
+
+## The treasury is held, not spent
+
+The ten per cent that is not routed sits in the community treasury as a **real asset
+you have a claim on**, not a fee that disappears. Paying roles and running costs draws
+it down over time, and **that drawdown is a governance decision**, made by the people
+holding governance weight rather than by whoever is running the platform that month.
+
+So in the worked example, the 10,000 in the treasury is genuinely part of what that
+contributor's $RCivics represents. It is the smallest of the three holdings and the
+only one the community spends from directly.
 
 ---
 

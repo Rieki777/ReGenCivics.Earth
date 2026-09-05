@@ -118,8 +118,96 @@ export const ROUTING_SIGNAL = {
 export const RCIVICS = {
   /** Deployed on Base, chain 8453. */
   contract: "0x72e9B17a2F93A923D63666eC0a1c096B1443ef26",
-  /** OPEN QUESTION: 1:1 with what? See docs/CROWDPOOL_MODEL.md section "Open". */
-  pegNote: "1 token per 1 unit of contributed currency, currency itself unresolved",
+
+  /**
+   * One token per Swiss franc. CHF is the unit of account at launch, until the
+   * market prices the token itself. Contributions in any other currency convert
+   * at the contribution-time rate, and BOTH the original amount+currency and the
+   * CHF amount used for issuance are stored, because a contributor asked why they
+   * hold what they hold must be answerable years later.
+   */
+  unitOfAccount: "CHF",
+  tokensPerUnit: 1,
+
+  /**
+   * Two schema facts that the CHF peg runs into, both measured on production
+   * 2026-09-05.
+   *
+   * 1. `user_token_ledger.amount` is `int`. Whole tokens only. At one token per
+   *    franc that means a contribution cannot carry centimes, and every campaign
+   *    money column is `int` too. Someone contributing 100,000.50 CHF either
+   *    loses the fifty or the write fails. Decide the unit before the first
+   *    contribution, because changing a token's scale later is not a migration,
+   *    it is a sweep of every caller that posts to the ledger.
+   *
+   * 2. Production campaigns are ALREADY multi-currency: USD, EUR and GBP all
+   *    exist today, and `campaigns.currency` is a free varchar with no rate
+   *    stored anywhere. Pegging issuance to CHF means every contribution needs
+   *    its original amount, its original currency, the rate used, the rate's
+   *    source and its timestamp all persisted. Storing only the converted figure
+   *    makes "why do I hold this number" unanswerable later.
+   */
+  knownSchemaGaps: ["ledger_amount_is_integer", "no_fx_rate_recorded"] as const,
+
+  /**
+   * Issued at contribution as a RESTRICTED balance, claimed at close.
+   *
+   * Stage 1, at contribution: credited privately so the contributor sees their
+   * standing immediately. NOT spendable and NOT tradable on the platform, and
+   * removable if the contribution is refunded. It is a record, not yet a holding.
+   *
+   * Stage 2, at close: once deals complete, projects hold their own tokens and
+   * refund is no longer possible, the contributor claims the real tokens on Base
+   * through Hypha. Same one-way claim bridge the four-token model already uses.
+   *
+   * WARNING for whoever builds this, measured rather than assumed.
+   *
+   * `players.requestClaim` (server/routes/players.ts:645) takes a LIST OF TOKEN
+   * TYPES and no amount. It claims the WHOLE private balance for each type. So a
+   * contributor holding restricted crowdpool $RCivics alongside any other
+   * $RCivics would sweep both to Base in one claim, including the part that is
+   * still refundable and whose campaigns have not closed. That breaks the refund
+   * promise on-chain, where it cannot be undone: the bridge is one-way by design.
+   *
+   * So the private $RCivics balance needs a claimable part and a restricted part,
+   * and requestClaim must claim only the first. A source tag alone will not do
+   * it, because the balance is a single cached column.
+   *
+   * Note the related risk is currently theoretical rather than live: no spend
+   * surface reads a private balance today, so "not spendable" is satisfied by
+   * accident. It stops being satisfied the day one is built, so the restriction
+   * belongs in the data, not in the absence of a caller.
+   */
+  issuance: {
+    stage1: "restricted_private_at_contribution",
+    stage2: "claim_to_base_at_close",
+    spendableBeforeClaim: false,
+    tradableBeforeClaim: false,
+    removableOnRefund: true,
+    /** All must hold before a claim may be requested. */
+    claimPreconditions: [
+      "campaigns_routed_to_have_closed",
+      "project_tokens_issued",
+      "refund_window_passed",
+    ],
+  },
+} as const;
+
+/**
+ * The community treasury holds; it does not merely spend. The unrouted share is a
+ * real asset the contributor's $RCivics has a claim on. Drawdown for roles and
+ * running costs is a governance decision, not an operator one.
+ *
+ * Note this is exactly what founder ruling R92 used to forbid, and why R92's hard
+ * block was lifted on 2026-09-05. The DEFAULT it protected still stands: a project
+ * with no treasury configuration has no treasury, no cap and no pre-issued supply.
+ */
+export const TREASURY = {
+  held: true,
+  spentDirectly: false,
+  drawdownIsGoverned: true,
+  defaultExists: false,
+  defaultCap: null,
 } as const;
 
 /** Words we do not use, and what we say instead. Enforced by a repo guard. */
