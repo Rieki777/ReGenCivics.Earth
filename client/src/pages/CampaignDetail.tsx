@@ -869,7 +869,7 @@ export default function CampaignDetail() {
 
         {/* Pledge simulator: a pure-client "what does my pledge unlock" widget,
             grounded in the same coach numbers as the wizard. */}
-        <PledgeSimulator items={campaign.items} region={campaign.location} />
+        <PledgeSimulator items={campaign.items} region={campaign.location} currency={campaign.currency || undefined} />
 
         {/* Pool Ledger: the public record of pledges, deliveries, and thanks */}
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">

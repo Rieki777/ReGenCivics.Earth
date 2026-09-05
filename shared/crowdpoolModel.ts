@@ -210,6 +210,39 @@ export const TREASURY = {
   defaultCap: null,
 } as const;
 
+/**
+ * Governance of the cooperative. Ruled 2026-09-05.
+ *
+ * TWO WEIGHTINGS, both supported, chosen rather than assumed. One member one vote
+ * is the Swiss cooperative default and the shape that most clearly reads as a
+ * membership rather than an investment vehicle. One franc one vote is capital
+ * weighted. Which applies is a setting, because the answer may differ by decision
+ * type and because Swiss counsel has not ruled yet.
+ *
+ * THE ELECTORATE IS NOT ONLY PEOPLE. Voting weight also goes to projects,
+ * organisations and other actors, so the cooperative is governed by the whole
+ * ecosystem rather than by individual contributors alone. That has a consequence
+ * worth stating before anything is built: "member" cannot be a synonym for "user".
+ * A voter is an ACTOR, which may be a person, a land project, a partner
+ * organisation, or something not yet named. Any schema that hangs governance off
+ * `userId` will have to be torn out the first time a project votes.
+ *
+ * RCVoice is the governance token. Note it is the only one of the four with no
+ * contract deployed on Base (STEERING.md section 5), so this is currently
+ * platform-side only.
+ */
+export const GOVERNANCE = {
+  token: "rcvoice",
+  /** game_variables: crowdpool.governance.weighting */
+  weightings: ["one_member_one_vote", "one_franc_one_vote"] as const,
+  defaultWeighting: "one_member_one_vote",
+  /** May vary by what is being decided, not only by season. */
+  weightingIsPerDecisionType: true,
+  /** A voter is an actor, never assumed to be a person. */
+  actorKinds: ["person", "project", "organisation", "other"] as const,
+  rcvoiceDeployedOnBase: false,
+} as const;
+
 /** Words we do not use, and what we say instead. Enforced by a repo guard. */
 export const BANNED_TERMS: Record<string, string> = {
   // "Earmarking" is the exact term of art in Rev. Rul. 63-252 for what destroys

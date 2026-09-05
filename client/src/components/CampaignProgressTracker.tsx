@@ -16,7 +16,13 @@ interface CampaignProgressTrackerProps {
 
 function formatCurrency(amount: number, symbol: string = '$'): string {
   if (amount >= 1000000) return `${symbol}${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 1000) return `${symbol}${(amount / 1000).toFixed(0)}K`;
+  // Between 1K and 10K, keep one decimal. `toFixed(0)` ROUNDS, so a campaign
+  // asking 1,500 was shown as "2K", overstating its goal by a third, and 1,499
+  // as "1K". The error is worst exactly where campaigns are smallest and the
+  // number matters most to the people reading it. Above 10K the relative error
+  // is small enough that the shorter form is the friendlier one.
+  if (amount >= 10000) return `${symbol}${(amount / 1000).toFixed(0)}K`;
+  if (amount >= 1000) return `${symbol}${(amount / 1000).toFixed(1)}K`;
   return `${symbol}${amount.toLocaleString()}`;
 }
 

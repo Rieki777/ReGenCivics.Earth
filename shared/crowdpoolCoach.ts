@@ -302,8 +302,16 @@ export function valuationForLand(input: {
   };
 }
 
-/** Wraps a figure the user already has into a plus-or-minus band for review. */
-export function valuationBandForValue(value: number, spread = 0.25): ValuationBand {
+/**
+ * Wraps a figure the user already has into a plus-or-minus band for review.
+ *
+ * `symbol` defaults to a dollar sign so every existing caller keeps its current
+ * output. Pass the campaign's own symbol where one is known: a campaign
+ * denominated in francs was showing a person their pledge range in dollars,
+ * measured live on a euro campaign where "$3,500" sat among euro figures on the
+ * same page.
+ */
+export function valuationBandForValue(value: number, spread = 0.25, symbol = "$"): ValuationBand {
   const mid = Math.max(0, Math.round(Number(value) || 0));
   const { low, high } = band(mid, spread);
   return {
@@ -313,7 +321,7 @@ export function valuationBandForValue(value: number, spread = 0.25): ValuationBa
     basis: mid > 0 ? "reference" : "none",
     note:
       mid > 0
-        ? `A fair range around this figure is $${low.toLocaleString()} to $${high.toLocaleString()}.`
+        ? `A fair range around this figure is ${symbol}${low.toLocaleString()} to ${symbol}${high.toLocaleString()}.`
         : `Add an estimated value and the coach will suggest a fair range.`,
   };
 }

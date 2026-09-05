@@ -51,7 +51,19 @@ function titleForItem(item: any): string {
 const STRENGTH_WORD: Record<string, string> = { none: "empty", thin: "thin", solid: "solid" };
 const WEEKS = 12;
 
-export function PledgeSimulator({ items, region }: { items: any[]; region?: string | null }) {
+/**
+ * Currency symbols for the currencies a campaign can be denominated in. The
+ * simulator used to hardcode a dollar sign, so a campaign in francs, euros or
+ * pounds showed a person their pledge in dollars: measured live on the EUR
+ * campaign "Terra Nova Regenerative Farm", where "$3,500" sat among euro figures
+ * on the same page.
+ */
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$", EUR: "€", GBP: "£", CHF: "CHF ", JPY: "¥",
+  CAD: "C$", AUD: "A$", NZD: "NZ$", PHP: "₱", INR: "₹",
+};
+
+export function PledgeSimulator({ items, region, currency }: { items: any[]; region?: string | null; currency?: string }) {
   const needs = (items ?? []).filter((it) => kindForItem(it) !== "financial_link");
 
   const baseNeeds: CoachNeedInput[] = useMemo(
@@ -70,17 +82,24 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
   const [capital, setCapital] = useState<CapitalType>("experiential");
   const [hours, setHours] = useState(5);
 
+  // The campaign's own currency, not a dollar sign. An unknown code renders as
+  // the code itself ("SEK 1,200") rather than silently claiming to be dollars.
+  const symbol = currency
+    ? (CURRENCY_SYMBOLS[currency.toUpperCase()] ?? `${currency.toUpperCase()} `)
+    : "";
+  const fmt = (n: number) => `${symbol}${Math.round(n).toLocaleString()}`;
+
   const sim = useMemo(() => {
     if (mode === "need" && needs[needIdx]) {
       const it = needs[needIdx];
       const cap = capitalForItem(it);
       const value = Number(it.estimatedValue) || 0;
-      return { capital: cap, kind: kindForItem(it), value, band: valuationBandForValue(value) };
+      return { capital: cap, kind: kindForItem(it), value, band: valuationBandForValue(value, 0.25, symbol || "$") };
     }
     const band = valuationForRole({ capital, hoursPerWeek: hours, weeks: WEEKS, region });
     return { capital, kind: "role", value: band.mid, band };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, needIdx, capital, hours, region, needs.length]);
+  }, [mode, needIdx, capital, hours, region, needs.length, symbol]);
 
   const simNeed: CoachNeedInput = { capitalType: sim.capital, kind: sim.kind, estimatedValue: sim.value };
   const base = useMemo(() => analyzeCoverage(baseNeeds), [baseNeeds]);
@@ -97,7 +116,6 @@ export function PledgeSimulator({ items, region }: { items: any[]; region?: stri
       : `keeps ${capLabel} ${STRENGTH_WORD[afterEntry?.strength ?? "none"]}`;
   const opensNewForm = withSim.coveredCount > base.coveredCount;
 
-  const fmt = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
   return (
     <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
