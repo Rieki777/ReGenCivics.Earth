@@ -163,7 +163,7 @@ describe('the pooled total', () => {
    * pledge is delivered. village-os reads pledgedTotal/totalValue as its
    * progress ring (docs/modules/crowdpool.md), so the village sees it too.
    */
-  it.skipIf(skipIfNoDb).fails('does not shrink when a delivered pledge is confirmed', async () => {
+  it.skipIf(skipIfNoDb)('does not shrink when a delivered pledge is confirmed', async () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Total shrink', quantityWanted: 5 });
     const caller = steward();
 
@@ -184,17 +184,19 @@ describe('the pooled total', () => {
   });
 
   /**
-   * DEFECT. getCampaignPledgedTotals adds EVERY contribution to totals.total
-   * (server/db.ts:1215, unconditional) and then adds financial ones AGAIN to
-   * totals.financial (db.ts:1230). The two columns overlap. Three display
-   * surfaces then sum them:
-   *   client/src/components/CampaignProgressTracker.tsx:62  pledgedTotal + pledgedFinancial
-   *   client/src/pages/CrowdPoolingProjects.tsx:593         same, per gallery card
-   *   client/src/pages/CrowdPoolingProjects.tsx:511         site-wide "total pooled"
-   * So a $10,000 crypto pledge is displayed as $20,000 raised, including in the
-   * headline number on the public gallery.
+   * REGRESSION GUARD, two halves.
+   *
+   * `pledgedTotal` contains every standing contribution INCLUDING financial ones
+   * (server/db.ts, `totals.total +=` runs unconditionally). `pledgedFinancial` is
+   * a BREAKDOWN of it, the same way pledgedLand and pledgedRoles are. That
+   * overlap is deliberate and is asserted here so nobody "fixes" the columns
+   * when the callers were the problem.
+   *
+   * What was wrong was four display surfaces adding the two together, so a
+   * $10,000 cash pledge rendered as $20,000 raised, including the site-wide
+   * pooled figure on the public gallery.
    */
-  it.skipIf(skipIfNoDb).fails('does not carry a financial pledge in two columns that the UI then adds', async () => {
+  it.skipIf(skipIfNoDb)('keeps a financial pledge in pledgedTotal, with pledgedFinancial as its breakdown', async () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Double count', quantityWanted: 3 });
     const caller = steward();
 
@@ -212,41 +214,77 @@ describe('the pooled total', () => {
     await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
 
     const row = await campaignRow(campaignId);
-    // What every display surface computes:
-    const displayed = row.pledgedTotal + row.pledgedFinancial;
-    expect(displayed).toBe(10000);
+    expect(row.pledgedTotal).toBe(10000);      // the whole pledge, counted once
+    expect(row.pledgedFinancial).toBe(10000);  // the same money, as a breakdown
   });
 
-  it.skipIf(skipIfNoDb)('records the double-count precisely, so the size of the bug is documented', async () => {
-    const { campaignId, itemId } = await activeCampaign({ title: 'Double count size', quantityWanted: 3 });
-    const caller = steward();
-    const c = await appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
-      campaignId, campaignItemId: itemId, contributionType: 'financial',
-      title: 'A crypto pledge', estimatedValue: 10000, financialAmount: 10000, quantityPledged: 1,
-      contributorName: 'Crypto2', contributorEmail: 'crypto2@example.com',
-    });
-    await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
-    const row = await campaignRow(campaignId);
-    expect(row.pledgedTotal).toBe(10000);
-    expect(row.pledgedFinancial).toBe(10000);
-    expect(row.pledgedTotal + row.pledgedFinancial).toBe(20000); // what the member is shown
+  /**
+   * The whole status set, in one place, because this is the thing that was wrong
+   * and a partial fix would be easy to make. A pledge counts while it stands
+   * (accepted, then fulfilled on delivery, then thanked) and stops counting when
+   * it is genuinely gone (pending, rejected, withdrawn, expired).
+   *
+   * `expired` is asserted here rather than through the nightly sweep because the
+   * sweep's own test cannot run on a MariaDB scratch database: it backdates
+   * `claimExpiresAt` and compares against `NOW()`, and that comparison behaves
+   * differently there. CI runs it against MySQL 9.4, where it passes. This test
+   * exercises the same arithmetic without the timestamp.
+   */
+  it.skipIf(skipIfNoDb)('counts a pledge while it stands and drops it when it is gone', async () => {
+    const database = (await dbHelpers.getDb())!;
+    const standing = ['accepted', 'fulfilled', 'thanked'];
+    const gone = ['pending', 'rejected', 'withdrawn', 'expired'];
+
+    for (const status of [...standing, ...gone]) {
+      const { campaignId, itemId } = await activeCampaign({ title: `Status ${status}`, quantityWanted: 3 });
+      const c = await pledge(campaignId, itemId, 4000, `St${status}`);
+
+      // Set the status directly: several of these are terminal and cannot be
+      // reached through the router from 'pending'.
+      await database.execute(
+        sql`UPDATE campaign_contributions SET status = ${status} WHERE id = ${c.id}`);
+      await dbHelpers.updateCampaignPledgedTotals(campaignId);
+
+      const row = await campaignRow(campaignId);
+      const expected = standing.includes(status) ? 4000 : 0;
+      expect({ status, pledgedTotal: row.pledgedTotal }).toEqual({ status, pledgedTotal: expected });
+    }
   });
 
-  it.skipIf(skipIfNoDb)('records the shrink precisely, so the size of the bug is documented', async () => {
-    const { campaignId, itemId } = await activeCampaign({ title: 'Shrink size', quantityWanted: 5 });
-    const caller = steward();
+  /**
+   * The half that actually stops this coming back. A behaviour test cannot catch
+   * it, because the database is correct: the defect only exists in what a caller
+   * does with two correct numbers. And the sum LOOKS right, because the line
+   * directly above it in CampaignProgressTracker adds totalValue and
+   * financialTarget, which genuinely ARE disjoint.
+   *
+   * Covers the infix form and the reduce form, with the nullish-coalescing and
+   * property prefixes both surfaces used stripped before matching.
+   */
+  it('no client surface adds pledgedTotal to pledgedFinancial', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs');
+    const { join } = await import('node:path');
 
-    const a = await pledge(campaignId, itemId, 10000, 'Cy');
-    await caller.campaigns.updateContributionStatus({ contributionId: a.id, status: 'accepted' });
-    await caller.campaigns.updateContributionStatus({ contributionId: a.id, status: 'fulfilled' });
-
-    const b = await pledge(campaignId, itemId, 5000, 'Di');
-    await caller.campaigns.updateContributionStatus({ contributionId: b.id, status: 'accepted' });
-
-    // This is what it actually does today. When someone fixes the bug above,
-    // this assertion fails too and tells them to delete this test.
-    expect((await campaignRow(campaignId)).pledgedTotal).toBe(5000);
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = join(dir, name);
+        if (statSync(full).isDirectory()) { walk(full); continue; }
+        if (!/\.(ts|tsx)$/.test(name)) continue;
+        readFileSync(full, 'utf8').split(/\r?\n/).forEach((line, i) => {
+          const t = line.trimStart();
+          if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return;
+          const bare = line.replace(/[\s()]|\?\?\s*0|\w+\./g, '');
+          if (/pledgedTotal\+pledgedFinancial|pledgedFinancial\+pledgedTotal/.test(bare)) {
+            offenders.push(`${full.replace(/\\/g, '/').split('/client/')[1]}:${i + 1}  ${line.trim()}`);
+          }
+        });
+      }
+    };
+    walk(join(process.cwd(), 'client', 'src'));
+    expect(offenders).toEqual([]);
   });
+
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

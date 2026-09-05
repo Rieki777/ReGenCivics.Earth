@@ -1195,13 +1195,25 @@ export async function getCampaignPledgedTotals(campaignId: number): Promise<{
   const db = await getDb();
   if (!db) return { total: 0, land: 0, equipment: 0, roles: 0, resources: 0, financial: 0 };
   
+  // Every status in which the pledge still stands. This used to be 'accepted'
+  // alone, which quietly deleted a contribution's value the moment a steward
+  // confirmed delivery: 'fulfilled' and 'thanked' are LATER states in the same
+  // lifecycle, not alternatives to it. A campaign that had $10,000 delivered and
+  // then accepted a further $5,000 reported $5,000, so the bar went backwards at
+  // the moment the project succeeded, and village-os divides this same number to
+  // draw its progress ring.
+  //
+  // The excluded statuses are the ones where the pledge really is gone:
+  // 'pending' (not yet a promise), 'rejected', 'withdrawn', 'expired'.
+  const STANDING: Array<'accepted' | 'fulfilled' | 'thanked'> = ['accepted', 'fulfilled', 'thanked'];
+
   const contributions = await db.select()
     .from(campaignContributions)
     .where(and(
       eq(campaignContributions.campaignId, campaignId),
-      eq(campaignContributions.status, 'accepted')
+      inArray(campaignContributions.status, STANDING)
     ));
-  
+
   const totals = {
     total: 0,
     land: 0,

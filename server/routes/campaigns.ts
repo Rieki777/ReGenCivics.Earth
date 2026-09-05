@@ -814,6 +814,15 @@ export const campaignsRouter = router({
         }
       }
 
+      // Recompute after the payoff too. The totals used to refresh only in the
+      // accepted/rejected branch, so a status change here left the stored number
+      // stale until some unrelated accept happened to trigger a recompute. That
+      // made the correction land late and detached from its cause, which is the
+      // half of this defect that made it hard to attribute.
+      if (input.status === 'fulfilled' && firstFulfillment) {
+        await db.updateCampaignPledgedTotals(contribution.campaignId);
+      }
+
       // Thanked closes the loop: a note is required, a photo is optional.
       if (input.status === 'thanked') {
         if (prevStatus !== 'fulfilled') {

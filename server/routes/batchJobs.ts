@@ -443,6 +443,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
 
   let expired = 0;
   let reminders = 0;
+  const touchedCampaigns = new Set<number>();
 
   // Pass 1: expire overdue claims and release their slots.
   const [overdueRows] = await db.execute(sql`
@@ -496,6 +497,24 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
       });
     } catch (err) {
       console.warn('[crowdpool-sweep] expiry notification failed:', err);
+    }
+
+    // An expired claim is no longer a standing pledge, so the campaign's totals
+    // have to stop counting it. Without this the value sat in pledgedTotal until
+    // some unrelated accept happened to trigger a recompute, which is the same
+    // deferred-correction shape as the delivery bug.
+    touchedCampaigns.add(claim.campaignId);
+  }
+
+  // One recompute per affected campaign rather than one per claim.
+  if (touchedCampaigns.size) {
+    const { updateCampaignPledgedTotals } = await import("../db");
+    for (const campaignId of touchedCampaigns) {
+      try {
+        await updateCampaignPledgedTotals(campaignId);
+      } catch (err) {
+        console.warn('[crowdpool-sweep] pledged-total recompute failed for campaign', campaignId, err);
+      }
     }
   }
 

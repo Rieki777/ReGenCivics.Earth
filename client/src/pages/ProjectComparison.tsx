@@ -90,7 +90,8 @@ export default function ProjectComparison() {
           location: c.location || "Location TBD",
           description: c.description || "",
           targetAmount: (c.totalValue ?? 0) + (c.financialTarget ?? 0),
-          currentAmount: (c.pledgedTotal ?? 0) + (c.pledgedFinancial ?? 0),
+          // pledgedFinancial is a breakdown of pledgedTotal, not a second pot.
+          currentAmount: c.pledgedTotal ?? 0,
           financialPledged: c.pledgedFinancial ?? 0,
           financialTarget: c.financialTarget ?? 0,
           currency: c.currency || "USD",

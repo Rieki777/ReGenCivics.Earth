@@ -44,7 +44,8 @@ export interface GalleryCampaign {
   description: string;
   /** totalValue + financialTarget: the whole pool the campaign is raising. */
   targetAmount: number;
-  /** pledgedTotal + pledgedFinancial: what the community has pledged so far. */
+  /** pledgedTotal: what the community has pledged so far. Financial pledges are
+   *  already inside it; pledgedFinancial is a breakdown, never an addend. */
   currentAmount: number;
   /** pledgedFinancial only, for the second bar. */
   financialAmount: number;
@@ -590,7 +591,10 @@ export default function CrowdPoolingProjects() {
           location: c.location || "Location TBD",
           description: c.description || "",
           targetAmount: (c.totalValue ?? 0) + (c.financialTarget ?? 0),
-          currentAmount: (c.pledgedTotal ?? 0) + (c.pledgedFinancial ?? 0),
+          // pledgedTotal already contains the financial pledges; pledgedFinancial
+          // is a breakdown of it, not a second pot. Adding them showed every cash
+          // pledge twice, here and in the site-wide pooled figure below.
+          currentAmount: c.pledgedTotal ?? 0,
           financialAmount: c.pledgedFinancial ?? 0,
           currency: c.currency || "USD",
           contributorsCount: typeof extras.contributorsCount === "number" ? extras.contributorsCount : undefined,

@@ -58,8 +58,20 @@ export function CampaignProgressTracker({
     };
   }, [startedAt, durationDays]);
 
+  // These two sums look alike and only one of them is right.
+  //
+  // The GOAL side is disjoint: totalValue is derived from the campaign's item
+  // values grouped by category (server/db.ts:897) and financialTarget is entered
+  // separately by the steward, so adding them gives the whole ask.
+  //
+  // The RAISED side is NOT. pledgedFinancial is a breakdown component of
+  // pledgedTotal, the same way pledgedLand and pledgedRoles are: every accepted
+  // contribution lands in pledgedTotal, and financial ones additionally land in
+  // pledgedFinancial. Adding them counted every cash pledge twice, so $10,000
+  // pledged rendered as $20,000 raised here, on every gallery card, and in the
+  // site-wide pooled figure. pledgedTotal alone is the total.
   const totalGoal = totalValue + financialTarget;
-  const totalRaised = pledgedTotal + pledgedFinancial;
+  const totalRaised = pledgedTotal;
   const fundingPercent = totalGoal > 0 ? Math.min(100, (totalRaised / totalGoal) * 100) : 0;
 
   const urgencyLevel = useMemo(() => {
