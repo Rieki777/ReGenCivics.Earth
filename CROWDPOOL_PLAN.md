@@ -145,6 +145,28 @@ The one real hazard with DECIMAL is that `mysql2` returns it as a STRING by defa
 `decimalNumbers: true` so values come back as JS numbers, and a test asserts it. At two
 decimal places, JS number precision is not a concern until roughly ninety trillion.
 
+**Two things this cost, both worth keeping.**
+
+*The first guard was worthless and passed anyway.* The original money test read through
+`getCampaignById`, and drizzle's `mode: "number"` converts on its own, so removing the
+pool flag changed nothing and the test stayed green. A guard that reports the same thing
+when it did not run as when it passed. Raw `db.execute` bypasses the mapper, which is
+where the flag actually matters, and that is what the test reads now. It was only found
+by deliberately breaking the flag to see whether the test noticed.
+
+*A type-changing migration must ship with its code.* Applying 0239 to production put the
+database on DECIMAL while the running code still had the `int` schema and no pool flag,
+because its deploy was still building. In that window every money read came back as a
+string. The site came through it: the percentage maths divides, and division coerces
+where addition concatenates, and the single `+` on money had been removed an hour
+earlier by the double-count fix. Had the order been reversed, the gallery's
+`reduce((s, p) => s + p.currentAmount, 0)` would have rendered a total like
+`"051200.0038200.00"` on the public page.
+
+So: **an additive migration can lead its deploy, a migration that changes a column's
+RETURNED TYPE cannot.** Ship it in the same deploy as the code that expects it, or put
+it behind a rail. This one survived on ordering luck rather than design.
+
 ---
 
 ## 7. Known defects, still outstanding
