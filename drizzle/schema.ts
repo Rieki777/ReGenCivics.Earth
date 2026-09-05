@@ -798,8 +798,8 @@ export const crowdPoolingProjects = mysqlTable("crowd_pooling_projects", {
   
   // Crowd pooling details
   targetCurrency: varchar("targetCurrency", { length: 10 }).default("USD").notNull(), // USD, EUR, GBP, etc.
-  targetAmount: int("targetAmount").notNull(), // Target funding amount
-  currentAmount: int("currentAmount").default(0).notNull(), // Current pooled amount
+  targetAmount: decimal("targetAmount", { mode: "number", precision: 18, scale: 2 }).notNull(), // Target funding amount
+  currentAmount: decimal("currentAmount", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // Current pooled amount
   contributorCount: int("contributorCount").default(0).notNull(), // Number of contributors
   
   // Timeline
@@ -842,7 +842,7 @@ export const crowdPoolingProposals = mysqlTable("crowd_pooling_proposals", {
   // Financial summary
   totalContribution: int("totalContribution").default(0).notNull(), // Total value in target currency
   financialContribution: int("financialContribution").default(0).notNull(), // Cash/financial only
-  futureValueContribution: int("futureValueContribution").default(0).notNull(), // Future value/roles
+  futureValueContribution: decimal("futureValueContribution", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // Future value/roles
   
   // Status
   status: mysqlEnum("status", [
@@ -957,7 +957,7 @@ export const savedContributions = mysqlTable("saved_contributions", {
   
   // Project context (optional - can be generic)
   projectName: varchar("projectName", { length: 255 }),
-  targetAmount: int("targetAmount"),
+  targetAmount: decimal("targetAmount", { mode: "number", precision: 18, scale: 2 }),
   currency: varchar("currency", { length: 10 }).default("USD"),
   
   // Contributor info
@@ -969,8 +969,8 @@ export const savedContributions = mysqlTable("saved_contributions", {
   futureContributions: text("futureContributions"), // JSON array of future value contributions
   
   // Totals (cached for quick display)
-  totalImmediateValue: int("totalImmediateValue").default(0),
-  totalFutureValue: int("totalFutureValue").default(0),
+  totalImmediateValue: decimal("totalImmediateValue", { mode: "number", precision: 18, scale: 2 }).default(0),
+  totalFutureValue: decimal("totalFutureValue", { mode: "number", precision: 18, scale: 2 }).default(0),
   
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1008,7 +1008,7 @@ export const playerContributions = mysqlTable("player_contributions", {
   description: text("description"),
 
   // Estimated USD value (player self-reported, optional)
-  estimatedValue: int("estimatedValue"),
+  estimatedValue: decimal("estimatedValue", { mode: "number", precision: 18, scale: 2 }),
 
   // Which project / org received the contribution (optional free-text)
   projectName: varchar("projectName", { length: 255 }),
@@ -1060,7 +1060,7 @@ export const campaigns = mysqlTable("campaigns", {
   applicationId: int("applicationId"), // Optional link to applications table
   
   // Financial Target
-  financialTarget: int("financialTarget").default(0).notNull(), // How much money they actually need
+  financialTarget: decimal("financialTarget", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // How much money they actually need
   currency: varchar("currency", { length: 10 }).default("USD"),
   
   // Project Details (from application)
@@ -1089,19 +1089,19 @@ export const campaigns = mysqlTable("campaigns", {
   daoLink: varchar("daoLink", { length: 512 }),
   
   // Progress Tracking
-  totalValue: int("totalValue").default(0).notNull(), // Total value of all needs
-  landValue: int("landValue").default(0).notNull(),
-  equipmentValue: int("equipmentValue").default(0).notNull(),
-  rolesValue: int("rolesValue").default(0).notNull(),
-  resourcesValue: int("resourcesValue").default(0).notNull(),
+  totalValue: decimal("totalValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // Total value of all needs
+  landValue: decimal("landValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  equipmentValue: decimal("equipmentValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  rolesValue: decimal("rolesValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  resourcesValue: decimal("resourcesValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
   
   // Contribution tracking (how much has been pledged)
-  pledgedTotal: int("pledgedTotal").default(0).notNull(),
-  pledgedLand: int("pledgedLand").default(0).notNull(),
-  pledgedEquipment: int("pledgedEquipment").default(0).notNull(),
-  pledgedRoles: int("pledgedRoles").default(0).notNull(),
-  pledgedResources: int("pledgedResources").default(0).notNull(),
-  pledgedFinancial: int("pledgedFinancial").default(0).notNull(),
+  pledgedTotal: decimal("pledgedTotal", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedLand: decimal("pledgedLand", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedEquipment: decimal("pledgedEquipment", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedRoles: decimal("pledgedRoles", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedResources: decimal("pledgedResources", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedFinancial: decimal("pledgedFinancial", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
   
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1164,8 +1164,8 @@ export const campaignItems = mysqlTable("campaign_items", {
   resourceDescription: text("resourceDescription"),
   
   // Common fields
-  estimatedValue: int("estimatedValue").default(0).notNull(),
-  pledgedValue: int("pledgedValue").default(0).notNull(), // How much has been pledged for this item
+  estimatedValue: decimal("estimatedValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(),
+  pledgedValue: decimal("pledgedValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // How much has been pledged for this item
 
   // Needs registry (0202, CROWDPOOLING_PLATFORM_SPEC.md Part B Migration A).
   // kind is what shape the need takes. 'crypto' is trackable money on-platform
@@ -1270,12 +1270,12 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   resourceUnit: varchar("resourceUnit", { length: 50 }),
   
   // Financial-specific
-  financialAmount: int("financialAmount"),
+  financialAmount: decimal("financialAmount", { mode: "number", precision: 18, scale: 2 }),
   financialCurrency: varchar("financialCurrency", { length: 10 }).default("USD"),
   paymentMethod: varchar("paymentMethod", { length: 50 }), // cash, crypto, wire, etc.
   
   // Value
-  estimatedValue: int("estimatedValue").default(0).notNull(), // Estimated value in campaign currency
+  estimatedValue: decimal("estimatedValue", { mode: "number", precision: 18, scale: 2 }).default(0).notNull(), // Estimated value in campaign currency
   
   // Status (0203). accepted reserves quantity (ghost progress), fulfilled is
   // the payoff moment (decision 4), thanked closes the loop, expired is
@@ -1349,7 +1349,7 @@ export const campaignPartnerLinks = mysqlTable("campaign_partner_links", {
   partner: mysqlEnum("partner", ["maearth", "gosteward", "grant", "other"]).notNull(),
   label: varchar("label", { length: 255 }),
   url: varchar("url", { length: 512 }).notNull(),
-  cachedRaised: int("cachedRaised"),
+  cachedRaised: decimal("cachedRaised", { mode: "number", precision: 18, scale: 2 }),
   cachedContributorCount: int("cachedContributorCount"),
   cachedPercent: int("cachedPercent"),
   lastFetchedAt: timestamp("lastFetchedAt"),

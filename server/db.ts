@@ -22,6 +22,19 @@ export async function getDb() {
         connectionLimit: 10,
         waitForConnections: true,
         queueLimit: 0,
+        // Money columns are DECIMAL(18,2). mysql2 returns DECIMAL as a STRING by
+        // default, which does not throw and does not warn: it turns every
+        // `a + b` in the 400-odd places that read a money field into string
+        // concatenation, so 100.00 + 50.00 becomes "100.0050.00" and renders as
+        // a plausible, enormous number. Returning JS numbers keeps every
+        // existing caller correct.
+        //
+        // Precision is not a concern at two decimal places until roughly ninety
+        // trillion, far above any figure this system can hold in an INT-derived
+        // column. `server/money.test.ts` asserts both the type and the
+        // round-trip, because a silent revert of this flag would be very hard to
+        // spot from the symptom.
+        decimalNumbers: true,
       });
       // Pass tables + relations so the relational query API
       // (`db.query.<table>.findMany({ with: ... })`) is available.

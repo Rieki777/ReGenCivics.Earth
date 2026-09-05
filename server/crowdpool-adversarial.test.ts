@@ -466,26 +466,34 @@ describe('concurrency', () => {
 
 describe('money units', () => {
   /**
-   * estimatedValue is `z.number().min(0)` — any float passes validation — and
-   * lands in an int(11) column. A pledge of $1000.75 is stored as something
-   * else, and the contributor is never told which.
+   * REGRESSION GUARD. This used to assert that a fractional pledge was silently
+   * rounded, because the money columns were `int` and 1000.75 could only be
+   * stored as 1000 or 1001 with the contributor never told which. Since
+   * migration 0237 they are DECIMAL(18,2) and the amount is kept exactly, so the
+   * test now asserts the honest behaviour rather than documenting the old one.
    */
-  it.skipIf(skipIfNoDb)('stores a fractional pledge as the value the contributor was shown, or refuses it', async () => {
+  it.skipIf(skipIfNoDb)('stores a fractional pledge exactly as the contributor entered it', async () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Fractional', quantityWanted: 3 });
     const caller = steward();
 
-    let submitted: { id: number } | null = null;
-    try {
-      submitted = await pledge(campaignId, itemId, 1000.75, 'Frac');
-    } catch {
-      return; // Refusing the input is a correct outcome.
-    }
+    const submitted = await pledge(campaignId, itemId, 1000.75, 'Frac');
     await caller.campaigns.updateContributionStatus({ contributionId: submitted.id, status: 'accepted' });
 
+    expect((await campaignRow(campaignId)).pledgedTotal).toBeCloseTo(1000.75, 2);
+  });
+
+  it.skipIf(skipIfNoDb)('keeps a third decimal out, rather than storing a number nobody agreed to', async () => {
+    // Two decimals is the contract. A third has to round somewhere, and the
+    // point of the fix is that rounding is never silent about the amount a
+    // contributor was shown, so assert what actually happens rather than assume.
+    const { campaignId, itemId } = await activeCampaign({ title: 'Third decimal', quantityWanted: 3 });
+    const caller = steward();
+    const c = await pledge(campaignId, itemId, 10.005, 'Third');
+    await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
+
     const stored = (await campaignRow(campaignId)).pledgedTotal;
-    // A silent change of the amount is the defect. Either number is defensible;
-    // a THIRD number is not.
-    expect([1000, 1001]).toContain(stored);
+    // 10.00 or 10.01, never 10.005 and never something unrelated.
+    expect([10, 10.01]).toContain(Number(stored));
   });
 
   it.skipIf(skipIfNoDb)('refuses a pledge too large for its column instead of silently clamping', async () => {
