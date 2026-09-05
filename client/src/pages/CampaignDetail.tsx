@@ -39,7 +39,9 @@ import {
   Coins,
   Loader2,
   Layers,
-  Landmark
+  Landmark,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -289,7 +291,7 @@ export default function CampaignDetail() {
       case 'active':
         return <Badge className="bg-green-500 text-white">Active</Badge>;
       case 'funded':
-        return <Badge className="bg-blue-500 text-white">Funded</Badge>;
+        return <Badge className="bg-blue-500 text-white">Complete</Badge>;
       case 'completed':
         return <Badge className="bg-purple-500 text-white">Completed</Badge>;
       default:
@@ -324,7 +326,7 @@ export default function CampaignDetail() {
       {/* SEO for social sharing */}
       <SEO
         title={`${campaign.title} - Support This Campaign`}
-        description={`${campaign.description.slice(0, 150)}... Goal: ${formatCurrencyForSEO(totalValue)} | ${contributorCount} contributors | ${progressPercentage.toFixed(0)}% funded`}
+        description={`${campaign.description.slice(0, 150)}... Goal: ${formatCurrencyForSEO(totalValue)} | ${contributorCount} contributors | ${progressPercentage.toFixed(0)}% complete`}
         keywords={`crowdfunding, regenerative project, ${campaign.projectName}, land project, impact investment, community funding`}
         url={`/campaign/${id}`}
         type="website"
@@ -997,7 +999,7 @@ export default function CampaignDetail() {
                   {cTotal > 0 && (
                     <div className="mb-3">
                       <div className="flex justify-between text-xs text-[#1a472a]/80 mb-1">
-                        <span>{cPct.toFixed(0)}% funded</span>
+                        <span>{cPct.toFixed(0)}% complete</span>
                       </div>
                       <div className="w-full bg-[#1a472a]/10 rounded-full h-1.5">
                         <div
@@ -1177,15 +1179,44 @@ function NeedsRegistry({
       <div className="flex flex-wrap items-end justify-between gap-2 mb-1">
         <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
           <Target className="w-5 h-5 text-[#4a7c59]" />
-          Needs Registry
+          What this project needs
         </h2>
         <span className="text-xs font-semibold text-[#4a7c59] bg-[#4a7c59]/10 rounded-full px-3 py-1">
           {coveredCount} of 9 forms of capital
         </span>
       </div>
-      <p className="text-sm text-[#1a472a]/75 mb-6">
-        What this project needs, organized by the capital it feeds. Claim a slot and the steward takes it from there.
+      <p className="text-sm text-[#1a472a]/75 mb-5">
+        Every kind of value a village runs on, grouped by the capital it feeds. Take a slot and the steward takes it from there.
       </p>
+
+      {/*
+        The Crowd Pooling Tool is the actual innovation and until now nothing on
+        this page pointed at it: a person arriving here could only think in terms
+        of money, which is the smallest part of what a project needs. This says
+        the quiet part out loud, right where someone is deciding what to give.
+      */}
+      <Link href="/crowd-pooling">
+        <div className="group mb-6 rounded-2xl border border-[#4a7c59]/25 bg-gradient-to-r from-[#f0f7f0] to-[#f0f7f0]/40 p-4 md:p-5 hover:border-[#4a7c59]/60 transition-colors cursor-pointer">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-[#1a472a] p-2 shrink-0">
+              <Sparkles className="w-5 h-5 text-[#7dd87d]" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-[#1a472a] mb-0.5" style={{ fontFamily: 'var(--font-display)' }}>
+                You have more to bring than money
+              </p>
+              <p className="text-sm text-[#1a472a]/80">
+                Hours, tools, land, a skill, a spare room, a network. Add up everything you could
+                bring in the Crowd Pooling Tool, then place it where you want it to go.
+              </p>
+              <span className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-[#4a7c59] group-hover:underline">
+                Total up what you can bring
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
       <div className="space-y-8">
         {groups.map(({ capital, items: groupItems }) => {
           const color = CAPITAL_COLORS[capital];

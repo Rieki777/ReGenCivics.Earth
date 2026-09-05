@@ -109,7 +109,7 @@ export function CampaignProgressTracker({
         {/* Stats row */}
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold text-[#1a472a]">
-            {fundingPercent.toFixed(0)}% funded
+            {fundingPercent.toFixed(0)}% complete
           </span>
           <div className="flex items-center gap-3 text-[#1a472a]/80">
             <span className="flex items-center gap-1">
@@ -127,7 +127,7 @@ export function CampaignProgressTracker({
               ) : status === 'pending_review' ? (
                 <span className="text-amber-600">Pending</span>
               ) : status === 'funded' ? (
-                <span className="text-[#4a7c59]">Funded!</span>
+                <span className="text-[#4a7c59]">Complete!</span>
               ) : (
                 status
               )}
@@ -190,7 +190,7 @@ export function CampaignProgressTracker({
       <div className="grid grid-cols-3 divide-x divide-[#7dd87d]/20">
         <div className="p-4 text-center">
           <div className="text-2xl font-bold text-[#4a7c59]">{fundingPercent.toFixed(0)}%</div>
-          <div className="text-xs text-[#1a472a]/80 mt-1">Funded</div>
+          <div className="text-xs text-[#1a472a]/80 mt-1">Complete</div>
         </div>
         <div className="p-4 text-center">
           <div className="text-2xl font-bold text-[#4a7c59]">{contributorsCount}</div>

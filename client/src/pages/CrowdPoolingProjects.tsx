@@ -49,6 +49,8 @@ export interface GalleryCampaign {
   currentAmount: number;
   /** pledgedFinancial only, for the second bar. */
   financialAmount: number;
+  /** The cash ask alone. The second bar divides by THIS, not by the whole goal. */
+  financialTarget: number;
   currency: string;
   /** Omitted when the API doesn't expose it yet; the UI then omits the row. */
   contributorsCount?: number;
@@ -101,12 +103,14 @@ function DeadlineCountdown({ deadline }: { deadline: string | null }) {
 // pledgedTotal bar (showProposed off).
 // ────────────────────────────────────────────────────────────────────────────────
 function AnimatedProgressBar({
-  label, totalValue, financialValue, targetAmount, currency,
+  label, totalValue, financialValue, targetAmount, financialTarget, currency,
   showProposed = false, proposedTotal = 0, proposedFinancial = 0,
   dark = false
 }: {
   label: string;
   totalValue: number; financialValue: number; targetAmount: number;
+  /** The cash ask alone. Omitted, the cash bar falls back to the whole goal. */
+  financialTarget?: number;
   currency: string;
   showProposed?: boolean; proposedTotal?: number; proposedFinancial?: number;
   dark?: boolean;
@@ -114,10 +118,15 @@ function AnimatedProgressBar({
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: true });
   const symbol = currencySymbols[currency] || currency;
   const safeTarget = targetAmount > 0 ? targetAmount : 1;
+  // The cash bar divides by the CASH ask, not by the whole goal. Dividing it by
+  // the whole goal guaranteed it looked tiny forever, because money is by design
+  // the smaller part of what a project needs: a project asking 450k of which 50k
+  // is cash, with the cash ask fully met, still drew a bar at eleven per cent.
+  const safeFinancialTarget = (financialTarget ?? 0) > 0 ? (financialTarget as number) : safeTarget;
   const totalPct = Math.min((totalValue / safeTarget) * 100, 100);
-  const financialPct = Math.min((financialValue / safeTarget) * 100, 100);
+  const financialPct = Math.min((financialValue / safeFinancialTarget) * 100, 100);
   const proposedTotalPct = showProposed ? Math.min((proposedTotal / safeTarget) * 100, 100) : 0;
-  const proposedFinancialPct = showProposed ? Math.min((proposedFinancial / safeTarget) * 100, 100) : 0;
+  const proposedFinancialPct = showProposed ? Math.min((proposedFinancial / safeFinancialTarget) * 100, 100) : 0;
 
   const animatedTotal = useCountUp(totalPct, 1200, isVisible);
   const animatedFinancial = useCountUp(financialPct, 1200, isVisible);
@@ -596,6 +605,7 @@ export default function CrowdPoolingProjects() {
           // pledge twice, here and in the site-wide pooled figure below.
           currentAmount: c.pledgedTotal ?? 0,
           financialAmount: c.pledgedFinancial ?? 0,
+          financialTarget: c.financialTarget ?? 0,
           currency: c.currency || "USD",
           contributorsCount: typeof extras.contributorsCount === "number" ? extras.contributorsCount : undefined,
           recentContributions: extras.recentContributions ?? 0,
@@ -787,12 +797,12 @@ export default function CrowdPoolingProjects() {
           {/* How It Works collapsible (150-16) */}
           <HowCrowdPoolingWorks />
 
-          {/* 150-19: Active / Upcoming / Funded tabs */}
+          {/* 150-19: Active / Upcoming / Complete tabs */}
           <div className="flex flex-wrap items-center gap-2 mb-6">
             {[
               { key: "active", label: `Active (${activeCount})` },
               { key: "upcoming", label: "Upcoming: Season Applications Open" },
-              { key: "funded", label: `Funded (${fundedCount})` },
+              { key: "funded", label: `Complete (${fundedCount})` },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -843,7 +853,7 @@ export default function CrowdPoolingProjects() {
                 onChange={e => setSortBy(e.target.value as typeof sortBy)}
                 className="bg-white/5 border border-white/20 text-white/70 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
               >
-                <option value="most-funded">Most Funded</option>
+                <option value="most-funded">Furthest along</option>
                 <option value="ending-soon">Ending Soon</option>
                 <option value="newest">Newest</option>
                 <option value="most-contributors">Most Contributors</option>
@@ -983,12 +993,12 @@ export default function CrowdPoolingProjects() {
                           <span className={`font-bold text-base px-3 py-1 rounded-lg leading-tight ${isAlmost ? "bg-amber-400 text-amber-900" : "bg-[#7dd87d] text-[#1a472a]"}`}>
                             {pct}%
                           </span>
-                          <span className="text-white text-sm font-medium drop-shadow-sm">funded</span>
+                          <span className="text-white text-sm font-medium drop-shadow-sm">complete</span>
                         </div>
 
                         {/* Status badge */}
                         <Badge className={`absolute top-3 right-3 ${project.status === 'active' ? 'bg-emerald-500/80 text-white' : 'bg-white/20 text-white'}`}>
-                          {project.status === 'active' ? 'Active' : 'Funded'}
+                          {project.status === 'active' ? 'In play' : 'Complete'}
                         </Badge>
 
                         {/* Example badge: persistent on demo campaigns (spec Part D) */}
@@ -1029,10 +1039,11 @@ export default function CrowdPoolingProjects() {
                         {/* Animated Dual Progress Bars (150-2) */}
                         <div className="mb-4">
                           <AnimatedProgressBar
-                            label="Funding Progress"
+                            label="What has been pooled"
                             totalValue={project.currentAmount}
                             financialValue={project.financialAmount}
                             targetAmount={project.targetAmount}
+                            financialTarget={project.financialTarget}
                             currency={project.currency}
                             dark
                           />

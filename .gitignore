@@ -193,3 +193,9 @@ voice-demos/
 harness/shots/
 harness/.out/
 video-out/
+
+# Legal research. Rye's own due diligence for conversations with counsel, kept
+# out of the repo on purpose: it is working material for a lawyer meeting, not a
+# statement of the project's legal position, and a half-formed legal document in
+# a public repo is worse than none.
+legal-research/

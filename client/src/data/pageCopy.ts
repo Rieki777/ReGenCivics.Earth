@@ -93,18 +93,18 @@ export const pageCopy = {
   },
   crowdPoolingProjects: {
     hero: {
-      label: "Crowd Pooling Projects",
-      heading: "Support Regenerative Land Projects",
-      subtext: "Contribute what projects actually need: land, equipment, skills, time, knowledge, and financial resources",
+      label: "The Grand Game",
+      heading: "Participate in ReGen Land Projects",
+      subtext: "Join the renaissance and pool all the things we actually need, together, so we can start building our villages without waiting on money's permission",
       CTAs: {
-        createProposal: "Create Your Proposal",
-        compareProjects: "Compare Projects",
-        listProject: "List Your Project",
+        createProposal: "Total up what you can bring",
+        compareProjects: "Compare projects",
+        listProject: "Enter your project",
       },
     },
     callout: {
-      text: "These are land projects currently raising through crowd pooling. Want to run the numbers on your contribution?",
-      link: "Open the Crowd Pooling Calculator →",
+      text: "Most people bring far more than they think. Hours, tools, a skill, a spare room, a network, and money too. Add it all up before you choose where it goes.",
+      link: "Open the Crowd Pooling Tool →",
     },
     howItWorks: {
       heading: "How It Works",
