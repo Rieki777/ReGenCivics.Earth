@@ -709,11 +709,22 @@ export const playerProfilesRouter = router({
       const dhoSlug = Array.from(dhoSlugs)[0] ?? "regen-games";
 
       // Build the per-token balance + threshold view for the requested set.
-      const balanceFor = (t: string): number => (profile as any)?.[`${t}Private`] ?? 0;
-      const requestedTokens = requestedTokenTypes.map(t => ({
-        tokenType: t,
-        balance: balanceFor(t),
-      }));
+      //
+      // CLAIMABLE, not private. A private balance can contain restricted credits
+      // that the holder can see but must not send to Base yet: crowdpool
+      // $RCivics is issued at contribution so a contributor sees where they
+      // stand, while the money behind it stays refundable until the campaigns
+      // they routed to close. This procedure claims a whole balance and takes no
+      // amount, so without the subtraction one claim would sweep the refundable
+      // part too, across a bridge that is one-way by design.
+      const { getClaimableBalance } = await import("../db/tokens");
+      const privateFor = (t: string): number => (profile as any)?.[`${t}Private`] ?? 0;
+      const requestedTokens = await Promise.all(
+        requestedTokenTypes.map(async (t) => ({
+          tokenType: t,
+          balance: await getClaimableBalance(ctx.user.id, t, privateFor(t)),
+        })),
+      );
 
       // Threshold check (OR within the requested set).
       const thresholds = await Promise.all(
@@ -727,9 +738,23 @@ export const playerProfilesRouter = router({
       const anyAboveThreshold = requestedTokens.some((t, i) => t.balance >= thresholds[i]);
       if (!anyAboveThreshold) {
         const lines = requestedTokens.map((t, i) => `${t.tokenType} ${t.balance}/${thresholds[i]}`).join("; ");
+        // Say WHY the number is lower than the one on their profile. A holder
+        // who can see 100,000 and is told they have 0 to claim, with no
+        // explanation, will reasonably think the balance was lost.
+        const { getRestrictedBalance } = await import("../db/tokens");
+        const restrictedAmounts = await Promise.all(
+          requestedTokens.map((t) => getRestrictedBalance(ctx.user.id, t.tokenType)),
+        );
+        const held = requestedTokens
+          .map((t, i) => ({ t, r: restrictedAmounts[i] }))
+          .filter((x) => x.r > 0)
+          .map((x) => `${x.r} ${x.t.tokenType}`);
+        const heldNote = held.length
+          ? ` You also hold ${held.join(" and ")} from crowdpooling, which stays on the platform until the campaigns you routed to close and refunds are no longer possible.`
+          : "";
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: `No requested token meets its threshold (${lines}). Earn more in any of these tokens to unlock the claim.`,
+          message: `No requested token meets its threshold (${lines}). Earn more in any of these tokens to unlock the claim.${heldNote}`,
         });
       }
 

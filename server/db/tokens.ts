@@ -64,6 +64,79 @@ export type TokenType = "rcvoice" | "rgvoice" | "rcivics" | "regen";
  */
 export type CreditSource = string;
 
+/**
+ * Sources whose credits are RESTRICTED: visible to the holder, counted in the
+ * private balance, and NOT claimable to Base.
+ *
+ * Why this exists. `players.requestClaim` takes a list of token types and no
+ * amount, and claims the whole private balance for each one. Crowdpool $RCivics
+ * is issued at contribution so a contributor can see where they stand
+ * immediately, but the money behind it can still be refunded until the campaigns
+ * they routed to close. Without this set, a contributor holding restricted
+ * crowdpool $RCivics beside any ordinary $RCivics would sweep both to Base in a
+ * single claim, on a bridge that is one-way by design. The refund would then be
+ * owed against tokens that had already left the platform.
+ *
+ * A restriction lifts by writing a compensating ledger row, never by editing
+ * history: credit the same amount under an unrestricted source and debit it here.
+ * That keeps the ledger append-only and leaves the reason visible.
+ *
+ * Add a source here the moment it can be reversed, not the moment somebody
+ * remembers to.
+ */
+// Typed as a plain readonly array rather than `as const`, so the emptiness guard
+// in getRestrictedBalance stays meaningful. With `as const` the compiler knows the
+// length literally and calls the guard dead code, which is exactly the guard you
+// want alive the day someone empties this list: `source IN ()` is invalid SQL.
+export const RESTRICTED_CREDIT_SOURCES: readonly string[] = [
+  "crowdpool_contribution",
+];
+
+/**
+ * The part of a private balance that cannot be claimed, computed FROM THE LEDGER
+ * rather than cached in a column.
+ *
+ * That choice is deliberate and it is the sibling repo's most expensive lesson:
+ * a stored number that is meant to agree with the ledger is a number that can
+ * disagree with it, and when they disagree the ledger is right and the cache is
+ * a silent bug. Claims are rare, so the scan costs nothing that matters.
+ */
+export async function getRestrictedBalance(
+  userId: number,
+  tokenType: TokenType,
+): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  if (RESTRICTED_CREDIT_SOURCES.length === 0) return 0;
+
+  const [row]: any = await db.execute(sql`
+    SELECT COALESCE(SUM(amount), 0) AS restricted
+    FROM user_token_ledger
+    WHERE userId = ${userId}
+      AND tokenType = ${tokenType}
+      AND source IN (${sql.join(RESTRICTED_CREDIT_SOURCES.map((s) => sql`${s}`), sql`, `)})
+  `);
+  const raw = Array.isArray(row) ? row[0]?.restricted : row?.restricted;
+  const restricted = Number(raw ?? 0);
+  // A restricted total can only reduce what is claimable. If compensating rows
+  // ever drive it negative, treat it as zero rather than handing the holder
+  // MORE than their private balance.
+  return Number.isFinite(restricted) && restricted > 0 ? restricted : 0;
+}
+
+/**
+ * What the holder may actually claim to Base: their private balance less
+ * anything still restricted. Never negative.
+ */
+export async function getClaimableBalance(
+  userId: number,
+  tokenType: TokenType,
+  privateBalance: number,
+): Promise<number> {
+  const restricted = await getRestrictedBalance(userId, tokenType);
+  return Math.max(0, (privateBalance ?? 0) - restricted);
+}
+
 const TOKEN_TO_PROFILE_COLUMN: Record<TokenType, string> = {
   rcvoice: "rcvoicePrivate",
   rgvoice: "rgvoicePrivate",
