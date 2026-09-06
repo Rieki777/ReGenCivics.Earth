@@ -398,7 +398,7 @@ export default function Schedule() {
           <p className="text-[#7dd87d] font-medium text-sm md:text-base">
             🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessStart(nextOpenAccessSession)}.{" "}
             {sessionTopic(nextOpenAccessSession.date)
-              ? `We're talking ${sessionTopic(nextOpenAccessSession.date)!.headline}. Free and open to all.`
+              ? `We're talking ${sessionTopic(nextOpenAccessSession.date)!.short}. Free and open to all.`
               : "Every new moon, free and open to all."}
           </p>
         </div>
@@ -463,16 +463,18 @@ export default function Schedule() {
                 </p>
                 {(() => {
                   const topic = sessionTopic(nextOpenAccessSession.date);
-                  return topic ? (
-                    <div className="mb-4 rounded-lg bg-[#7dd87d]/15 border border-[#7dd87d]/30 p-3">
+                  if (!topic) return null;
+                  return (
+                    <div className="mb-3 rounded-lg bg-[#7dd87d]/15 border border-[#7dd87d]/30 p-3">
                       <div className="text-[#7dd87d] text-[10px] font-bold tracking-wider uppercase mb-1">This session</div>
                       <div className="text-white font-semibold text-sm mb-1">{topic.headline}</div>
                       <p className="text-white/75 text-xs leading-relaxed">{topic.body}</p>
                     </div>
-                  ) : (
-                    <p className="text-white/70 text-xs mb-4">Every new moon. {OPEN_ACCESS_PITCH}</p>
                   );
                 })()}
+                {/* The standing pitch stays put whether or not this one has a topic:
+                    a first-time reader still needs to know who the session is for. */}
+                <p className="text-white/70 text-xs mb-4">Every new moon. {OPEN_ACCESS_PITCH}</p>
                 <div className="mb-4">
                   <CalendarCta
                     googleUrl={openAccessGoogleUrl(nextOpenAccessSession)}

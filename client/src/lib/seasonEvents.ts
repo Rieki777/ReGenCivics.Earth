@@ -75,15 +75,23 @@ export const OPEN_ACCESS_PITCH =
  * the session is actually about instead of only when it is. Dates that are not
  * listed fall back to OPEN_ACCESS_PITCH.
  */
-export const SESSION_TOPICS: Record<string, { headline: string; body: string }> = {
+export type SessionTopic = {
+  headline: string;
+  body: string;
+  /** Lower-case fragment for mid-sentence use in banners. */
+  short: string;
+};
+
+export const SESSION_TOPICS: Record<string, SessionTopic> = {
   "2026-09-10": {
     headline: "All things Season Two",
     body: "We're talking through the whole season: what projects get, how selection works, what the accelerator covers, and how the shared crowdpooling launch works. Come ask your questions and meet some of the cohort. More of them show up on selection day.",
+    short: "all things Season Two",
   },
 };
 
 /** Topic for a given session date, or null when it is a standard open session. */
-export function sessionTopic(date: string): { headline: string; body: string } | null {
+export function sessionTopic(date: string): SessionTopic | null {
   return SESSION_TOPICS[date] ?? null;
 }
 
