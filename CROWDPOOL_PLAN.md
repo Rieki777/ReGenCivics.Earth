@@ -103,7 +103,7 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | Expired claims stop counting as pledged | `b835c28` |
 | A claim can no longer sweep a restricted balance to Base | `3c0a579` |
 | The model, human and machine readable | `750512d`, `3ae3d67` |
-| Own legal due diligence, seven dimensions | `4751def` |
+| Own legal due diligence, US and Swiss | not committed, see `legal-research/` |
 
 ---
 
@@ -183,6 +183,35 @@ in `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md`.
 
 ---
 
+## 7a. Mobile, as of 2026-09-05
+
+An adversarial pass at 375x812, driven in a browser rather than read. Nine defects
+fixed, listed in commits `e7f6336e`, `6b3bd838` and `bdd15b55`. The two worth
+remembering are that a backdrop tap wiped a fully filled contribution form with no
+confirmation, and that a wrapped dialog title sat under the close button, so tapping
+what looked like the heading closed the modal and discarded the form. Both are the
+same class of bug: a phone makes an accidental dismissal easy, and this form is the
+main way anyone gives anything.
+
+**What is already right, so nobody "fixes" it:** zero horizontal overflow on the
+gallery, the campaign page and the tool at 375; the claim modal scrolls internally
+and every input in it is 16px, so iOS does not zoom on focus, and 44px tall; `main`
+carries 80px of bottom padding so the mobile tab bar never covers content.
+
+**ONE OPEN, MEASURED, DELIBERATELY NOT FIXED.** The mobile sheet sits 12px below the
+viewport bottom. Its `top` is 32px and its cap is `calc(100dvh-2rem)`, which would
+land exactly at the edge, but `slide-in-from-bottom-3` leaves a 0.75rem translate
+(`client/src/components/ui/dialog.tsx:158`). That component is behind every modal in
+the app, and the content is still reachable because the sheet scrolls internally, so
+it was not worth changing without regression-testing every modal. Whoever picks it up
+starts from the cause rather than the symptom.
+
+**Not reproduced, recorded so it is not chased twice:** a mobile lane reported the two
+primary CTAs on `/crowd-pooling` overflowing a 320 screen. All 79 controls on that
+page were measured at 375 and none overflows its text.
+
+---
+
 ## 8. What is blocked, and on what
 
 **No pooling machinery is built until the legal shape is settled.** Rye's ruling of
@@ -229,7 +258,7 @@ instruments carrying equity.
 | `shared/crowdpoolModel.ts` | the mechanic, for code |
 | `docs/CROWDPOOL_HUB_CONTRACT.md` | the contract village-os reads |
 | `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md` | what was built vs the mechanic, with evidence |
-| `docs/legal/` | own due diligence, US-framed, superseded in framing |
+| `legal-research/` | own due diligence, US and Swiss. **GITIGNORED, not committed**, at Rye's request: it is working material for a conversation with counsel, not a statement of the project's legal position. Start at its `README_START_HERE.md`. |
 | `server/crowdpool-adversarial.test.ts` | the adversarial suite |
 | `server/crowdpool-restricted-claim.test.ts` | the restricted-balance guard |
 | `CROWDPOOLING_PLATFORM_SPEC.md` | the July 2026 spec, needs its decision #1 amendment |
