@@ -369,6 +369,7 @@ export function ContributionModal({
                   <Label htmlFor="name">Name *</Label>
                   <Input
                     id="name"
+                    autoComplete="name"
                     value={contributorName}
                     onChange={(e) => setContributorName(e.target.value)}
                     placeholder="Your full name"
@@ -379,6 +380,8 @@ export function ContributionModal({
                   <Input
                     id="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     value={contributorEmail}
                     onChange={(e) => setContributorEmail(e.target.value)}
                     placeholder="your@email.com"
@@ -389,6 +392,9 @@ export function ContributionModal({
                 <Label htmlFor="phone">Phone (optional)</Label>
                 <Input
                   id="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   value={contributorPhone}
                   onChange={(e) => setContributorPhone(e.target.value)}
                   placeholder="+1 (555) 123-4567"

@@ -759,7 +759,7 @@ export default function CrowdPoolingProjects() {
         </div>
 
         {/* Season Notice Banner: stays until the first season goes live. */}
-        <div className="bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 border-y border-amber-400/30 backdrop-blur-sm py-4 px-4">
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 border-y border-amber-400/30 backdrop-blur-sm py-4 px-4 pr-20 md:pr-4">
           <div className="container">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
               <div className="flex items-center gap-2">
@@ -807,7 +807,7 @@ export default function CrowdPoolingProjects() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key as typeof activeTab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 min-h-11 rounded-full text-sm font-medium transition-all ${
                   activeTab === key
                     ? "bg-[#7dd87d] text-[#1a472a]"
                     : "bg-white/5 border border-white/20 text-white/60 hover:bg-white/10 hover:text-white"
