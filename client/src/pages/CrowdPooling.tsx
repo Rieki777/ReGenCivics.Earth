@@ -112,9 +112,17 @@ export default function CrowdPooling() {
 
           {/* Benefits Callout - Collapsible */}
           <div className="bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] rounded-2xl p-6 mb-8 text-white shadow-lg">
-            <button 
+            {/*
+              min-h-11 because this measured 28px tall on a phone. It is the
+              accordion that opens the explanation of what crowd pooling even is,
+              on a page we now send people to from the campaign gallery and from
+              every campaign, so it is a poor thing to have to aim at.
+            */}
+            <button
+              type="button"
+              aria-expanded={benefitsExpanded}
               onClick={() => setBenefitsExpanded(!benefitsExpanded)}
-              className="w-full flex items-center justify-between mb-4"
+              className="w-full flex items-center justify-between mb-4 min-h-11 text-left"
             >
               <h2 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
                 <Sparkles className="w-5 h-5 text-[#7dd87d]" />
