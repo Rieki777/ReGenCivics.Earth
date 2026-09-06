@@ -188,15 +188,15 @@ export function CampaignProgressTracker({
 
       {/* Stats grid */}
       <div className="grid grid-cols-3 divide-x divide-[#7dd87d]/20">
-        <div className="p-4 text-center">
-          <div className="text-2xl font-bold text-[#4a7c59]">{fundingPercent.toFixed(0)}%</div>
-          <div className="text-xs text-[#1a472a]/80 mt-1">Complete</div>
+        <div className="px-2 py-3 sm:p-4 text-center min-w-0">
+          <div className="text-xl sm:text-2xl font-bold text-[#4a7c59]">{fundingPercent.toFixed(0)}%</div>
+          <div className="text-[11px] sm:text-xs text-[#1a472a]/80 mt-1">Complete</div>
         </div>
-        <div className="p-4 text-center">
-          <div className="text-2xl font-bold text-[#4a7c59]">{contributorsCount}</div>
-          <div className="text-xs text-[#1a472a]/80 mt-1">Contributors</div>
+        <div className="px-2 py-3 sm:p-4 text-center min-w-0">
+          <div className="text-xl sm:text-2xl font-bold text-[#4a7c59]">{contributorsCount}</div>
+          <div className="text-[11px] sm:text-xs text-[#1a472a]/80 mt-1">Contributors</div>
         </div>
-        <div className="p-4 text-center">
+        <div className="px-2 py-3 sm:p-4 text-center min-w-0">
           <div className={`text-2xl font-bold ${
             urgencyLevel === 'critical' || urgencyLevel === 'expired' ? 'text-red-500' : 
             urgencyLevel === 'urgent' ? 'text-amber-500' : 'text-[#4a7c59]'

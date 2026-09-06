@@ -199,13 +199,39 @@ export function ContributionModal({
     setSessionLength('');
   };
 
+  /** True once the person has typed anything worth losing. */
+  const isDirty = step === 'details' && Boolean(
+    contributorName || contributorEmail || contributorPhone || contributorBio ||
+    description || contributorNotes || estimatedValue
+  );
+
   const handleClose = () => {
     resetForm();
     onClose();
   };
 
+  /**
+   * A tap on the backdrop used to wipe a fully filled form with no confirmation
+   * and no undo, which on a phone is easy to do by accident while scrolling a
+   * sheet that fills the screen. The X and Escape still close it, because a
+   * deliberate close should stay one action.
+   */
+  const handleOpenChange = (open: boolean) => {
+    if (open) return;
+    if (isDirty && !window.confirm('Discard what you have filled in?')) return;
+    handleClose();
+  };
+
   // Quantity changes rescale the prefilled value proportionally.
   const handleQuantityChange = (raw: string) => {
+    // Allow the field to be empty WHILE TYPING. Clamping on every keystroke meant
+    // deleting the last digit instantly refilled "1", so getting from 1 to 12 on a
+    // phone required selecting the digit rather than backspacing over it. It is
+    // normalized on blur instead.
+    if (raw === '') {
+      setQuantityPledged('');
+      return;
+    }
     const qty = Math.min(remainingSlots, Math.max(1, parseInt(raw) || 1));
     setQuantityPledged(String(qty));
     if (need) {
@@ -301,10 +327,17 @@ export function ContributionModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white text-[#1a472a] apply-form-dark light-form-island">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {/* No max-h here on purpose. DialogContent already caps at 100dvh on mobile
+          and 90vh from md up. Re-adding max-h-[90vh] put a static vh cap back over
+          the dynamic one, so with the iOS URL bar showing, the sheet was taller
+          than the visible area and its header sat off the top of the screen. */}
+      <DialogContent className="max-w-lg bg-white text-[#1a472a] apply-form-dark light-form-island">
         <DialogHeader>
-          <DialogTitle className="text-[#1a472a]">
+          {/* pr-12 keeps a wrapped title clear of the 44px close button. Without
+              it a long need title wrapped under the X, so tapping what looked like
+              the heading closed the modal and discarded the form. */}
+          <DialogTitle className="text-[#1a472a] text-left leading-tight pr-12 sm:pr-0">
             {step === 'success' ? 'Contribution Submitted!' :
               need ? `Claim: ${need.title}` : 'Contribute to Campaign'}
           </DialogTitle>
@@ -451,10 +484,15 @@ export function ContributionModal({
                   <Input
                     id="qty"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={remainingSlots}
                     value={quantityPledged}
                     onChange={(e) => handleQuantityChange(e.target.value)}
+                    // The field may be empty while typing; settle it on blur so
+                    // nobody is left looking at a blank slot count. Submit already
+                    // falls back to 1, so this is about what the person sees.
+                    onBlur={() => { if (quantityPledged === '') handleQuantityChange('1'); }}
                   />
                 </div>
               )}
