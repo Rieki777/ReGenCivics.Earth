@@ -47,6 +47,8 @@ import {
   buildIcsDataUrl,
   SEASON_2_SERIES_GOOGLE_URL,
   SEASON_2_SERIES_ICS_URL,
+  OPEN_ACCESS_PITCH,
+  sessionTopic,
 } from "@/lib/seasonEvents";
 
 
@@ -394,7 +396,10 @@ export default function Schedule() {
       {nextOpenAccessSession && (
         <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
           <p className="text-[#7dd87d] font-medium text-sm md:text-base">
-            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessStart(nextOpenAccessSession)}. Every new moon, open to all.
+            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessStart(nextOpenAccessSession)}.{" "}
+            {sessionTopic(nextOpenAccessSession.date)
+              ? `We're talking ${sessionTopic(nextOpenAccessSession.date)!.headline}. Free and open to all.`
+              : "Every new moon, free and open to all."}
           </p>
         </div>
       )}
@@ -456,7 +461,18 @@ export default function Schedule() {
                 <p className="text-white/70 text-sm mb-1">
                   {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessWhen(nextOpenAccessSession)}
                 </p>
-                <p className="text-white/70 text-xs mb-4">Every new moon. Open to anyone curious about the ReGenerative Renaissance.</p>
+                {(() => {
+                  const topic = sessionTopic(nextOpenAccessSession.date);
+                  return topic ? (
+                    <div className="mb-4 rounded-lg bg-[#7dd87d]/15 border border-[#7dd87d]/30 p-3">
+                      <div className="text-[#7dd87d] text-[10px] font-bold tracking-wider uppercase mb-1">This session</div>
+                      <div className="text-white font-semibold text-sm mb-1">{topic.headline}</div>
+                      <p className="text-white/75 text-xs leading-relaxed">{topic.body}</p>
+                    </div>
+                  ) : (
+                    <p className="text-white/70 text-xs mb-4">Every new moon. {OPEN_ACCESS_PITCH}</p>
+                  );
+                })()}
                 <div className="mb-4">
                   <CalendarCta
                     googleUrl={openAccessGoogleUrl(nextOpenAccessSession)}

@@ -30,6 +30,19 @@ describe("Season2Calendar", () => {
     }
   }
 
+  it("says what the next session is about and who the sessions are for", () => {
+    render(<Season2Calendar />);
+
+    // Sept 10 has a topic set; it must surface on the card, not just the date.
+    expect(screen.getByText("All things Season Two")).toBeInTheDocument();
+    expect(screen.getByText(/Come ask your questions and meet some of the cohort/i)).toBeInTheDocument();
+    expect(screen.getByText(/More of them show up on selection day/i)).toBeInTheDocument();
+
+    // And the standing pitch says who it is for and that it costs nothing.
+    expect(screen.getByText(/A monthly session for anyone and everyone/i)).toBeInTheDocument();
+    expect(screen.getByText(/Free, no commitment, no pitch required/i)).toBeInTheDocument();
+  });
+
   it("collapses every date after the first by default", () => {
     render(<Season2Calendar />);
 

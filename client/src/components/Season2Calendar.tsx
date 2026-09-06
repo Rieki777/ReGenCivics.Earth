@@ -24,6 +24,8 @@ import {
   SEASON_2_SERIES_GOOGLE_URL,
   SEASON_2_SERIES_ICS_URL,
   upcomingOpenAccessSessions,
+  OPEN_ACCESS_PITCH,
+  sessionTopic,
 } from "@/lib/seasonEvents";
 
 const display = { fontFamily: "var(--font-display)" } as const;
@@ -92,8 +94,8 @@ export function Season2Calendar() {
             Open Access Sessions
           </h3>
         </div>
-        <p className="text-white/70 text-sm mb-5">
-          Every new moon, 11:00 AM Pacific, 2:00 PM Eastern. Open to anyone curious about the ReGenerative Renaissance.
+        <p className="text-white/75 text-sm mb-5 max-w-2xl">
+          Every new moon, 11:00 AM Pacific, 2:00 PM Eastern. {OPEN_ACCESS_PITCH}
         </p>
 
         <div className="space-y-4">
@@ -115,6 +117,19 @@ export function Season2Calendar() {
               <div className="text-white/70 text-sm mb-4">
                 {s.dayName}, {formatSessionLong(s.date)}, {formatOpenAccessWhen(s)}
               </div>
+              {(() => {
+                const topic = sessionTopic(s.date);
+                if (!topic) return null;
+                return (
+                  <div className="mb-4 rounded-lg bg-[#7dd87d]/12 border border-[#7dd87d]/30 p-4">
+                    <div className="text-[#7dd87d] text-xs font-bold tracking-[0.15em] uppercase mb-1.5">
+                      This session
+                    </div>
+                    <div className="text-white font-semibold mb-1">{topic.headline}</div>
+                    <p className="text-white/75 text-sm leading-relaxed">{topic.body}</p>
+                  </div>
+                );
+              })()}
               <CalendarCta
                 googleUrl={openAccessGoogleUrl(s)}
                 appleUrl={openAccessIcsUrl(s)}

@@ -477,6 +477,30 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
   },
 ];
 
+// ─── The short version of what a project gets, shown high on the page ───
+const GETS_SUMMARY: { icon: React.ElementType; title: string; body: string }[] = [
+  {
+    icon: Gamepad2,
+    title: "Thirteen weeks of accelerator",
+    body: "Governance, legal structure, economics, and financing, designed alongside twelve other projects and the people who have done it before.",
+  },
+  {
+    icon: UnlockIcon,
+    title: "Every model, open-sourced",
+    body: "The templates, legal structures, and frameworks built in the season are published. You keep them, and so does everyone who comes after.",
+  },
+  {
+    icon: Users,
+    title: "The weight gets shared",
+    body: "A network that carries some of what usually falls on one or two founders, and acknowledgment systems that make every kind of contribution count.",
+  },
+  {
+    icon: Coins,
+    title: "A route to real capital",
+    body: "A shared crowdpooling launch, then a place in the index fund, so your project raises alongside the network instead of alone.",
+  },
+];
+
 // ─── Selection process ──────────────────────────────────────────────────
 const PITCH_EXAMPLES_URL =
   "https://pie.yt/?v=https://youtu.be/AJZI0OiRPeU?si=bHPcwIEA1HHBq-IV&pieshare=1";
@@ -635,6 +659,11 @@ export default function Season2() {
             </a>
           </div>
 
+          <p className="mt-6 text-white/80 text-base md:text-lg">
+            Free to apply. Free to take part. Everything we build together gets
+            open-sourced.
+          </p>
+
           <div className="mt-10">
             <Countdown />
           </div>
@@ -695,6 +724,70 @@ export default function Season2() {
             is backing a single organ, and the network around it is what makes that
             project investable.
           </p>
+        </div>
+      </AnimatedSection>
+
+      {/* ── WHAT A PROJECT GETS, AND WHAT IT COSTS ── */}
+      <AnimatedSection as="section" animation="slide-up" id="what-you-get" className="py-20 md:py-28 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
+            What it costs
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
+            Free to enter. <span className="italic text-[#a8e6a8]">Open-sourced on the way out.</span>
+          </h2>
+          <p className="text-white/80 text-lg leading-relaxed mb-4 max-w-2xl">
+            No fee to apply. No fee to take part. What you bring is your team's
+            time and a token swap that makes the alliance and your project
+            co-invested in each other.
+          </p>
+          <p className="text-white/75 text-lg leading-relaxed mb-10 max-w-2xl">
+            Every model, template, legal structure, and framework built during the
+            season gets open-sourced. We are trying to grow the ReGenerative
+            Renaissance as fast as it can grow, so charging admission to the
+            on-ramp would be working against the goal.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            {GETS_SUMMARY.map((g) => {
+              const Icon = g.icon;
+              return (
+                <div
+                  key={g.title}
+                  className="flex gap-4 p-5 rounded-xl border border-[#7dd87d]/20 bg-[#7dd87d]/5"
+                >
+                  <Icon className="w-6 h-6 text-[#7dd87d] shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-white font-semibold mb-1" style={display}>
+                      {g.title}
+                    </h3>
+                    <p className="text-white/70 text-sm leading-relaxed">{g.body}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link href="/apply">
+              <Button
+                size="lg"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+              >
+                Apply for Season Two
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <a href="#receive">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl px-8 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                See everything in detail
+              </Button>
+            </a>
+          </div>
         </div>
       </AnimatedSection>
 
@@ -762,6 +855,17 @@ export default function Season2() {
               prototype something better. Thirteen projects at a time, each
               season, in public, with everything open-sourced so the next wave of
               builders starts from a foundation instead of scratch.
+            </p>
+            <p>
+              Governments should be funding this work. They are not, yet. So we're
+              building the systems that can carry and direct the billions to
+              trillions this transition needs, and we're building them in the open
+              so they belong to the movement rather than to us.
+            </p>
+            <p>
+              That is the actual goal: a civilizational shift, and a network of
+              support for the people who want to heal the earth so they can get on
+              with it.
             </p>
             <p>
               Season One ran. Projects went through. We learned a lot. Season Two
@@ -1050,7 +1154,7 @@ export default function Season2() {
       </AnimatedSection>
 
       {/* ── WHAT YOU GET ── */}
-      <AnimatedSection as="section" animation="slide-up" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
+      <AnimatedSection as="section" animation="slide-up" id="receive" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
             What accepted projects receive
@@ -1327,8 +1431,23 @@ export default function Season2() {
             </p>
             <p>
               Connecting the projects also creates paths between them. Members
-              travel, stay, and work across the network, so your people can see the
-              world and stay among their own the whole way.
+              travel, stay, and work across the network, so your people get freedom
+              of movement and stay among their own the whole way.
+            </p>
+            <p>
+              <strong className="text-white font-semibold">
+                Most land projects rest on one or two people carrying everything.
+              </strong>{" "}
+              A network is how that weight gets shared. Founders who have already
+              carried it are compensated for what they built, and the
+              acknowledgment systems track every kind of contribution, so the
+              people holding things together stop being invisible.
+            </p>
+            <p>
+              We're building for both sides of this. A structure that can accept
+              serious financial capital, and a way to coordinate that reduces how
+              much we depend on money in the first place, so a project does not
+              have to wait for funding to give it permission to start.
             </p>
             <p>
               ReGen Civics is building the index fund for the ReGenerative

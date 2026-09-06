@@ -116,7 +116,9 @@ describe("Season2 page", () => {
 
   it("offers travel paths across the network", () => {
     expect(screen.getByRole("heading", { name: /Travel Paths Across the Network/i })).toBeTruthy();
-    expect(body()).toMatch(/see the\s+world and stay among their own the whole way/i);
+    // The tile spells out the benefit; the fund section names it "freedom of movement".
+    expect(body()).toMatch(/see the world and stay among their own network the whole way/i);
+    expect(body()).toMatch(/travel, stay, and work at other projects in the alliance/i);
   });
 
   it("links the live campaigns page from the crowdpooling story", () => {
@@ -163,6 +165,29 @@ describe("Season2 page", () => {
     // The old portrait art was capped at 280px; the journey map runs full width.
     expect(img.className).toMatch(/w-full/);
     expect(img.className).not.toMatch(/max-w-\[280px\]/);
+  });
+
+  it("says it is free, and why, before the reader has to scroll for it", () => {
+    // In the hero itself, not buried in the FAQ.
+    expect(body()).toMatch(/Free to apply\. Free to take part\./i);
+    expect(
+      screen.getByRole("heading", { name: /Free to enter\.\s+Open-sourced on the way out\./i }),
+    ).toBeTruthy();
+    expect(body()).toMatch(/No fee to apply\. No fee to take part\./i);
+    expect(body()).toMatch(/charging admission to the\s+on-ramp would be working against the goal/i);
+  });
+
+  it("names the funding gap and the civilizational goal", () => {
+    expect(body()).toMatch(/Governments should be funding this work\. They are not, yet\./i);
+    expect(body()).toMatch(/billions to\s+trillions this transition needs/i);
+    expect(body()).toMatch(/a civilizational shift/i);
+  });
+
+  it("names the weight founders carry and money as permission", () => {
+    expect(body()).toMatch(/Most land projects rest on one or two people carrying everything/i);
+    expect(body()).toMatch(/acknowledgment systems track every kind of contribution/i);
+    expect(body()).toMatch(/freedom\s+of movement/i);
+    expect(body()).toMatch(/wait for funding to give it permission to start/i);
   });
 
   it("keeps the copy free of em-dashes", () => {

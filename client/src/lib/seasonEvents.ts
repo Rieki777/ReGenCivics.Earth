@@ -64,6 +64,29 @@ export type OpenAccessSession = {
 export const OPEN_ACCESS_DESC =
   "Open community session for the ReGenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
 
+/** One-line standing pitch for the monthly session. Used on /season2 and /schedule. */
+export const OPEN_ACCESS_PITCH =
+  "A monthly session for anyone and everyone interested in what we're doing. Free, no commitment, no pitch required. Come meet the people building this and ask us anything.";
+
+/**
+ * Per-session topics, keyed by session date.
+ *
+ * Set one whenever a session has a specific draw, so the calendar can say what
+ * the session is actually about instead of only when it is. Dates that are not
+ * listed fall back to OPEN_ACCESS_PITCH.
+ */
+export const SESSION_TOPICS: Record<string, { headline: string; body: string }> = {
+  "2026-09-10": {
+    headline: "All things Season Two",
+    body: "We're talking through the whole season: what projects get, how selection works, what the accelerator covers, and how the shared crowdpooling launch works. Come ask your questions and meet some of the cohort. More of them show up on selection day.",
+  },
+};
+
+/** Topic for a given session date, or null when it is a standard open session. */
+export function sessionTopic(date: string): { headline: string; body: string } | null {
+  return SESSION_TOPICS[date] ?? null;
+}
+
 export function parseCompactUtc(stamp: string): Date {
   return new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z"));
 }
