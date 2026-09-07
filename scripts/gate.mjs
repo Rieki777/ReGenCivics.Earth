@@ -17,7 +17,7 @@
  * Usage: pnpm gate
  */
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 /**
  * Find a Python that actually runs. On Windows, `py` (the official launcher) is
@@ -123,6 +123,58 @@ run("gate 1e: advertised endpoints", process.execPath, ["scripts/check-advertise
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
 // needs no shell and behaves the same on Windows and Linux.
+/**
+ * A stale node_modules is indistinguishable from a broken repo by the time tsc
+ * reports it. On 2026-09-06 a worktree left over from before the TypeScript
+ * 5.9.3 -> 6.0.3 bump failed this gate with:
+ *
+ *   tsconfig.json(19,27): error TS5103: Invalid value for '--ignoreDeprecations'
+ *
+ * which reads as "someone broke tsconfig", not "your install is behind main".
+ * The tsconfig was correct; the installed compiler was the old one, and an old
+ * tsc rejects a tsconfig written for the new one. Same shape as the other traps
+ * this file exists for: a check that fails for a reason it does not name gets
+ * worked around by hand instead of fixed.
+ *
+ * Only exact pins are compared, since anything else needs a semver resolver.
+ */
+function staleDeps() {
+  let pkg;
+  try {
+    pkg = JSON.parse(readFileSync("package.json", "utf8"));
+  } catch {
+    return [];
+  }
+  const declared = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+  const stale = [];
+  for (const [name, range] of Object.entries(declared)) {
+    if (typeof range !== "string" || !/^\d+\.\d+\.\d+$/.test(range)) continue;
+    let installed;
+    try {
+      installed = JSON.parse(
+        readFileSync(`node_modules/${name}/package.json`, "utf8"),
+      ).version;
+    } catch {
+      stale.push({ name, want: range, got: "not installed" });
+      continue;
+    }
+    if (installed !== range) stale.push({ name, want: range, got: installed });
+  }
+  return stale;
+}
+
+const stale = staleDeps();
+if (stale.length) {
+  console.error(
+    "\n\u2717 node_modules does not match package.json. Run `pnpm install`.\n\n" +
+      stale.map((d) => `    ${d.name}: want ${d.want}, have ${d.got}`).join("\n") +
+      "\n\n  The gate is not meaningful against a stale install, and the failure it\n" +
+      "  produces usually points at the wrong thing. TypeScript is the usual\n" +
+      "  culprit: an old tsc rejects a tsconfig written for a newer one.\n",
+  );
+  process.exit(1);
+}
+
 const TSC = "node_modules/typescript/bin/tsc";
 if (!existsSync(TSC)) {
   console.error(`✗ ${TSC} is missing. Run \`pnpm install\` first.`);
