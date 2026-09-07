@@ -60,6 +60,7 @@ import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
 import { registerPresenceRoutes } from "../routes/presence";
 import { registerShipCalendarRoutes } from "../routes/shipCalendarFeed";
+import { registerCalendarFeedRoutes } from "../routes/calendarFeed";
 import { registerAnalyticsRoutes } from "../routes/analytics";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
@@ -687,6 +688,11 @@ async function startServer() {
   // (GET /api/ship/calendar/:token/regen-ship.ics, guarded by SHIP_ICAL_TOKEN).
   // Our calendar is the source of truth; Outdoorsy re-reads this every 2h.
   registerShipCalendarRoutes(app);
+  // Public session calendars (GET /calendar/*.ics, /regen-civics-all-events.ics,
+  // /join). MUST stay above serveStatic(): express.static serves client/public
+  // with `immutable, max-age=1y`, which is what froze the old static feed in
+  // every cache for a year and stopped schedule edits from reaching anyone.
+  registerCalendarFeedRoutes(app);
   // First-party analytics ingest (POST /api/analytics/collect)
   registerAnalyticsRoutes(app);
 

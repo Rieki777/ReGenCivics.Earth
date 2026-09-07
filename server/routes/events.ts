@@ -20,6 +20,14 @@ import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
 import { syncCatalogEvents } from "../lib/syncCatalogEvents";
+import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
+import {
+  SEASON2_EPISODE_DATES,
+  SESSION_TIME_ZONE,
+  sessionEndUtc,
+  sessionStartUtc,
+  zoneName,
+} from "@shared/sessionClock";
 
 // ─────────────────────────────────────────────────────────────
 // Seed data, used to pre-populate the DB if it's empty
@@ -48,65 +56,23 @@ const SEED_EVENTS = [
     episodeNumber: null,
     status: "upcoming" as const,
   },
-  ...Array.from({ length: 13 }, (_, i) => {
-    const weekNum = i + 1;
-    const titles = [
-      "Week 1: Selection Day",
-      "Week 2: Incubator Overview",
-      "Week 3: Land & Vision",
-      "Week 4: Governance Design",
-      "Week 5: Financial Models",
-      "Week 6: Community Building",
-      "Week 7: Ecosystem Mapping",
-      "Week 8: Fundraising Strategy",
-      "Week 9: Legal Structures",
-      "Week 10: Token Design",
-      "Week 11: Alliance Partnerships",
-      "Week 12: Demo Day Prep",
-      "Week 13: Demo Day",
-    ];
-    const descriptions = [
-      "First steps of the ReGen Civics Incubator. Meet the selected projects, set intentions, and begin mapping your regenerative vision together.",
-      "Starting Season 2! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 episodes.",
-      "Exploring land-based projects and the visions behind them. Mapping bioregions, ecosystems, and community relationships.",
-      "How do regenerative communities make decisions together? Designing governance systems that work at the land level.",
-      "Alternative economic models for land projects: gift economies, contribution systems, community currencies, and cooperative finance.",
-      "Building resilient communities around land projects. Onboarding members, running events, and creating belonging.",
-      "Mapping the broader ecosystem of partners, resources, and organizations each project is embedded in.",
-      "How to raise funds ethically and regeneratively. Grant strategy, community fundraising, and impact investing.",
-      "Legal structures for land projects: land trusts, cooperatives, DAOs, and hybrid models.",
-      "Introduction to the $ReGen token and ReGen Civics Fund. How community currencies support land projects.",
-      "Connecting with other land projects and building alliances. The ReGen Civics Alliance and cross-project collaboration.",
-      "Preparing your project for Demo Day. Synthesizing your journey and articulating your next steps.",
-      "Final presentations from all Season 2 incubator projects. Celebration, feedback, and next steps.",
-    ];
-    // 11:00 America/Los_Angeles. DST dates are 18:00Z, standard-time dates are 19:00Z.
-    const startIso = [
-      "2026-09-26T18:00:00.000Z",
-      "2026-10-03T18:00:00.000Z",
-      "2026-10-10T18:00:00.000Z",
-      "2026-10-17T18:00:00.000Z",
-      "2026-10-24T18:00:00.000Z",
-      "2026-10-31T18:00:00.000Z",
-      "2026-11-07T19:00:00.000Z",
-      "2026-11-14T19:00:00.000Z",
-      "2026-11-21T19:00:00.000Z",
-      "2026-11-28T19:00:00.000Z",
-      "2026-12-05T19:00:00.000Z",
-      "2026-12-12T19:00:00.000Z",
-      "2026-12-19T19:00:00.000Z",
-    ][i]!;
-    const startTime = new Date(startIso);
-    const endTime = new Date(startTime.getTime() + 2 * 3_600_000);
+  // The thirteen Season 2 weeks come from shared/season2Curriculum.ts, which is
+  // the one definition of the curriculum. This list used to carry its own copy
+  // of the titles and descriptions, and by 2026-09-07 it had drifted so far
+  // from /seasons and the calendar feed that weeks 3 to 13 said three different
+  // things depending on which surface you looked at.
+  ...SEASON2_CURRICULUM.map((episode, i) => {
+    const ymd = SEASON2_EPISODE_DATES[i]!;
+    const startTime = sessionStartUtc(ymd);
     return {
-      title: titles[i],
-      description: descriptions[i],
+      title: episodeTitle(episode),
+      description: episode.description,
       type: "episode" as const,
       startTime,
-      endTime,
-      timezone: i < 6 ? "PDT" : "PST",
+      endTime: sessionEndUtc(ymd),
+      timezone: zoneName(startTime, SESSION_TIME_ZONE),
       season: "Season 2",
-      episodeNumber: weekNum,
+      episodeNumber: episode.week,
       status: "upcoming" as const,
     };
   }),
@@ -766,6 +732,9 @@ export const eventsRouter = router({
       guestSpeakerName: z.string().max(255).nullable().optional(), // #25
       guestSpeakerBio: z.string().nullable().optional(), // #25
       guestSpeakerTopic: z.string().max(500).nullable().optional(), // #25
+      // Pass false to hand a row back to the catalog sync. Otherwise editing a
+      // catalog-owned field pins the row automatically, see below.
+      manualOverride: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -776,6 +745,18 @@ export const eventsRouter = router({
       );
       if (startTime !== undefined) updateFields.startTime = new Date(startTime);
       if (endTime !== undefined) updateFields.endTime = endTime ? new Date(endTime) : null;
+
+      // syncCatalogEvents runs on every public events.list call and forces
+      // Season 2 and Open Access rows back to the shared catalog. Without this
+      // pin, an admin moving an episode would see it revert on the next page
+      // load, and /schedule explicitly warns that episode times may shift after
+      // week 1. Touching a link, a speaker, or a status does not pin anything.
+      const CATALOG_OWNED = ["title", "description", "startTime", "endTime", "timezone"];
+      if (input.manualOverride === undefined && CATALOG_OWNED.some((f) => f in updateFields)) {
+        updateFields.manualOverride = 1;
+      } else if (input.manualOverride !== undefined) {
+        updateFields.manualOverride = input.manualOverride ? 1 : 0;
+      }
 
       await database.update(events).set(updateFields).where(eq(events.id, id));
       return { success: true };

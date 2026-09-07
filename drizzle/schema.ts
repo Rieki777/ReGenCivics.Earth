@@ -2794,6 +2794,11 @@ export const events = mysqlTable("events", {
   // Pre-event forum discussion thread (#6)
   forumThreadId: int("forumThreadId"), // ID of the forum post created when this event is added
 
+  // Set by events.update. While 1, syncCatalogEvents leaves this row alone, so
+  // an admin who moves an episode is not reverted by the catalog on the next
+  // public events.list call. See drizzle/0241_events_manual_override.sql.
+  manualOverride: tinyint("manualOverride").default(0).notNull(),
+
   // Reminder tracking
   reminderSent: tinyint("reminderSent").default(0).notNull(), // 1 once 24h reminder has been sent
 
