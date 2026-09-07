@@ -13,6 +13,7 @@ import { Calendar, ArrowRight, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { CalendarCta, LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
+import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
 import {
   openAccessGoogleUrl,
   openAccessIcsUrl,
@@ -195,6 +196,10 @@ export function Season2Calendar() {
           label="episodes"
           onToggle={() => setEpisodesOpen((v) => !v)}
         />
+
+        <div className="mt-10">
+          <CalendarFeedUrls />
+        </div>
 
         <div className="mt-10">
           <Link href="/schedule">

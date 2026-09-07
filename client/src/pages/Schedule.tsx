@@ -32,6 +32,7 @@ import { trpc } from '@/lib/trpc';
 import { cdnImg } from "@/lib/utils";
 import { useAuth } from '@/_core/hooks/useAuth';
 import { CalendarCta } from "@/components/CalendarCta";
+import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
 import { CalendarOptions, type CalendarSession } from "@/components/CalendarOptions";
 import {
   RIVERSIDE_INFO,
@@ -548,6 +549,14 @@ export default function Schedule() {
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* The floor under every one-click subscribe path above. See the
+          component for why a copyable URL has to exist alongside the buttons. */}
+      <section className="py-8 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <CalendarFeedUrls />
         </div>
       </section>
 
