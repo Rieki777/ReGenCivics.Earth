@@ -30,14 +30,26 @@ export const CALENDAR_LABELS = {
   apple: "Apple/Outlook",
 } as const;
 
+/**
+ * All three button styles carry an explicit min-h-[44px].
+ *
+ * The coarse-pointer hit-area expander in index.css (~line 1256) covers
+ * `button` and `[role="button"|"checkbox"|"radio"|"switch"]`. It does not cover
+ * a plain `<a>`, and every control here is an anchor, so these get no help from
+ * it. Measured on a 375px viewport before this was added: the quiet buttons
+ * were 34px tall and the inline Season 2 links were 18px. scripts/
+ * audit-touch-targets.py did not catch it because it looks for heights capped
+ * by a utility class (h-4..h-8), not for heights that come out short from
+ * padding alone, so gate 1c passed the whole time.
+ */
 const primaryButton =
-  "inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2.5 rounded-xl font-bold transition-colors text-sm";
+  "inline-flex items-center justify-center gap-2 min-h-[44px] bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2.5 rounded-xl font-bold transition-colors text-sm";
 
 const secondaryButton =
-  "inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm border border-white/20";
+  "inline-flex items-center justify-center gap-2 min-h-[44px] bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm border border-white/20";
 
 const quietButton =
-  "inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 rounded-lg font-medium transition-colors text-xs border border-white/20";
+  "inline-flex items-center justify-center gap-2 min-h-[44px] bg-transparent hover:bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-lg font-medium transition-colors text-xs border border-white/20";
 
 /**
  * Subscribe to a feed in Google Calendar or in Apple/Outlook.

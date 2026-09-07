@@ -104,3 +104,27 @@ describe("Button labels", () => {
     expect(screen.queryByRole("link", { name: "Google" })).toBeNull();
   });
 });
+
+describe("Tap targets", () => {
+  it("gives every calendar control a 44px floor", () => {
+    // These are all <a>, and the coarse-pointer hit expander in index.css only
+    // covers button and [role="button"|"checkbox"|"radio"|"switch"], so an
+    // anchor gets nothing from it. Measured live on a 375px viewport before
+    // this was fixed: quiet buttons 34px, the inline Season 2 links 18px.
+    // scripts/audit-touch-targets.py passed throughout, because it looks for a
+    // height capped by a utility class, not one that comes out short from
+    // padding, so gate 1c cannot be relied on to catch a regression here.
+    render(
+      <>
+        <SubscribeButtons feed={CALENDAR_FEEDS.all} />
+        <CalendarCta googleUrl="https://example.com/g" appleUrl="https://example.com/a.ics" />
+      </>,
+    );
+    const links = screen.getAllByRole("link");
+    expect(links.length).toBe(4);
+    for (const link of links) {
+      expect(link.className, link.textContent ?? "").toContain("min-h-[44px]");
+    }
+  });
+});
+
