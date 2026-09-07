@@ -45,6 +45,7 @@ import {
   buildIcsDataUrl,
   OPEN_ACCESS_PITCH,
   sessionTopic,
+  SESSION_TIME_ZONE,
 } from "@/lib/seasonEvents";
 import {
   eventFeed,
@@ -299,7 +300,15 @@ export default function Schedule() {
   );
 
   // Use DB events if available, otherwise fall back to hardcoded list until DB is ready
-  const upcomingEvents = (dbEvents && dbEvents.length > 0 ? dbEvents : upcomingEventsFallback).map(ev => ({
+  // The fallback carries every catalog date, past ones included, and its rows
+  // have no `status` for the upcoming filter to key off. So until the query
+  // resolved, the Upcoming tab listed May, June, July and August 2026 as though
+  // they were still to come. Brief, but it is the first thing a reader sees and
+  // it is wrong. Drop anything already past before it can render.
+  const todayYmd = new Date().toLocaleDateString("en-CA", { timeZone: SESSION_TIME_ZONE });
+  const fallbackEvents = upcomingEventsFallback.filter(e => e.date >= todayYmd);
+
+  const upcomingEvents = (dbEvents && dbEvents.length > 0 ? dbEvents : fallbackEvents).map(ev => ({
     ...ev,
     startTime: (ev as any).startTime ?? null,
     googleCalendarUrl: (ev as any).googleCalendarUrl ?? ((ev as any).startTime ? buildGoogleCalendarUrl(ev as any) : ''),
