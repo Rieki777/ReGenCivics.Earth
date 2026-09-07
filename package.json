@@ -169,7 +169,7 @@
     "csv-parse": "^6.2.1",
     "drizzle-kit": "^0.31.10",
     "esbuild": "^0.28.2",
-    "eslint": "^9.25.0",
+    "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.5",
     "globals": "^16.0.0",
