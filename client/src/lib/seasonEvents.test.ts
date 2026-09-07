@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import {
   APPLICATIONS_CLOSE,
   NEW_MOON_SESSIONS,
@@ -10,8 +8,6 @@ import {
   parseCompactUtc,
   season2EpisodeEvents,
   upcomingOpenAccessSessions,
-  SEASON_2_SERIES_GOOGLE_URL,
-  SEASON_2_SERIES_ICS_URL,
   wallTimeInZoneToUtc,
   sessionStartUtc,
   hourInZone,
@@ -22,10 +18,9 @@ import {
   openAccessUid,
   nextIcsSequence,
   buildIcsEvent,
-  buildAllEventsIcs,
+  sundayAfterSeason2Saturday,
   ICS_SEQUENCE,
   ICS_SEQUENCE_OA_RESCHEDULE,
-  sundayAfterSeason2Saturday,
   CALENDAR_SUBSCRIBE_WEBCAL,
   CALENDAR_FEED_PATH,
 } from "./seasonEvents";
@@ -33,6 +28,11 @@ import {
 const PT = "America/Los_Angeles";
 const ET = "America/New_York";
 
+/**
+ * Still used for the one-off single-session adds. The all-events feed is no
+ * longer built here at all: it is rendered server-side from the events table,
+ * and server/calendar-feed.test.ts covers it.
+ */
 function decodeIcsDataUrl(url: string): string {
   return decodeURIComponent(url.replace(/^data:text\/calendar;charset=utf8,/, ""));
 }
@@ -210,7 +210,7 @@ describe("Season 2 weekly episodes", () => {
     expect(episodes[0]?.title).toBe("Week 1: Selection Day");
     expect(episodes[0]?.date).toBe("2026-09-26");
     expect(episodes[0]?.time).toBe("11:00 AM");
-    expect(episodes[12]?.title).toBe("Week 13: Season Overview & Project Updates");
+    expect(episodes[12]?.title).toBe("Week 13: Crowd Pooling & Resourcing Our Projects");
 
     for (const episode of episodes) {
       const range = googleDateRange(episode.googleCalendarUrl);
@@ -265,10 +265,6 @@ describe("Season 2 weekly episodes", () => {
     });
   });
 
-  it("keeps the add-all series Google link on Week 1's corrected instant", () => {
-    expect(SEASON_2_SERIES_GOOGLE_URL).toContain("dates=20260926T180000Z/20260926T200000Z");
-    expect(SEASON_2_SERIES_GOOGLE_URL).not.toContain("20260926T150000Z");
-  });
 });
 
 describe("ICS UID + SEQUENCE", () => {
@@ -304,51 +300,19 @@ describe("ICS UID + SEQUENCE", () => {
     expect(nextIcsSequence(1, "20260926T180000Z", "20260926T180000Z")).toBe(1);
   });
 
-  it("publishes SEQUENCE 1 on the live feed after the 11am PT correction", () => {
-    expect(ICS_SEQUENCE).toBe(1);
-    const ics = buildAllEventsIcs();
-    expect(ics).toContain("SEQUENCE:1");
-    expect(ics).not.toMatch(/SEQUENCE:0/);
-    expect(ics).toContain("UID:open-access-2026-09-10@regencivics.earth");
-    expect(ics).toContain("UID:season2-week-1@regencivics.earth");
-    expect(ics).toContain("DTSTART:20260910T180000Z");
-    expect(ics).toContain("DTSTART:20260926T180000Z");
-    expect(ics).not.toContain("DTSTART:20260926T150000Z");
-    expect(ics).not.toContain("DTSTART:20260910T170000Z");
-  });
-
-  it("keeps the Oct 10 Open Access UID and points DTSTART at Sunday", () => {
-    const ics = buildAllEventsIcs();
-    const vevents = ics.split("BEGIN:VEVENT").slice(1);
-    const oaOct = vevents.find((v) => v.includes("UID:open-access-2026-10-10@regencivics.earth"));
-    expect(oaOct).toBeDefined();
-    expect(oaOct).toContain("DTSTART:20261011T180000Z");
-    expect(oaOct).toContain(`SEQUENCE:${ICS_SEQUENCE_OA_RESCHEDULE}`);
-    expect(oaOct).not.toContain("DTSTART:20261010T180000Z");
-    expect(ics).not.toContain("UID:open-access-2026-10-11@regencivics.earth");
-
-    const week3 = vevents.find((v) => v.includes("UID:season2-week-3@regencivics.earth"));
-    expect(week3).toContain("DTSTART:20261010T180000Z");
-  });
-
-  it("keeps client/public/regen-civics-all-events.ics in lockstep with the generator", () => {
-    const file = readFileSync(resolve(__dirname, "../../public/regen-civics-all-events.ics"), "utf8");
-    expect(file.replace(/\r\n/g, "\n")).toBe(buildAllEventsIcs());
-  });
 });
 
 describe("Subscribe feed", () => {
-  it("points Subscribe at the hosted all-events ICS", () => {
+  it("keeps answering the legacy path existing subscribers already poll", () => {
     expect(CALENDAR_FEED_PATH).toBe("/regen-civics-all-events.ics");
     expect(CALENDAR_SUBSCRIBE_WEBCAL).toBe("webcal://regencivics.earth/regen-civics-all-events.ics");
   });
 
-  it("encodes every feed event at 11:00 PT", () => {
-    const ics = decodeIcsDataUrl(SEASON_2_SERIES_ICS_URL);
-    const starts = [...ics.matchAll(/DTSTART:(\d{8}T\d{6}Z)/g)].map((m) => m[1]);
-    expect(starts.length).toBe(13);
-    for (const stamp of starts) {
-      assertElevenPtTwoEt(parseCompactUtc(stamp), `series ICS ${stamp}`);
+  it("still schedules every Season 2 week at 11:00 PT", () => {
+    const dates = season2EpisodeEvents().map((e) => e.date);
+    expect(dates).toHaveLength(13);
+    for (const date of dates) {
+      assertElevenPtTwoEt(sessionStartUtc(date), `week of ${date}`);
     }
   });
 });

@@ -36,23 +36,22 @@ import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { cdnImg } from "@/lib/utils";
 import { ReadableScrim } from "@/components/ReadableScrim";
+import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 
 
-const weeklyTopics = [
-  { week: 1, title: "Selection Day", description: "First steps of the ReGen Civics Incubator. Meet the selected projects, set intentions, and begin mapping your regenerative vision together." },
-  { week: 2, title: "Incubator Overview", description: "Starting Season 2! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 weeks." },
-  { week: 3, title: "Game & Organisation Co-Creation Part 1", description: "Designing the structure of our projects. Introduction to decentralized autonomous organizations and how to structure your community." },
-  { week: 4, title: "Game & Organisation Co-Creation Part 2", description: "Continuing to design the structure of our projects. Practical implementation of governance frameworks and community design." },
-  { week: 5, title: "Game Guides & Economic Systems", description: "Co-creating project 'Game Guides' and kickstarting our economic systems. How to document your project's unique plays and patterns." },
-  { week: 6, title: "Explore the ReGen Civics Ecosystem", description: "Introduction to the ReGen Civics DHO and the first steps in setting up yours. How our alliance operates and how you can participate." },
-  { week: 7, title: "Ecosystem Map & Policies", description: "Evolving our culture through ecosystem mapping and policy design. How we co-create the rules of our regenerative game." },
-  { week: 8, title: "Tokenomics Part 1", description: "The art and science of our token-assisted land-based economies. Understanding how tokens can support regenerative projects." },
-  { week: 9, title: "Tokenomics Part 2", description: "Continuing the art and theory of our token-assisted land-based economies. Practical token design for your project." },
-  { week: 10, title: "Legal Structures Part 1", description: "Exploring the expansive world of legal structures. How do our projects relate to nation states and existing legal frameworks?" },
-  { week: 11, title: "Legal Structures Part 2", description: "Continuing to explore legal structures. Practical considerations for land ownership, community agreements, and compliance." },
-  { week: 12, title: "Coordination & Minimum Viable Economies", description: "Meeting our needs through coordination structures. How do we create minimum viable regenerative economies? How do we thrive?" },
-  { week: 13, title: "Crowd Pooling & Resourcing Our Projects", description: "A complete overview of the ReGen Civics Incubator journey. Project stewards share updates on their progress, celebrate achievements, and explore crowd pooling for resources." }
-];
+/**
+ * The thirteen weeks, from shared/season2Curriculum.ts.
+ *
+ * This page held its own copy until 2026-09-07 and was one of four places the
+ * curriculum lived. Rye picked this list as the canonical one that day, so it
+ * moved into shared/ where the calendar feed, the events table and /season2 all
+ * read it. Editing the titles here would put the drift straight back.
+ */
+const weeklyTopics = SEASON2_CURRICULUM.map((ep) => ({
+  week: ep.week,
+  title: ep.title,
+  description: ep.description,
+}));
 
 export default function Seasons() {
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);

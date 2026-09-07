@@ -15,10 +15,10 @@
 /** Escape per RFC 5545 section 3.3.11. Order matters: backslash first. */
 export function escapeIcsText(text: string): string {
   return text
-    .replace(/\/g, "\\\\")
+    .replace(/\\/g, "\\\\")
     .replace(/;/g, "\\;")
-    .replace(/,/g, "\,")
-    .replace(/\r?\n/g, "\n");
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
 }
 
 /**

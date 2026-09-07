@@ -38,7 +38,12 @@ import {
   episodeTitle,
   PUBLIC_EPISODE_WEEKS,
 } from "@shared/season2Curriculum";
-import { JOIN_URL, SEEDS_YOUTUBE_URL, SITE_ORIGIN } from "@shared/sessionLinks";
+import {
+  JOIN_URL,
+  RIVERSIDE_ROOM_URL,
+  SEEDS_YOUTUBE_URL,
+  SITE_ORIGIN,
+} from "@shared/sessionLinks";
 import { openAccessDescription } from "@shared/openAccess";
 
 export const UID_DOMAIN = "regencivics.earth";
@@ -118,6 +123,22 @@ export function isPublicSession(row: FeedRow): boolean {
 }
 
 /**
+ * The room link an invite carries.
+ *
+ * Every one of the 25 rows in production stores the raw Riverside studio URL,
+ * token and all (verified 2026-09-07). Passing that straight through would put
+ * the token on every subscriber's calendar until April and defeat the whole
+ * point of the /join redirect, so a row holding the default room resolves to
+ * /join. A row holding something genuinely different is a per-event room and
+ * passes through untouched.
+ */
+export function roomUrl(row: FeedRow): string {
+  const stored = row.riversideRoomUrl?.trim();
+  if (!stored || stored === RIVERSIDE_ROOM_URL) return JOIN_URL;
+  return stored;
+}
+
+/**
  * The body of the invite.
  *
  * The old feed built episode descriptions by hand instead of going through the
@@ -127,7 +148,7 @@ export function isPublicSession(row: FeedRow): boolean {
  */
 export function eventDescription(row: FeedRow): string {
   const body = (row.description ?? "").trim();
-  const room = row.riversideRoomUrl ?? JOIN_URL;
+  const room = roomUrl(row);
   const watch = row.youtubeUrl ?? SEEDS_YOUTUBE_URL;
   const details = row.id != null ? `${SITE_ORIGIN}/events/${row.id}` : `${SITE_ORIGIN}/schedule`;
 
@@ -150,7 +171,7 @@ export function eventDescription(row: FeedRow): string {
  * working session would hand it to every public subscriber.
  */
 export function eventLocation(row: FeedRow): string {
-  if (isPublicSession(row)) return row.riversideRoomUrl ?? JOIN_URL;
+  if (isPublicSession(row)) return roomUrl(row);
   return row.youtubeUrl ?? SEEDS_YOUTUBE_URL;
 }
 

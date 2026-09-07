@@ -12,32 +12,33 @@ import { useState } from "react";
 import { Calendar, ArrowRight, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { CalendarCta } from "@/components/CalendarCta";
+import { CalendarCta, LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
 import {
-  formatDualZoneStart,
-  formatOpenAccessWhen,
-  formatSessionLong,
   openAccessGoogleUrl,
   openAccessIcsUrl,
+  parseCompactUtc,
   season2EpisodeEvents,
+  sessionEndUtc,
   sessionStartUtc,
-  SEASON_2_SERIES_GOOGLE_URL,
-  SEASON_2_SERIES_ICS_URL,
   upcomingOpenAccessSessions,
   OPEN_ACCESS_PITCH,
   sessionTopic,
 } from "@/lib/seasonEvents";
+import {
+  CALENDAR_FEEDS,
+  formatLocalDate,
+  formatLocalDateShort,
+  formatRangeWithReference,
+  formatStartWithReference,
+} from "@/lib/calendarLinks";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
-function formatEpisodeDate(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
-}
+/**
+ * Times here are the reader's own. They used to be published as Pacific and
+ * Eastern only, which left everyone else doing arithmetic and, for readers east
+ * of UTC, put a local date beside a Pacific clock.
+ */
 
 /** Toggle for the dates held back after the first one. */
 function MoreDatesToggle({
@@ -85,7 +86,8 @@ export function Season2Calendar() {
           Put Season Two <span className="italic text-[#a8e6a8]">on your calendar</span>
         </h2>
         <p className="text-white/75 text-lg leading-relaxed mb-10">
-          Subscribe once and the live feed stays current. Google Calendar and Apple/Outlook add one date at a time.
+          Subscribe once and the feed stays current. Google and Apple both work in one click, and
+          every time below is shown in your own timezone.
         </p>
 
         <div className="flex items-center gap-2 mb-3">
@@ -95,7 +97,7 @@ export function Season2Calendar() {
           </h3>
         </div>
         <p className="text-white/75 text-sm mb-5 max-w-2xl">
-          Every new moon, 11:00 AM Pacific, 2:00 PM Eastern. {OPEN_ACCESS_PITCH}
+          Every new moon. {OPEN_ACCESS_PITCH}
         </p>
 
         <div className="space-y-4">
@@ -114,8 +116,9 @@ export function Season2Calendar() {
                 </span>
               )}
               <div className="text-white font-semibold mb-1">Open Access Session</div>
-              <div className="text-white/70 text-sm mb-4">
-                {s.dayName}, {formatSessionLong(s.date)}, {formatOpenAccessWhen(s)}
+              <div className="text-white font-semibold text-sm">{formatLocalDate(parseCompactUtc(s.startUtc))}</div>
+              <div className="text-white/65 text-sm mb-4">
+                {formatRangeWithReference(parseCompactUtc(s.startUtc), parseCompactUtc(s.endUtc))}
               </div>
               {(() => {
                 const topic = sessionTopic(s.date);
@@ -153,17 +156,17 @@ export function Season2Calendar() {
           </h3>
         </div>
         <p className="text-white/70 text-sm mb-5">
-          Weekly incubator sessions, 11:00 AM Pacific, 2:00 PM Eastern, September through December 2026.
+          Thirteen weekly sessions, September 26 through December 19, 2026. Selection Day is open to
+          anyone; the rest are cohort working sessions you can follow on the livestream.
         </p>
 
         <div className="rounded-xl border border-[#7dd87d]/30 bg-[#7dd87d]/8 p-5 mb-6">
           <div className="text-white font-semibold mb-1">All 13 weekly episodes</div>
-          <p className="text-white/65 text-sm mb-4">Subscribe for the series. Times stay current if they change.</p>
-          <CalendarCta
-            googleUrl={SEASON_2_SERIES_GOOGLE_URL}
-            appleUrl={SEASON_2_SERIES_ICS_URL}
-            appleDownload="regen-civics-season-2.ics"
-          />
+          <p className="text-white/65 text-sm mb-4">
+            Subscribe once and every week lands in your calendar.
+          </p>
+          <SubscribeButtons feed={CALENDAR_FEEDS.season2} />
+          <LiveFeedNote />
         </div>
 
         <div className="space-y-3">
@@ -174,7 +177,8 @@ export function Season2Calendar() {
             >
               <div className="text-white font-semibold mb-1">{ep.title}</div>
               <div className="text-white/70 text-sm mb-4">
-                {formatEpisodeDate(ep.date)} · {formatDualZoneStart(sessionStartUtc(ep.date))}
+                {formatLocalDateShort(sessionStartUtc(ep.date))} ·{" "}
+                {formatStartWithReference(sessionStartUtc(ep.date))}
               </div>
               <CalendarCta
                 googleUrl={ep.googleCalendarUrl}

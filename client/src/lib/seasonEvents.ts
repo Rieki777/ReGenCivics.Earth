@@ -9,11 +9,13 @@
  * (2:00 PM EDT in September, 2:00 PM EST after the fall change).
  */
 
-export const RIVERSIDE_INFO = {
-  topic: "ReGen Civics Season 2",
-  description: "Join ReGen Civics in Season 2! Helping land projects evolve to the next stage of their regenerative journeys.",
-  roomUrl: "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b",
-};
+export {
+  RIVERSIDE_INFO,
+  JOIN_URL,
+  SEEDS_YOUTUBE_URL,
+  SEEDS_YOUTUBE_SUBSCRIBE_URL,
+} from "@shared/sessionLinks";
+import { JOIN_URL as JOIN, SEEDS_YOUTUBE_URL as SEEDS } from "@shared/sessionLinks";
 
 export {
   SESSION_TIME_ZONE,
@@ -26,6 +28,8 @@ export {
   wallTimeInZoneToUtc,
   sundayAfterSeason2Saturday,
 } from "@shared/sessionClock";
+import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
+import { SEASON2_EPISODE_DATES } from "@shared/sessionClock";
 import {
   OPEN_ACCESS_PUBLISHED_DATES,
   OPEN_ACCESS_TITLE as SHARED_OA_TITLE,
@@ -61,39 +65,23 @@ export type OpenAccessSession = {
   endUtc: string;
 };
 
-export const OPEN_ACCESS_DESC =
-  "Open community session for the ReGenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
-
-/** One-line standing pitch for the monthly session. Used on /season2 and /schedule. */
-export const OPEN_ACCESS_PITCH =
-  "A monthly session for anyone and everyone interested in what we're doing. Free, no commitment, no pitch required. Come meet the people building this and ask us anything.";
-
 /**
- * Per-session topics, keyed by session date.
- *
- * Set one whenever a session has a specific draw, so the calendar can say what
- * the session is actually about instead of only when it is. Dates that are not
- * listed fall back to OPEN_ACCESS_PITCH.
+ * Open Access copy moved to shared/openAccess.ts on 2026-09-07 so the calendar
+ * feed can use it too. It was client-only, which is why a subscriber's invite
+ * could say when a session was but never what it was about. Re-exported here
+ * because /schedule and Season2Calendar already import it from this module.
  */
-export type SessionTopic = {
-  headline: string;
-  body: string;
-  /** Lower-case fragment for mid-sentence use in banners. */
-  short: string;
-};
+export {
+  OPEN_ACCESS_PITCH,
+  SESSION_TOPICS,
+  sessionTopic,
+  openAccessDescription,
+  type SessionTopic,
+} from "@shared/openAccess";
+import { OPEN_ACCESS_DESCRIPTION } from "@shared/openAccess";
 
-export const SESSION_TOPICS: Record<string, SessionTopic> = {
-  "2026-09-10": {
-    headline: "All things Season Two",
-    body: "We're talking through the whole season: what projects get, how selection works, what the accelerator covers, and how the shared crowdpooling launch works. Come ask your questions and meet some of the cohort. More of them show up on selection day.",
-    short: "all things Season Two",
-  },
-};
-
-/** Topic for a given session date, or null when it is a standard open session. */
-export function sessionTopic(date: string): SessionTopic | null {
-  return SESSION_TOPICS[date] ?? null;
-}
+/** Kept under its old name. The copy itself now lives in shared/openAccess.ts. */
+export const OPEN_ACCESS_DESC = OPEN_ACCESS_DESCRIPTION;
 
 export function parseCompactUtc(stamp: string): Date {
   return new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z"));
@@ -188,8 +176,15 @@ export function buildIcsEvent(opts: {
   return lines.join("\n");
 }
 
+/**
+ * The body of a one-shot Google or Apple add.
+ *
+ * The room link is /join, never the Riverside studio URL, because that URL
+ * carries a session token and this text lands on somebody's phone until April.
+ * See shared/sessionLinks.ts.
+ */
 function calendarDetails(description: string): string {
-  return `${description}\n\nRiverside: ${RIVERSIDE_INFO.roomUrl}\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies`;
+  return `${description}\n\nJoin us live: ${JOIN}\n\nWatch live or catch the rerun on YouTube: ${SEEDS}`;
 }
 
 export function googleCalUrl(opts: { title: string; startUtc: string; endUtc: string; description: string }): string {
@@ -261,86 +256,21 @@ type EpisodeDef = {
   description: string;
 };
 
-export const SEASON2_EPISODE_DEFS: EpisodeDef[] = [
-  {
-    id: 1,
-    title: "Week 1: Selection Day",
-    date: "2026-09-26",
-    description: "First steps of the ReGen Civics Incubator. Meet the selected projects, set intentions, and begin mapping your regenerative vision together.",
-  },
-  {
-    id: 2,
-    title: "Week 2: Incubator Overview",
-    date: "2026-10-03",
-    description: "Starting Season 2! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 episodes.",
-  },
-  {
-    id: 3,
-    title: "Week 3: DAO/DHO/Org Co-Creation Part 1",
-    date: "2026-10-10",
-    description: "Designing the structure of our projects. Introduction to decentralized autonomous organizations and how to structure your community.",
-  },
-  {
-    id: 4,
-    title: "Week 4: DAO/DHO/Org Co-Creation Part 2",
-    date: "2026-10-17",
-    description: "Continuing to design the structure of our projects. Practical implementation of governance frameworks and community design.",
-  },
-  {
-    id: 5,
-    title: "Week 5: Game Guides & Economic Systems",
-    date: "2026-10-24",
-    description: "Co-creating project 'Game Guides' and kickstarting our economic systems. How to document your project's unique plays and patterns.",
-  },
-  {
-    id: 6,
-    title: "Week 6: Intro to the ReGen Civics DHO",
-    date: "2026-10-31",
-    description: "Introduction to the ReGen Civics DHO and the first steps in setting up yours. How our alliance operates and how you can participate.",
-  },
-  {
-    id: 7,
-    title: "Week 7: Ecosystem Map & Policies",
-    date: "2026-11-07",
-    description: "Evolving our culture through ecosystem mapping and policy design. How we co-create the rules of our regenerative game.",
-  },
-  {
-    id: 8,
-    title: "Week 8: Tokenomics Part 1",
-    date: "2026-11-14",
-    description: "The art and science of our token-assisted land-based economies. Understanding how tokens can support regenerative projects.",
-  },
-  {
-    id: 9,
-    title: "Week 9: Tokenomics Part 2",
-    date: "2026-11-21",
-    description: "Continuing the art and theory of our token-assisted land-based economies. Practical token design for your project.",
-  },
-  {
-    id: 10,
-    title: "Week 10: Legal Structures Part 1",
-    date: "2026-11-28",
-    description: "Exploring the expansive world of legal structures. How do our projects relate to nation states and existing legal frameworks?",
-  },
-  {
-    id: 11,
-    title: "Week 11: Legal Structures Part 2",
-    date: "2026-12-05",
-    description: "Continuing to explore legal structures. Practical considerations for land ownership, community agreements, and compliance.",
-  },
-  {
-    id: 12,
-    title: "Week 12: Coordination & Minimum Viable Economies",
-    date: "2026-12-12",
-    description: "Meeting our needs through coordination structures. How do we create minimum viable regenerative economies? How do we thrive?",
-  },
-  {
-    id: 13,
-    title: "Week 13: Season Overview & Project Updates",
-    date: "2026-12-19",
-    description: "A complete overview of the ReGen Civics Incubator journey. Project stewards share updates on their progress and celebrate our collective achievements.",
-  },
-];
+/**
+ * The thirteen weeks, from the one place the curriculum is defined.
+ *
+ * This array used to carry its own copy of the titles and descriptions, and by
+ * 2026-09-07 it disagreed with /seasons, with the seed list, and with the rows
+ * in MySQL. Weeks 3 to 13 said three different things depending on which
+ * surface you looked at, and the calendar invites carried the version nobody
+ * could see on the site. See shared/season2Curriculum.ts.
+ */
+export const SEASON2_EPISODE_DEFS: EpisodeDef[] = SEASON2_CURRICULUM.map((ep, i) => ({
+  id: ep.week,
+  title: episodeTitle(ep),
+  date: SEASON2_EPISODE_DATES[i]!,
+  description: ep.description,
+}));
 
 const SEASON2_DATES = new Set(SEASON2_EPISODE_DEFS.map((e) => e.date));
 
@@ -435,32 +365,18 @@ export type CalendarFallbackEvent = {
 /** End of 2026-09-11 in America/Los_Angeles. September is PDT (UTC-7). */
 export const APPLICATIONS_CLOSE = new Date("2026-09-11T23:59:59-07:00");
 
-const week1 = sessionPair("2026-09-26");
-
-export const SEASON_2_SERIES_GOOGLE_URL = googleCalUrl({
-  title: "ReGen Civics Season 2 Episode",
-  startUtc: week1.startUtc,
-  endUtc: week1.endUtc,
-  description: "ReGen Civics Season 2 Incubator weekly episode.",
-});
-
-function seriesIcsBody(): string {
-  const events = SEASON2_EPISODE_DEFS.map((def) => {
-    const { startUtc, endUtc } = sessionPair(def.date);
-    return buildIcsEvent({
-      uid: season2EpisodeUid(def.id),
-      summary: `ReGen Civics ${def.title}`,
-      startUtc,
-      endUtc,
-      sequence: ICS_SEQUENCE,
-      description: calendarDetails(def.description),
-      location: "Online via Riverside",
-    });
-  });
-  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ReGen Civics//Season 2//EN\n${events.join("\n")}\nEND:VCALENDAR`;
-}
-
-export const SEASON_2_SERIES_ICS_URL = `data:text/calendar;charset=utf8,${encodeURIComponent(seriesIcsBody())}`;
+/**
+ * The Season 2 series links used to live here as SEASON_2_SERIES_GOOGLE_URL and
+ * SEASON_2_SERIES_ICS_URL. Both were wrong in ways nobody had noticed:
+ *
+ *   - The Google one was a single-event TEMPLATE link for September 26 titled
+ *     'ReGen Civics Season 2 Episode'. A reader who clicked 'Google Calendar'
+ *     under 'All 13 weekly episodes' got exactly one generic event.
+ *   - The Apple one was a data: URL carrying all thirteen, which iOS Safari
+ *     handles unreliably and which no client can ever re-read for updates.
+ *
+ * Both are now live subscriptions: see CALENDAR_FEEDS in ./calendarLinks.
+ */
 
 export function upcomingOpenAccessSessions(nowMs: number = Date.now()): OpenAccessSession[] {
   return NEW_MOON_SESSIONS.filter((s) => parseCompactUtc(s.startUtc).getTime() > nowMs);
@@ -488,40 +404,3 @@ export function formatOpenAccessStart(session: OpenAccessSession): string {
   return formatDualZoneStart(parseCompactUtc(session.startUtc));
 }
 
-export function buildAllEventsIcs(): string {
-  const openAccess = NEW_MOON_SESSIONS.map((session) =>
-    buildIcsEvent({
-      uid: openAccessUid(session.publishedDate),
-      summary: SHARED_OA_TITLE,
-      startUtc: session.startUtc,
-      endUtc: session.endUtc,
-      sequence: session.sequence,
-      description: calendarDetails(OPEN_ACCESS_DESC),
-      location: "Online via Riverside",
-    }),
-  );
-  const episodes = SEASON2_EPISODE_DEFS.map((def) => {
-    const { startUtc, endUtc } = sessionPair(def.date);
-    return buildIcsEvent({
-      uid: season2EpisodeUid(def.id),
-      summary: `ReGen Civics ${def.title}`,
-      startUtc,
-      endUtc,
-      sequence: ICS_SEQUENCE,
-      description: `${def.description}\n\nRiverside: ${RIVERSIDE_INFO.roomUrl}`,
-      location: "Online via Riverside",
-    });
-  });
-
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//ReGen Civics//All Events//EN",
-    "X-WR-CALNAME:ReGen Civics All Events",
-    "X-WR-CALDESC:All ReGen Civics sessions and events",
-    ...openAccess,
-    ...episodes,
-    "END:VCALENDAR",
-    "",
-  ].join("\n");
-}

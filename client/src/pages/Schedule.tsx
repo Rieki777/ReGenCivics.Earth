@@ -31,25 +31,28 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from '@/lib/trpc';
 import { cdnImg } from "@/lib/utils";
 import { useAuth } from '@/_core/hooks/useAuth';
-import { CalendarCta, CalendarSubscribeButton } from "@/components/CalendarCta";
+import { CalendarCta } from "@/components/CalendarCta";
+import { CalendarOptions, type CalendarSession } from "@/components/CalendarOptions";
 import {
   RIVERSIDE_INFO,
   upcomingEventsFallback,
   upcomingOpenAccessSessions as listUpcomingOpenAccessSessions,
-  formatSessionLong,
-  formatSessionMonthDay,
-  formatOpenAccessWhen,
-  formatOpenAccessStart,
-  formatDualZoneStart,
+  parseCompactUtc,
   openAccessGoogleUrl,
   openAccessIcsUrl,
   buildGoogleCalendarUrl,
   buildIcsDataUrl,
-  SEASON_2_SERIES_GOOGLE_URL,
-  SEASON_2_SERIES_ICS_URL,
   OPEN_ACCESS_PITCH,
   sessionTopic,
 } from "@/lib/seasonEvents";
+import {
+  eventFeed,
+  resolveRoomUrl,
+  formatLocalDate,
+  formatLocalDateShort,
+  formatRangeWithReference,
+  formatStartWithReference,
+} from "@/lib/calendarLinks";
 
 
 
@@ -267,7 +270,8 @@ export default function Schedule() {
   const [agendaText, setAgendaText] = useState('');
   const [agendaSuccess, setAgendaSuccess] = useState<number | null>(null);
   // #12. User's local timezone for display
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Times are rendered by the helpers in lib/calendarLinks, which resolve the
+  // reader's zone themselves and keep the date and the clock in the same one.
 
   // #23. Token balance for signed-in users
   const { user } = useAuth();
@@ -278,6 +282,11 @@ export default function Schedule() {
   const upcomingOpenAccessSessions = listUpcomingOpenAccessSessions();
   const nextOpenAccessSession = upcomingOpenAccessSessions[0] ?? null;
   const followingOpenAccessSessions = upcomingOpenAccessSessions.slice(1, 3);
+  // Real Dates, so the date and the clock beside it can be rendered from one
+  // zone. Rendering the date locally next to a Pacific clock is what showed a
+  // Sydney reader "Sunday, September 27 at 11:00 AM PDT" for a Saturday event.
+  const nextOpenStart = nextOpenAccessSession ? parseCompactUtc(nextOpenAccessSession.startUtc) : null;
+  const nextOpenEnd = nextOpenAccessSession ? parseCompactUtc(nextOpenAccessSession.endUtc) : null;
 
   // Fetch events from DB (falls back gracefully while loading)
   // includeCompleted so historical tab has data
@@ -306,6 +315,27 @@ export default function Schedule() {
           const bTime = (b as any).startTime ? new Date((b as any).startTime).getTime() : 0;
           return bTime - aTime; // newest first
         });
+
+  // Feeds the "add a single session" picker. Only sessions still ahead of us,
+  // in the order they happen.
+  const calendarSessions: CalendarSession[] = upcomingEvents
+    .filter(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')
+    .map(e => {
+      const start = (e as any).startTime ? new Date((e as any).startTime) : null;
+      if (!start) return null;
+      const end = (e as any).endTime
+        ? new Date((e as any).endTime)
+        : new Date(start.getTime() + 2 * 3_600_000);
+      return {
+        id: typeof e.id === 'number' && (e as any).startTime ? e.id : null,
+        title: e.title,
+        start,
+        end,
+        description: (e as any).description ?? '',
+      } as CalendarSession;
+    })
+    .filter((s): s is CalendarSession => s !== null && s.start.getTime() > Date.now())
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
 
   // First upcoming event, auto-expand it
   const firstUpcomingId = filteredEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
@@ -393,10 +423,10 @@ export default function Schedule() {
     <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       {/* Open Session Announcement Banner */}
-      {nextOpenAccessSession && (
+      {nextOpenAccessSession && nextOpenStart && (
         <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
           <p className="text-[#7dd87d] font-medium text-sm md:text-base">
-            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessStart(nextOpenAccessSession)}.{" "}
+            🌿 Next Open Access Session: {formatLocalDate(nextOpenStart)} at {formatStartWithReference(nextOpenStart)}.{" "}
             {sessionTopic(nextOpenAccessSession.date)
               ? `We're talking ${sessionTopic(nextOpenAccessSession.date)!.short}. Free and open to all.`
               : "Every new moon, free and open to all."}
@@ -442,92 +472,59 @@ export default function Schedule() {
         </div>
       </section>
 
-      {/* Quick Add to Calendar Section */}
-      <section className="py-8 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Next Open Access Session (first card) */}
-            {nextOpenAccessSession && (
-              <div className="bg-gradient-to-br from-[#7dd87d]/30 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#7dd87d]/30 flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-[#7dd87d]" />
+      {/* The next open session, then the three ways to subscribe. */}
+      {nextOpenAccessSession && nextOpenStart && nextOpenEnd && (
+        <section className="py-8 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <div className="bg-gradient-to-br from-[#7dd87d]/25 to-[#4a7c59]/15 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
+              <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-0.5 rounded-full mb-2">
+                NEXT SESSION
+              </span>
+              <h2 className="text-xl font-bold text-white mb-1">Open Access Session</h2>
+              <p className="text-white font-semibold text-sm">{formatLocalDate(nextOpenStart)}</p>
+              <p className="text-white/65 text-sm mb-4">
+                {formatRangeWithReference(nextOpenStart, nextOpenEnd)}
+              </p>
+              {(() => {
+                const topic = sessionTopic(nextOpenAccessSession.date);
+                if (!topic) return null;
+                return (
+                  <div className="mb-4 rounded-lg bg-[#7dd87d]/15 border border-[#7dd87d]/30 p-4">
+                    <div className="text-[#7dd87d] text-[10px] font-bold tracking-wider uppercase mb-1">This session</div>
+                    <div className="text-white font-semibold text-sm mb-1">{topic.headline}</div>
+                    <p className="text-white/75 text-xs leading-relaxed">{topic.body}</p>
                   </div>
-                  <div>
-                    <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-0.5 rounded-full mb-1">NEXT SESSION</span>
-                    <h3 className="text-lg font-bold text-white">Open Access Session</h3>
-                  </div>
-                </div>
-                <p className="text-white/70 text-sm mb-1">
-                  {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at {formatOpenAccessWhen(nextOpenAccessSession)}
-                </p>
-                {(() => {
-                  const topic = sessionTopic(nextOpenAccessSession.date);
-                  if (!topic) return null;
-                  return (
-                    <div className="mb-3 rounded-lg bg-[#7dd87d]/15 border border-[#7dd87d]/30 p-3">
-                      <div className="text-[#7dd87d] text-[10px] font-bold tracking-wider uppercase mb-1">This session</div>
-                      <div className="text-white font-semibold text-sm mb-1">{topic.headline}</div>
-                      <p className="text-white/75 text-xs leading-relaxed">{topic.body}</p>
-                    </div>
-                  );
-                })()}
-                {/* The standing pitch stays put whether or not this one has a topic:
-                    a first-time reader still needs to know who the session is for. */}
-                <p className="text-white/70 text-xs mb-4">Every new moon. {OPEN_ACCESS_PITCH}</p>
-                <div className="mb-4">
-                  <CalendarCta
-                    googleUrl={openAccessGoogleUrl(nextOpenAccessSession)}
-                    appleUrl={openAccessIcsUrl(nextOpenAccessSession)}
-                    appleDownload="regen-civics-open-session.ics"
-                  />
-                </div>
-                {followingOpenAccessSessions.length > 0 && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-[#7dd87d]/80 font-bold mb-1">Also coming up</p>
-                    <ul className="text-white/60 text-xs space-y-0.5">
-                      {followingOpenAccessSessions.map(s => (
-                        <li key={s.date}>
-                          {s.dayName}, {formatSessionMonthDay(s.date)} · {formatOpenAccessStart(s)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Subscribe to All Events */}
-            <div className="bg-gradient-to-br from-[#4a7c59]/20 to-[#2d5a3d]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-[#7dd87d]" />
-                </div>
-                <h3 className="text-lg font-bold text-white">All Events</h3>
-              </div>
-              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically.</p>
-              <CalendarSubscribeButton />
-              <p className="text-white/70 text-xs mt-3">Live calendar. Times stay current if they change.</p>
-            </div>
-
-            {/* Season 2 Episodes (last card) */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-[#7dd87d]" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Season 2 Episodes</h3>
-              </div>
-              <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, 11:00 AM Pacific, 2:00 PM Eastern, Sept-Dec 2026</p>
+                );
+              })()}
+              {/* The standing pitch stays put whether or not this one has a topic:
+                  a first-time reader still needs to know who the session is for. */}
+              <p className="text-white/70 text-xs mb-4">Every new moon. {OPEN_ACCESS_PITCH}</p>
               <CalendarCta
-                googleUrl={SEASON_2_SERIES_GOOGLE_URL}
-                appleUrl={SEASON_2_SERIES_ICS_URL}
-                appleDownload="regen-civics-season-2.ics"
+                googleUrl={openAccessGoogleUrl(nextOpenAccessSession)}
+                appleUrl={openAccessIcsUrl(nextOpenAccessSession)}
+                appleDownload="regen-civics-open-session.ics"
               />
+              {followingOpenAccessSessions.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-[10px] uppercase tracking-wider text-[#7dd87d]/80 font-bold mb-1">Also coming up</p>
+                  <ul className="text-white/60 text-xs space-y-0.5">
+                    {followingOpenAccessSessions.map((s) => {
+                      const start = parseCompactUtc(s.startUtc);
+                      return (
+                        <li key={s.date}>
+                          {formatLocalDateShort(start)} · {formatStartWithReference(start)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      <CalendarOptions sessions={calendarSessions} />
 
       {/* Riverside Studio Info */}
       <section className="py-12 px-4">
@@ -541,7 +538,7 @@ export default function Schedule() {
             <p className="text-white/60 text-sm mb-4">Join via your browser. No download required.</p>
 
             <a
-              href={RIVERSIDE_INFO.roomUrl}
+              href={resolveRoomUrl(null)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
@@ -680,19 +677,22 @@ export default function Schedule() {
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-white/60">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
+                          {/* Date and clock both come from the reader's zone. They used
+                              to disagree: the date was local and the time was Pacific,
+                              so on 2026-09-07 a Sydney reader saw "Sunday, September 27
+                              at 11:00 AM PDT" for an event that runs Saturday the 26th. */}
                           {(event as any).startTime
-                            ? new Date((event as any).startTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                            ? formatLocalDate(new Date((event as any).startTime))
                             : (event as any).date === 'TBD' ? 'Date TBD' : formatDate((event as any).date)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {(event as any).startTime ? (() => {
-                            const d = new Date((event as any).startTime);
-                            const dual = formatDualZoneStart(d);
-                            const localTime = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: userTz, timeZoneName: 'short' });
-                            const localTzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: userTz, timeZoneName: 'short' }).format(d).split(' ').pop() ?? '';
-                            const alreadyShown = dual.includes(localTzAbbr);
-                            return alreadyShown ? dual : `${dual} (${localTime} your time)`;
+                            const start = new Date((event as any).startTime);
+                            const end = (event as any).endTime
+                              ? new Date((event as any).endTime)
+                              : new Date(start.getTime() + 2 * 3_600_000);
+                            return formatRangeWithReference(start, end);
                           })()
                             : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
                         </span>
@@ -743,9 +743,16 @@ export default function Schedule() {
                     <div className="flex flex-wrap gap-3">
                       {event.googleCalendarUrl ? (
                         <div className="w-full">
+                          {/* A served .ics beats the data: URL we used to hand out:
+                              iOS Safari is unreliable with data: downloads, and this
+                              one is rendered from the row so it never goes stale. */}
                           <CalendarCta
                             googleUrl={event.googleCalendarUrl}
-                            appleUrl={event.appleCalendarUrl || event.googleCalendarUrl}
+                            appleUrl={
+                              (event as any).startTime
+                                ? eventFeed(event.id).httpsUrl
+                                : event.appleCalendarUrl || event.googleCalendarUrl
+                            }
                             appleDownload={`${event.title.replace(/\s+/g, '-')}.ics`}
                           />
                         </div>
@@ -783,7 +790,7 @@ export default function Schedule() {
                           </a>
                         ) : (
                           <a
-                            href={(event as any).riversideRoomUrl ?? RIVERSIDE_INFO.roomUrl}
+                            href={resolveRoomUrl((event as any).riversideRoomUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
