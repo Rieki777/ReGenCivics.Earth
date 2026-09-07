@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { Youtube } from "lucide-react";
 import {
+  CALENDAR_LABELS,
   CalendarCta,
   CalendarOptionCard,
   LiveFeedNote,
@@ -95,14 +96,14 @@ export function CalendarOptions({
                 rel="noopener noreferrer"
                 className="text-[#7dd87d] hover:text-[#9de89d] underline"
               >
-                Google
+                {CALENDAR_LABELS.google}
               </a>{" "}
               or{" "}
               <a
                 href={CALENDAR_FEEDS.season2.webcalUrl}
                 className="text-[#7dd87d] hover:text-[#9de89d] underline"
               >
-                Apple/Outlook
+                {CALENDAR_LABELS.apple}
               </a>
             </p>
           </CalendarOptionCard>

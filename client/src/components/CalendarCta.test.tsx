@@ -10,15 +10,20 @@
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { CalendarCta, CalendarSubscribeButton, SubscribeButtons } from "./CalendarCta";
+import {
+  CALENDAR_LABELS,
+  CalendarCta,
+  CalendarSubscribeButton,
+  SubscribeButtons,
+} from "./CalendarCta";
 import { CALENDAR_FEEDS } from "@/lib/calendarLinks";
 
 describe("SubscribeButtons", () => {
   it("offers Google and Apple side by side, never one alone", () => {
     render(<SubscribeButtons feed={CALENDAR_FEEDS.all} />);
 
-    const google = screen.getByRole("link", { name: /Google Calendar/ });
-    const apple = screen.getByRole("link", { name: /Apple or Outlook/ });
+    const google = screen.getByRole("link", { name: CALENDAR_LABELS.google });
+    const apple = screen.getByRole("link", { name: CALENDAR_LABELS.apple });
 
     expect(google).toHaveAttribute("href", CALENDAR_FEEDS.all.googleUrl);
     expect(apple).toHaveAttribute("href", CALENDAR_FEEDS.all.webcalUrl);
@@ -26,7 +31,7 @@ describe("SubscribeButtons", () => {
 
   it("sends Google to an https deep link, not to webcal://", () => {
     render(<SubscribeButtons feed={CALENDAR_FEEDS.openAccess} />);
-    const google = screen.getByRole("link", { name: /Google Calendar/ });
+    const google = screen.getByRole("link", { name: CALENDAR_LABELS.google });
     const href = google.getAttribute("href") ?? "";
 
     expect(href.startsWith("https://calendar.google.com/")).toBe(true);
@@ -49,11 +54,11 @@ describe("SubscribeButtons", () => {
 describe("CalendarSubscribeButton", () => {
   it("subscribes to everything, in both ecosystems", () => {
     render(<CalendarSubscribeButton />);
-    expect(screen.getByRole("link", { name: /Google Calendar/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: CALENDAR_LABELS.google })).toHaveAttribute(
       "href",
       CALENDAR_FEEDS.all.googleUrl,
     );
-    expect(screen.getByRole("link", { name: /Apple or Outlook/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: CALENDAR_LABELS.apple })).toHaveAttribute(
       "href",
       CALENDAR_FEEDS.all.webcalUrl,
     );
@@ -71,12 +76,31 @@ describe("CalendarCta", () => {
       />,
     );
 
-    const google = screen.getByRole("link", { name: "Google Calendar" });
-    const apple = screen.getByRole("link", { name: "Apple/Outlook" });
+    const google = screen.getByRole("link", { name: CALENDAR_LABELS.google });
+    const apple = screen.getByRole("link", { name: CALENDAR_LABELS.apple });
 
     expect(google).toHaveAttribute("href", "https://calendar.google.com/example");
     expect(apple).toHaveAttribute("href", "https://regencivics.earth/calendar/event/20.ics");
     expect(apple).toHaveAttribute("download", "week-1.ics");
     expect(screen.getByText("A one-off add.")).toBeInTheDocument();
+  });
+});
+
+describe("Button labels", () => {
+  it("names the same two destinations in every block", () => {
+    // They drifted the day they were written: "Apple or Outlook" in one block,
+    // "Apple/Outlook" in another, bare "Google" in a third. Same component.
+    // This is the control a stuck user is scanning, and the words you say to
+    // them over a support channel, so it has to read the same everywhere.
+    render(
+      <>
+        <SubscribeButtons feed={CALENDAR_FEEDS.all} />
+        <CalendarCta googleUrl="https://example.com/g" appleUrl="https://example.com/a.ics" />
+      </>,
+    );
+    expect(screen.getAllByRole("link", { name: CALENDAR_LABELS.google })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: CALENDAR_LABELS.apple })).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: "Apple or Outlook" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Google" })).toBeNull();
   });
 });

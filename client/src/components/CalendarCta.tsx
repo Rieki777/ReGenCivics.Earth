@@ -15,6 +15,21 @@ import { Calendar, Check } from "lucide-react";
 import type { CalendarFeed } from "@/lib/calendarLinks";
 import { CALENDAR_FEEDS } from "@/lib/calendarLinks";
 
+/**
+ * The two labels, defined once.
+ *
+ * They drifted within a day of being written: three blocks rendering the same
+ * component showed "Google Calendar"/"Apple or Outlook", "Google Calendar"/
+ * "Apple/Outlook", and "Google"/"Apple/Outlook". This is the control someone
+ * is scanning when they cannot make the calendar work, and it is what you name
+ * over a support channel when you tell them which button to press, so the words
+ * have to be the same in every block.
+ */
+export const CALENDAR_LABELS = {
+  google: "Google Calendar",
+  apple: "Apple/Outlook",
+} as const;
+
 const primaryButton =
   "inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2.5 rounded-xl font-bold transition-colors text-sm";
 
@@ -25,7 +40,7 @@ const quietButton =
   "inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 rounded-lg font-medium transition-colors text-xs border border-white/20";
 
 /**
- * Subscribe to a feed in Google or in Apple/Outlook.
+ * Subscribe to a feed in Google Calendar or in Apple/Outlook.
  *
  * Google gets an https deep link into its "add calendar by URL" flow. Apple and
  * Outlook get webcal://, which is what they actually want. One button each,
@@ -36,11 +51,11 @@ export function SubscribeButtons({ feed }: { feed: CalendarFeed }) {
     <div className="flex flex-wrap gap-2">
       <a href={feed.googleUrl} target="_blank" rel="noopener noreferrer" className={primaryButton}>
         <Calendar className="w-4 h-4" />
-        Google Calendar
+        {CALENDAR_LABELS.google}
       </a>
       <a href={feed.webcalUrl} className={secondaryButton}>
         <Calendar className="w-4 h-4" />
-        Apple or Outlook
+        {CALENDAR_LABELS.apple}
       </a>
     </div>
   );
@@ -74,14 +89,14 @@ export function CalendarCta({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         <a href={googleUrl} target="_blank" rel="noopener noreferrer" className={quietButton}>
-          Google Calendar
+          {CALENDAR_LABELS.google}
         </a>
         <a
           href={appleUrl}
           {...(appleDownload ? { download: appleDownload } : {})}
           className={quietButton}
         >
-          Apple/Outlook
+          {CALENDAR_LABELS.apple}
         </a>
       </div>
       {note ? <p className="text-white/50 text-xs">{note}</p> : null}

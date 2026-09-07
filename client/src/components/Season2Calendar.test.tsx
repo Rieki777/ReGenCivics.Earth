@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { Season2Calendar } from "./Season2Calendar";
 import { openAccessGoogleUrl, NEW_MOON_SESSIONS, parseCompactUtc } from "@/lib/seasonEvents";
 import { CALENDAR_FEEDS, formatRangeWithReference } from "@/lib/calendarLinks";
+import { CALENDAR_LABELS } from "./CalendarCta";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 
 vi.mock("@/components/AnimatedSection", () => ({
@@ -83,8 +84,8 @@ describe("Season2Calendar", () => {
 
     expect(screen.queryByRole("link", { name: "Subscribe" })).toBeNull();
 
-    const google = screen.getAllByRole("link", { name: /Google Calendar/ });
-    const apple = screen.getAllByRole("link", { name: /Apple or Outlook|Apple\/Outlook/ });
+    const google = screen.getAllByRole("link", { name: CALENDAR_LABELS.google });
+    const apple = screen.getAllByRole("link", { name: CALENDAR_LABELS.apple });
     expect(google.length).toBe(apple.length);
     expect(google.length).toBeGreaterThan(0);
 
