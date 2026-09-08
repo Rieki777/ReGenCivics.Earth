@@ -9,7 +9,7 @@
  * buttons are the fallback.
  */
 import { useState } from "react";
-import { Calendar, ArrowRight, ChevronDown } from "lucide-react";
+import { Calendar, ArrowRight, ChevronDown, Youtube } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { CalendarCta, LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
@@ -24,6 +24,7 @@ import {
   upcomingOpenAccessSessions,
   OPEN_ACCESS_PITCH,
   sessionTopic,
+  SEEDS_YOUTUBE_SUBSCRIBE_URL,
 } from "@/lib/seasonEvents";
 import {
   CALENDAR_FEEDS,
@@ -86,10 +87,23 @@ export function Season2Calendar() {
         <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4" style={display}>
           Put Season Two <span className="italic text-[#a8e6a8]">on your calendar</span>
         </h2>
-        <p className="text-white/75 text-lg leading-relaxed mb-10">
+        <p className="text-white/75 text-lg leading-relaxed mb-6">
           Subscribe once and the feed stays current. Google and Apple both work in one click, and
           every time below is shown in your own timezone.
         </p>
+
+        {/* The everything feed leads (Rye, 2026-09-07). Somebody who has read
+            this far has already decided they want the season; making them scroll
+            past two sections of individual dates to find the one button that
+            adds all of it was the wrong order. */}
+        <div className="rounded-2xl border border-[#7dd87d]/40 bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 p-5 md:p-6 mb-12">
+          <div className="text-white font-semibold mb-1">Everything</div>
+          <p className="text-white/70 text-sm mb-4">
+            Every Open Access Session and all thirteen Season Two episodes, in one calendar.
+          </p>
+          <SubscribeButtons feed={CALENDAR_FEEDS.all} />
+          <LiveFeedNote />
+        </div>
 
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-5 h-5 text-[#7dd87d]" />
@@ -97,9 +111,14 @@ export function Season2Calendar() {
             Open Access Sessions
           </h3>
         </div>
-        <p className="text-white/75 text-sm mb-5 max-w-2xl">
+        <p className="text-white/75 text-sm mb-4 max-w-2xl">
           Every new moon. {OPEN_ACCESS_PITCH}
         </p>
+
+        <p className="text-white/55 text-xs font-medium mb-2">Just the open sessions:</p>
+        <div className="mb-6">
+          <SubscribeButtons feed={CALENDAR_FEEDS.openAccess} />
+        </div>
 
         <div className="space-y-4">
           {shownSessions.map((s, i) => (
@@ -168,6 +187,18 @@ export function Season2Calendar() {
           </p>
           <SubscribeButtons feed={CALENDAR_FEEDS.season2} />
           <LiveFeedNote />
+          {/* Weeks 2 to 13 are cohort working sessions, so for everyone who is
+              not in the cohort the livestream IS the way to attend. The calendar
+              tells them when; this tells them where. Same control as /schedule. */}
+          <a
+            href={SEEDS_YOUTUBE_SUBSCRIBE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] mt-3 text-xs font-semibold text-white/80 hover:text-white bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
+          >
+            <Youtube className="w-3.5 h-3.5" />
+            Subscribe on YouTube to follow the season live
+          </a>
         </div>
 
         <div className="space-y-3">

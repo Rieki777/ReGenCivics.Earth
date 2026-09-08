@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Season2Calendar } from "./Season2Calendar";
-import { openAccessGoogleUrl, NEW_MOON_SESSIONS, parseCompactUtc } from "@/lib/seasonEvents";
+import {
+  openAccessGoogleUrl,
+  NEW_MOON_SESSIONS,
+  parseCompactUtc,
+  SEEDS_YOUTUBE_SUBSCRIBE_URL,
+} from "@/lib/seasonEvents";
 import { CALENDAR_FEEDS, formatRangeWithReference } from "@/lib/calendarLinks";
 import { CALENDAR_LABELS } from "./CalendarCta";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
@@ -135,5 +140,37 @@ describe("Season2Calendar", () => {
     );
     expect(screen.getByText(expected)).toBeInTheDocument();
     expect(screen.queryByText(/8:00 AM/)).toBeNull();
+  });
+
+  it("offers all three feeds, with everything at the top", () => {
+    // Rye, 2026-09-07: the everything feed leads, the open-sessions feed sits
+    // with the open sessions, and the season feed with the episodes. A reader
+    // who has decided they want the season should not have to scroll past two
+    // sections of individual dates to find the button that adds all of it.
+    render(<Season2Calendar />);
+
+    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain(CALENDAR_FEEDS.all.googleUrl);
+    expect(hrefs).toContain(CALENDAR_FEEDS.all.webcalUrl);
+    expect(hrefs).toContain(CALENDAR_FEEDS.openAccess.googleUrl);
+    expect(hrefs).toContain(CALENDAR_FEEDS.openAccess.webcalUrl);
+    expect(hrefs).toContain(CALENDAR_FEEDS.season2.googleUrl);
+    expect(hrefs).toContain(CALENDAR_FEEDS.season2.webcalUrl);
+
+    // "Everything" comes before the Open Access heading in document order.
+    const everything = screen.getByText("Everything");
+    const openHeading = screen.getByText("Open Access Sessions");
+    expect(
+      everything.compareDocumentPosition(openHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("points people who are not in the cohort at the livestream", () => {
+    // Weeks 2 to 13 are cohort working sessions, so for everyone else the
+    // livestream is how they attend. The calendar says when; this says where.
+    render(<Season2Calendar />);
+    const yt = screen.getByRole("link", { name: /Subscribe on YouTube/i });
+    expect(yt.getAttribute("href")).toBe(SEEDS_YOUTUBE_SUBSCRIBE_URL);
+    expect(yt.className).toContain("min-h-[44px]");
   });
 });
