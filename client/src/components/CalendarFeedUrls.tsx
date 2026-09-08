@@ -19,7 +19,7 @@
  * the URLs cannot drift from what the buttons point at.
  */
 import { useState } from "react";
-import { Check, Copy, Link2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Link2 } from "lucide-react";
 import { CALENDAR_FEEDS, type CalendarFeed } from "@/lib/calendarLinks";
 
 const ROWS: { feed: CalendarFeed; label: string; hint: string }[] = [
@@ -76,31 +76,53 @@ function CopyRow({ feed, label, hint }: { feed: CalendarFeed; label: string; hin
   );
 }
 
+/**
+ * Collapsed by default (Rye, 2026-09-07).
+ *
+ * The buttons work for almost everyone now, so three URLs and a paragraph of
+ * per-app instructions sitting open under them is noise for the majority and
+ * makes the page look like the buttons are unreliable. It stays one tap away
+ * for the minority whose browser, OS or calendar app disagree, which is the
+ * only audience it was ever for.
+ */
 export function CalendarFeedUrls() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="rounded-2xl border border-[#7dd87d]/20 bg-[#0d2818]/30 p-6">
-      <div className="flex items-center gap-2 mb-2">
-        <Link2 className="w-5 h-5 text-[#7dd87d]" />
-        <h3 className="text-white font-bold text-lg">Buttons not working? Add it by URL</h3>
-      </div>
-      <p className="text-white/70 text-sm leading-relaxed mb-5">
-        Every calendar app can subscribe from a plain link, and it works the same
-        on every device. In Google Calendar, open Other calendars, then From URL.
-        In Apple Calendar, File, then New Calendar Subscription. In Outlook, Add
-        calendar, then Subscribe from web.
-      </p>
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-2 min-h-[44px] text-white/55 hover:text-[#7dd87d] text-xs font-medium transition-colors"
+      >
+        <Link2 className="w-3.5 h-3.5" />
+        Buttons not working? Add it by URL
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
 
-      <div className="space-y-3">
-        {ROWS.map((r) => (
-          <CopyRow key={r.feed.httpsUrl} {...r} />
-        ))}
-      </div>
+      {open && (
+        <div className="mt-3 rounded-2xl border border-[#7dd87d]/20 bg-[#0d2818]/30 p-6">
+          <p className="text-white/70 text-sm leading-relaxed mb-5">
+            Every calendar app can subscribe from a plain link, and it works the same
+            on every device. In Google Calendar, open Other calendars, then From URL.
+            In Apple Calendar, File, then New Calendar Subscription. In Outlook, Add
+            calendar, then Subscribe from web.
+          </p>
 
-      <p className="text-white/60 text-xs leading-relaxed mt-5">
-        These are live feeds. Add one once and it stays current on its own, so a
-        changed time or a new session updates in place rather than arriving as a
-        duplicate.
-      </p>
+          <div className="space-y-3">
+            {ROWS.map((r) => (
+              <CopyRow key={r.feed.httpsUrl} {...r} />
+            ))}
+          </div>
+
+          <p className="text-white/60 text-xs leading-relaxed mt-5">
+            These are live feeds. Add one once and it stays current on its own, so a
+            changed time or a new session updates in place rather than arriving as a
+            duplicate.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

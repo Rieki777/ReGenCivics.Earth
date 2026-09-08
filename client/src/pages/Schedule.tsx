@@ -33,7 +33,7 @@ import { cdnImg } from "@/lib/utils";
 import { useAuth } from '@/_core/hooks/useAuth';
 import { CalendarCta } from "@/components/CalendarCta";
 import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
-import { CalendarOptions, type CalendarSession } from "@/components/CalendarOptions";
+import { CalendarOptions } from "@/components/CalendarOptions";
 import {
   RIVERSIDE_INFO,
   upcomingEventsFallback,
@@ -255,6 +255,9 @@ function RecordingsSection() {
   );
 }
 
+/** Signup counts stay private until a session has more than this many. */
+const SIGNUP_COUNT_VISIBLE_FROM = 50;
+
 // YouTube playlist for Season 1 recordings
 const YOUTUBE_PLAYLIST = "https://www.youtube.com/watch?v=AJZI0OiRPeU&list=PL3Xi8vZSmBTSUZsQ82awoNIQS8ceBQ4io";
 
@@ -325,27 +328,6 @@ export default function Schedule() {
           const bTime = (b as any).startTime ? new Date((b as any).startTime).getTime() : 0;
           return bTime - aTime; // newest first
         });
-
-  // Feeds the "add a single session" picker. Only sessions still ahead of us,
-  // in the order they happen.
-  const calendarSessions: CalendarSession[] = upcomingEvents
-    .filter(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')
-    .map(e => {
-      const start = (e as any).startTime ? new Date((e as any).startTime) : null;
-      if (!start) return null;
-      const end = (e as any).endTime
-        ? new Date((e as any).endTime)
-        : new Date(start.getTime() + 2 * 3_600_000);
-      return {
-        id: typeof e.id === 'number' && (e as any).startTime ? e.id : null,
-        title: e.title,
-        start,
-        end,
-        description: (e as any).description ?? '',
-      } as CalendarSession;
-    })
-    .filter((s): s is CalendarSession => s !== null && s.start.getTime() > Date.now())
-    .sort((a, b) => a.start.getTime() - b.start.getTime());
 
   // First upcoming event, auto-expand it
   const firstUpcomingId = filteredEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
@@ -534,7 +516,7 @@ export default function Schedule() {
         </section>
       )}
 
-      <CalendarOptions sessions={calendarSessions} />
+      <CalendarOptions />
 
       {/* Riverside Studio Info */}
       <section className="py-12 px-4">
@@ -718,8 +700,12 @@ export default function Schedule() {
                           <MapPin className="w-4 h-4" />
                           Online
                         </span>
-                        {/* #8. Social proof signup count */}
-                        {signupCountMap[event.id] > 0 && (
+                        {/* Social proof, but only once it actually is any.
+                            "1 person signed up" on a session nobody has joined
+                            yet reads as evidence not to come, so it stays
+                            hidden until the number is worth showing (Rye,
+                            2026-09-07). */}
+                        {signupCountMap[event.id] > SIGNUP_COUNT_VISIBLE_FROM && (
                           <span className="flex items-center gap-1 text-[#7dd87d]/80">
                             <Users className="w-4 h-4" />
                             {signupCountMap[event.id]} {signupCountMap[event.id] === 1 ? 'person' : 'people'} signed up
