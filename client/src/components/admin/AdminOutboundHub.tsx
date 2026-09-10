@@ -97,9 +97,21 @@ function WriteStub() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="rounded-xl border border-dashed border-[#1a472a]/20 bg-[#f8f5f0] p-6 text-sm text-[#1a472a]/80">
-          <p>You will pick an audience, draft markdown, and preview before anything goes out.</p>
-          <p className="mt-2">The send button stays off until that path is ready.</p>
+        <div className="rounded-xl border border-dashed border-[#1a472a]/20 bg-[#f8f5f0] p-6 text-sm text-[#1a472a]/80 space-y-2">
+          <p>
+            The composer will take full markdown: headings, bold, italic, lists, links,
+            blockquotes, horizontal rules, and images from assets.regencivics.earth.
+          </p>
+          <p>
+            Insert a CTA button as its own control. Insert an image the same way.
+            Preview the letter with buttons, images, and the unsubscribe footer before
+            anything goes out.
+          </p>
+          <p>
+            An AI writing partner can draft a letter, add a button, drop in a hero
+            image, or shorten copy for an exit-intent segment.
+          </p>
+          <p>The send button stays off until that path is ready.</p>
         </div>
       </CardContent>
     </Card>
@@ -114,7 +126,7 @@ function TemplatesStub() {
           Newsletter templates
         </CardTitle>
         <CardDescription>
-          Saved Outbound letters will live here. Application Reviews still keeps its own letters.
+          Saved Outbound letters live here: full markdown layouts with CTA buttons and images.
         </CardDescription>
       </CardHeader>
       <CardContent>

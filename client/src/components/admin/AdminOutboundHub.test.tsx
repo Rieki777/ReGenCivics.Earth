@@ -31,6 +31,8 @@ describe("AdminOutboundHub", () => {
     render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
     expect(screen.getByText("Write a letter")).toBeDefined();
     expect(screen.getByText(/Sending ships in the next update/)).toBeDefined();
+    expect(screen.getByText(/Insert a CTA button/)).toBeDefined();
+    expect(screen.getByText(/unsubscribe footer/)).toBeDefined();
     expect(screen.queryByRole("button", { name: /send/i })).toBeNull();
   });
 
