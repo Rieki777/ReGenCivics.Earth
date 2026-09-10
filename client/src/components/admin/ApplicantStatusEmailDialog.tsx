@@ -26,7 +26,7 @@ import { Loader2, Mail, Send } from "lucide-react";
 import {
   defaultLayoutForTemplate,
   isLetterLayout,
-  isMarkdownEmailTemplateRow,
+  isApplicationMarkdownTemplateRow,
   type LetterLayout,
 } from "@shared/letterLayout";
 
@@ -92,7 +92,7 @@ export function ApplicantStatusEmailDialog({
   const overCap = recipients.length > 100;
 
   const savedLetters = useMemo(
-    () => (savedQuery.data ?? []).filter((row) => isMarkdownEmailTemplateRow(row)),
+    () => (savedQuery.data ?? []).filter((row) => isApplicationMarkdownTemplateRow(row)),
     [savedQuery.data],
   );
 

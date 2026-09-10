@@ -5,7 +5,7 @@
  * Mobile-first, enchanted forest theme.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
@@ -30,6 +30,25 @@ export default function Unsubscribe() {
       setErrorMsg(err.message || "Something went wrong. Please try again.");
     },
   });
+
+  const unsubscribeByToken = trpc.newsletter.unsubscribeByToken.useMutation({
+    onSuccess: () => {
+      setState("success");
+    },
+    onError: (err) => {
+      setState("error");
+      setErrorMsg(err.message || "Something went wrong. Please try again.");
+    },
+  });
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (!token) return;
+    setState("loading");
+    unsubscribeByToken.mutate({ token });
+    // One-shot from the signed email link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +113,14 @@ export default function Unsubscribe() {
                 You've been unsubscribed
               </h2>
               <p className="text-white/60 text-sm mb-6 leading-relaxed">
-                <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
-                You will no longer receive newsletter emails from ReGen Civics.
+                {email ? (
+                  <>
+                    <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
+                    You will no longer receive newsletter emails from ReGen Civics.
+                  </>
+                ) : (
+                  <>You will no longer receive newsletter emails from ReGen Civics.</>
+                )}
               </p>
               <p className="text-white/60 text-xs mb-6">
                 Changed your mind? You can always re-subscribe from our homepage or any form on the site.

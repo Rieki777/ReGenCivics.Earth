@@ -110,6 +110,16 @@ export const newsletterRouter = router({
       return { success: true };
     }),
 
+  unsubscribeByToken: publicProcedure
+    .input(z.object({ token: z.string().min(20).max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "newsletter_unsubscribe");
+      const { verifyUnsubscribeToken } = await import("../lib/newsletter-issue-email");
+      const email = await verifyUnsubscribeToken(input.token);
+      if (email) await db.unsubscribeNewsletter(email);
+      return { success: true };
+    }),
+
   // Self-service: check if logged-in user has already subscribed
   hasSubscribed: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user.email) return { subscribed: false };
@@ -660,6 +670,7 @@ export const emailRouter = router({
       bodyFormat: z.enum(["html", "markdown", "plain"]).optional(),
       layout: letterLayoutZ.nullable().optional(),
       label: z.string().max(120).nullable().optional(),
+      kind: z.enum(["application", "newsletter"]).optional(),
       createOnly: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -680,6 +691,7 @@ export const emailRouter = router({
         bodyFormat: input.bodyFormat,
         layout: input.layout,
         label: input.label,
+        kind: input.kind,
         lastEditedBy: ctx.user.name || ctx.user.email || "Admin",
       });
       return { success: true };

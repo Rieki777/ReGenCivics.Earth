@@ -5,6 +5,7 @@ import { AdminOutboundHub } from "./AdminOutboundHub";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: () => ({ email: { getCustomTemplates: { invalidate: vi.fn() } } }),
     newsletter: {
       list: {
         useQuery: () => ({
@@ -15,6 +16,27 @@ vi.mock("@/lib/trpc", () => ({
           isLoading: false,
         }),
       },
+      listActive: {
+        useQuery: () => ({
+          data: [
+            { id: 1, email: "active@example.com", name: "Ada", source: "exit_intent", isActive: 1 },
+          ],
+          isLoading: false,
+        }),
+      },
+    },
+    email: {
+      getCustomTemplates: { useQuery: () => ({ data: [], isLoading: false }) },
+      saveCustomTemplate: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      renderPdf: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+    },
+    outbound: {
+      saveDraft: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      sendPreview: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+      confirmSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+      draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      listIssues: { useQuery: () => ({ data: [], isLoading: false }) },
     },
     admin: {
       broadcast: {
@@ -27,13 +49,12 @@ vi.mock("@/lib/trpc", () => ({
 }));
 
 describe("AdminOutboundHub", () => {
-  it("shows the write stub and no send control", () => {
+  it("shows the newsletter composer with insert-button control", () => {
     render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
     expect(screen.getByText("Write a letter")).toBeDefined();
-    expect(screen.getByText(/Sending ships in the next update/)).toBeDefined();
-    expect(screen.getByText(/Insert a CTA button/)).toBeDefined();
-    expect(screen.getByText(/unsubscribe footer/)).toBeDefined();
-    expect(screen.queryByRole("button", { name: /send/i })).toBeNull();
+    expect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
+    expect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
   });
 
   it("defaults the people list to active subscribers", () => {

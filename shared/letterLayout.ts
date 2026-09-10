@@ -24,6 +24,8 @@ export const TEMPLATE_KEY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
 export const LETTER_LOGO_URL =
   "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp";
 
+export const NEWSLETTER_POSTAL_ADDRESS = "ReGen Civics Alliance, Ashland, Oregon, USA";
+
 export function isLetterLayout(value: unknown): value is LetterLayout {
   return typeof value === "string" && (LETTER_LAYOUTS as readonly string[]).includes(value);
 }
@@ -40,18 +42,22 @@ export function letterSkipsSendWrap(layout: LetterLayout): boolean {
   return layout !== "plain";
 }
 
-export function slugifyLetterKey(label: string): string {
+export function slugifyLetterKey(label: string, prefix = "letter"): string {
   const core = (label ?? "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 48);
-  return `letter_${core || "draft"}`;
+  return `${prefix}_${core || "draft"}`;
 }
 
-export function uniqueLetterKey(label: string, existingKeys: Iterable<string>): string {
+export function uniqueLetterKey(
+  label: string,
+  existingKeys: Iterable<string>,
+  prefix = "letter",
+): string {
   const used = new Set(existingKeys);
-  const base = slugifyLetterKey(label);
+  const base = slugifyLetterKey(label, prefix);
   if (!used.has(base)) return base;
   for (let n = 2; n < 100; n++) {
     const next = `${base}_${n}`.slice(0, 64);
@@ -66,6 +72,20 @@ export function isHtmlEmailTemplateRow(row: { bodyFormat?: string | null }): boo
 
 export function isMarkdownEmailTemplateRow(row: { bodyFormat?: string | null }): boolean {
   return row.bodyFormat === "markdown";
+}
+
+export function isNewsletterEmailTemplateRow(row: {
+  bodyFormat?: string | null;
+  kind?: string | null;
+}): boolean {
+  return row.bodyFormat === "markdown" && row.kind === "newsletter";
+}
+
+export function isApplicationMarkdownTemplateRow(row: {
+  bodyFormat?: string | null;
+  kind?: string | null;
+}): boolean {
+  return row.bodyFormat === "markdown" && row.kind !== "newsletter";
 }
 
 export function letterFilename(subject: string): string {

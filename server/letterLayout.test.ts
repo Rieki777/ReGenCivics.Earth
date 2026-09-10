@@ -31,6 +31,7 @@ describe("letter layout helpers", () => {
     expect(uniqueLetterKey("Season 2 next steps", ["letter_season_2_next_steps"])).toBe(
       "letter_season_2_next_steps_2",
     );
+    expect(slugifyLetterKey("Season 2 next steps", "nl")).toBe("nl_season_2_next_steps");
   });
 
   it("keeps EmailSettings HTML rows separate from markdown letters", () => {

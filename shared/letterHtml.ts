@@ -5,8 +5,27 @@
  * wrap for these layouts or the header would appear twice.
  */
 
-import { LETTER_LOGO_URL, type LetterLayout } from "./letterLayout";
+import { LETTER_LOGO_URL, NEWSLETTER_POSTAL_ADDRESS, type LetterLayout } from "./letterLayout";
 import { markdownToEmailHtml, wrapEmailHtml } from "./emailMarkdown";
+
+export type LetterDocumentExtras = {
+  unsubscribeUrl?: string;
+  postalAddress?: string;
+};
+
+export function newsletterLegalFooterHtml(
+  unsubscribeUrl: string,
+  postalAddress = NEWSLETTER_POSTAL_ADDRESS,
+): string {
+  const href = unsubscribeUrl.trim();
+  if (!href) return "";
+  const postal = postalAddress.trim() || NEWSLETTER_POSTAL_ADDRESS;
+  return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
+    You are receiving this because you subscribed to the ReGen Civics newsletter.
+    <a href="${href}" style="color:#8a8a8a;">Unsubscribe</a> any time.<br/>
+    ${postal}
+  </p>`;
+}
 
 function letterHeader(): string {
   return `
@@ -19,7 +38,7 @@ function letterHeader(): string {
     </tr>`;
 }
 
-function letterFooter(compact: boolean): string {
+function letterFooter(compact: boolean, legalFooter = ""): string {
   if (compact) {
     return `
     <tr>
@@ -27,6 +46,7 @@ function letterFooter(compact: boolean): string {
         <p style="color:#4a7c59;font-size:12px;margin:0;font-family:Georgia,'Times New Roman',serif;">
           <a href="https://regencivics.earth" style="color:#4a7c59;">regencivics.earth</a>
         </p>
+        ${legalFooter}
       </td>
     </tr>`;
   }
@@ -42,17 +62,25 @@ function letterFooter(compact: boolean): string {
         <p style="color:#4a7c59;font-size:12px;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
           <a href="https://regencivics.earth" style="color:#4a7c59;">regencivics.earth</a>
         </p>
+        ${legalFooter}
       </td>
     </tr>`;
 }
 
-export function brandedLetterDocument(inner: string, layout: LetterLayout): string {
+export function brandedLetterDocument(
+  inner: string,
+  layout: LetterLayout,
+  extras?: LetterDocumentExtras,
+): string {
   const width = layout === "one_pager" ? 680 : 600;
   const pad = layout === "one_pager" ? "22px 22px" : "30px 25px";
   const signed = /regen civics team/i.test(inner);
   const signature = signed
     ? ""
     : `<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;"><p style="color:#4a7c59;font-weight:bold;font-family:Georgia,'Times New Roman',serif;margin:0;">The ReGen Civics Team</p></div>`;
+  const legal = extras?.unsubscribeUrl
+    ? newsletterLegalFooterHtml(extras.unsubscribeUrl, extras.postalAddress)
+    : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -72,7 +100,7 @@ export function brandedLetterDocument(inner: string, layout: LetterLayout): stri
               ${inner}${signature}
             </td>
           </tr>
-          ${letterFooter(layout === "one_pager")}
+          ${letterFooter(layout === "one_pager", legal)}
         </table>
       </td>
     </tr>
@@ -81,8 +109,17 @@ export function brandedLetterDocument(inner: string, layout: LetterLayout): stri
 </html>`;
 }
 
-export function markdownLetterDocument(markdown: string, layout: LetterLayout = "plain"): string {
+export function markdownLetterDocument(
+  markdown: string,
+  layout: LetterLayout = "plain",
+  extras?: LetterDocumentExtras,
+): string {
   const inner = markdownToEmailHtml(markdown, layout);
-  if (layout === "plain") return wrapEmailHtml(inner);
-  return brandedLetterDocument(inner, layout);
+  if (layout === "plain") {
+    const legal = extras?.unsubscribeUrl
+      ? newsletterLegalFooterHtml(extras.unsubscribeUrl, extras.postalAddress)
+      : "";
+    return wrapEmailHtml(inner, legal);
+  }
+  return brandedLetterDocument(inner, layout, extras);
 }

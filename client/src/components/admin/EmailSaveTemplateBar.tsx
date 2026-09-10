@@ -11,7 +11,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Download, Loader2, Save } from "lucide-react";
 import {
-  isMarkdownEmailTemplateRow,
+  isApplicationMarkdownTemplateRow,
+  isNewsletterEmailTemplateRow,
   uniqueLetterKey,
   type LetterLayout,
 } from "@shared/letterLayout";
@@ -26,6 +27,7 @@ type SavedRow = {
   bodyFormat?: string | null;
   layout?: string | null;
   label?: string | null;
+  kind?: string | null;
 };
 
 interface Props {
@@ -35,6 +37,7 @@ interface Props {
   builtinTemplates: BuiltinTemplate[];
   currentKey: string;
   onSaved: (key: string) => void;
+  kind?: "application" | "newsletter";
 }
 
 export function EmailSaveTemplateBar({
@@ -44,6 +47,7 @@ export function EmailSaveTemplateBar({
   builtinTemplates,
   currentKey,
   onSaved,
+  kind = "application",
 }: Props) {
   const utils = trpc.useUtils();
   const savedQuery = trpc.email.getCustomTemplates.useQuery();
@@ -51,8 +55,11 @@ export function EmailSaveTemplateBar({
   const pdf = trpc.email.renderPdf.useMutation();
 
   const savedLetters = useMemo(
-    () => (savedQuery.data ?? []).filter((row: SavedRow) => isMarkdownEmailTemplateRow(row)),
-    [savedQuery.data],
+    () =>
+      (savedQuery.data ?? []).filter((row: SavedRow) =>
+        kind === "newsletter" ? isNewsletterEmailTemplateRow(row) : isApplicationMarkdownTemplateRow(row),
+      ),
+    [savedQuery.data, kind],
   );
 
   const [mode, setMode] = useState<"existing" | "new">("existing");
@@ -96,10 +103,14 @@ export function EmailSaveTemplateBar({
           toast.error("Name the new template.");
           return;
         }
-        const key = uniqueLetterKey(label, [
-          ...builtinTemplates.map((t) => t.id),
-          ...savedLetters.map((row) => row.templateKey),
-        ]);
+        const key = uniqueLetterKey(
+          label,
+          [
+            ...builtinTemplates.map((t) => t.id),
+            ...savedLetters.map((row) => row.templateKey),
+          ],
+          kind === "newsletter" ? "nl" : "letter",
+        );
         await save.mutateAsync({
           templateKey: key,
           customSubject: subject,
@@ -109,6 +120,7 @@ export function EmailSaveTemplateBar({
           label,
           isActive: 1,
           createOnly: true,
+          kind,
         });
         await utils.email.getCustomTemplates.invalidate();
         onSaved(key);
@@ -126,6 +138,7 @@ export function EmailSaveTemplateBar({
         layout,
         label: option?.label.replace(/ \(saved\)$/, "") || builtin?.label || targetKey,
         isActive: 1,
+        kind,
       });
       await utils.email.getCustomTemplates.invalidate();
       onSaved(targetKey);

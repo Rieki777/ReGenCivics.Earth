@@ -12,11 +12,18 @@ import { Loader2, Sparkles } from "lucide-react";
 import { EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
 import type { LetterLayout } from "@shared/letterLayout";
 
-const STARTERS = [
+const APPLICATION_STARTERS = [
   "Write a warmer version of this draft.",
   "Shorten this. Keep the next steps.",
   "Turn the next steps into a numbered list.",
   "Use announcement layout. Put each link on its own line so they become buttons.",
+];
+
+const NEWSLETTER_STARTERS = [
+  "Draft a letter about this week's Harvest.",
+  "Add a CTA button to the live stream.",
+  "Insert a hero image after the opening paragraph.",
+  "Shorten this for the exit-intent segment. Keep the button.",
 ];
 
 interface ChatTurn {
@@ -34,6 +41,8 @@ interface Props {
   statusLabel: string;
   recipientCount: number;
   onApply: (draft: { subject: string; body: string; layout?: LetterLayout }) => void;
+  variant?: "application" | "newsletter";
+  audienceLabel?: string;
 }
 
 export function EmailDraftAgent({
@@ -43,11 +52,16 @@ export function EmailDraftAgent({
   statusLabel,
   recipientCount,
   onApply,
+  variant = "application",
+  audienceLabel,
 }: Props) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const draft = trpc.email.draftWithAgent.useMutation();
+  const applicationDraft = trpc.email.draftWithAgent.useMutation();
+  const newsletterDraft = trpc.outbound.draftWithAgent.useMutation();
+  const draft = variant === "newsletter" ? newsletterDraft : applicationDraft;
+  const starters = variant === "newsletter" ? NEWSLETTER_STARTERS : APPLICATION_STARTERS;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,14 +74,23 @@ export function EmailDraftAgent({
     setTurns(nextTurns);
     setInput("");
     try {
-      const result = await draft.mutateAsync({
-        messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
-        currentSubject,
-        currentBody,
-        currentLayout,
-        statusLabel,
-        recipientCount,
-      });
+      const result = variant === "newsletter"
+        ? await newsletterDraft.mutateAsync({
+            messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
+            currentSubject,
+            currentBody,
+            currentLayout,
+            audienceLabel: audienceLabel || statusLabel,
+            recipientCount,
+          })
+        : await applicationDraft.mutateAsync({
+            messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
+            currentSubject,
+            currentBody,
+            currentLayout,
+            statusLabel,
+            recipientCount,
+          });
       setTurns([
         ...nextTurns,
         {
@@ -101,7 +124,7 @@ export function EmailDraftAgent({
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-[140px] max-h-[40vh] md:max-h-[52vh]" aria-live="polite">
         {turns.length === 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {STARTERS.map((starter) => (
+            {starters.map((starter) => (
               <button
                 key={starter}
                 type="button"
