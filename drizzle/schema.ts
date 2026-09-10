@@ -2954,10 +2954,11 @@ export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type InsertEventAttendance = typeof eventAttendance.$inferInsert;
 
 /**
- * Per-event auto-reminder schedule. Offsets (7d / 24h / 1h, plus optional 3d)
- * fire from the existing /api/cron/event-reminders job. Audience mode defaults
- * from event kind: episode/Season 2 -> approved+active applications, open ->
- * newsletter + signups, special -> admin must pick a custom selection.
+ * Per-event auto-reminder schedule. Offsets (7d / 24h / 1h / 33m, plus optional 3d)
+ * fire from the existing /api/cron/event-reminders job and a 5-minute in-process
+ * sweep. Audience mode defaults from event kind: episode/Season 2 -> approved+active
+ * applications, open -> newsletter + signups, special -> admin must pick a custom
+ * selection. Open Access and Season 2 default the 33-minute pre-call ping on.
  */
 export const eventAutoReminders = mysqlTable("event_auto_reminders", {
   id: int("id").autoincrement().primaryKey(),

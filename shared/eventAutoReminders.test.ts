@@ -4,12 +4,15 @@ import {
   canEnableAutoReminders,
   customAudienceIsSelected,
   defaultAudienceMode,
+  defaultOffsetsForEvent,
   dueOffsets,
   isDuplicateKeyError,
   mergeRecipients,
   offsetSubject,
   parseAudienceConfig,
   parseOffsetMinutes,
+  AUTO_REMINDER_SWEEP_MINUTES,
+  CALL_START_OFFSET_MINUTES,
   DEFAULT_AUTO_REMINDER_OFFSETS,
 } from "@shared/eventAutoReminders";
 
@@ -28,6 +31,23 @@ describe("defaultAudienceMode", () => {
   it("forces custom selection on special events with no Season 2 stamp", () => {
     expect(defaultAudienceMode({ type: "special", season: null })).toBe("custom");
     expect(defaultAudienceMode({ type: "special", season: "Investor call" })).toBe("custom");
+  });
+});
+
+describe("defaultOffsetsForEvent", () => {
+  it("turns the 33-minute ping on for Open Access and Season 2, and leaves custom events on the older drumbeat", () => {
+    expect(defaultOffsetsForEvent({ type: "open" })).toEqual([...DEFAULT_AUTO_REMINDER_OFFSETS, CALL_START_OFFSET_MINUTES]);
+    expect(defaultOffsetsForEvent({ type: "episode", season: "Season 2" })).toEqual([
+      ...DEFAULT_AUTO_REMINDER_OFFSETS,
+      CALL_START_OFFSET_MINUTES,
+    ]);
+    expect(defaultOffsetsForEvent({ type: "special", season: null })).toEqual([...DEFAULT_AUTO_REMINDER_OFFSETS]);
+    expect(defaultOffsetsForEvent({ type: "special", season: null })).not.toContain(CALL_START_OFFSET_MINUTES);
+  });
+
+  it("keeps a sweep short enough that T-33 cannot slip past the call", () => {
+    expect(AUTO_REMINDER_SWEEP_MINUTES).toBeLessThanOrEqual(5);
+    expect(AUTO_REMINDER_SWEEP_MINUTES * 2).toBeLessThan(CALL_START_OFFSET_MINUTES);
   });
 });
 
@@ -58,6 +78,7 @@ describe("parseOffsetMinutes", () => {
   it("keeps only the allowed offsets and drops junk", () => {
     expect(parseOffsetMinutes([10080, 60, 12, "1440", 10080])).toEqual([10080, 1440, 60]);
     expect(parseOffsetMinutes('["10080",60]')).toEqual([10080, 60]);
+    expect(parseOffsetMinutes([10080, CALL_START_OFFSET_MINUTES, 12])).toEqual([10080, CALL_START_OFFSET_MINUTES]);
     expect(parseOffsetMinutes("not-json")).toEqual([]);
     expect(parseOffsetMinutes(null)).toEqual([]);
   });
@@ -127,6 +148,30 @@ describe("dueOffsets", () => {
       alreadySent: [],
     })).toEqual([7 * 24 * 60]);
   });
+
+  it("fires the 33-minute offset at T-33 and not a minute earlier", () => {
+    expect(dueOffsets({
+      startTime: start,
+      now: new Date("2026-09-20T17:26:00Z"),
+      offsetsMinutes: [CALL_START_OFFSET_MINUTES],
+      alreadySent: [],
+    })).toEqual([]);
+    expect(dueOffsets({
+      startTime: start,
+      now: new Date("2026-09-20T17:27:00Z"),
+      offsetsMinutes: [CALL_START_OFFSET_MINUTES],
+      alreadySent: [],
+    })).toEqual([CALL_START_OFFSET_MINUTES]);
+  });
+
+  it("still sends a 33-minute reminder that became overdue inside the pre-start window", () => {
+    expect(dueOffsets({
+      startTime: start,
+      now: new Date("2026-09-20T17:40:00Z"),
+      offsetsMinutes: [CALL_START_OFFSET_MINUTES, 60],
+      alreadySent: [60],
+    })).toEqual([CALL_START_OFFSET_MINUTES]);
+  });
 });
 
 describe("mergeRecipients", () => {
@@ -146,6 +191,7 @@ describe("offsetSubject", () => {
   it("names the remaining time in the subject", () => {
     expect(offsetSubject("Selection Day", 24 * 60)).toBe("Reminder: Selection Day is tomorrow");
     expect(offsetSubject("Selection Day", 60)).toBe("Starting soon: Selection Day");
+    expect(offsetSubject("Selection Day", CALL_START_OFFSET_MINUTES)).toBe("Starting in 33 minutes: Selection Day");
   });
 });
 

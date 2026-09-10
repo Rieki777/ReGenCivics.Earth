@@ -2,7 +2,9 @@
  * Auto-scheduled event reminders. Deterministic, zero LLM.
  *
  * Picked up by the existing hourly POST /api/cron/event-reminders job (and a
- * 10-minute in-process sweep so the 1h offset does not wait for the next hour).
+ * 5-minute in-process sweep so the 33-minute and 1-hour offsets do not wait
+ * for the next hour). Catch-up still sends an offset that is already due,
+ * until the session starts.
  * Idempotent via unique (eventId, offsetMinutes) on event_auto_reminder_sends:
  * the insert is the claim, a duplicate key means another run already owns it.
  */
@@ -22,7 +24,7 @@ import {
 } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
-import { buildAutoReminderHtml, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
+import { buildAutoReminderHtml, reminderJoinUrl, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
 import {
   canEnableAutoReminders,
   dueOffsets,
@@ -196,7 +198,10 @@ async function recordRecipientCount(eventId: number, offsetMinutes: number, reci
 }
 
 async function sendOffset(event: Event, offsetMinutes: number, recipients: ReminderRecipient[], customSubject: string | null, customBody: string | null) {
-  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? "";
+  const joinUrl = reminderJoinUrl({
+    riversideRoomUrl: event.riversideRoomUrl,
+    zoomUrl: event.zoomUrl,
+  });
   const subject = customSubject?.trim() || offsetSubject(event.title, offsetMinutes);
 
   let sent = 0;

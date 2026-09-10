@@ -38,6 +38,9 @@ describe("AdminEventAutoReminders", () => {
     expect(screen.getByText("7 days before")).toBeDefined();
     expect(screen.getByText("24 hours before")).toBeDefined();
     expect(screen.getByText("1 hour before")).toBeDefined();
+    expect(screen.getByText("33 minutes before")).toBeDefined();
+    const t33 = screen.getByText("33 minutes before").closest("label")?.querySelector("[data-slot=checkbox]");
+    expect(t33?.getAttribute("data-state")).toBe("checked");
   });
 
   it("forces a custom event to pick an audience before enabling", async () => {
@@ -71,5 +74,22 @@ describe("AdminEventAutoReminders", () => {
     );
     expect(screen.getByText(/Active newsletter subscribers, plus anyone who signed up/)).toBeDefined();
     expect(screen.getByText("This will send to 40 people.")).toBeDefined();
+    expect(screen.getByText("33 minutes before")).toBeDefined();
+    const t33 = screen.getByText("33 minutes before").closest("label")?.querySelector("[data-slot=checkbox]");
+    expect(t33?.getAttribute("data-state")).toBe("checked");
+  });
+
+  it("leaves the 33-minute ping off for a custom event until someone checks it", () => {
+    preview.mockReturnValue({
+      data: { count: 0, label: "Custom selection", blocked: true },
+      isLoading: false,
+    });
+    render(
+      <AdminEventAutoReminders
+        event={{ id: 10, title: "Investor dinner", type: "special", season: null, status: "upcoming" }}
+      />,
+    );
+    const t33 = screen.getByText("33 minutes before").closest("label")?.querySelector("[data-slot=checkbox]");
+    expect(t33?.getAttribute("data-state")).toBe("unchecked");
   });
 });

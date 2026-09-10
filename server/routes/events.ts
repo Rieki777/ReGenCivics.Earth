@@ -12,6 +12,7 @@ import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoRem
 import { newsletterSubscribers, recordings, applications, users } from "../../drizzle/schema";
 import { resolveAutoReminderRecipients } from "../jobs/eventReminders";
 import {
+  ALLOWED_AUTO_REMINDER_OFFSETS,
   AUTO_REMINDER_AUDIENCE_MODES,
   CUSTOM_APPLICATION_STATUSES,
   NEWSLETTER_AUDIENCE_SOURCES,
@@ -869,7 +870,7 @@ export const eventsRouter = router({
         includeEventSignups: z.boolean().optional(),
         applicationStatuses: z.array(z.enum(CUSTOM_APPLICATION_STATUSES)).max(8).optional(),
       }).optional(),
-      offsetsMinutes: z.array(z.number().int()).min(1).max(4),
+      offsetsMinutes: z.array(z.number().int()).min(1).max(ALLOWED_AUTO_REMINDER_OFFSETS.length),
       customSubject: z.string().max(200).optional(),
       customBody: z.string().max(2000).optional(),
     }))
@@ -884,7 +885,7 @@ export const eventsRouter = router({
 
       const offsetsMinutes = parseOffsetMinutes(input.offsetsMinutes);
       if (!offsetsMinutes.length) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick at least one reminder time (7d, 3d, 24h, or 1h)." });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick at least one reminder time (7d, 3d, 24h, 1h, or 33m)." });
       }
       const audienceConfig = parseAudienceConfig(input.audienceConfig ?? {});
       if (input.enabled && !canEnableAutoReminders(input.audienceMode, audienceConfig)) {
