@@ -148,59 +148,10 @@ export const recordingsRouter = router({
         .limit(1);
       if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // Import and call the email sender from the webhook handler
-      const { sendEmail: sendResend, APP_BASE_URL } = await import("../_core/email");
-      const { getActiveNewsletterSubscribers } = await import("../db");
-
-      const subscribers = await getActiveNewsletterSubscribers();
-      if (!subscribers.length) return { sent: 0, message: "No active subscribers" };
-
-      const sessionDateStr = rec.sessionDate
-        ? rec.sessionDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
-        : "Recent session";
-
-      const forumUrl = rec.forumPostId
-        ? `${APP_BASE_URL}/community/post/${rec.forumPostId}`
-        : null;
-
-      const watchBtn = rec.youtubeUrl
-        ? `<a href="${rec.youtubeUrl}" style="display:inline-block;background:#FF0000;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">▶ Watch Recording</a>`
-        : "";
-      const forumBtn = forumUrl
-        ? `<a href="${forumUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin:0 8px 8px 0;">💬 Join the Discussion</a>`
-        : "";
-      const summaryBlock = rec.aiSummary
-        ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:16px 20px;border-radius:0 8px 8px 0;margin:20px 0;"><p style="color:#1a472a;font-weight:bold;margin:0 0 8px 0;">What we covered</p><p style="color:#2d5a3d;margin:0;line-height:1.7;">${rec.aiSummary}</p></div>`
-        : "";
-
-      const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-          <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-          <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:12px;">Recording ready</p>
-        </div>
-        <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
-          <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${rec.title}</h2>
-          <p style="color:#888;font-size:13px;margin:0 0 20px 0;">${sessionDateStr}</p>
-          ${summaryBlock}
-          <p style="color:#444;line-height:1.7;margin:20px 0;">The recording from our latest community session is ready. Watch it back, share it, or drop a reply in the forum.</p>
-          <div style="margin:24px 0;">${watchBtn}${forumBtn}</div>
-        </div>
-        <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-          <p style="color:#888;font-size:12px;margin:0;">You're receiving this because you subscribed to ReGen Civics updates.<br/><a href="${APP_BASE_URL}/settings" style="color:#7dd87d;">Update email preferences</a></p>
-        </div>
-      </div>`;
-
-      const emails = subscribers.map((s) => s.email);
-      const BATCH = 50;
-      let totalSent = 0;
-      for (let i = 0; i < emails.length; i += BATCH) {
-        const batch = emails.slice(i, i + BATCH);
-        await sendResend({ to: batch, subject: `Recording ready: ${rec.title}`, html, template: "recording_summary" });
-        totalSent += batch.length;
-      }
-
+      const { sendRecordingEmail } = await import("../lib/recording-finalize");
+      const sent = await sendRecordingEmail(rec);
       await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, input.id));
-      return { sent: totalSent };
+      return { sent };
     }),
 
   // Admin: delete a recording record (doesn't touch Riverside, just removes from our DB)

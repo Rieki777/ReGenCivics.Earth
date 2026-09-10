@@ -9,7 +9,8 @@ type ReminderEmailInput = {
   bodyText?: string | null;
   joinUrl: string;
   offsetMinutes: number;
-  unsubscribeUrl: string;
+  /** Signed community prefs URL. Footer CTA is Manage email preferences. */
+  preferencesUrl: string;
 };
 
 function escapeHtml(value: string): string {
@@ -53,14 +54,15 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
           </div>
           <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
             <p style="color:#888;font-size:12px;margin:0;">You are receiving this as a reminder for this event.<br/>
-            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${input.unsubscribeUrl}" style="color:#999;">Unsubscribe</a></p>
+            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${escapeHtml(input.preferencesUrl)}" style="color:#999;">Manage email preferences</a></p>
           </div>
         </div>`;
 }
 
+/** Per-event signup cancel URL. List / community reminders use managePreferencesUrl instead. */
 export function reminderUnsubscribeUrl(email: string, eventId: number, mode: "event_signup" | "list"): string {
   if (mode === "event_signup") {
     return `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&email=${encodeURIComponent(email)}`;
   }
-  return `${APP_BASE_URL}/unsubscribe`;
+  return `${APP_BASE_URL}/email-preferences`;
 }

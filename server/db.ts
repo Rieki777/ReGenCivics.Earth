@@ -353,6 +353,9 @@ export {
   getActiveNewsletterSubscribers,
   getNewsletterAudience,
   getRecordingSubscribers,
+  getSubscribersForTopic,
+  emailsBlockingTopic,
+  updateNewsletterPrefs,
   unsubscribeNewsletter,
   activateNewsletterSubscriber,
 } from "./db/newsletter";

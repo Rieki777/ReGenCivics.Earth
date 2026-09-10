@@ -373,6 +373,7 @@ function Router() {
       <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>
       <Route path={"/unsubscribe"}><EB><Unsubscribe /></EB></Route>
       <Route path={"/preferences"}><EB><EmailPreferences /></EB></Route>
+      <Route path={"/email-preferences"}><EB><EmailPreferences /></EB></Route>
       <Route path={"/notifications"}><EB><Notifications /></EB></Route>
       <Route path={"/settings/notifications"}><EB><NotificationSettings /></EB></Route>
       <Route path={"/community"}><EB><Community /></EB></Route>

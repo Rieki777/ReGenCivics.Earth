@@ -54,9 +54,8 @@ export function emailDocumentFromMarkdown(
 ): string {
   const inner = sanitizeEmailHtml(markdownToEmailHtml(markdown, layout));
   if (layout === "plain") {
-    const legal = extras?.unsubscribeUrl
-      ? newsletterLegalFooterHtml(extras.unsubscribeUrl, extras.postalAddress)
-      : "";
+    const href = (extras?.managePreferencesUrl || extras?.unsubscribeUrl || "").trim();
+    const legal = href ? newsletterLegalFooterHtml(href, extras?.postalAddress) : "";
     return wrapEmailHtml(inner, legal);
   }
   return brandedLetterDocument(inner, layout, extras);
