@@ -2,7 +2,7 @@
  * Outbound Write: newsletter composer, audience, preview confirm, send.
  */
 import { useMemo, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { CalendarClock, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
@@ -10,6 +10,7 @@ import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -17,6 +18,11 @@ import {
   newsletterSourceLabel,
   type NewsletterSource,
 } from "@/lib/outboundAudience";
+import {
+  defaultScheduleLocal,
+  formatPacificSchedule,
+  pacificDatetimeLocalToUtc,
+} from "@shared/outboundSchedule";
 import {
   isLetterLayout,
   isNewsletterEmailTemplateRow,
@@ -40,11 +46,13 @@ export function AdminOutboundWrite() {
   } | null>(null);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [result, setResult] = useState<string | null>(null);
+  const [scheduleLocal, setScheduleLocal] = useState(() => defaultScheduleLocal());
 
   const savedQuery = trpc.email.getCustomTemplates.useQuery();
   const saveDraft = trpc.outbound.saveDraft.useMutation();
   const sendPreview = trpc.outbound.sendPreview.useMutation();
   const confirmSend = trpc.outbound.confirmSend.useMutation();
+  const scheduleSend = trpc.outbound.scheduleSend.useMutation();
   const listActive = trpc.newsletter.listActive.useQuery();
 
   const savedLetters = useMemo(
@@ -125,6 +133,25 @@ export function AdminOutboundWrite() {
       toast.success(message);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Send refused.");
+    }
+  };
+
+  const handleSchedule = async () => {
+    if (!issueId || !preview) return;
+    try {
+      const scheduledFor = pacificDatetimeLocalToUtc(scheduleLocal).toISOString();
+      const r = await scheduleSend.mutateAsync({
+        issueId,
+        confirmToken: preview.confirmToken,
+        idempotencyKey,
+        scheduledFor,
+      });
+      const when = formatPacificSchedule(new Date(r.scheduledFor));
+      const message = `Scheduled for ${when}. ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}. Open Sent to cancel or reschedule.`;
+      setResult(message);
+      toast.success(message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Schedule refused.");
     }
   };
 
@@ -241,7 +268,7 @@ export function AdminOutboundWrite() {
                 <Button
                   type="button"
                   className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                  disabled={confirmSend.isPending}
+                  disabled={confirmSend.isPending || scheduleSend.isPending}
                   onClick={() => void handleConfirm()}
                 >
                   {confirmSend.isPending ? (
@@ -252,11 +279,41 @@ export function AdminOutboundWrite() {
                   Confirm send to {preview.recipientCount}
                 </Button>
                 <Button type="button" variant="ghost" className="text-[#2d5a3d]" onClick={() => setPreview(null)}>
-                  Cancel
+                  Back to draft
                 </Button>
               </div>
-              {confirmSend.isError && (
-                <p className="text-sm text-red-700">{confirmSend.error.message}</p>
+              <div className="flex flex-wrap items-end gap-2 pt-1">
+                <div className="space-y-1">
+                  <Label htmlFor="outbound-schedule-at" className="text-[#1a472a] text-xs">
+                    Schedule for… (Pacific time)
+                  </Label>
+                  <Input
+                    id="outbound-schedule-at"
+                    type="datetime-local"
+                    value={scheduleLocal}
+                    onChange={(e) => setScheduleLocal(e.target.value)}
+                    className="bg-white min-w-[12rem] border-[#1a472a]/20"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-[#1a472a]/30 text-[#1a472a]"
+                  disabled={scheduleSend.isPending || confirmSend.isPending || !scheduleLocal}
+                  onClick={() => void handleSchedule()}
+                >
+                  {scheduleSend.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                  )}
+                  Schedule send
+                </Button>
+              </div>
+              {(confirmSend.isError || scheduleSend.isError) && (
+                <p className="text-sm text-red-700">
+                  {confirmSend.error?.message || scheduleSend.error?.message}
+                </p>
               )}
             </div>
           )}

@@ -35,8 +35,42 @@ vi.mock("@/lib/trpc", () => ({
       saveDraft: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       sendPreview: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
       confirmSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+      scheduleSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+      cancelScheduled: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      reschedule: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
-      listIssues: { useQuery: () => ({ data: [], isLoading: false }) },
+      listIssues: {
+        useQuery: () => ({
+          data: [
+            {
+              id: 11,
+              subject: "September letter",
+              status: "scheduled",
+              layout: "announcement",
+              recipientCount: 3,
+              sentCount: 0,
+              failedCount: 0,
+              sentAt: null,
+              scheduledFor: "2026-09-11T16:00:00.000Z",
+              createdAt: "2026-09-10T16:00:00.000Z",
+            },
+            {
+              id: 10,
+              subject: "Already out",
+              status: "sent",
+              layout: "announcement",
+              recipientCount: 3,
+              sentCount: 3,
+              failedCount: 0,
+              sentAt: "2026-09-01T16:00:00.000Z",
+              scheduledFor: null,
+              createdAt: "2026-09-01T15:00:00.000Z",
+            },
+          ],
+          isLoading: false,
+          refetch: vi.fn(),
+        }),
+      },
     },
     admin: {
       broadcast: {
@@ -82,5 +116,16 @@ describe("AdminOutboundHub", () => {
     expect(screen.getByTestId("broadcast-message")).toBeDefined();
     expect(screen.getByTestId("dictation-button")).toBeDefined();
     expect(screen.getByLabelText("Dictate message")).toBeDefined();
+  });
+
+  it("lists scheduled letters on Sent with cancel and reschedule", async () => {
+    render(<AdminOutboundHub surface="sent" onSurfaceChange={vi.fn()} />);
+    expect(screen.getByText("September letter")).toBeDefined();
+    expect(screen.getByText("Already out")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Reschedule" })).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: /Scheduled/ }));
+    expect(screen.getByText("September letter")).toBeDefined();
+    expect(screen.queryByText("Already out")).toBeNull();
   });
 });
