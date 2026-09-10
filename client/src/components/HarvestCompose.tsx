@@ -5,14 +5,17 @@
  * The staging rules the UI enforces visually (the server enforces them for
  * real): every surface has its own Approve, publish only unlocks after
  * approval, the review screen shows everything before anything fires, the
- * article goes out as a hidden preview first, and email routes to the
- * hardened send on the newsletter draft.
+ * article goes out as a hidden preview first, email sends from this screen
+ * via the same hardened preview/confirm path as Drafts, and social posts
+ * hand off to Outbound Social (the human-in-the-loop desk).
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { EmailSendPanel } from "@/components/EmailSendPanel";
+import { outboundSocialHref, queueBroadcastFill } from "@/lib/broadcastFill";
 import { Loader2, PenLine, Sparkles, Check, Globe, ImagePlus, ExternalLink, Undo2, Copy } from "lucide-react";
 
 const SURFACE_LABEL: Record<string, string> = {
@@ -23,6 +26,8 @@ const SURFACE_LABEL: Record<string, string> = {
   threads_x: "Threads / X",
   email: "Email announcement",
 };
+
+const SOCIAL_SURFACES = new Set(["linkedin", "facebook", "instagram", "threads_x"]);
 
 export function ComposeBox({ onComposed }: { onComposed: (publicationId: number) => void }) {
   const [text, setText] = useState("");
@@ -84,7 +89,6 @@ function TargetRow({ publicationId, target, item, onChanged }: {
   item: { id: number; body: string | null; status: string } | undefined;
   onChanged: () => void;
 }) {
-  const [profileId, setProfileId] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [firstCommentDraft, setFirstCommentDraft] = useState(target.firstComment ?? "");
   const [weeklyNoteDraft, setWeeklyNoteDraft] = useState(target.weeklyNote ?? "");
@@ -100,10 +104,10 @@ function TargetRow({ publicationId, target, item, onChanged }: {
   const publish = trpc.harvest.publishTarget.useMutation();
   const verify = trpc.harvest.verifyTarget.useMutation();
   const updateFields = trpc.harvest.updateTargetFields.useMutation();
-  const needsProfile = !["site", "email"].includes(target.surface);
+  const isSocial = SOCIAL_SURFACES.has(target.surface);
   // The first comment is a social-surface tactic: the site and email have no
   // comment thread to put a link in.
-  const takesFirstComment = !["site", "email"].includes(target.surface);
+  const takesFirstComment = isSocial;
 
   // Fact-check state. Blocks are hard stops on approve; warns are for the eye.
   const flags: FactFlag[] = Array.isArray(target.verificationFlags) ? (target.verificationFlags as FactFlag[]) : [];
@@ -161,19 +165,28 @@ function TargetRow({ publicationId, target, item, onChanged }: {
             <Undo2 className="w-3 h-3 mr-1" /> Un-approve
           </Button>
         )}
-        {target.status === "approved" && target.surface !== "email" && (
-          <Button size="sm" className="h-7 rounded-lg text-xs bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={publish.isPending || (needsProfile && !profileId)}
+        {target.status === "approved" && target.surface === "site" && (
+          <Button size="sm" className="h-7 rounded-lg text-xs bg-[#1a472a] hover:bg-[#2d5a3d]" disabled={publish.isPending}
             onClick={async () => {
               const result = await publish.mutateAsync({
                 publicationId,
                 surface: target.surface as never,
-                ...(target.surface === "site" ? { makePublic: true } : {}),
-                ...(needsProfile ? { profileId } : {}),
+                makePublic: true,
               });
               setNote(result.note ?? null);
               onChanged();
             }}>
             {publish.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3 mr-1" />} Publish
+          </Button>
+        )}
+        {isSocial && item?.body && target.status !== "published" && (
+          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" asChild>
+            <a
+              href={outboundSocialHref()}
+              onClick={() => queueBroadcastFill(item.body ?? "")}
+            >
+              <ExternalLink className="w-3 h-3 mr-1" /> Open in Outbound Social
+            </a>
           </Button>
         )}
       </div>
@@ -294,15 +307,14 @@ function TargetRow({ publicationId, target, item, onChanged }: {
           />
         </div>
       )}
-      {target.surface === "email" && target.status !== "published" && (
-        <p className="text-[11px] text-[#2d5a3d]">Email only goes out through the hardened send: edit the newsletter draft below, then Preview email send.</p>
+      {target.surface === "email" && target.status !== "published" && item && item.status === "edited" && (
+        <EmailSendPanel itemId={item.id} onSent={onChanged} />
+      )}
+      {target.surface === "email" && target.status !== "published" && item && item.status !== "edited" && (
+        <p className="text-[11px] text-[#2d5a3d]">Email goes out through the hardened send on this draft. Save an edit first, even a small one, then preview and confirm here.</p>
       )}
       {target.surface === "site" && target.status === "approved" && (
         <p className="text-[11px] text-[#2d5a3d]">First publish creates a hidden preview at a private URL; publishing again makes it public (voice grader must pass).</p>
-      )}
-      {needsProfile && target.status === "approved" && (
-        <input value={profileId} onChange={(e) => setProfileId(e.target.value)} placeholder="Buffer profile id for this channel"
-          className="w-full text-xs text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={64} />
       )}
       {note && <p className="text-[11px] text-[#2d5a3d]">{note}</p>}
       {publish.isError && <p className="text-[11px] text-red-700">{publish.error.message}</p>}
@@ -337,7 +349,7 @@ export function PublicationReview({ publicationId }: { publicationId: number }) 
           </Button>
         )}
       </div>
-      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit any draft in the Drafts tier first; the texts here are those same items.</p>
+      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit the text here. After you save an email draft, preview and confirm send on that row. Social posts open in Outbound Social.</p>
 
       <div className="space-y-2">
         {targets.map((target) => (

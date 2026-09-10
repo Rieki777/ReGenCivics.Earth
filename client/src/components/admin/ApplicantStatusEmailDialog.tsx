@@ -18,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { emailTemplates, type TemplateType } from "@/components/EmailTemplateSelector";
-import { sourceIdForStatus } from "@/lib/applicationEmailSources";
 import { EmailMarkdownComposer, EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
@@ -138,8 +137,6 @@ export function ApplicantStatusEmailDialog({
     () => capped.map((r) => `${r.name} <${r.email}>`).join("\n"),
     [capped],
   );
-
-  const composerHref = `/admin?tab=settings&emailSource=${sourceIdForStatus(status) ?? "approved_projects"}`;
 
   const handleSend = async () => {
     if (capped.length === 0) {
@@ -276,13 +273,7 @@ export function ApplicantStatusEmailDialog({
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:justify-between">
-          <a
-            href={composerHref}
-            className="text-sm text-[#4a7c59] hover:underline self-center"
-          >
-            Open in email composer
-          </a>
+        <DialogFooter className="gap-2">
           <div className="flex gap-2">
             <Button
               variant="outline"

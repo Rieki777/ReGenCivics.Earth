@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { consumeBroadcastFill, clearBroadcastFill } from "@/lib/broadcastFill";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,17 +88,12 @@ export function AdminBroadcastPanel() {
   }, [selectedChannels]);
 
   useEffect(() => {
-    try {
-      const pending = sessionStorage.getItem("broadcast_fill_pending");
-      if (pending) {
-        sessionStorage.removeItem("broadcast_fill_pending");
-        setText(pending);
-      }
-    } catch { /* private mode */ }
+    const pending = consumeBroadcastFill();
+    if (pending) setText(pending);
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ text?: string }>).detail;
       if (!detail?.text) return;
-      try { sessionStorage.removeItem("broadcast_fill_pending"); } catch { /* private mode */ }
+      clearBroadcastFill();
       setText(detail.text);
     };
     window.addEventListener(BROADCAST_FILL_EVENT, handler);
@@ -328,11 +324,11 @@ export function AdminBroadcastPanel() {
             <Label className="text-[#1a472a] font-medium">Message</Label>
             <div className="relative">
               <Textarea
+                data-testid="broadcast-message"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder="What do you want to share?"
                 rows={4}
-                data-testid="broadcast-message"
                 className="resize-none border-[#1a472a]/20 focus:border-[#1a472a] pr-16"
               />
               <span

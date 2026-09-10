@@ -64,12 +64,19 @@ const REVIEW_FIXTURE = {
       verificationStatus: "unverified", verificationFlags: null,
       firstComment: null, weeklyNote: null,
     },
+    {
+      id: 5, publicationId: 1, surface: "email", itemId: 15, status: "draft",
+      externalUrl: null,
+      verificationStatus: "unverified", verificationFlags: null,
+      firstComment: null, weeklyNote: null,
+    },
   ],
   items: [
     { id: 11, status: "ready", body: "We chose a venture structure because legibility moves more capital than purity. Investors read a cap table faster than they read a manifesto." },
     { id: 12, status: "ready", body: "Soil first. Governance second. Everything else follows from those two." },
     { id: 13, status: "ready", body: "Three land projects joined this month. Here is what each one is actually planting." },
     { id: 14, status: "ready", body: "# Why we chose a VC structure\n\nThe short answer is legibility." },
+    { id: 15, status: "edited", body: "A note from the land\n\nThree projects joined this month. Here is what each one is planting." },
   ],
   images: [],
   article: null,
@@ -195,6 +202,11 @@ export const STORIES: Record<string, Story> = {
     title: "Publication review: fact flags, first comment, weekly note",
     setup: () => {
       mockData["harvest.publicationReview"] = REVIEW_FIXTURE;
+      mockData["harvest.sendPreview.result"] = {
+        subject: "A note from the land",
+        recipientCount: 12,
+        confirmToken: "harness-token",
+      };
     },
     render: () => (
       <div className="max-w-3xl">
