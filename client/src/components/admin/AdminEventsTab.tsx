@@ -22,10 +22,12 @@ import {
   Users,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
 
 export function AdminEventsTab() {
   const { data: allEvents = [], refetch, isLoading } = trpc.events.adminList.useQuery();
   const { data: signupCounts = [] } = trpc.events.signupCounts.useQuery();
+  const { data: autoReminders = [] } = trpc.events.listAutoReminders.useQuery();
   const { data: agendaSuggestions = [] } = trpc.events.listAgendaSuggestions.useQuery({});
   const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); setFormData(defaultForm); } });
   const updateMutation = trpc.events.update.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
@@ -58,6 +60,7 @@ export function AdminEventsTab() {
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
+  const [autoReminderOpen, setAutoReminderOpen] = useState<number | null>(null);
   const [customSubject, setCustomSubject] = useState('');
   const [customBody, setCustomBody] = useState('');
   const [rollupSeason, setRollupSeason] = useState('');
@@ -76,6 +79,7 @@ export function AdminEventsTab() {
     { enabled: rosterEventId !== null }
   );
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
+  const autoReminderMap = Object.fromEntries(autoReminders.map(r => [r.eventId, r]));
 
   function startEdit(ev: any) {
     setEditingId(ev.id);
@@ -285,6 +289,9 @@ export function AdminEventsTab() {
                     <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/60">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
+                      {autoReminderMap[ev.id]?.enabled && (
+                        <span className="text-blue-300">Auto-remind on</span>
+                      )}
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
                       {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
                       {ev.recordingId && <span className="text-purple-400">Recording #{ev.recordingId}</span>}
@@ -322,6 +329,14 @@ export function AdminEventsTab() {
                           <Bell size={11} className="mr-1" />
                           {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
                         </Button>}
+                    <Button size="sm" variant="ghost"
+                      onClick={() => setAutoReminderOpen(autoReminderOpen === ev.id ? null : ev.id)}
+                      className="text-white/60 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2 text-xs">
+                      <Clock size={11} className="mr-1" />
+                      {autoReminderOpen === ev.id
+                        ? "Close auto-remind"
+                        : autoReminderMap[ev.id]?.enabled ? "Auto-remind on" : "Auto-remind"}
+                    </Button>
                     {/* #17. Send Follow-up for completed events */}
                     {ev.status === 'completed' && (
                       followupSuccess === ev.id
@@ -606,6 +621,13 @@ export function AdminEventsTab() {
                   </div>
                 )}
 
+                {autoReminderOpen === ev.id && (
+                  <AdminEventAutoReminders
+                    event={ev}
+                    saved={autoReminderMap[ev.id]}
+                  />
+                )}
+
                 {/* Who's coming, of the projects that applied. Rye's ask, 2026-08-28.
                     Four groups and all of them visible: an inner join would answer
                     the question by hiding the people it could not match. */}
@@ -730,7 +752,7 @@ export function AdminEventsTab() {
           <CardTitle className="text-yellow-400 text-sm flex items-center gap-2"><Clock size={14} /> Auto-Reminder Cron Setup</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-white/60 space-y-1">
-          <p>Reminders send automatically if you set up the Railway cron job:</p>
+          <p>Reminders send automatically if you set up the Railway cron job. Auto-reminders on each event (7d / 24h / 1h, with Season 2 / Open Access / custom audiences) use this same endpoint.</p>
           <ol className="list-decimal list-inside space-y-1 text-white/70">
             <li>In Railway: New Service → Cron Job</li>
             <li>Schedule: <code className="bg-white/10 px-1 rounded">0 * * * *</code> (hourly)</li>

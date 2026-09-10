@@ -1098,8 +1098,12 @@ async function startServer() {
           dbLt(eventsTable.endTime as any, completedThreshold)
         ));
 
-      // Find upcoming events in the reminder window that haven't been reminded yet
-      const upcomingEvents = await database
+      // Find upcoming events in the reminder window that haven't been reminded yet.
+      // Events with auto-reminders enabled are owned by runAutoEventReminders
+      // (offsets + audience rules) so this 20-28h signup blast skips them.
+      const { listEnabledAutoReminderEventIds, runAutoEventReminders } = await import("../jobs/eventReminders");
+      const autoEnabledIds = await listEnabledAutoReminderEventIds();
+      const upcomingInWindow = await database
         .select()
         .from(eventsTable)
         .where(
@@ -1110,6 +1114,7 @@ async function startServer() {
             dbEq(eventsTable.status, "upcoming")
           )
         );
+      const upcomingEvents = upcomingInWindow.filter((event) => !autoEnabledIds.has(event.id));
 
       const { sendSMS: sendTwilioSMS } = await import("./notify");
 
@@ -1192,7 +1197,9 @@ async function startServer() {
           .where(dbEq(eventsTable.id, event.id));
       }
 
-      res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent, scheduledSent });
+      const autoReminders = await runAutoEventReminders(now);
+
+      res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent, scheduledSent, autoReminders });
     } catch (err: any) {
       log.error("cron/event-reminders", err);
       res.status(500).json({ error: err.message });
@@ -1481,6 +1488,21 @@ async function processScheduledEmails() {
 
 // Run every minute
 setInterval(processScheduledEmails, 60_000);
+
+// ─── Auto-scheduled event reminders (every 10 minutes) ───────────────────────
+// Same job the hourly Railway cron POST /api/cron/event-reminders runs. The
+// in-process sweep exists so the 1-hour offset does not wait for the next hour.
+// Idempotent via unique (eventId, offsetMinutes).
+setTimeout(async () => {
+  const run = async () => {
+    const { runAutoEventReminders } = await import("../jobs/eventReminders");
+    await runAutoEventReminders();
+  };
+  try { await run(); } catch (e) { log.error("AutoEventReminders error", e); }
+  setInterval(async () => {
+    try { await run(); } catch (e) { log.error("AutoEventReminders error", e); }
+  }, 10 * 60 * 1000);
+}, 2 * 60 * 1000);
 
 // ─── Weekly digest job ───────────────────────────────────────────────────────
 setTimeout(async () => {

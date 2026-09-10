@@ -8,8 +8,19 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "../
 import { z } from "zod";
 import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
-import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
+import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoReminderSends, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
 import { newsletterSubscribers, recordings, applications, users } from "../../drizzle/schema";
+import { resolveAutoReminderRecipients } from "../jobs/eventReminders";
+import {
+  AUTO_REMINDER_AUDIENCE_MODES,
+  CUSTOM_APPLICATION_STATUSES,
+  NEWSLETTER_AUDIENCE_SOURCES,
+  audienceModeLabel,
+  canEnableAutoReminders,
+  defaultAudienceMode,
+  parseAudienceConfig,
+  parseOffsetMinutes,
+} from "@shared/eventAutoReminders";
 import { pickPublic } from "../lib/public-projection";
 import { and, asc, desc, eq, ne, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -770,8 +781,148 @@ export const eventsRouter = router({
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       // Also remove all signups for this event
       await database.delete(eventSignups).where(eq(eventSignups.eventId, input.id));
+      await database.delete(eventAutoReminderSends).where(eq(eventAutoReminderSends.eventId, input.id));
+      await database.delete(eventAutoReminders).where(eq(eventAutoReminders.eventId, input.id));
       await database.delete(events).where(eq(events.id, input.id));
       return { success: true };
+    }),
+
+  // ── Admin: auto-reminder configs for the Events tab ───────
+  listAutoReminders: adminProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return [];
+    const configs = await database.select().from(eventAutoReminders);
+    const sends = configs.length
+      ? await database
+          .select({
+            eventId: eventAutoReminderSends.eventId,
+            offsetMinutes: eventAutoReminderSends.offsetMinutes,
+            sentAt: eventAutoReminderSends.sentAt,
+            recipientCount: eventAutoReminderSends.recipientCount,
+          })
+          .from(eventAutoReminderSends)
+          .where(inArray(eventAutoReminderSends.eventId, configs.map((c) => c.eventId)))
+      : [];
+    const sendsByEvent = new Map<number, typeof sends>();
+    for (const row of sends) {
+      const list = sendsByEvent.get(row.eventId) ?? [];
+      list.push(row);
+      sendsByEvent.set(row.eventId, list);
+    }
+    return configs.map((c) => ({
+      eventId: c.eventId,
+      enabled: c.enabled === 1,
+      audienceMode: c.audienceMode,
+      audienceConfig: parseAudienceConfig(c.audienceConfig),
+      offsetsMinutes: parseOffsetMinutes(c.offsetsJson),
+      customSubject: c.customSubject,
+      customBody: c.customBody,
+      sends: sendsByEvent.get(c.eventId) ?? [],
+    }));
+  }),
+
+  previewAutoReminderAudience: adminProcedure
+    .input(z.object({
+      eventId: z.number().int(),
+      audienceMode: z.enum(AUTO_REMINDER_AUDIENCE_MODES),
+      audienceConfig: z.object({
+        newsletterSources: z.array(z.enum(NEWSLETTER_AUDIENCE_SOURCES)).max(8).optional(),
+        includeInvestors: z.boolean().optional(),
+        includeLoi: z.boolean().optional(),
+        includeEventSignups: z.boolean().optional(),
+        applicationStatuses: z.array(z.enum(CUSTOM_APPLICATION_STATUSES)).max(8).optional(),
+      }).optional(),
+    }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [event] = await database.select({ id: events.id, type: events.type, season: events.season })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND" });
+      const config = parseAudienceConfig(input.audienceConfig ?? {});
+      if (!canEnableAutoReminders(input.audienceMode, config)) {
+        return { count: 0, label: audienceModeLabel(input.audienceMode), blocked: true as const };
+      }
+      const recipients = await resolveAutoReminderRecipients({
+        eventId: input.eventId,
+        audienceMode: input.audienceMode,
+        audienceConfig: config,
+      });
+      return {
+        count: recipients.length,
+        label: audienceModeLabel(input.audienceMode),
+        blocked: false as const,
+      };
+    }),
+
+  setAutoReminder: adminProcedure
+    .input(z.object({
+      eventId: z.number().int(),
+      enabled: z.boolean(),
+      audienceMode: z.enum(AUTO_REMINDER_AUDIENCE_MODES),
+      audienceConfig: z.object({
+        newsletterSources: z.array(z.enum(NEWSLETTER_AUDIENCE_SOURCES)).max(8).optional(),
+        includeInvestors: z.boolean().optional(),
+        includeLoi: z.boolean().optional(),
+        includeEventSignups: z.boolean().optional(),
+        applicationStatuses: z.array(z.enum(CUSTOM_APPLICATION_STATUSES)).max(8).optional(),
+      }).optional(),
+      offsetsMinutes: z.array(z.number().int()).min(1).max(4),
+      customSubject: z.string().max(200).optional(),
+      customBody: z.string().max(2000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [event] = await database.select()
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const offsetsMinutes = parseOffsetMinutes(input.offsetsMinutes);
+      if (!offsetsMinutes.length) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick at least one reminder time (7d, 3d, 24h, or 1h)." });
+      }
+      const audienceConfig = parseAudienceConfig(input.audienceConfig ?? {});
+      if (input.enabled && !canEnableAutoReminders(input.audienceMode, audienceConfig)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Custom events need an audience selection before auto-reminders can turn on.",
+        });
+      }
+
+      await database
+        .insert(eventAutoReminders)
+        .values({
+          eventId: input.eventId,
+          enabled: input.enabled ? 1 : 0,
+          audienceMode: input.audienceMode,
+          audienceConfig,
+          offsetsJson: offsetsMinutes,
+          customSubject: input.customSubject?.trim() || null,
+          customBody: input.customBody?.trim() || null,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            enabled: input.enabled ? 1 : 0,
+            audienceMode: input.audienceMode,
+            audienceConfig,
+            offsetsJson: offsetsMinutes,
+            customSubject: input.customSubject?.trim() || null,
+            customBody: input.customBody?.trim() || null,
+          },
+        });
+
+      return {
+        success: true,
+        enabled: input.enabled,
+        audienceMode: input.audienceMode,
+        defaultMode: defaultAudienceMode(event),
+        offsetsMinutes,
+      };
     }),
 
   // ── Admin: manually send reminder emails for an event ─────
