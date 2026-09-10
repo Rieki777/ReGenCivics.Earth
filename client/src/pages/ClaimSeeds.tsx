@@ -35,6 +35,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cdnImg } from "@/lib/utils";
 import { Link } from "wouter";
+import { buildSeedsClaimSubmitInput } from "@/lib/seedsClaimsUi";
 
 type UploadedFile = {
   name: string;
@@ -828,29 +829,48 @@ export default function ClaimSeeds() {
                         ${formData.totalUsd.toFixed(2)}
                       </span>
                     </div>
-                    {formData.hasSpentTokens && formData.spentAmount > 0 && (
+                    {formData.isOnDisputePath ? (
                       <>
-                        <div className="flex justify-between items-start">
-                          <span className="text-sm text-muted-foreground">Spent/Transferred</span>
-                          <span className="font-medium text-foreground">
-                            -${formData.spentAmount.toFixed(2)}
+                        <div className="flex justify-between items-start bg-amber-50 -mx-4 -my-3 px-4 py-3 rounded">
+                          <span className="text-sm font-medium text-foreground">USD Amount Claiming</span>
+                          <span className="font-bold text-primary">
+                            ${formData.spentAmount.toFixed(2)}
                           </span>
                         </div>
-                        <div className="h-px bg-gray-200"></div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-sm text-muted-foreground">$ReGen Tokens</span>
+                          <span className="font-bold text-foreground">
+                            {(formData.spentAmount * regenPerUsd).toLocaleString()}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {formData.hasSpentTokens && formData.spentAmount > 0 && (
+                          <>
+                            <div className="flex justify-between items-start">
+                              <span className="text-sm text-muted-foreground">Spent/Transferred</span>
+                              <span className="font-medium text-foreground">
+                                -${formData.spentAmount.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="h-px bg-gray-200"></div>
+                          </>
+                        )}
+                        <div className="flex justify-between items-start bg-amber-50 -mx-4 -my-3 px-4 py-3 rounded">
+                          <span className="text-sm font-medium text-foreground">Final USD Claim</span>
+                          <span className="font-bold text-primary">
+                            ${formData.adjustedUsd.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-sm text-muted-foreground">$ReGen Tokens</span>
+                          <span className="font-bold text-foreground">
+                            {regenAmount.toLocaleString()}
+                          </span>
+                        </div>
                       </>
                     )}
-                    <div className="flex justify-between items-start bg-amber-50 -mx-4 -my-3 px-4 py-3 rounded">
-                      <span className="text-sm font-medium text-foreground">Final USD Claim</span>
-                      <span className="font-bold text-primary">
-                        ${formData.adjustedUsd.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <span className="text-sm text-muted-foreground">$ReGen Tokens</span>
-                      <span className="font-bold text-foreground">
-                        {regenAmount.toLocaleString()}
-                      </span>
-                    </div>
                     <div className="h-px bg-gray-200"></div>
                     <div className="flex justify-between items-start">
                       <span className="text-sm text-muted-foreground">Base Wallet</span>
@@ -862,6 +882,27 @@ export default function ClaimSeeds() {
                       <span className="text-sm text-muted-foreground">Email</span>
                       <span className="text-sm text-foreground">{formData.email}</span>
                     </div>
+                    {formData.isOnDisputePath && formData.disputeExplanation.trim() !== "" && (
+                      <>
+                        <div className="h-px bg-gray-200"></div>
+                        <div className="space-y-1">
+                          <span className="text-sm text-muted-foreground">Explanation</span>
+                          <p className="text-sm text-foreground whitespace-pre-wrap">
+                            {formData.disputeExplanation}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    {formData.isOnDisputePath && formData.disputeEvidence.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">Supporting Evidence</span>
+                        <ul className="text-sm text-foreground list-disc list-inside">
+                          {formData.disputeEvidence.map((file) => (
+                            <li key={file.url}>{file.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -891,18 +932,9 @@ export default function ClaimSeeds() {
                   </Button>
                   <Button
                     onClick={() => {
-                      submitMutation.mutate({
-                        seedsAccount: formData.seedsAccount,
-                        email: formData.email,
-                        originalUsdTotal: formData.totalUsd,
-                        spentUsdAmount: formData.spentAmount,
-                        claimedUsdAmount: formData.adjustedUsd,
-                        regenAmount: formData.adjustedUsd * regenPerUsd, // advisory; server re-derives from the live rate
-                        baseWalletAddress: formData.baseWalletAddress,
-                        isDispute: formData.isOnDisputePath,
-                        disputeReason: formData.disputeExplanation || undefined,
-                        evidenceUrls: formData.disputeEvidence.length > 0 ? JSON.stringify(formData.disputeEvidence.map(f => f.url)) : undefined,
-                      });
+                      submitMutation.mutate(
+                        buildSeedsClaimSubmitInput(formData, regenPerUsd),
+                      );
                     }}
                     disabled={!formData.confirmedAccurate || submitMutation.isPending}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"

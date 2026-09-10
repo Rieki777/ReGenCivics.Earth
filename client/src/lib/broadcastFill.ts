@@ -1,13 +1,12 @@
 /**
  * Harvest → Outbound Social (and assistant → Broadcast) compose handoff.
- *
- * The key and event name match PR #91 (Broadcast Voice) so a pending fill
- * written here is picked up by that panel, and the other way around.
+ * Storage key and event name match Broadcast Voice so either writer works.
  */
 import { adminTabHref } from "@/lib/adminNav";
 
+export { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
+
 export const BROADCAST_FILL_STORAGE_KEY = "broadcast_fill_pending";
-export const BROADCAST_FILL_EVENT = "admin-broadcast-fill";
 
 export function outboundSocialHref(): string {
   return adminTabHref("outbound", { surface: "social" });

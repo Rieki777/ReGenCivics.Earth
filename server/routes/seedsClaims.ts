@@ -8,6 +8,7 @@ import { seedsClaims, seedsContributions } from "../../drizzle/schema";
 
 import { getGameVariable } from "../game";
 import { SEEDS_REGEN_PER_USD as SEEDS_REGEN_PER_USD_FALLBACK } from "@shared/gameMechanics";
+import { deriveSeedsClaimAmounts } from "../lib/seedsClaimAmounts";
 
 // $ReGen credited per $1 USD of SEEDS contribution. Read from the
 // `seeds.regen_per_usd` game variable (tunable in the admin UI) so the claim
@@ -123,13 +124,16 @@ export const seedsClaimsRouter = router({
       z.object({
         seedsAccount: seedsAccountSchema,
         email: emailSchema,
-        // The USD/regen numbers below are advisory only. The server derives
-        // the real values from seeds_contributions and ignores these for any
-        // money movement; spentUsdAmount is the one genuine user input.
-        originalUsdTotal: z.number().positive("Original USD must be positive"),
+        // The USD/regen numbers below are advisory only for accounts we have
+        // records for. The server derives the real values from
+        // seeds_contributions and ignores these for any money movement.
+        // spentUsdAmount is the one genuine user input on the found path.
+        // Dispute claims for unknown accounts may send originalUsdTotal = 0;
+        // those stay pending and are never auto-credited.
+        originalUsdTotal: z.number().min(0, "Original USD cannot be negative"),
         spentUsdAmount: z.number().min(0, "Spent amount cannot be negative"),
         claimedUsdAmount: z.number().positive("Claimed USD must be positive"),
-        regenAmount: z.number().positive("Regen amount must be positive"),
+        regenAmount: z.number().min(0, "Regen amount cannot be negative"),
         baseWalletAddress: ethereumAddressSchema,
         isDispute: z.boolean().default(false),
         disputeReason: z.string().max(5000).optional(),
@@ -147,28 +151,28 @@ export const seedsClaimsRouter = router({
 
       // AUTHORITATIVE USD: recompute from our contribution records. Never
       // trust the client's originalUsdTotal. An account with no recorded
-      // contributions cannot claim anything.
+      // contributions can only file a dispute, which stays pending for
+      // admin review and is never auto-credited.
       const contributions = await db
         .select()
         .from(seedsContributions)
         .where(eq(seedsContributions.recipientAccount, input.seedsAccount));
-      if (contributions.length === 0) {
+      const serverTotalUsd = contributions.reduce((sum, c) => sum + c.usdValue, 0);
+      const regenPerUsd = await getSeedsRegenPerUsd();
+      const derived = deriveSeedsClaimAmounts({
+        isDispute: input.isDispute,
+        contributionTotalUsd: serverTotalUsd,
+        spentUsdAmount: input.spentUsdAmount,
+        claimedUsdAmount: input.claimedUsdAmount,
+        regenPerUsd,
+      });
+      if (!derived.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "No SEEDS contributions are on record for that account.",
+          message: derived.message,
         });
       }
-      const serverTotalUsd = contributions.reduce((sum, c) => sum + c.usdValue, 0);
-
-      // spentUsdAmount is the one honest user input (what they sold/spent).
-      // Clamp it into [0, serverTotalUsd]; claimed is derived, not trusted.
-      const spentUsdAmount = Math.min(Math.max(input.spentUsdAmount, 0), serverTotalUsd);
-      const maxClaimable = serverTotalUsd - spentUsdAmount;
-      // Claimed amount is clamped to what they're actually entitled to.
-      const claimedUsdAmount = Math.min(Math.max(input.claimedUsdAmount, 0), maxClaimable);
-      // $ReGen is DERIVED from the live rate, never taken from input.
-      const regenPerUsd = await getSeedsRegenPerUsd();
-      const regenAmount = claimedUsdAmount * regenPerUsd;
+      const { originalUsdTotal, spentUsdAmount, claimedUsdAmount, regenAmount } = derived;
 
       const currentUserId: number | null = ctx.user?.id ?? null;
 
@@ -184,6 +188,8 @@ export const seedsClaimsRouter = router({
       // Auto-approve only when: the user accepts the full entitled amount,
       // isn't disputing, there's something to claim, AND they're signed in
       // (so we know who to credit). Guests get a stored pending claim.
+      // Disputes for unknown accounts have originalUsdTotal 0 and stay pending.
+      const maxClaimable = originalUsdTotal - spentUsdAmount;
       const acceptsShownAmount =
         !input.isDispute && claimedUsdAmount === maxClaimable && maxClaimable > 0;
       const canAutoCredit = acceptsShownAmount && currentUserId != null;
@@ -198,7 +204,7 @@ export const seedsClaimsRouter = router({
           .update(seedsClaims)
           .set({
             email: input.email,
-            originalUsdTotal: serverTotalUsd,
+            originalUsdTotal,
             spentUsdAmount,
             claimedUsdAmount,
             regenAmount,
@@ -219,7 +225,7 @@ export const seedsClaimsRouter = router({
         const result = await db.insert(seedsClaims).values({
           seedsAccount: input.seedsAccount,
           email: input.email,
-          originalUsdTotal: serverTotalUsd,
+          originalUsdTotal,
           spentUsdAmount,
           claimedUsdAmount,
           regenAmount,
@@ -319,7 +325,7 @@ export const seedsClaimsRouter = router({
           .optional(),
         isDispute: z.boolean().optional(),
         search: z.string().optional(), // Search by seedsAccount or email
-        page: z.number().int().min(0).default(0),
+        page: z.number().int().min(0).default(0), // 0-indexed. The admin UI is 1-indexed and must convert.
         limit: z.number().int().min(1).max(100).default(20),
       })
     )

@@ -23,6 +23,9 @@ vi.mock("@/lib/trpc", () => ({
         farcasterIntent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       },
     },
+    harvest: {
+      draftBroadcast: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+    },
   },
 }));
 
@@ -47,5 +50,11 @@ describe("AdminOutboundHub", () => {
     render(<AdminOutboundHub surface="write" onSurfaceChange={onSurfaceChange} />);
     await userEvent.click(screen.getByRole("tab", { name: "Social" }));
     expect(onSurfaceChange).toHaveBeenCalledWith("social");
+  });
+
+  it("mounts the Broadcast composer on Social, including Draft with Harvest", () => {
+    render(<AdminOutboundHub surface="social" onSurfaceChange={vi.fn()} />);
+    expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
+    expect(screen.getByTestId("broadcast-message")).toBeDefined();
   });
 });
