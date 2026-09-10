@@ -18,6 +18,20 @@ import { gradeVoice } from "./voice-grader";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
 
+/**
+ * The fields draftChannel actually reads. A persisted HarvestIdea satisfies
+ * this; Broadcast drafting builds a synthetic seed so it can reuse the same
+ * Worldview Pack, learned voice_rules, grader, and source_index loader
+ * without writing a harvest_ideas row.
+ */
+export type DraftSeed = {
+  ownerId: number;
+  title: string;
+  summary: string | null;
+  sourceRefs: unknown;
+  steer?: string | null;
+};
+
 const log = logger("harvest");
 
 export const HARVEST_CHANNELS = ["linkedin", "facebook", "instagram", "threads_x", "newsletter", "article"] as const;
@@ -116,7 +130,7 @@ async function loadSources(ownerId: number, refs: string[]): Promise<Array<{ ref
     .where(and(eq(sourceIndex.ownerId, ownerId), inArray(sourceIndex.refId, refs.slice(0, 30))));
 }
 
-function sourceRefList(idea: HarvestIdea): string[] {
+function sourceRefList(idea: { sourceRefs: unknown }): string[] {
   const raw = idea.sourceRefs;
   if (!Array.isArray(raw)) return [];
   return (raw as unknown[]).filter((r): r is string => typeof r === "string");
@@ -191,14 +205,14 @@ export function isRefusalDraft(body: string): boolean {
  * Draft one channel for one idea. One generation call; if the deterministic
  * grader flags the draft, exactly one repair call runs. Never more.
  */
-export async function draftChannel(idea: HarvestIdea, channel: HarvestChannel, opts: { angle?: string; nudge?: string } = {}): Promise<DraftResult> {
+export async function draftChannel(idea: DraftSeed, channel: HarvestChannel, opts: { angle?: string; nudge?: string; channelSpec?: string } = {}): Promise<DraftResult> {
   const sources = await loadSources(idea.ownerId, sourceRefList(idea));
   const sourceBlock = sources.length > 0
     ? sources.map((s) => `[${s.refId}] (${s.date ? s.date.toISOString().slice(0, 10) : "undated"})\n${(s.text ?? "").slice(0, 2000)}`).join("\n\n")
     : "(no raw sources available; draft only from the idea text, invent nothing)";
 
   const userParts = [
-    `CHANNEL: ${CHANNEL_REGISTER[channel]}`,
+    `CHANNEL: ${opts.channelSpec ?? CHANNEL_REGISTER[channel]}`,
     opts.angle ? `ANGLE (Rye picked this): ${opts.angle.slice(0, 200)}` : "",
     idea.steer ? `STEER (standing note from Rye about this idea): ${idea.steer.slice(0, 500)}` : "",
     opts.nudge ? `NUDGE for this regeneration: ${opts.nudge.slice(0, 300)}` : "",

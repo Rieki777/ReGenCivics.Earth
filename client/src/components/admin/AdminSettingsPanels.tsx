@@ -515,67 +515,6 @@ export function ReviewerEmailManager() {
 }
 
 
-export function NewsletterSubscribersList() {
-  const { data: subscribers, isLoading } = trpc.newsletter.list.useQuery();
-  
-  // Store subscribers in window for CSV export
-  useEffect(() => {
-    if (subscribers) {
-      (window as any).__newsletterSubscribers = subscribers;
-    }
-  }, [subscribers]);
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-8 h-8 animate-spin text-[#7dd87d]" />
-      </div>
-    );
-  }
-  
-  if (!subscribers || subscribers.length === 0) {
-    return (
-      <div className="text-center py-8 text-[#1a472a]/75">
-        <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        <p>No newsletter subscribers yet</p>
-        <p className="text-sm mt-1">Subscribers will appear here when people sign up</p>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#1a472a]/10">
-        <p className="text-sm text-[#1a472a]/80">
-          {subscribers.length} subscriber{subscribers.length !== 1 ? 's' : ''}
-        </p>
-      </div>
-      {subscribers.map((subscriber: any) => (
-        <div 
-          key={subscriber.id} 
-          className="flex items-center justify-between p-3 rounded-lg bg-[#f0ebe3]/50 border border-[#1a472a]/10"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-              <Mail className="w-4 h-4 text-[#1a472a]" />
-            </div>
-            <div>
-              <p className="font-medium text-[#1a472a]">{subscriber.email}</p>
-              <p className="text-xs text-[#1a472a]/75">
-                Subscribed {new Date(subscriber.createdAt).toLocaleDateString()}
-                {subscriber.source && ` via ${subscriber.source}`}
-              </p>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-xs capitalize">
-            {subscriber.source || 'website'}
-          </Badge>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function ScheduledEmailsManager() {
   const utils = trpc.useUtils();
   const { data: scheduled, isLoading } = trpc.scheduledEmails.list.useQuery();

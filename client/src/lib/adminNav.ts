@@ -23,7 +23,6 @@ import {
   Scissors,
   Shield,
   Megaphone,
-  Search,
   Image,
   Images,
   AppWindow,
@@ -79,8 +78,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { id: "call-tasks", label: "Tasks", icon: ScrollText },
       { id: "edited-cuts", label: "Edited Cuts", icon: Scissors },
       { id: "moderation", label: "Forum", icon: Shield, route: "/admin/moderation" },
-      { id: "newsletter", label: "Newsletter", icon: Megaphone },
-      { id: "broadcast", label: "Broadcast", icon: Search },
+      { id: "outbound", label: "Outbound", icon: Megaphone },
     ],
   },
   {
@@ -153,8 +151,37 @@ export function writeAdminContinue(item: NavItem): void {
 }
 
 export function writeAdminContinueFromTab(tab: string): void {
-  const item = navItemById(tab);
+  const item = navItemById(canonicalizeAdminTab(tab).tab);
   if (item) writeAdminContinue(item);
+}
+
+export const OUTBOUND_SURFACES = ["write", "social", "people", "templates", "sent"] as const;
+export type OutboundSurface = (typeof OUTBOUND_SURFACES)[number];
+
+const OUTBOUND_SURFACE_ALIASES: Record<string, OutboundSurface> = {
+  email: "write",
+  write: "write",
+  social: "social",
+  people: "people",
+  templates: "templates",
+  sent: "sent",
+};
+
+/** Map a `?surface=` query (or alias like email) to an Outbound section. */
+export function parseOutboundSurface(raw: string | null | undefined): OutboundSurface | undefined {
+  if (!raw) return undefined;
+  return OUTBOUND_SURFACE_ALIASES[raw];
+}
+
+/**
+ * Old Newsletter and Broadcast tabs now live on Outbound.
+ * `?tab=newsletter` opens People (the old subscriber list).
+ * `?tab=broadcast` opens Social.
+ */
+export function canonicalizeAdminTab(tab: string): { tab: string; surface?: OutboundSurface } {
+  if (tab === "newsletter") return { tab: "outbound", surface: "people" };
+  if (tab === "broadcast") return { tab: "outbound", surface: "social" };
+  return { tab };
 }
 
 export type AdminHrefExtras = {
@@ -162,13 +189,17 @@ export type AdminHrefExtras = {
   open?: string;
   status?: string;
   view?: string;
+  surface?: string;
 };
 
 export function adminTabHref(tab: string, extras?: AdminHrefExtras): string {
-  const item = navItemById(tab);
+  const canon = canonicalizeAdminTab(tab);
+  const item = navItemById(canon.tab);
   if (item?.route) return item.route;
   const q = new URLSearchParams();
-  if (tab !== "overview") q.set("tab", tab);
+  if (canon.tab !== "overview") q.set("tab", canon.tab);
+  const surface = parseOutboundSurface(extras?.surface) ?? canon.surface;
+  if (canon.tab === "outbound" && surface) q.set("surface", surface);
   if (extras?.type) q.set("type", extras.type);
   if (extras?.open) q.set("open", extras.open);
   if (extras?.status) q.set("status", extras.status);
