@@ -152,6 +152,7 @@ export function EmailDraftAgent({
                 <Button
                   type="button"
                   size="sm"
+                  data-testid="apply-to-draft"
                   onClick={() =>
                     onApply({
                       subject: turn.proposedSubject || currentSubject,
@@ -202,7 +203,7 @@ export function EmailDraftAgent({
           disabled={draft.isPending || !input.trim()}
           className="bg-[#4a7c59] hover:bg-[#3d6849] text-white self-end h-11"
         >
-          Send
+          {variant === "newsletter" ? "Ask" : "Send"}
         </Button>
       </form>
     </div>
