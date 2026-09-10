@@ -1,9 +1,21 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { adminProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { newsletterIssues } from "../../drizzle/schema";
+import { ENV } from "../_core/env";
+import { emailDocumentFromMarkdown } from "../lib/emailHtml";
+import { loadRecipientLogs } from "../lib/outbound-history";
+import { NEWSLETTER_POSTAL_ADDRESS, isLetterLayout } from "../../shared/letterLayout";
+import {
+  HISTORY_VISIBLE_STATUSES,
+  attachHistoryStats,
+  buildHistoryTimeline,
+  buildRecipientRows,
+  cleanLetterSubject,
+} from "../../shared/outboundHistory";
+import { previewUnsubscribeUrl } from "../lib/newsletter-issue-email";
 import { invokeLLM, isLLMConfigured } from "../_core/llm";
 import {
   attachDraftToLastUserMessage,
@@ -12,7 +24,6 @@ import {
   parseDraftAgentOutput,
   stripEmailPii,
 } from "../lib/emailDraftAgent";
-import { isLetterLayout } from "../../shared/letterLayout";
 
 const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 const sourceZ = z.enum([
@@ -97,6 +108,30 @@ export const outboundRouter = router({
     }).from(newsletterIssues).orderBy(desc(newsletterIssues.createdAt)).limit(50);
   }),
 
+  listHistory: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    const issues = await db.select({
+      id: newsletterIssues.id,
+      subject: newsletterIssues.subject,
+      status: newsletterIssues.status,
+      layout: newsletterIssues.layout,
+      audience: newsletterIssues.audience,
+      recipientCount: newsletterIssues.recipientCount,
+      sentCount: newsletterIssues.sentCount,
+      failedCount: newsletterIssues.failedCount,
+      sentAt: newsletterIssues.sentAt,
+      scheduledFor: newsletterIssues.scheduledFor,
+      createdAt: newsletterIssues.createdAt,
+    }).from(newsletterIssues)
+      .where(inArray(newsletterIssues.status, [...HISTORY_VISIBLE_STATUSES]))
+      .orderBy(desc(newsletterIssues.createdAt))
+      .limit(50);
+    if (issues.length === 0) return [];
+    const { recipients, logs } = await loadRecipientLogs(issues.map((row) => row.id));
+    return attachHistoryStats(issues, recipients, logs);
+  }),
+
   getIssue: adminProcedure
     .input(z.object({ issueId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
@@ -106,6 +141,47 @@ export const outboundRouter = router({
       if (!issue) throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
       void ctx;
       return issue;
+    }),
+
+  getHistoryDetail: adminProcedure
+    .input(z.object({ issueId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [issue] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, input.issueId)).limit(1);
+      if (!issue) throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found." });
+      const { recipients, logs } = await loadRecipientLogs([issue.id]);
+      const [item] = attachHistoryStats([issue], recipients, logs);
+      const layout = isLetterLayout(issue.layout) ? issue.layout : "plain";
+      const html = emailDocumentFromMarkdown(issue.body, layout, {
+        managePreferencesUrl: previewUnsubscribeUrl(),
+        postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
+      });
+      return {
+        ...(item ?? {
+          ...issue,
+          subjectDisplay: cleanLetterSubject(issue.subject),
+          audienceSummary: "All active subscribers",
+          statusLabel: issue.status,
+          stats: {
+            delivered: 0,
+            opened: 0,
+            clicked: 0,
+            bounced: 0,
+            complained: 0,
+            failed: 0,
+            total: issue.recipientCount,
+            openPercent: null as number | null,
+            clickPercent: null as number | null,
+            bounceFailCount: issue.failedCount,
+          },
+          when: issue.sentAt ?? issue.scheduledFor ?? issue.createdAt,
+        }),
+        body: issue.body,
+        html,
+        timeline: buildHistoryTimeline(issue, logs),
+        recipients: buildRecipientRows(recipients, logs),
+      };
     }),
 
   sendPreview: adminProcedure
