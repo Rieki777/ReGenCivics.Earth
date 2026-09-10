@@ -155,7 +155,7 @@ export function writeAdminContinueFromTab(tab: string): void {
   if (item) writeAdminContinue(item);
 }
 
-export const OUTBOUND_SURFACES = ["write", "social", "people", "templates", "sent"] as const;
+export const OUTBOUND_SURFACES = ["write", "social", "people", "templates", "history"] as const;
 export type OutboundSurface = (typeof OUTBOUND_SURFACES)[number];
 
 const OUTBOUND_SURFACE_ALIASES: Record<string, OutboundSurface> = {
@@ -164,7 +164,8 @@ const OUTBOUND_SURFACE_ALIASES: Record<string, OutboundSurface> = {
   social: "social",
   people: "people",
   templates: "templates",
-  sent: "sent",
+  sent: "history",
+  history: "history",
 };
 
 /** Map a `?surface=` query (or alias like email) to an Outbound section. */

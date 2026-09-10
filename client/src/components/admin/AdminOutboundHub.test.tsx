@@ -37,6 +37,8 @@ vi.mock("@/lib/trpc", () => ({
       confirmSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
       draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       listIssues: { useQuery: () => ({ data: [], isLoading: false }) },
+      listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
+      getHistoryDetail: { useQuery: () => ({ data: undefined, isLoading: false }) },
     },
     admin: {
       broadcast: {
@@ -82,5 +84,21 @@ describe("AdminOutboundHub", () => {
     expect(screen.getByTestId("broadcast-message")).toBeDefined();
     expect(screen.getByTestId("dictation-button")).toBeDefined();
     expect(screen.getByLabelText("Dictate message")).toBeDefined();
+  });
+
+  it("renames Sent to History in the Outbound nav", () => {
+    render(<AdminOutboundHub surface="history" onSurfaceChange={vi.fn()} />);
+    expect(screen.getByRole("tab", { name: "History" })).toBeDefined();
+    expect(screen.queryByRole("tab", { name: "Sent" })).toBeNull();
+    expect(screen.queryByText("Sent issues")).toBeNull();
+    expect(screen.getByText("Letters sent and scheduled to subscribers.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Write a letter" })).toBeDefined();
+  });
+
+  it("lets the admin switch to History without leaving the hub", async () => {
+    const onSurfaceChange = vi.fn();
+    render(<AdminOutboundHub surface="write" onSurfaceChange={onSurfaceChange} />);
+    await userEvent.click(screen.getByRole("tab", { name: "History" }));
+    expect(onSurfaceChange).toHaveBeenCalledWith("history");
   });
 });

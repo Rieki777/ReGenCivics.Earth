@@ -2,11 +2,12 @@
  * Outbound hub: email + social in one admin section.
  */
 import { useMemo, useState } from "react";
-import { Mail, Radio, Users, FileText, Send, Download, Loader2 } from "lucide-react";
+import { Mail, Radio, Users, FileText, History, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
-import { AdminOutboundWrite } from "@/components/admin/AdminOutboundWrite";
+import { AdminOutboundWrite, type OutboundWritePrefill } from "@/components/admin/AdminOutboundWrite";
+import { AdminOutboundHistory } from "@/components/admin/AdminOutboundHistory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ const SURFACE_META: Record<OutboundSurface, { label: string; icon: typeof Mail; 
   social: { label: "Social", icon: Radio, blurb: "Post to channels" },
   people: { label: "People", icon: Users, blurb: "Subscribers" },
   templates: { label: "Templates", icon: FileText, blurb: "Saved letters" },
-  sent: { label: "Sent", icon: Send, blurb: "Issue history" },
+  history: { label: "History", icon: History, blurb: "Letters sent and scheduled" },
 };
 
 export function AdminOutboundHub({
@@ -40,6 +41,8 @@ export function AdminOutboundHub({
   surface: OutboundSurface;
   onSurfaceChange: (surface: OutboundSurface) => void;
 }) {
+  const [writePrefill, setWritePrefill] = useState<OutboundWritePrefill | null>(null);
+
   return (
     <div className="space-y-4">
       <div>
@@ -62,7 +65,10 @@ export function AdminOutboundHub({
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => onSurfaceChange(id)}
+              onClick={() => {
+                if (id !== "write") setWritePrefill(null);
+                onSurfaceChange(id);
+              }}
               className={`min-h-11 px-3 rounded-xl border inline-flex items-center gap-2 text-sm font-medium ${
                 active
                   ? "border-[#1a472a] bg-[#1a472a]/5 text-[#1a472a]"
@@ -76,11 +82,21 @@ export function AdminOutboundHub({
         })}
       </div>
 
-      {surface === "write" && <AdminOutboundWrite />}
+      {surface === "write" && (
+        <AdminOutboundWrite prefill={writePrefill} />
+      )}
       {surface === "social" && <AdminBroadcastPanel />}
       {surface === "people" && <PeoplePanel />}
       {surface === "templates" && <TemplatesStub />}
-      {surface === "sent" && <SentStub />}
+      {surface === "history" && (
+        <AdminOutboundHistory
+          onWrite={() => onSurfaceChange("write")}
+          onDuplicate={(draft) => {
+            setWritePrefill(draft);
+            onSurfaceChange("write");
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -109,41 +125,6 @@ function TemplatesStub() {
               <li key={row.templateKey} className="rounded-lg border border-[#1a472a]/10 p-3">
                 <p className="font-medium text-[#1a472a]">{row.label || row.templateKey}</p>
                 <p className="text-xs text-[#1a472a]/70">{row.customSubject || "No subject"}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function SentStub() {
-  const issues = trpc.outbound.listIssues.useQuery();
-  return (
-    <Card className="bg-white border-2 border-[#1a472a]/10">
-      <CardHeader>
-        <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-          Sent issues
-        </CardTitle>
-        <CardDescription>
-          Each letter you send shows here with recipient counts and status.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {issues.isLoading ? (
-          <Loader2 className="w-6 h-6 animate-spin text-[#7dd87d]" />
-        ) : !issues.data?.length ? (
-          <p className="text-sm text-[#1a472a]/80">Nothing sent from Outbound yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {issues.data.map((row) => (
-              <li key={row.id} className="rounded-lg border border-[#1a472a]/10 p-3">
-                <p className="font-medium text-[#1a472a]">{row.subject}</p>
-                <p className="text-xs text-[#1a472a]/70">
-                  {row.status} · {row.sentCount}/{row.recipientCount} sent
-                  {row.failedCount ? ` · ${row.failedCount} failed` : ""}
-                </p>
               </li>
             ))}
           </ul>

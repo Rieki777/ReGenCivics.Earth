@@ -1,7 +1,7 @@
 /**
  * Outbound Write: newsletter composer, audience, preview confirm, send.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -25,13 +25,24 @@ import {
 
 const NEWSLETTER_BUILTINS = [{ id: "nl_blank", label: "Blank letter" }];
 
-export function AdminOutboundWrite() {
+export type OutboundWritePrefill = {
+  subject: string;
+  body: string;
+  layout: LetterLayout;
+  source: NewsletterSource | "all";
+};
+
+export function AdminOutboundWrite({
+  prefill,
+}: {
+  prefill?: OutboundWritePrefill | null;
+} = {}) {
   const [issueId, setIssueId] = useState<number | null>(null);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [layout, setLayout] = useState<LetterLayout>("announcement");
+  const [subject, setSubject] = useState(prefill?.subject ?? "");
+  const [body, setBody] = useState(prefill?.body ?? "");
+  const [layout, setLayout] = useState<LetterLayout>(prefill?.layout ?? "announcement");
   const [templateKey, setTemplateKey] = useState("nl_blank");
-  const [source, setSource] = useState<NewsletterSource | "all">("all");
+  const [source, setSource] = useState<NewsletterSource | "all">(prefill?.source ?? "all");
   const [preview, setPreview] = useState<{
     subject: string;
     recipientCount: number;
@@ -46,6 +57,17 @@ export function AdminOutboundWrite() {
   const sendPreview = trpc.outbound.sendPreview.useMutation();
   const confirmSend = trpc.outbound.confirmSend.useMutation();
   const listActive = trpc.newsletter.listActive.useQuery();
+
+  useEffect(() => {
+    if (!prefill) return;
+    setIssueId(null);
+    setSubject(prefill.subject);
+    setBody(prefill.body);
+    setLayout(prefill.layout);
+    setSource(prefill.source);
+    setPreview(null);
+    setResult(null);
+  }, [prefill]);
 
   const savedLetters = useMemo(
     () => (savedQuery.data ?? []).filter((row) => isNewsletterEmailTemplateRow(row)),
