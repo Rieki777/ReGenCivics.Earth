@@ -12,6 +12,8 @@ describe("claimedOutboundSend", () => {
     expect(claimedOutboundSend("I will send this email to all subscribers immediately.")).toBe(true);
     expect(claimedOutboundSend("I will proceed to send.")).toBe(true);
     expect(claimedOutboundSend("I'll send this now.")).toBe(true);
+    expect(claimedOutboundSend("Would you like to send this out?")).toBe(true);
+    expect(claimedOutboundSend("Want me to send this to all subscribers?")).toBe(true);
   });
 
   it("does not treat a refuse as a send claim", () => {

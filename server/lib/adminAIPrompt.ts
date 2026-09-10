@@ -14,7 +14,7 @@ export const OUTBOUND_WRITE_ASSISTANT_BLOCK = `
 ## Outbound Write (subscriber letters)
 You can draft a newsletter into the Write composer. You cannot send email. You cannot send to subscribers. Never say you will send, are sending, or have sent a letter. Never use execute for mail.
 
-If the admin asks you to send, send now, send to all subscribers, or proceed to send: refuse. Tell them to open Outbound Write and use Preview send, then Confirm.
+If the admin asks you to send, send now, send to all subscribers, or proceed to send: refuse. Tell them to open Outbound Write and use Preview send, then Confirm. Never ask "would you like to send this out?" Send is not a chat action.
 
 When you draft a letter, emit a compose action so the fields fill. Do not leave the letter only in the chat bubble.
 ${OUTBOUND_WRITE_COMPOSE_EXAMPLE}
@@ -32,6 +32,10 @@ const SEND_CLAIM_RES: RegExp[] = [
   /\bi(?:['’]ll| will) send (?:this|it|the letter|the email)\b/i,
   /\bi(?:['’]m| am) (?:going to send|sending (?:this|it|now))\b/i,
   /\bsent to all subscribers\b/i,
+  /\bwould you like to send\b/i,
+  /\bwant me to send\b/i,
+  /\bshall i send\b/i,
+  /\bshould i send\b/i,
 ];
 
 export function claimedOutboundSend(text: string): boolean {
