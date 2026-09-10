@@ -7,7 +7,7 @@
  * `import { ... } from "./db"` keeps working, and let typecheck prove the
  * move. Follow server/db/tokens.ts for anything that needs transactions.
  */
-import { and, desc, eq, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { InsertNewsletterSubscriber, newsletterSubscribers } from "../../drizzle/schema";
 import { EMAIL_TOPICS, type EmailTopicKey } from "../../shared/emailPrefs";
 import { getDb } from "../db";
@@ -59,19 +59,30 @@ export async function getActiveNewsletterSubscribers() {
     .orderBy(desc(newsletterSubscribers.createdAt));
 }
 
-/** Active subscribers only. Optional source filter for Outbound issues. */
-export async function getNewsletterAudience(opts?: { sources?: string[] }) {
+/**
+ * Active community subscribers for a topic (default seasonal for Outbound).
+ * Honors pause and topic mute. Optional source filter.
+ */
+export async function getNewsletterAudience(opts?: { sources?: string[]; topic?: EmailTopicKey }) {
   const db = await getDb();
   if (!db) return [];
+  const topic = opts?.topic ?? "seasonal";
+  const column = newsletterSubscribers[EMAIL_TOPICS[topic].column];
+  const now = new Date();
   const sources = (opts?.sources ?? []).filter((s): s is NewsletterSource => Boolean(s) && s !== "all");
-  if (sources.length === 0) {
-    return getActiveNewsletterSubscribers();
+  const filters = [
+    eq(newsletterSubscribers.isActive, 1),
+    eq(column, 1),
+    or(
+      isNull(newsletterSubscribers.marketingPausedUntil),
+      lt(newsletterSubscribers.marketingPausedUntil, now),
+    ),
+  ];
+  if (sources.length > 0) {
+    filters.push(inArray(newsletterSubscribers.source, sources));
   }
   return db.select().from(newsletterSubscribers)
-    .where(and(
-      eq(newsletterSubscribers.isActive, 1),
-      inArray(newsletterSubscribers.source, sources),
-    ))
+    .where(and(...filters))
     .orderBy(desc(newsletterSubscribers.createdAt));
 }
 
@@ -83,23 +94,31 @@ export async function getRecordingSubscribers(): Promise<{ email: string; name: 
  * Active community subscribers who want a given topic and are not paused.
  * Events / Outbound / Harvest / recordings should call this (or audienceForTopic).
  */
-export async function getSubscribersForTopic(topic: EmailTopicKey): Promise<{ email: string; name: string | null }[]> {
+export async function getSubscribersForTopic(
+  topic: EmailTopicKey,
+  opts?: { sources?: string[] },
+): Promise<{ email: string; name: string | null }[]> {
+  const rows = await getNewsletterAudience({ topic, sources: opts?.sources });
+  return rows.map((row) => ({ email: row.email, name: row.name }));
+}
+
+/** Newsletter emails that must not receive this topic (muted, paused, or unsubscribed). */
+export async function emailsBlockingTopic(topic: EmailTopicKey): Promise<Set<string>> {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return new Set();
   const column = newsletterSubscribers[EMAIL_TOPICS[topic].column];
   const now = new Date();
-  return db.select({
-    email: newsletterSubscribers.email,
-    name: newsletterSubscribers.name,
-  }).from(newsletterSubscribers)
-    .where(and(
-      eq(newsletterSubscribers.isActive, 1),
-      eq(column, 1),
-      or(
-        isNull(newsletterSubscribers.marketingPausedUntil),
-        lt(newsletterSubscribers.marketingPausedUntil, now),
+  const rows = await db.select({ email: newsletterSubscribers.email })
+    .from(newsletterSubscribers)
+    .where(or(
+      eq(newsletterSubscribers.isActive, 0),
+      eq(column, 0),
+      and(
+        isNotNull(newsletterSubscribers.marketingPausedUntil),
+        gte(newsletterSubscribers.marketingPausedUntil, now),
       ),
     ));
+  return new Set(rows.map((row) => row.email.toLowerCase()));
 }
 
 export async function updateNewsletterPrefs(

@@ -64,10 +64,10 @@ describe("newsletter preview footer", () => {
     const html = markdownLetterDocument(
       "Hello\n\n![Hero](https://assets.regencivics.earth/hero.jpg)\n\n[Join](https://regencivics.earth/apply)",
       "announcement",
-      { unsubscribeUrl: `${ENV.appUrl}/preferences`, postalAddress: "ReGen Civics Alliance, Ashland, Oregon, USA" },
+      { managePreferencesUrl: `${ENV.appUrl}/email-preferences`, postalAddress: "ReGen Civics Alliance, Ashland, Oregon, USA" },
     );
     expect(html).toContain("Manage email preferences");
-    expect(html).toContain("/preferences");
+    expect(html).toContain("/email-preferences");
     expect(html).not.toContain(">Unsubscribe<");
     expect(html).toContain("<img");
     expect(html).toContain("Join");
@@ -75,10 +75,11 @@ describe("newsletter preview footer", () => {
 });
 
 describe("signed preference url", () => {
-  it("points at /preferences and round-trips the unsubscribe token", async () => {
-    expect(previewUnsubscribeUrl()).toMatch(/\/preferences$/);
+  it("points at /email-preferences and round-trips the prefs token", async () => {
+    expect(previewUnsubscribeUrl()).toMatch(/\/email-preferences/);
     const url = await signedUnsubscribeUrl("ada@example.org");
-    expect(url).toMatch(/\/preferences\?token=/);
+    expect(url).toMatch(/\/email-preferences\?/);
+    expect(url).toContain("mute=seasonal");
     expect(url).not.toContain("/unsubscribe");
     const token = new URL(url).searchParams.get("token");
     expect(token).toBeTruthy();

@@ -11,7 +11,7 @@ import {
   MARKETING_PAUSE_DAYS,
   type EmailTopicKey,
 } from "../../shared/emailPrefs";
-import { getNewsletterSubscriberByEmail, getSubscribersForTopic, updateNewsletterPrefs } from "../db/newsletter";
+import { emailsBlockingTopic, getNewsletterSubscriberByEmail, getSubscribersForTopic, updateNewsletterPrefs } from "../db/newsletter";
 import { ENV } from "../_core/env";
 
 const PREFS_PURPOSE = "newsletter-prefs";
@@ -60,9 +60,12 @@ export async function managePreferencesUrl(
 }
 
 /** Recipients for a tagged community blast. Investor mail does not use this. */
-export async function audienceForTopic(topic: EmailTopicKey) {
-  return getSubscribersForTopic(topic);
+export async function audienceForTopic(topic: EmailTopicKey, opts?: { sources?: string[] }) {
+  return getSubscribersForTopic(topic, opts);
 }
+
+/** Newsletter identities that muted, paused, or unsubscribed from this topic. */
+export { emailsBlockingTopic };
 
 export type PublicPrefs = {
   email: string;

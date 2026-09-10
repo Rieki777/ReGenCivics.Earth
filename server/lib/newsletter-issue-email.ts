@@ -3,10 +3,9 @@
  *
  * Copies Harvest's confirm-token + idempotency pattern onto newsletter_issues.
  * Does not use email.sendBulk. Sends 1:1 so each letter can carry a signed
- * unsubscribe link and an email_logs row. Harvest's sender is untouched.
+ * Manage email preferences link and an email_logs row. Harvest's sender is untouched.
  */
 import crypto from "crypto";
-import { SignJWT, jwtVerify } from "jose";
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { getDb } from "../db";
 import { newsletterIssueRecipients, newsletterIssues } from "../../drizzle/schema";
@@ -17,6 +16,7 @@ import { logger } from "../_core/logger";
 import { emailDocumentFromMarkdown } from "./emailHtml";
 import { createEmailLog } from "../emailTracking";
 import { isLetterLayout, NEWSLETTER_POSTAL_ADDRESS, type LetterLayout } from "../../shared/letterLayout";
+import { managePreferencesUrl, previewManagePreferencesUrl, verifyPrefsToken } from "./emailPrefs";
 
 const log = logger("newsletter-issue-email");
 
@@ -75,32 +75,22 @@ export function verifyConfirmToken(token: string): TokenPayload | null {
   }
 }
 
+/** @deprecated Use managePreferencesUrl. Kept so older Outbound tests and tokens still resolve. */
 export async function buildUnsubscribeToken(email: string): Promise<string> {
-  const secret = new TextEncoder().encode(ENV.cookieSecret);
-  return new SignJWT({ email, purpose: "newsletter-unsubscribe" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("90d")
-    .sign(secret);
+  const { buildPrefsToken } = await import("./emailPrefs");
+  return buildPrefsToken(email);
 }
 
 export async function verifyUnsubscribeToken(token: string): Promise<string | null> {
-  try {
-    const secret = new TextEncoder().encode(ENV.cookieSecret);
-    const { payload } = await jwtVerify(token, secret);
-    if (payload.purpose !== "newsletter-unsubscribe" || typeof payload.email !== "string") return null;
-    return payload.email;
-  } catch {
-    return null;
-  }
+  return verifyPrefsToken(token);
 }
 
 export function previewUnsubscribeUrl(): string {
-  return `${ENV.appUrl}/preferences`;
+  return previewManagePreferencesUrl({ mute: "seasonal" });
 }
 
 export async function signedUnsubscribeUrl(email: string): Promise<string> {
-  const token = await buildUnsubscribeToken(email);
-  return `${ENV.appUrl}/preferences?token=${encodeURIComponent(token)}`;
+  return managePreferencesUrl(email, { mute: "seasonal" });
 }
 
 function asLayout(value: string | null | undefined): LetterLayout {
@@ -155,7 +145,7 @@ export async function buildIssuePreview(params: {
 
   const layout = asLayout(issue.layout);
   const html = emailDocumentFromMarkdown(issue.body, layout, {
-    unsubscribeUrl: previewUnsubscribeUrl(),
+    managePreferencesUrl: previewUnsubscribeUrl(),
     postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
   });
   const hash = issueBodyHash(issue.subject, issue.body, audience);
@@ -285,9 +275,9 @@ export async function confirmAndSendIssue(params: {
       continue;
     }
     try {
-      const unsub = await signedUnsubscribeUrl(email);
+      const prefsUrl = await signedUnsubscribeUrl(email);
       const html = emailDocumentFromMarkdown(issue.body, layout, {
-        unsubscribeUrl: unsub,
+        managePreferencesUrl: prefsUrl,
         postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
       });
       const emailLogId = await createEmailLog({

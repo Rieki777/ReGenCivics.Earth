@@ -354,6 +354,7 @@ export {
   getNewsletterAudience,
   getRecordingSubscribers,
   getSubscribersForTopic,
+  emailsBlockingTopic,
   updateNewsletterPrefs,
   unsubscribeNewsletter,
   activateNewsletterSubscriber,

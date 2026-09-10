@@ -90,6 +90,20 @@ describe("prefs token round-trip", () => {
     expect(url).toContain("mute=open_access");
     expect(url).toContain("token=");
   });
+
+  it("accepts the older Outbound unsubscribe token purpose", async () => {
+    const { SignJWT } = await import("jose");
+    const { ENV } = await import("./_core/env");
+    if (!ENV.cookieSecret) {
+      (ENV as { cookieSecret: string }).cookieSecret = "test-email-prefs-secret-32chars!!";
+    }
+    const { verifyPrefsToken } = await import("./lib/emailPrefs");
+    const token = await new SignJWT({ email: "ada@example.org", purpose: "newsletter-unsubscribe" })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("90d")
+      .sign(new TextEncoder().encode(ENV.cookieSecret));
+    expect(await verifyPrefsToken(token)).toBe("ada@example.org");
+  });
 });
 
 describe.skipIf(skipIfNoDb)("audienceForTopic + unsub-all (DB)", () => {

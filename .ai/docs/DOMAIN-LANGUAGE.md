@@ -295,7 +295,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 ### Community email topics (ADR-55)
 
-**Email preference center**. The tokenized page at `/email-preferences` for the community / newsletter subscriber identity. No login. Investor and funder mail is a separate list (`investor_inquiries`) and is never a topic here. Transactional mail (application status, claims, magic links) is not on this page.
+**Email preference center**. The tokenized page at `/email-preferences` (alias `/preferences`) for the community / newsletter subscriber identity. No login. Investor and funder mail is a separate list (`investor_inquiries`) and is never a topic here. Transactional mail (application status, claims, magic links) is not on this page.
 
 **Topic keys** (toggles, default ON for new subscribers): `seasonal` (newsletters, Harvest, weekly digest), `open_access` (Open Access invitations and reminders), `season2` (Season 2 session reminders; S2-approved people can mute these), `events` (other / custom event reminders on the community list), `recordings` (session recording summaries, stored as `notifyRecordings`). Existing `notifyRecordings` values are kept. Senders resolve recipients with `audienceForTopic(topic)` in `server/lib/emailPrefs.ts`.
 
