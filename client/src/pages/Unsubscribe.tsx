@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Mail, CheckCircle2, AlertCircle, ArrowLeft, Shield, Leaf } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SEO } from "@/components/SEO";
@@ -17,6 +17,7 @@ import { trpc } from "@/lib/trpc";
 type UnsubState = "idle" | "loading" | "success" | "error";
 
 export default function Unsubscribe() {
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [state, setState] = useState<UnsubState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -31,24 +32,12 @@ export default function Unsubscribe() {
     },
   });
 
-  const unsubscribeByToken = trpc.newsletter.unsubscribeByToken.useMutation({
-    onSuccess: () => {
-      setState("success");
-    },
-    onError: (err) => {
-      setState("error");
-      setErrorMsg(err.message || "Something went wrong. Please try again.");
-    },
-  });
+  const tokenInUrl = new URLSearchParams(window.location.search).get("token");
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token");
-    if (!token) return;
-    setState("loading");
-    unsubscribeByToken.mutate({ token });
-    // One-shot from the signed email link.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!tokenInUrl) return;
+    setLocation(`/preferences?token=${encodeURIComponent(tokenInUrl)}`);
+  }, [setLocation, tokenInUrl]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +53,18 @@ export default function Unsubscribe() {
     setState("idle");
     setErrorMsg("");
   };
+
+  if (tokenInUrl) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#1e3a2a] to-[#0d2818]">
+        <SEO
+          title="Email preferences | ReGen Civics"
+          description="Opening your ReGen Civics email preferences."
+        />
+        <p className="text-white/70 text-sm text-center pt-24">Opening your email preferences.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#1e3a2a] to-[#0d2818]">

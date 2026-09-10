@@ -22,7 +22,7 @@ export function newsletterLegalFooterHtml(
   const postal = postalAddress.trim() || NEWSLETTER_POSTAL_ADDRESS;
   return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
     You are receiving this because you subscribed to the ReGen Civics newsletter.
-    <a href="${href}" style="color:#8a8a8a;">Unsubscribe</a> any time.<br/>
+    <a href="${href}" style="color:#8a8a8a;">Manage email preferences</a><br/>
     ${postal}
   </p>`;
 }

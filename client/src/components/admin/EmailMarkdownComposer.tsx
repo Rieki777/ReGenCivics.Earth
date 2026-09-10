@@ -145,7 +145,7 @@ export function EmailMarkdownComposer({
     body || "_Nothing to preview yet._",
     layout,
     variant === "newsletter"
-      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/unsubscribe", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
+      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
       : undefined,
   );
 
@@ -253,7 +253,7 @@ export function EmailMarkdownComposer({
             />
             <p className="text-xs text-[#1a472a]/70 mt-1">
               {variant === "newsletter"
-                ? "Markdown: **bold**, *italic*, lists, [links](https://), ## headings, ![images](https://assets.regencivics.earth/...). Insert Button puts a CTA on its own line. Preview includes the unsubscribe footer."
+                ? "Markdown: **bold**, *italic*, lists, [links](https://), ## headings, ![images](https://assets.regencivics.earth/...). Insert Button puts a CTA on its own line. Preview includes the email preferences footer."
                 : "Markdown: **bold**, *italic*, lists, [links](https://), ## headings. A link on its own line becomes a button in announcement layout. Tokens stay as {{name}}."}
             </p>
           </TabsContent>

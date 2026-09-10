@@ -136,7 +136,7 @@ export function AdminOutboundWrite() {
             Write a letter
           </CardTitle>
           <CardDescription>
-            Full markdown, CTA buttons, images from assets.regencivics.earth, and a preview with the unsubscribe footer.
+            Full markdown, CTA buttons, images from assets.regencivics.earth, and a preview with the email preferences footer.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

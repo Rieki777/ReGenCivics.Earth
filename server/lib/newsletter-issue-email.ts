@@ -95,12 +95,12 @@ export async function verifyUnsubscribeToken(token: string): Promise<string | nu
 }
 
 export function previewUnsubscribeUrl(): string {
-  return `${ENV.appUrl}/unsubscribe`;
+  return `${ENV.appUrl}/preferences`;
 }
 
 export async function signedUnsubscribeUrl(email: string): Promise<string> {
   const token = await buildUnsubscribeToken(email);
-  return `${ENV.appUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+  return `${ENV.appUrl}/preferences?token=${encodeURIComponent(token)}`;
 }
 
 function asLayout(value: string | null | undefined): LetterLayout {

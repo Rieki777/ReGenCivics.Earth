@@ -19,6 +19,9 @@ import {
   issueBodyHash,
   TOKEN_TTL_MS,
   parseIssueAudience,
+  previewUnsubscribeUrl,
+  signedUnsubscribeUrl,
+  verifyUnsubscribeToken,
 } from "./lib/newsletter-issue-email";
 import { markdownLetterDocument } from "../shared/letterHtml";
 
@@ -57,14 +60,28 @@ describe("parseIssueAudience", () => {
 });
 
 describe("newsletter preview footer", () => {
-  it("includes unsubscribe copy and a hosted image", () => {
+  it("includes a manage-preferences footer and a hosted image", () => {
     const html = markdownLetterDocument(
       "Hello\n\n![Hero](https://assets.regencivics.earth/hero.jpg)\n\n[Join](https://regencivics.earth/apply)",
       "announcement",
-      { unsubscribeUrl: `${ENV.appUrl}/unsubscribe`, postalAddress: "ReGen Civics Alliance, Ashland, Oregon, USA" },
+      { unsubscribeUrl: `${ENV.appUrl}/preferences`, postalAddress: "ReGen Civics Alliance, Ashland, Oregon, USA" },
     );
-    expect(html).toContain("Unsubscribe");
+    expect(html).toContain("Manage email preferences");
+    expect(html).toContain("/preferences");
+    expect(html).not.toContain(">Unsubscribe<");
     expect(html).toContain("<img");
     expect(html).toContain("Join");
+  });
+});
+
+describe("signed preference url", () => {
+  it("points at /preferences and round-trips the unsubscribe token", async () => {
+    expect(previewUnsubscribeUrl()).toMatch(/\/preferences$/);
+    const url = await signedUnsubscribeUrl("ada@example.org");
+    expect(url).toMatch(/\/preferences\?token=/);
+    expect(url).not.toContain("/unsubscribe");
+    const token = new URL(url).searchParams.get("token");
+    expect(token).toBeTruthy();
+    expect(await verifyUnsubscribeToken(token!)).toBe("ada@example.org");
   });
 });
