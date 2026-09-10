@@ -18,10 +18,12 @@ vi.mock("./_core/email", () => ({
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
 }));
 const subscribersMock = vi.fn().mockResolvedValue([
-  { email: "a@example.org" }, { email: "b@example.org" }, { email: "c@example.org" },
+  { email: "a@example.org", name: "A" }, { email: "b@example.org", name: "B" }, { email: "c@example.org", name: "C" },
 ]);
-vi.mock("./db/newsletter", () => ({
-  getActiveNewsletterSubscribers: () => subscribersMock(),
+vi.mock("./lib/emailPrefs", () => ({
+  audienceForTopic: () => subscribersMock(),
+  managePreferencesUrl: async (email: string) => `https://example.test/email-preferences?token=t&e=${encodeURIComponent(email)}`,
+  previewManagePreferencesUrl: () => "https://example.test/email-preferences?mute=seasonal",
 }));
 vi.mock("./_core/llm", () => ({
   invokeLLM: vi.fn().mockResolvedValue({
@@ -74,6 +76,8 @@ describe("send gates (no DB needed)", () => {
   it("preview binds the token to the current text", async () => {
     const preview = await buildSendPreview({ id: 5, channel: "newsletter", status: "edited", body: "Subject line\n\nBody text." });
     expect(preview.recipientCount).toBe(3);
+    expect(preview.html).toContain("Manage email preferences");
+    expect(preview.html).not.toMatch(/>Unsubscribe</);
     const payload = verifyConfirmToken(preview.confirmToken)!;
     const { subject, text } = splitSubject("Subject line\n\nBody text.");
     expect(payload.hash).toBe(bodyHash(subject, text));
@@ -135,7 +139,10 @@ describe("confirmed send (DB)", () => {
       idempotencyKey: key,
     });
     expect(sent.recipientCount).toBe(3);
-    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock).toHaveBeenCalledTimes(3);
+    const firstHtml = String(sendEmailMock.mock.calls[0][0].html);
+    expect(firstHtml).toContain("Manage email preferences");
+    expect(firstHtml).not.toMatch(/>Unsubscribe</);
 
     // Double-click with the same idempotency key: no-op, nothing re-sent.
     sendEmailMock.mockClear();
