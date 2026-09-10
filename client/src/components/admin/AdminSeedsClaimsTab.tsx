@@ -208,15 +208,10 @@ export function SeedsClaimDetail({
       </div>
 
       {claim.isDispute && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" />
-            <div className="min-w-0">
-              <h4 className="font-medium text-amber-900 text-sm">Dispute flagged</h4>
-              <p className="text-sm text-amber-800 mt-1 whitespace-pre-wrap">
-                {claim.disputeReason || "No explanation was provided."}
-              </p>
-            </div>
+            <h4 className="font-medium text-amber-900 text-sm">This claim is a dispute</h4>
           </div>
         </div>
       )}
