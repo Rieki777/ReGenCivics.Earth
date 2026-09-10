@@ -1,7 +1,7 @@
 /**
  * Outbound Write: newsletter composer, audience, preview confirm, send.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -22,6 +22,12 @@ import {
   isNewsletterEmailTemplateRow,
   type LetterLayout,
 } from "@shared/letterLayout";
+import {
+  OUTBOUND_WRITE_FILL_EVENT,
+  clearOutboundWriteFill,
+  consumeOutboundWriteFill,
+  type OutboundWriteFill,
+} from "@shared/outboundWriteFill";
 
 const NEWSLETTER_BUILTINS = [{ id: "nl_blank", label: "Blank letter" }];
 
@@ -66,6 +72,30 @@ export function AdminOutboundWrite() {
   const audienceLabel = source === "all"
     ? "active subscribers"
     : `active ${newsletterSourceLabel(source)} subscribers`;
+
+  const applyFill = (fill: OutboundWriteFill) => {
+    if (!fill.subject?.trim() && !fill.body?.trim() && !fill.layout) return;
+    if (fill.subject !== undefined) setSubject(fill.subject);
+    if (fill.body !== undefined) setBody(fill.body);
+    if (fill.layout) setLayout(fill.layout);
+    setPreview(null);
+    toast.success("Draft loaded from the assistant.");
+  };
+
+  useEffect(() => {
+    const pending = consumeOutboundWriteFill();
+    if (pending) applyFill(pending);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<OutboundWriteFill>).detail;
+      if (!detail) return;
+      clearOutboundWriteFill();
+      applyFill(detail);
+    };
+    window.addEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    return () => window.removeEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    // Mount-only: pending fill + live assistant events.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadTemplate = (key: string) => {
     setTemplateKey(key);
@@ -186,6 +216,8 @@ export function AdminOutboundWrite() {
             onBodyChange={(v) => { setBody(v); setPreview(null); }}
             onLayoutChange={(v) => { setLayout(v); setPreview(null); }}
             variant="newsletter"
+            subjectId="outbound-write-subject"
+            bodyId="outbound-write-body"
             minHeightClass="min-h-[240px]"
           />
 
@@ -276,6 +308,7 @@ export function AdminOutboundWrite() {
           setBody(draft.body);
           if (draft.layout) setLayout(draft.layout);
           setPreview(null);
+          toast.success("Draft applied. Review it, then use Preview send.");
         }}
       />
     </div>

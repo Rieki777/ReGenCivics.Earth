@@ -101,10 +101,21 @@ describe("AdminAIAssistant FAB", () => {
     expect(screen.queryByText("Who needs follow-up today?")).toBeNull();
   });
 
-  it("keeps pipeline starters on Outbound Write", () => {
-    render(<AdminAIAssistant context={{ activeTab: "outbound", outboundSurface: "write" }} />);
+  it("keeps pipeline starters on Outbound People", () => {
+    render(<AdminAIAssistant context={{ activeTab: "outbound", outboundSurface: "people" }} />);
     fireEvent.click(fab());
     expect(screen.getByText("Who needs follow-up today?")).toBeDefined();
+    expect(screen.queryByText("Draft a post from the ripest Harvest idea")).toBeNull();
+    expect(screen.queryByText("Draft a letter into Write about this week's Harvest.")).toBeNull();
+  });
+
+  it("offers Write compose starters on Outbound Write", () => {
+    render(<AdminAIAssistant context={{ activeTab: "outbound", outboundSurface: "write" }} />);
+    fireEvent.click(fab());
+    expect(screen.getByText(/You're on Write/)).toBeDefined();
+    expect(screen.getByText("Draft a letter into Write about this week's Harvest.")).toBeDefined();
+    expect(screen.getByText("Fill the Write composer with a short announcement.")).toBeDefined();
+    expect(screen.queryByText("Who needs follow-up today?")).toBeNull();
     expect(screen.queryByText("Draft a post from the ripest Harvest idea")).toBeNull();
   });
 });
