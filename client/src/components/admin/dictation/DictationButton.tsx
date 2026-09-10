@@ -4,9 +4,9 @@
  * Click toggles listening. Press and hold to talk; release to stop.
  * Inserts at the caret. Never attach this to a password or credential field.
  *
- * Wired today: Harvest Compose, the admin AI chatbot, and Broadcast Message.
- * Outbound email compose should import this same button rather than growing
- * its own mic.
+ * Wired today: Harvest Compose, the admin AI chatbot, Broadcast Message,
+ * and the Write with me email partner. Outbound email body compose should
+ * import this same button rather than growing its own mic.
  */
 import { useEffect, useRef, type PointerEvent, type RefObject } from "react";
 import { Mic, MicOff } from "lucide-react";

@@ -13,6 +13,7 @@ import { InquirySection } from "@/components/admin/AdminInquirySection";
 import { AdminEventAnalytics } from "@/components/AdminEventAnalytics";
 import { AdminAIAssistant } from "@/components/AdminAIAssistant";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
+import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { DictationButton } from "@/components/admin/dictation";
 
 export type Story = {
@@ -223,6 +224,22 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="max-w-3xl">
         <ComposeBox onComposed={() => undefined} />
+      </div>
+    ),
+  },
+
+  "email-draft-agent": {
+    title: "Write with me chat input with the shared dictation mic",
+    render: () => (
+      <div className="max-w-xl">
+        <EmailDraftAgent
+          currentSubject="Season update"
+          currentBody="Friends,"
+          statusLabel="all subscribers"
+          recipientCount={12}
+          variant="newsletter"
+          onApply={() => undefined}
+        />
       </div>
     ),
   },

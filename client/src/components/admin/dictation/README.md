@@ -42,6 +42,7 @@ hook inserts at the caret (or appends) and never replaces the whole field.
 - Harvest Compose idea box (`ComposeBox` in `client/src/components/HarvestCompose.tsx`)
 - ReGen AI Assistant chat input (`client/src/components/AdminAIAssistant.tsx`)
 - Broadcast Message field (`AdminBroadcastPanel` in `client/src/components/AdminBroadcastPanel.tsx`)
+- Write with me chat input (`EmailDraftAgent` in `client/src/components/admin/EmailDraftAgent.tsx`), used by Outbound Write and Applications status email
 
 If Broadcast also drafts through the ReGen AI Assistant compose box, that input
 already has the mic. Do not grow a parallel assistant.
