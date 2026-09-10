@@ -21,6 +21,7 @@ import {
   Navigation, Mail, Search, User, Minimize2, Maximize2, StickyNote
 } from "lucide-react";
 import { HarvestNoteComposer } from "./HarvestNoteComposer";
+import { DictationButton } from "@/components/admin/dictation";
 import { isAdminRole } from "@shared/adminRole";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 
@@ -449,6 +450,14 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
               placeholder="Ask anything about your admin data..."
               className="min-h-[40px] max-h-[100px] resize-none text-sm border-[#4a7c59]/30 focus-visible:ring-[#7dd87d] rounded-xl py-2"
               rows={1}
+            />
+            <DictationButton
+              value={input}
+              onChange={setInput}
+              targetRef={inputRef}
+              label="Dictate message"
+              className="h-10 w-10"
+              errorAlign="end"
             />
             <Button
               onClick={() => sendMessage()}
