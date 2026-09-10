@@ -3,9 +3,9 @@
  * Styles stay on the tags because email clients ignore stylesheets.
  */
 import sanitizeHtml from "sanitize-html";
-import { brandedLetterDocument } from "../../shared/letterHtml";
+import { brandedLetterDocument, newsletterLegalFooterHtml, type LetterDocumentExtras } from "../../shared/letterHtml";
 import type { LetterLayout } from "../../shared/letterLayout";
-import { markdownToEmailHtml, wrapEmailHtml } from "../../shared/emailMarkdown";
+import { EMAIL_IMAGE_HOSTS, markdownToEmailHtml, wrapEmailHtml } from "../../shared/emailMarkdown";
 
 const EMAIL_SANITIZE: sanitizeHtml.IOptions = {
   allowedTags: [
@@ -32,11 +32,7 @@ const EMAIL_SANITIZE: sanitizeHtml.IOptions = {
       const src = attribs.src || "";
       try {
         const host = new URL(src).hostname;
-        if (
-          host === "regencivics.earth" ||
-          host === "www.regencivics.earth" ||
-          host === "assets.regencivics.earth"
-        ) {
+        if ((EMAIL_IMAGE_HOSTS as readonly string[]).includes(host)) {
           return { tagName: "img", attribs };
         }
       } catch {
@@ -54,10 +50,24 @@ export function sanitizeEmailHtml(html: string): string {
 export function emailDocumentFromMarkdown(
   markdown: string,
   layout: LetterLayout = "plain",
+  extras?: LetterDocumentExtras,
 ): string {
   const inner = sanitizeEmailHtml(markdownToEmailHtml(markdown, layout));
-  if (layout === "plain") return wrapEmailHtml(inner);
-  return brandedLetterDocument(inner, layout);
+  if (layout === "plain") {
+    const legal = extras?.unsubscribeUrl
+      ? newsletterLegalFooterHtml(extras.unsubscribeUrl, extras.postalAddress)
+      : "";
+    return wrapEmailHtml(inner, legal);
+  }
+  return brandedLetterDocument(inner, layout, extras);
+}
+
+export function emailDocumentFromNewsletterMarkdown(
+  markdown: string,
+  layout: LetterLayout,
+  extras: LetterDocumentExtras,
+): string {
+  return emailDocumentFromMarkdown(markdown, layout, extras);
 }
 
 /** Legacy newline-to-paragraph path used before markdown composers. */

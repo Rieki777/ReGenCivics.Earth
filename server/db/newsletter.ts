@@ -7,9 +7,11 @@
  * `import { ... } from "./db"` keeps working, and let typecheck prove the
  * move. Follow server/db/tokens.ts for anything that needs transactions.
  */
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { InsertNewsletterSubscriber, newsletterSubscribers } from "../../drizzle/schema";
 import { getDb } from "../db";
+
+type NewsletterSource = NonNullable<InsertNewsletterSubscriber["source"]>;
 
 export async function createNewsletterSubscriber(data: InsertNewsletterSubscriber) {
   const db = await getDb();
@@ -21,12 +23,7 @@ export async function createNewsletterSubscriber(data: InsertNewsletterSubscribe
     .limit(1);
 
   if (existing.length > 0) {
-    // Update existing subscriber to active if they were inactive
-    if (existing[0].isActive === 0) {
-      await db.update(newsletterSubscribers)
-        .set({ isActive: 1, source: data.source })
-        .where(eq(newsletterSubscribers.id, existing[0].id));
-    }
+    // Double opt-in: only newsletter.confirm (JWT) sets isActive=1.
     return existing[0].id;
   }
 
@@ -58,6 +55,22 @@ export async function getActiveNewsletterSubscribers() {
 
   return db.select().from(newsletterSubscribers)
     .where(eq(newsletterSubscribers.isActive, 1))
+    .orderBy(desc(newsletterSubscribers.createdAt));
+}
+
+/** Active subscribers only. Optional source filter for Outbound issues. */
+export async function getNewsletterAudience(opts?: { sources?: string[] }) {
+  const db = await getDb();
+  if (!db) return [];
+  const sources = (opts?.sources ?? []).filter((s): s is NewsletterSource => Boolean(s) && s !== "all");
+  if (sources.length === 0) {
+    return getActiveNewsletterSubscribers();
+  }
+  return db.select().from(newsletterSubscribers)
+    .where(and(
+      eq(newsletterSubscribers.isActive, 1),
+      inArray(newsletterSubscribers.source, sources),
+    ))
     .orderBy(desc(newsletterSubscribers.createdAt));
 }
 

@@ -12,10 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   applyMarkdownLinePrefix,
   applyMarkdownWrap,
+  insertMarkdownBlock,
+  safeImageSrc,
 } from "@shared/emailMarkdown";
 import { markdownLetterDocument } from "@shared/letterHtml";
-import type { LetterLayout } from "@shared/letterLayout";
-import { Bold, CornerDownRight, Heading2, Italic, Link, List, ListOrdered, Quote } from "lucide-react";
+import { NEWSLETTER_POSTAL_ADDRESS, type LetterLayout } from "@shared/letterLayout";
+import { Bold, CornerDownRight, Heading2, ImagePlus, Italic, Link, List, ListOrdered, Minus, Quote, RectangleHorizontal } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { SmartImagePicker } from "@/components/SmartImagePicker";
 
 export const EMAIL_FIELD_CLASS =
   "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]/30";
@@ -35,6 +40,8 @@ interface Props {
   showSubject?: boolean;
   showLayout?: boolean;
   minHeightClass?: string;
+  variant?: "application" | "newsletter";
+  unsubscribeUrl?: string;
 }
 
 export function EmailMarkdownComposer({
@@ -49,9 +56,17 @@ export function EmailMarkdownComposer({
   showSubject = true,
   showLayout = true,
   minHeightClass = "min-h-[180px]",
+  variant = "application",
+  unsubscribeUrl,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [tab, setTab] = useState("write");
+  const [ctaOpen, setCtaOpen] = useState(false);
+  const [ctaLabel, setCtaLabel] = useState("Read more");
+  const [ctaHref, setCtaHref] = useState("https://regencivics.earth/");
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
 
   const applyWrap = (before: string, after: string, placeholder: string) => {
     const el = textareaRef.current;
@@ -94,7 +109,45 @@ export function EmailMarkdownComposer({
     applyWrap("[", `](${href.trim()})`, "link text");
   };
 
-  const previewHtml = markdownLetterDocument(body || "_Nothing to preview yet._", layout);
+  const insertBlock = (block: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      onBodyChange(body ? `${body}\n\n${block}` : block);
+      return;
+    }
+    const result = insertMarkdownBlock(el.value, el.selectionStart, block);
+    onBodyChange(result.value);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  };
+
+  const confirmCta = () => {
+    const href = ctaHref.trim();
+    const label = ctaLabel.trim() || "Read more";
+    if (!href) return;
+    insertBlock(`[${label}](${href})`);
+    setCtaOpen(false);
+  };
+
+  const confirmImage = () => {
+    const src = safeImageSrc(imageUrl.trim());
+    if (!src) return;
+    const alt = imageAlt.trim() || "Image";
+    insertBlock(`![${alt}](${src})`);
+    setImageOpen(false);
+    setImageUrl("");
+    setImageAlt("");
+  };
+
+  const previewHtml = markdownLetterDocument(
+    body || "_Nothing to preview yet._",
+    layout,
+    variant === "newsletter"
+      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
+      : undefined,
+  );
 
   return (
     <div className="space-y-3 apply-form-dark">
@@ -171,6 +224,21 @@ export function EmailMarkdownComposer({
                 <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("> ")} aria-label="Quote">
                   <Quote className="w-3.5 h-3.5" />
                 </button>
+                {variant === "newsletter" && (
+                  <>
+                    <button type="button" className={TOOLBAR_BTN} onClick={() => insertBlock("---")} aria-label="Horizontal rule">
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" className={TOOLBAR_BTN} onClick={() => setCtaOpen(true)} aria-label="Insert button">
+                      <RectangleHorizontal className="w-3.5 h-3.5" />
+                      <span className="ml-1 hidden sm:inline">Button</span>
+                    </button>
+                    <button type="button" className={TOOLBAR_BTN} onClick={() => setImageOpen(true)} aria-label="Insert image">
+                      <ImagePlus className="w-3.5 h-3.5" />
+                      <span className="ml-1 hidden sm:inline">Image</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -184,7 +252,9 @@ export function EmailMarkdownComposer({
               placeholder="Write markdown. Use {{name}}, {{email}}, and {{projectName}}."
             />
             <p className="text-xs text-[#1a472a]/70 mt-1">
-              Markdown: **bold**, *italic*, lists, [links](https://), ## headings. A link on its own line becomes a button in announcement layout. Tokens stay as {"{{name}}"}.
+              {variant === "newsletter"
+                ? "Markdown: **bold**, *italic*, lists, [links](https://), ## headings, ![images](https://assets.regencivics.earth/...). Insert Button puts a CTA on its own line. Preview includes the email preferences footer."
+                : "Markdown: **bold**, *italic*, lists, [links](https://), ## headings. A link on its own line becomes a button in announcement layout. Tokens stay as {{name}}."}
             </p>
           </TabsContent>
           <TabsContent value="preview" className="mt-2">
@@ -199,6 +269,65 @@ export function EmailMarkdownComposer({
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={ctaOpen} onOpenChange={setCtaOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#1a472a]">Insert a button</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="cta-label" className="text-[#1a472a]">Label</Label>
+              <Input id="cta-label" value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} className={EMAIL_FIELD_CLASS} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cta-href" className="text-[#1a472a]">URL</Label>
+              <Input id="cta-href" value={ctaHref} onChange={(e) => setCtaHref(e.target.value)} className={EMAIL_FIELD_CLASS} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCtaOpen(false)}>Cancel</Button>
+            <Button type="button" className="bg-[#4a7c59] hover:bg-[#3d6849] text-white" onClick={confirmCta}>
+              Insert button
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={imageOpen} onOpenChange={setImageOpen}>
+        <DialogContent className="bg-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-[#1a472a]">Insert an image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <SmartImagePicker
+              value={imageUrl}
+              onChange={setImageUrl}
+              label="Image"
+              theme="light"
+              context="blog"
+            />
+            <p className="text-xs text-[#1a472a]/70">
+              Hosts stay on assets.regencivics.earth. Other URLs will not render in the sent letter.
+            </p>
+            <div className="space-y-1">
+              <Label htmlFor="image-alt" className="text-[#1a472a]">Alt text</Label>
+              <Input id="image-alt" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} className={EMAIL_FIELD_CLASS} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setImageOpen(false)}>Cancel</Button>
+            <Button
+              type="button"
+              className="bg-[#4a7c59] hover:bg-[#3d6849] text-white"
+              disabled={!safeImageSrc(imageUrl.trim())}
+              onClick={confirmImage}
+            >
+              Insert image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

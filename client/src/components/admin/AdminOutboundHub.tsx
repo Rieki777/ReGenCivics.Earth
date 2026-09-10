@@ -1,12 +1,12 @@
 /**
  * Outbound hub: email + social in one admin section.
- * PR1 is the shell. Write / Templates / Sent are empty until the send PR.
  */
 import { useMemo, useState } from "react";
 import { Mail, Radio, Users, FileText, Send, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
+import { AdminOutboundWrite } from "@/components/admin/AdminOutboundWrite";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,7 +76,7 @@ export function AdminOutboundHub({
         })}
       </div>
 
-      {surface === "write" && <WriteStub />}
+      {surface === "write" && <AdminOutboundWrite />}
       {surface === "social" && <AdminBroadcastPanel />}
       {surface === "people" && <PeoplePanel />}
       {surface === "templates" && <TemplatesStub />}
@@ -85,40 +85,9 @@ export function AdminOutboundHub({
   );
 }
 
-function WriteStub() {
-  return (
-    <Card className="bg-white border-2 border-[#1a472a]/10">
-      <CardHeader>
-        <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-          Write a letter
-        </CardTitle>
-        <CardDescription>
-          Compose a newsletter to subscribers here. Sending ships in the next update.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-xl border border-dashed border-[#1a472a]/20 bg-[#f8f5f0] p-6 text-sm text-[#1a472a]/80 space-y-2">
-          <p>
-            The composer will take full markdown: headings, bold, italic, lists, links,
-            blockquotes, horizontal rules, and images from assets.regencivics.earth.
-          </p>
-          <p>
-            Insert a CTA button as its own control. Insert an image the same way.
-            Preview the letter with buttons, images, and the unsubscribe footer before
-            anything goes out.
-          </p>
-          <p>
-            An AI writing partner can draft a letter, add a button, drop in a hero
-            image, or shorten copy for an exit-intent segment.
-          </p>
-          <p>The send button stays off until that path is ready.</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function TemplatesStub() {
+  const savedQuery = trpc.email.getCustomTemplates.useQuery();
+  const letters = (savedQuery.data ?? []).filter((row) => row.kind === "newsletter" && row.bodyFormat === "markdown");
   return (
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
@@ -126,17 +95,31 @@ function TemplatesStub() {
           Newsletter templates
         </CardTitle>
         <CardDescription>
-          Saved Outbound letters live here: full markdown layouts with CTA buttons and images.
+          Saved Outbound letters: full markdown layouts with CTA buttons and images.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-[#1a472a]/80">No newsletter templates yet.</p>
+        {savedQuery.isLoading ? (
+          <Loader2 className="w-6 h-6 animate-spin text-[#7dd87d]" />
+        ) : letters.length === 0 ? (
+          <p className="text-sm text-[#1a472a]/80">No newsletter templates yet. Save one from Write.</p>
+        ) : (
+          <ul className="space-y-2">
+            {letters.map((row) => (
+              <li key={row.templateKey} className="rounded-lg border border-[#1a472a]/10 p-3">
+                <p className="font-medium text-[#1a472a]">{row.label || row.templateKey}</p>
+                <p className="text-xs text-[#1a472a]/70">{row.customSubject || "No subject"}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 function SentStub() {
+  const issues = trpc.outbound.listIssues.useQuery();
   return (
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
@@ -144,11 +127,27 @@ function SentStub() {
           Sent issues
         </CardTitle>
         <CardDescription>
-          Each letter you send will show here with recipient counts and status.
+          Each letter you send shows here with recipient counts and status.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-[#1a472a]/80">Nothing sent from Outbound yet.</p>
+        {issues.isLoading ? (
+          <Loader2 className="w-6 h-6 animate-spin text-[#7dd87d]" />
+        ) : !issues.data?.length ? (
+          <p className="text-sm text-[#1a472a]/80">Nothing sent from Outbound yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {issues.data.map((row) => (
+              <li key={row.id} className="rounded-lg border border-[#1a472a]/10 p-3">
+                <p className="font-medium text-[#1a472a]">{row.subject}</p>
+                <p className="text-xs text-[#1a472a]/70">
+                  {row.status} · {row.sentCount}/{row.recipientCount} sent
+                  {row.failedCount ? ` · ${row.failedCount} failed` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );

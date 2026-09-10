@@ -351,6 +351,7 @@ export {
   getNewsletterSubscriberByEmail,
   getAllNewsletterSubscribers,
   getActiveNewsletterSubscribers,
+  getNewsletterAudience,
   getRecordingSubscribers,
   unsubscribeNewsletter,
   activateNewsletterSubscriber,
@@ -1919,6 +1920,7 @@ export async function upsertCustomTemplate(data: {
   bodyFormat?: string;
   layout?: string | null;
   label?: string | null;
+  kind?: string;
 }): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -1932,6 +1934,7 @@ export async function upsertCustomTemplate(data: {
       bodyFormat: data.bodyFormat ?? "html",
       layout: data.layout ?? null,
       label: data.label ?? null,
+      kind: data.kind ?? "application",
     }).onDuplicateKeyUpdate({
       set: {
         customSubject: data.customSubject ?? null,
@@ -1941,6 +1944,7 @@ export async function upsertCustomTemplate(data: {
         bodyFormat: data.bodyFormat ?? "html",
         layout: data.layout ?? null,
         label: data.label ?? null,
+        kind: data.kind ?? "application",
       },
     });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markdownToEmailHtml, wrapEmailHtml, markdownEmailDocument, applyMarkdownWrap, applyMarkdownLinePrefix } from "@shared/emailMarkdown";
+import { markdownToEmailHtml, wrapEmailHtml, markdownEmailDocument, applyMarkdownWrap, applyMarkdownLinePrefix, insertMarkdownBlock } from "@shared/emailMarkdown";
 
 describe("markdownToEmailHtml", () => {
   it("turns paragraphs and line breaks into styled paragraphs", () => {
@@ -62,6 +62,30 @@ describe("markdownToEmailHtml", () => {
     expect(html).toContain("<hr");
   });
 
+  it("renders a hosted image on its own line", () => {
+    const html = markdownToEmailHtml(
+      "Hello\n\n![Forest path](https://assets.regencivics.earth/forest.jpg)\n\nThanks.",
+    );
+    expect(html).toContain('<img src="https://assets.regencivics.earth/forest.jpg"');
+    expect(html).toContain('alt="Forest path"');
+  });
+
+  it("drops images from hosts outside the allowlist", () => {
+    const html = markdownToEmailHtml("![nope](https://evil.example/x.png)");
+    expect(html).not.toContain("<img");
+    expect(html).toContain("nope");
+  });
+
+  it("keeps a CTA button in announcement layout next to an image", () => {
+    const html = markdownToEmailHtml(
+      "![Hero](https://assets.regencivics.earth/hero.jpg)\n\n[Join the stream](https://regencivics.earth/apply)",
+      "announcement",
+    );
+    expect(html).toContain("<img");
+    expect(html).toContain('bgcolor="#4a7c59"');
+    expect(html).toContain("Join the stream");
+  });
+
   it("escapes raw HTML", () => {
     const html = markdownToEmailHtml("Hi <script>alert(1)</script> {{projectName}}");
     expect(html).not.toContain("<script>");
@@ -103,5 +127,13 @@ describe("applyMarkdownLinePrefix", () => {
   it("prefixes the current line", () => {
     const out = applyMarkdownLinePrefix("Hi\nnext", 4, "## ");
     expect(out.value).toBe("Hi\n## next");
+  });
+});
+
+describe("insertMarkdownBlock", () => {
+  it("inserts a CTA on its own lines", () => {
+    const out = insertMarkdownBlock("Hello", 5, "[Join](https://regencivics.earth/)");
+    expect(out.value).toContain("[Join](https://regencivics.earth/)");
+    expect(out.value.startsWith("Hello\n")).toBe(true);
   });
 });
