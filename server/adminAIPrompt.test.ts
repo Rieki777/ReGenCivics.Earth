@@ -52,6 +52,8 @@ describe("OUTBOUND_WRITE_ASSISTANT_BLOCK", () => {
   it("tells the FAB to fill Write and never send", () => {
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain("You cannot send email");
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain("Preview send");
+    expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain("Apply to draft");
+    expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain("Write with me");
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain(OUTBOUND_WRITE_COMPOSE_EXAMPLE);
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain('"tab":"outbound"');
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain('"surface":"write"');

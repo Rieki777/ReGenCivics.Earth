@@ -24,7 +24,7 @@ import { HarvestNoteComposer } from "./HarvestNoteComposer";
 import { DictationButton } from "@/components/admin/dictation";
 import { isAdminRole } from "@shared/adminRole";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
-import { isOutboundWriteSurface } from "@shared/outboundWriteFill";
+import { isOutboundWriteComposeAction, isOutboundWriteSurface } from "@shared/outboundWriteFill";
 
 export interface AdminAIContext {
   activeTab?: string;
@@ -209,6 +209,8 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
       });
       const { clean, actions } = parseActions(response.content);
       setMessages(prev => [...prev, { role: "assistant", content: clean, actions }]);
+      const writeFill = actions.find((a) => isOutboundWriteComposeAction(a));
+      if (writeFill) onAction?.(writeFill);
     } catch {
       setMessages(prev => [...prev, {
         role: "assistant",
@@ -363,7 +365,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       {isBroadcastComposeSurface(context?.activeTab, context?.outboundSurface)
                         ? "You're on Social. I can draft social copy from The Harvest in Rye's voice. Ask for a post, or tap Draft with Harvest on the compose form."
                         : isOutboundWriteSurface(context?.activeTab, context?.outboundSurface)
-                          ? "You're on Write. I can put a letter in the composer. Send stays on Preview send, then Confirm."
+                          ? "You're on Write. I can put a letter in the composer. Send stays on Preview send, then Confirm, or Apply to draft on Write with me."
                           : "Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?"}
                     </div>
                   </div>
