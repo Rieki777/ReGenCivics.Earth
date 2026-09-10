@@ -18,6 +18,7 @@ import { AdminCustomGameWaitlist, AdminCustomGameApplications } from "@/componen
 import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
+import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 import { writeAdminContinueFromTab, type AdminHrefExtras } from "@/lib/adminNav";
 import { InquirySection } from "@/components/admin/AdminInquirySection";
 
@@ -126,6 +127,13 @@ function AdminDashboard() {
   function handleAIAction(action: AdminAIAction) {
     if (action.type === "navigate" && action.tab) {
       setActiveTab(action.tab);
+    } else if (action.type === "compose" && action.tab === "broadcast") {
+      const fill = action.body || action.subject;
+      if (fill) {
+        try { sessionStorage.setItem("broadcast_fill_pending", fill); } catch { /* private mode */ }
+        window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: fill } }));
+      }
+      setActiveTab("broadcast");
     } else if (action.type === "search" && action.query) {
       setInvestorSearch(action.query);
       setActiveTab("investors");

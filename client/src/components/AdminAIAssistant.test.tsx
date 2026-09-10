@@ -77,4 +77,12 @@ describe("AdminAIAssistant FAB", () => {
     fireEvent.click(fab());
     expect(screen.queryByLabelText("Add a note")).toBeNull();
   });
+
+  it("offers Harvest draft starters when viewing Broadcast", () => {
+    render(<AdminAIAssistant context={{ activeTab: "broadcast" }} />);
+    fireEvent.click(fab());
+    expect(screen.getByText(/You're on Broadcast/)).toBeDefined();
+    expect(screen.getByText("Draft a post from the ripest Harvest idea")).toBeDefined();
+    expect(screen.queryByText("Who needs follow-up today?")).toBeNull();
+  });
 });

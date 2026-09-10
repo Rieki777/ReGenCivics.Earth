@@ -38,6 +38,7 @@ export interface AdminAIAction {
   tab?: string;
   to?: string;
   subject?: string;
+  body?: string;
   query?: string;
   contactEmail?: string;
   /** For execute/undo: the registry action id + its input. */
@@ -83,6 +84,16 @@ const STARTERS = [
   "Draft a welcome email for new inquiries",
   "Which applications are overdue for review?",
 ];
+
+const BROADCAST_STARTERS = [
+  "Draft a post from the ripest Harvest idea",
+  "Write a short X post in my voice",
+  "Make a LinkedIn version of this",
+];
+
+function startersFor(tab?: string): string[] {
+  return tab === "broadcast" ? BROADCAST_STARTERS : STARTERS;
+}
 
 export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const [open, setOpen] = useState(false);
@@ -326,11 +337,13 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       <Bot className="w-4 h-4 text-[#7dd87d]" />
                     </div>
                     <div className="bg-[#f0ebe3] rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-[#1a472a] max-w-[280px]">
-                      Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?
+                      {context?.activeTab === "broadcast"
+                        ? "You're on Broadcast. I can draft social copy from The Harvest in Rye's voice. Ask for a post, or tap Draft with Harvest on the compose form."
+                        : "Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?"}
                     </div>
                   </div>
                   <div className="pl-9 flex flex-wrap gap-1.5">
-                    {STARTERS.map(s => (
+                    {startersFor(context?.activeTab).map(s => (
                       <button
                         key={s}
                         onClick={() => sendMessage(s)}
