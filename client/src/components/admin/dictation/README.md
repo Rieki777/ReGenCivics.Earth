@@ -36,28 +36,15 @@ hook inserts at the caret (or appends) and never replaces the whole field.
 
 - Harvest Compose idea box (`ComposeBox` in `client/src/components/HarvestCompose.tsx`)
 - ReGen AI Assistant chat input (`client/src/components/AdminAIAssistant.tsx`)
+- Broadcast Message field (`AdminBroadcastPanel` in `client/src/components/AdminBroadcastPanel.tsx`)
 
-## Next consumers (second PR, same import)
+If Broadcast also drafts through the ReGen AI Assistant compose box, that input
+already has the mic. Do not grow a parallel assistant.
 
-Do not add a second mic stack. Do not add a Broadcast Voice tab or an Outbound
-dictation tab. Import `DictationButton` next to the existing field.
+## Next consumers (same import)
 
-### Broadcast Voice Message field
-
-`client/src/components/AdminBroadcastPanel.tsx`, the Message textarea (`text` /
-`setText`, placeholder "What do you want to share?"). Add a `useRef` on that
-textarea and place the button beside the label or in the compose row:
-
-```tsx
-const messageRef = useRef<HTMLTextAreaElement>(null);
-
-<Label>Message</Label>
-<Textarea ref={messageRef} value={text} onChange={(e) => setText(e.target.value)} />
-<DictationButton value={text} onChange={setText} targetRef={messageRef} label="Dictate message" />
-```
-
-If Broadcast Voice also drafts through the ReGen AI Assistant compose box,
-that input already has the mic. Do not grow a parallel assistant.
+Do not add a second mic stack. Do not add an Outbound dictation tab. Import
+`DictationButton` next to the existing field.
 
 ### Outbound email body / Applications letter composer
 

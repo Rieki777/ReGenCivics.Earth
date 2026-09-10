@@ -11,6 +11,7 @@ import { AdminAllianceTab } from "@/components/admin/AdminAllianceTab";
 import { InquirySection } from "@/components/admin/AdminInquirySection";
 import { AdminEventAnalytics } from "@/components/AdminEventAnalytics";
 import { AdminAIAssistant } from "@/components/AdminAIAssistant";
+import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 
 export type Story = {
   title: string;
@@ -210,6 +211,21 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="relative min-h-[560px]">
         <AdminAIAssistant context={{ activeTab: "overview" }} />
+      </div>
+    ),
+  },
+
+  "broadcast-message": {
+    title: "Broadcast Message field with the shared dictation mic",
+    setup: () => {
+      mockData["admin.broadcast.getBufferProfiles"] = [
+        { id: "tw", service: "twitter", service_username: "regencivics", formatted_username: "@regencivics" },
+        { id: "li", service: "linkedin", service_username: "regencivics", formatted_username: "ReGen Civics" },
+      ];
+    },
+    render: () => (
+      <div className="max-w-3xl p-4">
+        <AdminBroadcastPanel />
       </div>
     ),
   },

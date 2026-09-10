@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Send, Radio, Clock, Eye, CheckCircle2, XCircle, Loader2, AlertTriangle, Sparkles, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { DictationButton } from "@/components/admin/dictation";
 import {
   BROADCAST_CHANNELS,
   BROADCAST_FILL_EVENT,
@@ -69,6 +70,7 @@ function saveChannels(channels: string[]) {
 
 export function AdminBroadcastPanel() {
   const [text, setText] = useState("");
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>(loadSavedChannels);
@@ -328,6 +330,7 @@ export function AdminBroadcastPanel() {
             <Label className="text-[#1a472a] font-medium">Message</Label>
             <div className="relative">
               <Textarea
+                ref={messageRef}
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder="What do you want to share?"
@@ -348,6 +351,12 @@ export function AdminBroadcastPanel() {
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <DictationButton
+                value={text}
+                onChange={setText}
+                targetRef={messageRef}
+                label="Dictate message"
+              />
               <Button
                 type="button"
                 variant="outline"
