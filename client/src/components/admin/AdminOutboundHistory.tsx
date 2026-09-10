@@ -2,7 +2,8 @@
  * Outbound History: letters sent and scheduled, with Resend/email_logs stats.
  */
 import { useMemo, useState } from "react";
-import { History, Loader2 } from "lucide-react";
+import { History, Loader2, Download } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,8 +24,11 @@ import {
   audienceToWriteSource,
   formatPacificDateTime,
   formatPercent,
+  historyCsvFilename,
+  historyRecipientsCsv,
   pickHistoryBanner,
   type HistoryListItem,
+  type HistoryRecipientRow,
 } from "@shared/outboundHistory";
 import type { OutboundWritePrefill } from "@/components/admin/AdminOutboundWrite";
 
@@ -33,6 +37,22 @@ function statusChipClass(label: string): string {
   if (label === "Partial") return "border-amber-300 bg-amber-50 text-amber-900";
   if (label === "Sent") return "border-[#7dd87d] bg-[#7dd87d]/25 text-[#1a472a]";
   return "border-[#1a472a]/20 bg-white text-[#1a472a]";
+}
+
+function downloadHistoryCsv(issueId: number, subjectDisplay: string, rows: HistoryRecipientRow[]) {
+  if (rows.length === 0) {
+    toast.error("No recipients to export");
+    return;
+  }
+  const csv = historyRecipientsCsv(rows);
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = historyCsvFilename(issueId, subjectDisplay);
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("CSV downloaded");
 }
 
 function writePrefillFromDetail(detail: {
@@ -112,12 +132,26 @@ export function AdminOutboundHistory({
   onWrite: () => void;
 }) {
   const history = trpc.outbound.listHistory.useQuery();
+  const utils = trpc.useUtils();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [exportingId, setExportingId] = useState<number | null>(null);
   const detail = trpc.outbound.getHistoryDetail.useQuery(
     { issueId: selectedId ?? 0 },
     { enabled: selectedId != null },
   );
   const rows = history.data ?? [];
+
+  async function exportLetter(issueId: number, subjectDisplay: string, recipients?: HistoryRecipientRow[]) {
+    try {
+      setExportingId(issueId);
+      const rowsToExport = recipients ?? (await utils.outbound.getHistoryDetail.fetch({ issueId })).recipients;
+      downloadHistoryCsv(issueId, subjectDisplay, rowsToExport);
+    } catch {
+      toast.error("Could not export recipients.");
+    } finally {
+      setExportingId(null);
+    }
+  }
 
   return (
     <Card className="bg-white border-2 border-[#1a472a]/10">
@@ -143,11 +177,11 @@ export function AdminOutboundHistory({
         ) : (
           <ul className="space-y-2">
             {rows.map((row) => (
-              <li key={row.id}>
+              <li key={row.id} className="rounded-lg border border-[#1a472a]/10">
                 <button
                   type="button"
                   onClick={() => setSelectedId(row.id)}
-                  className="w-full text-left rounded-lg border border-[#1a472a]/10 p-3 hover:border-[#1a472a]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a472a]"
+                  className="w-full text-left p-3 hover:bg-[#1a472a]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a472a] rounded-t-lg"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-medium text-[#1a472a]">{row.subjectDisplay || "Untitled letter"}</p>
@@ -168,6 +202,23 @@ export function AdminOutboundHistory({
                     {row.stats.bounceFailCount > 0 ? ` · ${row.stats.bounceFailCount} bounce/fail` : ""}
                   </p>
                 </button>
+                <div className="px-3 pb-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-[#1a472a]/30 text-[#1a472a]"
+                    disabled={exportingId === row.id}
+                    onClick={() => void exportLetter(row.id, row.subjectDisplay)}
+                  >
+                    {exportingId === row.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    Export CSV
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -209,6 +260,20 @@ export function AdminOutboundHistory({
                     }}
                   >
                     Duplicate into Write
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-[#1a472a]/30 text-[#1a472a]"
+                    disabled={exportingId === detail.data.id}
+                    onClick={() => void exportLetter(detail.data.id, detail.data.subjectDisplay, detail.data.recipients)}
+                  >
+                    {exportingId === detail.data.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    Export CSV
                   </Button>
                 </div>
 

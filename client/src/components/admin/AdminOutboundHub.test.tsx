@@ -5,7 +5,10 @@ import { AdminOutboundHub } from "./AdminOutboundHub";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ email: { getCustomTemplates: { invalidate: vi.fn() } } }),
+    useUtils: () => ({
+      email: { getCustomTemplates: { invalidate: vi.fn() } },
+      outbound: { getHistoryDetail: { fetch: vi.fn() } },
+    }),
     newsletter: {
       list: {
         useQuery: () => ({

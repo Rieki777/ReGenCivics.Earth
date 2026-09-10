@@ -7,6 +7,8 @@ import {
   cleanLetterSubject,
   formatPacificDateTime,
   formatPercent,
+  historyCsvFilename,
+  historyRecipientsCsv,
   historyStatusLabel,
   pickHistoryBanner,
   ratePercent,
@@ -144,8 +146,8 @@ describe("buildRecipientRows and timeline", () => {
   it("maps delivery, opens, clicks, and bounce errors", () => {
     const rows = buildRecipientRows(
       [
-        { email: "ada@example.org", status: "sent", emailLogId: 1 },
-        { email: "bea@example.org", status: "sent", emailLogId: 2 },
+        { email: "ada@example.org", name: "Ada", status: "sent", emailLogId: 1 },
+        { email: "bea@example.org", name: null, status: "sent", emailLogId: 2 },
         { email: "cam@example.org", status: "failed", emailLogId: null },
       ],
       [
@@ -153,8 +155,8 @@ describe("buildRecipientRows and timeline", () => {
         { id: 2, status: "bounced", openedAt: null, clickedAt: null, bounceReason: "user unknown" },
       ],
     );
-    expect(rows[0]).toMatchObject({ statusLabel: "Delivered", opened: true, clicked: true, error: null });
-    expect(rows[1]).toMatchObject({ statusLabel: "Bounced", opened: false, error: "user unknown" });
+    expect(rows[0]).toMatchObject({ name: "Ada", statusLabel: "Delivered", opened: true, clicked: true, error: null });
+    expect(rows[1]).toMatchObject({ name: "", statusLabel: "Bounced", opened: false, error: "user unknown" });
     expect(rows[2]).toMatchObject({ statusLabel: "Failed", error: "Send failed" });
   });
 
@@ -271,5 +273,26 @@ describe("pickHistoryBanner", () => {
 
   it("returns empty when there is nothing to report", () => {
     expect(pickHistoryBanner([], now)).toEqual({ kind: "empty" });
+  });
+});
+
+describe("historyRecipientsCsv", () => {
+  it("exports email, name, status, opened, clicked, and error", () => {
+    const csv = historyRecipientsCsv([
+      { email: "ada@example.org", name: "Ada, Weaver", status: "sent", statusLabel: "Delivered", opened: true, clicked: true, error: null },
+      { email: "bea@example.org", name: "", status: "sent", statusLabel: "Bounced", opened: false, clicked: false, error: "user unknown" },
+    ]);
+    expect(csv).toBe(
+      [
+        "Email,Name,Status,Opened,Clicked,Error",
+        'ada@example.org,"Ada, Weaver",Delivered,yes,yes,',
+        "bea@example.org,,Bounced,no,no,user unknown",
+      ].join("\n"),
+    );
+  });
+
+  it("builds a letter filename from the cleaned subject", () => {
+    expect(historyCsvFilename(7, "**Subject:** Spring letter", new Date("2026-09-10T00:00:00.000Z")))
+      .toBe("letter-7-spring-letter-2026-09-10.csv");
   });
 });

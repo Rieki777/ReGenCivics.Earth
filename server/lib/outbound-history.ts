@@ -12,6 +12,7 @@ export async function loadRecipientLogs(issueIds: number[]): Promise<{
   recipients: Array<{
     issueId: number;
     email: string;
+    name: string | null;
     status: string;
     emailLogId: number | null;
   }>;
@@ -25,6 +26,7 @@ export async function loadRecipientLogs(issueIds: number[]): Promise<{
     .select({
       issueId: newsletterIssueRecipients.issueId,
       email: newsletterIssueRecipients.email,
+      name: newsletterIssueRecipients.name,
       status: newsletterIssueRecipients.status,
       emailLogId: newsletterIssueRecipients.emailLogId,
     })

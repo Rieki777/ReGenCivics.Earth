@@ -34,8 +34,19 @@ export type DeliveryLogRow = {
 
 export type HistoryRecipientInput = {
   email: string;
+  name?: string | null;
   status: string;
   emailLogId: number | null;
+};
+
+export type HistoryRecipientRow = {
+  email: string;
+  name: string;
+  status: string;
+  statusLabel: string;
+  opened: boolean;
+  clicked: boolean;
+  error: string | null;
 };
 
 export type DeliveryStats = {
@@ -71,15 +82,6 @@ export type HistoryListItem = HistoryIssueInput & {
   statusLabel: string;
   stats: DeliveryStats;
   when: Date | string | null;
-};
-
-export type HistoryRecipientRow = {
-  email: string;
-  status: string;
-  statusLabel: string;
-  opened: boolean;
-  clicked: boolean;
-  error: string | null;
 };
 
 export type HistoryTimelineEvent = {
@@ -284,6 +286,7 @@ export function buildRecipientRows(
     const log = row.emailLogId != null ? logsById.get(row.emailLogId) : undefined;
     return {
       email: row.email,
+      name: (row.name ?? "").trim(),
       status: row.status,
       statusLabel: recipientStatusLabel(row.status, log),
       opened: Boolean(log?.openedAt),
@@ -353,4 +356,32 @@ export function pickHistoryBanner(rows: HistoryListItem[], nowMs: number): Histo
     };
   }
   return { kind: "empty" };
+}
+
+function csvCell(value: string): string {
+  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+}
+
+export function historyRecipientsCsv(rows: HistoryRecipientRow[]): string {
+  const headers = ["Email", "Name", "Status", "Opened", "Clicked", "Error"];
+  const lines = rows.map((row) => [
+    csvCell(row.email),
+    csvCell(row.name || ""),
+    csvCell(row.statusLabel),
+    row.opened ? "yes" : "no",
+    row.clicked ? "yes" : "no",
+    csvCell(row.error || ""),
+  ].join(","));
+  return [headers.join(","), ...lines].join("\n");
+}
+
+export function historyCsvFilename(issueId: number, subjectDisplay: string, now = new Date()): string {
+  const slug = cleanLetterSubject(subjectDisplay)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40);
+  const day = now.toISOString().slice(0, 10);
+  return `letter-${issueId}${slug ? `-${slug}` : ""}-${day}.csv`;
 }

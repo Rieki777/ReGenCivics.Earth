@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminOutboundHistory } from "./AdminOutboundHistory";
@@ -42,13 +42,18 @@ const detail = {
     { at: "2026-09-08T20:00:00.000Z", label: "Sent" },
   ],
   recipients: [
-    { email: "ada@example.org", status: "sent", statusLabel: "Delivered", opened: true, clicked: false, error: null },
-    { email: "bea@example.org", status: "sent", statusLabel: "Delivered", opened: false, clicked: false, error: null },
+    { email: "ada@example.org", name: "Ada", status: "sent", statusLabel: "Delivered", opened: true, clicked: false, error: null },
+    { email: "bea@example.org", name: "", status: "sent", statusLabel: "Delivered", opened: false, clicked: false, error: null },
   ],
 };
 
+const fetchDetail = vi.fn().mockResolvedValue(detail);
+
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: () => ({
+      outbound: { getHistoryDetail: { fetch: fetchDetail } },
+    }),
     outbound: {
       listHistory: { useQuery: () => ({ data: [historyRow], isLoading: false }) },
       getHistoryDetail: {
@@ -62,6 +67,13 @@ vi.mock("@/lib/trpc", () => ({
 }));
 
 describe("AdminOutboundHistory", () => {
+  beforeEach(() => {
+    fetchDetail.mockClear();
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:test"),
+      revokeObjectURL: vi.fn(),
+    });
+  });
   it("shows a cleaned subject, audience, rates, and no issues label", () => {
     render(<AdminOutboundHistory onDuplicate={vi.fn()} onWrite={vi.fn()} />);
     expect(screen.getByText("Spring letter")).toBeDefined();
@@ -88,5 +100,11 @@ describe("AdminOutboundHistory", () => {
       layout: "announcement",
       source: "all",
     });
+  });
+
+  it("exports a recipient CSV from the list row", async () => {
+    render(<AdminOutboundHistory onDuplicate={vi.fn()} onWrite={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Export CSV" }));
+    expect(fetchDetail).toHaveBeenCalledWith({ issueId: 7 });
   });
 });
