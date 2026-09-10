@@ -2954,6 +2954,49 @@ export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type InsertEventAttendance = typeof eventAttendance.$inferInsert;
 
 /**
+ * Per-event auto-reminder schedule. Offsets (7d / 24h / 1h, plus optional 3d)
+ * fire from the existing /api/cron/event-reminders job. Audience mode defaults
+ * from event kind: episode/Season 2 -> approved+active applications, open ->
+ * newsletter + signups, special -> admin must pick a custom selection.
+ */
+export const eventAutoReminders = mysqlTable("event_auto_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  enabled: tinyint("enabled").default(0).notNull(),
+  audienceMode: mysqlEnum("audienceMode", ["season2_approved", "open_access", "custom"]).notNull(),
+  audienceConfig: json("audienceConfig"),
+  offsetsJson: json("offsetsJson").notNull(),
+  customSubject: varchar("customSubject", { length: 200 }),
+  customBody: text("customBody"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("event_auto_reminders_eventId").on(table.eventId),
+  index("event_auto_reminders_enabled_idx").on(table.enabled),
+]));
+
+export type EventAutoReminder = typeof eventAutoReminders.$inferSelect;
+export type InsertEventAutoReminder = typeof eventAutoReminders.$inferInsert;
+
+/**
+ * Idempotency ledger for auto-reminders. One row per (eventId, offsetMinutes)
+ * so a retried cron cannot double-send the same offset.
+ */
+export const eventAutoReminderSends = mysqlTable("event_auto_reminder_sends", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  offsetMinutes: int("offsetMinutes").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  recipientCount: int("recipientCount").default(0).notNull(),
+}, (table) => ([
+  unique("event_auto_reminder_sends_unique").on(table.eventId, table.offsetMinutes),
+  index("event_auto_reminder_sends_eventId_idx").on(table.eventId),
+]));
+
+export type EventAutoReminderSend = typeof eventAutoReminderSends.$inferSelect;
+export type InsertEventAutoReminderSend = typeof eventAutoReminderSends.$inferInsert;
+
+/**
  * $ReGen Token Ledger
  * Append-only ledger of all $ReGen token awards.
  * Balances are computed by summing entries per email.
