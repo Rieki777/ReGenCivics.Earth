@@ -11,13 +11,14 @@ import { Loader2, CheckCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import {
   AUTO_REMINDER_OFFSETS,
+  AUTO_REMINDER_SWEEP_MINUTES,
   CUSTOM_APPLICATION_STATUSES,
-  DEFAULT_AUTO_REMINDER_OFFSETS,
   NEWSLETTER_AUDIENCE_SOURCES,
   audienceModeHelp,
   audienceModeLabel,
   canEnableAutoReminders,
   defaultAudienceMode,
+  defaultOffsetsForEvent,
   type AutoReminderAudienceMode,
   type CustomApplicationStatus,
   type CustomAudienceConfig,
@@ -88,7 +89,7 @@ export function AdminEventAutoReminders({
 
   const [enabled, setEnabled] = useState(false);
   const [mode, setMode] = useState<AutoReminderAudienceMode>(defaultMode);
-  const [offsets, setOffsets] = useState<Set<number>>(new Set(DEFAULT_AUTO_REMINDER_OFFSETS));
+  const [offsets, setOffsets] = useState<Set<number>>(new Set(defaultOffsetsForEvent(event)));
   const [config, setConfig] = useState<CustomAudienceConfig>(emptyConfig());
   const [savedFlash, setSavedFlash] = useState(false);
 
@@ -96,7 +97,7 @@ export function AdminEventAutoReminders({
     const nextMode = forceCustom ? "custom" : (saved?.audienceMode ?? defaultMode);
     setEnabled(saved?.enabled ?? false);
     setMode(nextMode);
-    setOffsets(new Set(saved?.offsetsMinutes?.length ? saved.offsetsMinutes : DEFAULT_AUTO_REMINDER_OFFSETS));
+    setOffsets(new Set(saved?.offsetsMinutes?.length ? saved.offsetsMinutes : defaultOffsetsForEvent(event)));
     setConfig({ ...emptyConfig(), ...(saved?.audienceConfig ?? {}) });
   }, [event.id, saved, forceCustom, defaultMode]);
 
@@ -314,7 +315,7 @@ export function AdminEventAutoReminders({
             )}
           </div>
           <p className="text-xs text-white/40">
-            The hourly event-reminders cron (and a 10-minute in-process sweep) send these. Each offset sends once.
+            The hourly event-reminders cron and a {AUTO_REMINDER_SWEEP_MINUTES}-minute in-process sweep send these. Each offset sends once. If a sweep lands after an offset is due, catch-up still sends it until the session starts.
           </p>
         </div>
   );

@@ -4,11 +4,22 @@
  * audience. Shared by the admin UI and the cron job so they cannot drift.
  */
 
+/** Pre-call ping so people can actually get into the room. */
+export const CALL_START_OFFSET_MINUTES = 33;
+
+/**
+ * In-process sweep cadence. A 10-minute tick can land a T-33 send as late as
+ * T-23. Five minutes keeps catch-up inside a couple of minutes of due, and
+ * still leaves several ticks before the call starts.
+ */
+export const AUTO_REMINDER_SWEEP_MINUTES = 5;
+
 export const AUTO_REMINDER_OFFSETS = [
   { minutes: 7 * 24 * 60, label: "7 days before", shortLabel: "7d", lead: "Starting in 7 days" },
   { minutes: 3 * 24 * 60, label: "3 days before", shortLabel: "3d", lead: "Starting in 3 days" },
   { minutes: 24 * 60, label: "24 hours before", shortLabel: "24h", lead: "Starting in about 24 hours" },
   { minutes: 60, label: "1 hour before", shortLabel: "1h", lead: "Starting in about an hour" },
+  { minutes: CALL_START_OFFSET_MINUTES, label: "33 minutes before", shortLabel: "33m", lead: "Starting in 33 minutes" },
 ] as const;
 
 export type AutoReminderOffsetMinutes = (typeof AUTO_REMINDER_OFFSETS)[number]["minutes"];
@@ -23,6 +34,12 @@ export const DEFAULT_AUTO_REMINDER_OFFSETS: AutoReminderOffsetMinutes[] = [
   24 * 60,
   60,
 ];
+
+/** Open Access and Season 2 also default the T-33 pre-call ping on. Custom events do not. */
+export function defaultOffsetsForEvent(event: EventKindForReminders): AutoReminderOffsetMinutes[] {
+  if (defaultAudienceMode(event) === "custom") return [...DEFAULT_AUTO_REMINDER_OFFSETS];
+  return [...DEFAULT_AUTO_REMINDER_OFFSETS, CALL_START_OFFSET_MINUTES];
+}
 
 export const AUTO_REMINDER_AUDIENCE_MODES = [
   "season2_approved",
@@ -178,6 +195,7 @@ export function offsetSubject(title: string, minutes: number): string {
   if (minutes === 3 * 24 * 60) return `In 3 days: ${title}`;
   if (minutes === 24 * 60) return `Reminder: ${title} is tomorrow`;
   if (minutes === 60) return `Starting soon: ${title}`;
+  if (minutes === CALL_START_OFFSET_MINUTES) return `Starting in 33 minutes: ${title}`;
   return `Reminder: ${title}`;
 }
 

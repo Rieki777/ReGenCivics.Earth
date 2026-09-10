@@ -27,6 +27,7 @@ import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 import { runShipCrewListJob } from "../jobs/shipCrewList";
 import { runQuestCrewAssemblyJob } from "../jobs/questCrewAssembly";
+import { AUTO_REMINDER_SWEEP_MINUTES } from "@shared/eventAutoReminders";
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -1489,9 +1490,10 @@ async function processScheduledEmails() {
 // Run every minute
 setInterval(processScheduledEmails, 60_000);
 
-// ─── Auto-scheduled event reminders (every 10 minutes) ───────────────────────
+// ─── Auto-scheduled event reminders (every 5 minutes) ────────────────────────
 // Same job the hourly Railway cron POST /api/cron/event-reminders runs. The
-// in-process sweep exists so the 1-hour offset does not wait for the next hour.
+// in-process sweep exists so the 33-minute and 1-hour offsets do not wait for
+// the next hour. Catch-up still sends a due offset until the session starts.
 // Idempotent via unique (eventId, offsetMinutes).
 setTimeout(async () => {
   const run = async () => {
@@ -1501,7 +1503,7 @@ setTimeout(async () => {
   try { await run(); } catch (e) { log.error("AutoEventReminders error", e); }
   setInterval(async () => {
     try { await run(); } catch (e) { log.error("AutoEventReminders error", e); }
-  }, 10 * 60 * 1000);
+  }, AUTO_REMINDER_SWEEP_MINUTES * 60 * 1000);
 }, 2 * 60 * 1000);
 
 // ─── Weekly digest job ───────────────────────────────────────────────────────
