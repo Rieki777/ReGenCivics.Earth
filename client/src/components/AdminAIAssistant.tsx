@@ -433,6 +433,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
               targetRef={inputRef}
               label="Dictate message"
               className="h-10 w-10"
+              errorAlign="end"
             />
             <Button
               onClick={() => sendMessage()}

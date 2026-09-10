@@ -27,6 +27,8 @@ export type DictationButtonProps = {
   disabled?: boolean;
   /** Shown in the accessible name while idle. */
   label?: string;
+  /** Where the error bubble grows from the button. Use "end" when the mic sits on the right of a tight panel. */
+  errorAlign?: "start" | "end";
 };
 
 export function DictationButton({
@@ -36,6 +38,7 @@ export function DictationButton({
   className,
   disabled = false,
   label = "Dictate",
+  errorAlign = "start",
 }: DictationButtonProps) {
   const dictation = useDictation({ value, onChange, targetRef, disabled });
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +133,10 @@ export function DictationButton({
         <p
           role="status"
           data-testid="dictation-error"
-          className="absolute right-0 bottom-full mb-1 z-10 w-max max-w-[220px] rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] text-red-700 shadow-sm"
+          className={cn(
+            "absolute bottom-full mb-1 z-10 w-max max-w-[240px] rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] leading-snug text-red-700 shadow-sm",
+            errorAlign === "end" ? "right-0" : "left-0",
+          )}
         >
           {dictation.error}
         </p>
