@@ -4,6 +4,7 @@
  * awkward to reach in the running app.
  */
 import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mockData } from "./trpc-stub";
 import { PublicationReview, ComposeBox } from "@/components/HarvestCompose";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
@@ -12,6 +13,8 @@ import { InquirySection } from "@/components/admin/AdminInquirySection";
 import { AdminEventAnalytics } from "@/components/AdminEventAnalytics";
 import { AdminAIAssistant } from "@/components/AdminAIAssistant";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
+import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
+import { DictationButton } from "@/components/admin/dictation";
 
 export type Story = {
   title: string;
@@ -165,6 +168,29 @@ const RICH_VOLUME_FIXTURE = volumeDaysFrom("2026-08-05", 30).flatMap((day, i) =>
   return rows;
 });
 
+function BlockedMicStory() {
+  const [value, setValue] = useState("");
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const btn = document.querySelector("[data-testid=dictation-button]") as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    btn.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  }, []);
+  return (
+    <div className="relative max-w-md p-16">
+      <p className="mb-3 text-sm font-medium text-[#1a472a]">Shared admin mic, Blocked permission</p>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        className="mb-2 min-h-[80px] w-full rounded-xl border border-[#1a472a]/25 bg-white p-2 text-sm text-[#1a472a]"
+      />
+      <DictationButton value={value} onChange={setValue} targetRef={ref} />
+    </div>
+  );
+}
+
 export const STORIES: Record<string, Story> = {
   /**
    * The first-run quest intro over the bottom nav. Two things to check:
@@ -200,6 +226,50 @@ export const STORIES: Record<string, Story> = {
         <ComposeBox onComposed={() => undefined} />
       </div>
     ),
+  },
+
+  "email-draft-agent": {
+    title: "Write with me chat input with the shared dictation mic",
+    render: () => (
+      <div className="max-w-xl">
+        <EmailDraftAgent
+          currentSubject="Season update"
+          currentBody="Friends,"
+          statusLabel="all subscribers"
+          recipientCount={12}
+          variant="newsletter"
+          onApply={() => undefined}
+        />
+      </div>
+    ),
+  },
+
+  "dictation-blocked-mic": {
+    title: "DictationButton when the browser has Blocked the microphone",
+    setup: () => {
+      class FakeSpeechRecognition {
+        continuous = false;
+        interimResults = false;
+        lang = "";
+        onresult = null;
+        onerror = null;
+        onend = null;
+        start() {}
+        stop() {}
+        abort() {}
+      }
+      Object.defineProperty(window, "SpeechRecognition", {
+        configurable: true,
+        value: FakeSpeechRecognition,
+      });
+      Object.defineProperty(navigator, "permissions", {
+        configurable: true,
+        value: {
+          query: async () => ({ state: "denied", onchange: null }),
+        },
+      });
+    },
+    render: () => <BlockedMicStory />,
   },
 
   "admin-ai-chat": {

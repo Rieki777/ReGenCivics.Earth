@@ -58,6 +58,9 @@ describe("AdminOutboundHub", () => {
     expect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
     expect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
+    expect(screen.getByText("Write with me")).toBeDefined();
+    expect(screen.getByTestId("dictation-button")).toBeDefined();
+    expect(screen.getByLabelText("Dictate message")).toBeDefined();
   });
 
   it("defaults the people list to active subscribers", () => {
