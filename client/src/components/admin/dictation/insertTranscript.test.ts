@@ -27,8 +27,16 @@ describe("insertTranscript", () => {
     });
   });
 
-  it("trims the incoming transcript and ignores empty speech", () => {
-    expect(insertTranscript("Hello", "   ")).toEqual({ value: "Hello", caret: 5 });
-    expect(insertTranscript("", "  a   b  ")).toEqual({ value: "a b", caret: 3 });
+  it("never wipes existing text when appending speech", () => {
+    const original = "Keep this draft.";
+    expect(insertTranscript(original, "add this").value).toBe("Keep this draft. add this");
+    expect(insertTranscript(original, "add this").value.startsWith(original)).toBe(true);
+  });
+
+  it("leaves the field unchanged when the transcript is empty", () => {
+    expect(insertTranscript("Keep this draft.", "")).toEqual({
+      value: "Keep this draft.",
+      caret: 16,
+    });
   });
 });

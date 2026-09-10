@@ -104,6 +104,7 @@ export function DictationButton({
         aria-label={ariaLabel}
         aria-pressed={listening}
         title={title}
+        data-listening={listening ? "true" : "false"}
         style={{ touchAction: "manipulation" }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -117,7 +118,7 @@ export function DictationButton({
         }}
         className={cn(
           "h-9 w-9 rounded-xl border-[#1a472a]/30 text-[#1a472a]",
-          listening && "bg-[#1a472a] text-[#7dd87d] hover:bg-[#2d5a3d] border-[#1a472a]",
+          listening && "bg-[#1a472a] text-[#7dd87d] hover:bg-[#2d5a3d] border-[#1a472a] ring-2 ring-[#7dd87d]/70",
           blocked && !listening && "text-[#1a472a]/60",
           className,
         )}
@@ -126,6 +127,17 @@ export function DictationButton({
           ? <MicOff className="w-4 h-4" aria-hidden="true" />
           : <Mic className={cn("w-4 h-4", listening && "animate-pulse")} aria-hidden="true" />}
       </Button>
+      {listening && (
+        <p
+          data-testid="dictation-listening"
+          className={cn(
+            "absolute bottom-full mb-1 z-10 whitespace-nowrap text-[11px] font-medium text-[#1a472a]",
+            errorAlign === "end" ? "right-0" : "left-0",
+          )}
+        >
+          Listening
+        </p>
+      )}
       <span className="sr-only" aria-live="polite">
         {listening ? (dictation.interim ? dictation.interim : "Listening") : ""}
       </span>

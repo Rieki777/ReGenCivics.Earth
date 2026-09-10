@@ -94,7 +94,12 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   onChangeRef.current = onChange;
 
   const rememberCaret = useCallback(() => {
-    const saved = readCaret(targetRef?.current ?? null);
+    const el = targetRef?.current ?? null;
+    if (!el) return;
+    // Unfocused inputs report selectionStart 0. Treat that as "no caret"
+    // so speech appends instead of jumping to the front of existing text.
+    if (document.activeElement !== el) return;
+    const saved = readCaret(el);
     if (saved) caretRef.current = saved;
   }, [targetRef]);
 

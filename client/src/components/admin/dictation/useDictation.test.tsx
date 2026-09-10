@@ -97,6 +97,30 @@ describe("useDictation", () => {
     expect(screen.getByTestId("value").textContent).toBe("Hello world");
   });
 
+  it("does not wipe existing text when more speech arrives", () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("Keep this draft.");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    fireEvent.click(screen.getByTestId("start"));
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: true, 0: { transcript: "add this" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("Keep this draft. add this");
+  });
+
   it("surfaces permission denied without throwing", () => {
     const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
     act(() => result.current.start());
@@ -169,6 +193,8 @@ describe("DictationButton", () => {
     fireEvent.pointerDown(btn);
     fireEvent.pointerUp(btn);
     expect(btn.getAttribute("aria-pressed")).toBe("true");
+    expect(btn.getAttribute("data-listening")).toBe("true");
+    expect(screen.getByTestId("dictation-listening").textContent).toBe("Listening");
     fireEvent.pointerDown(btn);
     fireEvent.pointerUp(btn);
     expect(btn.getAttribute("aria-pressed")).toBe("false");
