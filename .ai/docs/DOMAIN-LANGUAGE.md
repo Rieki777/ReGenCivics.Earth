@@ -293,3 +293,11 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Accrued (a pool share)**. A share earned by a named builder with nowhere to send it, because the hub has not attested them, they hold no ReGen Civics account, or they have not linked a Base address. **It carries into the NEXT cycle's pool and is re-split by that cycle's reach.** It is not held for the builder who earned it, so a builder who links an account late does not receive what accrued in their name; `modulePool.myAccruals` shows them what did. There is no lapse timer and no escrow: `PROPOSED_ACCRUAL_CYCLES` is a proposal nothing reads. Distinct from a **remainder**, which is flooring dust belonging to nobody and is never minted at all. Remainders evaporate, accruals go back to the pool.
 
 **Roster (of villages)**. For the pool, `shared/networkRegistry.ts` `NETWORK_GAMES` filtered to `listed: true` and `status: "live"`. The only villages whose usage reports ever count. Not a synonym for "the network": the network page lists building villages too, and those count zero.
+
+### Community email topics (ADR-55)
+
+**Email preference center**. The tokenized page at `/email-preferences` (alias `/preferences`) for the community / newsletter subscriber identity. No login. Investor and funder mail is a separate list (`investor_inquiries`) and is never a topic here. Transactional mail (application status, claims, magic links) is not on this page.
+
+**Topic keys** (toggles, default ON for new subscribers): `seasonal` (newsletters, Harvest, weekly digest), `open_access` (Open Access invitations and reminders), `season2` (Season 2 session reminders; S2-approved people can mute these), `events` (other / custom event reminders on the community list), `recordings` (session recording summaries, stored as `notifyRecordings`). Existing `notifyRecordings` values are kept. Senders resolve recipients with `audienceForTopic(topic)` in `server/lib/emailPrefs.ts`.
+
+**Manage email preferences**. The only footer CTA on community/marketing letters. It opens the signed prefs URL. Unsubscribe from all is a control on that page, not a second footer link. `/unsubscribe` remains the nuclear email-entry path.

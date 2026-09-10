@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { insertTranscript } from "./insertTranscript";
+import { queryMicrophonePermission, requestMicrophoneAccess } from "./micPermission";
 import { isSensitiveField } from "./sensitiveField";
 
 type AnyWindow = Window & {
@@ -43,6 +44,14 @@ export const DICTATION_GENERIC_ERROR =
   "Listening stopped. Type instead, or try the mic again.";
 export const DICTATION_SENSITIVE_MESSAGE =
   "This field cannot take dictation.";
+export const DICTATION_BLOCKED_TITLE = "Microphone is blocked";
+export const DICTATION_BLOCKED_LEAD =
+  "This site's microphone is set to Block. Change it to Allow, then reload.";
+export const DICTATION_BLOCKED_STEPS = [
+  "Click the lock or site info icon in the address bar",
+  "Set Microphone to Allow",
+  "Reload this page, then press the mic",
+] as const;
 
 export function dictationSupported(): boolean {
   if (typeof window === "undefined") return false;
@@ -64,9 +73,12 @@ export type UseDictationResult = {
   listening: boolean;
   interim: string;
   error: string | null;
-  start: () => void;
+  /** True after a start attempt while the browser has Blocked the mic. */
+  blockedHelp: boolean;
+  start: () => Promise<void>;
   stop: () => void;
   toggle: () => void;
+  dismissBlockedHelp: () => void;
 };
 
 function readCaret(el: HTMLTextAreaElement | HTMLInputElement | null): { start: number; end: number } | null {
@@ -83,6 +95,7 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const [state, setState] = useState<DictationState>(supported ? "idle" : "unsupported");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [blockedHelp, setBlockedHelp] = useState(false);
 
   const recRef = useRef<BrowserSpeechRecognition | null>(null);
   const wantRef = useRef(false);
@@ -173,6 +186,7 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       if (kind === "not-allowed" || kind === "service-not-allowed") {
         setState("denied");
         setError(DICTATION_DENIED_MESSAGE);
+        setBlockedHelp(true);
         return;
       }
       setState("idle");
@@ -220,34 +234,67 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     return () => document.removeEventListener("focusin", onFocusIn);
   }, [stop]);
 
-  const start = useCallback(() => {
+  const markDenied = useCallback(() => {
+    wantRef.current = false;
+    setInterim("");
+    setState("denied");
+    setError(DICTATION_DENIED_MESSAGE);
+    setBlockedHelp(true);
+  }, []);
+
+  const start = useCallback(async () => {
     if (disabled) return;
     rememberCaret();
     if (isSensitiveField(targetRef?.current ?? null) || isSensitiveField(document.activeElement)) {
       wantRef.current = false;
       setError(DICTATION_SENSITIVE_MESSAGE);
       setState("idle");
+      setBlockedHelp(false);
       return;
     }
     if (!supported || !recRef.current) {
       setState("unsupported");
       setError(DICTATION_UNSUPPORTED_MESSAGE);
+      setBlockedHelp(false);
       return;
     }
     setError(null);
+    setBlockedHelp(false);
     wantRef.current = true;
+
+    const permission = await queryMicrophonePermission();
+    if (!liveRef.current || !wantRef.current) return;
+    if (permission === "denied") {
+      markDenied();
+      return;
+    }
+
+    // Prompt (or unknown Permissions API): ask via getUserMedia so Chromium
+    // can still show Allow, then hand off to Web Speech.
+    if (permission === "prompt" || permission === "unknown") {
+      const access = await requestMicrophoneAccess();
+      if (!liveRef.current || !wantRef.current) return;
+      if (access === "denied") {
+        markDenied();
+        return;
+      }
+    }
+
+    if (!recRef.current) return;
     try {
       recRef.current.start();
       setState("listening");
     } catch {
       setState("listening");
     }
-  }, [disabled, rememberCaret, supported, targetRef]);
+  }, [disabled, markDenied, rememberCaret, supported, targetRef]);
 
   const toggle = useCallback(() => {
     if (wantRef.current || state === "listening") stop();
-    else start();
+    else void start();
   }, [start, state, stop]);
+
+  const dismissBlockedHelp = useCallback(() => setBlockedHelp(false), []);
 
   return {
     supported,
@@ -255,8 +302,10 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     listening: state === "listening",
     interim,
     error,
+    blockedHelp,
     start,
     stop,
     toggle,
+    dismissBlockedHelp,
   };
 }

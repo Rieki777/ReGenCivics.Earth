@@ -4,15 +4,18 @@
  * Click toggles listening. Press and hold to talk; release to stop.
  * Inserts at the caret. Never attach this to a password or credential field.
  *
- * Wired today: Harvest Compose, the admin AI chatbot, and Broadcast Message.
- * Outbound email compose should import this same button rather than growing
- * its own mic.
+ * Wired today: Harvest Compose, the admin AI chatbot, Broadcast Message,
+ * and the Write with me email partner. Outbound email body compose should
+ * import this same button rather than growing its own mic.
  */
 import { useEffect, useRef, type PointerEvent, type RefObject } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  DICTATION_BLOCKED_LEAD,
+  DICTATION_BLOCKED_STEPS,
+  DICTATION_BLOCKED_TITLE,
   DICTATION_UNSUPPORTED_MESSAGE,
   useDictation,
 } from "./useDictation";
@@ -66,7 +69,7 @@ export function DictationButton({
     holdTimer.current = setTimeout(() => {
       holdEngaged.current = true;
     }, HOLD_MS);
-    if (!dictation.listening) dictation.start();
+    if (!dictation.listening) void dictation.start();
   };
 
   const onPointerUp = () => {
@@ -92,6 +95,7 @@ export function DictationButton({
         ? dictation.error
         : "Click to listen. Hold the mic to talk.";
   const ariaLabel = listening ? "Stop dictation" : label;
+  const alignClass = errorAlign === "end" ? "right-0" : "left-0";
 
   return (
     <div className="relative shrink-0">
@@ -103,6 +107,8 @@ export function DictationButton({
         data-testid="dictation-button"
         aria-label={ariaLabel}
         aria-pressed={listening}
+        aria-expanded={dictation.blockedHelp}
+        aria-haspopup="dialog"
         title={title}
         data-listening={listening ? "true" : "false"}
         style={{ touchAction: "manipulation" }}
@@ -132,7 +138,7 @@ export function DictationButton({
           data-testid="dictation-listening"
           className={cn(
             "absolute bottom-full mb-1 z-10 whitespace-nowrap text-[11px] font-medium text-[#1a472a]",
-            errorAlign === "end" ? "right-0" : "left-0",
+            alignClass,
           )}
         >
           Listening
@@ -141,13 +147,50 @@ export function DictationButton({
       <span className="sr-only" aria-live="polite">
         {listening ? (dictation.interim ? dictation.interim : "Listening") : ""}
       </span>
-      {dictation.error && !listening && (
+      {dictation.blockedHelp && !listening && (
+        <div
+          role="dialog"
+          aria-labelledby="dictation-mic-help-title"
+          data-testid="dictation-mic-help"
+          className={cn(
+            "absolute bottom-full mb-1 z-30 w-max max-w-[18rem] rounded-xl border border-[#1a472a]/25 bg-white px-3 py-2 text-[11px] leading-snug text-[#1a472a] shadow-sm",
+            alignClass,
+          )}
+        >
+          <p id="dictation-mic-help-title" className="font-semibold text-[#1a472a]">
+            {DICTATION_BLOCKED_TITLE}
+          </p>
+          <p className="mt-1 text-[#1a472a]/80">{DICTATION_BLOCKED_LEAD}</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-[#1a472a]">
+            {DICTATION_BLOCKED_STEPS.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="h-7 rounded-lg bg-[#1a472a] px-2.5 text-[11px] font-medium text-[#7dd87d] hover:bg-[#2d5a3d] pointer-coarse:min-h-11"
+              onClick={() => window.location.reload()}
+            >
+              Reload page
+            </button>
+            <button
+              type="button"
+              className="h-7 rounded-lg border border-[#1a472a]/30 px-2.5 text-[11px] font-medium text-[#1a472a] hover:bg-[#1a472a]/5 pointer-coarse:min-h-11"
+              onClick={dictation.dismissBlockedHelp}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {dictation.error && !listening && !dictation.blockedHelp && (
         <p
           role="status"
           data-testid="dictation-error"
           className={cn(
             "absolute bottom-full mb-1 z-10 w-max max-w-[240px] rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] leading-snug text-red-700 shadow-sm",
-            errorAlign === "end" ? "right-0" : "left-0",
+            alignClass,
           )}
         >
           {dictation.error}
