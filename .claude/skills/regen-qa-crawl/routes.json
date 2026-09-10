@@ -375,6 +375,12 @@
       "needsAuth": false
     },
     {
+      "path": "/preferences",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
       "path": "/community",
       "hasParam": false,
       "redirectOnly": false,
