@@ -463,7 +463,8 @@ export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInse
 
 /**
  * Newsletter issue (Outbound campaign). Markdown body, audience JSON
- * `{ sources: string[], activeOnly: boolean }`. Send ships in a later PR.
+ * `{ sources: string[], activeOnly: boolean }`. Status `scheduled` is a
+ * newsletter letter queued for later; it is not an Events auto-reminder.
  * Named `newsletter_issues` so it never collides with crowd-pooling `campaigns`.
  */
 export const newsletterIssues = mysqlTable("newsletter_issues", {

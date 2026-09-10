@@ -60,6 +60,9 @@ export const outboundRouter = router({
         if (existing.status === "sending" || existing.status === "sent") {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "A sent letter cannot be edited." });
         }
+        if (existing.status === "scheduled") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Cancel the scheduled send from Sent before editing." });
+        }
         await db.update(newsletterIssues).set({
           subject: input.subject,
           body: input.body,
@@ -93,6 +96,7 @@ export const outboundRouter = router({
       sentCount: newsletterIssues.sentCount,
       failedCount: newsletterIssues.failedCount,
       sentAt: newsletterIssues.sentAt,
+      scheduledFor: newsletterIssues.scheduledFor,
       createdAt: newsletterIssues.createdAt,
     }).from(newsletterIssues).orderBy(desc(newsletterIssues.createdAt)).limit(50);
   }),
@@ -138,6 +142,65 @@ export const outboundRouter = router({
         });
       } catch (err) {
         fail(err, "Send refused");
+      }
+    }),
+
+  scheduleSend: adminProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
+    .input(z.object({
+      issueId: z.number().int().positive(),
+      confirmToken: z.string().min(20).max(2000),
+      idempotencyKey: z.string().min(8).max(64),
+      scheduledFor: z.string().min(10).max(40),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { scheduleIssue } = await import("../lib/newsletter-issue-email");
+      try {
+        return await scheduleIssue({
+          issueId: input.issueId,
+          createdBy: ctx.user.id,
+          confirmToken: input.confirmToken,
+          idempotencyKey: input.idempotencyKey,
+          scheduledFor: input.scheduledFor,
+        });
+      } catch (err) {
+        fail(err, "Schedule refused");
+      }
+    }),
+
+  cancelScheduled: adminProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 20 }))
+    .input(z.object({
+      issueId: z.number().int().positive(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { cancelScheduledIssue } = await import("../lib/newsletter-issue-email");
+      try {
+        return await cancelScheduledIssue({
+          issueId: input.issueId,
+          createdBy: ctx.user.id,
+        });
+      } catch (err) {
+        fail(err, "Cancel refused");
+      }
+    }),
+
+  reschedule: adminProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 20 }))
+    .input(z.object({
+      issueId: z.number().int().positive(),
+      scheduledFor: z.string().min(10).max(40),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { rescheduleIssue } = await import("../lib/newsletter-issue-email");
+      try {
+        return await rescheduleIssue({
+          issueId: input.issueId,
+          createdBy: ctx.user.id,
+          scheduledFor: input.scheduledFor,
+        });
+      } catch (err) {
+        fail(err, "Reschedule refused");
       }
     }),
 

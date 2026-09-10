@@ -121,6 +121,8 @@ describe("admin nav", () => {
     expect(adminTabHref("broadcast")).toBe("/admin?tab=outbound&surface=social");
     expect(adminTabHref("outbound", { surface: "email" })).toBe("/admin?tab=outbound&surface=write");
     expect(adminTabHref("outbound", { surface: "sent" })).toBe("/admin?tab=outbound&surface=sent");
+    expect(parseOutboundSurface("scheduled")).toBe("sent");
+    expect(adminTabHref("outbound", { surface: "scheduled" })).toBe("/admin?tab=outbound&surface=sent");
   });
 
   it("maps a leftover newsletter Continue tap onto Outbound", () => {
