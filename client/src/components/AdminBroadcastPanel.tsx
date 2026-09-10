@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { BROADCAST_FILL_EVENT, consumeBroadcastFill, clearBroadcastFill } from "@/lib/broadcastFill";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +82,19 @@ export function AdminBroadcastPanel() {
   useEffect(() => {
     saveChannels(selectedChannels);
   }, [selectedChannels]);
+
+  useEffect(() => {
+    const pending = consumeBroadcastFill();
+    if (pending) setText(pending);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ text?: string }>).detail;
+      if (!detail?.text) return;
+      clearBroadcastFill();
+      setText(detail.text);
+    };
+    window.addEventListener(BROADCAST_FILL_EVENT, handler);
+    return () => window.removeEventListener(BROADCAST_FILL_EVENT, handler);
+  }, []);
 
   // Fetch Buffer profiles to find matching profile IDs
   const {
@@ -306,6 +320,7 @@ export function AdminBroadcastPanel() {
             <Label className="text-[#1a472a] font-medium">Message</Label>
             <div className="relative">
               <Textarea
+                data-testid="broadcast-message"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder="What do you want to share?"
