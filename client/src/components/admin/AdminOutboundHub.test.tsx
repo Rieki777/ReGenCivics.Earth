@@ -56,5 +56,7 @@ describe("AdminOutboundHub", () => {
     render(<AdminOutboundHub surface="social" onSurfaceChange={vi.fn()} />);
     expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
     expect(screen.getByTestId("broadcast-message")).toBeDefined();
+    expect(screen.getByTestId("dictation-button")).toBeDefined();
+    expect(screen.getByLabelText("Dictate message")).toBeDefined();
   });
 });
