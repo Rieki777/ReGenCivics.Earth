@@ -202,6 +202,11 @@ export const STORIES: Record<string, Story> = {
     title: "Publication review: fact flags, first comment, weekly note",
     setup: () => {
       mockData["harvest.publicationReview"] = REVIEW_FIXTURE;
+      mockData["harvest.sendPreview.result"] = {
+        subject: "A note from the land",
+        recipientCount: 12,
+        confirmToken: "harness-token",
+      };
     },
     render: () => (
       <div className="max-w-3xl">
