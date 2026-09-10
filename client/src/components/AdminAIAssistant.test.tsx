@@ -81,8 +81,23 @@ describe("AdminAIAssistant FAB", () => {
   it("offers Harvest draft starters when viewing Broadcast", () => {
     render(<AdminAIAssistant context={{ activeTab: "broadcast" }} />);
     fireEvent.click(fab());
-    expect(screen.getByText(/You're on Broadcast/)).toBeDefined();
+    expect(screen.getByText(/You're on Social/)).toBeDefined();
     expect(screen.getByText("Draft a post from the ripest Harvest idea")).toBeDefined();
     expect(screen.queryByText("Who needs follow-up today?")).toBeNull();
+  });
+
+  it("offers Harvest draft starters on Outbound Social", () => {
+    render(<AdminAIAssistant context={{ activeTab: "outbound", outboundSurface: "social" }} />);
+    fireEvent.click(fab());
+    expect(screen.getByText(/You're on Social/)).toBeDefined();
+    expect(screen.getByText("Draft a post from the ripest Harvest idea")).toBeDefined();
+    expect(screen.queryByText("Who needs follow-up today?")).toBeNull();
+  });
+
+  it("keeps pipeline starters on Outbound Write", () => {
+    render(<AdminAIAssistant context={{ activeTab: "outbound", outboundSurface: "write" }} />);
+    fireEvent.click(fab());
+    expect(screen.getByText("Who needs follow-up today?")).toBeDefined();
+    expect(screen.queryByText("Draft a post from the ripest Harvest idea")).toBeNull();
   });
 });

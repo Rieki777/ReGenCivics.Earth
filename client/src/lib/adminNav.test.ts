@@ -9,6 +9,8 @@ import {
   ADMIN_CONTINUE_KEY,
   adminTabHref,
   applicationHref,
+  canonicalizeAdminTab,
+  parseOutboundSurface,
 } from "./adminNav";
 
 describe("admin nav", () => {
@@ -99,6 +101,35 @@ describe("admin nav", () => {
       id: "funding",
       label: "Funding",
       href: "/admin/funding",
+    });
+  });
+
+  it("replaces Newsletter and Broadcast with one Outbound tab", () => {
+    expect(navItemById("outbound")?.label).toBe("Outbound");
+    expect(navItemById("newsletter")).toBeUndefined();
+    expect(navItemById("broadcast")).toBeUndefined();
+    expect(NAV_ITEMS_FLAT.filter((item) => item.id === "outbound")).toHaveLength(1);
+  });
+
+  it("redirects legacy newsletter and broadcast tabs onto Outbound surfaces", () => {
+    expect(canonicalizeAdminTab("newsletter")).toEqual({ tab: "outbound", surface: "people" });
+    expect(canonicalizeAdminTab("broadcast")).toEqual({ tab: "outbound", surface: "social" });
+    expect(canonicalizeAdminTab("applications")).toEqual({ tab: "applications" });
+    expect(parseOutboundSurface("email")).toBe("write");
+    expect(parseOutboundSurface("people")).toBe("people");
+    expect(adminTabHref("newsletter")).toBe("/admin?tab=outbound&surface=people");
+    expect(adminTabHref("broadcast")).toBe("/admin?tab=outbound&surface=social");
+    expect(adminTabHref("outbound", { surface: "email" })).toBe("/admin?tab=outbound&surface=write");
+    expect(adminTabHref("outbound", { surface: "sent" })).toBe("/admin?tab=outbound&surface=sent");
+  });
+
+  it("maps a leftover newsletter Continue tap onto Outbound", () => {
+    localStorage.removeItem(ADMIN_CONTINUE_KEY);
+    writeAdminContinueFromTab("newsletter");
+    expect(readAdminContinue()).toEqual({
+      kind: "tab",
+      id: "outbound",
+      label: "Outbound",
     });
   });
 });

@@ -22,9 +22,11 @@ import {
 } from "lucide-react";
 import { HarvestNoteComposer } from "./HarvestNoteComposer";
 import { isAdminRole } from "@shared/adminRole";
+import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 
 export interface AdminAIContext {
   activeTab?: string;
+  outboundSurface?: string;
   investorCount?: number;
   inquiryCount?: number;
   applicationCount?: number;
@@ -91,8 +93,15 @@ const BROADCAST_STARTERS = [
   "Make a LinkedIn version of this",
 ];
 
-function startersFor(tab?: string): string[] {
-  return tab === "broadcast" ? BROADCAST_STARTERS : STARTERS;
+function startersFor(tab?: string, surface?: string): string[] {
+  return isBroadcastComposeSurface(tab, surface) ? BROADCAST_STARTERS : STARTERS;
+}
+
+function viewingLabel(tab?: string, surface?: string): string | undefined {
+  if (!tab) return undefined;
+  if (isBroadcastComposeSurface(tab, surface)) return "outbound / social";
+  if (tab === "outbound" && surface) return `outbound / ${surface}`;
+  return tab;
 }
 
 export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
@@ -290,7 +299,9 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
           <p className="text-[#7dd87d]/70 text-xs mt-0.5 truncate">
             {mode === "note"
               ? "Voice or text, straight to your inbox"
-              : context?.activeTab ? `Viewing: ${context.activeTab}` : "Ready to help"}
+              : viewingLabel(context?.activeTab, context?.outboundSurface)
+                ? `Viewing: ${viewingLabel(context?.activeTab, context?.outboundSurface)}`
+                : "Ready to help"}
           </p>
         </div>
         {canCapture && (
@@ -337,13 +348,13 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       <Bot className="w-4 h-4 text-[#7dd87d]" />
                     </div>
                     <div className="bg-[#f0ebe3] rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-[#1a472a] max-w-[280px]">
-                      {context?.activeTab === "broadcast"
-                        ? "You're on Broadcast. I can draft social copy from The Harvest in Rye's voice. Ask for a post, or tap Draft with Harvest on the compose form."
+                      {isBroadcastComposeSurface(context?.activeTab, context?.outboundSurface)
+                        ? "You're on Social. I can draft social copy from The Harvest in Rye's voice. Ask for a post, or tap Draft with Harvest on the compose form."
                         : "Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?"}
                     </div>
                   </div>
                   <div className="pl-9 flex flex-wrap gap-1.5">
-                    {startersFor(context?.activeTab).map(s => (
+                    {startersFor(context?.activeTab, context?.outboundSurface).map(s => (
                       <button
                         key={s}
                         onClick={() => sendMessage(s)}
@@ -417,7 +428,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
             <div className="px-3 py-1.5 border-t border-[#1a472a]/10 flex gap-1.5 flex-wrap bg-[#f8f5f0]">
               {context.activeTab && (
                 <Badge variant="outline" className="text-xs border-[#4a7c59]/30 text-[#4a7c59] py-0 h-5">
-                  Tab: {context.activeTab}
+                  Tab: {viewingLabel(context.activeTab, context.outboundSurface) ?? context.activeTab}
                 </Badge>
               )}
               {context.selectedContactName && (

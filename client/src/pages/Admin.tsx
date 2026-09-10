@@ -12,25 +12,23 @@ import { AdminCitizenshipTiers } from "@/components/admin/AdminCitizenshipTiers"
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 import { AdminInquiriesHub } from "@/components/admin/AdminInquiriesHub";
 import { ContactNotesPanel, ContactTagsPanel, ReminderPanel, AssigneeSelect } from "@/components/admin/AdminContactPanels";
-import { NewsletterSubscribersList } from "@/components/admin/AdminSettingsPanels";
+import { InquirySection } from "@/components/admin/AdminInquirySection";
 import { AdminPlayersTab } from "@/components/admin/AdminPlayersTab";
 import { AdminCustomGameWaitlist, AdminCustomGameApplications } from "@/components/admin/AdminCustomGamesPanels";
 import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
-import { writeAdminContinueFromTab, type AdminHrefExtras } from "@/lib/adminNav";
-import { InquirySection } from "@/components/admin/AdminInquirySection";
+import { writeAdminContinueFromTab, canonicalizeAdminTab, parseOutboundSurface, type AdminHrefExtras, type OutboundSurface } from "@/lib/adminNav";
 
 const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
-const AdminNewsletterTab = lazy(() => import("@/components/admin/AdminNewsletterTab").then(m => ({ default: m.AdminNewsletterTab })));
+const AdminOutboundHub = lazy(() => import("@/components/admin/AdminOutboundHub").then(m => ({ default: m.AdminOutboundHub })));
 const AdminSettingsTab = lazy(() => import("@/components/admin/AdminSettingsTab").then(m => ({ default: m.AdminSettingsTab })));
 const AdminInvestorsTab = lazy(() => import("@/components/admin/AdminInvestorsTab").then(m => ({ default: m.AdminInvestorsTab })));
 const AdminAllianceTab = lazy(() => import("@/components/admin/AdminAllianceTab").then(m => ({ default: m.AdminAllianceTab })));
 const AdminSeedsClaimsTab = lazy(() => import("@/components/admin/AdminSeedsClaimsTab").then(m => ({ default: m.AdminSeedsClaimsTab })));
 const AdminCrowdpoolingTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminCrowdpoolingTab })));
-const AdminBroadcastTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminBroadcastTab })));
 const AdminLOITab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminLOITab })));
 const AdminBannersTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminBannersTab })));
 const AdminImagesTab = lazy(() => import("@/components/admin/AdminSimpleTabs").then(m => ({ default: m.AdminImagesTab })));
@@ -53,10 +51,20 @@ function readSearch() {
   }
 }
 
+function resolveAdminTab(rawTab: string): { tab: string; surface?: OutboundSurface } {
+  const canon = canonicalizeAdminTab(rawTab);
+  if (LEGACY_INQUIRY_TABS.has(canon.tab)) return { tab: "inquiries" };
+  return canon;
+}
+
 function AdminDashboard() {
   const params = readSearch();
   const rawTab = params.get("tab") || "overview";
-  const [activeTab, setActiveTabState] = useState(() => (LEGACY_INQUIRY_TABS.has(rawTab) ? "inquiries" : rawTab));
+  const initial = resolveAdminTab(rawTab);
+  const [activeTab, setActiveTabState] = useState(initial.tab);
+  const [outboundSurface, setOutboundSurface] = useState<OutboundSurface>(
+    () => parseOutboundSurface(params.get("surface")) ?? initial.surface ?? "write",
+  );
   const [inquiryType, setInquiryType] = useState<string | null>(() =>
     LEGACY_INQUIRY_TABS.has(rawTab) ? (rawTab === "kanban" ? "kanban" : rawTab) : params.get("type"),
   );
@@ -74,8 +82,13 @@ function AdminDashboard() {
   const [notifCenterOpen, setNotifCenterOpen] = useState(false);
 
   const setActiveTab = (tab: string, extras?: AdminHrefExtras) => {
-    const nextTab = LEGACY_INQUIRY_TABS.has(tab) ? "inquiries" : tab;
+    const resolved = resolveAdminTab(tab);
+    const nextTab = resolved.tab;
     setActiveTabState(nextTab);
+    if (nextTab === "outbound") {
+      const fromExtras = parseOutboundSurface(extras?.surface);
+      setOutboundSurface(fromExtras ?? resolved.surface ?? (activeTab === "outbound" ? outboundSurface : "write"));
+    }
     if (LEGACY_INQUIRY_TABS.has(tab)) {
       setInquiryType(tab === "kanban" ? "kanban" : tab);
     } else if (extras?.type) {
@@ -102,18 +115,22 @@ function AdminDashboard() {
       else if (activeTab !== "applications") url.searchParams.delete("status");
       if (activeTab === "applications" && appView) url.searchParams.set("view", appView);
       else if (activeTab !== "applications") url.searchParams.delete("view");
+      if (activeTab === "outbound") url.searchParams.set("surface", outboundSurface);
+      else url.searchParams.delete("surface");
       const next = url.pathname + url.search;
       if (next !== window.location.pathname + window.location.search) {
         window.history.pushState(null, "", next);
       }
     } catch { /* history unavailable */ }
-  }, [activeTab, inquiryType, openRecordId, appStatus, appView]);
+  }, [activeTab, inquiryType, openRecordId, appStatus, appView, outboundSurface]);
 
   useEffect(() => {
     const onPop = () => {
       const p = readSearch();
       const tab = p.get("tab") || "overview";
-      setActiveTabState(LEGACY_INQUIRY_TABS.has(tab) ? "inquiries" : tab);
+      const resolved = resolveAdminTab(tab);
+      setActiveTabState(resolved.tab);
+      setOutboundSurface(parseOutboundSurface(p.get("surface")) ?? resolved.surface ?? "write");
       setInquiryType(LEGACY_INQUIRY_TABS.has(tab) ? (tab === "kanban" ? "kanban" : tab) : p.get("type"));
       const open = p.get("open");
       setOpenRecordId(open ? Number(open) : null);
@@ -316,10 +333,9 @@ function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="crowdpooling"><AdminCrowdpoolingTab /></TabsContent>
-          <TabsContent value="newsletter">
-            <AdminNewsletterTab NewsletterSubscribersListComp={NewsletterSubscribersList} />
+          <TabsContent value="outbound">
+            <AdminOutboundHub surface={outboundSurface} onSurfaceChange={setOutboundSurface} />
           </TabsContent>
-          <TabsContent value="broadcast"><AdminBroadcastTab /></TabsContent>
           <TabsContent value="analytics"><AdminAnalyticsTab /></TabsContent>
           <TabsContent value="loi"><AdminLOITab /></TabsContent>
           <TabsContent value="banners"><AdminBannersTab /></TabsContent>
@@ -346,6 +362,7 @@ function AdminDashboard() {
       <AdminAIAssistant
         context={{
           activeTab,
+          outboundSurface: activeTab === "outbound" ? outboundSurface : undefined,
           investorCount: investors?.length,
           inquiryCount: inquiries?.length,
           applicationCount: applications?.length,

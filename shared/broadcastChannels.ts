@@ -48,3 +48,12 @@ export function isBroadcastChannelId(id: string): id is BroadcastChannelId {
 
 /** Assistant "Use this in Broadcast" action fills the compose box. */
 export const BROADCAST_FILL_EVENT = "admin-broadcast-fill";
+
+/**
+ * Social compose lives on Outbound Social. Legacy `?tab=broadcast` still counts
+ * so assistant actions and Harvest grounding keep working after the hub merge.
+ */
+export function isBroadcastComposeSurface(tab?: string, surface?: string): boolean {
+  if (tab === "broadcast") return true;
+  return tab === "outbound" && surface === "social";
+}

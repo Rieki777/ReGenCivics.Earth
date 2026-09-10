@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BROADCAST_CHANNELS,
   isBroadcastChannelId,
+  isBroadcastComposeSurface,
   strictestBroadcastLimit,
 } from "./broadcastChannels";
 
@@ -42,5 +43,22 @@ describe("broadcast channel catalog", () => {
   it("accepts only catalog ids", () => {
     expect(isBroadcastChannelId("twitter")).toBe(true);
     expect(isBroadcastChannelId("threads_x")).toBe(false);
+  });
+});
+
+describe("isBroadcastComposeSurface", () => {
+  it("treats the legacy Broadcast tab as social compose", () => {
+    expect(isBroadcastComposeSurface("broadcast")).toBe(true);
+  });
+
+  it("treats Outbound Social as social compose", () => {
+    expect(isBroadcastComposeSurface("outbound", "social")).toBe(true);
+  });
+
+  it("does not treat other Outbound surfaces as social compose", () => {
+    expect(isBroadcastComposeSurface("outbound")).toBe(false);
+    expect(isBroadcastComposeSurface("outbound", "write")).toBe(false);
+    expect(isBroadcastComposeSurface("outbound", "people")).toBe(false);
+    expect(isBroadcastComposeSurface("settings")).toBe(false);
   });
 });

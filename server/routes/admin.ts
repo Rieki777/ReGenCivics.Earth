@@ -13,6 +13,7 @@ import { ENV } from "../_core/env";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
+import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 
 /**
  * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
@@ -457,6 +458,7 @@ export const adminAIRouter = router({
       // Live context snapshot passed from the client
       context: z.object({
         activeTab: z.string().optional(),
+        outboundSurface: z.string().optional(),
         investorCount: z.number().optional(),
         inquiryCount: z.number().optional(),
         applicationCount: z.number().optional(),
@@ -466,8 +468,10 @@ export const adminAIRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const snap = input.context ?? {};
+      const onSocialCompose = isBroadcastComposeSurface(snap.activeTab, snap.outboundSurface);
       const contextBlock = [
         snap.activeTab ? `Active admin tab: ${snap.activeTab}` : null,
+        snap.outboundSurface ? `Outbound surface: ${snap.outboundSurface}` : null,
         snap.investorCount !== undefined ? `Total investors in DB: ${snap.investorCount}` : null,
         snap.inquiryCount !== undefined ? `Total general inquiries: ${snap.inquiryCount}` : null,
         snap.applicationCount !== undefined ? `Total applications: ${snap.applicationCount}` : null,
@@ -475,7 +479,7 @@ export const adminAIRouter = router({
       ].filter(Boolean).join("\n");
 
       let harvestBlock = "";
-      if (snap.activeTab === "broadcast" && ENV.ownerUserId && ctx.user.id === ENV.ownerUserId) {
+      if (onSocialCompose && ENV.ownerUserId && ctx.user.id === ENV.ownerUserId) {
         try {
           const { loadHarvestGrounding } = await import("../lib/broadcast-draft");
           const grounding = await loadHarvestGrounding(ctx.user.id, "");
@@ -488,10 +492,10 @@ export const adminAIRouter = router({
         }
       }
 
-      const broadcastBlock = snap.activeTab === "broadcast" ? `
+      const broadcastBlock = onSocialCompose ? `
 
-## Broadcast tab
-You are helping draft social posts for the Broadcast composer (X, LinkedIn, Facebook, Instagram, Bluesky, Farcaster). Voice and facts come from The Harvest: Worldview Pack + learned voice rules + ripe ideas / source_index. Never invent a Notion or Drive path. Never post. To put copy in the compose box:
+## Social compose (Outbound)
+You are helping draft social posts for the Social composer (X, LinkedIn, Facebook, Instagram, Bluesky, Farcaster). Voice and facts come from The Harvest: Worldview Pack + learned voice rules + ripe ideas / source_index. Never invent a Notion or Drive path. Never post. To put copy in the compose box:
 <action>{"type":"compose","tab":"broadcast","body":"...post text...","label":"Use this in Broadcast"}</action>
 Follow the hard publishing rules: no em-dashes, no contrast framing, no AI filler, no rhetorical openers except the brand question, no passive inspiration. Keep X/Bluesky/Farcaster short. Do not put raw URLs in the body.` : "";
 
@@ -515,8 +519,8 @@ You live inside the /admin dashboard and help administrators (like Rieki and the
 - **Create**: "Create with ReGens" collaboration requests
 - **Other**: Catch-all inquiries
 - **Kanban**: Drag-and-drop view of investor/inquiry/application pipelines
+- **Outbound**: Letters to subscribers and posts to social channels. Social compose posts go through Buffer (or Warpcast for Farcaster). Drafts should use The Harvest.
 - **Settings**: Email templates, newsletter subscribers, scheduled emails
-- **Broadcast**: Social compose. Posts go through Buffer (or Warpcast for Farcaster). Drafts should use The Harvest.
 
 ## Available Actions
 When you want the admin to take an action, include a JSON action block in your response wrapped in <action> tags. The UI will render these as buttons.

@@ -97,6 +97,7 @@ export function AdminBroadcastPanel() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ text?: string }>).detail;
       if (!detail?.text) return;
+      try { sessionStorage.removeItem("broadcast_fill_pending"); } catch { /* private mode */ }
       setText(detail.text);
     };
     window.addEventListener(BROADCAST_FILL_EVENT, handler);

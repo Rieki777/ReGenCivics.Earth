@@ -91,11 +91,13 @@ describe("AdminBroadcastPanel", () => {
   });
 
   it("applies assistant fill events into the compose box", async () => {
+    sessionStorage.setItem("broadcast_fill_pending", "stale queued fill");
     render(<AdminBroadcastPanel />);
     await act(async () => {
       window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: "From the assistant." } }));
     });
     expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("From the assistant.");
+    expect(sessionStorage.getItem("broadcast_fill_pending")).toBeNull();
   });
 
   it("picks up a pending fill left before the panel mounted", () => {
