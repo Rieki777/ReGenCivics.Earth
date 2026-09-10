@@ -16,6 +16,7 @@ Last reviewed: 2026-09-02.
 | Image generation per forum post | Every new forum post | Title + first 150 chars of content | A generated banner image stored on R2 |
 | ReGen Guide chat (passport / ask a question) | User chat input | User message + system prompt | Streaming response, no storage |
 | Admin email writing partner (`email.draftWithAgent`) | Admin compose dialog | Status label + recipient count + current draft and layout (PII stripped) | Conversational reply + optional markdown subject/body + optional layout (`plain` / `announcement` / `one_pager`). Never sends. Never returns HTML or PDF. |
+| Harvest Broadcast draft (`harvest.draftBroadcast`) | Admin Broadcast "Draft with Harvest" | Owner intent (optional) + selected channels, wrapped as DATA; ripe `harvest_ideas` + `source_index`; Worldview Pack + learned voice_rules via `draftChannel` | Per-channel social copy. Never posts. Owner-gated. Rate-limited. |
 
 Each one has its own risk shape. Below covers the cross-cutting risks.
 

@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import { sdk } from "../_core/sdk";
-import { ENV } from "../_core/env";
-import { getSiteSetting, setSiteSetting } from "../db";
+import { setSiteSetting } from "../db";
+import { getBufferAccessToken } from "../lib/buffer-token";
 
 const router = express.Router();
 
@@ -22,15 +22,9 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-// DB-stored token takes precedence over env var
-async function getToken(): Promise<string | null> {
-  const dbToken = await getSiteSetting("buffer_access_token");
-  return dbToken || ENV.bufferAccessToken || null;
-}
-
 // GET /api/admin/buffer/profiles
 router.get("/profiles", requireAdmin, async (_req: Request, res: Response): Promise<void> => {
-  const token = await getToken();
+  const token = await getBufferAccessToken();
   if (!token) {
     res.status(503).json({ error: "Buffer not configured" });
     return;
@@ -69,7 +63,7 @@ router.post("/token", requireAdmin, async (req: Request, res: Response): Promise
 
 // POST /api/admin/buffer/post
 router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<void> => {
-  const token = await getToken();
+  const token = await getBufferAccessToken();
   if (!token) {
     res.status(503).json({ error: "Buffer not configured" });
     return;
