@@ -89,6 +89,7 @@ describe("harvest router owner gate", () => {
       const ctx = await createMockContext({ id: TEST_OWNER_ID + 1, role: "admin" });
       const caller = appRouter.createCaller(ctx);
       await expect(caller.harvest.listFeed({ tier: "all" })).rejects.toThrow(/Owner access required/);
+      await expect(caller.harvest.draftBroadcast({ channels: ["twitter"] })).rejects.toThrow(/Owner access required/);
     } finally {
       (ENV as any).ownerUserId = prev;
     }

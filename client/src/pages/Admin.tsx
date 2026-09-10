@@ -18,6 +18,7 @@ import { AdminCustomGameWaitlist, AdminCustomGameApplications } from "@/componen
 import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
+import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 import { writeAdminContinueFromTab, canonicalizeAdminTab, parseOutboundSurface, type AdminHrefExtras, type OutboundSurface } from "@/lib/adminNav";
 
 const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
@@ -143,6 +144,13 @@ function AdminDashboard() {
   function handleAIAction(action: AdminAIAction) {
     if (action.type === "navigate" && action.tab) {
       setActiveTab(action.tab);
+    } else if (action.type === "compose" && action.tab === "broadcast") {
+      const fill = action.body || action.subject;
+      if (fill) {
+        try { sessionStorage.setItem("broadcast_fill_pending", fill); } catch { /* private mode */ }
+        window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: fill } }));
+      }
+      setActiveTab("broadcast");
     } else if (action.type === "search" && action.query) {
       setInvestorSearch(action.query);
       setActiveTab("investors");
@@ -354,6 +362,7 @@ function AdminDashboard() {
       <AdminAIAssistant
         context={{
           activeTab,
+          outboundSurface: activeTab === "outbound" ? outboundSurface : undefined,
           investorCount: investors?.length,
           inquiryCount: inquiries?.length,
           applicationCount: applications?.length,

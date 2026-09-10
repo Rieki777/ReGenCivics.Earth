@@ -404,6 +404,26 @@ export const harvestRouter = router({
       return findRelatedMaterial(ctx.user.id, input.text);
     }),
 
+  /**
+   * Broadcast compose assist: draft social copy from the same Harvest corpus
+   * (ripe ideas + source_index + Worldview Pack voice). Never publishes.
+   */
+  draftBroadcast: ownerProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 6 }))
+    .input(z.object({
+      intent: z.string().max(2000).optional(),
+      channels: z.array(z.enum(["twitter", "linkedin", "facebook", "instagram", "bluesky", "farcaster"])).min(1).max(6),
+      link: z.string().url().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { isLLMConfigured } = await import("../_core/llm");
+      if (!isLLMConfigured()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "LLM is not configured" });
+      }
+      const { draftBroadcastFromHarvest } = await import("../lib/broadcast-draft");
+      return draftBroadcastFromHarvest(ctx.user.id, input);
+    }),
+
   listPublications: ownerProcedure.query(async ({ ctx }) => {
     const db = await requireDb();
     const { publications } = await import("../../drizzle/schema");
