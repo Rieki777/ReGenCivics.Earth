@@ -154,7 +154,7 @@ export const outboundRouter = router({
       const [item] = attachHistoryStats([issue], recipients, logs);
       const layout = isLetterLayout(issue.layout) ? issue.layout : "plain";
       const html = emailDocumentFromMarkdown(issue.body, layout, {
-        unsubscribeUrl: previewUnsubscribeUrl(),
+        managePreferencesUrl: previewUnsubscribeUrl(),
         postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
       });
       return {
