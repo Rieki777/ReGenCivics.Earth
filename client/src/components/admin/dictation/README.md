@@ -26,8 +26,13 @@ hook inserts at the caret (or appends) and never replaces the whole field.
 - Password, `autocomplete=current-password` / `new-password`, and
   `data-dictation="off"` fields are skipped. Focus into a password field
   stops listening.
-- Mic denied or an unsupported browser shows a short error on the button.
-  The page stays up. Type instead.
+- Mic denied: the button opens a forest-green panel with steps (address-bar
+  lock or site info icon → Microphone → Allow → reload). Chromium will not
+  show the Allow prompt again after Block. Type in the meantime.
+- Unsupported browser: a short error on the button. The page stays up.
+- Prompt, granted, or a browser without the Permissions API: the normal
+  request path runs. Chromium gets `getUserMedia({ audio: true })` first so
+  Allow can appear, then the stream is released and Web Speech starts.
 
 `useDictation` is the same engine if a surface needs custom chrome. Prefer
 `DictationButton` so hold-to-talk and the listening state stay consistent.

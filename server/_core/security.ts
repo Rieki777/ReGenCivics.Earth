@@ -129,7 +129,9 @@ export function securityHeadersMiddleware(_req: Request, res: Response, next: Ne
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Permissions policy
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  // microphone=(self): admin dictation and companion voice need the mic on
+  // this origin. camera / geolocation / payment stay off.
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=(), payment=()');
   
   // HSTS for HTTPS enforcement
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
