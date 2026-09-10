@@ -78,6 +78,13 @@ describe("AdminAIAssistant FAB", () => {
     expect(screen.queryByLabelText("Add a note")).toBeNull();
   });
 
+  it("offers the shared dictation mic on the chat input", () => {
+    render(<AdminAIAssistant />);
+    fireEvent.click(fab());
+    expect(screen.getByTestId("dictation-button")).toBeTruthy();
+    expect(screen.getByLabelText("Dictate message")).toBeTruthy();
+  });
+
   it("offers Harvest draft starters when viewing Broadcast", () => {
     render(<AdminAIAssistant context={{ activeTab: "broadcast" }} />);
     fireEvent.click(fab());
