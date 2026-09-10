@@ -18,13 +18,14 @@ import {
   events,
   investorInquiries,
   letterOfIntent,
-  newsletterSubscribers,
   users,
   type Event,
 } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
-import { buildAutoReminderHtml, reminderJoinUrl, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
+import { buildAutoReminderHtml, reminderJoinUrl } from "../lib/eventReminderEmail";
+import { audienceForTopic, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
+import type { EmailTopicKey } from "@shared/emailPrefs";
 import {
   canEnableAutoReminders,
   dueOffsets,
@@ -39,6 +40,12 @@ import {
 } from "@shared/eventAutoReminders";
 
 const log = logger("event-auto-reminders");
+
+function communityTopicForAudience(mode: AutoReminderAudienceMode): EmailTopicKey {
+  if (mode === "season2_approved") return "season2";
+  if (mode === "open_access") return "open_access";
+  return "events";
+}
 
 export type AutoReminderJobReport = {
   ok: boolean;
@@ -82,14 +89,7 @@ export async function resolveAutoReminderRecipients(opts: {
   };
 
   const loadOpenAccess = async () => {
-    const subs = await database
-      .select({
-        email: newsletterSubscribers.email,
-        name: newsletterSubscribers.name,
-      })
-      .from(newsletterSubscribers)
-      .where(eq(newsletterSubscribers.isActive, 1));
-    groups.push(subs);
+    groups.push(await audienceForTopic("open_access"));
     groups.push(await loadEventSignups(opts.eventId));
   };
 
@@ -115,17 +115,7 @@ export async function resolveAutoReminderRecipients(opts: {
     const config = opts.audienceConfig ?? {};
     if (!canEnableAutoReminders("custom", config)) return [];
     if (config.newsletterSources && config.newsletterSources.length > 0) {
-      const subs = await database
-        .select({
-          email: newsletterSubscribers.email,
-          name: newsletterSubscribers.name,
-        })
-        .from(newsletterSubscribers)
-        .where(and(
-          eq(newsletterSubscribers.isActive, 1),
-          inArray(newsletterSubscribers.source, config.newsletterSources),
-        ));
-      groups.push(subs);
+      groups.push(await audienceForTopic("events", { sources: config.newsletterSources }));
     }
     if (config.includeInvestors) {
       const investors = await database
@@ -166,7 +156,12 @@ export async function resolveAutoReminderRecipients(opts: {
     }
   }
 
-  return mergeRecipients(groups);
+  const merged = mergeRecipients(groups);
+  if (opts.audienceMode === "season2_approved") {
+    const blocked = await emailsBlockingTopic("season2");
+    return merged.filter((row) => !blocked.has(row.email.toLowerCase()));
+  }
+  return merged;
 }
 
 async function claimSend(eventId: number, offsetMinutes: number): Promise<boolean> {
@@ -197,15 +192,24 @@ async function recordRecipientCount(eventId: number, offsetMinutes: number, reci
     ));
 }
 
-async function sendOffset(event: Event, offsetMinutes: number, recipients: ReminderRecipient[], customSubject: string | null, customBody: string | null) {
+async function sendOffset(
+  event: Event,
+  offsetMinutes: number,
+  recipients: ReminderRecipient[],
+  customSubject: string | null,
+  customBody: string | null,
+  audienceMode: AutoReminderAudienceMode,
+) {
   const joinUrl = reminderJoinUrl({
     riversideRoomUrl: event.riversideRoomUrl,
     zoomUrl: event.zoomUrl,
   });
   const subject = customSubject?.trim() || offsetSubject(event.title, offsetMinutes);
+  const mute = communityTopicForAudience(audienceMode);
 
   let sent = 0;
   for (const recipient of recipients) {
+    const prefsUrl = await managePreferencesUrl(recipient.email, { mute });
     const html = buildAutoReminderHtml({
       title: event.title,
       startTime: event.startTime,
@@ -214,7 +218,7 @@ async function sendOffset(event: Event, offsetMinutes: number, recipients: Remin
       bodyText: customBody,
       joinUrl,
       offsetMinutes,
-      unsubscribeUrl: reminderUnsubscribeUrl(recipient.email, event.id, "list"),
+      preferencesUrl: prefsUrl,
     });
     await sendEmail({
       to: [recipient.email],
@@ -330,6 +334,7 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
           recipients,
           config.customSubject,
           config.customBody,
+          config.audienceMode,
         );
         await recordRecipientCount(event.id, offsetMinutes, sent);
         if (offsetMinutes === 24 * 60) {

@@ -85,6 +85,7 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 - CORS: explicit allowlist in `server/_core/index.ts`. localhost:5173 added for dev.
 - `app.set('trust proxy', 1)` set so X-Forwarded-* is honored at exactly one hop (Railway → Cloudflare).
 - `Strict-Transport-Security` enforced. `X-Content-Type-Options: nosniff`. `X-Frame-Options: SAMEORIGIN`.
+- Permissions-Policy: `camera=()`, `geolocation=()`, `payment=()` stay off. `microphone=(self)` so admin dictation and companion voice can request the mic on this origin. A prior `microphone=()` value made Allow in the address bar a no-op.
 - Production: `NODE_ENV=production` → `secure: true` cookies default, even if `x-forwarded-proto` is missing (commit `657f230`).
 - 2026-07-17, companion voices (ADR-44): `script-src` gained `'wasm-unsafe-eval'` (WebAssembly compile only; grants nothing to eval), `worker-src 'self' blob:` added (onnxruntime-web threading workers), and `connect-src` gained `https://huggingface.co https://*.huggingface.co https://*.hf.co` (Kokoro model download, one ~90MB browser-cached fetch) plus `https://cdn.jsdelivr.net` (ONNX WASM binary). All serve static model artifacts; no script execution granted to those origins beyond the pre-existing jsdelivr `script-src` entry. The hosted `companion.speak` procedure is public but rate-limited (`companion_tts`), text-capped at 600 chars, registry-validated voice keys only, and server-cached, bounding third-party TTS spend per client.
 

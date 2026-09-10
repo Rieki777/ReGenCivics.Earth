@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
+import { DictationButton } from "@/components/admin/dictation";
 import type { LetterLayout } from "@shared/letterLayout";
 
 const APPLICATION_STARTERS = [
@@ -58,6 +59,7 @@ export function EmailDraftAgent({
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const applicationDraft = trpc.email.draftWithAgent.useMutation();
   const newsletterDraft = trpc.outbound.draftWithAgent.useMutation();
   const draft = variant === "newsletter" ? newsletterDraft : applicationDraft;
@@ -177,13 +179,14 @@ export function EmailDraftAgent({
       </div>
 
       <form
-        className="p-2 border-t border-[#4a7c59]/20 flex gap-2"
+        className="p-2 border-t border-[#4a7c59]/20 flex gap-2 items-end"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);
         }}
       >
         <Textarea
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -193,14 +196,23 @@ export function EmailDraftAgent({
             }
           }}
           placeholder="Tell me what to change..."
-          className={`${EMAIL_FIELD_CLASS} min-h-[44px] max-h-24 text-sm`}
+          className={`${EMAIL_FIELD_CLASS} min-h-[44px] max-h-24 min-w-0 flex-1 text-sm`}
           rows={2}
           disabled={draft.isPending}
+        />
+        <DictationButton
+          value={input}
+          onChange={setInput}
+          targetRef={inputRef}
+          label="Dictate message"
+          disabled={draft.isPending}
+          errorAlign="end"
+          className="h-11 w-11"
         />
         <Button
           type="submit"
           disabled={draft.isPending || !input.trim()}
-          className="bg-[#4a7c59] hover:bg-[#3d6849] text-white self-end h-11"
+          className="bg-[#4a7c59] hover:bg-[#3d6849] text-white h-11"
         >
           Send
         </Button>
