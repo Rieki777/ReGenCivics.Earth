@@ -461,6 +461,54 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
 
+/**
+ * Newsletter issue (Outbound campaign). Markdown body, audience JSON
+ * `{ sources: string[], activeOnly: boolean }`. Send ships in a later PR.
+ * Named `newsletter_issues` so it never collides with crowd-pooling `campaigns`.
+ */
+export const newsletterIssues = mysqlTable("newsletter_issues", {
+  id: int("id").autoincrement().primaryKey(),
+  subject: varchar("subject", { length: 300 }).notNull(),
+  body: mediumtext("body").notNull(),
+  layout: varchar("layout", { length: 32 }).default("plain").notNull(),
+  templateKey: varchar("template_key", { length: 100 }),
+  audience: json("audience"),
+  status: mysqlEnum("status", ["draft", "scheduled", "sending", "sent", "failed", "cancelled"]).default("draft").notNull(),
+  scheduledFor: timestamp("scheduled_for"),
+  bodyHash: char("body_hash", { length: 64 }),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }).unique(),
+  recipientCount: int("recipient_count").default(0).notNull(),
+  sentCount: int("sent_count").default(0).notNull(),
+  failedCount: int("failed_count").default(0).notNull(),
+  createdBy: int("created_by").notNull(),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  statusScheduledIdx: index("newsletter_issues_status_scheduled_idx").on(t.status, t.scheduledFor),
+  createdByIdx: index("newsletter_issues_created_by_idx").on(t.createdBy, t.createdAt),
+}));
+export type NewsletterIssue = typeof newsletterIssues.$inferSelect;
+export type InsertNewsletterIssue = typeof newsletterIssues.$inferInsert;
+
+/** Per-address snapshot for one issue. Filled at preview/send time (later PR). */
+export const newsletterIssueRecipients = mysqlTable("newsletter_issue_recipients", {
+  id: int("id").autoincrement().primaryKey(),
+  issueId: int("issue_id").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  source: varchar("source", { length: 32 }),
+  status: mysqlEnum("status", ["pending", "sent", "failed", "skipped_unsub"]).default("pending").notNull(),
+  emailLogId: int("email_log_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  issueEmailUnique: uniqueIndex("newsletter_issue_recipients_issue_email_unique").on(t.issueId, t.email),
+  issueIdx: index("newsletter_issue_recipients_issue_idx").on(t.issueId),
+  emailLogIdx: index("newsletter_issue_recipients_email_log_idx").on(t.emailLogId),
+}));
+export type NewsletterIssueRecipient = typeof newsletterIssueRecipients.$inferSelect;
+export type InsertNewsletterIssueRecipient = typeof newsletterIssueRecipients.$inferInsert;
+
 
 /**
  * Video Suggestions table
@@ -1597,6 +1645,9 @@ export const emailTemplates = mysqlTable("emailTemplates", {
   
   // Template identifier (matches the key in emailTemplates object, e.g. "newsletter_welcome")
   templateKey: varchar("templateKey", { length: 100 }).notNull().unique(),
+
+  // application = Application Reviews / inquiries. newsletter = Outbound letters.
+  kind: varchar("kind", { length: 16 }).default("application").notNull(),
   
   // Custom subject line (null = use default)
   customSubject: varchar("customSubject", { length: 500 }),
