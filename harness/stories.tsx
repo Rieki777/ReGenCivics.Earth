@@ -5,11 +5,12 @@
  */
 import type { ReactNode } from "react";
 import { mockData } from "./trpc-stub";
-import { PublicationReview } from "@/components/HarvestCompose";
+import { PublicationReview, ComposeBox } from "@/components/HarvestCompose";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
 import { AdminAllianceTab } from "@/components/admin/AdminAllianceTab";
 import { InquirySection } from "@/components/admin/AdminInquirySection";
 import { AdminEventAnalytics } from "@/components/AdminEventAnalytics";
+import { AdminAIAssistant } from "@/components/AdminAIAssistant";
 
 export type Story = {
   title: string;
@@ -188,6 +189,28 @@ export const STORIES: Record<string, Story> = {
         inquiries={ALLIANCE_INQUIRIES}
         InquirySectionComp={InquirySection}
       />
+    ),
+  },
+
+  "harvest-compose": {
+    title: "Harvest Compose idea box with the shared dictation mic",
+    render: () => (
+      <div className="max-w-3xl">
+        <ComposeBox onComposed={() => undefined} />
+      </div>
+    ),
+  },
+
+  "admin-ai-chat": {
+    title: "Admin AI chatbot input with the shared dictation mic",
+    setup: () => {
+      mockData["auth.me"] = { id: "u1", role: "admin", name: "Rye" };
+      mockData["quickNotes.status"] = { ready: true, voice: true };
+    },
+    render: () => (
+      <div className="relative min-h-[560px]">
+        <AdminAIAssistant context={{ activeTab: "overview" }} />
+      </div>
     ),
   },
 

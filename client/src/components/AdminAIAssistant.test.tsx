@@ -77,4 +77,11 @@ describe("AdminAIAssistant FAB", () => {
     fireEvent.click(fab());
     expect(screen.queryByLabelText("Add a note")).toBeNull();
   });
+
+  it("offers the shared dictation mic on the chat input", () => {
+    render(<AdminAIAssistant />);
+    fireEvent.click(fab());
+    expect(screen.getByTestId("dictation-button")).toBeTruthy();
+    expect(screen.getByLabelText("Dictate message")).toBeTruthy();
+  });
 });

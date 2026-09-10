@@ -8,11 +8,12 @@
  * article goes out as a hidden preview first, and email routes to the
  * hardened send on the newsletter draft.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { DictationButton } from "@/components/admin/dictation";
 import { Loader2, PenLine, Sparkles, Check, Globe, ImagePlus, ExternalLink, Undo2, Copy } from "lucide-react";
 
 const SURFACE_LABEL: Record<string, string> = {
@@ -27,16 +28,18 @@ const SURFACE_LABEL: Record<string, string> = {
 export function ComposeBox({ onComposed }: { onComposed: (publicationId: number) => void }) {
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<{ ideas: Array<{ id: number; title: string }>; sourceRefs: string[] } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const composePreview = trpc.harvest.composePreview.useMutation();
   const compose = trpc.harvest.compose.useMutation();
 
   return (
     <div className="rounded-2xl border-2 border-[#1a472a]/30 bg-white p-4 space-y-2">
       <p className="text-sm font-semibold text-[#1a472a] flex items-center gap-1.5"><PenLine className="w-4 h-4 text-[#2d5a3d]" /> Compose</p>
-      <Textarea value={text} onChange={(e) => { setText(e.target.value); setPreview(null); }}
+      <Textarea ref={textareaRef} value={text} onChange={(e) => { setText(e.target.value); setPreview(null); }}
         placeholder="Drop an idea. First line becomes the working title. It fans out into an article, social posts, and an optional email, grounded in your own notes."
         className="min-h-[100px] text-sm bg-white text-[#1a472a] placeholder:text-[#4a7c59] rounded-xl border border-[#1a472a]/25 focus-visible:ring-[#4a7c59]" />
       <div className="flex items-center gap-2 flex-wrap">
+        <DictationButton value={text} onChange={(next) => { setText(next); setPreview(null); }} targetRef={textareaRef} label="Dictate idea" />
         <Button size="sm" variant="outline" className="h-9 rounded-lg border-[#1a472a]/30 text-[#1a472a]"
           disabled={text.trim().length < 10 || composePreview.isPending}
           onClick={async () => setPreview(await composePreview.mutateAsync({ text: text.trim() }))}>
