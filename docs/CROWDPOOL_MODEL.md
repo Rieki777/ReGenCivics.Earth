@@ -171,12 +171,33 @@ you claim, the chain confirms, and the confirmation comes back.
 
 The ten per cent that is not routed sits in the community treasury as a **real asset
 you have a claim on**, not a fee that disappears. Paying roles and running costs draws
-it down over time, and **that drawdown is a governance decision**, made by the people
-holding governance weight rather than by whoever is running the platform that month.
+it down over time, and **that drawdown is a governance decision**, made by the fund
+assembly described below.
 
 So in the worked example, the 10,000 in the treasury is genuinely part of what that
 contributor's $RCivics represents. It is the smallest of the three holdings and the
 only one the community spends from directly.
+
+---
+
+## Who decides
+
+The fund is governed by an assembly where **every seat has exactly one vote**. Three
+kinds of seat exist:
+
+- **Every land project organisation.**
+- **Every investor who has put in at least CHF 250,000.**
+- **Every steward on the operational council.**
+
+The assembly decides how the fund is run, and above all how money is disbursed. The
+operational council carries those decisions out and has real authority inside its
+roles.
+
+Land projects vote on the disbursement plan as a whole. A project never votes on a
+single award, so it never votes on its own.
+
+Crowdpool contributors take part in the fund and route their share. How someone below
+CHF 250,000 is heard in the assembly is still being decided.
 
 ---
 

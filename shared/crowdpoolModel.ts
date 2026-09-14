@@ -211,13 +211,28 @@ export const TREASURY = {
 } as const;
 
 /**
- * Governance of the cooperative. Ruled 2026-09-05.
+ * Governance of the fund. Ruled 2026-09-14. This replaces the ruling of 2026-09-05
+ * that both one member one vote and one franc one vote be supported.
  *
- * TWO WEIGHTINGS, both supported, chosen rather than assumed. One member one vote
- * is the Swiss cooperative default and the shape that most clearly reads as a
- * membership rather than an investment vehicle. One franc one vote is capital
- * weighted. Which applies is a setting, because the answer may differ by decision
- * type and because Swiss counsel has not ruled yet.
+ * ONE SEAT, ONE VOTE. The fund assembly has three kinds of seat, and each seat
+ * carries exactly one vote:
+ *   - every land project organisation
+ *   - every investor who has put in at least CHF 250,000
+ *   - every steward on the operational council
+ * The assembly decides overall governance, how the fund is run, and above all how
+ * money is disbursed. The operational council carries those decisions out and is
+ * empowered within its roles.
+ *
+ * Land projects vote on the disbursement slate as a whole. They do not vote on
+ * individual awards, their own included.
+ *
+ * Crowdpool contributors take part in the fund. What voice a contributor below
+ * CHF 250,000 has is still OPEN. The recommendation on the table is a crowd circle
+ * that elects delegates, one delegate seat for every CHF 250,000 the crowd has
+ * pooled. Nothing is built on it yet. CROWDPOOL_PLAN.md section 9 has the reasoning.
+ *
+ * One vote per member is mandatory in a Swiss cooperative (CO Art. 885) and the
+ * floor in a Liechtenstein one (PGR Art. 172 para. 5), so this ruling fits both.
  *
  * THE ELECTORATE IS NOT ONLY PEOPLE. Voting weight also goes to projects,
  * organisations and other actors, so the cooperative is governed by the whole
@@ -233,11 +248,18 @@ export const TREASURY = {
  */
 export const GOVERNANCE = {
   token: "rcvoice",
-  /** game_variables: crowdpool.governance.weighting */
-  weightings: ["one_member_one_vote", "one_franc_one_vote"] as const,
-  defaultWeighting: "one_member_one_vote",
-  /** May vary by what is being decided, not only by season. */
-  weightingIsPerDecisionType: true,
+  votesPerSeat: 1,
+  seats: {
+    land_project: { votes: 1, who: "every land project organisation" },
+    investor: { votes: 1, minimumInvestedChf: 250_000 },
+    steward: { votes: 1, who: "every steward on the operational council" },
+  },
+  assemblyDecides: ["overall governance", "how the fund is run", "disbursements"] as const,
+  operationalCouncil: { executesDecisions: true, empoweredWithinRoles: true },
+  /** Projects vote on the whole disbursement slate, never on a single award. */
+  projectsVoteOnDisbursements: "whole_slate",
+  /** OPEN. Recommended: crowd-elected delegates, one seat per CHF 250,000 pooled. */
+  crowdContributorVoice: null,
   /** A voter is an actor, never assumed to be a person. */
   actorKinds: ["person", "project", "organisation", "other"] as const,
   rcvoiceDeployedOnBase: false,

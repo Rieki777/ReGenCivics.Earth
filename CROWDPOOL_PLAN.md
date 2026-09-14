@@ -88,6 +88,10 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | 2026-09-05 | **ReGen Civics is a COOPERATIVE**, Swiss, with a separate accredited-investor fund alongside. |
 | 2026-09-05 | Accredited investors are routed to `/opportunity` to pledge LOIs. |
 | 2026-09-05 | **Every rail is switchable.** Build the machinery with per-rail on/off so what is legal can be turned on as counsel clears it. |
+| 2026-09-14 | **Fund governance is one seat, one vote.** Seats: every land project organisation, every investor with at least CHF 250,000 in, every steward on the operational council. The assembly decides overall governance and disbursements. The operational council executes, empowered within its roles. Replaces the 2026-09-05 ruling to support both weightings. |
+| 2026-09-14 | The investor seat threshold is **CHF 250,000**. |
+| 2026-09-14 | Land projects vote on the disbursement **slate as a whole**, never on a single award. |
+| 2026-09-14 | Crowdpool contributors take part in the fund and can receive from it. Their voice below CHF 250,000 is **open**; the recommendation is in section 9. |
 
 ---
 
@@ -234,12 +238,26 @@ instruments carrying equity.
 
 ## 9. Open questions
 
-1. **One member one vote, or one franc one vote?** Rye's design gives RCVoice in
-   proportion to money contributed. Swiss cooperatives default to one member one vote,
-   and capital-weighted governance is one of the things that makes a body look like an
-   investment vehicle rather than a membership. This is the single most important open
-   question for the cooperative framing, and nothing is built, so it is still free.
-2. **RCVoice is not deployed.** It is the only one of the four tokens with no contract on
+1. **What voice does a crowdpool contributor below CHF 250,000 have?** Recommended: a
+   **crowd circle**. Every contributor is a member and votes one person one vote in the
+   circle. The circle elects delegates to the fund assembly, one delegate seat for every
+   CHF 250,000 the crowd has pooled and not had refunded. The threshold then means the
+   same thing whether CHF 250,000 arrives from one wallet or from a thousand.
+   The legal reason: in a Swiss or a Liechtenstein cooperative every member keeps at
+   least one vote, so a member with no voice at all is not available. The other route,
+   contributors who are not members and hold a claim with no vote, is the most
+   fund-like shape there is, and in Switzerland it is blocked (BGE 140 III 206).
+   Delegates are allowed at any size in Liechtenstein (PGR Art. 166) and above 300
+   members in Switzerland (CO Art. 892).
+2. **Does slate voting survive the recusal rule?** In a Liechtenstein entity with 30 or
+   more voters, a member may not vote on its own dealings with the entity (PGR Art. 175).
+   A slate that contains a project's own award may still count. Ask counsel; if it does,
+   the voting engine records an abstention on any slate that pays the voter.
+3. **Stewards vote on what they then carry out.** They should abstain on their own roles,
+   pay and discharge (CO Art. 887 bars management from voting on discharge).
+4. **Is the CHF 250,000 cumulative or one commitment, and can it be split or combined
+   across affiliates?** `member_compliance` already carries an affiliate flag.
+5. **RCVoice is not deployed.** It is the only one of the four tokens with no contract on
    Base. The governance token this design rests on does not exist on-chain yet.
 3. **Does the required-participation condition hold?** Rye intends every money
    contributor to also give time, equipment or a role. That is the thing that most
