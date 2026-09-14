@@ -4,33 +4,39 @@
 `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md` and the earlier money build plan, and it is
 the single place the current state lives.
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-14
 
 ---
 
-## 1. What ReGen Civics is, as of 2026-09-05
+## 1. What ReGen Civics is, as of 2026-09-14
 
-**ReGen Civics is a cooperative.** Not a fund. A global, in-real-life game in which
-members build ecovillages together by pooling everything they have: time, money,
-equipment, land, knowledge, networks and roles. Members govern democratically. Money is
-one resource among many and usually the smaller part, typically ten to twenty per cent
-of what a project needs.
+**ReGen Civics is a cooperative, and the cooperative is the fund.** A global, in-real-life
+game in which members build ecovillages together by pooling everything they have: time,
+money, equipment, land, knowledge, networks and roles. Members govern one seat, one vote.
+Money is one resource among many and usually the smaller part, typically ten to twenty
+per cent of what a project needs.
 
-This framing was settled on 2026-09-05 and it changes the whole legal analysis.
-Everything researched before that date analysed a fund trying not to look like a fund,
-which was the wrong question.
+**Home jurisdiction: Liechtenstein.** Ruled 2026-09-14. Liechtenstein uses the Swiss
+franc, so the unit of account does not change. Swiss analysis stops; what carries over
+is kept in `legal-research/`.
 
-**Two vehicles, kept apart.**
+**Three channels into every campaign, all counted on the campaign page.**
 
-| | The cooperative | The fund |
-|---|---|---|
-| Name | ReGen Civics | "ReGen Civics Fund" or another name, to be settled |
-| Who | Members, worldwide, who contribute and participate | Accredited investors |
-| What happens | Crowdpooling: money and in-kind, routed by members | Financial exposure, no crowdpooling |
-| Today | Being built, accepts nothing yet | LOI pledges only, on `/opportunity` |
+| Channel | Who | Where the money goes | What you get |
+|---|---|---|---|
+| The fund | Anyone contributing **CHF 250,000 or more** through a campaign | The cooperative, held by a licensed custodian until close | Membership: one seat, one vote, $RCivics one per franc, routing |
+| The partner platform | Anyone contributing less than the minimum | A crowdfunding platform we partner with and do not run. Recommended: straight to the project, on the platform's terms. Not yet ruled. | Whatever the platform offers. No fund tokens. A voice through the crowd circle |
+| In kind | Everyone | One project, through the needs registry | The Game side: RGVoice and $ReGen. No fund tokens. Whether it counts toward crowd seats is open |
 
-**Home jurisdiction: Switzerland.** That is why the Swiss franc is the unit of account.
-A legal plan built around a Swiss cooperative is in progress; see section 8.
+The minimum is the price of a direct seat. Below it the voice is collective: the **crowd
+circle**, one person one vote, elects delegates to the assembly, one seat for every
+CHF 250,000 the crowd has contributed together. A thousand people who pool CHF 250,000
+hold the same seat one person does. Nobody with a stake is voiceless, and nobody holds a
+disproportionate one.
+
+**The accredited path.** Recommended, not yet ruled: `/opportunity` and its LOIs become
+the front door to the same fund channel rather than a second vehicle. The "two vehicles,
+kept apart" table of 2026-09-05 is superseded by this section.
 
 ---
 
@@ -42,11 +48,12 @@ Full human explanation: `docs/CROWDPOOL_MODEL.md`. Machine-readable:
 1. Thirteen land projects run campaigns at the end of a season. Each needs money and
    roles, equipment, time, land, networks. **A campaign succeeds only if both halves
    land.**
-2. In-kind contributions go to ONE project. Money goes to ReGen Civics, never to a
-   project.
-3. A member contributing 100,000 CHF receives **100,000 $RCivics** and an equal amount
-   of **RCVoice**, the governance token, so contributing makes you a participant rather
-   than a passive investor.
+2. In-kind contributions go to ONE project. Money at or above the fund minimum goes to
+   ReGen Civics, never to a project. Money below the minimum goes to the partner
+   platform and never enters the fund (section 1).
+3. A member contributing **CHF 250,000** receives **250,000 $RCivics** and **one seat**
+   in the fund, recorded as RCVoice. Every seat has one vote whatever was contributed,
+   so contributing makes you a member rather than a passive investor.
 4. They **route** 90% of it (configurable 50 to 90) across the projects they choose.
    Routing is non-binding signalling, movable until a campaign closes, never
    transferable or sellable.
@@ -61,6 +68,9 @@ Full human explanation: `docs/CROWDPOOL_MODEL.md`. Machine-readable:
 8. A campaign that misses its window gives the member three choices, with a **seven day
    window** and silence defaulting to the core team choosing. That default has its own
    consent checkbox.
+9. Below the minimum, the **crowd circle**: one person one vote inside it, delegates to
+   the assembly, one delegate seat per CHF 250,000 the crowd contributed together. A
+   delegate's vote counts the same as any seat, and no member holds more than one seat.
 
 ---
 
@@ -91,7 +101,12 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | 2026-09-14 | **Fund governance is one seat, one vote.** Seats: every land project organisation, every investor with at least CHF 250,000 in, every steward on the operational council. The assembly decides overall governance and disbursements. The operational council executes, empowered within its roles. Replaces the 2026-09-05 ruling to support both weightings. |
 | 2026-09-14 | The investor seat threshold is **CHF 250,000**. |
 | 2026-09-14 | Land projects vote on the disbursement **slate as a whole**, never on a single award. |
-| 2026-09-14 | Crowdpool contributors take part in the fund and can receive from it. Their voice below CHF 250,000 is **open**; the recommendation is in section 9. |
+| 2026-09-14 | Crowdpool contributors take part in the fund and can receive from it. Their voice below CHF 250,000 was left open for a few hours; superseded by the fund minimum below. |
+| 2026-09-14 | **Home jurisdiction is Liechtenstein.** Swiss analysis stops. The franc stays. |
+| 2026-09-14 | **Fund minimum CHF 250,000.** Every financial contribution through a campaign is at least the minimum, and each one earns exactly one seat. The number is a setting, `crowdpool.fund_minimum_chf`; the shape is not. |
+| 2026-09-14 | **Below the minimum goes to a partner crowdfunding platform** we do not operate. Its total is still counted on the campaign page. Who receives that money is open; recommended: the project directly. |
+| 2026-09-14 | "Money goes to ReGen Civics, never to a project" (2026-09-04) now applies to the fund channel only. |
+| 2026-09-14 | **The crowd circle is in.** Everyone who contributes below the minimum has a voice through a crowd circle: one person one vote inside it, and it elects delegates to the assembly, one delegate seat per CHF 250,000 the crowd has contributed together. A delegate holds one vote, like every seat. Rye's principle: everyone has a voice relative to their contribution, the fund is infrastructure for the whole network, and no single person or small group holds disproportionate value. |
 
 ---
 
@@ -221,14 +236,16 @@ page were measured at 375 and none overflows its text.
 **No pooling machinery is built until the legal shape is settled.** Rye's ruling of
 2026-09-05: build the rails, talk out the shape first.
 
-In progress: a legal lane reworking the plan for a **Swiss cooperative** running a global
-ecovillage-building game, with the accredited fund alongside. Seven dimensions: the
-Genossenschaft form itself, whether it is a collective investment scheme under CISA,
-token issuance under the DLT Act, cross-border reach over members worldwide, member
-labour under Swiss employment and social insurance law, tax, and how the two vehicles sit
-side by side without becoming one arrangement.
+The legal shape under test is a **registered Liechtenstein cooperative that is the fund**:
+a CHF 250,000 minimum and one seat per member, a partner crowdfunding platform for
+smaller money, a licensed custodian holding contributions until close. Rye meets counsel
+the week of 2026-09-14. The research is in `legal-research/` (not committed) and its
+questions for counsel are ranked. The one that decides everything: **is the cooperative
+an AIF under AIFMG Art. 4, and if so which route (small AIFM registration, EuSEF, a full
+licence) is the cheapest lawful one.** Nothing takes money until that is answered in
+writing.
 
-Earlier US-framed research is in `docs/legal/`. Read it knowing it analysed a fund. Its
+Earlier US-framed research is in `legal-research/` too. Read it knowing it analysed a fund. Its
 findings that survive the reframe are that labels do not change what an instrument is,
 that governance rights alone probably do not defeat the "efforts of others" prong, and
 that the 2025-26 US crypto statutes do not help because both new regimes exclude
@@ -238,32 +255,38 @@ instruments carrying equity.
 
 ## 9. Open questions
 
-1. **What voice does a crowdpool contributor below CHF 250,000 have?** Recommended: a
-   **crowd circle**. Every contributor is a member and votes one person one vote in the
-   circle. The circle elects delegates to the fund assembly, one delegate seat for every
-   CHF 250,000 the crowd has pooled and not had refunded. The threshold then means the
-   same thing whether CHF 250,000 arrives from one wallet or from a thousand.
-   The legal reason: in a Swiss or a Liechtenstein cooperative every member keeps at
-   least one vote, so a member with no voice at all is not available. The other route,
-   contributors who are not members and hold a claim with no vote, is the most
-   fund-like shape there is, and in Switzerland it is blocked (BGE 140 III 206).
-   Delegates are allowed at any size in Liechtenstein (PGR Art. 166) and above 300
-   members in Switzerland (CO Art. 892).
-2. **Does slate voting survive the recusal rule?** In a Liechtenstein entity with 30 or
+1. **Who receives the money below the minimum?** The project directly, on the partner
+   platform's terms, or the cooperative. Recommended: the project directly. Money that
+   joins the pool through an intermediary puts small investors back into the fund, which
+   is the thing the minimum exists to avoid. Needs a ruling.
+2. **Which partner platform, and of what kind?** Reward-based platforms take backers
+   worldwide and give no financial return. Platforms licensed under the EU crowdfunding
+   regulation are EEA-only, regulated, and can offer loans or securities in a single
+   project. The choice decides what a small contributor gets and who may contribute.
+3. **Does slate voting survive the recusal rule?** In a Liechtenstein entity with 30 or
    more voters, a member may not vote on its own dealings with the entity (PGR Art. 175).
    A slate that contains a project's own award may still count. Ask counsel; if it does,
    the voting engine records an abstention on any slate that pays the voter.
-3. **Stewards vote on what they then carry out.** They should abstain on their own roles,
-   pay and discharge (CO Art. 887 bars management from voting on discharge).
-4. **Is the CHF 250,000 cumulative or one commitment, and can it be split or combined
+4. **Stewards vote on what they then carry out.** They should abstain on their own roles,
+   pay and discharge.
+5. **Is the CHF 250,000 cumulative or one commitment, and can it be split or combined
    across affiliates?** `member_compliance` already carries an affiliate flag.
-5. **RCVoice is not deployed.** It is the only one of the four tokens with no contract on
-   Base. The governance token this design rests on does not exist on-chain yet.
-3. **Does the required-participation condition hold?** Rye intends every money
-   contributor to also give time, equipment or a role. That is the thing that most
-   distinguishes a cooperative from a fund, so it needs to be a real, enforced condition
-   rather than an aspiration.
-4. **Where do the 10% project stakes sit**, in the cooperative or in the fund?
+6. **RCVoice is not deployed.** It is the only one of the four tokens with no contract on
+   Base. With one seat per member it records a seat rather than a weight, and it may not
+   need to be a token at all.
+7. **Does the required-participation condition hold?** Rye intends every money
+   contributor to also give time, equipment or a role. With a membership of a few dozen
+   seats that is enforceable, and it is the thing that most distinguishes a
+   member-governed cooperative from a fund, so it needs to be a real condition rather
+   than an aspiration.
+8. **Does `/opportunity` become the front door to the fund channel?** Its $250,000
+   proposed minimum and the CHF 250,000 seat threshold should be one number in one
+   currency (`shared/fund.ts` still says dollars).
+9. **The crowd circle's shape.** Are its members cooperative members with a nominal
+   share, or electors through an association that holds the delegate seats as a
+   legal-person member? Does in-kind count toward delegate seats, at the needs
+   registry's recorded value? How long is a delegate's term and what do they owe the
+   circle? What happens to a seat when the campaigns behind it are refunded?
 
 ---
 
@@ -276,7 +299,7 @@ instruments carrying equity.
 | `shared/crowdpoolModel.ts` | the mechanic, for code |
 | `docs/CROWDPOOL_HUB_CONTRACT.md` | the contract village-os reads |
 | `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md` | what was built vs the mechanic, with evidence |
-| `legal-research/` | own due diligence, US and Swiss. **GITIGNORED, not committed**, at Rye's request: it is working material for a conversation with counsel, not a statement of the project's legal position. Start at its `README_START_HERE.md`. |
+| `legal-research/` | own due diligence, US, Swiss and Liechtenstein. **GITIGNORED, not committed**, at Rye's request: it is working material for a conversation with counsel, not a statement of the project's legal position. Start at its `README_START_HERE.md`. |
 | `server/crowdpool-adversarial.test.ts` | the adversarial suite |
 | `server/crowdpool-restricted-claim.test.ts` | the restricted-balance guard |
 | `CROWDPOOLING_PLATFORM_SPEC.md` | the July 2026 spec, needs its decision #1 amendment |
