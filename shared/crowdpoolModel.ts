@@ -146,6 +146,11 @@ export const CLOSE_CONDITIONS = {
  * When a campaign misses its window, the contributor who routed to it chooses.
  * Silence has a consequence, so the consent for it is captured separately at
  * contribution time rather than folded into a general terms tick.
+ *
+ * RECOMMENDED CHANGE, not yet ruled (research of 2026-09-14): default to refund.
+ * Under Liechtenstein fund law the core-team default is the one design element
+ * that most strengthens the reading that this is a managed fund, and it names
+ * the core team as the manager. CROWDPOOL_PLAN.md section 9 carries it.
  */
 export const MISSED_WINDOW = {
   choices: ["reroute", "refund", "regen_civics_chooses"] as const,
@@ -343,9 +348,20 @@ export const GOVERNANCE = {
     /** One delegate seat per this much contributed by the crowd together, per season. */
     delegateSeatPerChf: FUND_ENTRY.minimumChf,
     delegateVotes: 1,
-    /** OPEN: whether in-kind contributions, at their recorded value, count toward seats. */
+    /**
+     * OPEN: whether in-kind contributions, at their recorded value, count toward
+     * seats. Research of 2026-09-14 recommends not in season one.
+     */
     inKindCountsTowardSeats: null,
-    /** OPEN: nominal cooperative membership, or an association that holds the seats. */
+    /**
+     * OPEN. Research of 2026-09-14 recommends: the circle lives OUTSIDE the
+     * cooperative (an association, or the platform's own body), because only
+     * members may elect a cooperative's delegates and making the whole crowd
+     * nominal members would put retail investors inside the fund. Each elected
+     * delegate is then admitted as a member for their term, with a nominal share
+     * and no return; a floor of one delegate and a cap on the crowd's share of
+     * seats sit in the statutes.
+     */
     legalShape: null,
   },
   /** A voter is an actor, never assumed to be a person. */

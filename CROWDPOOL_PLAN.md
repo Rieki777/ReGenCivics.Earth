@@ -38,6 +38,13 @@ disproportionate one.
 the front door to the same fund channel rather than a second vehicle. The "two vehicles,
 kept apart" table of 2026-09-05 is superseded by this section.
 
+**Two legal persons, recommended, not yet ruled.** The 2026-09-14 research found that a
+fund registered with the FMA needs an exclusive investment purpose, so the platform, the
+needs registry and the Game side would have to live in a separate entity from the fund
+cooperative. The cooperative is still the fund; the Game is not inside it. The route the
+research recommends is registration as an internally managed **EuSEF**, which is built
+for a member who commits EUR 100,000 or more. Section 8 and `legal-research/` carry it.
+
 ---
 
 ## 2. The mechanic
@@ -243,7 +250,10 @@ the week of 2026-09-14. The research is in `legal-research/` (not committed) and
 questions for counsel are ranked. The one that decides everything: **is the cooperative
 an AIF under AIFMG Art. 4, and if so which route (small AIFM registration, EuSEF, a full
 licence) is the cheapest lawful one.** Nothing takes money until that is answered in
-writing.
+writing. The research of 2026-09-14 answers it provisionally: still a fund, the minimum
+does not change that, and the route is a EuSEF with a binding FMA answer under AIFMG
+Art. 159 para. 2 first. The ranked weak points and 28 questions for counsel are in
+`legal-research/ReGen_Civics_Fund_Blueprint.html`.
 
 Earlier US-framed research is in `legal-research/` too. Read it knowing it analysed a fund. Its
 findings that survive the reframe are that labels do not change what an instrument is,
@@ -287,6 +297,48 @@ instruments carrying equity.
    legal-person member? Does in-kind count toward delegate seats, at the needs
    registry's recorded value? How long is a delegate's term and what do they owe the
    circle? What happens to a seat when the campaigns behind it are refunded?
+10. **The hub contract has no version field.** village-os sets its "pledged total is
+    a floor" flag by hand (`PoolPieces.tsx`, `HUB_PLEDGED_TOTAL_IS_A_FLOOR`), so a fork
+    pointing at an older hub would show a floor as a total. Raised by the village-os
+    economics session on 2026-09-14; its corrected prose is in
+    [village-os PR #243](https://github.com/Rieki777/village-os/pull/243). A version
+    field in `docs/CROWDPOOL_HUB_CONTRACT.md` is the thing to key it on. Small change,
+    deferred with the rest of the money side.
+
+### Recommended changes awaiting Rye's ruling (from the 2026-09-14 research)
+
+Each of these changes a ruling in the decision log, so none is recorded as decided.
+
+- **Silence means refund.** The missed-window default of 2026-09-05 (silence lets the
+  core team choose) is the single design element that most strengthens the fund reading,
+  and it names the core team as an unregistered manager. Flip the default to refund, or
+  to the next assembly slate, and drop the separate consent checkbox.
+- **Projects and their own slate.** Art. 175 PGR recusal reaches every project on a
+  slate that pays it, from thirty voters. Either the statutes carry an Amt für Justiz
+  exception, or a disbursement committee without project seats decides the slate and
+  projects keep every other vote.
+- **The crowd circle sits outside the cooperative.** An association or a platform body
+  elects the delegates; each delegate is admitted as a member for the term with a nominal
+  share and no return; floor of one delegate; a cap on the crowd's share of seats
+  (suggested one third); in-kind not counted in season one.
+- **$RCivics is a cooperative share.** Certificated under Art. 447, one vote per member
+  written expressly, never described as "utility" anywhere (it would tax the raise) and
+  not as "a share of all thirteen" in front of the FMA. Needs its own ADR before the
+  claim bridge opens. The live site says it today, measured 2026-09-14:
+  `client/src/pages/Opportunity.tsx:1075` ("Network Utility"), `:1136` ("Network
+  interchange token" under a "Utility" row), `:2101` ("tokenized REIT + VC fund with
+  network utility"), `client/src/pages/Tokenomics.tsx:476` ("Tradable utility token"),
+  `client/src/components/StructuredData.tsx:181` ("utility tokens ($Regen and
+  $RCivics)"). Copy change waits for counsel and Rye; it is marketing copy on a legal
+  point.
+- **Two legal persons.** The fund cooperative with an exclusive investment purpose, and a
+  separate entity for the platform and the Game. The data model should assume it now.
+- **The public site before registration.** `/opportunity` shows proposed fund terms and
+  the campaign pages show a gated contribution flow. Counsel decides what EEA visitors may
+  see; the cheap mitigation is a residence gate and a dated archive of every version.
+- **Compliance record gains an investor class** (professional, opted up, EuSEF EUR 100k,
+  retail), every money flow a payee entity (fund, project, partner platform), every
+  project a EuSEF-eligibility record, and assets under management are tracked in EUR.
 
 ---
 
