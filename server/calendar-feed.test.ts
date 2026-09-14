@@ -105,31 +105,66 @@ describe("Links in the invite", () => {
     }
   });
 
-  it("never puts the tokenized studio URL in an invite", () => {
-    const ics = unfold(renderFeed([row(), openRow()], "all"));
-    expect(ics).not.toContain("t=243a36b4d9fdbc785c4b");
+  it("never puts a raw studio URL in an invite, in any stored form", () => {
+    // Every events row stores the old `?t=` token link, while the constant now
+    // holds the room link. Both have to come out as /join, or a row's stored
+    // value slips past the redirect the moment the constant changes.
+    const legacy =
+      "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b";
+    const ics = unfold(
+      renderFeed(
+        [
+          row(),
+          row({ riversideRoomUrl: legacy, episodeNumber: 5 }),
+          openRow({ riversideRoomUrl: legacy }),
+        ],
+        "all",
+      ),
+    );
+    expect(ics).not.toContain("riverside.com");
     expect(ics).toContain(JOIN_URL);
-    expect(roomUrl(row())).toBe(JOIN_URL);
+    expect(roomUrl(row({ riversideRoomUrl: RIVERSIDE_ROOM_URL }))).toBe(JOIN_URL);
+    expect(roomUrl(row({ riversideRoomUrl: legacy }))).toBe(JOIN_URL);
     expect(roomUrl(row({ riversideRoomUrl: null }))).toBe(JOIN_URL);
   });
 
   it("passes a genuinely different per-event room straight through", () => {
     const custom = "https://riverside.com/studio/somewhere-else";
     expect(roomUrl(row({ riversideRoomUrl: custom }))).toBe(custom);
+    // A lookalike studio name is a different studio, not ours.
+    const lookalike = "https://riverside.com/studio/rieki-cordon-riekis-studio-2";
+    expect(roomUrl(row({ riversideRoomUrl: lookalike }))).toBe(lookalike);
   });
 
-  it("leads with the room for open sessions and the livestream for cohort weeks", () => {
-    expect(isPublicSession(openRow())).toBe(true);
-    expect(isPublicSession(row({ episodeNumber: 1 }))).toBe(true); // Selection Day
-    expect(isPublicSession(row({ episodeNumber: 5 }))).toBe(false);
-
-    expect(eventLocation(openRow())).toBe(JOIN_URL);
-    // A cohort working session must not hand its room to every public
-    // subscriber as the event's location.
-    expect(eventLocation(row({ episodeNumber: 5 }))).toBe(SEEDS_YOUTUBE_URL);
-
+  it("makes LOCATION the join link for every session, open and cohort alike", () => {
+    // Rye, 2026-09-14: both session types share one room, and a URL in
+    // LOCATION is what calendar apps turn into a tappable link. Cohort weeks
+    // carried the YouTube URL here until then.
+    for (const r of [
+      openRow(),
+      row({ episodeNumber: 1 }),
+      row({ episodeNumber: 5 }),
+      row({ episodeNumber: 13 }),
+    ]) {
+      expect(eventLocation(r)).toBe(JOIN_URL);
+    }
+    // The livestream stays in the cohort description.
     const cohort = eventDescription(row({ episodeNumber: 5 }));
-    expect(cohort.indexOf("YouTube")).toBeLessThan(cohort.indexOf("Cohort room"));
+    expect(cohort).toContain(SEEDS_YOUTUBE_URL);
+    expect(cohort).toContain(JOIN_URL);
+    expect(isPublicSession(row({ episodeNumber: 5 }))).toBe(false);
+  });
+
+  it("gives every event in all three feeds LOCATION /join", () => {
+    const rows = catalogFallbackRows(NOW);
+    for (const kind of ["all", "open-access", "season2"] as const) {
+      const events = unfold(renderFeed(rows, kind)).split("BEGIN:VEVENT").slice(1);
+      expect(events.length, kind).toBeGreaterThan(0);
+      for (const ev of events) {
+        const loc = ev.split("\r\n").find((l) => l.startsWith("LOCATION:"));
+        expect(loc, kind).toBe(`LOCATION:${JOIN_URL}`);
+      }
+    }
   });
 });
 

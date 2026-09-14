@@ -40,7 +40,7 @@ import {
 } from "@shared/season2Curriculum";
 import {
   JOIN_URL,
-  RIVERSIDE_ROOM_URL,
+  isDefaultRoomUrl,
   SEEDS_YOUTUBE_URL,
   SITE_ORIGIN,
 } from "@shared/sessionLinks";
@@ -123,18 +123,17 @@ export function isPublicSession(row: FeedRow): boolean {
 }
 
 /**
- * The room link an invite carries.
+ * The room link an invite carries: /join, for our studio.
  *
- * Every one of the 25 rows in production stores the raw Riverside studio URL,
- * token and all (verified 2026-09-07). Passing that straight through would put
- * the token on every subscriber's calendar until April and defeat the whole
- * point of the /join redirect, so a row holding the default room resolves to
- * /join. A row holding something genuinely different is a per-event room and
- * passes through untouched.
+ * Every events row in production stores a Riverside studio URL in
+ * riversideRoomUrl (the old `?t=` token link, verified 2026-09-07). Passing that
+ * through would put a raw studio link on subscribers' calendars and defeat the
+ * /join redirect, so any link into our studio, in any stored form, resolves to
+ * /join. A genuinely different room passes through untouched.
  */
 export function roomUrl(row: FeedRow): string {
   const stored = row.riversideRoomUrl?.trim();
-  if (!stored || stored === RIVERSIDE_ROOM_URL) return JOIN_URL;
+  if (!stored || isDefaultRoomUrl(stored)) return JOIN_URL;
   return stored;
 }
 
@@ -166,13 +165,16 @@ export function eventDescription(row: FeedRow): string {
 }
 
 /**
- * LOCATION is that audience's primary way in: the room for open sessions, the
- * livestream for cohort weeks. Putting the cohort room here for a closed
- * working session would hand it to every public subscriber.
+ * LOCATION is the join link, for every session in every feed.
+ *
+ * Calendar apps render a URL in LOCATION as something you can tap, which makes
+ * it the one-tap way into the session. Open Access Sessions and all thirteen
+ * Season Two episodes share one room on purpose (Rye, 2026-09-14), so they
+ * share one LOCATION. Until then, cohort weeks 2 to 13 carried the SEEDS
+ * YouTube URL here instead; the livestream link is still in their description.
  */
 export function eventLocation(row: FeedRow): string {
-  if (isPublicSession(row)) return roomUrl(row);
-  return row.youtubeUrl ?? SEEDS_YOUTUBE_URL;
+  return roomUrl(row);
 }
 
 function categories(row: FeedRow): string[] {
