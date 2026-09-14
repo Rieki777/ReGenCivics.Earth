@@ -87,6 +87,24 @@ describe("SEQUENCE", () => {
     // session. A client ignores an update that does not advance the number.
     expect(early).toBeGreaterThan(2);
   });
+
+  it("advances when the rendered output changes even though the row did not", () => {
+    // 2026-09-14 moved every LOCATION to /join without writing a single events
+    // row, so updatedAt stayed put. If SEQUENCE and DTSTAMP had stayed put with
+    // it, a client already holding the UID could skip the update and keep the
+    // old LOCATION.
+    const untouched = new Date("2026-09-07T22:32:00Z");
+    const ev = toIcsEvent(row({ updatedAt: untouched }));
+    expect(ev.sequence).toBeGreaterThan(eventSequence(untouched));
+    expect(ev.dtstamp.getTime()).toBeGreaterThan(untouched.getTime());
+  });
+
+  it("still lets a later admin edit win", () => {
+    const later = new Date("2030-01-01T00:00:00Z");
+    const ev = toIcsEvent(row({ updatedAt: later }));
+    expect(ev.dtstamp.getTime()).toBe(later.getTime());
+    expect(ev.sequence).toBe(eventSequence(later));
+  });
 });
 
 describe("Links in the invite", () => {

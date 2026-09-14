@@ -183,8 +183,32 @@ function categories(row: FeedRow): string[] {
   return ["ReGen Civics"];
 }
 
+/**
+ * The last time the way existing events render changed without their rows
+ * changing. Bump it whenever a code change alters the output for rows nobody
+ * edited.
+ *
+ * SEQUENCE and DTSTAMP come from updatedAt, which only moves when a row is
+ * written. On 2026-09-14 every LOCATION moved to /join and not one events row
+ * was touched, so without this every event would have gone out carrying the
+ * same SEQUENCE and DTSTAMP as the old version. A client already holding the
+ * UID is entitled to skip an update like that, and the old LOCATION would have
+ * stayed on subscribers' calendars.
+ */
+export const FEED_CONTENT_REVISED_AT = new Date("2026-09-14T00:00:00Z");
+
+/** The later of the row's last edit and the last change to how rows render. */
+export function lastChanged(row: FeedRow): Date {
+  return row.updatedAt.getTime() >= FEED_CONTENT_REVISED_AT.getTime()
+    ? row.updatedAt
+    : FEED_CONTENT_REVISED_AT;
+}
+
 export function toIcsEvent(row: FeedRow): IcsEvent {
   const end = row.endTime ?? new Date(row.startTime.getTime() + 2 * 3_600_000);
+  // Monotonic either way: a later admin edit still wins, and SEQUENCE can only
+  // ever go up for a given UID.
+  const changed = lastChanged(row);
   return {
     uid: eventUid(row),
     start: row.startTime,
@@ -193,8 +217,8 @@ export function toIcsEvent(row: FeedRow): IcsEvent {
     description: eventDescription(row),
     location: eventLocation(row),
     url: row.id != null ? `${SITE_ORIGIN}/events/${row.id}` : `${SITE_ORIGIN}/schedule`,
-    sequence: eventSequence(row.updatedAt),
-    dtstamp: row.updatedAt,
+    sequence: eventSequence(changed),
+    dtstamp: changed,
     // A cancelled session stays in the feed carrying STATUS:CANCELLED. Dropping
     // the row instead would leave it on every subscriber's calendar forever,
     // because a feed going quiet about a UID is not a cancellation.
