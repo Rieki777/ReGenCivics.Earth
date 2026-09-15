@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ApplicantStatusEmailDialog } from "./ApplicantStatusEmailDialog";
 
+vi.mock("./EmailDraftAgent", () => ({
+  EmailDraftAgent: () => null,
+}));
+
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({
