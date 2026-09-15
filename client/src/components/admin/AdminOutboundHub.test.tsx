@@ -76,6 +76,7 @@ vi.mock("@/lib/trpc", () => ({
                                                   refetch: vi.fn(),
                                     }),
                         },
+              listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
               },
               admin: {
                         broadcast: {
@@ -83,7 +84,8 @@ vi.mock("@/lib/trpc", () => ({
                                   postToBuffer: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                                   farcasterIntent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                         },
-                      harvest: {
+              },
+            harvest: {
                                 draftBroadcast: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                       },
               },
