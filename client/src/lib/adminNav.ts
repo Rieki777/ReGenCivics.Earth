@@ -166,7 +166,7 @@ const OUTBOUND_SURFACE_ALIASES: Record<string, OutboundSurface> = {
   templates: "templates",
   sent: "history",
   history: "history",
-    scheduled: "sent",
+    scheduled: "history",
 };
 
 /** Map a `?surface=` query (or alias like email) to an Outbound section. */
