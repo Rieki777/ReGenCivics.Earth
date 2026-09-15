@@ -10,13 +10,21 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { EMAIL_FIELD_CLASS } from "@/components/admin/EmailMarkdownComposer";
+import { DictationButton } from "@/components/admin/dictation";
 import type { LetterLayout } from "@shared/letterLayout";
 
-const STARTERS = [
+const APPLICATION_STARTERS = [
   "Write a warmer version of this draft.",
   "Shorten this. Keep the next steps.",
   "Turn the next steps into a numbered list.",
   "Use announcement layout. Put each link on its own line so they become buttons.",
+];
+
+const NEWSLETTER_STARTERS = [
+  "Draft a letter about this week's Harvest.",
+  "Add a CTA button to the live stream.",
+  "Insert a hero image after the opening paragraph.",
+  "Shorten this for the exit-intent segment. Keep the button.",
 ];
 
 interface ChatTurn {
@@ -34,6 +42,8 @@ interface Props {
   statusLabel: string;
   recipientCount: number;
   onApply: (draft: { subject: string; body: string; layout?: LetterLayout }) => void;
+  variant?: "application" | "newsletter";
+  audienceLabel?: string;
 }
 
 export function EmailDraftAgent({
@@ -43,11 +53,17 @@ export function EmailDraftAgent({
   statusLabel,
   recipientCount,
   onApply,
+  variant = "application",
+  audienceLabel,
 }: Props) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const draft = trpc.email.draftWithAgent.useMutation();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const applicationDraft = trpc.email.draftWithAgent.useMutation();
+  const newsletterDraft = trpc.outbound.draftWithAgent.useMutation();
+  const draft = variant === "newsletter" ? newsletterDraft : applicationDraft;
+  const starters = variant === "newsletter" ? NEWSLETTER_STARTERS : APPLICATION_STARTERS;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,14 +76,23 @@ export function EmailDraftAgent({
     setTurns(nextTurns);
     setInput("");
     try {
-      const result = await draft.mutateAsync({
-        messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
-        currentSubject,
-        currentBody,
-        currentLayout,
-        statusLabel,
-        recipientCount,
-      });
+      const result = variant === "newsletter"
+        ? await newsletterDraft.mutateAsync({
+            messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
+            currentSubject,
+            currentBody,
+            currentLayout,
+            audienceLabel: audienceLabel || statusLabel,
+            recipientCount,
+          })
+        : await applicationDraft.mutateAsync({
+            messages: nextTurns.map((t) => ({ role: t.role, content: t.content })),
+            currentSubject,
+            currentBody,
+            currentLayout,
+            statusLabel,
+            recipientCount,
+          });
       setTurns([
         ...nextTurns,
         {
@@ -101,7 +126,7 @@ export function EmailDraftAgent({
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-[140px] max-h-[40vh] md:max-h-[52vh]" aria-live="polite">
         {turns.length === 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {STARTERS.map((starter) => (
+            {starters.map((starter) => (
               <button
                 key={starter}
                 type="button"
@@ -129,6 +154,7 @@ export function EmailDraftAgent({
                 <Button
                   type="button"
                   size="sm"
+                  data-testid="apply-to-draft"
                   onClick={() =>
                     onApply({
                       subject: turn.proposedSubject || currentSubject,
@@ -154,13 +180,14 @@ export function EmailDraftAgent({
       </div>
 
       <form
-        className="p-2 border-t border-[#4a7c59]/20 flex gap-2"
+        className="p-2 border-t border-[#4a7c59]/20 flex gap-2 items-end"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);
         }}
       >
         <Textarea
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -170,16 +197,25 @@ export function EmailDraftAgent({
             }
           }}
           placeholder="Tell me what to change..."
-          className={`${EMAIL_FIELD_CLASS} min-h-[44px] max-h-24 text-sm`}
+          className={`${EMAIL_FIELD_CLASS} min-h-[44px] max-h-24 min-w-0 flex-1 text-sm`}
           rows={2}
           disabled={draft.isPending}
+        />
+        <DictationButton
+          value={input}
+          onChange={setInput}
+          targetRef={inputRef}
+          label="Dictate message"
+          disabled={draft.isPending}
+          errorAlign="end"
+          className="h-11 w-11"
         />
         <Button
           type="submit"
           disabled={draft.isPending || !input.trim()}
-          className="bg-[#4a7c59] hover:bg-[#3d6849] text-white self-end h-11"
+          className="bg-[#4a7c59] hover:bg-[#3d6849] text-white h-11"
         >
-          Send
+          {variant === "newsletter" ? "Ask" : "Send"}
         </Button>
       </form>
     </div>

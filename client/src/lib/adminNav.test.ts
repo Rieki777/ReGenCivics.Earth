@@ -120,7 +120,10 @@ describe("admin nav", () => {
     expect(adminTabHref("newsletter")).toBe("/admin?tab=outbound&surface=people");
     expect(adminTabHref("broadcast")).toBe("/admin?tab=outbound&surface=social");
     expect(adminTabHref("outbound", { surface: "email" })).toBe("/admin?tab=outbound&surface=write");
-    expect(adminTabHref("outbound", { surface: "sent" })).toBe("/admin?tab=outbound&surface=sent");
+    expect(adminTabHref("outbound", { surface: "sent" })).toBe("/admin?tab=outbound&surface=history");
+    expect(adminTabHref("outbound", { surface: "history" })).toBe("/admin?tab=outbound&surface=history");
+    expect(parseOutboundSurface("sent")).toBe("history");
+    expect(parseOutboundSurface("history")).toBe("history");
   });
 
   it("maps a leftover newsletter Continue tap onto Outbound", () => {

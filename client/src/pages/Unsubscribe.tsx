@@ -5,10 +5,10 @@
  * Mobile-first, enchanted forest theme.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Mail, CheckCircle2, AlertCircle, ArrowLeft, Shield, Leaf } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SEO } from "@/components/SEO";
@@ -17,6 +17,7 @@ import { trpc } from "@/lib/trpc";
 type UnsubState = "idle" | "loading" | "success" | "error";
 
 export default function Unsubscribe() {
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [state, setState] = useState<UnsubState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -30,6 +31,13 @@ export default function Unsubscribe() {
       setErrorMsg(err.message || "Something went wrong. Please try again.");
     },
   });
+
+  const tokenInUrl = new URLSearchParams(window.location.search).get("token");
+
+  useEffect(() => {
+    if (!tokenInUrl) return;
+    setLocation(`/preferences?token=${encodeURIComponent(tokenInUrl)}`);
+  }, [setLocation, tokenInUrl]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +53,18 @@ export default function Unsubscribe() {
     setState("idle");
     setErrorMsg("");
   };
+
+  if (tokenInUrl) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#1e3a2a] to-[#0d2818]">
+        <SEO
+          title="Email preferences | ReGen Civics"
+          description="Opening your ReGen Civics email preferences."
+        />
+        <p className="text-white/70 text-sm text-center pt-24">Opening your email preferences.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#1e3a2a] to-[#0d2818]">
@@ -94,8 +114,14 @@ export default function Unsubscribe() {
                 You've been unsubscribed
               </h2>
               <p className="text-white/60 text-sm mb-6 leading-relaxed">
-                <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
-                You will no longer receive newsletter emails from ReGen Civics.
+                {email ? (
+                  <>
+                    <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
+                    You will no longer receive newsletter emails from ReGen Civics.
+                  </>
+                ) : (
+                  <>You will no longer receive newsletter emails from ReGen Civics.</>
+                )}
               </p>
               <p className="text-white/60 text-xs mb-6">
                 Changed your mind? You can always re-subscribe from our homepage or any form on the site.

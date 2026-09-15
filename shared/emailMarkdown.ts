@@ -19,8 +19,16 @@ const QUOTE = "color:#333;line-height:1.6;margin:0 0 12px 0;padding-left:14px;bo
 const CODE = "font-family:ui-monospace,monospace;font-size:0.9em;background:#f0ebe3;padding:1px 4px;border-radius:3px;";
 
 const LINK_ONLY = /^\[([^\]]+)\]\(([^)]+)\)$/;
+const IMAGE_ONLY = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const BARE_URL = /^(https?:\/\/[^\s]+)$/i;
 const IMPORTANT_LINE = /^(?:\*\*Important:?\*\*|Important:)\s*/i;
+
+/** Hosts allowed on <img src> in letters. Matches server/lib/emailHtml.ts. */
+export const EMAIL_IMAGE_HOSTS = [
+  "regencivics.earth",
+  "www.regencivics.earth",
+  "assets.regencivics.earth",
+] as const;
 
 export type LetterListNode = {
   ordered: boolean;
@@ -34,7 +42,8 @@ export type LetterBlock =
   | { type: "quote"; text: string }
   | { type: "callout"; text: string }
   | { type: "hr" }
-  | { type: "cta"; label: string; href: string };
+  | { type: "cta"; label: string; href: string }
+  | { type: "image"; alt: string; src: string };
 
 function escapeHtml(s: string): string {
   return s
@@ -57,6 +66,18 @@ function restoreMerges(html: string, slots: string[]): string {
   return html.replace(/%%MERGE(\d+)%%/g, (_, i) => slots[Number(i)] ?? "");
 }
 
+export function safeImageSrc(raw: string): string | null {
+  const href = raw.trim().replace(/&amp;/g, "&");
+  try {
+    const parsed = new URL(href);
+    if (parsed.protocol !== "https:") return null;
+    if (!(EMAIL_IMAGE_HOSTS as readonly string[]).includes(parsed.hostname)) return null;
+    return href;
+  } catch {
+    return null;
+  }
+}
+
 export function safeHref(raw: string): string | null {
   const href = raw.trim().replace(/&amp;/g, "&");
   if (MERGE_TOKEN.test(href) || /^%%MERGE\d+%%$/.test(href)) return href;
@@ -74,6 +95,11 @@ export function inlineFormat(raw: string): string {
   let s = escapeHtml(text);
 
   s = s.replace(/`([^`]+)`/g, `<code style="${CODE}">$1</code>`);
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt: string, href: string) => {
+    const src = safeImageSrc(href);
+    if (!src) return alt;
+    return `<img src="${escapeHtml(src)}" alt="${alt}" width="560" style="max-width:100%;height:auto;display:block;margin:0 0 12px 0;border:0;" />`;
+  });
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label: string, href: string) => {
     const safe = safeHref(href);
     if (!safe) return label;
@@ -89,6 +115,7 @@ export function markdownInlineToPlain(raw: string): string {
   const { text, slots } = protectMerges(raw);
   let s = text;
   s = s.replace(/`([^`]+)`/g, "$1");
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1");
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
   s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
   s = s.replace(/(^|[^\*])\*([^*\n]+)\*/g, "$1$2");
@@ -101,6 +128,14 @@ function parseListLine(line: string): { indent: number; ordered: boolean; text: 
   if (!m) return null;
   const indent = m[1].replace(/\t/g, "  ").length;
   return { indent, ordered: /^\d+\./.test(m[2]), text: m[3] };
+}
+
+function parseImageLine(trimmed: string): { alt: string; src: string } | null {
+  const matched = trimmed.match(IMAGE_ONLY);
+  if (!matched) return null;
+  const src = safeImageSrc(matched[2]);
+  if (!src) return { alt: matched[1].trim() || "Image", src: matched[2].trim() };
+  return { alt: matched[1].trim() || "Image", src };
 }
 
 function parseCtaLine(trimmed: string): { label: string; href: string } | null {
@@ -208,7 +243,8 @@ export function parseLetterBlocks(markdown: string): LetterBlock[] {
     const trimmed = line.trim();
     const list = parseListLine(line);
     const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
-    const cta = trimmed ? parseCtaLine(trimmed) : null;
+    const image = trimmed ? parseImageLine(trimmed) : null;
+    const cta = trimmed && !image ? parseCtaLine(trimmed) : null;
 
     if (list) {
       endPara();
@@ -220,6 +256,12 @@ export function parseLetterBlocks(markdown: string): LetterBlock[] {
 
     if (!trimmed) {
       endPara();
+      continue;
+    }
+
+    if (image) {
+      endPara();
+      out.push({ type: "image", alt: image.alt, src: image.src });
       continue;
     }
 
@@ -277,6 +319,14 @@ function renderList(node: LetterListNode): string {
   return `<${tag} style="margin:0 0 12px 18px;padding:0;">${lis}</${tag}>`;
 }
 
+function renderImage(alt: string, src: string): string {
+  const safe = safeImageSrc(src);
+  if (!safe) {
+    return alt ? `<p style="${P}">${inlineFormat(alt)}</p>` : "";
+  }
+  return `<img src="${escapeHtml(safe)}" alt="${escapeHtml(alt)}" width="560" style="max-width:100%;height:auto;display:block;margin:0 0 16px 0;border:0;" />`;
+}
+
 function renderCtaPlain(label: string, href: string): string {
   const safe = safeHref(href);
   if (!safe) return `<p style="${P}">${inlineFormat(label)}</p>`;
@@ -309,6 +359,8 @@ export function renderLetterInnerHtml(blocks: LetterBlock[], layout: LetterLayou
           return '<hr style="border:none;border-top:1px solid #e0e0e0;margin:16px 0;" />';
         case "cta":
           return graphic ? renderCtaButton(block.label, block.href) : renderCtaPlain(block.label, block.href);
+        case "image":
+          return renderImage(block.alt, block.src);
         default:
           return "";
       }
@@ -324,12 +376,12 @@ export function markdownToEmailHtml(markdown: string, layout: LetterLayout = "pl
   return renderLetterInnerHtml(parseLetterBlocks(markdown), layout);
 }
 
-export function wrapEmailHtml(inner: string): string {
+export function wrapEmailHtml(inner: string, extraFooter = ""): string {
   const signed = /regen civics team/i.test(inner);
   const footer = signed
     ? ""
     : `<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;"><p style="color:#4a7c59;font-weight:bold;">The ReGen Civics Team</p></div>`;
-  return `<div style="font-family:Georgia,'Times New Roman',serif;max-width:600px;margin:0 auto;padding:20px;">${inner}${footer}</div>`;
+  return `<div style="font-family:Georgia,'Times New Roman',serif;max-width:600px;margin:0 auto;padding:20px;">${inner}${footer}${extraFooter}</div>`;
 }
 
 export function markdownEmailDocument(markdown: string): string {
@@ -364,4 +416,29 @@ export function applyMarkdownLinePrefix(
   const next = value.slice(0, lineStart) + prefix + value.slice(lineStart);
   const caret = from + prefix.length;
   return { value: next, selectionStart: caret, selectionEnd: caret };
+}
+
+/** Insert a standalone markdown block (CTA, image, HR) at the caret. */
+export function insertMarkdownBlock(
+  value: string,
+  start: number,
+  block: string,
+): { value: string; selectionStart: number; selectionEnd: number } {
+  const from = Math.max(0, Math.min(start, value.length));
+  const before = value.slice(0, from);
+  const after = value.slice(from);
+  const lead = before.length === 0 || before.endsWith("\n\n")
+    ? ""
+    : before.endsWith("\n")
+      ? "\n"
+      : "\n\n";
+  const tail = after.length === 0 || after.startsWith("\n\n")
+    ? ""
+    : after.startsWith("\n")
+      ? "\n"
+      : "\n\n";
+  const inserted = `${lead}${block}${tail}`;
+  const next = before + inserted + after;
+  const selectionStart = (before + lead + block).length;
+  return { value: next, selectionStart, selectionEnd: selectionStart };
 }

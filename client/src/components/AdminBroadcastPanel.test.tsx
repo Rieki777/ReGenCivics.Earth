@@ -69,6 +69,7 @@ describe("AdminBroadcastPanel", () => {
     expect(screen.getByText("Buffer is not configured")).toBeDefined();
     expect(screen.getByTestId("connect-twitter").getAttribute("href")).toBe("/admin?tab=settings");
     expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
+    expect(screen.getByTestId("dictation-button")).toBeDefined();
   });
 
   it("fills the message box from a Harvest draft", async () => {
@@ -105,5 +106,11 @@ describe("AdminBroadcastPanel", () => {
     render(<AdminBroadcastPanel />);
     expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("Queued from the assistant.");
     expect(sessionStorage.getItem("broadcast_fill_pending")).toBeNull();
+  });
+
+  it("offers the shared dictation mic on the Message field", () => {
+    render(<AdminBroadcastPanel />);
+    expect(screen.getByTestId("dictation-button")).toBeTruthy();
+    expect(screen.getByLabelText("Dictate message")).toBeTruthy();
   });
 });

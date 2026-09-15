@@ -18,7 +18,7 @@ import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
 import {
   defaultLayoutForTemplate,
   isLetterLayout,
-  isMarkdownEmailTemplateRow,
+  isApplicationMarkdownTemplateRow,
   type LetterLayout,
 } from "@shared/letterLayout";
 
@@ -252,7 +252,7 @@ export function EmailTemplateSelector({
   const sendEmailMutation = trpc.email.sendDirect.useMutation();
   const scheduleEmailMutation = trpc.scheduledEmails.schedule.useMutation();
   const savedQuery = trpc.email.getCustomTemplates.useQuery(undefined, { enabled: isComposing });
-  const savedLetters = (savedQuery.data ?? []).filter((row) => isMarkdownEmailTemplateRow(row));
+  const savedLetters = (savedQuery.data ?? []).filter((row) => isApplicationMarkdownTemplateRow(row));
   const extraTemplates = savedLetters.filter((row) => !emailTemplates.some((t) => t.id === row.templateKey));
 
   const loadTemplate = (templateId: string) => {

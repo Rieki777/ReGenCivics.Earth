@@ -9,9 +9,10 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoReminderSends, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
-import { newsletterSubscribers, recordings, applications, users } from "../../drizzle/schema";
+import { recordings, applications, users } from "../../drizzle/schema";
 import { resolveAutoReminderRecipients } from "../jobs/eventReminders";
 import {
+  ALLOWED_AUTO_REMINDER_OFFSETS,
   AUTO_REMINDER_AUDIENCE_MODES,
   CUSTOM_APPLICATION_STATUSES,
   NEWSLETTER_AUDIENCE_SOURCES,
@@ -27,6 +28,7 @@ import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyNewEvent } from "../_core/notify";
+import { audienceForTopic } from "../lib/emailPrefs";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
@@ -869,7 +871,7 @@ export const eventsRouter = router({
         includeEventSignups: z.boolean().optional(),
         applicationStatuses: z.array(z.enum(CUSTOM_APPLICATION_STATUSES)).max(8).optional(),
       }).optional(),
-      offsetsMinutes: z.array(z.number().int()).min(1).max(4),
+      offsetsMinutes: z.array(z.number().int()).min(1).max(ALLOWED_AUTO_REMINDER_OFFSETS.length),
       customSubject: z.string().max(200).optional(),
       customBody: z.string().max(2000).optional(),
     }))
@@ -884,7 +886,7 @@ export const eventsRouter = router({
 
       const offsetsMinutes = parseOffsetMinutes(input.offsetsMinutes);
       if (!offsetsMinutes.length) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick at least one reminder time (7d, 3d, 24h, or 1h)." });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick at least one reminder time (7d, 3d, 24h, 1h, or 33m)." });
       }
       const audienceConfig = parseAudienceConfig(input.audienceConfig ?? {});
       if (input.enabled && !canEnableAutoReminders(input.audienceMode, audienceConfig)) {
@@ -1024,7 +1026,10 @@ export const eventsRouter = router({
         }
       }
 
-      // #18. Send individually so each email gets a personalized unsubscribe link
+      // #18. Send individually so each email gets a personalized unsubscribe link.
+      // Per-event signups are this table, not the community list. Community
+      // event blasts (custom events people opted into via newsletter topics)
+      // should call audienceForTopic("events") from server/lib/emailPrefs.ts.
       let totalSent = 0;
       for (const signup of signups) {
         const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
@@ -1114,9 +1119,7 @@ export const eventsRouter = router({
       const seasonSignups = await database.select({ email: eventSignups.email })
         .from(eventSignups)
         .where(inArray(eventSignups.eventId, seasonEvents.map(e => e.id)));
-      const newsletterSubs = await database.select({ email: newsletterSubscribers.email })
-        .from(newsletterSubscribers)
-        .where(eq(newsletterSubscribers.isActive, 1));
+      const newsletterSubs = await audienceForTopic("seasonal");
 
       const allEmails = Array.from(new Set([
         ...seasonSignups.map(s => s.email),

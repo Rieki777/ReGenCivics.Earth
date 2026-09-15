@@ -450,8 +450,14 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
   // Status
   isActive: int("isActive").default(1).notNull(),
 
-  // Email preferences
-  notifyRecordings: tinyint("notifyRecordings").default(0).notNull(),
+  // Email preferences. Community topics default ON for new subscribers.
+  // recordings maps to notifyRecordings (existing opt-in column; new rows default ON).
+  notifyRecordings: tinyint("notifyRecordings").default(1).notNull(),
+  prefSeasonal: tinyint("prefSeasonal").default(1).notNull(),
+  prefOpenAccess: tinyint("prefOpenAccess").default(1).notNull(),
+  prefSeason2: tinyint("prefSeason2").default(1).notNull(),
+  prefEvents: tinyint("prefEvents").default(1).notNull(),
+  marketingPausedUntil: timestamp("marketingPausedUntil"),
 
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -463,7 +469,8 @@ export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInse
 
 /**
  * Newsletter issue (Outbound campaign). Markdown body, audience JSON
- * `{ sources: string[], activeOnly: boolean }`. Send ships in a later PR.
+ * `{ sources: string[], activeOnly: boolean }`. Status `scheduled` is a
+ * newsletter letter queued for later; it is not an Events auto-reminder.
  * Named `newsletter_issues` so it never collides with crowd-pooling `campaigns`.
  */
 export const newsletterIssues = mysqlTable("newsletter_issues", {
@@ -2954,10 +2961,11 @@ export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type InsertEventAttendance = typeof eventAttendance.$inferInsert;
 
 /**
- * Per-event auto-reminder schedule. Offsets (7d / 24h / 1h, plus optional 3d)
- * fire from the existing /api/cron/event-reminders job. Audience mode defaults
- * from event kind: episode/Season 2 -> approved+active applications, open ->
- * newsletter + signups, special -> admin must pick a custom selection.
+ * Per-event auto-reminder schedule. Offsets (7d / 24h / 1h / 33m, plus optional 3d)
+ * fire from the existing /api/cron/event-reminders job and a 5-minute in-process
+ * sweep. Audience mode defaults from event kind: episode/Season 2 -> approved+active
+ * applications, open -> newsletter + signups, special -> admin must pick a custom
+ * selection. Open Access and Season 2 default the 33-minute pre-call ping on.
  */
 export const eventAutoReminders = mysqlTable("event_auto_reminders", {
   id: int("id").autoincrement().primaryKey(),

@@ -14,7 +14,7 @@
 
 import { Express, Request, Response } from "express";
 import crypto from "crypto";
-import { updateEmailStatus } from "../emailTracking";
+import { recordEmailClick, recordEmailOpen, updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
 import { emailLogs } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -168,6 +168,16 @@ async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
       const complaintType = data.complaint?.feedback_type || "spam";
       await updateEmailStatus(emailLogId, "failed", `Complaint: ${complaintType}`);
       log.info(`Marked email ${emailLogId} as complained`);
+      break;
+
+    case "email.opened":
+      await recordEmailOpen(emailLogId);
+      log.info(`Marked email ${emailLogId} as opened`);
+      break;
+
+    case "email.clicked":
+      await recordEmailClick(emailLogId);
+      log.info(`Marked email ${emailLogId} as clicked`);
       break;
 
     case "email.delivery_delayed":

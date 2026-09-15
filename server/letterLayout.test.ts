@@ -31,6 +31,7 @@ describe("letter layout helpers", () => {
     expect(uniqueLetterKey("Season 2 next steps", ["letter_season_2_next_steps"])).toBe(
       "letter_season_2_next_steps_2",
     );
+    expect(slugifyLetterKey("Season 2 next steps", "nl")).toBe("nl_season_2_next_steps");
   });
 
   it("keeps EmailSettings HTML rows separate from markdown letters", () => {
@@ -53,6 +54,16 @@ describe("markdownLetterDocument", () => {
     expect(html).toContain('bgcolor="#4a7c59"');
     expect(html).toContain("{{name}}");
     expect(html).toContain("<!DOCTYPE html>");
+  });
+
+  it("puts Manage email preferences in the letter footer, not Unsubscribe", () => {
+    const html = markdownLetterDocument("Hello", "announcement", {
+      managePreferencesUrl: "https://regencivics.earth/email-preferences?token=abc&mute=open_access",
+    });
+    expect(html).toContain("Manage email preferences");
+    expect(html).toContain("/email-preferences?token=abc");
+    expect(html).toContain("mute=open_access");
+    expect(html).not.toMatch(/>Unsubscribe</);
   });
 });
 

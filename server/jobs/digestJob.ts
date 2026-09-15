@@ -2,6 +2,9 @@
 import { invokeLLM } from "../_core/llm";
 import * as db from "../db";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { audienceForTopic, managePreferencesUrl } from "../lib/emailPrefs";
+import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
+import { ENV } from "../_core/env";
 
 const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 // Extra guard: if a digest was sent within the last 2 hours, treat it as a duplicate
@@ -137,7 +140,7 @@ async function sendDigestEmails(
   weekNum: number
 ) {
   try {
-    const subscribers = await db.getActiveNewsletterSubscribers();
+    const subscribers = await audienceForTopic("seasonal");
     if (subscribers.length === 0) return;
 
     const weekLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -255,7 +258,7 @@ async function sendDigestEmails(
         </p>
       </div>`;
 
-    const html = `
+    const bodyHtml = `
       <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
         <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
           <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
@@ -268,8 +271,7 @@ async function sendDigestEmails(
           ${connectSection}
         </div>
         <div style="padding: 24px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
-          <p style="margin: 0 0 6px;">You're getting this because you subscribed to ReGen Civics updates.</p>
-          <p style="margin: 0;"><a href="${APP_BASE_URL}/profile?utm_source=email&utm_medium=digest" style="color: #1a472a;">Update email preferences</a></p>
+          {{PREFS_FOOTER}}
         </div>
       </div>`;
 
@@ -278,13 +280,18 @@ async function sendDigestEmails(
     for (let i = 0; i < subscribers.length; i += BATCH) {
       const batch = subscribers.slice(i, i + BATCH);
       await Promise.allSettled(
-        batch.map(sub =>
-          sendEmail({
+        batch.map(async (sub) => {
+          const prefsUrl = await managePreferencesUrl(sub.email, { mute: "seasonal" });
+          const html = bodyHtml.replace(
+            "{{PREFS_FOOTER}}",
+            newsletterLegalFooterHtml(prefsUrl, ENV.harvestPostalAddress),
+          );
+          return sendEmail({
             to: sub.email,
             subject: `This week in the community: ${weekLabel}`,
             html,
-          }).catch(err => console.warn(`[DigestJob] Failed to send to ${sub.email}:`, err))
-        )
+          }).catch(err => console.warn(`[DigestJob] Failed to send to ${sub.email}:`, err));
+        }),
       );
       if (i + BATCH < subscribers.length) {
         await new Promise(r => setTimeout(r, 1000));

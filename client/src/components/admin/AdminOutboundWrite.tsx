@@ -1,0 +1,395 @@
+/**
+ * Outbound Write: newsletter composer, audience, preview confirm, send.
+ */
+import { useEffect, useMemo, useState } from "react";
+import { CalendarClock, Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
+import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
+import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  NEWSLETTER_SOURCES,
+  newsletterSourceLabel,
+  type NewsletterSource,
+} from "@/lib/outboundAudience";
+import {
+  defaultScheduleLocal,
+  formatPacificSchedule,
+  pacificDatetimeLocalToUtc,
+} from "@shared/outboundSchedule";
+import {
+  isLetterLayout,
+  isNewsletterEmailTemplateRow,
+  type LetterLayout,
+} from "@shared/letterLayout";
+import {
+  OUTBOUND_WRITE_FILL_EVENT,
+  clearOutboundWriteFill,
+  consumeOutboundWriteFill,
+  type OutboundWriteFill,
+} from "@shared/outboundWriteFill";
+
+const NEWSLETTER_BUILTINS = [{ id: "nl_blank", label: "Blank letter" }];
+
+export type OutboundWritePrefill = {
+  subject: string;
+  body: string;
+  layout: LetterLayout;
+  source: NewsletterSource | "all";
+};
+
+export function AdminOutboundWrite({
+  prefill,
+}: {
+  prefill?: OutboundWritePrefill | null;
+} = {}) {
+  const [issueId, setIssueId] = useState<number | null>(null);
+  const [subject, setSubject] = useState(prefill?.subject ?? "");
+  const [body, setBody] = useState(prefill?.body ?? "");
+  const [layout, setLayout] = useState<LetterLayout>(prefill?.layout ?? "announcement");
+  const [templateKey, setTemplateKey] = useState("nl_blank");
+  const [source, setSource] = useState<NewsletterSource | "all">(prefill?.source ?? "all");
+  const [preview, setPreview] = useState<{
+    subject: string;
+    recipientCount: number;
+    confirmToken: string;
+    html: string;
+  } | null>(null);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [result, setResult] = useState<string | null>(null);
+  const [scheduleLocal, setScheduleLocal] = useState(() => defaultScheduleLocal());
+
+  const savedQuery = trpc.email.getCustomTemplates.useQuery();
+  const saveDraft = trpc.outbound.saveDraft.useMutation();
+  const sendPreview = trpc.outbound.sendPreview.useMutation();
+  const confirmSend = trpc.outbound.confirmSend.useMutation();
+  const scheduleSend = trpc.outbound.scheduleSend.useMutation();
+  const listActive = trpc.newsletter.listActive.useQuery();
+
+  useEffect(() => {
+    if (!prefill) return;
+    setIssueId(null);
+    setSubject(prefill.subject);
+    setBody(prefill.body);
+    setLayout(prefill.layout);
+    setSource(prefill.source);
+    setPreview(null);
+    setResult(null);
+  }, [prefill]);
+
+  const savedLetters = useMemo(
+    () => (savedQuery.data ?? []).filter((row) => isNewsletterEmailTemplateRow(row)),
+    [savedQuery.data],
+  );
+
+  const audienceCount = useMemo(() => {
+    const rows = listActive.data ?? [];
+    if (source === "all") return rows.length;
+    return rows.filter((row) => (row.source || "other") === source).length;
+  }, [listActive.data, source]);
+
+  const audience = {
+    sources: source === "all" ? [] : [source],
+    activeOnly: true as const,
+  };
+
+  const audienceLabel = source === "all"
+    ? "active subscribers"
+    : `active ${newsletterSourceLabel(source)} subscribers`;
+
+  const applyFill = (fill: OutboundWriteFill) => {
+    if (!fill.subject?.trim() && !fill.body?.trim() && !fill.layout) return;
+    if (fill.subject !== undefined) setSubject(fill.subject);
+    if (fill.body !== undefined) setBody(fill.body);
+    if (fill.layout) setLayout(fill.layout);
+    setPreview(null);
+    toast.success("Draft loaded from the assistant.");
+  };
+
+  useEffect(() => {
+    const pending = consumeOutboundWriteFill();
+    if (pending) applyFill(pending);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<OutboundWriteFill>).detail;
+      if (!detail) return;
+      clearOutboundWriteFill();
+      applyFill(detail);
+    };
+    window.addEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    return () => window.removeEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    // Mount-only: pending fill + live assistant events.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadTemplate = (key: string) => {
+    setTemplateKey(key);
+    const saved = savedLetters.find((row) => row.templateKey === key);
+    if (saved?.customBody) {
+      setSubject(saved.customSubject || "");
+      setBody(saved.customBody);
+      setLayout(isLetterLayout(saved.layout) ? saved.layout : "announcement");
+    }
+  };
+
+  const persistDraft = async () => {
+    const saved = await saveDraft.mutateAsync({
+      issueId: issueId ?? undefined,
+      subject,
+      body,
+      layout,
+      templateKey: templateKey === "nl_blank" ? null : templateKey,
+      audience,
+    });
+    setIssueId(saved.id);
+    return saved.id;
+  };
+
+  const handlePreview = async () => {
+    if (!subject.trim() || !body.trim()) {
+      toast.error("Write a subject and body first.");
+      return;
+    }
+    try {
+      const id = await persistDraft();
+      const p = await sendPreview.mutateAsync({ issueId: id });
+      setPreview({
+        subject: p.subject,
+        recipientCount: p.recipientCount,
+        confirmToken: p.confirmToken,
+        html: p.html,
+      });
+      setResult(null);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Preview failed.");
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!issueId || !preview) return;
+    try {
+      const r = await confirmSend.mutateAsync({
+        issueId,
+        confirmToken: preview.confirmToken,
+        idempotencyKey,
+      });
+      const message = r.duplicate
+        ? "Already sent (double-click caught, nothing re-sent)."
+        : `Sent to ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}${r.failedCount ? `, ${r.failedCount} failed` : ""}.`;
+      setResult(message);
+      toast.success(message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Send refused.");
+    }
+  };
+
+  const handleSchedule = async () => {
+    if (!issueId || !preview) return;
+    try {
+      const scheduledFor = pacificDatetimeLocalToUtc(scheduleLocal).toISOString();
+      const r = await scheduleSend.mutateAsync({
+        issueId,
+        confirmToken: preview.confirmToken,
+        idempotencyKey,
+        scheduledFor,
+      });
+      const when = formatPacificSchedule(new Date(r.scheduledFor));
+      const message = `Scheduled for ${when}. ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}. Open Sent to cancel or reschedule.`;
+      setResult(message);
+      toast.success(message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Schedule refused.");
+    }
+  };
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <Card className="bg-white border-2 border-[#1a472a]/10">
+        <CardHeader>
+          <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
+            Write a letter
+          </CardTitle>
+          <CardDescription>
+            Full markdown, CTA buttons, images from assets.regencivics.earth, and a preview with the email preferences footer.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="space-y-1">
+              <Label className="text-[#1a472a] text-xs">Audience</Label>
+              <Select value={source} onValueChange={(v) => { setSource(v as NewsletterSource | "all"); setPreview(null); }}>
+                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All active subscribers</SelectItem>
+                  {NEWSLETTER_SOURCES.map((s) => (
+                    <SelectItem key={s} value={s}>{newsletterSourceLabel(s)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[#1a472a] text-xs">Saved letter</Label>
+              <Select value={templateKey} onValueChange={loadTemplate}>
+                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NEWSLETTER_BUILTINS.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  ))}
+                  {savedLetters.map((row) => (
+                    <SelectItem key={row.templateKey} value={row.templateKey}>
+                      {row.label || row.templateKey}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="self-end text-sm text-[#1a472a]/80 pb-2">
+              {audienceCount} active subscriber{audienceCount === 1 ? "" : "s"}
+            </p>
+          </div>
+
+          <EmailMarkdownComposer
+            subject={subject}
+            body={body}
+            layout={layout}
+            onSubjectChange={(v) => { setSubject(v); setPreview(null); }}
+            onBodyChange={(v) => { setBody(v); setPreview(null); }}
+            onLayoutChange={(v) => { setLayout(v); setPreview(null); }}
+            variant="newsletter"
+            subjectId="outbound-write-subject"
+            bodyId="outbound-write-body"
+            minHeightClass="min-h-[240px]"
+          />
+
+          <EmailSaveTemplateBar
+            subject={subject}
+            body={body}
+            layout={layout}
+            builtinTemplates={NEWSLETTER_BUILTINS}
+            currentKey={templateKey}
+            onSaved={(key) => setTemplateKey(key)}
+            kind="newsletter"
+          />
+
+          {result ? (
+            <p className="text-sm text-[#1a472a] font-medium">{result}</p>
+          ) : !preview ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+                disabled={sendPreview.isPending || saveDraft.isPending}
+                onClick={() => void handlePreview()}
+              >
+                {(sendPreview.isPending || saveDraft.isPending) ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Preview send to {audienceCount}
+              </Button>
+              {(sendPreview.isError || saveDraft.isError) && (
+                <p className="text-sm text-red-700">
+                  {sendPreview.error?.message || saveDraft.error?.message}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 space-y-2">
+              <p className="text-sm text-amber-900">
+                <span className="font-semibold">Subject:</span> {preview.subject}
+              </p>
+              <p className="text-sm text-amber-900">
+                This sends to <span className="font-semibold">{preview.recipientCount} subscriber{preview.recipientCount === 1 ? "" : "s"}</span> and cannot be unsent. Confirm is bound to this exact text and audience.
+              </p>
+              <iframe
+                title="Send preview"
+                sandbox=""
+                referrerPolicy="no-referrer"
+                srcDoc={preview.html}
+                className="w-full min-h-[220px] bg-white rounded-md border border-amber-200"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+                  disabled={confirmSend.isPending || scheduleSend.isPending}
+                  onClick={() => void handleConfirm()}
+                >
+                  {confirmSend.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Confirm send to {preview.recipientCount}
+                </Button>
+                <Button type="button" variant="ghost" className="text-[#2d5a3d]" onClick={() => setPreview(null)}>
+                  Back to draft
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-end gap-2 pt-1">
+                <div className="space-y-1">
+                  <Label htmlFor="outbound-schedule-at" className="text-[#1a472a] text-xs">
+                    Schedule for… (Pacific time)
+                  </Label>
+                  <Input
+                    id="outbound-schedule-at"
+                    type="datetime-local"
+                    value={scheduleLocal}
+                    onChange={(e) => setScheduleLocal(e.target.value)}
+                    className="bg-white min-w-[12rem] border-[#1a472a]/20"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-[#1a472a]/30 text-[#1a472a]"
+                  disabled={scheduleSend.isPending || confirmSend.isPending || !scheduleLocal}
+                  onClick={() => void handleSchedule()}
+                >
+                  {scheduleSend.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                  )}
+                  Schedule send
+                </Button>
+              </div>
+              {(confirmSend.isError || scheduleSend.isError) && (
+                <p className="text-sm text-red-700">
+                  {confirmSend.error?.message || scheduleSend.error?.message}
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <EmailDraftAgent
+        currentSubject={subject}
+        currentBody={body}
+        currentLayout={layout}
+        statusLabel={audienceLabel}
+        audienceLabel={audienceLabel}
+        recipientCount={audienceCount}
+        variant="newsletter"
+        onApply={(draft) => {
+          setSubject(draft.subject);
+          setBody(draft.body);
+          if (draft.layout) setLayout(draft.layout);
+          setPreview(null);
+          toast.success("Draft applied. Review it, then use Preview send.");
+        }}
+      />
+    </div>
+  );
+}

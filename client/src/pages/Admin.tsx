@@ -20,6 +20,11 @@ import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 import { queueBroadcastFill } from "@/lib/broadcastFill";
+import {
+  isOutboundWriteComposeAction,
+  queueOutboundWriteFill,
+} from "@shared/outboundWriteFill";
+import { isLetterLayout } from "@shared/letterLayout";
 import { writeAdminContinueFromTab, canonicalizeAdminTab, parseOutboundSurface, type AdminHrefExtras, type OutboundSurface } from "@/lib/adminNav";
 
 const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
@@ -152,6 +157,13 @@ function AdminDashboard() {
         window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: fill } }));
       }
       setActiveTab("broadcast");
+    } else if (isOutboundWriteComposeAction(action)) {
+      queueOutboundWriteFill({
+        subject: action.subject,
+        body: action.body,
+        layout: isLetterLayout(action.layout) ? action.layout : undefined,
+      });
+      setActiveTab("outbound", { surface: "write" });
     } else if (action.type === "search" && action.query) {
       setInvestorSearch(action.query);
       setActiveTab("investors");
