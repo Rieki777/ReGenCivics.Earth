@@ -1,8 +1,8 @@
 /**
  * Outbound Write: newsletter composer, audience, preview confirm, send.
  */
-import { useMemo, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarClock, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
@@ -10,6 +10,7 @@ import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -18,10 +19,21 @@ import {
   type NewsletterSource,
 } from "@/lib/outboundAudience";
 import {
+  defaultScheduleLocal,
+  formatPacificSchedule,
+  pacificDatetimeLocalToUtc,
+} from "@shared/outboundSchedule";
+import {
   isLetterLayout,
   isNewsletterEmailTemplateRow,
   type LetterLayout,
 } from "@shared/letterLayout";
+import {
+  OUTBOUND_WRITE_FILL_EVENT,
+  clearOutboundWriteFill,
+  consumeOutboundWriteFill,
+  type OutboundWriteFill,
+} from "@shared/outboundWriteFill";
 
 const NEWSLETTER_BUILTINS = [{ id: "nl_blank", label: "Blank letter" }];
 
@@ -40,11 +52,13 @@ export function AdminOutboundWrite() {
   } | null>(null);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [result, setResult] = useState<string | null>(null);
+  const [scheduleLocal, setScheduleLocal] = useState(() => defaultScheduleLocal());
 
   const savedQuery = trpc.email.getCustomTemplates.useQuery();
   const saveDraft = trpc.outbound.saveDraft.useMutation();
   const sendPreview = trpc.outbound.sendPreview.useMutation();
   const confirmSend = trpc.outbound.confirmSend.useMutation();
+  const scheduleSend = trpc.outbound.scheduleSend.useMutation();
   const listActive = trpc.newsletter.listActive.useQuery();
 
   const savedLetters = useMemo(
@@ -66,6 +80,30 @@ export function AdminOutboundWrite() {
   const audienceLabel = source === "all"
     ? "active subscribers"
     : `active ${newsletterSourceLabel(source)} subscribers`;
+
+  const applyFill = (fill: OutboundWriteFill) => {
+    if (!fill.subject?.trim() && !fill.body?.trim() && !fill.layout) return;
+    if (fill.subject !== undefined) setSubject(fill.subject);
+    if (fill.body !== undefined) setBody(fill.body);
+    if (fill.layout) setLayout(fill.layout);
+    setPreview(null);
+    toast.success("Draft loaded from the assistant.");
+  };
+
+  useEffect(() => {
+    const pending = consumeOutboundWriteFill();
+    if (pending) applyFill(pending);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<OutboundWriteFill>).detail;
+      if (!detail) return;
+      clearOutboundWriteFill();
+      applyFill(detail);
+    };
+    window.addEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    return () => window.removeEventListener(OUTBOUND_WRITE_FILL_EVENT, handler);
+    // Mount-only: pending fill + live assistant events.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadTemplate = (key: string) => {
     setTemplateKey(key);
@@ -128,6 +166,25 @@ export function AdminOutboundWrite() {
     }
   };
 
+  const handleSchedule = async () => {
+    if (!issueId || !preview) return;
+    try {
+      const scheduledFor = pacificDatetimeLocalToUtc(scheduleLocal).toISOString();
+      const r = await scheduleSend.mutateAsync({
+        issueId,
+        confirmToken: preview.confirmToken,
+        idempotencyKey,
+        scheduledFor,
+      });
+      const when = formatPacificSchedule(new Date(r.scheduledFor));
+      const message = `Scheduled for ${when}. ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}. Open Sent to cancel or reschedule.`;
+      setResult(message);
+      toast.success(message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Schedule refused.");
+    }
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <Card className="bg-white border-2 border-[#1a472a]/10">
@@ -186,6 +243,8 @@ export function AdminOutboundWrite() {
             onBodyChange={(v) => { setBody(v); setPreview(null); }}
             onLayoutChange={(v) => { setLayout(v); setPreview(null); }}
             variant="newsletter"
+            subjectId="outbound-write-subject"
+            bodyId="outbound-write-body"
             minHeightClass="min-h-[240px]"
           />
 
@@ -241,7 +300,7 @@ export function AdminOutboundWrite() {
                 <Button
                   type="button"
                   className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                  disabled={confirmSend.isPending}
+                  disabled={confirmSend.isPending || scheduleSend.isPending}
                   onClick={() => void handleConfirm()}
                 >
                   {confirmSend.isPending ? (
@@ -252,11 +311,41 @@ export function AdminOutboundWrite() {
                   Confirm send to {preview.recipientCount}
                 </Button>
                 <Button type="button" variant="ghost" className="text-[#2d5a3d]" onClick={() => setPreview(null)}>
-                  Cancel
+                  Back to draft
                 </Button>
               </div>
-              {confirmSend.isError && (
-                <p className="text-sm text-red-700">{confirmSend.error.message}</p>
+              <div className="flex flex-wrap items-end gap-2 pt-1">
+                <div className="space-y-1">
+                  <Label htmlFor="outbound-schedule-at" className="text-[#1a472a] text-xs">
+                    Schedule for… (Pacific time)
+                  </Label>
+                  <Input
+                    id="outbound-schedule-at"
+                    type="datetime-local"
+                    value={scheduleLocal}
+                    onChange={(e) => setScheduleLocal(e.target.value)}
+                    className="bg-white min-w-[12rem] border-[#1a472a]/20"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-[#1a472a]/30 text-[#1a472a]"
+                  disabled={scheduleSend.isPending || confirmSend.isPending || !scheduleLocal}
+                  onClick={() => void handleSchedule()}
+                >
+                  {scheduleSend.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                  )}
+                  Schedule send
+                </Button>
+              </div>
+              {(confirmSend.isError || scheduleSend.isError) && (
+                <p className="text-sm text-red-700">
+                  {confirmSend.error?.message || scheduleSend.error?.message}
+                </p>
               )}
             </div>
           )}
@@ -276,6 +365,7 @@ export function AdminOutboundWrite() {
           setBody(draft.body);
           if (draft.layout) setLayout(draft.layout);
           setPreview(null);
+          toast.success("Draft applied. Review it, then use Preview send.");
         }}
       />
     </div>

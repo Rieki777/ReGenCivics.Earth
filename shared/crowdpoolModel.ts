@@ -12,8 +12,8 @@
  * these is a constant in a component.
  *
  * Nothing in this file accepts value. The pooling surfaces are built and gated off
- * until the Fund is a legal entity and counsel has ruled. See
- * `docs/legal/CROWDPOOL_LEGAL_DD_2026-09-05_all-dimensions.md`.
+ * until the cooperative is a legal entity and counsel has ruled. See
+ * `CROWDPOOL_PLAN.md` section 8; the legal research itself is kept out of the repo.
  */
 
 /** What a player brings. Money is one resource among nine, and usually the smaller part. */
@@ -31,9 +31,77 @@ export const RESOURCE_KINDS = [
 export type ResourceKind = (typeof RESOURCE_KINDS)[number];
 
 /**
+ * Where the cooperative lives. Ruled 2026-09-14. Liechtenstein uses the Swiss franc
+ * through a currency union, so the CHF peg below is unchanged by the choice.
+ */
+export const JURISDICTION = {
+  country: "Liechtenstein",
+  form: "registered cooperative (PGR Art. 428 ff.)",
+  currency: "CHF",
+  /** The cooperative IS the fund. There is no second vehicle. */
+  cooperativeIsTheFund: true,
+  ruled: "2026-09-14",
+} as const;
+
+/**
+ * The price of a seat. Ruled 2026-09-14.
+ *
+ * Every financial contribution through a campaign is at least the fund minimum,
+ * and each one makes the contributor a member with exactly one seat. The number
+ * is a setting; the shape is not. Money below the minimum never enters the fund:
+ * it goes to the partner platform (MONEY_CHANNELS.partnerPlatform), which is why
+ * nobody in the fund can be voiceless and no lesser class of vote exists.
+ */
+export const FUND_ENTRY = {
+  /** game_variables: crowdpool.fund_minimum_chf */
+  minimumChf: 250_000,
+  seatsPerContribution: 1,
+  /** A second contribution by the same member buys more $RCivics, never a second seat. */
+  seatsPerMember: 1,
+} as const;
+
+/**
+ * Three channels into every campaign, and the campaign page counts all three so a
+ * project sees one total. Only the first is the fund.
+ */
+export const MONEY_CHANNELS = {
+  fund: {
+    minimumChf: FUND_ENTRY.minimumChf,
+    recipient: "the cooperative",
+    /** Never on the cooperative's own account. */
+    heldBy: "licensed custodian, until close",
+    gives: ["$RCivics one per franc", "one seat", "routing"] as const,
+    countedOnCampaign: true,
+  },
+  partnerPlatform: {
+    /** A platform we partner with. We do not operate it and never touch its money. */
+    operatedByUs: false,
+    /** OPEN. Recommended: the project directly, on the platform's terms. */
+    recipient: "open; recommended: the project directly",
+    gives: ["whatever the platform offers", "a voice through the crowd circle"] as const,
+    fundTokens: false,
+    directSeat: false,
+    voice: "crowd circle",
+    countedOnCampaign: true,
+    /** game_variables: crowdpool.rails.partner_platform (off), crowdpool.partner_platform.url */
+    rail: "crowdpool.rails.partner_platform",
+  },
+  inKind: {
+    recipient: "one project, through the needs registry",
+    /** The Game side (RGVoice, $ReGen), never the Fund side. */
+    side: "game",
+    fundTokens: false,
+    directSeat: false,
+    /** OPEN: whether in-kind counts toward crowd-circle delegate seats. */
+    voice: "crowd circle, if in-kind counts",
+    countedOnCampaign: true,
+  },
+} as const;
+
+/**
  * The routing share: how much of a money contribution the contributor gets to
  * direct at projects of their choosing. Configurable per season within the range.
- * The remainder goes to the community treasury.
+ * The remainder goes to the community treasury. Fund channel only.
  */
 export const ROUTING = {
   /** game_variables: crowdpool.routing_share_pct */
@@ -78,6 +146,11 @@ export const CLOSE_CONDITIONS = {
  * When a campaign misses its window, the contributor who routed to it chooses.
  * Silence has a consequence, so the consent for it is captured separately at
  * contribution time rather than folded into a general terms tick.
+ *
+ * RECOMMENDED CHANGE, not yet ruled (research of 2026-09-14): default to refund.
+ * Under Liechtenstein fund law the core-team default is the one design element
+ * that most strengthens the reading that this is a managed fund, and it names
+ * the core team as the manager. CROWDPOOL_PLAN.md section 9 carries it.
  */
 export const MISSED_WINDOW = {
   choices: ["reroute", "refund", "regen_civics_chooses"] as const,
@@ -211,13 +284,34 @@ export const TREASURY = {
 } as const;
 
 /**
- * Governance of the cooperative. Ruled 2026-09-05.
+ * Governance of the fund. Ruled 2026-09-14. This replaces the ruling of 2026-09-05
+ * that both one member one vote and one franc one vote be supported.
  *
- * TWO WEIGHTINGS, both supported, chosen rather than assumed. One member one vote
- * is the Swiss cooperative default and the shape that most clearly reads as a
- * membership rather than an investment vehicle. One franc one vote is capital
- * weighted. Which applies is a setting, because the answer may differ by decision
- * type and because Swiss counsel has not ruled yet.
+ * ONE SEAT, ONE VOTE. The fund assembly has three kinds of seat, and each seat
+ * carries exactly one vote:
+ *   - every land project organisation
+ *   - every investor who has put in at least CHF 250,000
+ *   - every steward on the operational council
+ * The assembly decides overall governance, how the fund is run, and above all how
+ * money is disbursed. The operational council carries those decisions out and is
+ * empowered within its roles.
+ *
+ * Land projects vote on the disbursement slate as a whole. They do not vote on
+ * individual awards, their own included.
+ *
+ * Every financial member paid at least the fund minimum (FUND_ENTRY), so every
+ * stake in the fund is a direct seat. Below the minimum the voice is collective:
+ * the CROWD CIRCLE. Everyone who contributed to the season below the minimum is
+ * in it, one person one vote, and the circle elects delegates to the assembly,
+ * one delegate seat for every CHF 250,000 the crowd contributed together. A
+ * delegate votes like any other seat. Rye's principle, 2026-09-14: everyone has
+ * a voice relative to their contribution, the fund is infrastructure for the
+ * whole network, and no single person or small group holds disproportionate
+ * value. That is also why no member ever holds more than one seat.
+ *
+ * One vote per member is the Liechtenstein default and the floor under any
+ * weighting (PGR Art. 172 para. 5). Delegates' and section assemblies exist in
+ * the PGR at any size (Art. 166), which is the hook the circle hangs on.
  *
  * THE ELECTORATE IS NOT ONLY PEOPLE. Voting weight also goes to projects,
  * organisations and other actors, so the cooperative is governed by the whole
@@ -233,11 +327,43 @@ export const TREASURY = {
  */
 export const GOVERNANCE = {
   token: "rcvoice",
-  /** game_variables: crowdpool.governance.weighting */
-  weightings: ["one_member_one_vote", "one_franc_one_vote"] as const,
-  defaultWeighting: "one_member_one_vote",
-  /** May vary by what is being decided, not only by season. */
-  weightingIsPerDecisionType: true,
+  votesPerSeat: 1,
+  seats: {
+    land_project: { votes: 1, who: "every land project organisation" },
+    investor: { votes: 1, minimumInvestedChf: FUND_ENTRY.minimumChf },
+    steward: { votes: 1, who: "every steward on the operational council" },
+  },
+  assemblyDecides: ["overall governance", "how the fund is run", "disbursements"] as const,
+  operationalCouncil: { executesDecisions: true, empoweredWithinRoles: true },
+  /** Projects vote on the whole disbursement slate, never on a single award. */
+  projectsVoteOnDisbursements: "whole_slate",
+  /** Nobody holds more than one seat, whatever they contribute. */
+  maxSeatsPerMember: 1,
+  /**
+   * The collective voice below the minimum. Delegates are elected by the circle
+   * and vote like any other seat.
+   */
+  crowdCircle: {
+    votesPerPersonInCircle: 1,
+    /** One delegate seat per this much contributed by the crowd together, per season. */
+    delegateSeatPerChf: FUND_ENTRY.minimumChf,
+    delegateVotes: 1,
+    /**
+     * OPEN: whether in-kind contributions, at their recorded value, count toward
+     * seats. Research of 2026-09-14 recommends not in season one.
+     */
+    inKindCountsTowardSeats: null,
+    /**
+     * OPEN. Research of 2026-09-14 recommends: the circle lives OUTSIDE the
+     * cooperative (an association, or the platform's own body), because only
+     * members may elect a cooperative's delegates and making the whole crowd
+     * nominal members would put retail investors inside the fund. Each elected
+     * delegate is then admitted as a member for their term, with a nominal share
+     * and no return; a floor of one delegate and a cap on the crowd's share of
+     * seats sit in the statutes.
+     */
+    legalShape: null,
+  },
   /** A voter is an actor, never assumed to be a person. */
   actorKinds: ["person", "project", "organisation", "other"] as const,
   rcvoiceDeployedOnBase: false,
@@ -259,6 +385,9 @@ export const BANNED_TERMS: Record<string, string> = {
 };
 
 export type CrowdpoolModel = {
+  jurisdiction: typeof JURISDICTION;
+  fundEntry: typeof FUND_ENTRY;
+  moneyChannels: typeof MONEY_CHANNELS;
   routing: typeof ROUTING;
   projectStake: typeof PROJECT_STAKE;
   closeConditions: typeof CLOSE_CONDITIONS;

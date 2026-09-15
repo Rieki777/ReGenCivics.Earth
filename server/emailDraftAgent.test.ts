@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   attachDraftToLastUserMessage,
   buildDraftAgentSystemPrompt,
+  buildNewsletterDraftAgentSystemPrompt,
   parseDraftAgentOutput,
   stripEmailPii,
 } from "./lib/emailDraftAgent";
@@ -54,17 +55,16 @@ describe("parseDraftAgentOutput", () => {
   });
 });
 
-describe("buildDraftAgentSystemPrompt", () => {
-  it("includes count and status, never a raw email", () => {
-    const prompt = buildDraftAgentSystemPrompt({
-      statusLabel: "Approved (zgeist@gmail.com)",
-      recipientCount: 8,
+describe("buildNewsletterDraftAgentSystemPrompt", () => {
+  it("never sends and never asks for emails", () => {
+    const prompt = buildNewsletterDraftAgentSystemPrompt({
+      audienceLabel: "active subscribers (zgeist@gmail.com)",
+      recipientCount: 40,
     });
-    expect(prompt).toContain("Recipient count: 8");
-    expect(prompt).toContain("{{email}}");
+    expect(prompt).toContain("You never send");
+    expect(prompt).toContain("Audience: active subscribers ({{email}})");
     expect(prompt).not.toMatch(/zgeist@gmail\.com/);
-    expect(prompt).not.toContain("\u2014");
-    expect(prompt).toContain("announcement");
+    expect(prompt).toContain("Recipient count: 40");
   });
 });
 

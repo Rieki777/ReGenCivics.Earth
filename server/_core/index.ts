@@ -1207,6 +1207,25 @@ async function startServer() {
     }
   });
 
+  // ── Outbound newsletter scheduled send ────────────────────────────────────
+  // Newsletter letters only (newsletter_issues). Not Events auto-reminders.
+  // Also runs in-process every minute. Safe to re-run: status claim +
+  // idempotencyKey make a second tick a no-op.
+  app.post("/api/cron/outbound-issues", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runDueNewsletterIssues } = await import("../jobs/outboundScheduledIssues");
+      const report = await runDueNewsletterIssues();
+      return res.json(report);
+    } catch (err: any) {
+      log.error("cron outbound-issues failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Gratitude cycle close cron endpoint ────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/gratitude-cycles
   // A lunation ends at an arbitrary hour, so closing hourly keeps a cycle from
@@ -1491,6 +1510,21 @@ async function processScheduledEmails() {
 setInterval(processScheduledEmails, 60_000);
 
 // ─── Auto-scheduled event reminders (every 5 minutes) ────────────────────────
+// ─── Outbound newsletter scheduled letters (every minute) ────────────────────
+// Distinct from Events auto-reminders below. Sends due newsletter_issues
+// through the same hardened path as outbound.confirmSend.
+setTimeout(async () => {
+  const run = async () => {
+    const { runDueNewsletterIssues } = await import("../jobs/outboundScheduledIssues");
+    await runDueNewsletterIssues();
+  };
+  try { await run(); } catch (e) { log.error("OutboundScheduledIssues error", e); }
+  setInterval(async () => {
+    try { await run(); } catch (e) { log.error("OutboundScheduledIssues error", e); }
+  }, 60_000);
+}, 20_000);
+
+// ─── Auto-scheduled event reminders (every 10 minutes) ───────────────────────
 // Same job the hourly Railway cron POST /api/cron/event-reminders runs. The
 // in-process sweep exists so the 33-minute and 1-hour offsets do not wait for
 // the next hour. Catch-up still sends a due offset until the session starts.
