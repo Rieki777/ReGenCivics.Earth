@@ -157,7 +157,7 @@ describe("AdminOutboundHub", () => {
     expect(onSurfaceChange).toHaveBeenCalledWith("history");
   });
            it("lists scheduled letters on Sent with cancel and reschedule", async () => {
-                 render(<AdminOutboundHub surface="sent" onSurfaceChange={vi.fn()} />);
+                 render(<AdminOutboundHub surface="history" onSurfaceChange={vi.fn()} />);
                  expect(screen.getByText("September letter")).toBeDefined();
                  expect(screen.getByText("Already out")).toBeDefined();
                  expect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
