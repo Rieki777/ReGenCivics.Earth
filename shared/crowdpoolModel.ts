@@ -356,11 +356,14 @@ export const GOVERNANCE = {
     /**
      * OPEN. Research of 2026-09-14 recommends: the circle lives OUTSIDE the
      * cooperative (an association, or the platform's own body), because only
-     * members may elect a cooperative's delegates and making the whole crowd
-     * nominal members would put retail investors inside the fund. Each elected
-     * delegate is then admitted as a member for their term, with a nominal share
-     * and no return; a floor of one delegate and a cap on the crowd's share of
-     * seats sit in the statutes.
+     * members may elect a cooperative's council and making the whole crowd
+     * nominal members would put retail investors inside the fund. How a
+     * delegate is then seated is for counsel: as a member with a nominal share,
+     * or as a non-member with a statutory vote (PGR Art. 169 para. 5). The
+     * adversarial check found a nominal share may be a fund unit for a delegate
+     * exactly as for the crowd, so the non-member seat may be the shape that
+     * keeps delegates out of fund law. A floor of one delegate and a cap on the
+     * crowd's share of seats are design choices, not law.
      */
     legalShape: null,
   },

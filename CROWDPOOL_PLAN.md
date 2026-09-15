@@ -320,9 +320,12 @@ Each of these changes a ruling in the decision log, so none is recorded as decid
   exception, or a disbursement committee without project seats decides the slate and
   projects keep every other vote.
 - **The crowd circle sits outside the cooperative.** An association or a platform body
-  elects the delegates; each delegate is admitted as a member for the term with a nominal
-  share and no return; floor of one delegate; a cap on the crowd's share of seats
-  (suggested one third); in-kind not counted in season one.
+  elects the delegates. How a delegate is seated is for counsel: as a member with a
+  nominal share, or as a non-member with a statutory vote (PGR Art. 169 para. 5). The
+  check pass found that a nominal share may be a fund unit for a delegate exactly as for
+  the crowd, so the second shape may be the one that keeps delegates out of fund law.
+  Floor of one delegate and a cap on the crowd's share of seats (suggested one third)
+  are design choices, not law; in-kind not counted in season one.
 - **$RCivics is a cooperative share.** Certificated under Art. 447, one vote per member
   written expressly, never described as "utility" anywhere (it would tax the raise) and
   not as "a share of all thirteen" in front of the FMA. Needs its own ADR before the
