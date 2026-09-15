@@ -32,7 +32,7 @@ vi.mock("@/lib/trpc", () => ({
           isLoading: false,
         }),
       },
-    },
+
     email: {
       getCustomTemplates: { useQuery: () => ({ data: [], isLoading: false }) },
       saveCustomTemplate: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
@@ -43,6 +43,10 @@ vi.mock("@/lib/trpc", () => ({
       saveDraft: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       sendPreview: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
       confirmSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+              scheduleSend: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }) },
+              cancelScheduled: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+              reschedule: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+        
       draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       listIssues: { useQuery: () => ({ data: [], isLoading: false }) },
       listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
