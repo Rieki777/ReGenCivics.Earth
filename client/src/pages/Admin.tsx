@@ -19,6 +19,7 @@ import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
+import { queueBroadcastFill } from "@/lib/broadcastFill";
 import {
   isOutboundWriteComposeAction,
   queueOutboundWriteFill,
@@ -152,7 +153,7 @@ function AdminDashboard() {
     } else if (action.type === "compose" && action.tab === "broadcast") {
       const fill = action.body || action.subject;
       if (fill) {
-        try { sessionStorage.setItem("broadcast_fill_pending", fill); } catch { /* private mode */ }
+        queueBroadcastFill(fill);
         window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: fill } }));
       }
       setActiveTab("broadcast");
