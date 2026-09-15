@@ -301,9 +301,11 @@ instruments carrying equity.
     a floor" flag by hand (`PoolPieces.tsx`, `HUB_PLEDGED_TOTAL_IS_A_FLOOR`), so a fork
     pointing at an older hub would show a floor as a total. Raised by the village-os
     economics session on 2026-09-14; its corrected prose is in
-    [village-os PR #243](https://github.com/Rieki777/village-os/pull/243). A version
-    field in `docs/CROWDPOOL_HUB_CONTRACT.md` is the thing to key it on. Small change,
-    deferred with the rest of the money side.
+    [village-os PR #243](https://github.com/Rieki777/village-os/pull/243).
+    **Resolved 2026-09-14.** Rye ruled, through that session: "add a version number".
+    `meta.contract` now returns `{ crowdpool: 2 }` (`shared/hubContract.ts`,
+    `server/routes/meta.ts`), the history and bump rule are section 10 of the contract
+    doc, and `server/hub-contract.test.ts` fails if the number and the table drift.
 
 ### Recommended changes awaiting Rye's ruling (from the 2026-09-14 research)
 

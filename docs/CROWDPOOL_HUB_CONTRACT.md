@@ -6,7 +6,9 @@ live today and, until this file existed, was written down only on the village si
 This is the hub's half.
 
 **Date:** 2026-09-04. Agreed directly with the village-os economics session, which
-measured its half from its own code rather than from its documentation.
+measured its half from its own code rather than from its documentation. **Updated
+2026-09-14:** the contract now carries a version number (section 10), and the
+`pledgedTotal` defect in section 4 is fixed.
 
 ---
 
@@ -40,6 +42,7 @@ not change without a message to the village-os session first.
 | `campaigns.getItems` | `{campaignId}` | the needs |
 | `campaigns.getActivity` | `{campaignId}` | the public Pool Ledger |
 | `campaigns.getPartnerLinks` | `{campaignId}` | partner funders and their cached numbers |
+| `meta.contract` | `{}` or nothing | the contract version per surface, section 10 |
 
 **Stable fields.** On a need: `id`, `name`, `kind`, `category`, `capitalType`,
 `description`, `estimatedValue`, `quantityWanted`, `quantityClaimed`,
@@ -91,12 +94,15 @@ So: an unannounced rename here shows a village a quietly false story about itsel
 Both are recorded in `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md` and both are ours to
 fix.
 
-**The village's gold ring collapses when a pledge is delivered.** `percentPledged` on
-the village side is `pledgedTotal / totalValue`
-(`village-os server/lib/crowdpool.ts:330`). The hub's `pledgedTotal` counts only
-`status = 'accepted'` (`server/db.ts:1200-1203`), so confirming a delivery removes
-that value from the number the ring divides. Measured: $10,000 delivered then $5,000
-accepted reports $5,000. The village ring shrinks at the moment a village succeeds.
+**The village's gold ring collapsed when a pledge was delivered. Fixed, `b835c28e`,
+2026-09-05.** `percentPledged` on the village side is `pledgedTotal / totalValue`
+(`village-os server/lib/crowdpool.ts:330`). The hub's `pledgedTotal` used to count
+only `status = 'accepted'`, so confirming a delivery removed that value from the
+number the ring divides. Measured before the fix: $10,000 delivered then $5,000
+accepted reported $5,000. Since `b835c28e` the total sums the standing statuses,
+`accepted`, `fulfilled` and `thanked` (`getCampaignPledgedTotals`, `server/db.ts`),
+and it is recomputed on first fulfilment and once per campaign when claims expire.
+That change is why the contract version is 2 (section 10).
 
 **Over-delivery makes a need vanish from the village shelf.** The hub's fulfil path
 is not idempotent (gap analysis 3.4), so `quantityDelivered` can pass
@@ -207,3 +213,31 @@ server/lib/crowdpool.ts:5`, and nearly in its economics document. Five is correc
 The village side is fixing its copies. Recorded here because the failure mode, prose
 disagreeing with the table under it, has now happened three times in one day across
 these two repositories.
+
+## 10. The contract version
+
+`meta.contract` returns one integer per public surface a village reads, for example
+`{ "crowdpool": 2 }`. It is `publicProcedure`, no auth, no database, and it accepts
+`{}` or no input. The numbers live in `shared/hubContract.ts`; the meanings live here,
+and `server/hub-contract.test.ts` fails if the two drift.
+
+**The bump rule.** Raise a surface's integer whenever a change alters what a field a
+village already reads MEANS. An added field needs no bump. A changed meaning always
+does. Announce a bump to the village-os session before it deploys, as with any change
+to the stable set.
+
+**How a village reads it.** Ask once per sync and cache it with the snapshot. Treat a
+missing procedure, an error or a missing key as version 1, and never fail a fetch over
+it: a hub that predates the field is by definition an older contract.
+
+**crowdpool**
+
+| Version | Meaning | Since |
+|---|---|---|
+| 1 | `pledgedTotal` sums accepted pledges only, so it is a floor. | the beginning |
+| 2 | `pledgedTotal` sums the standing statuses: accepted, fulfilled and thanked. | `b835c28e`, 2026-09-05 |
+
+Ruled by Rye on 2026-09-14, relayed by the village-os economics session: "add a
+version number, not that the history matters right now as nobody is running it, but
+going forward this will be helpful as both sides will be evolving rapidly over the next
+months."
