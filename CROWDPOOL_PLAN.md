@@ -306,6 +306,10 @@ instruments carrying equity.
     `meta.contract` now returns `{ crowdpool: 2 }` (`shared/hubContract.ts`,
     `server/routes/meta.ts`), the history and bump rule are section 10 of the contract
     doc, and `server/hub-contract.test.ts` fails if the number and the table drift.
+    The village side reads it in
+    [village-os PR #265](https://github.com/Rieki777/village-os/pull/265): missing,
+    erroring or malformed reads as version 1, and "2 or later" prints the pledged
+    figure as a total. Any bump past 2 goes to the village-os session before it deploys.
 
 ### Recommended changes awaiting Rye's ruling (from the 2026-09-14 research)
 
