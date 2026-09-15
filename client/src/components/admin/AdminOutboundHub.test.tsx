@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, e pect, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminOutboundHub } from "./AdminOutboundHub";
@@ -15,8 +15,8 @@ vi.mock("@/lib/trpc", () => ({
                         list: {
                                     useQuery: () => ({
                                                   data: [
-                                                      { id: 1, email: "active@example.com", name: "Ada", source: "exit_intent", isActive: 1, createdAt: "2026-08-01T00:00:00.000Z" },
-                                                      { id: 2, email: "old@example.com", name: "Bea", source: "footer", isActive: 0, createdAt: "2026-08-02T00:00:00.000Z" },
+                                                      { id: 1, email: "active@e ample.com", name: "Ada", source: "e it_intent", isActive: 1, createdAt: "2026-08-01T00:00:00.000Z" },
+                                                      { id: 2, email: "old@e ample.com", name: "Bea", source: "footer", isActive: 0, createdAt: "2026-08-02T00:00:00.000Z" },
                                                                 ],
                                                   isLoading: false,
                                     }),
@@ -24,7 +24,7 @@ vi.mock("@/lib/trpc", () => ({
                         listActive: {
                                     useQuery: () => ({
                                                   data: [
-                                                      { id: 1, email: "active@example.com", name: "Ada", source: "exit_intent", isActive: 1 },
+                                                      { id: 1, email: "active@e ample.com", name: "Ada", source: "e it_intent", isActive: 1 },
                                                                 ],
                                                   isLoading: false,
                                     }),
@@ -77,6 +77,7 @@ vi.mock("@/lib/trpc", () => ({
                                     }),
                         },
               listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
+                                            getHistoryDetail: { useQuery: () => ({ data: null, isLoading: false }) }, 
               },
               admin: {
                         broadcast: {
@@ -102,36 +103,36 @@ describe("AdminOutboundHub", () => {
 
            it("shows the newsletter composer with insert-button control", () => {
                    render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
-                   expect(screen.getByText("Write a letter")).toBeDefined();
-                   expect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
-                   expect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
-                   expect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
-                   expect(screen.queryByText(/composer will take full markdown/i)).toBeNull();
-                   expect(screen.queryByText(/send button stays off/i)).toBeNull();
-                   expect(screen.getByText("Write with me")).toBeDefined();
-                   expect(screen.getByTestId("dictation-button")).toBeDefined();
-                   expect(screen.getByLabelText("Dictate message")).toBeDefined();
+                   e pect(screen.getByTe t("Write a letter")).toBeDefined();
+                   e pect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
+                   e pect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
+                   e pect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
+                   e pect(screen.queryByTe t(/composer will take full markdown/i)).toBeNull();
+                   e pect(screen.queryByTe t(/send button stays off/i)).toBeNull();
+                   e pect(screen.getByTe t("Write with me")).toBeDefined();
+                   e pect(screen.getByTestId("dictation-button")).toBeDefined();
+                   e pect(screen.getByLabelTe t("Dictate message")).toBeDefined();
            });
 
            it("defaults the people list to active subscribers", () => {
                    render(<AdminOutboundHub surface="people" onSurfaceChange={vi.fn()} />);
-                   expect(screen.getByText("active@example.com")).toBeDefined();
-                   expect(screen.queryByText("old@example.com")).toBeNull();
+                   e pect(screen.getByTe t("active@e ample.com")).toBeDefined();
+                   e pect(screen.queryByTe t("old@e ample.com")).toBeNull();
            });
 
            it("lets the admin switch to Social without leaving the hub", async () => {
                    const onSurfaceChange = vi.fn();
                    render(<AdminOutboundHub surface="write" onSurfaceChange={onSurfaceChange} />);
                    await userEvent.click(screen.getByRole("tab", { name: "Social" }));
-                   expect(onSurfaceChange).toHaveBeenCalledWith("social");
+                   e pect(onSurfaceChange).toHaveBeenCalledWith("social");
            });
 
            it("mounts the Broadcast composer on Social, including Draft with Harvest", () => {
                    render(<AdminOutboundHub surface="social" onSurfaceChange={vi.fn()} />);
-                   expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
-                   expect(screen.getByTestId("broadcast-message")).toBeDefined();
-                   expect(screen.getByTestId("dictation-button")).toBeDefined();
-                   expect(screen.getByLabelText("Dictate message")).toBeDefined();
+                   e pect(screen.getByTestId("draft-with-harvest")).toBeDefined();
+                   e pect(screen.getByTestId("broadcast-message")).toBeDefined();
+                   e pect(screen.getByTestId("dictation-button")).toBeDefined();
+                   e pect(screen.getByLabelTe t("Dictate message")).toBeDefined();
            });
 
            it("fills Write fields from a pending assistant compose", () => {
@@ -144,10 +145,10 @@ describe("AdminOutboundHub", () => {
                              })!,
                            );
                    render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
-                   expect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("Season update");
-                   expect((screen.getByTestId("outbound-write-body") as HTMLTextAreaElement).value).toContain("live stream is tonight");
-                   expect(screen.getByTestId("outbound-write-body-layout").textContent).toMatch(/Plain letter/i);
-                   expect(sessionStorage.getItem(OUTBOUND_WRITE_FILL_KEY)).toBeNull();
+                   e pect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("Season update");
+                   e pect((screen.getByTestId("outbound-write-body") as HTMLTe tAreaElement).value).toContain("live stream is tonight");
+                   e pect(screen.getByTestId("outbound-write-body-layout").te tContent).toMatch(/Plain letter/i);
+                   e pect(sessionStorage.getItem(OUTBOUND_WRITE_FILL_KEY)).toBeNull();
            });
 
            it("fills Write fields from a live assistant compose event", () => {
@@ -161,18 +162,18 @@ describe("AdminOutboundHub", () => {
                                          },
                              }));
                    });
-                   expect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("From the assistant");
-                   expect((screen.getByTestId("outbound-write-body") as HTMLTextAreaElement).value).toBe("A short letter body.");
+                   e pect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("From the assistant");
+                   e pect((screen.getByTestId("outbound-write-body") as HTMLTe tAreaElement).value).toBe("A short letter body.");
            });
 
            it("lists scheduled letters in History with cancel and reschedule", async () => {
                    render(<AdminOutboundHub surface="history" onSurfaceChange={vi.fn()} />);
-                   expect(screen.getByText("September letter")).toBeDefined();
-                   expect(screen.getByText("Already out")).toBeDefined();
-                   expect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
-                   expect(screen.getByRole("button", { name: "Reschedule" })).toBeDefined();
+                   e pect(screen.getByTe t("September letter")).toBeDefined();
+                   e pect(screen.getByTe t("Already out")).toBeDefined();
+                   e pect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
+                   e pect(screen.getByRole("button", { name: "Reschedule" })).toBeDefined();
                    await userEvent.click(screen.getByRole("button", { name: /Scheduled/ }));
-                   expect(screen.getByText("September letter")).toBeDefined();
-                   expect(screen.queryByText("Already out")).toBeNull();
+                   e pect(screen.getByTe t("September letter")).toBeDefined();
+                   e pect(screen.queryByTe t("Already out")).toBeNull();
            });
 });
