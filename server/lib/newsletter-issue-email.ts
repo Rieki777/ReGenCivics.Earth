@@ -140,7 +140,7 @@ export async function buildIssuePreview(params: {
   const [issue] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, params.issueId)).limit(1);
   if (!issue || issue.createdBy !== params.createdBy) throw new Error("Issue not found.");
   if (issue.status === "sending" || issue.status === "sent") {
-    throw new Error("This letter is already sending or sent. Open Sent for history.");
+    throw new Error("This letter is already sending or sent. Open History.");
   }
   if (issue.status === "scheduled") {
     throw new Error("This letter is scheduled. Cancel it from Sent before editing.");

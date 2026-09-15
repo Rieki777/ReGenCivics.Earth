@@ -2,11 +2,12 @@
  * Outbound hub: email + social in one admin section.
  */
 import { useMemo, useState } from "react";
-import { Mail, Radio, Users, FileText, Send, Download, Loader2, CalendarClock } from "lucide-react";
+import { Mail, Radio, Users, FileText, History, Send, Download, Loader2, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
-import { AdminOutboundWrite } from "@/components/admin/AdminOutboundWrite";
+import { AdminOutboundWrite, type OutboundWritePrefill } from "@/components/admin/AdminOutboundWrite";
+import { AdminOutboundHistory } from "@/components/admin/AdminOutboundHistory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,7 @@ const SURFACE_META: Record<OutboundSurface, { label: string; icon: typeof Mail; 
   social: { label: "Social", icon: Radio, blurb: "Post to channels" },
   people: { label: "People", icon: Users, blurb: "Subscribers" },
   templates: { label: "Templates", icon: FileText, blurb: "Saved letters" },
-  sent: { label: "Sent", icon: Send, blurb: "Issue history" },
+  history: { label: "History", icon: History, blurb: "Letters sent and scheduled" },
 };
 
 export function AdminOutboundHub({
@@ -47,6 +48,8 @@ export function AdminOutboundHub({
   surface: OutboundSurface;
   onSurfaceChange: (surface: OutboundSurface) => void;
 }) {
+  const [writePrefill, setWritePrefill] = useState<OutboundWritePrefill | null>(null);
+
   return (
     <div className="space-y-4">
       <div>
@@ -69,7 +72,10 @@ export function AdminOutboundHub({
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => onSurfaceChange(id)}
+              onClick={() => {
+                if (id !== "write") setWritePrefill(null);
+                onSurfaceChange(id);
+              }}
               className={`min-h-11 px-3 rounded-xl border inline-flex items-center gap-2 text-sm font-medium ${
                 active
                   ? "border-[#1a472a] bg-[#1a472a]/5 text-[#1a472a]"
@@ -83,11 +89,21 @@ export function AdminOutboundHub({
         })}
       </div>
 
-      {surface === "write" && <AdminOutboundWrite />}
+      {surface === "write" && (
+        <AdminOutboundWrite prefill={writePrefill} />
+      )}
       {surface === "social" && <AdminBroadcastPanel />}
       {surface === "people" && <PeoplePanel />}
       {surface === "templates" && <TemplatesStub />}
-      {surface === "sent" && <SentPanel />}
+      {surface === "history" && (
+        <AdminOutboundHistory
+          onWrite={() => onSurfaceChange("write")}
+          onDuplicate={(draft) => {
+            setWritePrefill(draft);
+            onSurfaceChange("write");
+          }}
+        />
+      )}
     </div>
   );
 }
