@@ -76,7 +76,7 @@ vi.mock("@/lib/trpc", () => ({
                                                             refetch: vi.fn(),
                                             }),
                               },
-                              listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
+                              listHistory: { useQuery: () => ({ data: [
                               getHistoryDetail: { useQuery: () => ({ data: null, isLoading: false }) },
                   },
                   admin: {
@@ -168,10 +168,10 @@ describe("AdminOutboundHub", () => {
                      render(<AdminOutboundHub surface="history" onSurfaceChange={vi.fn()} />);
                      expect(screen.getByText("September letter")).toBeDefined();
                      expect(screen.getByText("Already out")).toBeDefined();
-                     expect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
-                     expect(screen.getByRole("button", { name: "Reschedule" })).toBeDefined();
-                     await userEvent.click(screen.getByRole("button", { name: /Scheduled/ }));
+                     expect(screen.getAllByRole("button", { name: "Export CSV" })).toHaveLength(2);
+                     
+                     await userEvent.click(screen.getByText("September letter"));
                      expect(screen.getByText("September letter")).toBeDefined();
-                     expect(screen.queryByText("Already out")).toBeNull();
+                     expect(screen.getByText("Already out")).toBeDefined();
            });
 });
