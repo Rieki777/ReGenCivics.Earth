@@ -10,7 +10,7 @@ import {
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({
+    useUtils: () => ({},
       email: { getCustomTemplates: { invalidate: vi.fn() } },
       outbound: { getHistoryDetail: { fetch: vi.fn() } },
     }),
@@ -33,7 +33,8 @@ vi.mock("@/lib/trpc", () => ({
         }),
       },
 
-    email: {
+    },
+      email: {
       getCustomTemplates: { useQuery: () => ({ data: [], isLoading: false }) },
       saveCustomTemplate: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       renderPdf: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
