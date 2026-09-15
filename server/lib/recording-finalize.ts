@@ -18,6 +18,9 @@ import { eq, gte, lte, isNotNull, and } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyRecordingReady } from "../_core/notify";
 import { logger } from "../_core/logger";
+import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
+import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
+import { ENV } from "../_core/env";
 
 const log = logger("recording-finalize");
 
@@ -163,30 +166,35 @@ export async function sendRecordingEmail(recording: {
   riversideUrl: string | null;
   aiSummary: string | null;
   forumPostId: number | null;
-}): Promise<void> {
-  const subscribers = await db.getRecordingSubscribers();
+}): Promise<number> {
+  const subscribers = await audienceForTopic("recordings");
   if (!subscribers.length) {
     log.info("No recording subscribers, skipping email");
-    return;
+    return 0;
   }
 
   const forumUrl = recording.forumPostId ? `${APP_BASE_URL}/community/post/${recording.forumPostId}` : null;
-  const html = buildEmailHtml({
-    title: recording.title,
-    sessionDate: formatSessionDate(recording.sessionDate),
-    youtubeUrl: recording.youtubeUrl,
-    riversideUrl: recording.riversideUrl,
-    aiSummary: recording.aiSummary,
-    forumUrl,
-  });
 
-  const emails = subscribers.map((s) => s.email);
-  const BATCH = 50;
-  for (let i = 0; i < emails.length; i += BATCH) {
-    const batch = emails.slice(i, i + BATCH);
-    await sendEmail({ to: batch, subject: `Recording ready: ${recording.title}`, html, template: "recording_summary" });
-    log.info(`Sent email batch ${Math.floor(i / BATCH) + 1} (${batch.length} recipients)`);
+  for (const subscriber of subscribers) {
+    const prefsUrl = await managePreferencesUrl(subscriber.email, { mute: "recordings" });
+    const html = buildEmailHtml({
+      title: recording.title,
+      sessionDate: formatSessionDate(recording.sessionDate),
+      youtubeUrl: recording.youtubeUrl,
+      riversideUrl: recording.riversideUrl,
+      aiSummary: recording.aiSummary,
+      forumUrl,
+      prefsUrl,
+    });
+    await sendEmail({
+      to: subscriber.email,
+      subject: `Recording ready: ${recording.title}`,
+      html,
+      template: "recording_summary",
+    });
   }
+  log.info(`Sent recording email to ${subscribers.length} subscribers`);
+  return subscribers.length;
 }
 
 // ── Helpers ──
@@ -212,6 +220,7 @@ function buildEmailHtml(opts: {
   riversideUrl?: string | null;
   aiSummary?: string | null;
   forumUrl?: string | null;
+  prefsUrl: string;
 }): string {
   const watchBtn = opts.youtubeUrl
     ? `<a href="${opts.youtubeUrl}" style="display:inline-block;background:#FF0000;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">▶ Watch Recording</a>`
@@ -250,10 +259,7 @@ function buildEmailHtml(opts: {
       </div>
 
       <div style="background: #f0f7f0; padding: 20px 24px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
-        <p style="color: #888; font-size: 12px; margin: 0;">
-          You're receiving this because you opted into recording updates in your profile.<br/>
-          <a href="${APP_BASE_URL}/settings" style="color: #7dd87d;">Update email preferences</a>
-        </p>
+        ${newsletterLegalFooterHtml(opts.prefsUrl, ENV.harvestPostalAddress)}
       </div>
     </div>
   `;

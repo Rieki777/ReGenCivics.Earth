@@ -13,8 +13,9 @@
  *  3. Hard caps: one send per 10 minutes, three per day, enforced against the
  *     audit table (not the in-memory limiter, so restarts cannot reset them).
  *  4. An idempotency key makes a double-click a no-op.
- *  5. CAN-SPAM: unsubscribe link on the existing newsletter mechanism, postal
- *     address in the footer, Resend's suppression list applies at delivery.
+ *  5. CAN-SPAM: Manage email preferences link (signed token) and postal
+ *     address in the footer. Unsubscribe-from-all lives on that prefs page.
+ *     Resend's suppression list applies at delivery.
  *  6. Audit row per attempt: who, when, recipient COUNT (never the list),
  *     body hash, and the ai-vs-shipped pair.
  */
@@ -22,10 +23,11 @@ import crypto from "crypto";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { creationItems, harvestEmailSends } from "../../drizzle/schema";
-import { getActiveNewsletterSubscribers } from "../db/newsletter";
 import { sendEmail } from "../_core/email";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
+import { audienceForTopic, managePreferencesUrl, previewManagePreferencesUrl } from "./emailPrefs";
+import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 
 const log = logger("harvest-email");
 
@@ -75,11 +77,10 @@ export function splitSubject(body: string): { subject: string; text: string } {
   return { subject, text };
 }
 
-function renderHtml(text: string): string {
+function renderHtml(text: string, prefsUrl: string): string {
   const escaped = text
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const paragraphs = escaped.split(/\n{2,}/).map((p) => `<p style="color:#2d3a2d;line-height:1.7;margin:0 0 16px 0;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
-  const unsubUrl = `${ENV.appUrl}/unsubscribe`;
   return `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 26px 20px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -89,11 +90,7 @@ function renderHtml(text: string): string {
       ${paragraphs}
     </div>
     <div style="padding: 14px 22px; background: #f8f5f0; border-radius: 0 0 8px 8px; border: 1px solid #e8e4de; border-top: none;">
-      <p style="color:#8a8a8a;font-size:11px;margin:0;line-height:1.6;">
-        You are receiving this because you subscribed to the ReGen Civics newsletter.
-        <a href="${unsubUrl}" style="color:#8a8a8a;">Unsubscribe</a> any time.<br/>
-        ${ENV.harvestPostalAddress}
-      </p>
+      ${newsletterLegalFooterHtml(prefsUrl, ENV.harvestPostalAddress)}
     </div>
   </div>`;
 }
@@ -116,14 +113,14 @@ export async function buildSendPreview(item: { id: number; channel: string; stat
   if (!item.body?.trim()) throw new Error("The item is empty.");
 
   const { subject, text } = splitSubject(item.body);
-  const recipients = await getActiveNewsletterSubscribers();
+  const recipients = await audienceForTopic("seasonal");
   if (recipients.length === 0) throw new Error("No active newsletter subscribers to send to.");
 
   const hash = bodyHash(subject, text);
   const expiresAt = Date.now() + TOKEN_TTL_MS;
   return {
     subject,
-    html: renderHtml(text),
+    html: renderHtml(text, previewManagePreferencesUrl({ mute: "seasonal" })),
     recipientCount: recipients.length,
     confirmToken: buildConfirmToken({ itemId: item.id, hash, recipients: recipients.length, exp: expiresAt }),
     expiresAt,
@@ -211,23 +208,20 @@ export async function confirmAndSend(params: {
     throw err;
   }
 
-  const recipients = await getActiveNewsletterSubscribers();
-  const html = renderHtml(text);
-  const emails = recipients.map((s) => s.email);
-  const BATCH = 50;
+  const recipients = await audienceForTopic("seasonal");
   let sent = 0;
   try {
-    for (let i = 0; i < emails.length; i += BATCH) {
-      const batch = emails.slice(i, i + BATCH);
-      await sendEmail({ to: batch, subject, html, template: "harvest_announcement" });
-      sent += batch.length;
+    for (const recipient of recipients) {
+      const html = renderHtml(text, await managePreferencesUrl(recipient.email, { mute: "seasonal" }));
+      await sendEmail({ to: recipient.email, subject, html, template: "harvest_announcement" });
+      sent += 1;
     }
   } catch (err) {
     await db.update(harvestEmailSends)
       .set({ status: "failed", recipientCount: sent })
       .where(eq(harvestEmailSends.idempotencyKey, params.idempotencyKey));
     log.error(`send failed after ${sent} recipients`, err instanceof Error ? err : undefined);
-    throw new Error(`Send failed after ${sent} of ${emails.length} recipients. Check the Resend dashboard before retrying.`);
+    throw new Error(`Send failed after ${sent} of ${recipients.length} recipients. Check the Resend dashboard before retrying.`);
   }
 
   await db.update(harvestEmailSends)

@@ -23,6 +23,7 @@ import {
   viewerIsPacific,
 } from "./calendarLinks";
 import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { googleCalUrl, icsDataUrl } from "./seasonEvents";
 
 /** Week 1, 11:00 Pacific on Saturday 2026-09-26. */
 const WEEK1_START = new Date("2026-09-26T18:00:00Z");
@@ -105,15 +106,47 @@ describe("Feed URLs", () => {
 });
 
 describe("resolveRoomUrl", () => {
-  it("swaps the default studio URL for the durable /join redirect", () => {
+  it("swaps any link into our studio for the durable /join redirect", () => {
     expect(resolveRoomUrl(RIVERSIDE_ROOM_URL)).toBe(JOIN_URL);
+    // What every events row actually stores.
+    expect(
+      resolveRoomUrl("https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b"),
+    ).toBe(JOIN_URL);
     expect(resolveRoomUrl(null)).toBe(JOIN_URL);
     expect(resolveRoomUrl("  ")).toBe(JOIN_URL);
   });
 
-  it("leaves a genuine per-event room alone", () => {
+  it("leaves a genuine per-event room alone, including a lookalike studio name", () => {
     expect(resolveRoomUrl("https://riverside.com/studio/other")).toBe(
       "https://riverside.com/studio/other",
     );
+    expect(resolveRoomUrl("https://riverside.com/studio/rieki-cordon-riekis-studio-2")).toBe(
+      "https://riverside.com/studio/rieki-cordon-riekis-studio-2",
+    );
+  });
+});
+
+describe("one-shot adds on the session cards", () => {
+  // The "Google Calendar" and "Apple/Outlook" buttons on each Open Access and
+  // episode card. Until 2026-09-14 both set the location to the plain text
+  // "Online via Riverside", which no calendar app can open.
+  const opts = {
+    title: "Week 1: Selection Day",
+    startUtc: "20260926T180000Z",
+    endUtc: "20260926T200000Z",
+    description: "x",
+  };
+
+  it("sets the Google event location to the join link", () => {
+    const url = new URL(googleCalUrl(opts));
+    expect(url.searchParams.get("location")).toBe(JOIN_URL);
+    expect(url.searchParams.get("details")).toContain(`Join us live: ${JOIN_URL}`);
+  });
+
+  it("sets the Apple/Outlook LOCATION to the join link", () => {
+    const dataUrl = icsDataUrl({ uid: "u@regencivics.earth", summary: opts.title, ...opts });
+    const ics = decodeURIComponent(dataUrl.replace(/^data:text\/calendar;charset=utf8,/, ""));
+    expect(ics).toContain(`LOCATION:${JOIN_URL}`);
+    expect(ics).not.toContain("Online via Riverside");
   });
 });

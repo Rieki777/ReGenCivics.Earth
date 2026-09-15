@@ -69,10 +69,13 @@ import { outboundRouter } from "./routes/outbound";
 import { brainRouter } from "./routes/brain";
 import { callIntelligenceRouter } from "./routes/callIntelligence";
 import { videoTutorRouter } from "./routes/videoTutor";
+import { metaRouter } from "./routes/meta";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  // The hub contract version a village reads once per sync. docs/CROWDPOOL_HUB_CONTRACT.md section 10.
+  meta: metaRouter,
 
   // Global
   globalSearch: globalSearchRouter,

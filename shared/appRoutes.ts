@@ -82,6 +82,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/custom-games/apply",
   "/disclaimers",
   "/economy",
+  "/email-preferences",
   "/events/:id",
   "/features",
   "/federation",

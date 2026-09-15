@@ -22,6 +22,16 @@ import {
 } from "../lib/emailDraftAgent";
 import { letterSkipsSendWrap, TEMPLATE_KEY_RE } from "../../shared/letterLayout";
 import { renderLetterPdfBase64 } from "../lib/letterPdf";
+import { EMAIL_TOPIC_KEYS, MARKETING_PAUSE_DAYS, type EmailTopicKey } from "../../shared/emailPrefs";
+import {
+  loadPrefsForToken,
+  muteTopic as mutePrefsTopic,
+  pauseCommunityMail,
+  resubscribeCommunity,
+  saveTopicPrefs,
+  unsubscribeAllCommunity,
+  verifyPrefsToken,
+} from "../lib/emailPrefs";
 
 const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 
@@ -114,10 +124,110 @@ export const newsletterRouter = router({
     .input(z.object({ token: z.string().min(20).max(4000) }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "newsletter_unsubscribe");
-      const { verifyUnsubscribeToken } = await import("../lib/newsletter-issue-email");
-      const email = await verifyUnsubscribeToken(input.token);
-      if (email) await db.unsubscribeNewsletter(email);
+      const email = await verifyPrefsToken(input.token);
+      if (email) await unsubscribeAllCommunity(email);
       return { success: true };
+    }),
+
+  getPreferences: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 60 }))
+    .input(z.object({ token: z.string().min(16).max(4096) }))
+    .query(async ({ input }) => {
+      const prefs = await loadPrefsForToken(input.token);
+      if (!prefs) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      return prefs;
+    }),
+
+  savePreferences: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 40 }))
+    .input(z.object({
+      token: z.string().min(16).max(4096),
+      topics: z.object({
+        seasonal: z.boolean(),
+        open_access: z.boolean(),
+        season2: z.boolean(),
+        events: z.boolean(),
+        recordings: z.boolean(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      const email = await verifyPrefsToken(input.token);
+      if (!email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      const prefs = await saveTopicPrefs(email, input.topics);
+      if (!prefs) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This link is invalid or has expired." });
+      }
+      return prefs;
+    }),
+
+  muteTopic: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 40 }))
+    .input(z.object({
+      token: z.string().min(16).max(4096),
+      topic: z.enum(EMAIL_TOPIC_KEYS),
+    }))
+    .mutation(async ({ input }) => {
+      const email = await verifyPrefsToken(input.token);
+      if (!email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      const prefs = await mutePrefsTopic(email, input.topic as EmailTopicKey);
+      if (!prefs) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This link is invalid or has expired." });
+      }
+      return prefs;
+    }),
+
+  pauseMarketing: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 20 }))
+    .input(z.object({
+      token: z.string().min(16).max(4096),
+      days: z.union([z.literal(0), z.literal(MARKETING_PAUSE_DAYS)]),
+    }))
+    .mutation(async ({ input }) => {
+      const email = await verifyPrefsToken(input.token);
+      if (!email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      const prefs = await pauseCommunityMail(email, input.days);
+      if (!prefs) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This link is invalid or has expired." });
+      }
+      return prefs;
+    }),
+
+  unsubscribeAll: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 20 }))
+    .input(z.object({ token: z.string().min(16).max(4096) }))
+    .mutation(async ({ input }) => {
+      const email = await verifyPrefsToken(input.token);
+      if (!email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      const prefs = await unsubscribeAllCommunity(email);
+      if (!prefs) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This link is invalid or has expired." });
+      }
+      return prefs;
+    }),
+
+  resubscribe: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 60 * 1000, max: 20 }))
+    .input(z.object({ token: z.string().min(16).max(4096) }))
+    .mutation(async ({ input }) => {
+      const email = await verifyPrefsToken(input.token);
+      if (!email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This link is invalid or has expired." });
+      }
+      const prefs = await resubscribeCommunity(email);
+      if (!prefs) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This link is invalid or has expired." });
+      }
+      return prefs;
     }),
 
   // Self-service: check if logged-in user has already subscribed

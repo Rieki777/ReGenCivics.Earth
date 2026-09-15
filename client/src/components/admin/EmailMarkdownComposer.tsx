@@ -145,7 +145,7 @@ export function EmailMarkdownComposer({
     body || "_Nothing to preview yet._",
     layout,
     variant === "newsletter"
-      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
+      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/email-preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
       : undefined,
   );
 

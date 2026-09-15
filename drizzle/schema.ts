@@ -450,8 +450,14 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
   // Status
   isActive: int("isActive").default(1).notNull(),
 
-  // Email preferences
-  notifyRecordings: tinyint("notifyRecordings").default(0).notNull(),
+  // Email preferences. Community topics default ON for new subscribers.
+  // recordings maps to notifyRecordings (existing opt-in column; new rows default ON).
+  notifyRecordings: tinyint("notifyRecordings").default(1).notNull(),
+  prefSeasonal: tinyint("prefSeasonal").default(1).notNull(),
+  prefOpenAccess: tinyint("prefOpenAccess").default(1).notNull(),
+  prefSeason2: tinyint("prefSeason2").default(1).notNull(),
+  prefEvents: tinyint("prefEvents").default(1).notNull(),
+  marketingPausedUntil: timestamp("marketingPausedUntil"),
 
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -463,7 +469,8 @@ export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInse
 
 /**
  * Newsletter issue (Outbound campaign). Markdown body, audience JSON
- * `{ sources: string[], activeOnly: boolean }`. Send ships in a later PR.
+ * `{ sources: string[], activeOnly: boolean }`. Status `scheduled` is a
+ * newsletter letter queued for later; it is not an Events auto-reminder.
  * Named `newsletter_issues` so it never collides with crowd-pooling `campaigns`.
  */
 export const newsletterIssues = mysqlTable("newsletter_issues", {

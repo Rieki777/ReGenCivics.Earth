@@ -55,6 +55,16 @@ describe("markdownLetterDocument", () => {
     expect(html).toContain("{{name}}");
     expect(html).toContain("<!DOCTYPE html>");
   });
+
+  it("puts Manage email preferences in the letter footer, not Unsubscribe", () => {
+    const html = markdownLetterDocument("Hello", "announcement", {
+      managePreferencesUrl: "https://regencivics.earth/email-preferences?token=abc&mute=open_access",
+    });
+    expect(html).toContain("Manage email preferences");
+    expect(html).toContain("/email-preferences?token=abc");
+    expect(html).toContain("mute=open_access");
+    expect(html).not.toMatch(/>Unsubscribe</);
+  });
 });
 
 describe("renderLetterPdf", () => {

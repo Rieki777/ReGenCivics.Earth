@@ -24,6 +24,7 @@ export const TEMPLATE_KEY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
 export const LETTER_LOGO_URL =
   "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp";
 
+/** CAN-SPAM postal line for community/newsletter letters. */
 export const NEWSLETTER_POSTAL_ADDRESS = "ReGen Civics Alliance, Ashland, Oregon, USA";
 
 export function isLetterLayout(value: unknown): value is LetterLayout {

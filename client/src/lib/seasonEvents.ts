@@ -187,9 +187,16 @@ function calendarDetails(description: string): string {
   return `${description}\n\nJoin us live: ${JOIN}\n\nWatch live or catch the rerun on YouTube: ${SEEDS}`;
 }
 
+/**
+ * The one-shot Google add behind each session card's "Google Calendar" button.
+ *
+ * `location` is the join link rather than the words "Online via Riverside",
+ * which is what it said until 2026-09-14: calendar apps turn a URL in the
+ * location field into something you can tap, and a phrase into nothing.
+ */
 export function googleCalUrl(opts: { title: string; startUtc: string; endUtc: string; description: string }): string {
   const details = encodeURIComponent(calendarDetails(opts.description));
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(opts.title)}&dates=${opts.startUtc}/${opts.endUtc}&details=${details}&location=Online+via+Riverside`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(opts.title)}&dates=${opts.startUtc}/${opts.endUtc}&details=${details}&location=${encodeURIComponent(JOIN)}`;
 }
 
 export function icsDataUrl(opts: {
@@ -207,7 +214,9 @@ export function icsDataUrl(opts: {
     endUtc: opts.endUtc,
     sequence: opts.sequence ?? ICS_SEQUENCE,
     description: calendarDetails(opts.description),
-    location: "Online via Riverside",
+    // The join link, not the words "Online via Riverside": a URL here is
+    // tappable in Apple Calendar and Outlook, a phrase is not.
+    location: JOIN,
   });
   const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ReGen Civics//Events//EN\n${event}\nEND:VCALENDAR`;
   return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;

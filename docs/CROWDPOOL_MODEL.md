@@ -22,35 +22,66 @@ Two kinds of contribution, and they behave differently.
 tractor, runs a workshop, commits eight Saturdays. It goes where they put it and it
 stays there.
 
-**Money goes to ReGen Civics.** Not to a project. This is the part people find
-surprising, so it is worth being plain: you cannot send money to a project through
-this platform. You contribute to ReGen Civics, and you tell us where to route it.
+**Money at or above the fund minimum goes to ReGen Civics.** Not to a project. This is
+the part people find surprising, so it is worth being plain: you cannot send money to
+a project through this platform. You contribute to ReGen Civics, and you tell us where
+to route it. The minimum is **CHF 250,000** at present, and it is the price of a seat.
+
+**Money below the minimum goes to a partner platform.** A crowdfunding platform we work
+with and do not run. It has its own terms, and what you receive there is theirs to
+say. It never enters the fund, and it earns no fund tokens and no seat. The campaign
+page still counts it, so a project sees one total.
+
+---
+
+## Below the minimum
+
+Most people who back a project will do it this way, and the page should make it
+feel like the front door rather than a side entrance. A person who chooses an amount
+under the minimum is shown, plainly, that the fund starts at CHF 250,000, and is sent
+to the partner platform's page for that project with one tap. Their contribution
+shows up on the campaign page under the platform's name once the platform reports it.
+
+Where that money lands is not settled. The recommendation is that it goes to the
+project directly, on the platform's terms, and not into the fund: small money that
+joins the pool through an intermediary would put the people the minimum exists to
+protect right back inside the fund.
+
+**You still have a voice.** Everyone who contributed below the minimum in a season is
+in the **crowd circle**, where it is one person, one vote. The circle elects delegates
+to the fund's assembly, one seat for every CHF 250,000 the crowd has contributed
+together, and a delegate's vote counts exactly as much as anyone else's. A thousand
+people who pool CHF 250,000 hold the same seat as one person who contributes it. That
+is the point of the design: everyone has a voice relative to what they bring, and no
+single person or small group holds a disproportionate one.
 
 ---
 
 ## What happens to money, with real numbers
 
-Someone contributes **100,000 CHF**.
+Someone contributes **250,000 CHF**, the minimum.
 
-**They receive 100,000 $RCivics.** One token for one franc, for their whole
-contribution. That is their standing in the whole thing.
+**They receive 250,000 $RCivics and one seat.** One token for one franc, for their
+whole contribution. That is their standing in what the community builds. The seat is
+their voice in how it is run, and it is the same one vote whether they put in the
+minimum or ten times it.
 
-**They get to route 90,000 of it.** Ninety per cent is the current share and it is a
+**They get to route 225,000 of it.** Ninety per cent is the current share and it is a
 setting, adjustable between fifty and ninety per cent from one season to the next.
 Routing means naming which projects they want their money to reach.
 
-Say they route **50,000 to Project A** and **40,000 to Project B**.
+Say they route **125,000 to Project A** and **100,000 to Project B**.
 
-**The remaining 10,000 goes to the community treasury**, which pays for the roles and
+**The remaining 25,000 goes to the community treasury**, which pays for the roles and
 the running of the platform that makes the season happen at all.
 
 **Then the projects answer.** A project that receives routed money sends back an equal
-amount of its own tokens to ReGen Civics. Project A sends back 50,000 worth. Project B
-sends back 40,000 worth.
+amount of its own tokens to ReGen Civics. Project A sends back 125,000 worth. Project
+B sends back 100,000 worth.
 
-So after the season, ReGen Civics holds 50,000 of Project A, 40,000 of Project B, and
-10,000 in the treasury. And if this person were the only contributor in the whole
-fund, their 100,000 $RCivics would represent all of it: every one of those holdings,
+So after the season, ReGen Civics holds 125,000 of Project A, 100,000 of Project B,
+and 25,000 in the treasury. And if this person were the only member in the whole
+fund, their 250,000 $RCivics would represent all of it: every one of those holdings,
 in those proportions.
 
 **That is the point of the whole design.** You back the projects you believe in, and
@@ -171,12 +202,38 @@ you claim, the chain confirms, and the confirmation comes back.
 
 The ten per cent that is not routed sits in the community treasury as a **real asset
 you have a claim on**, not a fee that disappears. Paying roles and running costs draws
-it down over time, and **that drawdown is a governance decision**, made by the people
-holding governance weight rather than by whoever is running the platform that month.
+it down over time, and **that drawdown is a governance decision**, made by the fund
+assembly described below.
 
-So in the worked example, the 10,000 in the treasury is genuinely part of what that
-contributor's $RCivics represents. It is the smallest of the three holdings and the
+So in the worked example, the 25,000 in the treasury is genuinely part of what that
+member's $RCivics represents. It is the smallest of the three holdings and the
 only one the community spends from directly.
+
+---
+
+## Who decides
+
+The fund is governed by an assembly where **every seat has exactly one vote**. Three
+kinds of seat exist:
+
+- **Every land project organisation.**
+- **Every member who has put in at least CHF 250,000.**
+- **Every steward on the operational council.**
+- **Every delegate of the crowd circle**, one for every CHF 250,000 the crowd
+  contributed together.
+
+Nobody holds more than one seat, however much they bring.
+
+The assembly decides how the fund is run, and above all how money is disbursed. The
+operational council carries those decisions out and has real authority inside its
+roles.
+
+Land projects vote on the disbursement plan as a whole. A project never votes on a
+single award, so it never votes on its own.
+
+The fund is infrastructure for the whole network: it exists to coordinate and resource
+every project in it, which is why the people who bring the most and the people who
+bring a little are both in the room, in proportion, and neither can outweigh the other.
 
 ---
 
@@ -190,7 +247,7 @@ contribution paths are gated off in code rather than merely hidden. The ReGen Ci
 Fund is in formation and is not yet a legal entity, so it cannot receive or hold
 anyone's money.
 
-Before any of it opens, a securities lawyer has to rule on the shape. The project's
-own research is in `docs/legal/`, and its clearest finding is that what a thing is
-called does not change what it legally is. Everything here is built on the assumption
+Before any of it opens, counsel in Liechtenstein, the chosen home, has to rule on the
+shape. The project's own research is kept out of the repository on purpose, and its
+clearest finding is that what a thing is called does not change what it legally is. Everything here is built on the assumption
 that the money half is regulated, because it almost certainly is.

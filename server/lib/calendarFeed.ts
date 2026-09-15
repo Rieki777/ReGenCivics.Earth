@@ -40,7 +40,7 @@ import {
 } from "@shared/season2Curriculum";
 import {
   JOIN_URL,
-  RIVERSIDE_ROOM_URL,
+  isDefaultRoomUrl,
   SEEDS_YOUTUBE_URL,
   SITE_ORIGIN,
 } from "@shared/sessionLinks";
@@ -123,18 +123,17 @@ export function isPublicSession(row: FeedRow): boolean {
 }
 
 /**
- * The room link an invite carries.
+ * The room link an invite carries: /join, for our studio.
  *
- * Every one of the 25 rows in production stores the raw Riverside studio URL,
- * token and all (verified 2026-09-07). Passing that straight through would put
- * the token on every subscriber's calendar until April and defeat the whole
- * point of the /join redirect, so a row holding the default room resolves to
- * /join. A row holding something genuinely different is a per-event room and
- * passes through untouched.
+ * Every events row in production stores a Riverside studio URL in
+ * riversideRoomUrl (the old `?t=` token link, verified 2026-09-07). Passing that
+ * through would put a raw studio link on subscribers' calendars and defeat the
+ * /join redirect, so any link into our studio, in any stored form, resolves to
+ * /join. A genuinely different room passes through untouched.
  */
 export function roomUrl(row: FeedRow): string {
   const stored = row.riversideRoomUrl?.trim();
-  if (!stored || stored === RIVERSIDE_ROOM_URL) return JOIN_URL;
+  if (!stored || isDefaultRoomUrl(stored)) return JOIN_URL;
   return stored;
 }
 
@@ -166,13 +165,16 @@ export function eventDescription(row: FeedRow): string {
 }
 
 /**
- * LOCATION is that audience's primary way in: the room for open sessions, the
- * livestream for cohort weeks. Putting the cohort room here for a closed
- * working session would hand it to every public subscriber.
+ * LOCATION is the join link, for every session in every feed.
+ *
+ * Calendar apps render a URL in LOCATION as something you can tap, which makes
+ * it the one-tap way into the session. Open Access Sessions and all thirteen
+ * Season Two episodes share one room on purpose (Rye, 2026-09-14), so they
+ * share one LOCATION. Until then, cohort weeks 2 to 13 carried the SEEDS
+ * YouTube URL here instead; the livestream link is still in their description.
  */
 export function eventLocation(row: FeedRow): string {
-  if (isPublicSession(row)) return roomUrl(row);
-  return row.youtubeUrl ?? SEEDS_YOUTUBE_URL;
+  return roomUrl(row);
 }
 
 function categories(row: FeedRow): string[] {
@@ -181,8 +183,32 @@ function categories(row: FeedRow): string[] {
   return ["ReGen Civics"];
 }
 
+/**
+ * The last time the way existing events render changed without their rows
+ * changing. Bump it whenever a code change alters the output for rows nobody
+ * edited.
+ *
+ * SEQUENCE and DTSTAMP come from updatedAt, which only moves when a row is
+ * written. On 2026-09-14 every LOCATION moved to /join and not one events row
+ * was touched, so without this every event would have gone out carrying the
+ * same SEQUENCE and DTSTAMP as the old version. A client already holding the
+ * UID is entitled to skip an update like that, and the old LOCATION would have
+ * stayed on subscribers' calendars.
+ */
+export const FEED_CONTENT_REVISED_AT = new Date("2026-09-14T00:00:00Z");
+
+/** The later of the row's last edit and the last change to how rows render. */
+export function lastChanged(row: FeedRow): Date {
+  return row.updatedAt.getTime() >= FEED_CONTENT_REVISED_AT.getTime()
+    ? row.updatedAt
+    : FEED_CONTENT_REVISED_AT;
+}
+
 export function toIcsEvent(row: FeedRow): IcsEvent {
   const end = row.endTime ?? new Date(row.startTime.getTime() + 2 * 3_600_000);
+  // Monotonic either way: a later admin edit still wins, and SEQUENCE can only
+  // ever go up for a given UID.
+  const changed = lastChanged(row);
   return {
     uid: eventUid(row),
     start: row.startTime,
@@ -191,8 +217,8 @@ export function toIcsEvent(row: FeedRow): IcsEvent {
     description: eventDescription(row),
     location: eventLocation(row),
     url: row.id != null ? `${SITE_ORIGIN}/events/${row.id}` : `${SITE_ORIGIN}/schedule`,
-    sequence: eventSequence(row.updatedAt),
-    dtstamp: row.updatedAt,
+    sequence: eventSequence(changed),
+    dtstamp: changed,
     // A cancelled session stays in the feed carrying STATUS:CANCELLED. Dropping
     // the row instead would leave it on every subscriber's calendar forever,
     // because a feed going quiet about a UID is not a cancellation.

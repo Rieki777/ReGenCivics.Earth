@@ -18,7 +18,7 @@
  *    have to come from one zone. Here they do.
  */
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
-import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { JOIN_URL, isDefaultRoomUrl } from "@shared/sessionLinks";
 
 const ORIGIN = "https://regencivics.earth";
 
@@ -76,15 +76,14 @@ export function eventFeed(eventId: number): CalendarFeed {
  * The room link to show for a session. Mirrors roomUrl() in
  * server/lib/calendarFeed.ts so a page and an invite always agree.
  *
- * A row holding the default studio URL resolves to /join, so the token stops
- * being handed out. A row holding something else is a genuine per-event room
- * and passes through. The token was never a secret (it ships in the client
- * bundle and has been a visible href on /schedule), so this is not about
- * hiding it: it is so that rotating it does not break anything.
+ * Any link into our studio, in any form a row has stored it, resolves to /join,
+ * so changing the room means changing one constant. A row holding something
+ * else is a genuine per-event room and passes through. See isDefaultRoomUrl in
+ * shared/sessionLinks.ts for why this cannot be an exact string comparison.
  */
 export function resolveRoomUrl(stored?: string | null): string {
   const value = stored?.trim();
-  if (!value || value === RIVERSIDE_ROOM_URL) return JOIN_URL;
+  if (!value || isDefaultRoomUrl(value)) return JOIN_URL;
   return value;
 }
 
