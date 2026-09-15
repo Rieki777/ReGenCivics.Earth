@@ -780,11 +780,15 @@ export default function Schedule() {
                         <ReplayButton eventId={event.id} />
                       )}
 
-                      {/* Join link: DB riversideUrl takes priority, then fallback to RIVERSIDE_INFO */}
+                      {/* Join link. Both branches go through resolveRoomUrl: signed-in
+                          members receive riversideRoomUrl, and every row stores the
+                          old studio token link there, so passing it through raw
+                          sidestepped /join for exactly the people most likely to
+                          click. */}
                       {(event as any).status !== 'completed' && (
                         (event as any).riversideRoomUrl ? (
                           <a
-                            href={(event as any).riversideRoomUrl}
+                            href={resolveRoomUrl((event as any).riversideRoomUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"

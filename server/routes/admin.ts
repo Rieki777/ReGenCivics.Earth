@@ -14,6 +14,12 @@ import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
+import { isOutboundWriteSurface } from "@shared/outboundWriteFill";
+import {
+  guardAssistantSendClaim,
+  OUTBOUND_WRITE_ASSISTANT_BLOCK,
+  OUTBOUND_WRITE_SURFACE_BLOCK,
+} from "../lib/adminAIPrompt";
 
 /**
  * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
@@ -469,6 +475,7 @@ export const adminAIRouter = router({
     .mutation(async ({ ctx, input }) => {
       const snap = input.context ?? {};
       const onSocialCompose = isBroadcastComposeSurface(snap.activeTab, snap.outboundSurface);
+      const onWriteCompose = isOutboundWriteSurface(snap.activeTab, snap.outboundSurface);
       const contextBlock = [
         snap.activeTab ? `Active admin tab: ${snap.activeTab}` : null,
         snap.outboundSurface ? `Outbound surface: ${snap.outboundSurface}` : null,
@@ -499,6 +506,8 @@ You are helping draft social posts for the Social composer (X, LinkedIn, Faceboo
 <action>{"type":"compose","tab":"broadcast","body":"...post text...","label":"Use this in Broadcast"}</action>
 Follow the hard publishing rules: no em-dashes, no contrast framing, no AI filler, no rhetorical openers except the brand question, no passive inspiration. Keep X/Bluesky/Farcaster short. Do not put raw URLs in the body.` : "";
 
+      const writeBlock = `${OUTBOUND_WRITE_ASSISTANT_BLOCK}${onWriteCompose ? OUTBOUND_WRITE_SURFACE_BLOCK : ""}`;
+
       const systemPrompt = `You are an AI admin assistant for ReGen Civics  -  a regenerative civilization project coordinating land projects, alliance organizations, and investors.
 
 You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
@@ -519,7 +528,7 @@ You live inside the /admin dashboard and help administrators (like Rieki and the
 - **Create**: "Create with ReGens" collaboration requests
 - **Other**: Catch-all inquiries
 - **Kanban**: Drag-and-drop view of investor/inquiry/application pipelines
-- **Outbound**: Letters to subscribers and posts to social channels. Social compose posts go through Buffer (or Warpcast for Farcaster). Drafts should use The Harvest.
+- **Outbound**: Letters to subscribers and posts to social channels. Write is the newsletter composer (Preview send, then Confirm). Social compose posts go through Buffer (or Warpcast for Farcaster). Social drafts should use The Harvest. This chat never sends the letter.
 - **Settings**: Email templates, newsletter subscribers, scheduled emails
 
 ## Available Actions
@@ -528,6 +537,7 @@ When you want the admin to take an action, include a JSON action block in your r
 Examples:
 <action>{"type":"navigate","tab":"investors","label":"Go to Investors tab"}</action>
 <action>{"type":"compose","to":"email@example.com","subject":"Following up on your inquiry","label":"Draft email to contact"}</action>
+<action>{"type":"compose","tab":"outbound","surface":"write","subject":"Season update","body":"Friends,\\n\\nA short letter.","layout":"announcement","label":"Use this in Write"}</action>
 <action>{"type":"search","query":"search term","label":"Search for this contact"}</action>
 <action>{"type":"focus","contactEmail":"email@example.com","label":"Open contact card"}</action>
 
@@ -541,7 +551,7 @@ Example:
 Only propose an execute action when you have the specific id or key from the conversation or context. Never invent ids. For anything destructive or high-stakes (deleting records, bans, rejections, sending money, mass email, public posts), do NOT use execute; tell the admin to do it themselves.
 
 ## Current Context
-${contextBlock || "No specific context provided."}${broadcastBlock}${harvestBlock}
+${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}
 
 ## Communication Style
 - Be direct, warm, and efficient
@@ -556,7 +566,8 @@ ${contextBlock || "No specific context provided."}${broadcastBlock}${harvestBloc
       ];
 
       const response = await invokeLLM({ messages: llmMessages, maxTokens: 1500 });
-      const content = response.choices?.[0]?.message?.content ?? "I'm not sure how to help with that. Could you rephrase?";
+      const raw = response.choices?.[0]?.message?.content ?? "I'm not sure how to help with that. Could you rephrase?";
+      const content = guardAssistantSendClaim(raw, { onWrite: onWriteCompose });
       return { content };
     }),
 });

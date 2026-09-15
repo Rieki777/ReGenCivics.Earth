@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminOutboundHub } from "./AdminOutboundHub";
+import {
+    OUTBOUND_WRITE_FILL_EVENT,
+    OUTBOUND_WRITE_FILL_KEY,
+    serializeOutboundWriteFill,
+} from "@shared/outboundWriteFill";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -56,30 +61,77 @@ vi.mock("@/lib/trpc", () => ({
   },
 }));
 
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
 describe("AdminOutboundHub", () => {
-  it("shows the newsletter composer with insert-button control", () => {
-    render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
-    expect(screen.getByText("Write a letter")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
-    expect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
-    expect(screen.getByText("Write with me")).toBeDefined();
-    expect(screen.getByTestId("dictation-button")).toBeDefined();
-    expect(screen.getByLabelText("Dictate message")).toBeDefined();
-  });
+    beforeEach(() => {
+          sessionStorage.clear();
+    });
 
-  it("defaults the people list to active subscribers", () => {
-    render(<AdminOutboundHub surface="people" onSurfaceChange={vi.fn()} />);
-    expect(screen.getByText("active@example.com")).toBeDefined();
-    expect(screen.queryByText("old@example.com")).toBeNull();
-  });
+           it("shows the newsletter composer with insert-button control", () => {
+                 render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
+                 expect(screen.getByText("Write a letter")).toBeDefined();
+                 expect(screen.getByRole("button", { name: "Insert button" })).toBeDefined();
+                 expect(screen.getByRole("button", { name: "Insert image" })).toBeDefined();
+                 expect(screen.getByRole("button", { name: /Preview send/i })).toBeDefined();
+                 expect(screen.queryByText(/composer will take full markdown/i)).toBeNull();
+                 expect(screen.queryByText(/send button stays off/i)).toBeNull();
+                 expect(screen.getByText("Write with me")).toBeDefined();
+                 expect(screen.getByTestId("dictation-button")).toBeDefined();
+                 expect(screen.getByLabelText("Dictate message")).toBeDefined();
+           });
 
-  it("lets the admin switch to Social without leaving the hub", async () => {
-    const onSurfaceChange = vi.fn();
-    render(<AdminOutboundHub surface="write" onSurfaceChange={onSurfaceChange} />);
-    await userEvent.click(screen.getByRole("tab", { name: "Social" }));
-    expect(onSurfaceChange).toHaveBeenCalledWith("social");
-  });
+           it("defaults the people list to active subscribers", () => {
+                 render(<AdminOutboundHub surface="people" onSurfaceChange={vi.fn()} />);
+                 expect(screen.getByText("active@example.com")).toBeDefined();
+                 expect(screen.queryByText("old@example.com")).toBeNull();
+           });
+
+           it("lets the admin switch to Social without leaving the hub", async () => {
+                 const onSurfaceChange = vi.fn();
+                 render(<AdminOutboundHub surface="write" onSurfaceChange={onSurfaceChange} />);
+                 await userEvent.click(screen.getByRole("tab", { name: "Social" }));
+                 expect(onSurfaceChange).toHaveBeenCalledWith("social");
+           });
+
+           it("mounts the Broadcast composer on Social, including Draft with Harvest", () => {
+                 render(<AdminOutboundHub surface="social" onSurfaceChange={vi.fn()} />);
+                 expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
+                 expect(screen.getByTestId("broadcast-message")).toBeDefined();
+                 expect(screen.getByTestId("dictation-button")).toBeDefined();
+                 expect(screen.getByLabelText("Dictate message")).toBeDefined();
+           });
+
+           it("fills Write fields from a pending assistant compose", () => {
+                 sessionStorage.setItem(
+                         OUTBOUND_WRITE_FILL_KEY,
+                         serializeOutboundWriteFill({
+                                   subject: "Season update",
+                                   body: "Friends,\n\nThe live stream is tonight.",
+                                   layout: "plain",
+                         })!,
+                       );
+                 render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
+                 expect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("Season update");
+                 expect((screen.getByTestId("outbound-write-body") as HTMLTextAreaElement).value).toContain("live stream is tonight");
+                 expect(screen.getByTestId("outbound-write-body-layout").textContent).toMatch(/Plain letter/i);
+                 expect(sessionStorage.getItem(OUTBOUND_WRITE_FILL_KEY)).toBeNull();
+           });
+
+           it("fills Write fields from a live assistant compose event", () => {
+                 render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
+                 act(() => {
+                         window.dispatchEvent(new CustomEvent(OUTBOUND_WRITE_FILL_EVENT, {
+                                   detail: {
+                                               subject: "From the assistant",
+                                               body: "A short letter body.",
+                                               layout: "announcement",
+                                   },
+                         }));
+                 });
+                 expect((screen.getByTestId("outbound-write-subject") as HTMLInputElement).value).toBe("From the assistant");
+                 expect((screen.getByTestId("outbound-write-body") as HTMLTextAreaElement).value).toBe("A short letter body.");
+           });
 
   it("mounts the Broadcast composer on Social, including Draft with Harvest", () => {
     render(<AdminOutboundHub surface="social" onSurfaceChange={vi.fn()} />);
@@ -104,4 +156,14 @@ describe("AdminOutboundHub", () => {
     await userEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(onSurfaceChange).toHaveBeenCalledWith("history");
   });
+           it("lists scheduled letters on Sent with cancel and reschedule", async () => {
+                 render(<AdminOutboundHub surface="sent" onSurfaceChange={vi.fn()} />);
+                 expect(screen.getByText("September letter")).toBeDefined();
+                 expect(screen.getByText("Already out")).toBeDefined();
+                 expect(screen.getByRole("button", { name: "Cancel send" })).toBeDefined();
+                 expect(screen.getByRole("button", { name: "Reschedule" })).toBeDefined();
+                 await userEvent.click(screen.getByRole("button", { name: /Scheduled/ }));
+                 expect(screen.getByText("September letter")).toBeDefined();
+                 expect(screen.queryByText("Already out")).toBeNull();
+           });
 });

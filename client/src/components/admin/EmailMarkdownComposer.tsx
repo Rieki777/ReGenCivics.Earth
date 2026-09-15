@@ -156,6 +156,7 @@ export function EmailMarkdownComposer({
           <Label htmlFor={subjectId} className="text-[#1a472a]">Subject</Label>
           <Input
             id={subjectId}
+            data-testid={subjectId}
             value={subject}
             onChange={(e) => onSubjectChange(e.target.value)}
             className={EMAIL_FIELD_CLASS}
@@ -167,7 +168,7 @@ export function EmailMarkdownComposer({
         <div className="space-y-1">
           <Label htmlFor={`${bodyId}-layout`} className="text-[#1a472a]">Letter layout</Label>
           <Select value={layout} onValueChange={(v) => onLayoutChange(v as LetterLayout)}>
-            <SelectTrigger id={`${bodyId}-layout`} className={EMAIL_FIELD_CLASS}>
+            <SelectTrigger id={`${bodyId}-layout`} data-testid={`${bodyId}-layout`} className={EMAIL_FIELD_CLASS}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -246,6 +247,7 @@ export function EmailMarkdownComposer({
             <Textarea
               ref={textareaRef}
               id={bodyId}
+              data-testid={bodyId}
               value={body}
               onChange={(e) => onBodyChange(e.target.value)}
               className={`${EMAIL_FIELD_CLASS} ${minHeightClass} text-sm font-mono`}

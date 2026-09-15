@@ -24,6 +24,7 @@ import { HarvestNoteComposer } from "./HarvestNoteComposer";
 import { DictationButton } from "@/components/admin/dictation";
 import { isAdminRole } from "@shared/adminRole";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
+import { isOutboundWriteComposeAction, isOutboundWriteSurface } from "@shared/outboundWriteFill";
 
 export interface AdminAIContext {
   activeTab?: string;
@@ -39,9 +40,11 @@ export interface AdminAIAction {
   type: "navigate" | "compose" | "search" | "focus" | "execute" | "execute-confirm" | "undo";
   label: string;
   tab?: string;
+  surface?: string;
   to?: string;
   subject?: string;
   body?: string;
+  layout?: string;
   query?: string;
   contactEmail?: string;
   /** For execute/undo: the registry action id + its input. */
@@ -94,8 +97,16 @@ const BROADCAST_STARTERS = [
   "Make a LinkedIn version of this",
 ];
 
+const WRITE_STARTERS = [
+  "Draft a letter into Write about this week's Harvest.",
+  "Fill the Write composer with a short announcement.",
+  "Add a CTA to the live stream in the letter.",
+];
+
 function startersFor(tab?: string, surface?: string): string[] {
-  return isBroadcastComposeSurface(tab, surface) ? BROADCAST_STARTERS : STARTERS;
+  if (isBroadcastComposeSurface(tab, surface)) return BROADCAST_STARTERS;
+  if (isOutboundWriteSurface(tab, surface)) return WRITE_STARTERS;
+  return STARTERS;
 }
 
 function viewingLabel(tab?: string, surface?: string): string | undefined {
@@ -198,6 +209,8 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
       });
       const { clean, actions } = parseActions(response.content);
       setMessages(prev => [...prev, { role: "assistant", content: clean, actions }]);
+      const writeFill = actions.find((a) => isOutboundWriteComposeAction(a));
+      if (writeFill) onAction?.(writeFill);
     } catch {
       setMessages(prev => [...prev, {
         role: "assistant",
@@ -351,7 +364,9 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                     <div className="bg-[#f0ebe3] rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-[#1a472a] max-w-[280px]">
                       {isBroadcastComposeSurface(context?.activeTab, context?.outboundSurface)
                         ? "You're on Social. I can draft social copy from The Harvest in Rye's voice. Ask for a post, or tap Draft with Harvest on the compose form."
-                        : "Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?"}
+                        : isOutboundWriteSurface(context?.activeTab, context?.outboundSurface)
+                          ? "You're on Write. I can put a letter in the composer. Send stays on Preview send, then Confirm, or Apply to draft on Write with me."
+                          : "Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?"}
                     </div>
                   </div>
                   <div className="pl-9 flex flex-wrap gap-1.5">
