@@ -10,7 +10,7 @@ import {
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({},
+    useUtils: () => ({
       email: { getCustomTemplates: { invalidate: vi.fn() } },
       outbound: { getHistoryDetail: { fetch: vi.fn() } },
     }),
