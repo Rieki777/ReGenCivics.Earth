@@ -12,7 +12,7 @@ vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({
       email: { getCustomTemplates: { invalidate: vi.fn() } },
-      outbound: { getHistoryDetail: { fetch: vi.fn() } },
+      outbound: { listIssues: { useQuery: () => ({ data: [{ id: 1, subject: "September letter", status: "scheduled", scheduledFor: "2026-09-20T18:00:00.000Z", sentAt: null, sentCount: 0, recipientCount: 3, failedCount: 0 }, { id: 2, subject: "Already out", status: "sent", scheduledFor: null, sentAt: "2026-08-01T18:00:00.000Z", sentCount: 3, recipientCount: 3, failedCount: 0 }], isLoading: false, refetch: vi.fn() }) }, getHistoryDetail: { fetch: vi.fn() } },
     }),
     newsletter: {
       list: {
@@ -49,7 +49,7 @@ vi.mock("@/lib/trpc", () => ({
               reschedule: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
         
       draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
-      listIssues: { useQuery: () => ({ data: [], isLoading: false }) },
+      outbound: { listIssues: { useQuery: () => ({ data: [{ id: 1, subject: "September letter", status: "scheduled", scheduledFor: "2026-09-20T18:00:00.000Z", sentAt: null, sentCount: 0, recipientCount: 3, failedCount: 0 }, { id: 2, subject: "Already out", status: "sent", scheduledFor: null, sentAt: "2026-08-01T18:00:00.000Z", sentCount: 3, recipientCount: 3, failedCount: 0 }], isLoading: false, refetch: vi.fn() }) }, getHistoryDetail: { fetch: vi.fn() } },: { useQuery: () => ({ data: [], isLoading: false }) },
       listHistory: { useQuery: () => ({ data: [], isLoading: false }) },
       getHistoryDetail: { useQuery: () => ({ data: undefined, isLoading: false }) },
     },
