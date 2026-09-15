@@ -87,7 +87,9 @@ vi.mock("@/lib/trpc", () => ({
                                 draftBroadcast: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                       },
               },
-      }));
+      },
+}));,
+
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
