@@ -41,6 +41,10 @@ describe("buildAutoReminderHtml", () => {
     expect(html).toContain("Starting in 33 minutes");
     expect(html).toContain("Saturday, September 26, 2026");
     expect(html).toContain("11:00 AM PDT");
+    expect(html).toContain("Your local time");
+    expect(html).toContain("timeanddate.com/worldclock/fixedtime.html");
+    expect(html).toContain("iso=20260926T1800");
+    expect(html).toContain("p1=1440");
     expect(html).toContain(JOIN_URL);
     expect(html).toContain("Join the call");
     expect(html).toContain("Manage email preferences");
