@@ -2,9 +2,9 @@
  * Broadcast compose channels. Shared so the admin composer, char counters,
  * and Harvest-aware drafting agree on ids, labels, and length caps.
  *
- * Posting still sends one body to every selected Buffer profile; the caps
- * here are for drafting and the compose counter, not a claim that Buffer
- * will enforce them.
+ * Posting sends each selected Buffer profile its own body (per-channel
+ * editors or master fallback). Caps here guide drafting and counters;
+ * Buffer may still enforce its own limits.
  */
 export const BROADCAST_CHANNEL_IDS = [
   "twitter",
@@ -56,4 +56,118 @@ export const BROADCAST_FILL_EVENT = "admin-broadcast-fill";
 export function isBroadcastComposeSurface(tab?: string, surface?: string): boolean {
   if (tab === "broadcast") return true;
   return tab === "outbound" && surface === "social";
+}
+
+/**
+ * Deterministic clip so a long LinkedIn draft cannot overflow X.
+ * Prefers sentence boundaries, then word boundaries.
+ */
+export function clipToBroadcastLimit(text: string, maxChars: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  const cut = trimmed.slice(0, maxChars);
+  const lastStop = Math.max(
+    cut.lastIndexOf(". "),
+    cut.lastIndexOf("! "),
+    cut.lastIndexOf("? "),
+    cut.lastIndexOf("\n"),
+  );
+  if (lastStop >= Math.floor(maxChars * 0.5)) {
+    return cut.slice(0, lastStop + 1).trim();
+  }
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim();
+}
+
+/**
+ * Prefer an explicit per-channel body when non-empty; otherwise the master draft.
+ */
+export function resolveChannelBody(
+  masterText: string,
+  channelBodies: Record<string, string>,
+  channelId: string,
+): string {
+  const own = channelBodies[channelId];
+  if (typeof own === "string" && own.trim().length > 0) return own;
+  return masterText;
+}
+
+export type BufferProfileLike = {
+  id: string;
+  service: string;
+};
+
+export type BufferPostTarget = {
+  profileId: string;
+  channelId: string;
+  text: string;
+};
+
+const DEFAULT_BUFFER_CHANNEL = (id: string) => id !== "farcaster";
+
+/**
+ * Map selected compose channels → Buffer profiles with the body that should
+ * post to each. Missing profiles are listed separately (caller surfaces errors).
+ */
+export function buildBufferPostTargets(opts: {
+  selectedChannelIds: string[];
+  masterText: string;
+  channelBodies: Record<string, string>;
+  profiles: BufferProfileLike[];
+  isBufferChannel?: (channelId: string) => boolean;
+}): { targets: BufferPostTarget[]; missingChannels: string[] } {
+  const isBuffer = opts.isBufferChannel ?? DEFAULT_BUFFER_CHANNEL;
+  const targets: BufferPostTarget[] = [];
+  const missingChannels: string[] = [];
+
+  for (const channelId of opts.selectedChannelIds) {
+    if (!isBuffer(channelId)) continue;
+    const profile = opts.profiles.find(
+      (p) => p.service.toLowerCase() === channelId.toLowerCase(),
+    );
+    if (!profile) {
+      missingChannels.push(channelId);
+      continue;
+    }
+    const text = resolveChannelBody(
+      opts.masterText,
+      opts.channelBodies,
+      channelId,
+    ).trim();
+    targets.push({ profileId: profile.id, channelId, text });
+  }
+
+  return { targets, missingChannels };
+}
+
+/**
+ * Copy or length-adapt the master draft into each selected channel body.
+ * `adapt` clips to that channel's catalog cap; `copy` pastes the master as-is.
+ */
+export function fillChannelBodiesFromMaster(
+  masterText: string,
+  channelIds: string[],
+  mode: "copy" | "adapt",
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  const master = masterText.trim();
+  for (const id of channelIds) {
+    const max = broadcastChannelById(id)?.maxChars ?? 280;
+    out[id] = mode === "adapt" ? clipToBroadcastLimit(master, max) : master;
+  }
+  return out;
+}
+
+/** True when every selected channel has a non-empty body within its cap. */
+export function broadcastBodiesReady(
+  selectedChannelIds: string[],
+  masterText: string,
+  channelBodies: Record<string, string>,
+): boolean {
+  if (selectedChannelIds.length === 0) return false;
+  return selectedChannelIds.every((id) => {
+    const body = resolveChannelBody(masterText, channelBodies, id).trim();
+    const max = broadcastChannelById(id)?.maxChars ?? 280;
+    return body.length > 0 && body.length <= max;
+  });
 }

@@ -4,6 +4,8 @@ import { AdminBroadcastPanel } from "./AdminBroadcastPanel";
 import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 
 const draftMutateAsync = vi.fn();
+const postMutateAsync = vi.fn();
+const farcasterMutateAsync = vi.fn();
 const refetchProfiles = vi.fn();
 
 let profilesState: {
@@ -25,8 +27,8 @@ vi.mock("@/lib/trpc", () => ({
         getBufferProfiles: {
           useQuery: () => ({ ...profilesState, refetch: refetchProfiles }),
         },
-        postToBuffer: { useMutation: () => ({ mutateAsync: vi.fn() }) },
-        farcasterIntent: { useMutation: () => ({ mutateAsync: vi.fn() }) },
+        postToBuffer: { useMutation: () => ({ mutateAsync: postMutateAsync }) },
+        farcasterIntent: { useMutation: () => ({ mutateAsync: farcasterMutateAsync }) },
       },
     },
     harvest: {
@@ -39,16 +41,41 @@ vi.mock("@/lib/trpc", () => ({
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 
+function selectChannel(label: string) {
+  const box = screen.getByText(label).closest("label");
+  expect(box).toBeTruthy();
+  const checkbox = box!.querySelector('[role="checkbox"], input, button');
+  // Checkbox from shadcn is a button with role=checkbox
+  const control = box!.querySelector('[role="checkbox"]') as HTMLElement;
+  fireEvent.click(control);
+}
+
 describe("AdminBroadcastPanel", () => {
   beforeEach(() => {
     draftMutateAsync.mockReset();
+    postMutateAsync.mockReset();
+    farcasterMutateAsync.mockReset();
     refetchProfiles.mockReset();
-    profilesState = { data: [], isLoading: false, error: null, isFetching: false };
+    profilesState = {
+      data: [
+        { id: "buf-x", service: "twitter", service_username: "regen" },
+        { id: "buf-li", service: "linkedin", service_username: "regen-li" },
+      ],
+      isLoading: false,
+      error: null,
+      isFetching: false,
+    };
     localStorage.clear();
+    // jsdom open stub
+    vi.stubGlobal("open", vi.fn());
   });
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it("shows Draft with Harvest and Connect on disconnected Buffer channels", () => {
+    profilesState = { data: [], isLoading: false, error: null, isFetching: false };
     render(<AdminBroadcastPanel />);
     expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
     expect(screen.getByTestId("connect-twitter")).toBeDefined();
@@ -112,5 +139,102 @@ describe("AdminBroadcastPanel", () => {
     render(<AdminBroadcastPanel />);
     expect(screen.getByTestId("dictation-button")).toBeTruthy();
     expect(screen.getByLabelText("Dictate message")).toBeTruthy();
+  });
+
+  it("shows per-channel editors when multiple channels are selected", () => {
+    render(<AdminBroadcastPanel />);
+    expect(screen.queryByTestId("per-channel-editors")).toBeNull();
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+    expect(screen.getByTestId("per-channel-editors")).toBeDefined();
+    expect(screen.getByTestId("copy-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("adapt-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("channel-tab-twitter")).toBeDefined();
+    expect(screen.getByTestId("channel-tab-linkedin")).toBeDefined();
+  });
+
+  it("posts a distinct body to each Buffer profile", async () => {
+    postMutateAsync.mockResolvedValue({
+      results: [
+        { profileId: "buf-x", success: true, updateId: "u1" },
+        { profileId: "buf-li", success: true, updateId: "u2" },
+      ],
+    });
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+
+    fireEvent.change(screen.getByTestId("broadcast-message"), {
+      target: { value: "Master draft for the village." },
+    });
+    fireEvent.change(screen.getByTestId("channel-body-twitter"), {
+      target: { value: "Short X body." },
+    });
+    // LinkedIn tab may need activation for content; TabsContent still mounts with value
+    fireEvent.click(screen.getByTestId("channel-tab-linkedin"));
+    await waitFor(() => expect(screen.getByTestId("channel-body-linkedin")).toBeDefined());
+    fireEvent.change(screen.getByTestId("channel-body-linkedin"), {
+      target: { value: "Longer LinkedIn body for builders." },
+    });
+
+    fireEvent.click(screen.getByTestId("broadcast-post-now"));
+    await waitFor(() => expect(postMutateAsync).toHaveBeenCalled());
+
+    expect(postMutateAsync).toHaveBeenCalledWith({
+      posts: [
+        { profileId: "buf-x", text: "Short X body." },
+        { profileId: "buf-li", text: "Longer LinkedIn body for builders." },
+      ],
+      link: undefined,
+      scheduledAt: undefined,
+    });
+  });
+
+  it("falls back to master text for channels without a custom body", async () => {
+    postMutateAsync.mockResolvedValue({
+      results: [
+        { profileId: "buf-x", success: true },
+        { profileId: "buf-li", success: true },
+      ],
+    });
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+    fireEvent.change(screen.getByTestId("broadcast-message"), {
+      target: { value: "Shared master body." },
+    });
+    fireEvent.click(screen.getByTestId("broadcast-post-now"));
+    await waitFor(() => expect(postMutateAsync).toHaveBeenCalled());
+    expect(postMutateAsync).toHaveBeenCalledWith({
+      posts: [
+        { profileId: "buf-x", text: "Shared master body." },
+        { profileId: "buf-li", text: "Shared master body." },
+      ],
+      link: undefined,
+      scheduledAt: undefined,
+    });
+  });
+
+  it("seeds per-channel bodies from multi-channel Harvest drafts", async () => {
+    draftMutateAsync.mockResolvedValue({
+      drafts: [
+        { channel: "twitter", label: "X / Twitter", text: "X take.", charCount: 7, maxChars: 280 },
+        { channel: "linkedin", label: "LinkedIn", text: "LinkedIn take.", charCount: 14, maxChars: 3000 },
+      ],
+      sources: [],
+      grounded: false,
+      voice: { version: "1.0.0", revision: 1 },
+      errors: [],
+    });
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+    fireEvent.click(screen.getByTestId("draft-with-harvest"));
+    await waitFor(() => expect(draftMutateAsync).toHaveBeenCalled());
+    expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value).toBe("X take.");
+    fireEvent.click(screen.getByTestId("channel-tab-linkedin"));
+    await waitFor(() => {
+      expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe("LinkedIn take.");
+    });
   });
 });
