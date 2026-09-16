@@ -12,6 +12,10 @@ export function outboundSocialHref(): string {
   return adminTabHref("outbound", { surface: "social" });
 }
 
+export function outboundWriteHref(): string {
+  return adminTabHref("outbound", { surface: "write" });
+}
+
 export function queueBroadcastFill(text: string): void {
   try {
     sessionStorage.setItem(BROADCAST_FILL_STORAGE_KEY, text);

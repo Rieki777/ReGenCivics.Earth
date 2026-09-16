@@ -6,8 +6,9 @@
  * real): every surface has its own Approve, publish only unlocks after
  * approval, the review screen shows everything before anything fires, the
  * article goes out as a hidden preview first, email sends from this screen
- * via the same hardened preview/confirm path as Drafts, and social posts
- * hand off to Outbound Social (the human-in-the-loop desk).
+ * via the same hardened preview/confirm path as Drafts, social posts
+ * hand off to Outbound Social, and email drafts can Continue as newsletter
+ * into Outbound Write (same fill bus as Admin AI).
  */
 import { useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -15,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmailSendPanel } from "@/components/EmailSendPanel";
-import { outboundSocialHref, queueBroadcastFill } from "@/lib/broadcastFill";
+import { outboundSocialHref, outboundWriteHref, queueBroadcastFill } from "@/lib/broadcastFill";
+import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
 import { DictationButton } from "@/components/admin/dictation";
 import { Loader2, PenLine, Sparkles, Check, Globe, ImagePlus, ExternalLink, Undo2, Copy } from "lucide-react";
 
@@ -29,6 +31,22 @@ const SURFACE_LABEL: Record<string, string> = {
 };
 
 const SOCIAL_SURFACES = new Set(["linkedin", "facebook", "instagram", "threads_x"]);
+
+
+function newsletterFillFromItemBody(body: string): { subject: string; body: string } {
+  const trimmed = body.trim();
+  const parts = trimmed.split(/\n\s*\n/);
+  if (parts.length >= 2) {
+    const subject = parts[0].replace(/^#+\s*/, "").trim();
+    const rest = parts.slice(1).join("\n\n").trim();
+    if (subject && rest) return { subject: subject.slice(0, 200), body: rest };
+  }
+  const firstLine = trimmed.split("\n")[0]?.trim() ?? "";
+  return {
+    subject: (firstLine.replace(/^#+\s*/, "").slice(0, 200) || "Letter from Harvest").trim(),
+    body: trimmed,
+  };
+}
 
 export function ComposeBox({ onComposed }: { onComposed: (publicationId: number) => void }) {
   const [text, setText] = useState("");
@@ -310,11 +328,24 @@ function TargetRow({ publicationId, target, item, onChanged }: {
           />
         </div>
       )}
+      {target.surface === "email" && target.status !== "published" && item?.body && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" asChild>
+            <a
+              href={outboundWriteHref()}
+              onClick={() => queueOutboundWriteFill(newsletterFillFromItemBody(item.body ?? ""))}
+            >
+              <ExternalLink className="w-3 h-3 mr-1" /> Continue as newsletter
+            </a>
+          </Button>
+          <span className="text-[11px] text-[#2d5a3d]">Opens Outbound Write with this draft filled. Send stays on Preview there.</span>
+        </div>
+      )}
       {target.surface === "email" && target.status !== "published" && item && item.status === "edited" && (
         <EmailSendPanel itemId={item.id} onSent={onChanged} />
       )}
       {target.surface === "email" && target.status !== "published" && item && item.status !== "edited" && (
-        <p className="text-[11px] text-[#2d5a3d]">Email goes out through the hardened send on this draft. Save an edit first, even a small one, then preview and confirm here.</p>
+        <p className="text-[11px] text-[#2d5a3d]">Email goes out through the hardened send on this draft. Save an edit first, even a small one, then preview and confirm here. Or Continue as newsletter to finish in Outbound Write.</p>
       )}
       {target.surface === "site" && target.status === "approved" && (
         <p className="text-[11px] text-[#2d5a3d]">First publish creates a hidden preview at a private URL; publishing again makes it public (voice grader must pass).</p>
@@ -352,7 +383,7 @@ export function PublicationReview({ publicationId }: { publicationId: number }) 
           </Button>
         )}
       </div>
-      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit the text here. After you save an email draft, preview and confirm send on that row. Social posts open in Outbound Social.</p>
+      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit the text here. After you save an email draft, preview and confirm send on that row, or Continue as newsletter into Outbound Write. Social posts open in Outbound Social.</p>
 
       <div className="space-y-2">
         {targets.map((target) => (
