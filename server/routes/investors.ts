@@ -97,6 +97,48 @@ export const investorInquiriesRouter = router({
         });
       }
 
+      // Dual-list: when opted in, also join the ReGen Civics newsletter (source=investor_form).
+      // Same pending + confirmation flow as newsletter.subscribe (GDPR double opt-in).
+      if (input.newsletterOptIn) {
+        try {
+          await db.createNewsletterSubscriber({
+            email: input.email,
+            name: input.fullName || null,
+            source: "investor_form",
+            isActive: 0,
+          });
+          try {
+            const { ENV } = await import("../_core/env");
+            const { SignJWT } = await import("jose");
+            const secret = new TextEncoder().encode(ENV.cookieSecret);
+            const token = await new SignJWT({ email: input.email, purpose: "newsletter-confirm" })
+              .setProtectedHeader({ alg: "HS256" })
+              .setExpirationTime("24h")
+              .sign(secret);
+            const confirmUrl = `${ENV.appUrl}/newsletter/confirm?token=${encodeURIComponent(token)}`;
+            const { sendEmail } = await import("../_core/email");
+            await sendEmail({
+              to: input.email,
+              subject: "Confirm your ReGen Civics newsletter subscription",
+              html: `
+            <h2>Welcome to the ReGen Civics newsletter!</h2>
+            <p>You opted in while submitting an investor inquiry. Click below to confirm and stay informed about the ReGenerative Renaissance.</p>
+            <p style="margin: 24px 0;">
+              <a href="${confirmUrl}" style="background:#1a472a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+                Confirm Subscription
+              </a>
+            </p>
+            <p style="color:#888;font-size:13px;">This link expires in 24 hours. If you didn't sign up, you can safely ignore this email.</p>
+          `,
+            });
+          } catch (confirmErr) {
+            console.warn("Investor newsletter confirm email failed (subscriber row kept):", confirmErr);
+          }
+        } catch (nlErr) {
+          console.warn("Failed to add investor to newsletter list:", nlErr);
+        }
+      }
+
       // Auto-send investor welcome email with deck + /opportunity link
       try {
         const { sendEmail, emailTemplates: emailTpl } = await import("../_core/email");

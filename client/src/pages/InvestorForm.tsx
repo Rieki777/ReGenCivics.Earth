@@ -257,11 +257,6 @@ export default function InvestorForm() {
     }
   }, [isSubmitted, redirectCountdown, setLocation, returnTo]);
 
-  const newsletterMutation = trpc.newsletter.subscribe.useMutation({
-    onSuccess: () => markNewsletterSubscribed(),
-    onError: (error) => console.error("Newsletter subscription failed:", error.message),
-  });
-  
   const submitMutation = trpc.investorInquiries.submit.useMutation({
     onSuccess: () => {
       analytics.investorFormSubmitted();
@@ -276,6 +271,10 @@ export default function InvestorForm() {
         utils.investorInquiries.hasSubmitted.invalidate();
       }
       try { localStorage.removeItem(INVESTOR_LS_KEY); } catch { /* ignore */ }
+      // Dual-list: server joined newsletter when opted in; hide local newsletter prompts.
+      if (formData.newsletterOptIn) {
+        markNewsletterSubscribed();
+      }
       setIsSubmitted(true);
     },
     onError: (err) => {
@@ -340,15 +339,6 @@ export default function InvestorForm() {
       preferredContact: formData.preferredContact as any,
       newsletterOptIn: formData.newsletterOptIn,
     });
-    
-    // Auto-subscribe to newsletter if opted in
-    if (formData.newsletterOptIn && formData.email) {
-      newsletterMutation.mutate({
-        email: formData.email,
-        name: formData.fullName || undefined,
-        source: "investor_form" as const,
-      });
-    }
   };
 
   // Returning verified investor: offer the destinations directly instead of
@@ -1115,7 +1105,7 @@ export default function InvestorForm() {
                         onCheckedChange={(checked) => updateField("newsletterOptIn", checked as boolean)}
                       />
                       <Label htmlFor="newsletterOptIn" className="text-[#1a472a] cursor-pointer">
-                        Keep me updated with ReGen Civics news and investment opportunities
+                        Also join the ReGen Civics newsletter
                       </Label>
                     </div>
                     
