@@ -83,8 +83,8 @@ export function AdminInvestorsTab({
             <CardDescription className="mt-1">
               {investors?.length || 0} total ·{" "}
               {investorTriageCounts?.pendingReview ??
-                investors?.filter((i: any) => i.status === "new" || i.status === "pending").length ||
-                0}{" "}
+(                investors?.filter((i: any) => i.status === "new" || i.status === "pending").length ||
+                0)}{" "}
               pending review
               {investorTriageCounts && investorTriageCounts.overdue > 0
                 ? ` · ${investorTriageCounts.overdue} overdue`
