@@ -26,7 +26,10 @@ import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoRemind
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
+  isEventPastForAdmin,
   partitionEventsByTemporal,
+  resolveEventStart,
+  toMs,
 } from "@/lib/eventTemporal";
 
 export function AdminEventsTab() {
@@ -64,6 +67,8 @@ export function AdminEventsTab() {
   const [attendanceInput, setAttendanceInput] = useState('');
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
+  const [eventsFilter, setEventsFilter] = useState<"upcoming" | "past" | "all">("upcoming");
+  const [pastExpanded, setPastExpanded] = useState(false);
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
   const [autoReminderOpen, setAutoReminderOpen] = useState<number | null>(null);
   const [customSubject, setCustomSubject] = useState('');
@@ -142,7 +147,7 @@ export function AdminEventsTab() {
   const statusColors: Record<string, string> = {
     upcoming: 'bg-yellow-500/20 text-yellow-300',
     live: 'bg-red-500/20 text-red-300 animate-pulse',
-    completed: 'bg-gray-500/20 text-gray-300',
+    completed: 'bg-emerald-500/25 text-[#7dd87d] border border-[#7dd87d]/40',
     cancelled: 'bg-[#3d4a3d] text-[#f8f5f0]',
   };
 
@@ -276,15 +281,23 @@ export function AdminEventsTab() {
       {(() => {
         const renderEventCard = (ev: (typeof allEvents)[number]) => {
           const signupCount = Number(countMap[ev.id] ?? 0);
-          const startDate = ev.startTime ? new Date(ev.startTime) : null;
-          const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '-';
+          // Prefer adminList.startTime; resolveEventStart also accepts snake_case / number.
+          // Display via toMs so MySQL/epoch shapes match temporal grouping.
+          const startRaw = resolveEventStart(ev as any);
+          const startMs = toMs(startRaw as any);
+          const startDate = startMs != null ? new Date(startMs) : null;
+          const dateStr = startDate
+            ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            : '-';
           // timeZoneName, not ev.timezone. Formatting in the viewer's zone and
           // labelling it with a stored string showed "10:00 AM EDT" for a
           // 17:00Z event to a reader in California. Same bug as EventDetail.
-          const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : '';
-          const temporalPhase = deriveEventTemporalPhase(ev);
-          const isPast = temporalPhase === "past";
-          const displayStatus = adminEventStatusLabel(ev);
+          const timeStr = startDate
+            ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })
+            : '';
+          const temporalPhase = deriveEventTemporalPhase(ev as any);
+          const isPast = isEventPastForAdmin(ev as any);
+          const displayStatus = adminEventStatusLabel(ev as any);
           return (
             <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`} data-testid={isPast ? "admin-event-past" : "admin-event-upcoming"}>
               <CardContent className="p-4">
@@ -355,7 +368,7 @@ export function AdminEventsTab() {
                       </span>
                     )}
                     {/* #17. Send Follow-up for completed events */}
-                    {ev.status === 'completed' && (
+                    {(isPast || ev.status === 'completed') && (
                       followupSuccess === ev.id
                         ? <Button size="sm" variant="ghost" disabled className="text-green-400 h-7 px-2 text-xs">
                             <CheckCheck size={11} className="mr-1" /> Follow-up Sent!
@@ -538,7 +551,7 @@ export function AdminEventsTab() {
                     {preflightEventId === ev.id && (() => {
                       const signupCount = Number(countMap[ev.id] ?? 0);
                       const hasJoinLink = !!(ev.riversideRoomUrl || ev.zoomUrl);
-                      const isUpcoming = new Date(ev.startTime) > new Date();
+                      const isUpcoming = !isPast;
                       const alreadySent = !!(ev as any).reminderSent;
 
                       return (
@@ -762,24 +775,89 @@ export function AdminEventsTab() {
           );
         };
 
+        const showUpcoming = eventsFilter === "upcoming" || eventsFilter === "all";
+        const showPastSection = eventsFilter === "past" || eventsFilter === "all"
+          || (eventsFilter === "upcoming" && pastEvents.length > 0);
+        const pastCollapsed = eventsFilter === "upcoming" && !pastExpanded;
+
         return (
           <div className="space-y-6">
-            <div className="space-y-2" data-testid="admin-events-upcoming">
-              <h3 className="text-sm font-semibold text-[#1a472a]">Upcoming</h3>
-              {upcomingEvents.length === 0 ? (
-                <p className="text-sm text-[#1a472a]/70">No upcoming events.</p>
-              ) : (
-                upcomingEvents.map(renderEventCard)
-              )}
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="tablist"
+              aria-label="Filter events by time"
+              data-testid="admin-events-filter"
+            >
+              {([
+                ["upcoming", `Upcoming (${upcomingEvents.length})`],
+                ["past", `Past (${pastEvents.length})`],
+                ["all", `All (${allEvents.length})`],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={eventsFilter === value}
+                  data-testid={`admin-events-filter-${value}`}
+                  onClick={() => {
+                    setEventsFilter(value);
+                    if (value !== "upcoming") setPastExpanded(true);
+                  }}
+                  className={`min-h-11 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    eventsFilter === value
+                      ? "bg-[#1a472a] text-[#7dd87d]"
+                      : "bg-[#1a472a]/10 text-[#1a472a] hover:bg-[#1a472a]/15"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-            {pastEvents.length > 0 && (
-              <div className="space-y-2" data-testid="admin-events-past">
-                <h3 className="text-sm font-semibold text-[#1a472a]/80">Past</h3>
-                <p className="text-xs text-[#1a472a]/60">
-                  Derived from start/end times (not only cron status). Reminder send and auto-remind controls are hidden for past events.
-                </p>
-                {pastEvents.map(renderEventCard)}
+
+            {showUpcoming && (
+              <div className="space-y-3" data-testid="admin-events-upcoming">
+                <div className="rounded-lg bg-[#0a1f14] border border-[#7dd87d]/35 px-3 py-2">
+                  <h3 className="text-base md:text-lg font-bold text-white tracking-wide">
+                    Upcoming <span className="text-[#7dd87d]">({upcomingEvents.length})</span>
+                  </h3>
+                  <p className="text-xs text-white/70 mt-0.5">Live and not-yet-started sessions. Reminder actions available here.</p>
+                </div>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-sm text-[#1a472a]/70">No upcoming events.</p>
+                ) : (
+                  upcomingEvents.map(renderEventCard)
+                )}
               </div>
+            )}
+
+            {showPastSection && pastEvents.length > 0 && (
+              <div className="space-y-3" data-testid="admin-events-past">
+                <div className="rounded-lg bg-[#0a1f14] border border-white/15 px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-base md:text-lg font-bold text-white tracking-wide">
+                      Past <span className="text-white/70">({pastEvents.length})</span>
+                    </h3>
+                    <p className="text-xs text-white/60 mt-0.5">
+                      Derived from start/end times (not only cron status). Send Reminders is hidden for past events.
+                    </p>
+                  </div>
+                  {eventsFilter === "upcoming" && (
+                    <button
+                      type="button"
+                      data-testid="admin-events-past-toggle"
+                      className="min-h-11 rounded-lg border border-white/25 px-3 text-sm font-medium text-[#7dd87d] hover:bg-white/5"
+                      onClick={() => setPastExpanded((v) => !v)}
+                    >
+                      {pastCollapsed ? `Show Past (${pastEvents.length})` : "Hide Past"}
+                    </button>
+                  )}
+                </div>
+                {!pastCollapsed && pastEvents.map(renderEventCard)}
+              </div>
+            )}
+
+            {eventsFilter === "past" && pastEvents.length === 0 && (
+              <p className="text-sm text-[#1a472a]/70" data-testid="admin-events-past-empty">No past events.</p>
             )}
           </div>
         );
