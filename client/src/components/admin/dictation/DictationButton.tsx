@@ -8,8 +8,9 @@
  * the Write with me email partner, and EmailMarkdownComposer (Outbound Write
  * + Applications letter bodies). Prefer this button over a second mic stack.
  *
- * Blocked-mic and error bubbles portal to document.body so they are not
- * clipped by the admin sidebar / overflow stacking contexts.
+ * Blocked-mic help is a centered modal (viewport) so Close is never under the
+ * desktop sidebar hit area. Short error toasts still anchor near the mic but
+ * clamp into the main content column.
  */
 import {
   useEffect,
@@ -30,42 +31,17 @@ import {
   DICTATION_UNSUPPORTED_MESSAGE,
   useDictation,
 } from "./useDictation";
+import {
+  desktopSidebarInsetPx,
+  placePopover,
+  readAdminSidebarAside,
+  type PopoverPos,
+} from "./placePopover";
 
 const HOLD_MS = 300;
-const POPOVER_Z = 9999;
-const POPOVER_MAX_W = 288; // max-w-[18rem]
-
-type PopoverPos = {
-  top: number;
-  left: number;
-  width: number;
-  showAbove: boolean;
-  alignEnd: boolean;
-};
-
-function placePopover(
-  rect: DOMRect,
-  alignEnd: boolean,
-  estimatedHeight: number,
-): PopoverPos {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const pad = 8;
-  const gap = 8;
-  const width = Math.min(POPOVER_MAX_W, vw - pad * 2);
-  const spaceAbove = rect.top;
-  const spaceBelow = vh - rect.bottom;
-  const showAbove = spaceAbove > estimatedHeight || spaceAbove > spaceBelow;
-  let top = showAbove ? rect.top - gap : rect.bottom + gap;
-  if (!showAbove) {
-    top = Math.min(top, vh - estimatedHeight - pad);
-  } else {
-    top = Math.max(top, estimatedHeight + pad);
-  }
-  const preferredLeft = alignEnd ? rect.right - width : rect.left;
-  const left = Math.min(Math.max(pad, preferredLeft), vw - width - pad);
-  return { top, left, width, showAbove, alignEnd };
-}
+/** Above Sheet / Dialog overlays (radix ~50) and prior popover 9999. */
+const HELP_Z = 100000;
+const ERROR_Z = 100000;
 
 export type DictationButtonProps = {
   value: string;
@@ -93,7 +69,6 @@ export function DictationButton({
   const wasListening = useRef(false);
   const holdEngaged = useRef(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [helpPos, setHelpPos] = useState<PopoverPos | null>(null);
   const [errorPos, setErrorPos] = useState<PopoverPos | null>(null);
 
   useEffect(() => () => {
@@ -138,25 +113,6 @@ export function DictationButton({
   const alignEnd = errorAlign === "end";
 
   useLayoutEffect(() => {
-    if (!showHelp) {
-      setHelpPos(null);
-      return;
-    }
-    const place = () => {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setHelpPos(placePopover(rect, alignEnd, 220));
-    };
-    place();
-    window.addEventListener("scroll", place, true);
-    window.addEventListener("resize", place);
-    return () => {
-      window.removeEventListener("scroll", place, true);
-      window.removeEventListener("resize", place);
-    };
-  }, [showHelp, alignEnd]);
-
-  useLayoutEffect(() => {
     if (!showError) {
       setErrorPos(null);
       return;
@@ -164,7 +120,16 @@ export function DictationButton({
     const place = () => {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (!rect) return;
-      setErrorPos(placePopover(rect, alignEnd, 72));
+      const vw = window.innerWidth;
+      const sidebarInset = desktopSidebarInsetPx(vw, readAdminSidebarAside());
+      setErrorPos(
+        placePopover(rect, alignEnd, 72, {
+          vw,
+          vh: window.innerHeight,
+          sidebarInset,
+          maxWidth: 240,
+        }),
+      );
     };
     place();
     window.addEventListener("scroll", place, true);
@@ -197,29 +162,23 @@ export function DictationButton({
   const alignClass = errorAlign === "end" ? "right-0" : "left-0";
   const canPortal = typeof document !== "undefined";
 
-  const helpPopover = showHelp && helpPos && canPortal
+  const helpPopover = showHelp && canPortal
     ? createPortal(
         <>
           <div
-            className="fixed inset-0"
-            style={{ zIndex: POPOVER_Z - 1 }}
+            className="fixed inset-0 bg-black/45"
+            style={{ zIndex: HELP_Z - 1 }}
             onClick={dictation.dismissBlockedHelp}
             aria-hidden="true"
             data-testid="dictation-mic-help-backdrop"
           />
           <div
             role="dialog"
+            aria-modal="true"
             aria-labelledby="dictation-mic-help-title"
             data-testid="dictation-mic-help"
-            className="fixed w-max max-w-[18rem] rounded-xl border border-[#1a472a]/25 bg-white px-3 py-2 text-[11px] leading-snug text-[#1a472a] shadow-lg"
-            style={{
-              zIndex: POPOVER_Z,
-              top: helpPos.top,
-              left: helpPos.left,
-              width: helpPos.width,
-              maxWidth: "calc(100vw - 16px)",
-              transform: helpPos.showAbove ? "translateY(-100%)" : undefined,
-            }}
+            className="fixed left-1/2 top-1/2 w-[min(18rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#1a472a]/25 bg-white px-4 py-3 text-[12px] leading-snug text-[#1a472a] shadow-2xl"
+            style={{ zIndex: HELP_Z }}
             onClick={(e) => e.stopPropagation()}
           >
             <p id="dictation-mic-help-title" className="font-semibold text-[#1a472a]">
@@ -231,7 +190,7 @@ export function DictationButton({
                 <li key={step}>{step}</li>
               ))}
             </ol>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 className="h-7 rounded-lg bg-[#1a472a] px-2.5 text-[11px] font-medium text-[#7dd87d] hover:bg-[#2d5a3d] pointer-coarse:min-h-11"
@@ -260,9 +219,10 @@ export function DictationButton({
           data-testid="dictation-error"
           className="fixed w-max max-w-[240px] rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] leading-snug text-red-700 shadow-lg"
           style={{
-            zIndex: POPOVER_Z,
+            zIndex: ERROR_Z,
             top: errorPos.top,
             left: errorPos.left,
+            width: errorPos.width,
             maxWidth: "min(240px, calc(100vw - 16px))",
             transform: errorPos.showAbove ? "translateY(-100%)" : undefined,
           }}
