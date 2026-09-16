@@ -124,7 +124,7 @@ describe("AdminOutboundHub", () => {
                      expect(screen.queryByText(/composer will take full markdown/i)).toBeNull();
                      expect(screen.queryByText(/send button stays off/i)).toBeNull();
                      expect(screen.getByText("Write with me")).toBeDefined();
-                     expect(screen.getByTestId("dictation-button")).toBeDefined();
+                     expect(screen.getByLabelText("Dictate body")).toBeDefined();
                      expect(screen.getByLabelText("Dictate message")).toBeDefined();
            });
 
