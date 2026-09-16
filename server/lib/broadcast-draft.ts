@@ -25,8 +25,14 @@ import { getPackMeta } from "./worldview";
 import {
   BROADCAST_CHANNEL_IDS,
   broadcastChannelById,
+  clipToBroadcastLimit,
   type BroadcastChannelId,
 } from "../../shared/broadcastChannels";
+
+/** @deprecated Prefer clipToBroadcastLimit from shared; kept for existing imports/tests. */
+export function clipToLimit(text: string, maxChars: number): string {
+  return clipToBroadcastLimit(text, maxChars);
+}
 
 export const HARVEST_PREMISE =
   "The Harvest is Rye's creation studio at /admin-create. Captured ideas ripen against notes from the vault mirror, then become posts and articles. The pipeline tends the ideas. Rye decides what gets written.";
@@ -90,24 +96,6 @@ function isMissingTableError(err: unknown): boolean {
 function refsFrom(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((r): r is string => typeof r === "string");
-}
-
-/** Deterministic clip so a long LinkedIn draft cannot overflow X. */
-export function clipToLimit(text: string, maxChars: number): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= maxChars) return trimmed;
-  const cut = trimmed.slice(0, maxChars);
-  const lastStop = Math.max(
-    cut.lastIndexOf(". "),
-    cut.lastIndexOf("! "),
-    cut.lastIndexOf("? "),
-    cut.lastIndexOf("\n"),
-  );
-  if (lastStop >= Math.floor(maxChars * 0.5)) {
-    return cut.slice(0, lastStop + 1).trim();
-  }
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim();
 }
 
 export function broadcastDraftJobs(channelIds: string[]): ChannelSpec[] {
