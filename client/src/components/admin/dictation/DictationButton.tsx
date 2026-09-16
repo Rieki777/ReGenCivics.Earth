@@ -5,8 +5,8 @@
  * Inserts at the caret. Never attach this to a password or credential field.
  *
  * Wired today: Harvest Compose, the admin AI chatbot, Broadcast Message,
- * and the Write with me email partner. Outbound email body compose should
- * import this same button rather than growing its own mic.
+ * the Write with me email partner, and EmailMarkdownComposer (Outbound Write
+ * + Applications letter bodies). Prefer this button over a second mic stack.
  */
 import { useEffect, useRef, type PointerEvent, type RefObject } from "react";
 import { Mic, MicOff } from "lucide-react";
