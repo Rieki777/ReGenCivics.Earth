@@ -89,9 +89,30 @@ describe("rollupDeliveryStats", () => {
     expect(formatPercent(stats.openPercent)).toBe("n/a");
     expect(ratePercent(0, 0)).toBeNull();
   });
+  it("counts open/click engagement as delivered when status is still sent", () => {
+    const stats = rollupDeliveryStats(
+      [
+        { id: 1, status: "sent", openedAt: "2026-09-10T17:20:00.000Z", clickedAt: null },
+        { id: 2, status: "sent", openedAt: "2026-09-10T17:25:00.000Z", clickedAt: "2026-09-10T17:26:00.000Z" },
+        { id: 3, status: "sent", openedAt: null, clickedAt: null },
+      ],
+      { recipientTotal: 21 },
+    );
+    expect(stats).toMatchObject({
+      delivered: 2,
+      opened: 2,
+      clicked: 1,
+      total: 21,
+      openPercent: 100,
+      clickPercent: 50,
+    });
+  });
+
 });
 
 describe("attachHistoryStats", () => {
+
+
   it("cleans subjects, skips drafts, and attaches per-letter stats", () => {
     const rows = attachHistoryStats(
       [
