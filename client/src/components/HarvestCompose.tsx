@@ -204,6 +204,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
           <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" asChild>
             <a
               href={outboundSocialHref()}
+              // Queue the complete Harvest body; Outbound Social adapts it after handoff.
               onClick={() => queueBroadcastFill(item.body ?? "")}
             >
               <ExternalLink className="w-3 h-3 mr-1" /> Open in Outbound Social

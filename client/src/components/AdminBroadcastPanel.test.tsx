@@ -39,7 +39,7 @@ vi.mock("@/lib/trpc", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), message: vi.fn() } }));
 
 function selectChannel(label: string) {
   const box = screen.getByText(label).closest("label");
@@ -151,6 +151,41 @@ describe("AdminBroadcastPanel", () => {
     expect(screen.getByTestId("adapt-master-to-channels")).toBeDefined();
     expect(screen.getByTestId("channel-tab-twitter")).toBeDefined();
     expect(screen.getByTestId("channel-tab-linkedin")).toBeDefined();
+  });
+
+  it("keeps a long Harvest handoff in the master and adapts each channel body", async () => {
+    const { toast } = await import("sonner");
+    const long = ("First sentence. " + "The movement needs patient practice. ".repeat(20)).trim();
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: long } }));
+    });
+
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe(long);
+    expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value.length).toBeLessThanOrEqual(280);
+    expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe(long);
+    expect(toast.message).toHaveBeenCalledWith("Adapted social variants to each network's limit.");
+  });
+
+  it("clips a long handoff on the single-message path with a notice", async () => {
+    const { toast } = await import("sonner");
+    const long = "Soil first. ".repeat(80).trim();
+    localStorage.setItem("broadcast_channels", JSON.stringify(["twitter"]));
+    render(<AdminBroadcastPanel />);
+
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("");
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: long } }));
+    });
+
+    const box = screen.getByTestId("broadcast-message") as HTMLTextAreaElement;
+    expect(box.value.length).toBeLessThanOrEqual(280);
+    expect(box.value.length).toBeGreaterThan(0);
+    expect(toast.message).toHaveBeenCalled();
+    expect(String((toast.message as ReturnType<typeof vi.fn>).mock.calls[0][0])).toMatch(/Shortened for social/i);
   });
 
   it("posts a distinct body to each Buffer profile", async () => {
