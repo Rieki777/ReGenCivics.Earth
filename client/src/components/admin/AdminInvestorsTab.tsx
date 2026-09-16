@@ -8,6 +8,7 @@ import { TrendingUp, Download, Search, Filter, DollarSign, Clock, ChevronRight, 
 import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { adminStatusChipClass } from "@/lib/adminContrast";
+import { investorTriageEmptyCopy, countInvestorTriage } from "@/lib/investorTriage";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -30,6 +31,7 @@ interface Props {
   setInvestorStatusFilter: (v: string) => void;
   investorRangeCounts: Record<string, number>;
   duplicateInvestorEmails: Set<string>;
+  investorTriageCounts?: ReturnType<typeof countInvestorTriage>;
   updateInvestorMutation: any;
   getInvestorPriority: (investor: any) => { score: number; label: string; color: string };
   exportToCSV: (data: any[], filename: string) => void;
@@ -51,6 +53,7 @@ export function AdminInvestorsTab({
   setInvestorStatusFilter,
   investorRangeCounts,
   duplicateInvestorEmails,
+  investorTriageCounts,
   updateInvestorMutation,
   getInvestorPriority,
   exportToCSV,
@@ -78,7 +81,17 @@ export function AdminInvestorsTab({
               Investor Inquiries
             </CardTitle>
             <CardDescription className="mt-1">
-              {investors?.length || 0} total · {investors?.filter((i: any) => i.status === 'new' || i.status === 'pending').length || 0} pending review
+              {investors?.length || 0} total ·{" "}
+              {investorTriageCounts?.pendingReview ??
+(                investors?.filter((i: any) => i.status === "new" || i.status === "pending").length ||
+                0)}{" "}
+              pending review
+              {investorTriageCounts && investorTriageCounts.overdue > 0
+                ? ` · ${investorTriageCounts.overdue} overdue`
+                : ""}
+              {investorTriageCounts && investorTriageCounts.duplicateRows > 0
+                ? ` · ${investorTriageCounts.duplicateRows} duplicate emails`
+                : ""}
             </CardDescription>
           </div>
           <Button
@@ -118,13 +131,17 @@ export function AdminInvestorsTab({
             />
           </div>
           <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>
-            <SelectTrigger className="sm:w-44 min-h-11 text-sm">
+            <SelectTrigger className="sm:w-52 min-h-11 text-sm">
               <Filter className="w-3 h-3 mr-1" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="needs_action">Needs action</SelectItem>
+              <SelectItem value="overdue">Overdue (48h+)</SelectItem>
+              <SelectItem value="duplicates">Duplicate emails</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               <SelectItem value="new">New</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="contacted">Contacted</SelectItem>
               <SelectItem value="in_discussion">In Discussion</SelectItem>
               <SelectItem value="committed">Committed</SelectItem>
@@ -144,9 +161,21 @@ export function AdminInvestorsTab({
           filteredInvestors.length === 0 ? (
             <div className="p-8 text-center text-[#1a472a]/75">
               <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>No investors match your search</p>
-              <button onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }} className="text-[#7dd87d] text-sm mt-2 hover:underline">
-                Clear filters
+              <p className="font-semibold text-[#1a472a]">{investorTriageEmptyCopy(investorStatusFilter).title}</p>
+              <p className="text-sm mt-1 max-w-md mx-auto">{investorTriageEmptyCopy(investorStatusFilter).hint}</p>
+              <button
+                type="button"
+                onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('needs_action'); }}
+                className="text-[#4a7c59] text-sm mt-3 hover:underline min-h-11"
+              >
+                Back to needs action
+              </button>
+              <button
+                type="button"
+                onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }}
+                className="block mx-auto text-[#1a472a]/75 text-xs mt-1 hover:underline min-h-11"
+              >
+                Show all investors
               </button>
             </div>
           ) : (
@@ -203,10 +232,21 @@ export function AdminInvestorsTab({
                             </span>
                           );
                         })()}
-                        {duplicateInvestorEmails.has(investor.email) && (
-                          <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
-                            Duplicate email
-                          </Badge>
+                        {investor.email && duplicateInvestorEmails.has(String(investor.email).trim().toLowerCase()) && (
+                          <button
+                            type="button"
+                            className="inline-flex"
+                            title="Show all inquiries with this email"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInvestorSearch(investor.email);
+                              setInvestorStatusFilter("duplicates");
+                            }}
+                          >
+                            <Badge className="bg-orange-100 text-orange-900 border-orange-300 text-xs font-semibold hover:bg-orange-200">
+                              Duplicate email
+                            </Badge>
+                          </button>
                         )}
                         <span className="min-h-11 px-3 rounded-lg bg-[#1a472a] text-white text-xs font-semibold inline-flex items-center">
                           Contact

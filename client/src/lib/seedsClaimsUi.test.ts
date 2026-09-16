@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   adminListPageToApiPage,
   buildSeedsClaimSubmitInput,
+  formatClaimFiledBy,
+  formatClaimStatus,
   formatClaimUsd,
   parseEvidenceUrls,
 } from "./seedsClaimsUi";
@@ -86,5 +88,33 @@ describe("formatClaimUsd", () => {
   it("formats finite amounts and dashes missing ones", () => {
     expect(formatClaimUsd(10668.2)).toMatch(/10,668\.20/);
     expect(formatClaimUsd(undefined)).toBe("-");
+  });
+});
+
+
+describe("formatClaimStatus", () => {
+  it("title-cases raw lowercase statuses", () => {
+    expect(formatClaimStatus("pending")).toBe("Pending");
+    expect(formatClaimStatus("approved")).toBe("Approved");
+    expect(formatClaimStatus("flagged")).toBe("Flagged");
+  });
+});
+
+describe("formatClaimFiledBy", () => {
+  it("prefers human name with email", () => {
+    expect(
+      formatClaimFiledBy({
+        filerName: "Ada Lovelace",
+        email: "ada@example.com",
+        seedsAccount: "adalovelace",
+      }).line,
+    ).toBe("Ada Lovelace · ada@example.com");
+  });
+
+  it("falls back to SEEDS account then email-only", () => {
+    expect(
+      formatClaimFiledBy({ email: "ada@example.com", seedsAccount: "adalovelace" }).line,
+    ).toBe("adalovelace · ada@example.com");
+    expect(formatClaimFiledBy({ email: "solo@example.com" }).line).toBe("solo@example.com");
   });
 });

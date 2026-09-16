@@ -106,3 +106,32 @@ export function parseEvidenceUrls(raw: string | null | undefined): string[] {
     return trimmed.startsWith("http") || trimmed.startsWith("/") ? [trimmed] : [];
   }
 }
+
+/** Title-case a claim status for badges (pending → Pending). */
+export function formatClaimStatus(status: string | null | undefined): string {
+  if (!status) return "Unknown";
+  return String(status)
+    .replace(/_/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * "Filed by" line: prefer account-holder name when known, always show email.
+ * Name may come from a users join; SEEDS account is a last-resort label.
+ */
+export function formatClaimFiledBy(claim: {
+  email?: string | null;
+  filerName?: string | null;
+  seedsAccount?: string | null;
+}): { name: string; email: string; line: string } {
+  const email = (claim.email || "").trim() || "—";
+  const name =
+    (claim.filerName || "").trim() ||
+    (claim.seedsAccount || "").trim() ||
+    "";
+  if (name && name !== email) {
+    return { name, email, line: `${name} · ${email}` };
+  }
+  return { name: name || email, email, line: email };
+}

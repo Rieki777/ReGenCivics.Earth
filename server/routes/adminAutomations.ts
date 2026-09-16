@@ -181,7 +181,7 @@ async function runDigest(type: string): Promise<string> {
   if (type === "attention_digest") {
     const parts = [
       `${s.applications.pending} applications pending review`,
-      `${s.investors.new} new investors`,
+      `${s.investors.new} investors pending review`,
       `${s.inquiries.needsReview} inquiries to review`,
       `${s.moderation.pendingReports} moderation reports`,
       `${s.governance.openProposals} open proposals`,
@@ -192,7 +192,7 @@ async function runDigest(type: string): Promise<string> {
   // briefing_digest (default)
   return [
     `Applications ${s.applications.total} (${s.applications.pending} pending, ${s.applications.active} active).`,
-    `Investors ${s.investors.total} (${s.investors.new} new, ${s.investors.committed} committed).`,
+    `Investors ${s.investors.total} (${s.investors.new} pending review, ${s.investors.committed} committed).`,
     `Inquiries needing review ${s.inquiries.needsReview}.`,
     `Community ${s.community.players} players, ${s.community.forumPosts} posts.`,
     `This week +${s.weekly.newApplications} applications, +${s.weekly.newForumPosts + s.weekly.newForumReplies} forum activity, +${s.weekly.newPlayers} players.`,

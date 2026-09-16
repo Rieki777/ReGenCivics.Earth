@@ -69,7 +69,7 @@ function claim(over: Partial<SeedsClaimRow> & Pick<SeedsClaimRow, "id">): SeedsC
 }
 
 const ALL_CLAIMS: SeedsClaimRow[] = [
-  claim({ id: 11, email: "alice@example.com", seedsAccount: "aliceaccount" }),
+  claim({ id: 11, email: "alice@example.com", seedsAccount: "aliceaccount", filerName: "Alice Example" }),
   claim({
     id: 12,
     email: "bob@example.com",
@@ -117,10 +117,13 @@ describe("AdminSeedsClaimsTab list", () => {
 
   it("shows who filed each claim when two approved claims exist and search is empty", () => {
     render(<AdminSeedsClaimsTab />);
+    expect(screen.getByText("Alice Example")).toBeDefined();
     expect(screen.getByText("alice@example.com")).toBeDefined();
     expect(screen.getByText("bob@example.com")).toBeDefined();
-    expect(screen.getByText("aliceaccount")).toBeDefined();
-    expect(screen.getByText("bobaccount12")).toBeDefined();
+    expect(screen.getAllByText("aliceaccount").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("bobaccount12").length).toBeGreaterThan(0);
+    // Status badges are title-cased, not raw lowercase.
+    expect(screen.getAllByText("Approved").length).toBeGreaterThan(0);
     expect(screen.queryByText("No claims match your search")).toBeNull();
     expect(screen.getByText("2 claims total")).toBeDefined();
   });

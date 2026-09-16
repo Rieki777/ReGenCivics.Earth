@@ -17,6 +17,11 @@ import { AdminPlayersTab } from "@/components/admin/AdminPlayersTab";
 import { AdminCustomGameWaitlist, AdminCustomGameApplications } from "@/components/admin/AdminCustomGamesPanels";
 import { AdminAuthGate } from "@/components/admin/AdminAuthGate";
 import { exportToCSV, getInvestorPriority } from "@/lib/adminInquiry";
+import {
+  buildDuplicateInvestorEmails,
+  countInvestorTriage,
+  filterInvestorsForTriage,
+} from "@/lib/investorTriage";
 import { recordAdminVisit } from "@/lib/adminUsage";
 import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 import { queueBroadcastFill } from "@/lib/broadcastFill";
@@ -82,7 +87,7 @@ function AdminDashboard() {
   const [appView, setAppView] = useState<string | null>(() => params.get("view"));
   const [investorSearch, setInvestorSearch] = useState("");
   const [appSearch, setAppSearch] = useState("");
-  const [investorStatusFilter, setInvestorStatusFilter] = useState<string>("all");
+  const [investorStatusFilter, setInvestorStatusFilter] = useState<string>("needs_action");
   const [showDrafts, setShowDrafts] = useState(false);
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [notifCenterOpen, setNotifCenterOpen] = useState(false);
@@ -206,13 +211,21 @@ function AdminDashboard() {
     onError: (error: { message: string }) => toast.error(`Failed: ${error.message}`),
   });
 
+  const duplicateInvestorEmails = buildDuplicateInvestorEmails(investors || []);
+  const investorTriageCounts = countInvestorTriage(investors || []);
+  const filteredInvestors = filterInvestorsForTriage(investors || [], {
+    filter: investorStatusFilter,
+    search: investorSearch,
+    duplicateEmails: duplicateInvestorEmails,
+  });
+
   const stats = {
     totalApplications: applications?.length || 0,
     totalInvestors: investors?.length || 0,
     totalInquiries: inquiries?.length || 0,
     pendingReview:
       (applications?.filter((a: { status: string }) => a.status === "pending").length || 0) +
-      (investors?.filter((i: { status: string }) => i.status === "pending").length || 0) +
+      investorTriageCounts.pendingReview +
       (inquiries?.filter((i: { status: string }) => i.status === "pending" || i.status === "new").length || 0),
   };
 
@@ -221,24 +234,6 @@ function AdminDashboard() {
     acc[path] = (acc[path] || 0) + 1;
     return acc;
   }, {}) || {};
-
-  const investorEmailCounts = (investors || []).reduce((acc: Record<string, number>, inv: { email?: string }) => {
-    if (inv.email) acc[inv.email] = (acc[inv.email] || 0) + 1;
-    return acc;
-  }, {});
-  const duplicateInvestorEmails = new Set(
-    Object.entries(investorEmailCounts).filter(([, c]) => c > 1).map(([e]) => e),
-  );
-
-  const filteredInvestors = (investors || []).filter((inv: any) => {
-    const matchesSearch = !investorSearch ||
-      inv.fullName?.toLowerCase().includes(investorSearch.toLowerCase()) ||
-      inv.email?.toLowerCase().includes(investorSearch.toLowerCase()) ||
-      inv.investmentRange?.toLowerCase().includes(investorSearch.toLowerCase()) ||
-      inv.organization?.toLowerCase().includes(investorSearch.toLowerCase());
-    const matchesStatus = investorStatusFilter === "all" || inv.status === investorStatusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   const filteredApps = (applications || []).filter((app: any) =>
     !appSearch ||
@@ -312,6 +307,7 @@ function AdminDashboard() {
               setInvestorStatusFilter={setInvestorStatusFilter}
               investorRangeCounts={investorRangeCounts}
               duplicateInvestorEmails={duplicateInvestorEmails}
+              investorTriageCounts={investorTriageCounts}
               updateInvestorMutation={updateInvestorMutation}
               getInvestorPriority={getInvestorPriority}
               exportToCSV={exportToCSV}
