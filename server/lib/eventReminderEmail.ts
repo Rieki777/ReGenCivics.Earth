@@ -2,6 +2,7 @@ import { APP_BASE_URL } from "../_core/email";
 import { offsetLead } from "@shared/eventAutoReminders";
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
 import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { localTimeCtaHtml } from "@shared/localTimeCta";
 
 type ReminderEmailInput = {
   title: string;
@@ -73,7 +74,7 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
           <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
             <p style="color:#888;font-size:13px;margin:0 0 6px 0;">${lead}</p>
             <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${title}</h2>
-            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${escapeHtml(dateStr)} at ${escapeHtml(timeStr)}</p>
+            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${escapeHtml(dateStr)} at ${escapeHtml(timeStr)}${localTimeCtaHtml(input.startTime, { title: input.title })}</p>
             ${bodyHtml}
             <a href="${joinUrl}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${escapeHtml(joinLabel)}</a>
             <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
