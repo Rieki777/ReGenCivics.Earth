@@ -343,6 +343,7 @@ describe("DictationButton", () => {
     });
     expect(screen.queryByTestId("dictation-error")).toBeNull();
     const help = screen.getByTestId("dictation-mic-help");
+    expect(help.parentElement).toBe(document.body);
     expect(help.textContent).toContain(DICTATION_BLOCKED_TITLE);
     expect(help.textContent).toMatch(/lock|site info|address bar/i);
     expect(help.textContent).toMatch(/Microphone/);
