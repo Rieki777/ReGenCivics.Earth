@@ -1,6 +1,8 @@
 /**
  * Markdown email body editor: toolbar, write/preview tabs, forest-on-white fields.
  * Preview uses the same converter as send, including letter layout chrome.
+ * Body Write tab uses the shared DictationButton (same mic as Harvest / Broadcast /
+ * Write-with-me) so Outbound Write and Applications letters can dictate at the caret.
  */
 
 import { useRef, useState } from "react";
@@ -21,6 +23,7 @@ import { Bold, CornerDownRight, Heading2, ImagePlus, Italic, Link, List, ListOrd
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SmartImagePicker } from "@/components/SmartImagePicker";
+import { DictationButton } from "@/components/admin/dictation";
 
 export const EMAIL_FIELD_CLASS =
   "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]/30";
@@ -200,46 +203,55 @@ export function EmailMarkdownComposer({
               </TabsTrigger>
             </TabsList>
             {tab === "write" && (
-              <div className="flex flex-wrap gap-1" role="toolbar" aria-label="Markdown formatting">
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyWrap("**", "**", "bold")} aria-label="Bold">
-                  <Bold className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyWrap("*", "*", "italic")} aria-label="Italic">
-                  <Italic className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("## ")} aria-label="Heading">
-                  <Heading2 className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("- ")} aria-label="Bullet list">
-                  <List className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("  - ")} aria-label="Nested bullet">
-                  <CornerDownRight className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("1. ")} aria-label="Numbered list">
-                  <ListOrdered className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={insertLink} aria-label="Link">
-                  <Link className="w-3.5 h-3.5" />
-                </button>
-                <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("> ")} aria-label="Quote">
-                  <Quote className="w-3.5 h-3.5" />
-                </button>
-                {variant === "newsletter" && (
-                  <>
-                    <button type="button" className={TOOLBAR_BTN} onClick={() => insertBlock("---")} aria-label="Horizontal rule">
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <button type="button" className={TOOLBAR_BTN} onClick={() => setCtaOpen(true)} aria-label="Insert button">
-                      <RectangleHorizontal className="w-3.5 h-3.5" />
-                      <span className="ml-1 hidden sm:inline">Button</span>
-                    </button>
-                    <button type="button" className={TOOLBAR_BTN} onClick={() => setImageOpen(true)} aria-label="Insert image">
-                      <ImagePlus className="w-3.5 h-3.5" />
-                      <span className="ml-1 hidden sm:inline">Image</span>
-                    </button>
-                  </>
-                )}
+              <div className="flex flex-wrap items-center gap-2">
+                <DictationButton
+                  value={body}
+                  onChange={onBodyChange}
+                  targetRef={textareaRef}
+                  label="Dictate body"
+                  errorAlign="end"
+                />
+                <div className="flex flex-wrap gap-1" role="toolbar" aria-label="Markdown formatting">
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyWrap("**", "**", "bold")} aria-label="Bold">
+                    <Bold className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyWrap("*", "*", "italic")} aria-label="Italic">
+                    <Italic className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("## ")} aria-label="Heading">
+                    <Heading2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("- ")} aria-label="Bullet list">
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("  - ")} aria-label="Nested bullet">
+                    <CornerDownRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("1. ")} aria-label="Numbered list">
+                    <ListOrdered className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={insertLink} aria-label="Link">
+                    <Link className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" className={TOOLBAR_BTN} onClick={() => applyPrefix("> ")} aria-label="Quote">
+                    <Quote className="w-3.5 h-3.5" />
+                  </button>
+                  {variant === "newsletter" && (
+                    <>
+                      <button type="button" className={TOOLBAR_BTN} onClick={() => insertBlock("---")} aria-label="Horizontal rule">
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" className={TOOLBAR_BTN} onClick={() => setCtaOpen(true)} aria-label="Insert button">
+                        <RectangleHorizontal className="w-3.5 h-3.5" />
+                        <span className="ml-1 hidden sm:inline">Button</span>
+                      </button>
+                      <button type="button" className={TOOLBAR_BTN} onClick={() => setImageOpen(true)} aria-label="Insert image">
+                        <ImagePlus className="w-3.5 h-3.5" />
+                        <span className="ml-1 hidden sm:inline">Image</span>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>
