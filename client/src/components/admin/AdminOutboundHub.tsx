@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { AdminOutboundWrite, type OutboundWritePrefill } from "@/components/admin/AdminOutboundWrite";
 import { AdminOutboundHistory } from "@/components/admin/AdminOutboundHistory";
+import { AdminOutboundTemplates } from "@/components/admin/AdminOutboundTemplates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,7 +95,7 @@ export function AdminOutboundHub({
       )}
       {surface === "social" && <AdminBroadcastPanel />}
       {surface === "people" && <PeoplePanel />}
-      {surface === "templates" && <TemplatesStub />}
+      {surface === "templates" && <AdminOutboundTemplates />}
       {surface === "history" && (
         <AdminOutboundHistory
           onWrite={() => onSurfaceChange("write")}
@@ -105,39 +106,6 @@ export function AdminOutboundHub({
         />
       )}
     </div>
-  );
-}
-
-function TemplatesStub() {
-  const savedQuery = trpc.email.getCustomTemplates.useQuery();
-  const letters = (savedQuery.data ?? []).filter((row) => row.kind === "newsletter" && row.bodyFormat === "markdown");
-  return (
-    <Card className="bg-white border-2 border-[#1a472a]/10">
-      <CardHeader>
-        <CardTitle className="text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-          Newsletter templates
-        </CardTitle>
-        <CardDescription>
-          Saved Outbound letters: full markdown layouts with CTA buttons and images.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {savedQuery.isLoading ? (
-          <Loader2 className="w-6 h-6 animate-spin text-[#7dd87d]" />
-        ) : letters.length === 0 ? (
-          <p className="text-sm text-[#1a472a]/80">No newsletter templates yet. Save one from Write.</p>
-        ) : (
-          <ul className="space-y-2">
-            {letters.map((row) => (
-              <li key={row.templateKey} className="rounded-lg border border-[#1a472a]/10 p-3">
-                <p className="font-medium text-[#1a472a]">{row.label || row.templateKey}</p>
-                <p className="text-xs text-[#1a472a]/70">{row.customSubject || "No subject"}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
