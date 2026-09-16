@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { consumeBroadcastFill, clearBroadcastFill } from "@/lib/broadcastFill";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,13 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, Radio, Clock, Eye, CheckCircle2, XCircle, Loader2, AlertTriangle, Sparkles, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { DictationButton } from "@/components/admin/dictation";
 import {
   BROADCAST_CHANNELS,
   BROADCAST_FILL_EVENT,
-  strictestBroadcastLimit,
+  broadcastBodiesReady,
+  broadcastChannelById,
+  buildBufferPostTargets,
+  fillChannelBodiesFromMaster,
+  resolveChannelBody,
   type BroadcastChannelId,
 } from "@shared/broadcastChannels";
 
@@ -72,9 +77,12 @@ function saveChannels(channels: string[]) {
 export function AdminBroadcastPanel() {
   const [text, setText] = useState("");
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  const channelMessageRef = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>(loadSavedChannels);
+  const [channelBodies, setChannelBodies] = useState<Record<string, string>>({});
+  const [activeChannelTab, setActiveChannelTab] = useState<string>("");
   const [showScheduler, setShowScheduler] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
   const [showPreview, setShowPreview] = useState(false);
@@ -85,9 +93,21 @@ export function AdminBroadcastPanel() {
   const [draftVoice, setDraftVoice] = useState<{ version: string; revision: number } | null>(null);
   const [draftGrounded, setDraftGrounded] = useState(false);
 
+  const showPerChannelEditors = selectedChannels.length > 1;
+
   useEffect(() => {
     saveChannels(selectedChannels);
   }, [selectedChannels]);
+
+  useEffect(() => {
+    if (selectedChannels.length === 0) {
+      setActiveChannelTab("");
+      return;
+    }
+    if (!selectedChannels.includes(activeChannelTab)) {
+      setActiveChannelTab(selectedChannels[0]);
+    }
+  }, [selectedChannels, activeChannelTab]);
 
   useEffect(() => {
     const pending = consumeBroadcastFill();
@@ -120,6 +140,11 @@ export function AdminBroadcastPanel() {
     profilesError?.message === "Buffer not configured" ||
     (profilesError as { data?: { code?: string } } | null)?.data?.code === "PRECONDITION_FAILED";
 
+  const canPost = useMemo(
+    () => broadcastBodiesReady(selectedChannels, text, channelBodies),
+    [selectedChannels, text, channelBodies],
+  );
+
   function toggleChannel(id: string) {
     setSelectedChannels(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
@@ -141,9 +166,41 @@ export function AdminBroadcastPanel() {
     );
   }
 
+  function setChannelBody(channelId: string, value: string) {
+    setChannelBodies(prev => ({ ...prev, [channelId]: value }));
+  }
+
   function applyDraft(variant: DraftVariant) {
-    setText(variant.text);
-    toast.success(`Loaded the ${variant.label} draft.`);
+    setChannelBodies(prev => ({ ...prev, [variant.channel]: variant.text }));
+    setText(prev => (prev.trim() ? prev : variant.text));
+    if (selectedChannels.includes(variant.channel)) {
+      setActiveChannelTab(variant.channel);
+    }
+    toast.success(`Loaded the ${variant.label} draft into that channel.`);
+  }
+
+  function copyMasterToChannels() {
+    if (!text.trim()) {
+      toast.error("Write a master draft first.");
+      return;
+    }
+    setChannelBodies(prev => ({
+      ...prev,
+      ...fillChannelBodiesFromMaster(text, selectedChannels, "copy"),
+    }));
+    toast.success("Copied master into each selected channel.");
+  }
+
+  function adaptMasterToChannels() {
+    if (!text.trim()) {
+      toast.error("Write a master draft first.");
+      return;
+    }
+    setChannelBodies(prev => ({
+      ...prev,
+      ...fillChannelBodiesFromMaster(text, selectedChannels, "adapt"),
+    }));
+    toast.success("Adapted master into each channel (length-aware).");
   }
 
   async function handleDraftFromHarvest() {
@@ -158,8 +215,20 @@ export function AdminBroadcastPanel() {
       setDraftSources(res.sources);
       setDraftVoice(res.voice);
       setDraftGrounded(res.grounded);
-      if (res.drafts.length === 1) {
-        setText(res.drafts[0].text);
+      if (res.drafts.length > 0) {
+        setChannelBodies(prev => {
+          const next = { ...prev };
+          for (const d of res.drafts) next[d.channel] = d.text;
+          return next;
+        });
+        if (res.drafts.length === 1) {
+          setText(res.drafts[0].text);
+        } else if (!text.trim()) {
+          setText(res.drafts[0].text);
+        }
+        if (selectedChannels.includes(res.drafts[0].channel)) {
+          setActiveChannelTab(res.drafts[0].channel);
+        }
       }
       if (res.errors.length > 0) {
         toast.warning(`Drafted ${res.drafts.length}, ${res.errors.length} channel${res.errors.length === 1 ? "" : "s"} failed.`);
@@ -175,12 +244,12 @@ export function AdminBroadcastPanel() {
   }
 
   async function handlePost(scheduleTime?: string) {
-    if (!text.trim()) {
-      toast.error("Please write something before posting.");
-      return;
-    }
     if (selectedChannels.length === 0) {
       toast.error("Select at least one channel.");
+      return;
+    }
+    if (!canPost) {
+      toast.error("Each selected channel needs a body within its character limit.");
       return;
     }
 
@@ -195,34 +264,31 @@ export function AdminBroadcastPanel() {
     const hasFarcaster = selectedChannels.includes("farcaster");
 
     if (bufferChannels.length > 0) {
-      const profileIds: string[] = [];
-      const missingChannels: string[] = [];
+      const { targets, missingChannels } = buildBufferPostTargets({
+        selectedChannelIds: selectedChannels,
+        masterText: text,
+        channelBodies,
+        profiles: bufferProfiles ?? [],
+        isBufferChannel: (id) => ALL_CHANNELS.find(c => c.id === id)?.isBuffer === true,
+      });
 
-      for (const channelId of bufferChannels) {
-        const profile = getProfileForChannel(channelId);
-        if (profile) {
-          profileIds.push(profile.id);
-        } else {
-          missingChannels.push(channelId);
-        }
+      for (const c of missingChannels) {
+        newResults.push({
+          channel: BUFFER_SERVICE_MAP[c] ?? c,
+          success: false,
+          error: "No connected Buffer profile found for this channel.",
+        });
       }
 
-      if (missingChannels.length > 0) {
-        for (const c of missingChannels) {
-          newResults.push({
-            channel: BUFFER_SERVICE_MAP[c] ?? c,
-            success: false,
-            error: "No connected Buffer profile found for this channel.",
-          });
-        }
-      }
+      const posts = targets
+        .filter((t) => t.text.length > 0)
+        .map((t) => ({ profileId: t.profileId, text: t.text }));
 
-      if (profileIds.length > 0) {
+      if (posts.length > 0) {
         try {
           const res = await postToBuffer.mutateAsync({
-            text: text.trim(),
+            posts,
             link: link.trim() || undefined,
-            profileIds,
             scheduledAt: scheduleTime || undefined,
           });
 
@@ -239,11 +305,11 @@ export function AdminBroadcastPanel() {
           }
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
-          for (const id of profileIds) {
-            const profile = bufferProfiles?.find(p => p.id === id);
+          for (const p of posts) {
+            const profile = bufferProfiles?.find(pr => pr.id === p.profileId);
             const label = profile
               ? (BUFFER_SERVICE_MAP[profile.service.toLowerCase()] ?? profile.service)
-              : id;
+              : p.profileId;
             newResults.push({ channel: label, success: false, error: msg });
           }
         }
@@ -251,8 +317,9 @@ export function AdminBroadcastPanel() {
     }
 
     if (hasFarcaster) {
+      const farcasterText = resolveChannelBody(text, channelBodies, "farcaster").trim();
       try {
-        const res = await farcasterIntent.mutateAsync({ text: text.trim() });
+        const res = await farcasterIntent.mutateAsync({ text: farcasterText });
         window.open(res.url, "_blank", "noopener,noreferrer");
         newResults.push({ channel: "Farcaster", success: true });
       } catch (err: unknown) {
@@ -284,9 +351,11 @@ export function AdminBroadcastPanel() {
     handlePost(isoTime);
   }
 
-  const maxChars = strictestBroadcastLimit(selectedChannels);
-  const charsLeft = maxChars - text.length;
-  const overLimit = charsLeft < 0;
+  const masterMaxHint = selectedChannels.length === 1
+    ? (broadcastChannelById(selectedChannels[0])?.maxChars ?? 280)
+    : null;
+  const masterCharsLeft = masterMaxHint != null ? masterMaxHint - text.length : null;
+  const masterOverLimit = masterCharsLeft != null && masterCharsLeft < 0;
 
   return (
     <>
@@ -299,7 +368,10 @@ export function AdminBroadcastPanel() {
             <Radio className="w-5 h-5" />
             Broadcast
           </CardTitle>
-          <CardDescription>Compose and publish to social channels</CardDescription>
+          <CardDescription>
+            Compose and publish to social channels
+            {showPerChannelEditors ? " — each selected channel gets its own body" : ""}
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -323,28 +395,36 @@ export function AdminBroadcastPanel() {
           )}
 
           <div className="space-y-2">
-            <Label className="text-[#1a472a] font-medium">Message</Label>
+            <Label className="text-[#1a472a] font-medium">
+              {showPerChannelEditors ? "Master draft" : "Message"}
+            </Label>
             <div className="relative">
               <Textarea
                 data-testid="broadcast-message"
                 ref={messageRef}
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="What do you want to share?"
+                placeholder={
+                  showPerChannelEditors
+                    ? "Write once, then copy or adapt into each channel below."
+                    : "What do you want to share?"
+                }
                 rows={4}
                 className="resize-none border-[#1a472a]/20 focus:border-[#1a472a] pr-16"
               />
-              <span
-                className={`absolute bottom-2 right-3 text-xs font-mono ${
-                  overLimit
-                    ? "text-red-600 font-bold"
-                    : charsLeft <= 40
-                    ? "text-amber-600"
-                    : "text-[#1a472a]/80"
-                }`}
-              >
-                {charsLeft}
-              </span>
+              {masterCharsLeft != null && (
+                <span
+                  className={`absolute bottom-2 right-3 text-xs font-mono ${
+                    masterOverLimit
+                      ? "text-red-600 font-bold"
+                      : masterCharsLeft <= 40
+                      ? "text-amber-600"
+                      : "text-[#1a472a]/80"
+                  }`}
+                >
+                  {masterCharsLeft}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <DictationButton
@@ -534,11 +614,114 @@ export function AdminBroadcastPanel() {
             )}
           </div>
 
+          {showPerChannelEditors && (
+            <div className="space-y-3 rounded-xl border border-[#1a472a]/15 bg-[#1a472a]/5 p-3" data-testid="per-channel-editors">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label className="text-[#1a472a] font-medium">Per-channel bodies</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-[#1a472a]/30 text-[#1a472a]"
+                    data-testid="copy-master-to-channels"
+                    onClick={copyMasterToChannels}
+                  >
+                    Copy master → all
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-[#1a472a]/30 text-[#1a472a]"
+                    data-testid="adapt-master-to-channels"
+                    onClick={adaptMasterToChannels}
+                  >
+                    Adapt master → each
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-[#1a472a]/80">
+                Empty channel boxes fall back to the master draft when posting. Adapt clips to each network&apos;s length.
+              </p>
+              <Tabs
+                value={activeChannelTab || selectedChannels[0]}
+                onValueChange={setActiveChannelTab}
+              >
+                <TabsList className="flex flex-wrap h-auto gap-1 bg-white/80">
+                  {selectedChannels.map((id) => {
+                    const meta = broadcastChannelById(id);
+                    const body = resolveChannelBody(text, channelBodies, id);
+                    const max = meta?.maxChars ?? 280;
+                    const over = body.length > max;
+                    const customized = (channelBodies[id] ?? "").trim().length > 0;
+                    return (
+                      <TabsTrigger
+                        key={id}
+                        value={id}
+                        data-testid={`channel-tab-${id}`}
+                        className="text-xs data-[state=active]:bg-[#1a472a] data-[state=active]:text-white"
+                      >
+                        {meta?.label ?? id}
+                        <span className={`ml-1 font-mono ${over ? "text-red-500" : "opacity-70"}`}>
+                          {customized ? "·" : "◦"}
+                        </span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+                {selectedChannels.map((id) => {
+                  const meta = broadcastChannelById(id);
+                  const max = meta?.maxChars ?? 280;
+                  const value = channelBodies[id] ?? "";
+                  const left = max - value.length;
+                  const over = left < 0;
+                  const isActive = (activeChannelTab || selectedChannels[0]) === id;
+                  return (
+                    <TabsContent key={id} value={id} forceMount className="space-y-2 mt-3 data-[state=inactive]:hidden">
+                      <div className="relative">
+                        <Textarea
+                          data-testid={`channel-body-${id}`}
+                          ref={isActive ? channelMessageRef : undefined}
+                          value={value}
+                          onChange={(e) => setChannelBody(id, e.target.value)}
+                          placeholder={`Optional ${meta?.label ?? id} body (falls back to master)`}
+                          rows={4}
+                          className="resize-none border-[#1a472a]/20 focus:border-[#1a472a] pr-20 bg-white"
+                        />
+                        <span
+                          className={`absolute bottom-2 right-3 text-xs font-mono ${
+                            over
+                              ? "text-red-600 font-bold"
+                              : left <= 40
+                              ? "text-amber-600"
+                              : "text-[#1a472a]/80"
+                          }`}
+                        >
+                          {left}/{max}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <DictationButton
+                          value={value}
+                          onChange={(v) => setChannelBody(id, v)}
+                          targetRef={channelMessageRef}
+                          label={`Dictate ${meta?.label ?? id}`}
+                        />
+                      )}
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-3 pt-2">
             <Button
               onClick={() => handlePost()}
-              disabled={posting || overLimit || !text.trim() || selectedChannels.length === 0}
+              disabled={posting || !canPost}
               className="bg-[#1a472a] text-white hover:bg-[#1a472a]/90"
+              data-testid="broadcast-post-now"
             >
               {posting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -560,8 +743,9 @@ export function AdminBroadcastPanel() {
             <Button
               variant="outline"
               onClick={() => setShowPreview(true)}
-              disabled={!text.trim()}
+              disabled={selectedChannels.length === 0}
               className="border-[#1a472a]/30 text-[#1a472a]"
+              data-testid="broadcast-preview"
             >
               <Eye className="w-4 h-4 mr-2" />
               Preview
@@ -581,7 +765,7 @@ export function AdminBroadcastPanel() {
               </div>
               <Button
                 onClick={handleSchedulePost}
-                disabled={posting || !scheduledAt || overLimit || !text.trim() || selectedChannels.length === 0}
+                disabled={posting || !scheduledAt || !canPost}
                 className="bg-[#1a472a] text-white hover:bg-[#1a472a]/90"
               >
                 {posting ? (
@@ -629,14 +813,36 @@ export function AdminBroadcastPanel() {
       </Card>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[#1a472a]">Post Preview</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#f5f9f5] border border-[#1a472a]/15 whitespace-pre-wrap text-sm text-[#1a472a] leading-relaxed">
-              {text || <span className="text-[#1a472a]/80 italic">Nothing to preview yet</span>}
-            </div>
+            {selectedChannels.length === 0 ? (
+              <p className="text-sm text-[#1a472a]/80 italic">No channels selected</p>
+            ) : (
+              selectedChannels.map((id) => {
+                const meta = broadcastChannelById(id);
+                const body = resolveChannelBody(text, channelBodies, id);
+                const max = meta?.maxChars ?? 280;
+                const over = body.length > max;
+                return (
+                  <div key={id} className="space-y-1" data-testid={`preview-channel-${id}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-[#1a472a] text-xs font-medium">{meta?.label ?? id}</Label>
+                      <span className={`text-xs font-mono ${over ? "text-red-600" : "text-[#1a472a]/80"}`}>
+                        {body.length} / {max}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#f5f9f5] border border-[#1a472a]/15 whitespace-pre-wrap text-sm text-[#1a472a] leading-relaxed">
+                      {body.trim() || (
+                        <span className="text-[#1a472a]/80 italic">Nothing to preview yet</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
             {link && (
               <div>
                 <Label className="text-[#1a472a]/75 text-xs">Link</Label>
@@ -656,20 +862,6 @@ export function AdminBroadcastPanel() {
                 />
               </div>
             )}
-            <div>
-              <Label className="text-[#1a472a]/75 text-xs">Channels</Label>
-              <p className="text-sm text-[#1a472a] mt-0.5">
-                {selectedChannels.length > 0
-                  ? selectedChannels
-                      .map(id => ALL_CHANNELS.find(c => c.id === id)?.label ?? id)
-                      .join(", ")
-                  : "None selected"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-[#1a472a]/80">
-              <span>{text.length} / {maxChars} characters</span>
-              {overLimit && <span className="text-red-600 font-semibold">(over limit)</span>}
-            </div>
           </div>
         </DialogContent>
       </Dialog>
