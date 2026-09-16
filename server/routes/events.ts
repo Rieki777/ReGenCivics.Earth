@@ -27,6 +27,7 @@ import { and, asc, desc, eq, ne, gte, lte, lt, isNull, sql, inArray } from "driz
 import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { localTimeCtaHtml } from "@shared/localTimeCta";
 import { notifyNewEvent } from "../_core/notify";
 import { audienceForTopic } from "../lib/emailPrefs";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
@@ -346,7 +347,7 @@ export const eventsRouter = router({
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 10px 0;">You're on the waitlist</h2>
-              <p style="color:#444;line-height:1.7;">${event.title} is currently full. We'll email you if a spot opens up before ${dateStr} at ${timeStr} ${tz}.</p>
+              <p style="color:#444;line-height:1.7;">${event.title} is currently full. We'll email you if a spot opens up before ${dateStr} at ${timeStr} ${tz}${localTimeCtaHtml(event.startTime, { title: event.title })}.</p>
               <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events →</a></p>
             </div>
           </div>`
@@ -357,7 +358,7 @@ export const eventsRouter = router({
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 6px 0;">${event.title}</h2>
-              <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr} ${tz}</p>
+              <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr} ${tz}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
               <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">We'll send you a reminder the day before. See you there.</p>
               <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
               <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
@@ -1041,7 +1042,7 @@ export const eventsRouter = router({
           <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
             <p style="color:#888;font-size:13px;margin:0 0 6px 0;">Starting in ~24 hours</p>
             <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
-            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>
+            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
             ${prevSummaryBlock}
             ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
             <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
@@ -1451,7 +1452,7 @@ export const eventsRouter = router({
           </div>
           <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
             <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.guestSpeakerName}${topicLine}</h2>
-            <p style="color:#444;font-size:15px;margin:0 0 16px 0;">${dateStr} at ${timeStr}</p>
+            <p style="color:#444;font-size:15px;margin:0 0 16px 0;">${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
             ${event.guestSpeakerBio ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px 0;">
               <p style="color:#1a472a;font-weight:bold;margin:0 0 6px 0;font-size:13px;">About ${event.guestSpeakerName}</p>
               <p style="color:#2d5a3d;margin:0;font-size:14px;line-height:1.6;">${event.guestSpeakerBio}</p>
