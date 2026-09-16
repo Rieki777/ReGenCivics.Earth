@@ -31,8 +31,24 @@ vi.mock("@/lib/trpc", () => ({
                               },
                   },
                   email: {
-                              getCustomTemplates: { useQuery: () => ({ data: [], isLoading: false }) },
+                              getCustomTemplates: {
+                                            useQuery: () => ({
+                                                            data: [
+                                                                  {
+                                                                                    templateKey: "nl_season_update",
+                                                                                    label: "Season update",
+                                                                                    customSubject: "What's blooming",
+                                                                                    customBody: "Hello friends",
+                                                                                    bodyFormat: "markdown",
+                                                                                    layout: "announcement",
+                                                                                    kind: "newsletter",
+                                                                  },
+                                                                            ],
+                                                            isLoading: false,
+                                            }),
+                              },
                               saveCustomTemplate: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+                              deleteCustomTemplate: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                               renderPdf: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                               draftWithAgent: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
                   },
@@ -148,6 +164,17 @@ describe("AdminOutboundHub", () => {
                      expect(screen.getByTestId("outbound-write-body-layout").textContent).toMatch(/Plain letter/i);
                      expect(sessionStorage.getItem(OUTBOUND_WRITE_FILL_KEY)).toBeNull();
            });
+
+           it("lists newsletter templates with create and edit controls", () => {
+                     render(<AdminOutboundHub surface="templates" onSurfaceChange={vi.fn()} />);
+                     expect(screen.getByText("Newsletter templates")).toBeDefined();
+                     expect(screen.getByText("Season update")).toBeDefined();
+                     expect(screen.getByText("What's blooming")).toBeDefined();
+                     expect(screen.getByTestId("templates-create")).toBeDefined();
+                     expect(screen.getByTestId("templates-edit-nl_season_update")).toBeDefined();
+                     expect(screen.getByTestId("templates-delete-nl_season_update")).toBeDefined();
+           });
+
 
            it("fills Write fields from a live assistant compose event", () => {
                      render(<AdminOutboundHub surface="write" onSurfaceChange={vi.fn()} />);
