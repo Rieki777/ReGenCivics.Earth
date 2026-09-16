@@ -6,7 +6,8 @@
  * add a routine, toggle it, run it now, see its last result, and remove it.
  */
 import { trpc } from "@/lib/trpc";
-import { Clock, Play, Trash2, Plus, Power, Loader2, CalendarClock } from "lucide-react";
+import { Clock, Play, Trash2, Plus, Power, Loader2, CalendarClock, AlertTriangle } from "lucide-react";
+import { getRunFreshness } from "@/lib/adminFreshness";
 
 const TYPE_LABEL: Record<string, string> = {
   briefing_digest: "Briefing digest",
@@ -76,7 +77,20 @@ export function AdminAutomationsPanel() {
                     <span className="inline-flex items-center gap-1 text-[11px] text-[#1a472a]/75"><Clock className="w-3 h-3" />{a.cadence}</span>
                   </div>
                   {a.lastResult && <p className="text-[#1a472a]/75 text-xs mt-1 break-words">{a.lastResult}</p>}
-                  {a.lastRunAt && <p className="text-[#1a472a]/75 text-[11px] mt-0.5">Last run {new Date(a.lastRunAt as unknown as string).toLocaleString()}</p>}
+                  {(() => {
+                    const fresh = getRunFreshness(a.lastRunAt as unknown as string | null);
+                    return (
+                      <p className={`text-[11px] mt-0.5 inline-flex items-center gap-1 flex-wrap ${fresh.isStale ? "text-amber-800 font-semibold" : "text-[#1a472a]/75"}`}>
+                        {fresh.isStale && <AlertTriangle className="w-3 h-3 flex-shrink-0" />}
+                        <span>{fresh.displayLine}</span>
+                        {a.lastRunAt && (
+                          <span className="font-normal text-[#1a472a]/75">
+                            ({new Date(a.lastRunAt as unknown as string).toLocaleDateString()})
+                          </span>
+                        )}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button type="button" title="Run now" onClick={() => runNow.mutate({ id: a.id })} disabled={runNow.isPending} className="w-9 h-9 rounded-full hover:bg-[#7dd87d]/15 text-[#1a472a] flex items-center justify-center">

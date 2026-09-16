@@ -75,10 +75,11 @@ export function AdminNeedsYou({
     },
     {
       key: "inv",
-      label: "New investors to contact",
+      label: "Investors pending review",
       count: snap.investors.new,
       run: () => {
-        onInvestorFilter?.("all");
+        // Same vocabulary as Investors tab default: needs-action queue.
+        onInvestorFilter?.("needs_action");
         go("investors", oldestInvestor ? { open: String(oldestInvestor.id) } : undefined);
       },
       icon: TrendingUp,

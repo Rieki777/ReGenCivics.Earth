@@ -39,6 +39,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import {
   adminListPageToApiPage,
+  formatClaimFiledBy,
+  formatClaimStatus,
   formatClaimTokens,
   formatClaimUsd,
   parseEvidenceUrls,
@@ -48,6 +50,8 @@ export type SeedsClaimRow = {
   id: number;
   seedsAccount: string;
   email: string;
+  /** Optional display name from users join (no migration). */
+  filerName?: string | null;
   originalUsdTotal: number;
   spentUsdAmount: number;
   claimedUsdAmount: number;
@@ -144,10 +148,11 @@ export function SeedsClaimDetail({
         <h4 className="font-medium text-[#1a472a] text-sm">Submitted answers</h4>
         <div className="grid sm:grid-cols-2 gap-4">
           <DetailField label="Claim ID">{claim.id}</DetailField>
-          <DetailField label="Status">{claim.status}</DetailField>
+          <DetailField label="Status">{formatClaimStatus(claim.status)}</DetailField>
           <DetailField label="SEEDS Account Name" mono>
             {claim.seedsAccount || "-"}
           </DetailField>
+          <DetailField label="Filed by">{formatClaimFiledBy(claim).line}</DetailField>
           <DetailField label="Email Address">{claim.email || "-"}</DetailField>
           <DetailField label="Base Wallet Address" mono>
             {claim.baseWalletAddress || "-"}
@@ -619,9 +624,19 @@ export function AdminSeedsClaimsTab({}: Props) {
                       <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 text-sm">
                         <div>
                           <div className="text-[#1a472a]/75 text-xs font-medium">Filed by</div>
-                          <div className="text-[#1a472a] font-medium text-sm truncate">
-                            {claim.email || "-"}
-                          </div>
+                          {(() => {
+                            const filed = formatClaimFiledBy(claim);
+                            return (
+                              <div className="min-w-0">
+                                <div className="text-[#1a472a] font-medium text-sm truncate" title={filed.line}>
+                                  {filed.name}
+                                </div>
+                                {filed.name !== filed.email && (
+                                  <div className="text-[#1a472a]/75 text-xs truncate">{filed.email}</div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div>
                           <div className="text-[#1a472a]/75 text-xs font-medium">SEEDS Account</div>
@@ -656,7 +671,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                         <div>
                           <div className="text-[#1a472a]/75 text-xs font-medium">Status</div>
                           <Badge variant="outline" className={`text-xs ${getStatusColor(claim.status)}`}>
-                            {claim.status}
+                            {formatClaimStatus(claim.status)}
                           </Badge>
                         </div>
                       </div>
@@ -664,6 +679,14 @@ export function AdminSeedsClaimsTab({}: Props) {
                         <ChevronUp className="w-5 h-5 text-[#1a472a]/80" />
                       ) : (
                         <ChevronDown className="w-5 h-5 text-[#1a472a]/80" />
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#1a472a]/75">
+                      <span>Submitted {formatClaimDate(claim.createdAt)}</span>
+                      {claim.reviewedAt ? (
+                        <span>Reviewed {formatClaimDate(claim.reviewedAt)}</span>
+                      ) : (
+                        <span>Not reviewed yet</span>
                       )}
                     </div>
                   </div>
