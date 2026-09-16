@@ -44,6 +44,7 @@ import { BackButton } from "@/components/BackButton";
 import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
+import { INVESTOR_FORM_DRAFT_KEY, loadInvestorDraftFromStorage } from "@/lib/investorFormDraft";
 import { FUND } from "@shared/fund";
 
 // Form data type
@@ -157,12 +158,12 @@ const sectorOptions = [
   "Community Finance",
 ];
 
-const INVESTOR_LS_KEY = 'investor_form_draft';
+const INVESTOR_LS_KEY = INVESTOR_FORM_DRAFT_KEY;
 
 function loadInvestorDraft(): Partial<InvestorFormData> | null {
   try {
-    const raw = localStorage.getItem(INVESTOR_LS_KEY);
-    return raw ? JSON.parse(raw) : null;
+    // Attestations are stripped — contact fields may restore; checkboxes never do.
+    return loadInvestorDraftFromStorage(localStorage.getItem(INVESTOR_LS_KEY)) as Partial<InvestorFormData> | null;
   } catch { return null; }
 }
 
@@ -227,6 +228,10 @@ export default function InvestorForm() {
       email: savedEmail,
       fullName: savedName,
       ...(draft ?? {}),
+      // Never restore legal attestations from draft storage — always re-affirm.
+      isAccreditedInvestor: false,
+      understandsRisks: false,
+      hasReadDisclosures: false,
     };
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
