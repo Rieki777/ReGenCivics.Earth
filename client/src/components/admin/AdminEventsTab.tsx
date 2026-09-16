@@ -23,6 +23,11 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
+import {
+  adminEventStatusLabel,
+  deriveEventTemporalPhase,
+  partitionEventsByTemporal,
+} from "@/lib/eventTemporal";
 
 export function AdminEventsTab() {
   const { data: allEvents = [], refetch, isLoading } = trpc.events.adminList.useQuery();
@@ -80,6 +85,8 @@ export function AdminEventsTab() {
   );
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
   const autoReminderMap = Object.fromEntries(autoReminders.map(r => [r.eventId, r]));
+  const { upcoming: upcomingEvents, past: pastEvents } = partitionEventsByTemporal(allEvents);
+
 
   function startEdit(ev: any) {
     setEditingId(ev.id);
@@ -266,8 +273,8 @@ export function AdminEventsTab() {
       {/* Events List */}
       {isLoading && <div className="text-center py-8 text-[#1a472a]/70"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
 
-      <div className="space-y-2">
-        {allEvents.map(ev => {
+      {(() => {
+        const renderEventCard = (ev: (typeof allEvents)[number]) => {
           const signupCount = Number(countMap[ev.id] ?? 0);
           const startDate = ev.startTime ? new Date(ev.startTime) : null;
           const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '-';
@@ -275,21 +282,24 @@ export function AdminEventsTab() {
           // labelling it with a stored string showed "10:00 AM EDT" for a
           // 17:00Z event to a reader in California. Same bug as EventDetail.
           const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : '';
+          const temporalPhase = deriveEventTemporalPhase(ev);
+          const isPast = temporalPhase === "past";
+          const displayStatus = adminEventStatusLabel(ev);
           return (
-            <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`}>
+            <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`} data-testid={isPast ? "admin-event-past" : "admin-event-upcoming"}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[ev.type] ?? ''}`}>{ev.type}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ev.status] ?? ''}`}>{ev.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[displayStatus] ?? ''}`}>{displayStatus}</span>
                       {ev.season && <span className="text-xs text-white/60">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
                     </div>
                     <p className="font-medium text-white text-sm truncate">{ev.title}</p>
                     <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/60">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
-                      {autoReminderMap[ev.id]?.enabled && (
+                      {!isPast && autoReminderMap[ev.id]?.enabled && (
                         <span className="text-blue-300">Auto-remind on</span>
                       )}
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
@@ -307,7 +317,7 @@ export function AdminEventsTab() {
                       className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
                       <Users size={11} className="mr-1" /> {rosterEventId === ev.id ? 'Hide' : "Who's coming"}
                     </Button>
-                    {reminderSuccess === ev.id
+                    {!isPast && (reminderSuccess === ev.id
                       ? <Button size="sm" variant="ghost" disabled className="text-yellow-400 h-7 px-2 text-xs">
                           <CheckCheck size={11} className="mr-1" /> Sent!
                         </Button>
@@ -328,7 +338,8 @@ export function AdminEventsTab() {
                           className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
                           <Bell size={11} className="mr-1" />
                           {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
-                        </Button>}
+                        </Button>)}
+                    {!isPast && (
                     <Button size="sm" variant="ghost"
                       onClick={() => setAutoReminderOpen(autoReminderOpen === ev.id ? null : ev.id)}
                       className="text-white/60 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2 text-xs">
@@ -337,6 +348,12 @@ export function AdminEventsTab() {
                         ? "Close auto-remind"
                         : autoReminderMap[ev.id]?.enabled ? "Auto-remind on" : "Auto-remind"}
                     </Button>
+                    )}
+                    {isPast && autoReminderMap[ev.id]?.enabled && (
+                      <span className="text-[11px] text-white/50 h-7 px-2 inline-flex items-center" title="Auto-remind was on; past events no longer send">
+                        <Clock size={11} className="mr-1" /> Auto-remind was on
+                      </span>
+                    )}
                     {/* #17. Send Follow-up for completed events */}
                     {ev.status === 'completed' && (
                       followupSuccess === ev.id
@@ -419,7 +436,7 @@ export function AdminEventsTab() {
                 )}
 
                 {/* Inline email editor */}
-                {reminderEditorOpen === ev.id && (
+                {!isPast && reminderEditorOpen === ev.id && (
                   <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
                     <p className="text-xs text-white/70 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
                     <div>
@@ -621,7 +638,7 @@ export function AdminEventsTab() {
                   </div>
                 )}
 
-                {autoReminderOpen === ev.id && (
+                {!isPast && autoReminderOpen === ev.id && (
                   <AdminEventAutoReminders
                     event={ev}
                     saved={autoReminderMap[ev.id]}
@@ -743,8 +760,30 @@ export function AdminEventsTab() {
               </CardContent>
             </Card>
           );
-        })}
-      </div>
+        };
+
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2" data-testid="admin-events-upcoming">
+              <h3 className="text-sm font-semibold text-[#1a472a]">Upcoming</h3>
+              {upcomingEvents.length === 0 ? (
+                <p className="text-sm text-[#1a472a]/70">No upcoming events.</p>
+              ) : (
+                upcomingEvents.map(renderEventCard)
+              )}
+            </div>
+            {pastEvents.length > 0 && (
+              <div className="space-y-2" data-testid="admin-events-past">
+                <h3 className="text-sm font-semibold text-[#1a472a]/80">Past</h3>
+                <p className="text-xs text-[#1a472a]/60">
+                  Derived from start/end times (not only cron status). Reminder send and auto-remind controls are hidden for past events.
+                </p>
+                {pastEvents.map(renderEventCard)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Setup reminder */}
       <Card className="bg-[#0a1f14] border-yellow-800/30 mt-4">

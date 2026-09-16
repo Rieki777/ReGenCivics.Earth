@@ -18,8 +18,10 @@ import {
   broadcastBodiesReady,
   broadcastChannelById,
   buildBufferPostTargets,
+  clipToBroadcastLimit,
   fillChannelBodiesFromMaster,
   resolveChannelBody,
+  strictestBroadcastLimit,
   type BroadcastChannelId,
 } from "@shared/broadcastChannels";
 
@@ -110,17 +112,47 @@ export function AdminBroadcastPanel() {
   }, [selectedChannels, activeChannelTab]);
 
   useEffect(() => {
+    const applyBroadcastFill = (raw: string) => {
+      const fullText = raw.trim();
+      if (!fullText) return;
+
+      // Once the per-channel surface exists, keep the article intact in the
+      // master draft and adapt each selected body independently. The master is
+      // the source of truth; no article text is silently lost at handoff.
+      const hasPerChannelState =
+        selectedChannels.length > 1 || Object.keys(channelBodies).length > 0;
+      if (hasPerChannelState) {
+        setText(fullText);
+        setChannelBodies((prev) => ({
+          ...prev,
+          ...fillChannelBodiesFromMaster(fullText, selectedChannels, "adapt"),
+        }));
+        toast.message("Adapted social variants to each network's limit.");
+        return;
+      }
+
+      // Legacy/single-message path: retain Fix 2's safe cap and visible notice.
+      const limit = strictestBroadcastLimit(selectedChannels);
+      const clipped = clipToBroadcastLimit(fullText, limit);
+      setText(clipped);
+      if (clipped.length < fullText.length) {
+        toast.message(
+          `Shortened for social (${fullText.length} → ${clipped.length} chars, max ${limit}).`,
+        );
+      }
+    };
+
     const pending = consumeBroadcastFill();
-    if (pending) setText(pending);
+    if (pending) applyBroadcastFill(pending);
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ text?: string }>).detail;
       if (!detail?.text) return;
       clearBroadcastFill();
-      setText(detail.text);
+      applyBroadcastFill(detail.text);
     };
     window.addEventListener(BROADCAST_FILL_EVENT, handler);
     return () => window.removeEventListener(BROADCAST_FILL_EVENT, handler);
-  }, []);
+  }, [selectedChannels, channelBodies]);
 
   const {
     data: bufferProfiles,
