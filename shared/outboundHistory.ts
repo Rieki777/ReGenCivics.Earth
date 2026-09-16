@@ -189,7 +189,10 @@ export function rollupDeliveryStats(
   let complained = 0;
   let failed = 0;
   for (const log of logs) {
-    if (log.status === "delivered") delivered += 1;
+    // Open/click webhooks often land while status is still "sent" (delivery
+    // webhook missing or delayed). Engagement proves the message arrived, so
+    // count those rows as delivered for History rates and totals.
+    if (log.status === "delivered" || log.openedAt || log.clickedAt) delivered += 1;
     if (log.status === "bounced") bounced += 1;
     if (isComplaint(log)) complained += 1;
     else if (log.status === "failed") failed += 1;
@@ -226,7 +229,7 @@ export function recipientStatusLabel(recipientStatus: string, log?: DeliveryLogR
   if (recipientStatus === "skipped_unsub") return "Skipped";
   if (recipientStatus === "pending") return "Pending";
   if (recipientStatus === "failed") return "Failed";
-  if (log?.status === "delivered") return "Delivered";
+  if (log?.status === "delivered" || log?.openedAt || log?.clickedAt) return "Delivered";
   if (log?.status === "bounced") return "Bounced";
   if (log && isComplaint(log)) return "Complained";
   if (log?.status === "failed") return "Failed";
