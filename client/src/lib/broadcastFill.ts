@@ -16,6 +16,7 @@ export function outboundWriteHref(): string {
   return adminTabHref("outbound", { surface: "write" });
 }
 
+/** Queue the complete source body; the Social composer owns per-network limits. */
 export function queueBroadcastFill(text: string): void {
   try {
     sessionStorage.setItem(BROADCAST_FILL_STORAGE_KEY, text);
