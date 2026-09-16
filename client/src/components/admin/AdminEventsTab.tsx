@@ -752,7 +752,7 @@ export function AdminEventsTab() {
           <CardTitle className="text-yellow-400 text-sm flex items-center gap-2"><Clock size={14} /> Auto-Reminder Cron Setup</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-white/60 space-y-1">
-          <p>Reminders send automatically if you set up the Railway cron job. Auto-reminders on each event (7d / 24h / 1h, with Season 2 / Open Access / custom audiences) use this same endpoint.</p>
+          <p>Reminders send automatically if you set up the Railway cron job. Auto-reminders on each event (7d / 3d / 24h / 1h / 33m, with Season 2 / Open Access / custom audiences) use this same endpoint.</p>
           <ol className="list-decimal list-inside space-y-1 text-white/70">
             <li>In Railway: New Service → Cron Job</li>
             <li>Schedule: <code className="bg-white/10 px-1 rounded">0 * * * *</code> (hourly)</li>
