@@ -61,6 +61,33 @@ router.post("/token", requireAdmin, async (req: Request, res: Response): Promise
   }
 });
 
+type BufferPostJob = { profileId: string; text: string };
+
+function resolvePostJobs(body: {
+  text?: string;
+  profileIds?: string[];
+  posts?: Array<{ profileId?: string; text?: string }>;
+}): BufferPostJob[] | null {
+  if (Array.isArray(body.posts) && body.posts.length > 0) {
+    const jobs: BufferPostJob[] = [];
+    for (const p of body.posts) {
+      if (!p?.profileId || typeof p.profileId !== "string") return null;
+      if (!p?.text || typeof p.text !== "string" || !p.text.trim()) return null;
+      jobs.push({ profileId: p.profileId, text: p.text });
+    }
+    return jobs;
+  }
+  if (
+    typeof body.text === "string" &&
+    body.text.trim() &&
+    Array.isArray(body.profileIds) &&
+    body.profileIds.length > 0
+  ) {
+    return body.profileIds.map((profileId) => ({ profileId, text: body.text as string }));
+  }
+  return null;
+}
+
 // POST /api/admin/buffer/post
 router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<void> => {
   const token = await getBufferAccessToken();
@@ -69,26 +96,32 @@ router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<
     return;
   }
 
-  const { text, link, profileIds, scheduledAt } = req.body as {
-    text: string;
+  const { link, scheduledAt } = req.body as {
     link?: string;
-    profileIds: string[];
     scheduledAt?: string;
+    text?: string;
+    profileIds?: string[];
+    posts?: Array<{ profileId: string; text: string }>;
   };
 
-  if (!text || !Array.isArray(profileIds) || profileIds.length === 0) {
-    res.status(400).json({ error: "text and profileIds are required" });
+  const jobs = resolvePostJobs(req.body as {
+    text?: string;
+    profileIds?: string[];
+    posts?: Array<{ profileId?: string; text?: string }>;
+  });
+  if (!jobs) {
+    res.status(400).json({ error: "posts, or text with profileIds, are required" });
     return;
   }
 
   const results: Array<{ profileId: string; success: boolean; updateId?: string; error?: string }> = [];
 
-  for (const profileId of profileIds) {
+  for (const job of jobs) {
     try {
       const params = new URLSearchParams();
       params.append("access_token", token);
-      params.append("profile_ids[]", profileId);
-      params.append("text", text);
+      params.append("profile_ids[]", job.profileId);
+      params.append("text", job.text);
       if (link) params.append("media[link]", link);
       if (scheduledAt) {
         params.append("scheduled_at", scheduledAt);
@@ -104,17 +137,17 @@ router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        results.push({ profileId, success: false, error: text });
+        const errText = await response.text();
+        results.push({ profileId: job.profileId, success: false, error: errText });
       } else {
         const data = await response.json() as { updates?: Array<{ id?: string }>; update?: { id?: string } };
         const updateId =
           data.update?.id ??
           (Array.isArray(data.updates) && data.updates[0]?.id ? data.updates[0].id : undefined);
-        results.push({ profileId, success: true, updateId });
+        results.push({ profileId: job.profileId, success: true, updateId });
       }
     } catch (err) {
-      results.push({ profileId, success: false, error: String(err) });
+      results.push({ profileId: job.profileId, success: false, error: String(err) });
     }
   }
 

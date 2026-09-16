@@ -371,28 +371,58 @@ export const adminRouter = router({
       return profiles;
     }),
 
-    // Post to Buffer channels
+    // Post to Buffer channels (per-profile body, or legacy one body to all)
     postToBuffer: adminProcedure
-      .input(z.object({
-        text: z.string().min(1).max(3000),
-        link: z.string().url().optional(),
-        profileIds: z.array(z.string()).min(1),
-        scheduledAt: z.string().optional(),
-      }))
+      .input(
+        z
+          .object({
+            /** Preferred: each Buffer profile gets its own text. */
+            posts: z
+              .array(
+                z.object({
+                  profileId: z.string().min(1),
+                  text: z.string().min(1).max(3000),
+                }),
+              )
+              .min(1)
+              .optional(),
+            /** Legacy one-body-to-all (still accepted when posts omitted). */
+            text: z.string().min(1).max(3000).optional(),
+            link: z.string().url().optional(),
+            profileIds: z.array(z.string()).min(1).optional(),
+            scheduledAt: z.string().optional(),
+          })
+          .superRefine((val, ctx) => {
+            if (val.posts && val.posts.length > 0) return;
+            if (val.text && val.profileIds && val.profileIds.length > 0) return;
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "posts, or text with profileIds, is required",
+            });
+          }),
+      )
       .mutation(async ({ input }) => {
         const token = await getBufferAccessToken();
         if (!token) {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Buffer not configured" });
         }
 
+        const jobs: Array<{ profileId: string; text: string }> =
+          input.posts && input.posts.length > 0
+            ? input.posts
+            : (input.profileIds ?? []).map((profileId) => ({
+                profileId,
+                text: input.text as string,
+              }));
+
         const results: Array<{ profileId: string; success: boolean; updateId?: string; error?: string }> = [];
 
-        for (const profileId of input.profileIds) {
+        for (const job of jobs) {
           try {
             const params = new URLSearchParams();
             params.append("access_token", token);
-            params.append("profile_ids[]", profileId);
-            params.append("text", input.text);
+            params.append("profile_ids[]", job.profileId);
+            params.append("text", job.text);
             if (input.link) params.append("media[link]", input.link);
             if (input.scheduledAt) {
               params.append("scheduled_at", input.scheduledAt);
@@ -409,7 +439,7 @@ export const adminRouter = router({
 
             if (!response.ok) {
               const errText = await response.text();
-              results.push({ profileId, success: false, error: errText });
+              results.push({ profileId: job.profileId, success: false, error: errText });
             } else {
               const data = await response.json() as {
                 updates?: Array<{ id?: string }>;
@@ -418,10 +448,10 @@ export const adminRouter = router({
               const updateId =
                 data.update?.id ??
                 (Array.isArray(data.updates) && data.updates[0]?.id ? data.updates[0].id : undefined);
-              results.push({ profileId, success: true, updateId });
+              results.push({ profileId: job.profileId, success: true, updateId });
             }
           } catch (err) {
-            results.push({ profileId, success: false, error: String(err) });
+            results.push({ profileId: job.profileId, success: false, error: String(err) });
           }
         }
 
