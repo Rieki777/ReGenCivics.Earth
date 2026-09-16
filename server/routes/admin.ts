@@ -72,6 +72,9 @@ export async function computeEcosystemSnapshot() {
   const invBy = (s: string) => investors.filter((i) => ((i.status as string) || "new") === s).length;
   const inqBy = (s: string) => inquiries.filter((i) => ((i.status as string) || "new") === s).length;
   const n = (rows: { c: number }[]) => Number(rows[0]?.c ?? 0);
+  // Align with Investors admin "pending review": status new|pending.
+  // Archived is a separate status, so it never lands in this bucket.
+  const investorPendingReview = invBy("new") + invBy("pending");
 
   return {
     generatedAt: new Date().toISOString(),
@@ -84,7 +87,8 @@ export async function computeEcosystemSnapshot() {
     },
     investors: {
       total: investors.length,
-      new: invBy("new"),
+      // `new` keeps the existing API field name; value is pending-review count.
+      new: investorPendingReview,
       contacted: invBy("contacted"),
       inDiscussion: invBy("in_discussion"),
       committed: invBy("committed"),

@@ -3,8 +3,8 @@ import { publicProcedure, adminProcedure, rateLimited, router } from "../_core/t
 import { z } from "zod";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, and, like, or, desc, sql, count } from "drizzle-orm";
-import { seedsClaims, seedsContributions } from "../../drizzle/schema";
+import { eq, and, like, or, desc, sql, count, inArray } from "drizzle-orm";
+import { seedsClaims, seedsContributions, users } from "../../drizzle/schema";
 
 import { getGameVariable } from "../game";
 import { SEEDS_REGEN_PER_USD as SEEDS_REGEN_PER_USD_FALLBACK } from "@shared/gameMechanics";
@@ -367,15 +367,38 @@ export const seedsClaimsRouter = router({
         .where(where);
       const total = countResult[0]?.count || 0;
 
-      // Get paginated results
+      // Paginate claims first, then attach filer names via a separate lookup.
+      // users.email is not unique — a leftJoin would multiply rows and break
+      // limit/offset. No seeds_claims migration.
       const offset = input.page * input.limit;
-      const claims = await db
+      const claimRows = await db
         .select()
         .from(seedsClaims)
         .where(where)
         .orderBy(desc(seedsClaims.createdAt))
         .limit(input.limit)
         .offset(offset);
+
+      const emails = [...new Set(claimRows.map((c) => c.email).filter(Boolean))];
+      const nameByEmail = new Map<string, string>();
+      if (emails.length > 0) {
+        const userRows = await db
+          .select({ email: users.email, name: users.name })
+          .from(users)
+          .where(inArray(users.email, emails));
+        for (const u of userRows) {
+          const email = (u.email || "").trim().toLowerCase();
+          const name = (u.name || "").trim();
+          if (!email || !name) continue;
+          // First non-empty name wins (stable enough for admin display).
+          if (!nameByEmail.has(email)) nameByEmail.set(email, name);
+        }
+      }
+
+      const claims = claimRows.map((claim) => ({
+        ...claim,
+        filerName: nameByEmail.get((claim.email || "").trim().toLowerCase()) ?? null,
+      }));
 
       return {
         claims,
