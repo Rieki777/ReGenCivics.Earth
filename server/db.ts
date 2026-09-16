@@ -513,15 +513,37 @@ export async function updateEmailLogStatus(id: number, status: "sent" | "deliver
 export async function markEmailOpened(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.update(emailLogs).set({ openedAt: new Date() }).where(eq(emailLogs.id, id));
+
+  const now = new Date();
+  const [row] = await db
+    .select({ status: emailLogs.status, deliveredAt: emailLogs.deliveredAt })
+    .from(emailLogs)
+    .where(eq(emailLogs.id, id))
+    .limit(1);
+  const updates: Record<string, unknown> = { openedAt: now };
+  if (row?.status === "sent") {
+    updates.status = "delivered";
+    if (!row.deliveredAt) updates.deliveredAt = now;
+  }
+  await db.update(emailLogs).set(updates).where(eq(emailLogs.id, id));
 }
 
 export async function markEmailClicked(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.update(emailLogs).set({ clickedAt: new Date() }).where(eq(emailLogs.id, id));
+  const now = new Date();
+  const [row] = await db
+    .select({ status: emailLogs.status, deliveredAt: emailLogs.deliveredAt })
+    .from(emailLogs)
+    .where(eq(emailLogs.id, id))
+    .limit(1);
+  const updates: Record<string, unknown> = { clickedAt: now };
+  if (row?.status === "sent") {
+    updates.status = "delivered";
+    if (!row.deliveredAt) updates.deliveredAt = now;
+  }
+  await db.update(emailLogs).set(updates).where(eq(emailLogs.id, id));
 }
 
 export async function getEmailLogsByEmail(recipientEmail: string) {
@@ -1555,7 +1577,7 @@ export async function getCampaignConversionRate(campaignId: number): Promise<{
 // These helpers keep their legacy names so existing writers (campaigns,
 // hypha-bridge webhooks) work unchanged.
 
-/** Legacy type → in-app destination, mirroring the old NotificationBell map.
+/** Legacy type â†’ in-app destination, mirroring the old NotificationBell map.
  * New forum notifications set an explicit deep link instead. */
 function legacyNotificationLink(type: string, campaignId?: number | null): string | null {
   switch (type) {
@@ -1880,7 +1902,7 @@ export async function getNotificationEmails(type: string): Promise<string[] | nu
 }
 
 
-// ─── Email Template Persistence ───────────────────────────────────────
+// â”€â”€â”€ Email Template Persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Get all custom email templates
@@ -2698,7 +2720,7 @@ export async function createForumNotification(data: { userId: number; type: stri
   });
 }
 
-// ─── Email Magic Link Token Functions ────────────────────────────────────────
+// â”€â”€â”€ Email Magic Link Token Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createEmailToken(data: { email: string; token: string; expiresAt: Date }): Promise<void> {
   const db = await getDb();
@@ -2744,7 +2766,7 @@ export async function findAndConsumeEmailToken(token: string): Promise<EmailToke
   return rows[0] ?? null;
 }
 
-// ─── Project Join Requests ───────────────────────────────────────────────────
+// â”€â”€â”€ Project Join Requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function createProjectJoinRequest(data: InsertProjectJoinRequest): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2781,7 +2803,7 @@ export async function routeJoinRequestsToSteward(orgId: string, stewardUserId: n
     .where(and(eq(projectJoinRequests.targetId, orgId), isNull(projectJoinRequests.stewardUserId)));
 }
 
-// ─── Org Claims ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Org Claims â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function createOrgClaim(data: InsertOrgClaim): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2907,7 +2929,7 @@ export async function searchApplications(query: string) {
   return rows;
 }
 
-// ─── C15: Project Connections ─────────────────────────────────────────────────
+// â”€â”€â”€ C15: Project Connections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getConnectionsForPost(postId: number): Promise<ProjectConnection[]> {
   const db = await getDb();
@@ -2935,7 +2957,7 @@ export async function deleteProjectConnection(id: number): Promise<void> {
   await db.delete(projectConnections).where(eq(projectConnections.id, id));
 }
 
-// ─── C13: Glossary Terms ──────────────────────────────────────────────────────
+// â”€â”€â”€ C13: Glossary Terms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getApprovedGlossaryTerms(): Promise<GlossaryTerm[]> {
   const db = await getDb();
@@ -2980,7 +3002,7 @@ export async function getGlossaryTermByName(term: string): Promise<GlossaryTerm 
   return rows[0] || null;
 }
 
-// ─── C12: Digests ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ C12: Digests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function saveDigest(data: { periodStart: string; periodEnd: string; contentMd: string; forumPostId?: number }): Promise<number> {
   const db = await getDb();
@@ -3030,7 +3052,7 @@ export async function getRecentForumPostsForDigest(): Promise<{ id: number; titl
   return rows;
 }
 
-// ─── C9: Knowledge Map ────────────────────────────────────────────────────────
+// â”€â”€â”€ C9: Knowledge Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function listKnowledgeMapEntries(categoryId?: number) {
   const db = await getDb();
   if (!db) return [];
@@ -3073,7 +3095,7 @@ export async function reorderKnowledgeMapEntry(id: number, sortOrder: number) {
   await db.update(knowledgeMapEntries).set({ sortOrder }).where(eq(knowledgeMapEntries.id, id));
 }
 
-// ─── Site Settings ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Site Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getSiteSetting(key: string): Promise<string | null> {
   const db = await getDb();
@@ -3089,7 +3111,7 @@ export async function setSiteSetting(key: string, value: string): Promise<void> 
     .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
 
-// ─── Quest Completions ────────────────────────────────────────────────────────
+// â”€â”€â”€ Quest Completions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getQuestCompletionsForUser(userId: number): Promise<QuestCompletion[]> {
   const db = await getDb();
@@ -3168,7 +3190,7 @@ export async function getAdminAuditLog(opts?: {
   return query.orderBy(desc(adminAuditLog.createdAt)).limit(limit);
 }
 
-// ─── Event Attendance ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Event Attendance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** Mark an attendee as having attended an event. Returns the new attendance record, or null if already marked. */
 export async function markEventAttendance(data: {
@@ -3280,7 +3302,7 @@ export async function getAttendanceCounts(eventIds: number[]): Promise<Record<nu
   return result;
 }
 
-// ─── $ReGen Token Ledger ──────────────────────────────────────────────────────
+// â”€â”€â”€ $ReGen Token Ledger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** Get total $ReGen token balance for an email address. */
 export async function getTokenBalance(email: string): Promise<number> {
@@ -3344,7 +3366,7 @@ export async function getTokenLeaderboard(limit = 20): Promise<{ email: string; 
   return rows.map(r => ({ email: r.email, total: Number(r.total) }));
 }
 
-// ─── Community Agreements ─────────────────────────────────────────────────────
+// â”€â”€â”€ Community Agreements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function listCommunityAgreements(
   sortBy: 'votes' | 'newest' = 'votes',
@@ -3418,7 +3440,7 @@ export async function getUserCommunityAgreementVotes(userId: number) {
   return votes.map(v => v.agreementId);
 }
 
-// ─── Private token ledger (all 4 tokens) ──────────────────────────────────────
+// â”€â”€â”€ Private token ledger (all 4 tokens) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Implementation moved to server/db/tokens.ts per FIXES_TO_MAKE_2026-04-25_
 // world-class.md item 26 (split server/db.ts into domain modules). The
 // re-export keeps every existing `import { creditPrivateTokens } from

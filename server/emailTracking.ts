@@ -111,12 +111,21 @@ export async function recordEmailOpen(emailLogId: number): Promise<void> {
   try {
     const db = await getDb();
     if (!db) return;
-    
-    await db
-      .update(emailLogs)
-      .set({ openedAt: new Date() })
+
+    const now = new Date();
+    const [row] = await db
+      .select({ status: emailLogs.status, deliveredAt: emailLogs.deliveredAt })
+      .from(emailLogs)
       .where(eq(emailLogs.id, emailLogId))
-      .execute();
+      .limit(1);
+    const updates: Record<string, unknown> = { openedAt: now };
+    // An open proves inbox delivery; promote "sent" so History rates work
+    // even when the email.delivered webhook never arrived.
+    if (row?.status === "sent") {
+      updates.status = "delivered";
+      if (!row.deliveredAt) updates.deliveredAt = now;
+    }
+    await db.update(emailLogs).set(updates).where(eq(emailLogs.id, emailLogId)).execute();
   } catch (error) {
     console.error("Failed to record email open:", error);
   }
@@ -130,12 +139,19 @@ export async function recordEmailClick(emailLogId: number): Promise<void> {
   try {
     const db = await getDb();
     if (!db) return;
-    
-    await db
-      .update(emailLogs)
-      .set({ clickedAt: new Date() })
+
+    const now = new Date();
+    const [row] = await db
+      .select({ status: emailLogs.status, deliveredAt: emailLogs.deliveredAt })
+      .from(emailLogs)
       .where(eq(emailLogs.id, emailLogId))
-      .execute();
+      .limit(1);
+    const updates: Record<string, unknown> = { clickedAt: now };
+    if (row?.status === "sent") {
+      updates.status = "delivered";
+      if (!row.deliveredAt) updates.deliveredAt = now;
+    }
+    await db.update(emailLogs).set(updates).where(eq(emailLogs.id, emailLogId)).execute();
   } catch (error) {
     console.error("Failed to record email click:", error);
   }
