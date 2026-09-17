@@ -247,9 +247,18 @@ export async function runSynthesizePass(input: {
   ].join("\n");
 
   recordLlmUsage();
+  // Same Worldview + voice_rules stack as Outbound / FAB (fail-soft).
+  let systemPrompt = VOICE_RULES;
+  try {
+    const { loadAdminVoiceContextBlock } = await import("../lib/adminVoiceContext");
+    const voice = await loadAdminVoiceContextBlock().catch(() => "");
+    if (voice.trim()) systemPrompt = `${VOICE_RULES}\n\n${voice}`;
+  } catch {
+    // Fail-soft: hard VOICE_RULES alone still synthesize.
+  }
   const out = await invokeLLM({
     messages: [
-      { role: "system", content: VOICE_RULES },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     maxTokens: 3000,

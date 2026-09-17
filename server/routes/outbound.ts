@@ -25,6 +25,7 @@ import {
   stripEmailPii,
 } from "../lib/emailDraftAgent";
 import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
+import { fireOutboundVoiceLearn } from "../lib/voiceLearn";
 
 const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 const sourceZ = z.enum([
@@ -59,6 +60,8 @@ export const outboundRouter = router({
       layout: letterLayoutZ.default("announcement"),
       templateKey: z.string().max(100).nullable().optional(),
       audience: audienceZ.optional(),
+      /** Last AI-applied draft body from Write-with-me; enables voice_rules learning. */
+      aiDraftBody: z.string().max(50000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -82,6 +85,11 @@ export const outboundRouter = router({
           templateKey: input.templateKey ?? existing.templateKey,
           audience,
         }).where(eq(newsletterIssues.id, existing.id));
+        fireOutboundVoiceLearn({
+          ownerId: ctx.user.id,
+          aiDraftBody: input.aiDraftBody,
+          finalBody: input.body,
+        });
         return { id: existing.id };
       }
       const inserted = await db.insert(newsletterIssues).values({
@@ -92,6 +100,11 @@ export const outboundRouter = router({
         audience,
         status: "draft",
         createdBy: ctx.user.id,
+      });
+      fireOutboundVoiceLearn({
+        ownerId: ctx.user.id,
+        aiDraftBody: input.aiDraftBody,
+        finalBody: input.body,
       });
       return { id: inserted[0].insertId };
     }),
@@ -207,16 +220,31 @@ export const outboundRouter = router({
       issueId: z.number().int().positive(),
       confirmToken: z.string().min(20).max(2000),
       idempotencyKey: z.string().min(8).max(64),
+      aiDraftBody: z.string().max(50000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { confirmAndSendIssue } = await import("../lib/newsletter-issue-email");
       try {
-        return await confirmAndSendIssue({
+        const result = await confirmAndSendIssue({
           issueId: input.issueId,
           createdBy: ctx.user.id,
           confirmToken: input.confirmToken,
           idempotencyKey: input.idempotencyKey,
         });
+        if (input.aiDraftBody) {
+          const db = await getDb();
+          const [issue] = db
+            ? await db.select({ body: newsletterIssues.body }).from(newsletterIssues).where(eq(newsletterIssues.id, input.issueId)).limit(1)
+            : [];
+          if (issue?.body) {
+            fireOutboundVoiceLearn({
+              ownerId: ctx.user.id,
+              aiDraftBody: input.aiDraftBody,
+              finalBody: issue.body,
+            });
+          }
+        }
+        return result;
       } catch (err) {
         fail(err, "Send refused");
       }
@@ -229,17 +257,32 @@ export const outboundRouter = router({
       confirmToken: z.string().min(20).max(2000),
       idempotencyKey: z.string().min(8).max(64),
       scheduledFor: z.string().min(10).max(40),
+      aiDraftBody: z.string().max(50000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { scheduleIssue } = await import("../lib/newsletter-issue-email");
       try {
-        return await scheduleIssue({
+        const result = await scheduleIssue({
           issueId: input.issueId,
           createdBy: ctx.user.id,
           confirmToken: input.confirmToken,
           idempotencyKey: input.idempotencyKey,
           scheduledFor: input.scheduledFor,
         });
+        if (input.aiDraftBody) {
+          const db = await getDb();
+          const [issue] = db
+            ? await db.select({ body: newsletterIssues.body }).from(newsletterIssues).where(eq(newsletterIssues.id, input.issueId)).limit(1)
+            : [];
+          if (issue?.body) {
+            fireOutboundVoiceLearn({
+              ownerId: ctx.user.id,
+              aiDraftBody: input.aiDraftBody,
+              finalBody: issue.body,
+            });
+          }
+        }
+        return result;
       } catch (err) {
         fail(err, "Schedule refused");
       }

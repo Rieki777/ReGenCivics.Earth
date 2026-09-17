@@ -52,6 +52,8 @@ export function AdminOutboundWrite({
   const [issueId, setIssueId] = useState<number | null>(null);
   const [subject, setSubject] = useState(prefill?.subject ?? "");
   const [body, setBody] = useState(prefill?.body ?? "");
+  /** Body from last Write-with-me Apply; used for voice_rules learning on save/send. */
+  const [aiDraftBody, setAiDraftBody] = useState<string | null>(null);
   const [layout, setLayout] = useState<LetterLayout>(prefill?.layout ?? "announcement");
   const [templateKey, setTemplateKey] = useState("nl_blank");
   const [source, setSource] = useState<NewsletterSource | "all">(prefill?.source ?? "all");
@@ -77,6 +79,7 @@ export function AdminOutboundWrite({
     setIssueId(null);
     setSubject(prefill.subject);
     setBody(prefill.body);
+    setAiDraftBody(null);
     setLayout(prefill.layout);
     setSource(prefill.source);
     setPreview(null);
@@ -145,6 +148,7 @@ export function AdminOutboundWrite({
       layout,
       templateKey: templateKey === "nl_blank" ? null : templateKey,
       audience,
+      aiDraftBody: aiDraftBody ?? undefined,
     });
     setIssueId(saved.id);
     return saved.id;
@@ -177,6 +181,7 @@ export function AdminOutboundWrite({
         issueId,
         confirmToken: preview.confirmToken,
         idempotencyKey,
+        aiDraftBody: aiDraftBody ?? undefined,
       });
       const message = r.duplicate
         ? "Already sent (double-click caught, nothing re-sent)."
@@ -197,6 +202,7 @@ export function AdminOutboundWrite({
         confirmToken: preview.confirmToken,
         idempotencyKey,
         scheduledFor,
+        aiDraftBody: aiDraftBody ?? undefined,
       });
       const when = formatPacificSchedule(new Date(r.scheduledFor));
       const message = `Scheduled for ${when}. ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}. Open Sent to cancel or reschedule.`;
@@ -385,6 +391,7 @@ export function AdminOutboundWrite({
         onApply={(draft) => {
           setSubject(draft.subject);
           setBody(draft.body);
+          setAiDraftBody(draft.body);
           if (draft.layout) setLayout(draft.layout);
           setPreview(null);
           toast.success("Draft applied. Review it, then use Preview send.");
