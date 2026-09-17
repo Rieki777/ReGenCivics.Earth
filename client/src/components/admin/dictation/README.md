@@ -26,9 +26,12 @@ hook inserts at the caret (or appends) and never replaces the whole field.
 - Password, `autocomplete=current-password` / `new-password`, and
   `data-dictation="off"` fields are skipped. Focus into a password field
   stops listening.
-- Mic denied: the button opens a forest-green panel with steps (address-bar
-  lock or site info icon → Microphone → Allow → reload). Chromium will not
-  show the Allow prompt again after Block. Type in the meantime.
+- Mic denied: the button opens a forest-green panel — “Microphone permission
+  is blocked for this site.” Steps cover the browser site-info / mic control
+  and OS mic privacy when needed. Primary CTA is **I allowed it — try again**
+  (rechecks permission via `dictation.start()` without a full reload); Reload
+  is a fallback. Chromium will not show the Allow prompt again after Block.
+  Type in the meantime.
 - Unsupported browser: a short error on the button. The page stays up.
 - Prompt, granted, or a browser without the Permissions API: the normal
   request path runs. Chromium gets `getUserMedia({ audio: true })` first so

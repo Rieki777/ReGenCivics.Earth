@@ -193,7 +193,15 @@ export function DictationButton({
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
+                data-testid="dictation-mic-try-again"
                 className="h-7 rounded-lg bg-[#1a472a] px-2.5 text-[11px] font-medium text-[#7dd87d] hover:bg-[#2d5a3d] pointer-coarse:min-h-11"
+                onClick={() => { void dictation.start(); }}
+              >
+                I allowed it — try again
+              </button>
+              <button
+                type="button"
+                className="h-7 rounded-lg border border-[#1a472a]/30 px-2.5 text-[11px] font-medium text-[#1a472a] hover:bg-[#1a472a]/5 pointer-coarse:min-h-11"
                 onClick={() => window.location.reload()}
               >
                 Reload page

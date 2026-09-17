@@ -44,13 +44,15 @@ export const DICTATION_GENERIC_ERROR =
   "Listening stopped. Type instead, or try the mic again.";
 export const DICTATION_SENSITIVE_MESSAGE =
   "This field cannot take dictation.";
-export const DICTATION_BLOCKED_TITLE = "Microphone is blocked";
+export const DICTATION_BLOCKED_TITLE =
+  "Microphone permission is blocked for this site.";
 export const DICTATION_BLOCKED_LEAD =
-  "This site's microphone is set to Block. Change it to Allow, then reload.";
+  "Allow the mic for this site in the browser site-info / microphone control. If it is already Allowed there, check OS mic privacy. Then try again — reload is only a fallback.";
 export const DICTATION_BLOCKED_STEPS = [
-  "Click the lock or site info icon in the address bar",
-  "Set Microphone to Allow",
-  "Reload this page, then press the mic",
+  "Open the lock or site info control in the address bar",
+  "Set Microphone to Allow for this site",
+  "If still blocked, allow the browser under OS mic privacy (macOS Privacy & Security → Microphone, or Windows Privacy → Microphone)",
+  "Press “I allowed it — try again”. Reload only if Allow does not stick.",
 ] as const;
 
 export function dictationSupported(): boolean {
@@ -259,7 +261,8 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       return;
     }
     setError(null);
-    setBlockedHelp(false);
+    // Keep blockedHelp open across a failed recheck so "try again" does not
+    // flash the modal closed when permission is still denied.
     wantRef.current = true;
 
     const permission = await queryMicrophonePermission();
@@ -284,8 +287,10 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     try {
       recRef.current.start();
       setState("listening");
+      setBlockedHelp(false);
     } catch {
       setState("listening");
+      setBlockedHelp(false);
     }
   }, [disabled, markDenied, rememberCaret, supported, targetRef]);
 
