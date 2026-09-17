@@ -220,9 +220,11 @@ export type BroadcastDraftDeps = {
   packMeta?: typeof getPackMeta;
 };
 
+export type BroadcastDraftMode = "adaptMaster";
+
 export async function draftBroadcastFromHarvest(
   ownerId: number,
-  input: { intent?: string; channels: string[]; link?: string },
+  input: { intent?: string; channels: string[]; link?: string; mode?: BroadcastDraftMode },
   deps: BroadcastDraftDeps = {},
 ): Promise<BroadcastDraftResult> {
   const jobs = broadcastDraftJobs(input.channels);
@@ -235,11 +237,27 @@ export async function draftBroadcastFromHarvest(
   const packMeta = deps.packMeta ?? getPackMeta;
 
   const intent = (input.intent ?? "").trim();
-  const grounding = await loadGrounding(ownerId, intent);
+  const adaptMaster = input.mode === "adaptMaster";
+  if (adaptMaster && !intent) {
+    throw new Error("Write a master draft first");
+  }
+
+  // adaptMaster: stay inside the master text — skip Harvest idea grounding so we
+  // do not pull in unrelated ripe ideas as new facts.
+  const grounding = adaptMaster
+    ? { ideas: [] as HarvestGroundingIdea[], sourceRefs: [] as string[] }
+    : await loadGrounding(ownerId, intent);
   const seed = buildBroadcastSeed(ownerId, intent, grounding);
-  const nudge = input.link
-    ? "A link will be attached separately. Do not put a raw URL in the body."
-    : undefined;
+  const nudgeParts: string[] = [];
+  if (adaptMaster) {
+    nudgeParts.push(
+      "Rewrite the master draft for this channel's native voice and length. Stay within the facts and claims in the master text. Do not invent events, numbers, quotes, or new claims beyond the master.",
+    );
+  }
+  if (input.link) {
+    nudgeParts.push("A link will be attached separately. Do not put a raw URL in the body.");
+  }
+  const nudge = nudgeParts.length > 0 ? nudgeParts.join(" ") : undefined;
 
   const settled = await Promise.allSettled(
     jobs.map(async (job) => {
