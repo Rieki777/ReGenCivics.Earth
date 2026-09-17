@@ -78,13 +78,17 @@ export function ReminderPanel({ contactType, contactId }: { contactType: string;
   const createNote = trpc.contactNotes.create.useMutation({
     onSuccess: () => {
       utils.contactNotes.list.invalidate({ contactType, contactId });
+      utils.contactNotes.listByType.invalidate({ contactType });
       setDate(''); setMsg('');
       toast.success('Reminder set');
     },
     onError: (e: any) => toast.error(e.message),
   });
   const deleteNote = trpc.contactNotes.delete.useMutation({
-    onSuccess: () => utils.contactNotes.list.invalidate({ contactType, contactId }),
+    onSuccess: () => {
+      utils.contactNotes.list.invalidate({ contactType, contactId });
+      utils.contactNotes.listByType.invalidate({ contactType });
+    },
   });
 
   const reminders = (notes || []).filter((n: any) => n.note.startsWith('⏰ Reminder'));
