@@ -130,7 +130,12 @@ function TargetRow({ publicationId, target, item, onChanged }: {
   // The first comment is a social-surface tactic: the site and email have no
   // comment thread to put a link in.
   const takesFirstComment = isSocial;
-  const hasBody = Boolean(item?.body?.trim());
+  // When the in-row editor is open, handoff visibility + fill text follow the live
+  // bodyDraft (including unsaved whitespace). Closed rows still use saved item.body.
+  // (#137 already hid saved whitespace-only bodies; this covers the unsaved draft.)
+  const effectiveBody = open ? bodyDraft : (item?.body ?? "");
+  const hasBody = Boolean(effectiveBody.trim());
+  const handoffUsesUnsavedDraft = open && bodyDraft !== (item?.body ?? "");
 
   // Fact-check state. Blocks are hard stops on approve; warns are for the eye.
   const flags: FactFlag[] = Array.isArray(target.verificationFlags) ? (target.verificationFlags as FactFlag[]) : [];
@@ -214,8 +219,12 @@ function TargetRow({ publicationId, target, item, onChanged }: {
               href={outboundSocialHref()}
               // Queue the complete Harvest body; Outbound Social adapts it after handoff.
               onClick={() => {
-                if (!queueBroadcastFill(item?.body ?? "")) return;
-                toast.success("Filled Outbound Social with this draft. Nothing was posted.");
+                if (!queueBroadcastFill(effectiveBody.trim())) return;
+                toast.success(
+                  handoffUsesUnsavedDraft
+                    ? "Filled Outbound Social with the editor draft. Nothing was posted."
+                    : "Filled Outbound Social with this draft. Nothing was posted.",
+                );
               }}
             >
               <ExternalLink className="w-3 h-3 mr-1" /> Open in Outbound Social
@@ -232,7 +241,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
       {item?.body && !open && (
         <button
           type="button"
-          onClick={() => { setBodyDraft(item?.body ?? ""); setOpen(true); }}
+          onClick={() => { setBodyDraft(item.body ?? ""); setOpen(true); }}
           className="w-full text-left text-xs text-[#2d5a3d] line-clamp-2 hover:text-[#1a472a]"
           title="Open the full draft to read and edit it"
         >
@@ -358,9 +367,13 @@ function TargetRow({ publicationId, target, item, onChanged }: {
             <a
               href={outboundWriteHref()}
               onClick={() => {
-                const fill = newsletterFillFromItemBody(item?.body ?? "");
+                const fill = newsletterFillFromItemBody(effectiveBody.trim());
                 if (!queueOutboundWriteFill(fill)) return;
-                toast.success("Filled Outbound Write with subject and body. Nothing was sent.");
+                toast.success(
+                  handoffUsesUnsavedDraft
+                    ? "Filled Outbound Write with the editor draft. Nothing was sent."
+                    : "Filled Outbound Write with subject and body. Nothing was sent.",
+                );
               }}
             >
               <ExternalLink className="w-3 h-3 mr-1" /> Continue as newsletter
