@@ -192,6 +192,8 @@ export type AdminHrefExtras = {
   status?: string;
   view?: string;
   surface?: string;
+  /** Tab-local filter (events past/upcoming, investors needs_action, …). */
+  filter?: string;
 };
 
 export function adminTabHref(tab: string, extras?: AdminHrefExtras): string {
@@ -206,6 +208,7 @@ export function adminTabHref(tab: string, extras?: AdminHrefExtras): string {
   if (extras?.open) q.set("open", extras.open);
   if (extras?.status) q.set("status", extras.status);
   if (extras?.view) q.set("view", extras.view);
+  if (extras?.filter) q.set("filter", extras.filter);
   const qs = q.toString();
   return qs ? `/admin?${qs}` : "/admin";
 }
