@@ -214,7 +214,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
               href={outboundSocialHref()}
               // Queue the complete Harvest body; Outbound Social adapts it after handoff.
               onClick={() => {
-                if (!queueBroadcastFill(item.body ?? "")) return;
+                if (!queueBroadcastFill(item?.body ?? "")) return;
                 toast.success("Filled Outbound Social with this draft. Nothing was posted.");
               }}
             >
@@ -232,7 +232,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
       {item?.body && !open && (
         <button
           type="button"
-          onClick={() => { setBodyDraft(item.body ?? ""); setOpen(true); }}
+          onClick={() => { setBodyDraft(item?.body ?? ""); setOpen(true); }}
           className="w-full text-left text-xs text-[#2d5a3d] line-clamp-2 hover:text-[#1a472a]"
           title="Open the full draft to read and edit it"
         >
@@ -358,7 +358,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
             <a
               href={outboundWriteHref()}
               onClick={() => {
-                const fill = newsletterFillFromItemBody(item.body ?? "");
+                const fill = newsletterFillFromItemBody(item?.body ?? "");
                 if (!queueOutboundWriteFill(fill)) return;
                 toast.success("Filled Outbound Write with subject and body. Nothing was sent.");
               }}
