@@ -16,10 +16,12 @@ import { getBufferAccessToken } from "../lib/buffer-token";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 import { isOutboundWriteSurface } from "@shared/outboundWriteFill";
 import {
+  adminSiteContextBlock,
   guardAssistantSendClaim,
   OUTBOUND_WRITE_ASSISTANT_BLOCK,
   OUTBOUND_WRITE_SURFACE_BLOCK,
 } from "../lib/adminAIPrompt";
+import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
 
 /**
  * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
@@ -542,6 +544,15 @@ Follow the hard publishing rules: no em-dashes, no contrast framing, no AI fille
 
       const writeBlock = `${OUTBOUND_WRITE_ASSISTANT_BLOCK}${onWriteCompose ? OUTBOUND_WRITE_SURFACE_BLOCK : ""}`;
 
+      const siteBlock = `\n\n${adminSiteContextBlock()}`;
+      let voiceBlock = "";
+      try {
+        const voice = await loadAdminVoiceContextBlock({ ownerId: ctx.user.id });
+        if (voice.trim()) voiceBlock = `\n\n${voice}`;
+      } catch {
+        // Fail-soft: site map alone still prevents invented URLs.
+      }
+
       const systemPrompt = `You are an AI admin assistant for ReGen Civics  -  a regenerative civilization project coordinating land projects, alliance organizations, and investors.
 
 You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
@@ -585,13 +596,15 @@ Example:
 Only propose an execute action when you have the specific id or key from the conversation or context. Never invent ids. For anything destructive or high-stakes (deleting records, bans, rejections, sending money, mass email, public posts), do NOT use execute; tell the admin to do it themselves.
 
 ## Current Context
-${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}
+${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}${siteBlock}${voiceBlock}
 
 ## Communication Style
 - Be direct, warm, and efficient
 - Use bullet points for lists
 - Flag urgent items (old inquiries, stale applications)
 - Suggest concrete next steps
+- Never invent site URLs; use Canonical site URLs or ask
+- Match Rye's voice from the Voice / second brain block when present
 - When you don't know something specific about the data, say so  -  you can only see what the admin shares with you`;
 
       const llmMessages = [
