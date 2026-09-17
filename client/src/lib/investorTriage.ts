@@ -5,19 +5,21 @@
  * "pending review" / "needs action" means so counts don't drift.
  *
  * Product assumption: archived is a terminal status (not a separate flag).
- * Only "new" is waiting on an admin first look; archived never appears in
- * that bucket.
+ * "New" and "pending" are both waiting on admin; Overview "new" = pending review
+ * = those statuses only (archived never appears in that bucket).
  */
 
 /** Statuses that still need an admin first look / reply. */
-export const INVESTOR_PENDING_REVIEW_STATUSES = ["new"] as const;
+export const INVESTOR_PENDING_REVIEW_STATUSES = ["new", "pending"] as const;
 
 export type InvestorTriageFilter =
   | "needs_action"
   | "overdue"
   | "duplicates"
+  | "due_reminders"
   | "all"
   | "new"
+  | "pending"
   | "contacted"
   | "in_discussion"
   | "committed"
@@ -121,6 +123,8 @@ export function filterInvestorsForTriage(
     filter: string;
     search?: string;
     duplicateEmails?: Set<string>;
+    /** Investor ids with a reminder due today or overdue (parsed from notes). */
+    dueReminderIds?: Set<number>;
   },
 ): InvestorLike[] {
   const dupes = opts.duplicateEmails ?? buildDuplicateInvestorEmails(investors);
@@ -138,6 +142,8 @@ export function filterInvestorsForTriage(
         const email = (inv.email || "").trim().toLowerCase();
         return Boolean(email && dupes.has(email));
       }
+      case "due_reminders":
+        return inv.id != null && Boolean(opts.dueReminderIds?.has(inv.id));
       case "all":
         return true;
       default:
@@ -164,7 +170,7 @@ export function investorTriageEmptyCopy(filter: string): { title: string; hint: 
     case "needs_action":
       return {
         title: "Nothing needs action",
-        hint: "No new investor inquiries need review. Switch to All to browse history.",
+        hint: "No pending (non-archived) investor inquiries. Switch to All to browse history.",
       };
     case "overdue":
       return {
@@ -175,6 +181,11 @@ export function investorTriageEmptyCopy(filter: string): { title: string; hint: 
       return {
         title: "No duplicate emails",
         hint: "Every investor email appears once.",
+      };
+    case "due_reminders":
+      return {
+        title: "No due reminders",
+        hint: "No investor reminders are due today or overdue. Set a date in the contact sheet Reminder panel.",
       };
     case "archived":
       return {
