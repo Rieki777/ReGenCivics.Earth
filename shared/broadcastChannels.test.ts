@@ -7,6 +7,7 @@ import {
   fillChannelBodiesFromMaster,
   isBroadcastChannelId,
   isBroadcastComposeSurface,
+  profilesForChannel,
   resolveChannelBody,
   strictestBroadcastLimit,
 } from "./broadcastChannels";
@@ -139,6 +140,71 @@ describe("buildBufferPostTargets", () => {
     });
     expect(targets.map((t) => t.channelId)).toEqual(["twitter"]);
     expect(missingChannels).toEqual(["bluesky"]);
+  });
+
+  it("posts to every selected profile when a network has several", () => {
+    const multi = [
+      { id: "p-x-a", service: "twitter" },
+      { id: "p-x-b", service: "twitter" },
+      { id: "p-li", service: "linkedin" },
+    ];
+    const { targets, missingChannels } = buildBufferPostTargets({
+      selectedChannelIds: ["twitter", "linkedin"],
+      masterText: "One body.",
+      channelBodies: {},
+      profiles: multi,
+      selectedProfileIds: ["p-x-a", "p-x-b", "p-li"],
+    });
+    expect(missingChannels).toEqual([]);
+    expect(targets).toEqual([
+      { profileId: "p-x-a", channelId: "twitter", text: "One body." },
+      { profileId: "p-x-b", channelId: "twitter", text: "One body." },
+      { profileId: "p-li", channelId: "linkedin", text: "One body." },
+    ]);
+  });
+
+  it("respects a subset of selected profiles on one network", () => {
+    const multi = [
+      { id: "p-x-a", service: "twitter" },
+      { id: "p-x-b", service: "twitter" },
+    ];
+    const { targets } = buildBufferPostTargets({
+      selectedChannelIds: ["twitter"],
+      masterText: "Hi",
+      channelBodies: {},
+      profiles: multi,
+      selectedProfileIds: ["p-x-b"],
+    });
+    expect(targets).toEqual([{ profileId: "p-x-b", channelId: "twitter", text: "Hi" }]);
+  });
+
+  it("keeps first-profile-only when selectedProfileIds is omitted", () => {
+    const multi = [
+      { id: "p-x-a", service: "twitter" },
+      { id: "p-x-b", service: "twitter" },
+    ];
+    const { targets } = buildBufferPostTargets({
+      selectedChannelIds: ["twitter"],
+      masterText: "Hi",
+      channelBodies: {},
+      profiles: multi,
+    });
+    expect(targets).toEqual([{ profileId: "p-x-a", channelId: "twitter", text: "Hi" }]);
+  });
+});
+
+describe("profilesForChannel", () => {
+  it("returns every matching service profile", () => {
+    expect(
+      profilesForChannel(
+        [
+          { id: "a", service: "twitter" },
+          { id: "b", service: "Twitter" },
+          { id: "c", service: "linkedin" },
+        ],
+        "twitter",
+      ).map((p) => p.id),
+    ).toEqual(["a", "b"]);
   });
 });
 

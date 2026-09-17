@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { sdk } from "../_core/sdk";
 import { setSiteSetting } from "../db";
 import { getBufferAccessToken } from "../lib/buffer-token";
+import { appendBufferMedia } from "../lib/buffer-media";
 
 const router = express.Router();
 
@@ -96,8 +97,9 @@ router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<
     return;
   }
 
-  const { link, scheduledAt } = req.body as {
+  const { link, imageUrl, scheduledAt } = req.body as {
     link?: string;
+    imageUrl?: string;
     scheduledAt?: string;
     text?: string;
     profileIds?: string[];
@@ -122,7 +124,7 @@ router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<
       params.append("access_token", token);
       params.append("profile_ids[]", job.profileId);
       params.append("text", job.text);
-      if (link) params.append("media[link]", link);
+      appendBufferMedia(params, { link, imageUrl });
       if (scheduledAt) {
         params.append("scheduled_at", scheduledAt);
         params.append("now", "false");
