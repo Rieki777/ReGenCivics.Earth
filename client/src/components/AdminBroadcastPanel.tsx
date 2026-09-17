@@ -20,7 +20,6 @@ import {
   buildBufferPostTargets,
   clipToBroadcastLimit,
   fillChannelBodiesFromMaster,
-  profilesForChannel,
   resolveChannelBody,
   strictestBroadcastLimit,
   type BroadcastChannelId,
@@ -62,7 +61,6 @@ const ALL_CHANNELS = BROADCAST_CHANNELS.map((c) => ({
 }));
 
 const LS_CHANNELS_KEY = "broadcast_channels";
-const LS_PROFILE_IDS_KEY = "broadcast_profile_ids";
 const BUFFER_CHANNELS_URL = "https://publish.buffer.com/channels";
 const BUFFER_SETTINGS_HREF = "/admin?tab=settings";
 
@@ -78,22 +76,6 @@ function saveChannels(channels: string[]) {
   localStorage.setItem(LS_CHANNELS_KEY, JSON.stringify(channels));
 }
 
-function loadSavedProfileIds(): string[] {
-  try {
-    const raw = localStorage.getItem(LS_PROFILE_IDS_KEY);
-    if (raw) return JSON.parse(raw) as string[];
-  } catch {}
-  return [];
-}
-
-function saveProfileIds(ids: string[]) {
-  localStorage.setItem(LS_PROFILE_IDS_KEY, JSON.stringify(ids));
-}
-
-function profileLabel(p: BufferProfile): string {
-  return p.formatted_username ?? p.service_username ?? p.id;
-}
-
 export function AdminBroadcastPanel() {
   const [text, setText] = useState("");
   const messageRef = useRef<HTMLTextAreaElement>(null);
@@ -101,7 +83,6 @@ export function AdminBroadcastPanel() {
   const [link, setLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>(loadSavedChannels);
-  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>(loadSavedProfileIds);
   const [channelBodies, setChannelBodies] = useState<Record<string, string>>({});
   const [activeChannelTab, setActiveChannelTab] = useState<string>("");
   const [showScheduler, setShowScheduler] = useState(false);
@@ -119,10 +100,6 @@ export function AdminBroadcastPanel() {
   useEffect(() => {
     saveChannels(selectedChannels);
   }, [selectedChannels]);
-
-  useEffect(() => {
-    saveProfileIds(selectedProfileIds);
-  }, [selectedProfileIds]);
 
   useEffect(() => {
     if (selectedChannels.length === 0) {
@@ -150,7 +127,7 @@ export function AdminBroadcastPanel() {
           ...prev,
           ...fillChannelBodiesFromMaster(fullText, selectedChannels, "adapt"),
         }));
-        toast.message("Adapted social variants to each network's limit.");
+        toast.message("Filled Outbound Social — adapted to each network's limit. Review before posting.");
         return;
       }
 
@@ -160,8 +137,10 @@ export function AdminBroadcastPanel() {
       setText(clipped);
       if (clipped.length < fullText.length) {
         toast.message(
-          `Shortened for social (${fullText.length} → ${clipped.length} chars, max ${limit}).`,
+          `Filled Outbound Social — shortened (${fullText.length} → ${clipped.length} chars, max ${limit}). Review before posting.`,
         );
+      } else {
+        toast.message("Filled Outbound Social with the Harvest draft. Review before posting.");
       }
     };
 
@@ -200,62 +179,25 @@ export function AdminBroadcastPanel() {
     [selectedChannels, text, channelBodies],
   );
 
-  function profilesForService(service: string): BufferProfile[] {
-    if (!bufferProfiles) return [];
-    return profilesForChannel(bufferProfiles, service) as BufferProfile[];
-  }
-
   function toggleChannel(id: string) {
-    setSelectedChannels(prev => {
-      const next = prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id];
-      return next;
-    });
-    const matches = profilesForService(id);
-    if (matches.length === 0) return;
-    setSelectedProfileIds(prev => {
-      const matchIds = new Set(matches.map(p => p.id));
-      const wasOn = selectedChannels.includes(id);
-      if (wasOn) {
-        return prev.filter(pid => !matchIds.has(pid));
-      }
-      const merged = new Set(prev);
-      for (const p of matches) merged.add(p.id);
-      return Array.from(merged);
-    });
-  }
-
-  function toggleProfile(channelId: string, profileId: string) {
-    setSelectedProfileIds(prev => {
-      const on = prev.includes(profileId);
-      const next = on ? prev.filter(id => id !== profileId) : [...prev, profileId];
-      const matchIds = new Set(profilesForService(channelId).map(p => p.id));
-      const anySelected = next.some(id => matchIds.has(id));
-      setSelectedChannels(chs => {
-        if (anySelected && !chs.includes(channelId)) return [...chs, channelId];
-        if (!anySelected && chs.includes(channelId)) return chs.filter(c => c !== channelId);
-        return chs;
-      });
-      return next;
-    });
+    setSelectedChannels(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
   }
 
   function selectAll() {
     setSelectedChannels(ALL_CHANNELS.map(c => c.id));
-    if (bufferProfiles) {
-      setSelectedProfileIds(bufferProfiles.map(p => p.id));
-    }
   }
 
   function clearAll() {
     setSelectedChannels([]);
-    setSelectedProfileIds([]);
   }
 
   function getProfileForChannel(service: string): BufferProfile | undefined {
-    const matches = profilesForService(service);
-    if (matches.length === 0) return undefined;
-    const selected = matches.find(p => selectedProfileIds.includes(p.id));
-    return selected ?? matches[0];
+    if (!bufferProfiles) return undefined;
+    return bufferProfiles.find(
+      p => p.service.toLowerCase() === service.toLowerCase()
+    );
   }
 
   function setChannelBody(channelId: string, value: string) {
@@ -293,48 +235,6 @@ export function AdminBroadcastPanel() {
       ...fillChannelBodiesFromMaster(text, selectedChannels, "adapt"),
     }));
     toast.success("Adapted master into each channel (length-aware).");
-  }
-
-  async function handleLlmAdaptMasterToChannels() {
-    if (!text.trim()) {
-      toast.error("Write a master draft first.");
-      return;
-    }
-    const channels = selectedChannels as BroadcastChannelId[];
-    try {
-      const res = await draftFromHarvest.mutateAsync({
-        intent: text.trim(),
-        channels,
-        link: link.trim().startsWith("http") ? link.trim() : undefined,
-        mode: "adaptMaster",
-      });
-      setDrafts(res.drafts);
-      setDraftSources(res.sources);
-      setDraftVoice(res.voice);
-      setDraftGrounded(res.grounded);
-      if (res.drafts.length > 0) {
-        setChannelBodies(prev => {
-          const next = { ...prev };
-          for (const d of res.drafts) next[d.channel] = d.text;
-          return next;
-        });
-        if (selectedChannels.includes(res.drafts[0].channel)) {
-          setActiveChannelTab(res.drafts[0].channel);
-        }
-      }
-      if (res.errors.length > 0) {
-        toast.warning(`Adapted ${res.drafts.length}, ${res.errors.length} channel${res.errors.length === 1 ? "" : "s"} failed.`);
-      } else {
-        toast.success("LLM adapted master into each channel.");
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/Owner access required/i.test(msg)) {
-        toast.error("Harvest drafts are owner-only. Open The Harvest as the owner.");
-        return;
-      }
-      toast.error(msg || "Could not LLM-adapt master to channels.");
-    }
   }
 
   async function handleDraftFromHarvest() {
@@ -403,7 +303,6 @@ export function AdminBroadcastPanel() {
         masterText: text,
         channelBodies,
         profiles: bufferProfiles ?? [],
-        selectedProfileIds,
         isBufferChannel: (id) => ALL_CHANNELS.find(c => c.id === id)?.isBuffer === true,
       });
 
@@ -424,7 +323,6 @@ export function AdminBroadcastPanel() {
           const res = await postToBuffer.mutateAsync({
             posts,
             link: link.trim() || undefined,
-            imageUrl: imageUrl.trim().startsWith("http") ? imageUrl.trim() : undefined,
             scheduledAt: scheduleTime || undefined,
           });
 
@@ -640,15 +538,11 @@ export function AdminBroadcastPanel() {
           <div className="space-y-2">
             <Label className="text-[#1a472a] font-medium">Image URL (optional)</Label>
             <Input
-              data-testid="broadcast-image-url"
               value={imageUrl}
               onChange={e => setImageUrl(e.target.value)}
-              placeholder="https://cdn.example.com/photo.jpg"
+              placeholder="https://..."
               className="border-[#1a472a]/20 focus:border-[#1a472a]"
             />
-            <p className="text-xs text-[#1a472a]/70">
-              Public direct image URL. Buffer fetches it when the post publishes — avoid expiring/signed links.
-            </p>
           </div>
 
           <div className="space-y-3">
@@ -692,88 +586,55 @@ export function AdminBroadcastPanel() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {ALL_CHANNELS.map(channel => {
                   const isChecked = selectedChannels.includes(channel.id);
-                  const channelProfiles = channel.isBuffer
-                    ? profilesForService(channel.id)
-                    : [];
                   const bufferProfile = channel.isBuffer
                     ? getProfileForChannel(channel.id)
                     : undefined;
-                  const notConnected = channel.isBuffer && channelProfiles.length === 0;
-                  const multiProfiles = channelProfiles.length > 1;
+                  const notConnected = channel.isBuffer && !bufferProfile;
                   const connectHref = bufferNotConfigured ? BUFFER_SETTINGS_HREF : BUFFER_CHANNELS_URL;
 
                   return (
                     <div
                       key={channel.id}
-                      className={`flex flex-col gap-1.5 p-2.5 rounded-lg border transition-colors ${
+                      className={`flex items-start gap-2 p-2.5 rounded-lg border transition-colors ${
                         isChecked
                           ? "border-[#1a472a] bg-[#1a472a]/5"
                           : "border-[#1a472a]/15"
                       } ${notConnected ? "opacity-80" : ""}`}
                     >
-                      <div className="flex items-start gap-2">
-                        <label className="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={() => toggleChannel(channel.id)}
-                            className="border-[#1a472a]/40"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-[#1a472a] leading-tight">
-                              {channel.label}
+                      <label className="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
+                        <Checkbox
+                          checked={isChecked}
+                          onCheckedChange={() => toggleChannel(channel.id)}
+                          className="border-[#1a472a]/40"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[#1a472a] leading-tight">
+                            {channel.label}
+                          </p>
+                          {channel.isBuffer && bufferProfile && (
+                            <p className="text-xs text-[#1a472a]/80 truncate">
+                              {bufferProfile.formatted_username ?? bufferProfile.service_username}
                             </p>
-                            {channel.isBuffer && !multiProfiles && bufferProfile && (
-                              <p className="text-xs text-[#1a472a]/80 truncate">
-                                {profileLabel(bufferProfile)}
-                              </p>
-                            )}
-                            {channel.isBuffer && multiProfiles && (
-                              <p className="text-xs text-[#1a472a]/80">
-                                {channelProfiles.filter(p => selectedProfileIds.includes(p.id)).length}
-                                /{channelProfiles.length} profiles
-                              </p>
-                            )}
-                            {notConnected && (
-                              <p className="text-xs text-amber-600">Not connected</p>
-                            )}
-                            {!channel.isBuffer && (
-                              <p className="text-xs text-[#1a472a]/80">Opens Warpcast</p>
-                            )}
-                          </div>
-                        </label>
-                        {notConnected && (
-                          <a
-                            href={connectHref}
-                            target={bufferNotConfigured ? undefined : "_blank"}
-                            rel={bufferNotConfigured ? undefined : "noopener noreferrer"}
-                            data-testid={`connect-${channel.id}`}
-                            className="shrink-0 inline-flex items-center gap-0.5 text-xs font-medium text-white bg-[#1a472a] hover:bg-[#2d5a3d] rounded-md px-2 min-h-8"
-                          >
-                            Connect
-                            {!bufferNotConfigured && <ExternalLink className="w-3 h-3" />}
-                          </a>
-                        )}
-                      </div>
-                      {multiProfiles && (
-                        <div
-                          className="ml-6 space-y-1"
-                          data-testid={`profile-picker-${channel.id}`}
-                        >
-                          {channelProfiles.map(p => (
-                            <label
-                              key={p.id}
-                              className="flex items-center gap-2 cursor-pointer text-xs text-[#1a472a]"
-                            >
-                              <Checkbox
-                                checked={selectedProfileIds.includes(p.id)}
-                                onCheckedChange={() => toggleProfile(channel.id, p.id)}
-                                className="border-[#1a472a]/40 h-3.5 w-3.5"
-                                data-testid={`profile-check-${p.id}`}
-                              />
-                              <span className="truncate">{profileLabel(p)}</span>
-                            </label>
-                          ))}
+                          )}
+                          {notConnected && (
+                            <p className="text-xs text-amber-600">Not connected</p>
+                          )}
+                          {!channel.isBuffer && (
+                            <p className="text-xs text-[#1a472a]/80">Opens Warpcast</p>
+                          )}
                         </div>
+                      </label>
+                      {notConnected && (
+                        <a
+                          href={connectHref}
+                          target={bufferNotConfigured ? undefined : "_blank"}
+                          rel={bufferNotConfigured ? undefined : "noopener noreferrer"}
+                          data-testid={`connect-${channel.id}`}
+                          className="shrink-0 inline-flex items-center gap-0.5 text-xs font-medium text-white bg-[#1a472a] hover:bg-[#2d5a3d] rounded-md px-2 min-h-8"
+                        >
+                          Connect
+                          {!bufferNotConfigured && <ExternalLink className="w-3 h-3" />}
+                        </a>
                       )}
                     </div>
                   );
@@ -812,27 +673,10 @@ export function AdminBroadcastPanel() {
                   >
                     Adapt master → each
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 border-[#1a472a]/30 text-[#1a472a]"
-                    data-testid="llm-adapt-master-to-channels"
-                    onClick={() => void handleLlmAdaptMasterToChannels()}
-                    disabled={draftFromHarvest.isPending}
-                  >
-                    {draftFromHarvest.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    LLM adapt master → each
-                  </Button>
                 </div>
               </div>
               <p className="text-xs text-[#1a472a]/80">
                 Empty channel boxes fall back to the master draft when posting. Adapt clips to each network&apos;s length.
-                LLM adapt rewrites channel-native via Harvest draft (same path as Draft with Harvest), without inventing facts beyond the master.
               </p>
               <Tabs
                 value={activeChannelTab || selectedChannels[0]}

@@ -11,6 +11,7 @@
  * into Outbound Write (same fill bus as Admin AI).
  */
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,6 +130,7 @@ function TargetRow({ publicationId, target, item, onChanged }: {
   // The first comment is a social-surface tactic: the site and email have no
   // comment thread to put a link in.
   const takesFirstComment = isSocial;
+  const hasBody = Boolean(item?.body?.trim());
 
   // Fact-check state. Blocks are hard stops on approve; warns are for the eye.
   const flags: FactFlag[] = Array.isArray(target.verificationFlags) ? (target.verificationFlags as FactFlag[]) : [];
@@ -200,18 +202,30 @@ function TargetRow({ publicationId, target, item, onChanged }: {
             {publish.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3 mr-1" />} Publish
           </Button>
         )}
-        {isSocial && item?.body && target.status !== "published" && (
-          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" asChild>
+        {isSocial && hasBody && target.status !== "published" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]"
+            asChild
+            title="Fills Outbound Social with this draft. Nothing is posted until you confirm there."
+          >
             <a
               href={outboundSocialHref()}
               // Queue the complete Harvest body; Outbound Social adapts it after handoff.
-              onClick={() => queueBroadcastFill(item.body ?? "")}
+              onClick={() => {
+                if (!queueBroadcastFill(item.body ?? "")) return;
+                toast.success("Filled Outbound Social with this draft. Nothing was posted.");
+              }}
             >
               <ExternalLink className="w-3 h-3 mr-1" /> Open in Outbound Social
             </a>
           </Button>
         )}
       </div>
+      {isSocial && hasBody && target.status !== "published" && (
+        <p className="text-[11px] text-[#2d5a3d]">Outbound Social handoff fills the master draft. Adapt per network there; nothing posts from Harvest.</p>
+      )}
       {/* Click the preview to open the full draft and edit it in place. Saving
           goes through the same editItem the Drafts tier uses, so the second
           brain learns from the edit and verification resets itself. */}
@@ -329,18 +343,34 @@ function TargetRow({ publicationId, target, item, onChanged }: {
           />
         </div>
       )}
-      {target.surface === "email" && target.status !== "published" && item?.body && (
+      {isSocial && !hasBody && target.status !== "published" && (
+        <p className="text-[11px] text-[#2d5a3d]">Add draft body before opening Outbound Social.</p>
+      )}
+      {target.surface === "email" && hasBody && target.status !== "published" && (
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]" asChild>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 rounded-lg text-xs border-[#1a472a]/30 text-[#1a472a]"
+            asChild
+            title="Fills Outbound Write with subject and body. Nothing is sent until you Preview there."
+          >
             <a
               href={outboundWriteHref()}
-              onClick={() => queueOutboundWriteFill(newsletterFillFromItemBody(item.body ?? ""))}
+              onClick={() => {
+                const fill = newsletterFillFromItemBody(item.body ?? "");
+                if (!queueOutboundWriteFill(fill)) return;
+                toast.success("Filled Outbound Write with subject and body. Nothing was sent.");
+              }}
             >
               <ExternalLink className="w-3 h-3 mr-1" /> Continue as newsletter
             </a>
           </Button>
-          <span className="text-[11px] text-[#2d5a3d]">Opens Outbound Write with this draft filled. Send stays on Preview there.</span>
+          <span className="text-[11px] text-[#2d5a3d]">Fills Outbound Write (subject + body). You still Preview send — nothing auto-sends.</span>
         </div>
+      )}
+      {target.surface === "email" && !hasBody && target.status !== "published" && (
+        <p className="text-[11px] text-[#2d5a3d]">Add draft body before continuing as a newsletter in Outbound Write.</p>
       )}
       {target.surface === "email" && target.status !== "published" && item && item.status === "edited" && (
         <EmailSendPanel itemId={item.id} onSent={onChanged} />
@@ -384,7 +414,7 @@ export function PublicationReview({ publicationId }: { publicationId: number }) 
           </Button>
         )}
       </div>
-      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit the text here. After you save an email draft, preview and confirm send on that row, or Continue as newsletter into Outbound Write. Social posts open in Outbound Social.</p>
+      <p className="text-xs text-[#2d5a3d]">Everything below goes out only after you approve it, surface by surface. Edit the text here. <span className="font-medium text-[#1a472a]">Outbound handoffs:</span> social rows offer <span className="font-medium">Open in Outbound Social</span> (fills the draft — you still post); email rows offer <span className="font-medium">Continue as newsletter</span> into Outbound Write (fills subject + body — you still Preview). Nothing auto-sends or auto-posts.</p>
 
       <div className="space-y-2">
         {targets.map((target) => (

@@ -9,14 +9,7 @@ const farcasterMutateAsync = vi.fn();
 const refetchProfiles = vi.fn();
 
 let profilesState: {
-  data:
-    | Array<{
-        id: string;
-        service: string;
-        service_username: string;
-        formatted_username?: string;
-      }>
-    | undefined;
+  data: Array<{ id: string; service: string; service_username: string }> | undefined;
   isLoading: boolean;
   error: { message: string; data?: { code: string } } | null;
   isFetching: boolean;
@@ -46,15 +39,13 @@ vi.mock("@/lib/trpc", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), message: vi.fn() },
-}));
-
-import { toast } from "sonner";
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), message: vi.fn() } }));
 
 function selectChannel(label: string) {
   const box = screen.getByText(label).closest("label");
   expect(box).toBeTruthy();
+  const checkbox = box!.querySelector('[role="checkbox"], input, button');
+  // Checkbox from shadcn is a button with role=checkbox
   const control = box!.querySelector('[role="checkbox"]') as HTMLElement;
   fireEvent.click(control);
 }
@@ -75,9 +66,9 @@ describe("AdminBroadcastPanel", () => {
       isFetching: false,
     };
     localStorage.clear();
+    // jsdom open stub
     vi.stubGlobal("open", vi.fn());
   });
-
   afterEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
@@ -89,9 +80,12 @@ describe("AdminBroadcastPanel", () => {
     expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
     expect(screen.getByTestId("connect-twitter")).toBeDefined();
     expect(screen.getByTestId("connect-linkedin")).toBeDefined();
+    expect(screen.getByTestId("connect-twitter").getAttribute("href")).toBe("https://publish.buffer.com/channels");
+    expect(screen.queryByTestId("connect-farcaster")).toBeNull();
+    expect(screen.getByText("Opens Warpcast")).toBeDefined();
   });
 
-  it("routes Connect to settings when Buffer has no token", () => {
+  it("routes Connect to Broadcast settings when Buffer has no token", () => {
     profilesState = {
       data: undefined,
       isLoading: false,
@@ -99,8 +93,52 @@ describe("AdminBroadcastPanel", () => {
       isFetching: false,
     };
     render(<AdminBroadcastPanel />);
-    expect(screen.getByTestId("connect-twitter").getAttribute("href")).toMatch(/settings|admin/i);
+    expect(screen.getByText("Buffer is not configured")).toBeDefined();
+    expect(screen.getByTestId("connect-twitter").getAttribute("href")).toBe("/admin?tab=settings");
     expect(screen.getByTestId("draft-with-harvest")).toBeDefined();
+    expect(screen.getByTestId("dictation-button")).toBeDefined();
+  });
+
+  it("fills the message box from a Harvest draft", async () => {
+    draftMutateAsync.mockResolvedValue({
+      drafts: [{ channel: "twitter", label: "X / Twitter", text: "Food forests feed the village.", charCount: 30, maxChars: 280 }],
+      sources: [{ id: 1, title: "Food is the foundation" }],
+      grounded: true,
+      voice: { version: "1.0.0", revision: 2 },
+      errors: [],
+    });
+    render(<AdminBroadcastPanel />);
+    fireEvent.click(screen.getByTestId("draft-with-harvest"));
+    await waitFor(() => {
+      expect(draftMutateAsync).toHaveBeenCalled();
+    });
+    const box = screen.getByTestId("broadcast-message") as HTMLTextAreaElement;
+    expect(box.value).toBe("Food forests feed the village.");
+    expect(screen.getByTestId("harvest-drafts").textContent).toContain("Food is the foundation");
+    expect(screen.getByTestId("harvest-drafts").textContent).toContain("Worldview Pack r2");
+  });
+
+  it("applies assistant fill events into the compose box", async () => {
+    sessionStorage.setItem("broadcast_fill_pending", "stale queued fill");
+    render(<AdminBroadcastPanel />);
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: "From the assistant." } }));
+    });
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("From the assistant.");
+    expect(sessionStorage.getItem("broadcast_fill_pending")).toBeNull();
+  });
+
+  it("picks up a pending fill left before the panel mounted", () => {
+    sessionStorage.setItem("broadcast_fill_pending", "Queued from the assistant.");
+    render(<AdminBroadcastPanel />);
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("Queued from the assistant.");
+    expect(sessionStorage.getItem("broadcast_fill_pending")).toBeNull();
+  });
+
+  it("offers the shared dictation mic on the Message field", () => {
+    render(<AdminBroadcastPanel />);
+    expect(screen.getByTestId("dictation-button")).toBeTruthy();
+    expect(screen.getByLabelText("Dictate message")).toBeTruthy();
   });
 
   it("shows per-channel editors when multiple channels are selected", () => {
@@ -109,6 +147,47 @@ describe("AdminBroadcastPanel", () => {
     selectChannel("X / Twitter");
     selectChannel("LinkedIn");
     expect(screen.getByTestId("per-channel-editors")).toBeDefined();
+    expect(screen.getByTestId("copy-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("adapt-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("channel-tab-twitter")).toBeDefined();
+    expect(screen.getByTestId("channel-tab-linkedin")).toBeDefined();
+  });
+
+  it("keeps a long Harvest handoff in the master and adapts each channel body", async () => {
+    const { toast } = await import("sonner");
+    const long = ("First sentence. " + "The movement needs patient practice. ".repeat(20)).trim();
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: long } }));
+    });
+
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe(long);
+    expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value.length).toBeLessThanOrEqual(280);
+    expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe(long);
+    expect(toast.message).toHaveBeenCalledWith(
+      expect.stringMatching(/Filled Outbound Social.*adapted to each network/i),
+    );
+  });
+
+  it("clips a long handoff on the single-message path with a notice", async () => {
+    const { toast } = await import("sonner");
+    const long = "Soil first. ".repeat(80).trim();
+    localStorage.setItem("broadcast_channels", JSON.stringify(["twitter"]));
+    render(<AdminBroadcastPanel />);
+
+    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe("");
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: long } }));
+    });
+
+    const box = screen.getByTestId("broadcast-message") as HTMLTextAreaElement;
+    expect(box.value.length).toBeLessThanOrEqual(280);
+    expect(box.value.length).toBeGreaterThan(0);
+    expect(toast.message).toHaveBeenCalled();
+    expect(String((toast.message as ReturnType<typeof vi.fn>).mock.calls[0][0])).toMatch(/Filled Outbound Social.*shortened/i);
   });
 
   it("posts a distinct body to each Buffer profile", async () => {
@@ -128,6 +207,7 @@ describe("AdminBroadcastPanel", () => {
     fireEvent.change(screen.getByTestId("channel-body-twitter"), {
       target: { value: "Short X body." },
     });
+    // LinkedIn tab may need activation for content; TabsContent still mounts with value
     fireEvent.click(screen.getByTestId("channel-tab-linkedin"));
     await waitFor(() => expect(screen.getByTestId("channel-body-linkedin")).toBeDefined());
     fireEvent.change(screen.getByTestId("channel-body-linkedin"), {
@@ -137,164 +217,61 @@ describe("AdminBroadcastPanel", () => {
     fireEvent.click(screen.getByTestId("broadcast-post-now"));
     await waitFor(() => expect(postMutateAsync).toHaveBeenCalled());
 
-    expect(postMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        posts: [
-          { profileId: "buf-x", text: "Short X body." },
-          { profileId: "buf-li", text: "Longer LinkedIn body for builders." },
-        ],
-        imageUrl: undefined,
-      }),
-    );
-  });
-
-  it("sends imageUrl to Buffer when provided", async () => {
-    postMutateAsync.mockResolvedValue({
-      results: [{ profileId: "buf-x", success: true, updateId: "u1" }],
-    });
-    render(<AdminBroadcastPanel />);
-    selectChannel("X / Twitter");
-    fireEvent.change(screen.getByTestId("broadcast-message"), {
-      target: { value: "Photo post." },
-    });
-    fireEvent.change(screen.getByTestId("broadcast-image-url"), {
-      target: { value: "https://cdn.example.com/village.jpg" },
-    });
-    fireEvent.click(screen.getByTestId("broadcast-post-now"));
-    await waitFor(() => expect(postMutateAsync).toHaveBeenCalled());
-    expect(postMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        posts: [{ profileId: "buf-x", text: "Photo post." }],
-        imageUrl: "https://cdn.example.com/village.jpg",
-      }),
-    );
-  });
-
-  it("posts to multiple Buffer profiles on the same network when selected", async () => {
-    profilesState = {
-      data: [
-        {
-          id: "buf-x-a",
-          service: "twitter",
-          service_username: "regen",
-          formatted_username: "@regen",
-        },
-        {
-          id: "buf-x-b",
-          service: "twitter",
-          service_username: "regen2",
-          formatted_username: "@regen2",
-        },
+    expect(postMutateAsync).toHaveBeenCalledWith({
+      posts: [
+        { profileId: "buf-x", text: "Short X body." },
+        { profileId: "buf-li", text: "Longer LinkedIn body for builders." },
       ],
-      isLoading: false,
-      error: null,
-      isFetching: false,
-    };
+      link: undefined,
+      scheduledAt: undefined,
+    });
+  });
+
+  it("falls back to master text for channels without a custom body", async () => {
     postMutateAsync.mockResolvedValue({
       results: [
-        { profileId: "buf-x-a", success: true },
-        { profileId: "buf-x-b", success: true },
+        { profileId: "buf-x", success: true },
+        { profileId: "buf-li", success: true },
       ],
     });
     render(<AdminBroadcastPanel />);
     selectChannel("X / Twitter");
-    expect(screen.getByTestId("profile-picker-twitter")).toBeDefined();
-    expect(screen.getByTestId("profile-check-buf-x-a")).toBeDefined();
-    expect(screen.getByTestId("profile-check-buf-x-b")).toBeDefined();
-
+    selectChannel("LinkedIn");
     fireEvent.change(screen.getByTestId("broadcast-message"), {
-      target: { value: "Same copy to both X accounts." },
+      target: { value: "Shared master body." },
     });
     fireEvent.click(screen.getByTestId("broadcast-post-now"));
     await waitFor(() => expect(postMutateAsync).toHaveBeenCalled());
-    expect(postMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        posts: [
-          { profileId: "buf-x-a", text: "Same copy to both X accounts." },
-          { profileId: "buf-x-b", text: "Same copy to both X accounts." },
-        ],
-      }),
-    );
-  });
-
-  it("applies assistant fill events into the compose box", async () => {
-    render(<AdminBroadcastPanel />);
-    await act(async () => {
-      window.dispatchEvent(
-        new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: "From the assistant." } }),
-      );
+    expect(postMutateAsync).toHaveBeenCalledWith({
+      posts: [
+        { profileId: "buf-x", text: "Shared master body." },
+        { profileId: "buf-li", text: "Shared master body." },
+      ],
+      link: undefined,
+      scheduledAt: undefined,
     });
-    expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe(
-      "From the assistant.",
-    );
   });
 
-  it("shows LLM adapt master → each only when multiple channels are selected", () => {
-    render(<AdminBroadcastPanel />);
-    expect(screen.queryByTestId("llm-adapt-master-to-channels")).toBeNull();
-    selectChannel("X / Twitter");
-    expect(screen.queryByTestId("llm-adapt-master-to-channels")).toBeNull();
-    selectChannel("LinkedIn");
-    expect(screen.getByTestId("llm-adapt-master-to-channels")).toBeDefined();
-    expect(screen.getByTestId("adapt-master-to-channels")).toBeDefined();
-    expect(screen.getByTestId("llm-adapt-master-to-channels").textContent).toMatch(
-      /LLM adapt master/i,
-    );
-  });
-
-  it("LLM adapt with empty master toasts and does not call draftBroadcast", async () => {
-    render(<AdminBroadcastPanel />);
-    selectChannel("X / Twitter");
-    selectChannel("LinkedIn");
-    fireEvent.click(screen.getByTestId("llm-adapt-master-to-channels"));
-    await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(toast.error).toHaveBeenCalledWith("Write a master draft first.");
-    expect(draftMutateAsync).not.toHaveBeenCalled();
-  });
-
-  it("LLM adapt with filled master calls draftBroadcast and fills channel bodies", async () => {
+  it("seeds per-channel bodies from multi-channel Harvest drafts", async () => {
     draftMutateAsync.mockResolvedValue({
       drafts: [
-        { channel: "twitter", label: "X / Twitter", text: "Short X rewrite.", charCount: 16, maxChars: 280 },
-        {
-          channel: "linkedin",
-          label: "LinkedIn",
-          text: "Longer LinkedIn rewrite for builders.",
-          charCount: 38,
-          maxChars: 3000,
-        },
+        { channel: "twitter", label: "X / Twitter", text: "X take.", charCount: 7, maxChars: 280 },
+        { channel: "linkedin", label: "LinkedIn", text: "LinkedIn take.", charCount: 14, maxChars: 3000 },
       ],
       sources: [],
       grounded: false,
-      voice: null,
+      voice: { version: "1.0.0", revision: 1 },
       errors: [],
     });
     render(<AdminBroadcastPanel />);
     selectChannel("X / Twitter");
     selectChannel("LinkedIn");
-    fireEvent.change(screen.getByTestId("broadcast-message"), {
-      target: { value: "  Master village update for all networks.  " },
-    });
-    fireEvent.click(screen.getByTestId("llm-adapt-master-to-channels"));
+    fireEvent.click(screen.getByTestId("draft-with-harvest"));
     await waitFor(() => expect(draftMutateAsync).toHaveBeenCalled());
-    expect(draftMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        intent: "Master village update for all networks.",
-        channels: ["twitter", "linkedin"],
-        mode: "adaptMaster",
-      }),
-    );
-    await waitFor(() => {
-      expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value).toBe(
-        "Short X rewrite.",
-      );
-    });
+    expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value).toBe("X take.");
     fireEvent.click(screen.getByTestId("channel-tab-linkedin"));
     await waitFor(() => {
-      expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe(
-        "Longer LinkedIn rewrite for builders.",
-      );
+      expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe("LinkedIn take.");
     });
-    expect(toast.success).toHaveBeenCalledWith("LLM adapted master into each channel.");
   });
 });
