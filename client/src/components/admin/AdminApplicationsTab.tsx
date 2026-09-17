@@ -2,7 +2,6 @@ import React, { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -17,11 +16,10 @@ import {
   Download,
   Search,
   Clock,
-  Globe,
-  ExternalLink,
 } from "lucide-react";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { AdminApplicationReviewForm } from "@/components/admin/AdminApplicationReviewForm";
+import { ApplicationAnswersPanel } from "@/components/admin/ApplicationAnswersPanel";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { BulkActionBar } from "./BulkActionBar";
@@ -346,48 +344,7 @@ export function AdminApplicationsTab({
                       <SheetDescription className="text-[#1a472a]/80">{app.location}</SheetDescription>
                     </SheetHeader>
                     <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-6 py-4">
-                      {app.vision && (
-                        <div>
-                          <Label className="text-sm font-semibold text-[#1a472a]">Vision</Label>
-                          <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">
-                            {app.vision}
-                          </p>
-                        </div>
-                      )}
-                      {app.teamDescription && (
-                        <div>
-                          <Label className="text-sm font-semibold text-[#1a472a]">
-                            Team Description
-                          </Label>
-                          <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">
-                            {app.teamDescription}
-                          </p>
-                        </div>
-                      )}
-                      {(app.websiteUrl || app.videoUrl) && (
-                        <div className="flex gap-4">
-                          {app.websiteUrl && (
-                            <a
-                              href={app.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1"
-                            >
-                              <Globe className="w-4 h-4" /> Website
-                            </a>
-                          )}
-                          {app.videoUrl && (
-                            <a
-                              href={app.videoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1"
-                            >
-                              <ExternalLink className="w-4 h-4" /> Video
-                            </a>
-                          )}
-                        </div>
-                      )}
+                      <ApplicationAnswersPanel application={app} />
                       <Suspense fallback={null}>
                         <ActivityTimeline
                           email={app.contactEmail || ""}

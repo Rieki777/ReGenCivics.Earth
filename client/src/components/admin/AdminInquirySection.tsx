@@ -19,6 +19,7 @@ import {
 } from "@/lib/adminInquiry";
 import { ContactNotesPanel, ContactTagsPanel, ReminderPanel, AssigneeSelect } from "./AdminContactPanels";
 import { EmailHistoryPanel } from "./EmailHistoryPanel";
+import { GeneralInquiryAnswersPanel } from "./GeneralInquiryAnswersPanel";
 
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
 
@@ -564,18 +565,32 @@ export function InquirySection({
       ) : (
       <div className="divide-y divide-[#1a472a]/10">
       {filteredInquiries.map((inquiry: any, currentIndex: number) => {
-        // Parse form data
+        // Prefer real general_inquiries columns; fall back to legacy formData JSON if present.
         let formData: any = {};
         try {
           formData = inquiry.formData ? JSON.parse(inquiry.formData) : {};
         } catch (e) {
           formData = {};
         }
-        
-        // Get selected projects/orgs
-        const selectedProjects = formData.selectedProjects || [];
-        const selectedOrgs = formData.selectedOrganizations || [];
-        const roleArchetypes = formData.roleArchetypes || [];
+        const parseList = (raw: unknown): string[] => {
+          if (Array.isArray(raw)) return raw.map(String);
+          if (typeof raw !== "string" || !raw.trim()) return [];
+          try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.map(String) : [];
+          } catch {
+            return [];
+          }
+        };
+        const selectedProjects = parseList(inquiry.landProjects).length
+          ? parseList(inquiry.landProjects)
+          : (formData.selectedProjects || []);
+        const selectedOrgs = parseList(inquiry.allianceOrganizations).length
+          ? parseList(inquiry.allianceOrganizations)
+          : (formData.selectedOrganizations || []);
+        const roleArchetypes = parseList(inquiry.roleArchetypes).length
+          ? parseList(inquiry.roleArchetypes)
+          : (formData.roleArchetypes || []);
         const contributionTypes = formData.contributionTypes || [];
         
         const isOpen = activeOpen === inquiry.id;
@@ -698,18 +713,7 @@ export function InquirySection({
               </div>
               
               <div className="space-y-6 py-4">
-                {/* Contact Info */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Email</p>
-                    <p className="text-[#1a472a]">{inquiry.email}</p>
-                  </div>
-                  {inquiry.location && (
-                    <div>
-                      <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Location</p>
-                      <p className="text-[#1a472a]">{inquiry.location}</p>
-                    </div>
-                  )}
                   <div>
                     <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
                     <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
@@ -721,274 +725,9 @@ export function InquirySection({
                     <p className="text-[#1a472a]">{new Date(inquiry.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
-                
-                {/* Selected Projects/Orgs */}
-                {selectedProjects.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Selected Land Projects</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProjects.map((proj: string) => (
-                        <Badge key={proj} className="bg-green-100 text-green-800 border-green-200">
-                          {landProjectsList.find(p => p.id === proj)?.name || proj}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {selectedOrgs.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Selected Alliance Organizations</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedOrgs.map((org: string) => (
-                        <Badge key={org} className="bg-purple-100 text-purple-800 border-purple-200">
-                          {allianceOrgsList.find(o => o.id === org)?.name || org}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {roleArchetypes.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Role Archetypes</p>
-                    <div className="flex flex-wrap gap-2">
-                      {roleArchetypes.map((role: string) => (
-                        <Badge key={role} className="bg-amber-100 text-amber-800 border-amber-200">
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {contributionTypes.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Contribution Types</p>
-                    <div className="flex flex-wrap gap-2">
-                      {contributionTypes.map((type: string) => (
-                        <Badge key={type} className="bg-blue-100 text-blue-800 border-blue-200">
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Alliance-specific: Organization info */}
-                {(inquiry.organizationUrl || inquiry.partnershipDescription) && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <p className="text-xs font-medium text-purple-800 uppercase tracking-wide mb-2">Alliance Partnership Details</p>
-                    {inquiry.organizationUrl && (
-                      <div className="mb-3">
-                        <p className="text-xs text-purple-600 font-medium">Organization URL</p>
-                        <a 
-                          href={inquiry.organizationUrl.startsWith('http') ? inquiry.organizationUrl : `https://${inquiry.organizationUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-purple-700 hover:underline break-all"
-                        >
-                          {inquiry.organizationUrl}
-                        </a>
-                      </div>
-                    )}
-                    {inquiry.partnershipDescription && (
-                      <div>
-                        <p className="text-xs text-purple-600 font-medium mb-1">Partnership Vision</p>
-                        <p className="text-sm text-purple-900 whitespace-pre-wrap">{inquiry.partnershipDescription}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Land Partner-specific: Project info */}
-                {(inquiry.projectUrl || inquiry.projectInspiration) && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-xs font-medium text-green-800 uppercase tracking-wide mb-2">Land Project Details</p>
-                    {inquiry.projectUrl && (
-                      <div className="mb-3">
-                        <p className="text-xs text-green-600 font-medium">Project URL</p>
-                        <a 
-                          href={inquiry.projectUrl.startsWith('http') ? inquiry.projectUrl : `https://${inquiry.projectUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-700 hover:underline break-all"
-                        >
-                          {inquiry.projectUrl}
-                        </a>
-                      </div>
-                    )}
-                    {inquiry.projectInspiration && (
-                      <div>
-                        <p className="text-xs text-green-600 font-medium mb-1">Project Inspiration</p>
-                        <p className="text-sm text-green-900 whitespace-pre-wrap">{inquiry.projectInspiration}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Role-specific: Pre-filled role info */}
-                {formData.prefilledRole && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <p className="text-xs font-medium text-amber-800 uppercase tracking-wide mb-2">Applied for Role</p>
-                    <p className="font-semibold text-amber-900">{formData.prefilledRole.title}</p>
-                    {formData.prefilledRole.circle && (
-                      <p className="text-sm text-amber-700">Circle: {formData.prefilledRole.circle}</p>
-                    )}
-                    {formData.prefilledRole.purpose && (
-                      <p className="text-sm text-amber-700 mt-1">{formData.prefilledRole.purpose}</p>
-                    )}
-                  </div>
-                )}
-                
-                {/* Role Interest */}
-                {inquiry.roleInterest && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Role Interest</p>
-                    <div className="bg-[#f0ebe3] rounded-lg p-4">
-                      <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.roleInterest}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Unique Contribution (Something Else path) */}
-                {inquiry.uniqueContribution && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Unique Contribution</p>
-                    <div className="bg-[#f0ebe3] rounded-lg p-4">
-                      <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.uniqueContribution}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Capital Types (9 Forms of Capital) */}
-                {inquiry.capitalTypes && (() => {
-                  try {
-                    const capitals = JSON.parse(inquiry.capitalTypes);
-                    if (capitals.length > 0) {
-                      return (
-                        <div>
-                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Forms of Capital to Contribute</p>
-                          <div className="flex flex-wrap gap-2">
-                            {capitals.map((cap: string) => (
-                              <Badge key={cap} className="bg-teal-100 text-teal-800 border-teal-200 capitalize">
-                                {cap.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                  } catch { return null; }
-                  return null;
-                })()}
-                
-                {/* Organizational Capital */}
-                {inquiry.organizationalCapital && (() => {
-                  try {
-                    const orgCaps = JSON.parse(inquiry.organizationalCapital);
-                    if (orgCaps.length > 0) {
-                      return (
-                        <div>
-                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Organizational Capital</p>
-                          <div className="flex flex-wrap gap-2">
-                            {orgCaps.map((cap: string) => (
-                              <Badge key={cap} className="bg-indigo-100 text-indigo-800 border-indigo-200 capitalize">
-                                {cap.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                  } catch { return null; }
-                  return null;
-                })()}
-                
-                {/* Alliance Support Categories */}
-                {inquiry.allianceSupportCategories && (() => {
-                  try {
-                    const categories = JSON.parse(inquiry.allianceSupportCategories);
-                    if (categories.length > 0) {
-                      return (
-                        <div>
-                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Alliance Support Categories</p>
-                          <div className="flex flex-wrap gap-2">
-                            {categories.map((cat: string) => (
-                              <Badge key={cat} className="bg-violet-100 text-violet-800 border-violet-200 capitalize">
-                                {cat.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                  } catch { return null; }
-                  return null;
-                })()}
-                
-                {/* Alliance Support Description */}
-                {inquiry.allianceSupportDescription && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">How Alliance Supports Land Projects</p>
-                    <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
-                      <p className="text-violet-900 whitespace-pre-wrap">{inquiry.allianceSupportDescription}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Other Alliance Support */}
-                {inquiry.otherAllianceSupport && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Other Support Category</p>
-                    <div className="bg-[#f0ebe3] rounded-lg p-4">
-                      <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.otherAllianceSupport}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Value Contribution */}
-                {inquiry.valueContribution && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Value Contribution</p>
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                      <p className="text-emerald-900 whitespace-pre-wrap">{inquiry.valueContribution}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Why Ideal Fit */}
-                {inquiry.whyIdealFit && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Why They Would Be an Ideal Fit</p>
-                    <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
-                      <p className="text-sky-900 whitespace-pre-wrap">{inquiry.whyIdealFit}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Message/Notes */}
-                {(inquiry.message || formData.additionalNotes) && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Message</p>
-                    <div className="bg-[#f0ebe3] rounded-lg p-4">
-                      <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.message || formData.additionalNotes}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* All Form Data */}
-                {Object.keys(formData).length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">All Form Data</p>
-                    <div className="bg-[#f0ebe3] rounded-lg p-4 overflow-x-auto">
-                      <pre className="text-xs text-[#1a472a]/75">
-                        {JSON.stringify(formData, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-                
+
+                <GeneralInquiryAnswersPanel inquiry={inquiry} />
+
                 {/* Activity Timeline */}
                 <Suspense fallback={null}><ActivityTimeline email={inquiry.email} contactType="inquiry" contactId={inquiry.id} /></Suspense>
 

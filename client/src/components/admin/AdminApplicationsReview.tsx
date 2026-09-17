@@ -8,6 +8,7 @@ import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye, Mail, Search 
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { ApplicantStatusEmailDialog } from "@/components/admin/ApplicantStatusEmailDialog";
 import { AdminApplicationReviewForm } from "@/components/admin/AdminApplicationReviewForm";
+import { ApplicationAnswersPanel } from "@/components/admin/ApplicationAnswersPanel";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
@@ -302,7 +303,7 @@ export function AdminApplicationsReview({
                   </SheetDescription>
                 </SheetHeader>
                 <div className="px-1 pt-4 space-y-4">
-                  {app.vision && <p className="text-sm text-[#1a472a] whitespace-pre-wrap">{app.vision}</p>}
+                  <ApplicationAnswersPanel application={app} />
                   <AdminApplicationReviewForm applicationId={app.id} />
                 </div>
               </>

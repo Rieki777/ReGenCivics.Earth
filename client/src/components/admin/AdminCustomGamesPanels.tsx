@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Gamepad2, Mail, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { CustomGameBlueprintAnswersPanel } from "@/components/admin/CustomGameBlueprintAnswersPanel";
 
 export function AdminCustomGameWaitlist() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -160,42 +161,6 @@ export function AdminCustomGameApplications() {
   const scoreColor = (score: number) =>
     score >= 70 ? "text-[#1a472a]" : score >= 40 ? "text-[#6b3f12]" : "text-[#1a472a]/70";
 
-  /** Pull the reviewable facts out of a blueprint draft. */
-  const draftSummary = (bp: any): Array<{ label: string; value: string }> => {
-    if (!bp || typeof bp !== "object") return [];
-    const rows: Array<{ label: string; value: string }> = [];
-    const push = (label: string, value: unknown) => {
-      if (value === undefined || value === null || value === "") return;
-      rows.push({ label, value: String(value) });
-    };
-    push("Role", bp.applicant?.role);
-    push("Location", bp.identity?.location);
-    push("Land status", bp.identity?.landStatus);
-    push("Acreage", bp.identity?.acreage);
-    push("Stage", bp.identity?.stage);
-    push("Website", bp.identity?.website);
-    push("Vision", typeof bp.content?.vision === "string" ? bp.content.vision.slice(0, 400) : undefined);
-    push("Goals", Array.isArray(bp.content?.goals) ? bp.content.goals.join("; ") : undefined);
-    push("Pains", Array.isArray(bp.content?.problems) ? bp.content.problems.join(" | ").slice(0, 600) : undefined);
-    push("Personas", Array.isArray(bp.personas) ? bp.personas.map((p: any) => p.label || p.id).join(", ") : undefined);
-    push("Member name", bp.language?.memberName);
-    push("Currency", bp.language?.currencyName);
-    push("Guide", bp.language?.guideName);
-    push("Guide voice", bp.language?.guideVoice);
-    push("Team hours/week", bp.team?.hoursPerWeek);
-    push("Team size", bp.team?.size);
-    push("Technical comfort", bp.team?.technicalComfort);
-    push("Hosting", bp.deployment?.hosting);
-    push("Domain", bp.deployment?.domain);
-    push("Timeline", bp.deployment?.timelineEstimate);
-    push("Budget confirmed", bp.deployment?.budgetConfirmed === undefined ? undefined : bp.deployment.budgetConfirmed ? "yes" : "no");
-    push("Referral", bp.deployment?.referralSource);
-    push("LLM provider", bp.integrations?.llmProvider);
-    push("Email provider", bp.integrations?.emailProvider);
-    push("Links", Array.isArray(bp.generationInputs?.uploads) ? bp.generationInputs.uploads.join(" ") : undefined);
-    return rows;
-  };
-
   const parseTranscript = (raw: unknown): Array<{ role: string; content: string }> => {
     if (typeof raw !== "string" || !raw) return [];
     try {
@@ -261,20 +226,7 @@ export function AdminCustomGameApplications() {
 
               {expanded === app.id && (
                 <div className="mt-4 space-y-4 border-t border-[#1a472a]/10 pt-3" onClick={(e) => e.stopPropagation()}>
-                  <div>
-                    <p className="text-[#1a472a]/80 text-sm font-medium mb-2">Blueprint draft</p>
-                    {draftSummary(app.blueprintDraft).length === 0 && (
-                      <p className="text-[#1a472a]/75 text-sm">No draft fields captured.</p>
-                    )}
-                    <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
-                      {draftSummary(app.blueprintDraft).map(({ label, value }) => (
-                        <div key={label} className="text-sm">
-                          <span className="text-[#1a472a]/75">{label}: </span>
-                          <span className="text-[#1a472a] break-words">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <CustomGameBlueprintAnswersPanel blueprint={app.blueprintDraft} />
 
                   <div>
                     <p className="text-[#1a472a]/80 text-sm font-medium mb-2">Sylva transcript</p>
