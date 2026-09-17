@@ -220,4 +220,19 @@ export const recordingsRouter = router({
     }),
 
 
+  // Admin: upsert Outbound draft summarizing this session (never auto-sends).
+  draftPostSessionLetter: adminProcedure
+    .input(z.object({
+      recordingId: z.number().int().positive(),
+      refreshDraft: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { draftPostSessionLetter } = await import("../lib/postSessionLetter");
+      return draftPostSessionLetter({
+        recordingId: input.recordingId,
+        createdBy: ctx.user.id,
+        refreshDraft: input.refreshDraft,
+      });
+    }),
+
 });
