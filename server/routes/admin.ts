@@ -316,6 +316,21 @@ export const adminRouter = router({
     return computeOperatorPulse();
   }),
 
+  // Ops notify channel status (booleans only — never return secrets).
+  // Telegram/WhatsApp = server/_core/notify.ts; owner email = OWNER_EMAIL fail-soft.
+  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored here.
+  opsNotifyStatus: adminProcedure.query(async () => {
+    const telegram =
+      Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) &&
+      Boolean(process.env.TELEGRAM_CHAT_ID?.trim());
+    const whatsapp =
+      Boolean(process.env.WHATSAPP_PHONE_NUMBER_ID?.trim()) &&
+      Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim()) &&
+      Boolean(process.env.WHATSAPP_TO_NUMBER?.trim());
+    const ownerEmail = Boolean(process.env.OWNER_EMAIL?.trim());
+    return { telegram, whatsapp, ownerEmail };
+  }),
+
   // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
   // the "leadership team" report to the CEO grounded only in that data. Returns
   // the snapshot alongside so the client can render KPIs + narrative together.
