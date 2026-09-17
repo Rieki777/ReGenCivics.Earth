@@ -7,6 +7,7 @@ import {
   isScheduleEventPast,
   partitionEventsByTemporal,
   resolveWatchUrl,
+  eventHasWatchPath,
   toMs,
   truncateOneLine,
 } from "./eventTemporal";
@@ -243,5 +244,14 @@ describe("truncateOneLine / formatDurationSeconds", () => {
     expect(formatDurationSeconds(65)).toBe("1:05");
     expect(formatDurationSeconds(3661)).toBe("1:01:01");
     expect(formatDurationSeconds(null)).toBeNull();
+  });
+});
+
+describe("eventHasWatchPath", () => {
+  it("is true with recordingId or youtubeUrl", () => {
+    expect(eventHasWatchPath({ recordingId: 3 })).toBe(true);
+    expect(eventHasWatchPath({ youtubeUrl: "https://youtu.be/dQw4w9WgXcQ" })).toBe(true);
+    expect(eventHasWatchPath({})).toBe(false);
+    expect(eventHasWatchPath({ recordingId: null, youtubeUrl: "  " })).toBe(false);
   });
 });
