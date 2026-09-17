@@ -577,6 +577,9 @@ export default function Schedule() {
                       recordingId={recordingId}
                       eventYoutubeUrl={eventYoutubeUrl}
                       forumThreadId={forumThreadId}
+                      eventType={event.type}
+                      eventSeason={(event as any).season}
+                      eventTitle={event.title}
                       description={event.description}
                       guestSpeakerName={(event as any).guestSpeakerName}
                       guestSpeakerTopic={(event as any).guestSpeakerTopic}
