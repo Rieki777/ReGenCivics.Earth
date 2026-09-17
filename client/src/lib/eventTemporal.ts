@@ -133,3 +133,55 @@ export function partitionEventsByTemporal<T extends EventTemporalInput>(
   past.sort((a, b) => startMs(b) - startMs(a));
   return { upcoming, past };
 }
+
+/**
+ * Public Schedule past rule: same wall-clock as admin (endTime else startTime),
+ * plus treat completed/cancelled status as past even if timestamps are missing.
+ */
+export function isScheduleEventPast(
+  event: EventTemporalInput,
+  nowMs: number = Date.now(),
+): boolean {
+  if (event.status === "completed" || event.status === "cancelled") return true;
+  return isEventPastForAdmin(event, nowMs);
+}
+
+/** Prefer edited cut, then raw YouTube, then Riverside, then event.youtubeUrl. */
+export function resolveWatchUrl(sources: {
+  editedYoutubeUrl?: string | null;
+  youtubeUrl?: string | null;
+  riversideUrl?: string | null;
+  eventYoutubeUrl?: string | null;
+}): string | null {
+  for (const v of [
+    sources.editedYoutubeUrl,
+    sources.youtubeUrl,
+    sources.riversideUrl,
+    sources.eventYoutubeUrl,
+  ]) {
+    const t = (v ?? "").trim();
+    if (t) return t;
+  }
+  return null;
+}
+
+/** One-line teaser for collapsed past cards ("What we covered"). */
+export function truncateOneLine(
+  text: string | null | undefined,
+  max = 140,
+): string | null {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!t) return null;
+  if (t.length <= max) return t;
+  return `${t.slice(0, Math.max(1, max - 1)).trimEnd()}…`;
+}
+
+export function formatDurationSeconds(sec: number | null | undefined): string | null {
+  if (sec == null || !Number.isFinite(sec) || sec < 0) return null;
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  return `${m}:${String(ss).padStart(2, "0")}`;
+}

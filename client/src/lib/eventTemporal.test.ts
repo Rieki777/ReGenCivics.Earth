@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
+  formatDurationSeconds,
   isEventPastForAdmin,
+  isScheduleEventPast,
   partitionEventsByTemporal,
+  resolveWatchUrl,
   toMs,
+  truncateOneLine,
 } from "./eventTemporal";
 
 const NOW = Date.parse("2026-09-16T15:00:00.000Z");
@@ -151,5 +155,93 @@ describe("partitionEventsByTemporal", () => {
     );
     expect(past.map((e) => e.id).sort()).toEqual([1, 2]);
     expect(upcoming.map((e) => e.id)).toEqual([3]);
+  });
+});
+
+
+describe("isScheduleEventPast", () => {
+  it("treats completed and cancelled as past even with future start", () => {
+    expect(
+      isScheduleEventPast(
+        { startTime: "2026-10-01T18:00:00.000Z", status: "completed" },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isScheduleEventPast(
+        { startTime: "2026-10-01T18:00:00.000Z", status: "cancelled" },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("uses endTime when present (same as admin)", () => {
+    expect(
+      isScheduleEventPast(
+        {
+          startTime: "2026-09-16T14:00:00.000Z",
+          endTime: "2026-09-16T16:00:00.000Z",
+          status: "upcoming",
+        },
+        NOW,
+      ),
+    ).toBe(false); // still live at NOW=15:00Z
+    expect(
+      isScheduleEventPast(
+        {
+          startTime: "2026-09-16T12:00:00.000Z",
+          endTime: "2026-09-16T14:00:00.000Z",
+          status: "upcoming",
+        },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("resolveWatchUrl", () => {
+  it("prefers editedYoutubeUrl over raw youtube and riverside", () => {
+    expect(
+      resolveWatchUrl({
+        editedYoutubeUrl: "https://youtu.be/edited",
+        youtubeUrl: "https://youtu.be/raw",
+        riversideUrl: "https://riverside.fm/x",
+        eventYoutubeUrl: "https://youtu.be/event",
+      }),
+    ).toBe("https://youtu.be/edited");
+  });
+
+  it("falls back through youtube → riverside → event", () => {
+    expect(
+      resolveWatchUrl({
+        youtubeUrl: "https://youtu.be/raw",
+        riversideUrl: "https://riverside.fm/x",
+        eventYoutubeUrl: "https://youtu.be/event",
+      }),
+    ).toBe("https://youtu.be/raw");
+    expect(
+      resolveWatchUrl({
+        riversideUrl: "https://riverside.fm/x",
+        eventYoutubeUrl: "https://youtu.be/event",
+      }),
+    ).toBe("https://riverside.fm/x");
+    expect(resolveWatchUrl({ eventYoutubeUrl: "https://youtu.be/event" })).toBe(
+      "https://youtu.be/event",
+    );
+    expect(resolveWatchUrl({})).toBeNull();
+  });
+});
+
+describe("truncateOneLine / formatDurationSeconds", () => {
+  it("truncates with ellipsis", () => {
+    expect(truncateOneLine("short")).toBe("short");
+    expect(truncateOneLine("x".repeat(200), 20)?.endsWith("…")).toBe(true);
+    expect(truncateOneLine("   ")).toBeNull();
+  });
+
+  it("formats durations", () => {
+    expect(formatDurationSeconds(65)).toBe("1:05");
+    expect(formatDurationSeconds(3661)).toBe("1:01:01");
+    expect(formatDurationSeconds(null)).toBeNull();
   });
 });
