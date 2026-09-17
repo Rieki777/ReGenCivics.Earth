@@ -38,9 +38,11 @@ export type PastEventRecordingProps = {
 
 function usePastRecording(props: PastEventRecordingProps) {
   const { eventId, recordingId, eventYoutubeUrl, forumThreadId } = props;
+  // Always fetch: byEventId resolves recordingId OR a unique YouTube match so
+  // Historical can prefer editedYoutubeUrl even when status/link lag.
   const { data: recording, isLoading } = trpc.recordings.byEventId.useQuery(
     { eventId },
-    { enabled: !!recordingId },
+    { enabled: Number.isFinite(eventId) && eventId > 0 },
   );
   const watchUrl = resolveWatchUrl({
     editedYoutubeUrl: recording?.editedYoutubeUrl,
@@ -53,14 +55,16 @@ function usePastRecording(props: PastEventRecordingProps) {
   );
   const durationLabel = formatDurationSeconds(recording?.durationSeconds ?? null);
   const forumPostId = recording?.forumPostId ?? forumThreadId ?? null;
+  const resolvedRecordingId = recording?.id ?? recordingId ?? null;
   return {
     recording,
-    isLoading: !!recordingId && isLoading,
+    isLoading: isLoading && !recording,
     watchUrl,
     overviewLine,
     durationLabel,
     forumPostId,
-    hasRecordingId: !!recordingId,
+    hasRecordingId: !!resolvedRecordingId,
+    resolvedRecordingId,
   };
 }
 
@@ -94,7 +98,7 @@ export function PastEventCollapsedMeta(props: PastEventRecordingProps) {
   const { hasRecordingId, recording, overviewLine, durationLabel, isLoading } =
     usePastRecording(props);
 
-  if (!hasRecordingId) return null;
+  if (!hasRecordingId && !isLoading) return null;
   if (isLoading && !recording) {
     return (
       <div className="flex gap-3 mt-2" data-testid="past-event-collapsed-meta">
@@ -329,7 +333,7 @@ export function PastEventExpandedPanel(props: PastEventRecordingProps & {
     guestSpeakerBio,
     recordingId,
   } = props;
-  const { watchUrl, forumPostId, hasRecordingId, isLoading } = usePastRecording(props);
+  const { watchUrl, forumPostId, hasRecordingId, isLoading, resolvedRecordingId } = usePastRecording(props);
 
   let emptyState: ReactNode = null;
   if (!hasRecordingId) {
@@ -390,8 +394,8 @@ export function PastEventExpandedPanel(props: PastEventRecordingProps & {
 
       {emptyState}
 
-      {hasRecordingId && recordingId != null && (
-        <RecordingDetail id={recordingId} />
+      {hasRecordingId && resolvedRecordingId != null && (
+        <RecordingDetail id={resolvedRecordingId} />
       )}
     </div>
   );
