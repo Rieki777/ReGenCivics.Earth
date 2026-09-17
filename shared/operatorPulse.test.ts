@@ -1,0 +1,125 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildOperatorPulseItems,
+  eventHasWatchPath,
+  isApplicationWaitingReview,
+  isInvestorNeedsActionStatus,
+  isOpenOrOverdueCallTask,
+  isOutboundFailedOrStuck,
+  recordingNeedsCut,
+  OUTBOUND_STUCK_SENDING_MS,
+} from "./operatorPulse";
+
+describe("eventHasWatchPath", () => {
+  it("accepts any of the watch sources", () => {
+    expect(eventHasWatchPath({ eventYoutubeUrl: "https://youtu.be/x" })).toBe(true);
+    expect(eventHasWatchPath({ youtubeUrl: "https://youtu.be/x" })).toBe(true);
+    expect(eventHasWatchPath({ editedYoutubeUrl: "https://youtu.be/x" })).toBe(true);
+    expect(eventHasWatchPath({ riversideUrl: "https://riverside.fm/x" })).toBe(true);
+  });
+
+  it("rejects empty / whitespace / missing", () => {
+    expect(eventHasWatchPath({})).toBe(false);
+    expect(eventHasWatchPath({ eventYoutubeUrl: "  ", recordingId: 9 })).toBe(false);
+  });
+});
+
+describe("recordingNeedsCut", () => {
+  it("needs cut when edited URL empty", () => {
+    expect(recordingNeedsCut({ editedYoutubeUrl: null })).toBe(true);
+    expect(recordingNeedsCut({ editedYoutubeUrl: "" })).toBe(true);
+    expect(recordingNeedsCut({ editedYoutubeUrl: "https://youtu.be/cut" })).toBe(false);
+  });
+});
+
+describe("status helpers", () => {
+  it("applications waiting review", () => {
+    expect(isApplicationWaitingReview("submitted")).toBe(true);
+    expect(isApplicationWaitingReview("pending")).toBe(true);
+    expect(isApplicationWaitingReview("under_review")).toBe(true);
+    expect(isApplicationWaitingReview("approved")).toBe(false);
+  });
+
+  it("investors needs action mirrors triage", () => {
+    expect(isInvestorNeedsActionStatus("new")).toBe(true);
+    expect(isInvestorNeedsActionStatus(null)).toBe(true);
+    expect(isInvestorNeedsActionStatus("pending")).toBe(true);
+    expect(isInvestorNeedsActionStatus("archived")).toBe(false);
+    expect(isInvestorNeedsActionStatus("contacted")).toBe(false);
+  });
+});
+
+describe("isOutboundFailedOrStuck", () => {
+  const now = Date.parse("2026-09-16T20:00:00.000Z");
+
+  it("flags failed and partial sent", () => {
+    expect(isOutboundFailedOrStuck({ status: "failed" }, now)).toBe(true);
+    expect(isOutboundFailedOrStuck({ status: "sent", failedCount: 2 }, now)).toBe(true);
+    expect(isOutboundFailedOrStuck({ status: "sent", failedCount: 0 }, now)).toBe(false);
+  });
+
+  it("flags sending older than stuck threshold", () => {
+    const fresh = new Date(now - OUTBOUND_STUCK_SENDING_MS / 2).toISOString();
+    const stale = new Date(now - OUTBOUND_STUCK_SENDING_MS - 1000).toISOString();
+    expect(isOutboundFailedOrStuck({ status: "sending", updatedAt: fresh }, now)).toBe(false);
+    expect(isOutboundFailedOrStuck({ status: "sending", updatedAt: stale }, now)).toBe(true);
+  });
+});
+
+describe("isOpenOrOverdueCallTask", () => {
+  const now = Date.parse("2026-09-16T20:00:00.000Z");
+
+  it("counts open call_task statuses", () => {
+    expect(isOpenOrOverdueCallTask({ sourceType: "call_task", workStatus: "proposed" }, now)).toBe(true);
+    expect(isOpenOrOverdueCallTask({ sourceType: "call_task", workStatus: "in_review" }, now)).toBe(true);
+    expect(isOpenOrOverdueCallTask({ sourceType: "contribution", workStatus: "open" }, now)).toBe(false);
+    expect(isOpenOrOverdueCallTask({ sourceType: "call_task", workStatus: "completed" }, now)).toBe(false);
+  });
+
+  it("counts expired non-terminal", () => {
+    expect(
+      isOpenOrOverdueCallTask(
+        {
+          sourceType: "call_task",
+          workStatus: "claimed",
+          expiresAt: new Date(now - 1000).toISOString(),
+        },
+        now,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("buildOperatorPulseItems", () => {
+  it("omits zero counts and sorts high severity first", () => {
+    const items = buildOperatorPulseItems({
+      pastEventsNoWatch: 3,
+      recordingsNeedCut: 0,
+      investorsNeedsAction: 2,
+      applicationsWaitingReview: 1,
+      outboundFailedOrStuck: 4,
+      callTasksOpenOrOverdue: 0,
+    });
+    expect(items.map((i) => i.id)).toEqual([
+      "outbound-failed",
+      "applications",
+      "investors",
+      "past-events-no-watch",
+    ]);
+    expect(items[0].href).toContain("surface=history");
+    expect(items.find((i) => i.id === "investors")?.href).toContain("filter=needs_action");
+  });
+
+  it("returns empty when clear", () => {
+    expect(
+      buildOperatorPulseItems({
+        pastEventsNoWatch: 0,
+        recordingsNeedCut: 0,
+        investorsNeedsAction: 0,
+        applicationsWaitingReview: 0,
+        outboundFailedOrStuck: 0,
+        callTasksOpenOrOverdue: 0,
+      }),
+    ).toEqual([]);
+  });
+});
