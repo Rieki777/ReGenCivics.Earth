@@ -49,6 +49,7 @@ export const INVESTMENT_TIMELINE_LABELS: Record<string, string> = {
 
 export const PRIMARY_INTEREST_LABELS: Record<string, string> = {
   land_projects: "Land projects",
+  // fund-claims-allow: investor inquiry enum key and display label; not a product claim
   alliance_fund: "Alliance fund",
   both: "Both",
 };
