@@ -6,6 +6,7 @@ import {
   dictationSupported,
   DICTATION_DENIED_MESSAGE,
   DICTATION_BLOCKED_TITLE,
+  DICTATION_BLOCKED_LEAD,
   DICTATION_SENSITIVE_MESSAGE,
   DICTATION_UNSUPPORTED_MESSAGE,
 } from "./useDictation";
@@ -55,11 +56,15 @@ function removeSpeech() {
   delete (window as Window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
 }
 
+/** Mutable so try-again can flip denied → granted without remounting. */
+let micPermissionState: "granted" | "denied" | "prompt" = "prompt";
+
 function installMicPermission(state: "granted" | "denied" | "prompt") {
+  micPermissionState = state;
   Object.defineProperty(navigator, "permissions", {
     configurable: true,
     value: {
-      query: vi.fn(async () => ({ state, onchange: null })),
+      query: vi.fn(async () => ({ state: micPermissionState, onchange: null })),
     },
   });
 }
@@ -345,13 +350,66 @@ describe("DictationButton", () => {
     const help = screen.getByTestId("dictation-mic-help");
     expect(help.parentElement).toBe(document.body);
     expect(help.textContent).toContain(DICTATION_BLOCKED_TITLE);
+    expect(help.textContent).toContain(DICTATION_BLOCKED_LEAD);
+    expect(help.textContent).toMatch(/blocked for this site/i);
     expect(help.textContent).toMatch(/lock|site info|address bar/i);
     expect(help.textContent).toMatch(/Microphone/);
     expect(help.textContent).toMatch(/Allow/);
+    expect(help.textContent).toMatch(/OS mic privacy/i);
+    expect(help.textContent).toMatch(/I allowed it — try again/);
     expect(help.textContent).toMatch(/Reload/i);
+    expect(screen.getByTestId("dictation-mic-try-again")).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Close" }));
     });
     expect(screen.queryByTestId("dictation-mic-help")).toBeNull();
+  });
+
+  it("keeps the blocked modal open when try again still sees denied", async () => {
+    vi.useRealTimers();
+    installMicPermission("denied");
+    function Box() {
+      const [value, setValue] = useState("");
+      return <DictationButton value={value} onChange={setValue} />;
+    }
+    render(<Box />);
+    const btn = screen.getByTestId("dictation-button");
+    await act(async () => {
+      fireEvent.pointerDown(btn);
+      fireEvent.pointerUp(btn);
+    });
+    expect(screen.getByTestId("dictation-mic-help")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("dictation-mic-try-again"));
+    });
+    expect(screen.getByTestId("dictation-mic-help")).toBeTruthy();
+    expect(btn.getAttribute("aria-pressed")).toBe("false");
+    expect(FakeSpeechRecognition.latest?.started).toBeFalsy();
+  });
+
+  it("try again rechecks permission and starts listening without reload", async () => {
+    vi.useRealTimers();
+    installMicPermission("denied");
+    function Box() {
+      const [value, setValue] = useState("");
+      return <DictationButton value={value} onChange={setValue} />;
+    }
+    render(<Box />);
+    const btn = screen.getByTestId("dictation-button");
+    await act(async () => {
+      fireEvent.pointerDown(btn);
+      fireEvent.pointerUp(btn);
+    });
+    expect(screen.getByTestId("dictation-mic-help")).toBeTruthy();
+
+    micPermissionState = "granted";
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("dictation-mic-try-again"));
+    });
+
+    // Recovery path is start(), not location.reload — help closes and listening begins.
+    expect(screen.queryByTestId("dictation-mic-help")).toBeNull();
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+    expect(FakeSpeechRecognition.latest?.started).toBe(true);
   });
 });
