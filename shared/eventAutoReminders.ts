@@ -200,18 +200,63 @@ export function offsetSubject(title: string, minutes: number): string {
 }
 
 /**
- * Offsets that should fire now: due (now >= start - offset) and not yet sent,
- * and only while the event has not started.
+ * Wall-clock cutoff for "still open for upcoming reminders".
+ * Prefer endTime when present; if missing, fall back to startTime (same as
+ * admin eventTemporal: start-only events are past once start has passed).
+ */
+export function reminderOpenUntilMs(opts: {
+  startTime: Date;
+  endTime?: Date | string | null;
+}): number | null {
+  const startMs = opts.startTime instanceof Date
+    ? opts.startTime.getTime()
+    : new Date(opts.startTime as Date).getTime();
+  if (!Number.isFinite(startMs)) return null;
+  if (opts.endTime != null && opts.endTime !== "") {
+    const endMs = opts.endTime instanceof Date
+      ? opts.endTime.getTime()
+      : new Date(opts.endTime).getTime();
+    if (Number.isFinite(endMs)) return endMs;
+  }
+  return startMs;
+}
+
+/**
+ * True while now is strictly before endTime (or startTime when end is missing).
+ * Past OA/S2 sessions must not receive reminder sends even if DB status lags.
+ */
+export function isOpenForUpcomingReminders(opts: {
+  startTime: Date;
+  endTime?: Date | string | null;
+  now: Date;
+}): boolean {
+  const until = reminderOpenUntilMs(opts);
+  if (until == null) return false;
+  return opts.now.getTime() < until;
+}
+
+/**
+ * Offsets that should fire now: due (now >= start - offset) and not yet sent.
+ *
+ * Catch-up window:
+ * - Offset subjects are pre-start ("Starting in…"), so we still only fire while
+ *   now < startTime.
+ * - Additionally require now < (endTime ?? startTime) so a status-lagged past
+ *   event can never send, matching admin temporal derive.
  */
 export function dueOffsets(opts: {
   startTime: Date;
+  endTime?: Date | string | null;
   now: Date;
   offsetsMinutes: number[];
   alreadySent: Iterable<number>;
 }): number[] {
   const startMs = opts.startTime.getTime();
   const nowMs = opts.now.getTime();
-  if (!Number.isFinite(startMs) || nowMs >= startMs) return [];
+  if (!Number.isFinite(startMs)) return [];
+  if (!isOpenForUpcomingReminders(opts)) return [];
+  // Pre-start only: do not blast "Starting soon" after the session has begun.
+  if (nowMs >= startMs) return [];
   const sent = new Set(opts.alreadySent);
   return opts.offsetsMinutes.filter((minutes) => {
     if (sent.has(minutes)) return false;
