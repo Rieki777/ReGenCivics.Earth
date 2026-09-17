@@ -112,7 +112,7 @@ export function AdminOutboundWrite({
     if (fill.body !== undefined) setBody(fill.body);
     if (fill.layout) setLayout(fill.layout);
     setPreview(null);
-    toast.success("Draft loaded from the assistant.");
+    toast.success("Draft filled in Outbound Write. Review, then use Preview send.");
   };
 
   useEffect(() => {
@@ -293,13 +293,7 @@ export function AdminOutboundWrite({
               <Button
                 type="button"
                 className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                disabled={
-                  sendPreview.isPending
-                  || saveDraft.isPending
-                  || !subject.trim()
-                  || !body.trim()
-                  || audienceCount < 1
-                }
+                disabled={sendPreview.isPending || saveDraft.isPending}
                 onClick={() => void handlePreview()}
               >
                 {(sendPreview.isPending || saveDraft.isPending) ? (

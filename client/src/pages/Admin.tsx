@@ -22,9 +22,7 @@ import {
   countInvestorTriage,
   filterInvestorsForTriage,
 } from "@/lib/investorTriage";
-import { buildReminderByContactId, dueReminderContactIds } from "@shared/contactReminders";
 import { recordAdminVisit } from "@/lib/adminUsage";
-import { BROADCAST_FILL_EVENT } from "@shared/broadcastChannels";
 import { queueBroadcastFill } from "@/lib/broadcastFill";
 import {
   isOutboundWriteComposeAction,
@@ -187,8 +185,8 @@ function AdminDashboard() {
     } else if (action.type === "compose" && action.tab === "broadcast") {
       const fill = action.body || action.subject;
       if (fill) {
+        // queueBroadcastFill writes sessionStorage + dispatches BROADCAST_FILL_EVENT.
         queueBroadcastFill(fill);
-        window.dispatchEvent(new CustomEvent(BROADCAST_FILL_EVENT, { detail: { text: fill } }));
       }
       setActiveTab("broadcast");
     } else if (isOutboundWriteComposeAction(action)) {
@@ -225,10 +223,6 @@ function AdminDashboard() {
   const { data: draftApplications } = trpc.applications.listDrafts.useQuery(undefined, { retry: false });
   const { data: investors } = trpc.investorInquiries.list.useQuery(undefined, { retry: false });
   const { data: inquiries } = trpc.generalInquiries.list.useQuery(undefined, { retry: false });
-  const { data: investorNotes } = trpc.contactNotes.listByType.useQuery(
-    { contactType: "investor" },
-    { retry: false },
-  );
 
   const utils = trpc.useUtils();
   const auditNote = trpc.contactNotes.create.useMutation();
@@ -246,13 +240,10 @@ function AdminDashboard() {
 
   const duplicateInvestorEmails = buildDuplicateInvestorEmails(investors || []);
   const investorTriageCounts = countInvestorTriage(investors || []);
-  const investorRemindersById = buildReminderByContactId(investorNotes || []);
-  const dueReminderIds = dueReminderContactIds(investorRemindersById);
   const filteredInvestors = filterInvestorsForTriage(investors || [], {
     filter: investorStatusFilter,
     search: investorSearch,
     duplicateEmails: duplicateInvestorEmails,
-    dueReminderIds,
   });
 
   const stats = {
@@ -352,7 +343,6 @@ function AdminDashboard() {
               ContactTagsPanelComp={ContactTagsPanel}
               ReminderPanelComp={ReminderPanel}
               AssigneeSelectComp={AssigneeSelect}
-              investorRemindersById={investorRemindersById}
               openId={activeTab === "investors" ? openRecordId : null}
               onOpenIdChange={setOpenRecordId}
             />
