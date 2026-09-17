@@ -3,8 +3,10 @@
  * compose-into-fields, and the hard no-send rule. Chat never calls Resend.
  */
 
+import { formatSiteContextForPrompt, SITE_ORIGIN } from "../../shared/siteContext";
+
 export const OUTBOUND_WRITE_COMPOSE_EXAMPLE =
-  '<action>{"type":"compose","tab":"outbound","surface":"write","subject":"Season update","body":"Friends,\\n\\nHere is this week\'s note.\\n\\n[Watch the stream](https://regencivics.earth/)","layout":"announcement","label":"Use this in Write"}</action>';
+  '<action>{"type":"compose","tab":"outbound","surface":"write","subject":"Season update","body":"Friends,\\n\\nHere is this week\'s note.\\n\\n[Open Season 2](https://regencivics.earth/season2)","layout":"announcement","label":"Use this in Write"}</action>';
 
 export const OUTBOUND_WRITE_SEND_REDIRECT =
   "Send stays on Write. Use Preview send, then Confirm. Or tap Apply to draft on Write with me. I can put this letter in the composer.";
@@ -18,7 +20,16 @@ If the admin asks you to send, send now, send to all subscribers, or proceed to 
 
 When you draft a letter, emit a compose action so the fields fill. Do not leave the letter only in the chat bubble.
 ${OUTBOUND_WRITE_COMPOSE_EXAMPLE}
+
+Never invent URLs. Only use Canonical site URLs (injected below) or a link the admin gave you. If a page is missing from the map, say so and ask. Match Rye's voice from the Voice / second brain block when present.
 `;
+
+/** Shared site URL allowlist for the floating admin AI (and any prompt that imports it). */
+export function adminSiteContextBlock(): string {
+  return formatSiteContextForPrompt();
+}
+
+export const ADMIN_SITE_ORIGIN = SITE_ORIGIN;
 
 export const OUTBOUND_WRITE_SURFACE_BLOCK = `
 You are currently on Outbound Write. Put the draft in the composer with the compose action as soon as you write it, same as Apply to draft. Preview send and Confirm are on the Write form. Write with me Apply also fills the fields. This chat never sends.
