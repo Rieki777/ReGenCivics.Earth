@@ -210,3 +210,12 @@ export async function notifyShipCalendarConflict(conflicts: string[]): Promise<v
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
+
+/**
+ * Morning "Needs you today" ping for ops (Telegram + WhatsApp).
+ * Same channels as recording-ready. Fail-soft when env vars missing.
+ */
+export async function notifyOperatorPulse(message: string): Promise<void> {
+  await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
+}
+

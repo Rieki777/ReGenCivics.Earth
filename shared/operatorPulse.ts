@@ -209,3 +209,55 @@ export function buildOperatorPulseItems(counts: OperatorPulseCounts): OperatorPu
 export function emptyOperatorPulse(generatedAt = new Date().toISOString()): OperatorPulseResult {
   return { generatedAt, items: [], deferred: [] };
 }
+
+// ── Morning ping (phase 2 of Operator Pulse) ─────────────────────────────────
+// Cron: hourly POST /api/cron/operator-pulse-ping. Fires once per Pacific day
+// at/after 08:00 America/Los_Angeles when items.length > 0.
+
+export const OPERATOR_PULSE_PING_HOUR_PT = 8;
+export const OPERATOR_PULSE_PING_ZONE = "America/Los_Angeles";
+/** site_settings key storing last Pacific YYYY-MM-DD the ping was attempted. */
+export const OPERATOR_PULSE_PING_LAST_DAY_KEY = "operator_pulse_ping.last_day";
+
+/** Calendar day (YYYY-MM-DD) and 0-23 hour of an instant in Rye's zone. */
+export function operatorPulsePtDayHour(at: Date): { day: string; hour: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: OPERATOR_PULSE_PING_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return { day: `${get("year")}-${get("month")}-${get("day")}`, hour: Number(get("hour")) };
+}
+
+/**
+ * True on the first tick at or after 08:00 PT on a day that has not yet been
+ * marked (lastDay is the Pacific YYYY-MM-DD already handled, or null).
+ */
+export function operatorPulseMorningDue(now: Date, lastDay: string | null): boolean {
+  const here = operatorPulsePtDayHour(now);
+  if (here.hour < OPERATOR_PULSE_PING_HOUR_PT) return false;
+  if (!lastDay) return true;
+  return lastDay !== here.day;
+}
+
+/** Short Markdown-ish summary for Telegram / WhatsApp / email. */
+export function formatOperatorPulsePingMessage(
+  items: OperatorPulseItem[],
+  baseUrl: string,
+): { title: string; body: string } {
+  const root = baseUrl.replace(/\/$/, "");
+  const overview = `${root}/admin`;
+  const total = items.reduce((n, i) => n + i.count, 0);
+  const lines = items.map((i) => `• ${i.count} ${i.label}\n  ${root}${i.href}`);
+  const title = `Needs you today — ${items.length} item${items.length === 1 ? "" : "s"} (${total})`;
+  const body =
+    `*Needs you today*\n\n` +
+    `${items.length} open stack${items.length === 1 ? "" : "s"} · ${total} total\n\n` +
+    lines.join("\n") +
+    `\n\nOverview: ${overview}`;
+  return { title, body };
+}

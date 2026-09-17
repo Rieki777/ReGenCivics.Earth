@@ -843,6 +843,26 @@ async function startServer() {
     }
   });
 
+  // ── Operator Pulse morning ping ────────────────────────────────────────────
+  // Prefer hourly Railway cron: POST /api/cron/operator-pulse-ping (Bearer
+  // CRON_SECRET). Job itself gates to ~08:00 America/Los_Angeles once/day.
+  // When Overview "Needs you today" has items, notifies Telegram + WhatsApp
+  // (same ops stack as recording-ready) and fail-soft owner email.
+  app.post("/api/cron/operator-pulse-ping", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runOperatorPulsePing } = await import("../jobs/operatorPulsePing");
+      const report = await runOperatorPulsePing();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron operator-pulse-ping failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Movement Coordination Engine pipeline cron endpoint ──────────────────
   // Called every ~10 minutes by Railway cron: POST /api/cron/coordination-pipeline
   // Polls the YouTube channel RSS for new uploads, ingests them as
