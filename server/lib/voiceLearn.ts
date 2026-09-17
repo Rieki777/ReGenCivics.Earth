@@ -52,7 +52,7 @@ export async function learnFromOutboundEdit(params: {
     log.info(`outbound learn: ${candidates.length} candidates, ${stored} stored`);
     return { ok: true, stored };
   } catch (err) {
-    log.warn("learnFromOutboundEdit failed (fail-soft)", err);
+    log.warn("learnFromOutboundEdit failed (fail-soft)", { error: String(err) });
     return { ok: false, skipped: "error" };
   }
 }
