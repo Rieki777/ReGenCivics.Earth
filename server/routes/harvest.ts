@@ -414,6 +414,8 @@ export const harvestRouter = router({
       intent: z.string().max(2000).optional(),
       channels: z.array(z.enum(["twitter", "linkedin", "facebook", "instagram", "bluesky", "farcaster"])).min(1).max(6),
       link: z.string().url().max(500).optional(),
+      /** Rewrite master → each channel; skip Harvest idea grounding; no new facts. */
+      mode: z.enum(["adaptMaster"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { isLLMConfigured } = await import("../_core/llm");
