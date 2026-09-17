@@ -7,7 +7,9 @@ import {
   defaultOffsetsForEvent,
   dueOffsets,
   isDuplicateKeyError,
+  isOpenForUpcomingReminders,
   mergeRecipients,
+  reminderOpenUntilMs,
   offsetSubject,
   parseAudienceConfig,
   parseOffsetMinutes,
@@ -171,6 +173,69 @@ describe("dueOffsets", () => {
       offsetsMinutes: [CALL_START_OFFSET_MINUTES, 60],
       alreadySent: [60],
     })).toEqual([CALL_START_OFFSET_MINUTES]);
+  });
+
+  it("returns nothing when endTime has already passed (even if start were somehow ahead)", () => {
+    // Defense: closed by endTime. Offsets remain pre-start in normal data.
+    expect(dueOffsets({
+      startTime: new Date("2026-09-21T18:00:00Z"),
+      endTime: new Date("2026-09-10T20:00:00Z"),
+      now: new Date("2026-09-16T12:00:00Z"),
+      offsetsMinutes: DEFAULT_AUTO_REMINDER_OFFSETS,
+      alreadySent: [],
+    })).toEqual([]);
+  });
+
+  it("returns nothing for start-only events once start has passed", () => {
+    expect(dueOffsets({
+      startTime: start,
+      endTime: null,
+      now: new Date("2026-09-20T18:00:01Z"),
+      offsetsMinutes: DEFAULT_AUTO_REMINDER_OFFSETS,
+      alreadySent: [],
+    })).toEqual([]);
+  });
+});
+
+
+describe("reminderOpenUntilMs / isOpenForUpcomingReminders", () => {
+  const start = new Date("2026-09-20T18:00:00Z");
+  const end = new Date("2026-09-20T20:00:00Z");
+
+  it("uses endTime when present", () => {
+    expect(reminderOpenUntilMs({ startTime: start, endTime: end })).toBe(end.getTime());
+    expect(isOpenForUpcomingReminders({
+      startTime: start,
+      endTime: end,
+      now: new Date("2026-09-20T19:59:59Z"),
+    })).toBe(true);
+    expect(isOpenForUpcomingReminders({
+      startTime: start,
+      endTime: end,
+      now: new Date("2026-09-20T20:00:00Z"),
+    })).toBe(false);
+  });
+
+  it("falls back to startTime when endTime is missing", () => {
+    expect(reminderOpenUntilMs({ startTime: start, endTime: null })).toBe(start.getTime());
+    expect(isOpenForUpcomingReminders({
+      startTime: start,
+      endTime: null,
+      now: new Date("2026-09-20T17:59:59Z"),
+    })).toBe(true);
+    expect(isOpenForUpcomingReminders({
+      startTime: start,
+      endTime: null,
+      now: new Date("2026-09-20T18:00:00Z"),
+    })).toBe(false);
+  });
+
+  it("treats past OA/S2 sessions as closed even if start was long ago", () => {
+    expect(isOpenForUpcomingReminders({
+      startTime: new Date("2026-05-01T18:00:00Z"),
+      endTime: new Date("2026-05-01T20:00:00Z"),
+      now: new Date("2026-09-16T12:00:00Z"),
+    })).toBe(false);
   });
 });
 

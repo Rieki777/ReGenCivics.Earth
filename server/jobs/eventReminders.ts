@@ -4,7 +4,8 @@
  * Picked up by the existing hourly POST /api/cron/event-reminders job (and a
  * 5-minute in-process sweep so the 33-minute and 1-hour offsets do not wait
  * for the next hour). Catch-up still sends an offset that is already due,
- * until the session starts.
+ * until the session starts. Past events (now >= endTime, or >= startTime when
+ * endTime is missing) are skipped even if DB status still says upcoming/live.
  * Idempotent via unique (eventId, offsetMinutes) on event_auto_reminder_sends:
  * the insert is the claim, a duplicate key means another run already owns it.
  */
@@ -30,6 +31,7 @@ import {
   canEnableAutoReminders,
   dueOffsets,
   isDuplicateKeyError,
+  isOpenForUpcomingReminders,
   mergeRecipients,
   offsetSubject,
   parseAudienceConfig,
@@ -284,10 +286,21 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
       report.skipped += 1;
       continue;
     }
+    // Defense when status sweep lags or endTime was never set: do not OA/S2
+    // reminder-send past sessions.
+    if (!isOpenForUpcomingReminders({
+      startTime: event.startTime,
+      endTime: event.endTime,
+      now,
+    })) {
+      report.skipped += 1;
+      continue;
+    }
 
     const offsets = parseOffsetMinutes(config.offsetsJson);
     const due = dueOffsets({
       startTime: event.startTime,
+      endTime: event.endTime,
       now,
       offsetsMinutes: offsets,
       alreadySent: sentByEvent.get(event.id) ?? [],
