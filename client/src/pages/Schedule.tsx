@@ -35,6 +35,16 @@ import { CalendarCta } from "@/components/CalendarCta";
 import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
 import { CalendarOptions } from "@/components/CalendarOptions";
 import {
+  PastEventCollapsedMeta,
+  PastEventCollapsedWatch,
+  PastEventExpandedPanel,
+} from "@/components/schedule/PastEventRecording";
+import {
+  isScheduleEventPast,
+  toMs,
+  resolveEventStart,
+} from "@/lib/eventTemporal";
+import {
   RIVERSIDE_INFO,
   upcomingEventsFallback,
   upcomingOpenAccessSessions as listUpcomingOpenAccessSessions,
@@ -58,202 +68,8 @@ import {
 
 
 
-function ReplayButton({ eventId }: { eventId: number }) {
-  const { data: recording } = trpc.recordings.byEventId.useQuery({ eventId });
-  if (!recording) return null;
-  const url = recording.youtubeUrl ?? recording.riversideUrl;
-  if (!url) return null;
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
-    >
-      <Video className="w-4 h-4" />
-      Watch Replay
-    </a>
-  );
-}
-
-// Format a second offset as m:ss or h:mm:ss.
-function fmtTs(sec: number): string {
-  const s = Math.max(0, Math.floor(sec));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const ss = s % 60;
-  return h > 0
-    ? `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
-    : `${m}:${String(ss).padStart(2, "0")}`;
-}
-
-// Deep-link into the YouTube player at a given second.
-function chapterUrl(youtubeUrl: string, tSeconds: number): string {
-  const sep = youtubeUrl.includes("?") ? "&" : "?";
-  return `${youtubeUrl}${sep}t=${Math.max(0, Math.floor(tSeconds))}s`;
-}
-
-/**
- * RecordingDetail: the understanding produced by the coordination pipeline for
- * a recording. Overview, chapters (deep-linked into the player), decisions,
- * action items, and a collapsible timestamped transcript. Fetched on demand.
- */
-function RecordingDetail({ id }: { id: number }) {
-  const { data, isLoading } = trpc.recordings.getPublic.useQuery({ id });
-  const [showTranscript, setShowTranscript] = useState(false);
-  if (isLoading) return <p className="text-white/60 text-sm px-3 pb-3">Loading…</p>;
-  if (!data) return null;
-  const chapters = (data.chaptersJson as Array<{ tSeconds: number; title: string }> | null) ?? [];
-  const decisions = (data.decisionsJson as string[] | null) ?? [];
-  const actionItems = (data.actionItemsJson as Array<{ owner: string; item: string }> | null) ?? [];
-  const transcript = (data.transcriptJson as Array<{ start: number; text: string }> | null) ?? [];
-  const yt = data.youtubeUrl;
-
-  if (!data.overview && chapters.length === 0 && decisions.length === 0 && actionItems.length === 0 && transcript.length === 0) {
-    return <p className="text-white/60 text-sm px-3 pb-3">No summary yet for this session.</p>;
-  }
-
-  return (
-    <div className="px-3 pb-4 pt-1 space-y-4 text-sm border-t border-white/10">
-      {data.overview && <p className="text-white/80 leading-relaxed pt-3">{data.overview}</p>}
-
-      {chapters.length > 0 && (
-        <div>
-          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Chapters</h5>
-          <ul className="space-y-1">
-            {chapters.map((c, i) => (
-              <li key={i}>
-                {yt ? (
-                  <a href={chapterUrl(yt, c.tSeconds)} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#7dd87d] transition-colors">
-                    <span className="text-[#7dd87d]/70 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}
-                  </a>
-                ) : (
-                  <span className="text-white/80"><span className="text-white/60 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {decisions.length > 0 && (
-        <div>
-          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Decisions</h5>
-          <ul className="list-disc list-inside space-y-1 text-white/80">
-            {decisions.map((d, i) => <li key={i}>{d}</li>)}
-          </ul>
-        </div>
-      )}
-
-      {actionItems.length > 0 && (
-        <div>
-          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Action items</h5>
-          <ul className="space-y-1 text-white/80">
-            {actionItems.map((a, i) => (
-              <li key={i}><span className="text-[#7dd87d]/80 font-medium">{a.owner}:</span> {a.item}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {transcript.length > 0 && (
-        <div>
-          <button onClick={() => setShowTranscript((v) => !v)} className="text-white/60 hover:text-white text-xs inline-flex items-center gap-1">
-            {showTranscript ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {showTranscript ? "Hide transcript" : "Show transcript"}
-          </button>
-          {showTranscript && (
-            <div className="mt-2 max-h-64 overflow-y-auto space-y-1 pr-2">
-              {transcript.map((seg, i) => (
-                <p key={i} className="text-white/60 leading-relaxed">
-                  {yt ? (
-                    <a href={chapterUrl(yt, seg.start)} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d]/60 font-mono mr-2 hover:text-[#7dd87d]">{fmtTs(seg.start)}</a>
-                  ) : (
-                    <span className="text-white/60 font-mono mr-2">{fmtTs(seg.start)}</span>
-                  )}
-                  {seg.text}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * RecordingsSection: the most recent session recordings, ingested by the
- * coordination pipeline (YouTube poll) or the Riverside webhook. Each card
- * expands to show the pipeline's understanding (RecordingDetail).
- * Renders nothing if there are no recordings yet.
- */
-function RecordingsSection() {
-  const { data: recordings = [] } = trpc.recordings.list.useQuery({ limit: 12 });
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  if (!recordings || recordings.length === 0) return null;
-
-  return (
-    <section className="py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
-          <h3 className="text-2xl font-bold text-white mb-1">Episode Recordings</h3>
-          <p className="text-white/60 text-sm mb-5">Catch up on past sessions.</p>
-          <div className="grid grid-cols-1 gap-4">
-            {recordings.map((r: any) => {
-              const url = r.youtubeUrl ?? null;
-              const date = r.sessionDate ? new Date(r.sessionDate).toLocaleDateString() : null;
-              const expanded = expandedId === r.id;
-              return (
-                <div key={r.id} className="bg-white/5 rounded-xl border border-white/10 hover:border-[#7dd87d]/30 transition-colors overflow-hidden">
-                  <div className="flex gap-3 p-3">
-                    {r.thumbnailUrl ? (
-                      <img
-                        src={r.thumbnailUrl}
-                        alt=""
-                        width={120}
-                        height={68}
-                        className="w-30 h-17 rounded-lg object-cover flex-shrink-0"
-                        loading="lazy"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="w-30 h-17 rounded-lg bg-[#1a472a] flex-shrink-0 flex items-center justify-center">
-                        <Video className="w-6 h-6 text-[#7dd87d]/80" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-semibold text-sm line-clamp-2">{r.title || "Untitled session"}</h4>
-                      {date && <p className="text-white/70 text-xs mt-1">{date}</p>}
-                      <div className="flex items-center gap-3 mt-2">
-                        {url && (
-                          <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 text-xs font-semibold">
-                            <Video className="w-3.5 h-3.5" /> Watch
-                          </a>
-                        )}
-                        {r.forumPostId && (
-                          <Link href={`/community/post/${r.forumPostId}`} className="text-[#7dd87d]/80 hover:text-[#7dd87d] text-xs">Discuss</Link>
-                        )}
-                        <button
-                          onClick={() => setExpandedId(expanded ? null : r.id)}
-                          className="ml-auto inline-flex items-center gap-1 text-white/60 hover:text-white text-xs"
-                        >
-                          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                          {expanded ? "Less" : "Details"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {expanded && <RecordingDetail id={r.id} />}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+// Past-event Watch / RecordingDetail / empty states live in
+// @/components/schedule/PastEventRecording (Historical tab UX).
 
 /** Signup counts stay private until a session has more than this many. */
 const SIGNUP_COUNT_VISIBLE_FROM = 50;
@@ -318,19 +134,27 @@ export default function Schedule() {
     appleCalendarUrl: (ev as any).appleCalendarUrl ?? ((ev as any).startTime ? buildIcsDataUrl(ev as any) : ''),
   }));
 
-  // Filter events based on the active tab
+  // Filter events based on the active tab — same past rule as admin
+  // (endTime if present else startTime) plus completed/cancelled status.
   const filteredEvents = activeTab === "upcoming"
-    ? upcomingEvents.filter(e => (e as any).status !== "completed" && (e as any).status !== "cancelled")
-    : upcomingEvents
-        .filter(e => (e as any).status === "completed")
+    ? upcomingEvents
+        .filter((e) => !isScheduleEventPast(e as any))
         .sort((a, b) => {
-          const aTime = (a as any).startTime ? new Date((a as any).startTime).getTime() : 0;
-          const bTime = (b as any).startTime ? new Date((b as any).startTime).getTime() : 0;
+          const aTime = toMs(resolveEventStart(a as any)) ?? 0;
+          const bTime = toMs(resolveEventStart(b as any)) ?? 0;
+          return aTime - bTime;
+        })
+    : upcomingEvents
+        .filter((e) => isScheduleEventPast(e as any))
+        .sort((a, b) => {
+          const aTime = toMs(resolveEventStart(a as any)) ?? 0;
+          const bTime = toMs(resolveEventStart(b as any)) ?? 0;
           return bTime - aTime; // newest first
         });
 
-  // First upcoming event, auto-expand it
-  const firstUpcomingId = filteredEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
+  // First upcoming event, auto-expand it (only on Upcoming tab)
+  const firstUpcomingId =
+    activeTab === "upcoming" ? (filteredEvents[0]?.id ?? null) : null;
   const effectiveExpanded = expandedEvent !== null ? expandedEvent : firstUpcomingId;
 
   const reminderMutation = trpc.events.signup.useMutation();
@@ -649,85 +473,118 @@ export default function Schedule() {
                 {activeTab === "upcoming" ? "No upcoming events scheduled yet." : "No past events to show."}
               </p>
             )}
-            {filteredEvents.map((event) => (
+            {filteredEvents.map((event) => {
+              const isPast = isScheduleEventPast(event as any);
+              const recordingId = (event as any).recordingId as number | null | undefined;
+              const eventYoutubeUrl = (event as any).youtubeUrl as string | null | undefined;
+              const forumThreadId = (event as any).forumThreadId as number | null | undefined;
+              const toggleExpand = () =>
+                setExpandedEvent(effectiveExpanded === event.id ? null : event.id);
+
+              return (
               <div 
                 key={event.id}
-                className={`bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 overflow-hidden ${(event as any).status === 'completed' ? 'opacity-60' : ''} ${
+                className={`bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 overflow-hidden ${isPast ? 'opacity-80' : ''} ${
                   event.type === 'open' 
                     ? 'border-[#7dd87d]/50 ring-2 ring-[#7dd87d]/20' 
                     : 'border-[#7dd87d]/20 hover:border-[#7dd87d]/40'
                 }`}
               >
-                <button
-                  onClick={() => setExpandedEvent(effectiveExpanded === event.id ? null : event.id)}
-                  className="w-full p-6 text-left"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      {event.type === 'open' && (
-                        <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-1 rounded-full mb-2">
-                          OPEN ACCESS
+                {/* Collapsed bar: expand control + (past) Watch outside the button so links are valid HTML */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-6">
+                  <button
+                    type="button"
+                    onClick={toggleExpand}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    {event.type === 'open' && (
+                      <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-1 rounded-full mb-2">
+                        OPEN ACCESS
+                      </span>
+                    )}
+                    <h3 className="text-xl font-bold text-white">
+                      <Link href={`/events/${event.id}`} className="hover:text-[#7dd87d] transition-colors" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        {event.title}
+                      </Link>
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-white/60">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {(event as any).startTime
+                          ? formatLocalDate(new Date((event as any).startTime))
+                          : (event as any).date === 'TBD' ? 'Date TBD' : formatDate((event as any).date)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {(event as any).startTime ? (() => {
+                          const start = new Date((event as any).startTime);
+                          const end = (event as any).endTime
+                            ? new Date((event as any).endTime)
+                            : new Date(start.getTime() + 2 * 3_600_000);
+                          return formatRangeWithReference(start, end);
+                        })()
+                          : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        Online
+                      </span>
+                      {!isPast && signupCountMap[event.id] > SIGNUP_COUNT_VISIBLE_FROM && (
+                        <span className="flex items-center gap-1 text-[#7dd87d]/80">
+                          <Users className="w-4 h-4" />
+                          {signupCountMap[event.id]} {signupCountMap[event.id] === 1 ? 'person' : 'people'} signed up
                         </span>
                       )}
-                      <h3 className="text-xl font-bold text-white">
-                        <Link href={`/events/${event.id}`} className="hover:text-[#7dd87d] transition-colors" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                          {event.title}
-                        </Link>
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-4 mt-2 text-white/60">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {/* Date and clock both come from the reader's zone. They used
-                              to disagree: the date was local and the time was Pacific,
-                              so on 2026-09-07 a Sydney reader saw "Sunday, September 27
-                              at 11:00 AM PDT" for an event that runs Saturday the 26th. */}
-                          {(event as any).startTime
-                            ? formatLocalDate(new Date((event as any).startTime))
-                            : (event as any).date === 'TBD' ? 'Date TBD' : formatDate((event as any).date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {(event as any).startTime ? (() => {
-                            const start = new Date((event as any).startTime);
-                            const end = (event as any).endTime
-                              ? new Date((event as any).endTime)
-                              : new Date(start.getTime() + 2 * 3_600_000);
-                            return formatRangeWithReference(start, end);
-                          })()
-                            : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          Online
-                        </span>
-                        {/* Social proof, but only once it actually is any.
-                            "1 person signed up" on a session nobody has joined
-                            yet reads as evidence not to come, so it stays
-                            hidden until the number is worth showing (Rye,
-                            2026-09-07). */}
-                        {signupCountMap[event.id] > SIGNUP_COUNT_VISIBLE_FROM && (
-                          <span className="flex items-center gap-1 text-[#7dd87d]/80">
-                            <Users className="w-4 h-4" />
-                            {signupCountMap[event.id]} {signupCountMap[event.id] === 1 ? 'person' : 'people'} signed up
-                          </span>
-                        )}
-                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+                    {isPast && (
+                      <PastEventCollapsedMeta
+                        eventId={event.id}
+                        recordingId={recordingId}
+                        eventYoutubeUrl={eventYoutubeUrl}
+                        forumThreadId={forumThreadId}
+                      />
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-2 flex-shrink-0 self-start">
+                    {isPast && (
+                      <PastEventCollapsedWatch
+                        eventId={event.id}
+                        recordingId={recordingId}
+                        eventYoutubeUrl={eventYoutubeUrl}
+                        forumThreadId={forumThreadId}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={toggleExpand}
+                      className="p-1 rounded-lg hover:bg-white/10"
+                      aria-label={effectiveExpanded === event.id ? "Collapse event" : "Expand event"}
+                    >
                       {effectiveExpanded === event.id ? (
                         <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
                       ) : (
                         <ChevronDown className="w-5 h-5 text-white/70" />
                       )}
-                    </div>
+                    </button>
                   </div>
-                </button>
+                </div>
                 
                 {effectiveExpanded === event.id && (
+                  isPast ? (
+                    <PastEventExpandedPanel
+                      eventId={event.id}
+                      recordingId={recordingId}
+                      eventYoutubeUrl={eventYoutubeUrl}
+                      forumThreadId={forumThreadId}
+                      description={event.description}
+                      guestSpeakerName={(event as any).guestSpeakerName}
+                      guestSpeakerTopic={(event as any).guestSpeakerTopic}
+                      guestSpeakerBio={(event as any).guestSpeakerBio}
+                    />
+                  ) : (
                   <div className="px-6 pb-6 pt-0 border-t border-white/10">
                     <p className="text-white/70 mb-6 mt-4 safe-prose">{event.description}</p>
-                    {/* #25. Guest speaker info */}
                     {(event as any).guestSpeakerName && (
                       <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -747,9 +604,6 @@ export default function Schedule() {
                     <div className="flex flex-wrap gap-3">
                       {event.googleCalendarUrl ? (
                         <div className="w-full">
-                          {/* A served .ics beats the data: URL we used to hand out:
-                              iOS Safari is unreliable with data: downloads, and this
-                              one is rendered from the row so it never goes stale. */}
                           <CalendarCta
                             googleUrl={event.googleCalendarUrl}
                             appleUrl={
@@ -761,55 +615,29 @@ export default function Schedule() {
                           />
                         </div>
                       ) : null}
-                      
-                      {/* Watch Recording (shows once recording is linked) */}
-                      {(event as any).youtubeUrl && (event as any).status === 'completed' && (
+
+                      {(event as any).riversideRoomUrl ? (
                         <a
-                          href={(event as any).youtubeUrl}
+                          href={resolveRoomUrl((event as any).riversideRoomUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
                         >
                           <Video className="w-5 h-5" />
-                          Watch Recording
+                          Join on Riverside
+                        </a>
+                      ) : (
+                        <a
+                          href={resolveRoomUrl((event as any).riversideRoomUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
+                        >
+                          <Video className="w-5 h-5" />
+                          Join on Riverside
                         </a>
                       )}
 
-                      {/* Replay button for completed events with linked recording */}
-                      {(event as any).status === 'completed' && (event as any).recordingId && !(event as any).youtubeUrl && (
-                        <ReplayButton eventId={event.id} />
-                      )}
-
-                      {/* Join link. Both branches go through resolveRoomUrl: signed-in
-                          members receive riversideRoomUrl, and every row stores the
-                          old studio token link there, so passing it through raw
-                          sidestepped /join for exactly the people most likely to
-                          click. */}
-                      {(event as any).status !== 'completed' && (
-                        (event as any).riversideRoomUrl ? (
-                          <a
-                            href={resolveRoomUrl((event as any).riversideRoomUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                          >
-                            <Video className="w-5 h-5" />
-                            Join on Riverside
-                          </a>
-                        ) : (
-                          <a
-                            href={resolveRoomUrl((event as any).riversideRoomUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
-                          >
-                            <Video className="w-5 h-5" />
-                            Join on Riverside
-                          </a>
-                        )
-                      )}
-
-                      {/* Per-event reminder / waitlist */}
                       {reminderSuccess?.id === event.id ? (
                         <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm border ${reminderSuccess.type === 'waitlist' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 'bg-[#7dd87d]/20 text-[#7dd87d] border-[#7dd87d]/30'}`}>
                           <Check className="w-4 h-4" />
@@ -843,7 +671,6 @@ export default function Schedule() {
                               ✕
                             </button>
                           </div>
-                          {/* #4. Optional SMS */}
                           <input
                             type="tel"
                             placeholder="+1 555 000 0000 (optional, get a text reminder too)"
@@ -865,7 +692,6 @@ export default function Schedule() {
                         </button>
                       )}
 
-                      {/* #9. Suggest agenda item */}
                       {agendaSuccess === event.id ? (
                         <span className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-xl font-medium text-sm border border-purple-500/30">
                           <Check className="w-4 h-4" />
@@ -904,7 +730,7 @@ export default function Schedule() {
                             >✕</button>
                           </div>
                         </div>
-                      ) : (event as any).status !== 'completed' ? (
+                      ) : (
                         <button
                           onClick={() => setAgendaOpenFor(event.id)}
                           className="inline-flex items-center gap-2 bg-white/5 hover:bg-purple-600/20 text-white/70 hover:text-purple-300 px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/10 hover:border-purple-500/30"
@@ -912,12 +738,14 @@ export default function Schedule() {
                           <Plus className="w-4 h-4" />
                           Suggest agenda item
                         </button>
-                      ) : null}
+                      )}
                     </div>
                   </div>
+                  )
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
           
           {/* Note about TBD dates — only relevant for upcoming episodes.
