@@ -105,27 +105,51 @@ export type BufferPostTarget = {
 
 const DEFAULT_BUFFER_CHANNEL = (id: string) => id !== "farcaster";
 
+/** All Buffer profiles whose service matches a compose channel id. */
+export function profilesForChannel(
+  profiles: BufferProfileLike[],
+  channelId: string,
+): BufferProfileLike[] {
+  const needle = channelId.toLowerCase();
+  return profiles.filter((p) => p.service.toLowerCase() === needle);
+}
+
 /**
  * Map selected compose channels → Buffer profiles with the body that should
  * post to each. Missing profiles are listed separately (caller surfaces errors).
+ *
+ * When `selectedProfileIds` is provided, only those profiles are used (supports
+ * multiple Buffer profiles on one network). When omitted, keeps the historical
+ * first-match-per-network behavior for callers that have not opted in.
  */
 export function buildBufferPostTargets(opts: {
   selectedChannelIds: string[];
   masterText: string;
   channelBodies: Record<string, string>;
   profiles: BufferProfileLike[];
+  selectedProfileIds?: string[];
   isBufferChannel?: (channelId: string) => boolean;
 }): { targets: BufferPostTarget[]; missingChannels: string[] } {
   const isBuffer = opts.isBufferChannel ?? DEFAULT_BUFFER_CHANNEL;
   const targets: BufferPostTarget[] = [];
   const missingChannels: string[] = [];
+  const allow =
+    opts.selectedProfileIds !== undefined
+      ? new Set(opts.selectedProfileIds)
+      : null;
 
   for (const channelId of opts.selectedChannelIds) {
     if (!isBuffer(channelId)) continue;
-    const profile = opts.profiles.find(
-      (p) => p.service.toLowerCase() === channelId.toLowerCase(),
-    );
-    if (!profile) {
+    const matches = profilesForChannel(opts.profiles, channelId);
+    let chosen: BufferProfileLike[];
+    if (allow) {
+      chosen = matches.filter((p) => allow.has(p.id));
+    } else if (matches.length > 0) {
+      chosen = [matches[0]!];
+    } else {
+      chosen = [];
+    }
+    if (chosen.length === 0) {
       missingChannels.push(channelId);
       continue;
     }
@@ -134,7 +158,9 @@ export function buildBufferPostTargets(opts: {
       opts.channelBodies,
       channelId,
     ).trim();
-    targets.push({ profileId: profile.id, channelId, text });
+    for (const profile of chosen) {
+      targets.push({ profileId: profile.id, channelId, text });
+    }
   }
 
   return { targets, missingChannels };
