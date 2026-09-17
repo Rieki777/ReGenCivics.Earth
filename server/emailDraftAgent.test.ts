@@ -55,6 +55,30 @@ describe("parseDraftAgentOutput", () => {
   });
 });
 
+describe("buildDraftAgentSystemPrompt site + voice", () => {
+  it("always includes the canonical site URL block", () => {
+    const prompt = buildDraftAgentSystemPrompt({
+      statusLabel: "accepted",
+      recipientCount: 3,
+    });
+    expect(prompt).toContain("never invent links");
+    expect(prompt).toContain("https://regencivics.earth/season2");
+    expect(prompt).toContain("https://regencivics.earth/apply");
+    expect(prompt).toContain("ask the admin for the correct URL");
+  });
+
+  it("appends an injected voice / second-brain block", () => {
+    const prompt = buildDraftAgentSystemPrompt({
+      statusLabel: "accepted",
+      recipientCount: 1,
+      voiceContextBlock: "## Voice / second brain\n<voice-profile>\nBe concrete.\n</voice-profile>",
+    });
+    expect(prompt).toContain("Voice / second brain");
+    expect(prompt).toContain("Be concrete.");
+    expect(prompt).toContain("Match Rye's voice");
+  });
+});
+
 describe("buildNewsletterDraftAgentSystemPrompt", () => {
   it("never sends and never asks for emails", () => {
     const prompt = buildNewsletterDraftAgentSystemPrompt({
@@ -65,6 +89,18 @@ describe("buildNewsletterDraftAgentSystemPrompt", () => {
     expect(prompt).toContain("Audience: active subscribers ({{email}})");
     expect(prompt).not.toMatch(/zgeist@gmail\.com/);
     expect(prompt).toContain("Recipient count: 40");
+  });
+
+  it("includes site URL allowlist on every newsletter draft prompt", () => {
+    const prompt = buildNewsletterDraftAgentSystemPrompt({
+      audienceLabel: "active subscribers",
+      recipientCount: 10,
+      voiceContextBlock: "LEARNED STYLE RULES:\n- [tone] Prefer short sentences.",
+    });
+    expect(prompt).toContain("Canonical site URLs");
+    expect(prompt).toContain("https://regencivics.earth/season2");
+    expect(prompt).toContain("Prefer short sentences.");
+    expect(prompt).toContain("Never invent URLs");
   });
 });
 

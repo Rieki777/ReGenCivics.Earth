@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminSiteContextBlock,
   claimedOutboundSend,
   guardAssistantSendClaim,
   OUTBOUND_WRITE_ASSISTANT_BLOCK,
@@ -58,5 +59,14 @@ describe("OUTBOUND_WRITE_ASSISTANT_BLOCK", () => {
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain('"tab":"outbound"');
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain('"surface":"write"');
     expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).not.toContain("\u2014");
+  });
+});
+
+describe("adminSiteContextBlock", () => {
+  it("exposes the shared site map for the FAB", () => {
+    const block = adminSiteContextBlock();
+    expect(block).toContain("never invent links");
+    expect(block).toContain("https://regencivics.earth/season2");
+    expect(OUTBOUND_WRITE_ASSISTANT_BLOCK).toContain("Never invent URLs");
   });
 });
