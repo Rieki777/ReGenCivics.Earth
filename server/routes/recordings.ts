@@ -6,7 +6,7 @@
 import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { recordings, events } from "../../drizzle/schema";
+import { recordings } from "../../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -68,30 +68,12 @@ export const recordingsRouter = router({
       return rec ?? null;
     }),
 
-  // Public: get recording linked to a specific event
+  // Public: get recording linked to a specific event (or unique YouTube match)
   byEventId: publicProcedure
     .input(z.object({ eventId: z.number() }))
     .query(async ({ input }) => {
-      const database = await getDb();
-      if (!database) return null;
-      const [event] = await database.select({ recordingId: events.recordingId })
-        .from(events)
-        .where(eq(events.id, input.eventId))
-        .limit(1);
-      if (!event?.recordingId) return null;
-      const [recording] = await database.select({
-        id: recordings.id,
-        title: recordings.title,
-        youtubeUrl: recordings.youtubeUrl,
-        editedYoutubeUrl: recordings.editedYoutubeUrl,
-        riversideUrl: recordings.riversideUrl,
-        thumbnailUrl: recordings.thumbnailUrl,
-        durationSeconds: recordings.durationSeconds,
-        overview: recordings.overview,
-        aiSummary: recordings.aiSummary,
-        forumPostId: recordings.forumPostId,
-      }).from(recordings).where(eq(recordings.id, event.recordingId)).limit(1);
-      return recording ?? null;
+      const { findRecordingForEventPublic } = await import("../lib/recordingEventLink");
+      return findRecordingForEventPublic(input.eventId);
     }),
 
   // Admin: full list with all fields
@@ -229,4 +211,13 @@ export const recordingsRouter = router({
         .where(eq(recordings.id, input.recordingId));
       return { ok: true, notified: 0 };
     }),
+
+  // Admin: backfill unique recording↔event links for honesty (Historical Watch).
+  repairEventLinks: adminProcedure
+    .mutation(async () => {
+      const { repairPastEventRecordingLinks } = await import("../lib/recordingEventLink");
+      return repairPastEventRecordingLinks({ limit: 200 });
+    }),
+
+
 });

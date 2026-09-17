@@ -21,6 +21,7 @@ import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import { ENV } from "../_core/env";
+import { linkRecordingToMatchingEvent } from "./recordingEventLink";
 
 const log = logger("recording-finalize");
 
@@ -102,6 +103,15 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     }
   }
 
+  // ── 1b. Event link (independent of forum): unique YouTube id or ±4h session ──
+  // Prefer filling event.youtubeUrl + recordingId so Historical Watch works even
+  // when the event never got a forumThreadId. Idempotent / refuses ambiguity.
+  try {
+    await linkRecordingToMatchingEvent(recordingId);
+  } catch (err) {
+    log.error("recording↔event link failed:", err);
+  }
+
   // ── 2. Email subscribers (once per recording) ──
   if (!recording.emailSent && (recording.youtubeUrl || recording.riversideUrl)) {
     try {
@@ -120,6 +130,7 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     riversideUrl: recording.riversideUrl,
     forumPostId: recording.forumPostId,
   }).catch((err) => log.error("notify error:", err));
+
 }
 
 // ── Forum post creation (fallback when no event thread matches) ──

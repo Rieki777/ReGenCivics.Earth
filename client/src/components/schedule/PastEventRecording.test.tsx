@@ -7,18 +7,22 @@ vi.mock("@/lib/trpc", () => ({
   trpc: {
     recordings: {
       byEventId: {
-        useQuery: () => ({
-          data: {
-            id: 9,
-            editedYoutubeUrl: "https://youtu.be/edited-cut",
-            youtubeUrl: "https://youtu.be/raw",
-            riversideUrl: null,
-            thumbnailUrl: "https://example.com/t.jpg",
-            durationSeconds: 125,
-            overview: "We talked about open access and follow-ups.",
-            aiSummary: null,
-            forumPostId: 42,
-          },
+        // eventId 2 = no linked/matching recording (empty-state case)
+        useQuery: (input: { eventId: number }) => ({
+          data:
+            input.eventId === 2
+              ? null
+              : {
+                  id: 9,
+                  editedYoutubeUrl: "https://youtu.be/edited-cut",
+                  youtubeUrl: "https://youtu.be/raw",
+                  riversideUrl: null,
+                  thumbnailUrl: "https://example.com/t.jpg",
+                  durationSeconds: 125,
+                  overview: "We talked about open access and follow-ups.",
+                  aiSummary: null,
+                  forumPostId: 42,
+                },
           isLoading: false,
         }),
       },
@@ -103,7 +107,7 @@ describe("PastEventExpandedPanel", () => {
     expect(screen.queryByText(/Suggest agenda/i)).toBeNull();
   });
 
-  it("shows no-recording empty when recordingId missing", () => {
+  it("shows no-recording empty when no recordingId and byEventId null", () => {
     render(<PastEventExpandedPanel eventId={2} recordingId={null} />);
     expect(screen.getByTestId("past-empty-no-recording")).toHaveTextContent(
       "No recording linked yet",

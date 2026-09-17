@@ -185,3 +185,15 @@ export function formatDurationSeconds(sec: number | null | undefined): string | 
   if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
   return `${m}:${String(ss).padStart(2, "0")}`;
 }
+
+/** True when the event already exposes a Watch path (linked recording or youtube URL). */
+export function eventHasWatchPath(event: {
+  recordingId?: number | null;
+  youtubeUrl?: string | null;
+  youtube_url?: string | null;
+}): boolean {
+  if (event.recordingId != null && Number(event.recordingId) > 0) return true;
+  const yt = (event.youtubeUrl ?? event.youtube_url ?? "").trim();
+  return yt.length > 0;
+}
+

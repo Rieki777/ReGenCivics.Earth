@@ -26,6 +26,7 @@ import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoRemind
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
+  eventHasWatchPath,
   isEventPastForAdmin,
   partitionEventsByTemporal,
   resolveEventStart,
@@ -67,8 +68,20 @@ export function AdminEventsTab() {
   const [attendanceInput, setAttendanceInput] = useState('');
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
-  const [eventsFilter, setEventsFilter] = useState<"upcoming" | "past" | "all">("upcoming");
-  const [pastExpanded, setPastExpanded] = useState(false);
+  const [eventsFilter, setEventsFilter] = useState<"upcoming" | "past" | "all">(() => {
+    try {
+      const f = new URLSearchParams(window.location.search).get("filter");
+      if (f === "past" || f === "upcoming" || f === "all") return f;
+    } catch { /* SSR / no window */ }
+    return "upcoming";
+  });
+  const [pastExpanded, setPastExpanded] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("filter") === "past";
+    } catch {
+      return false;
+    }
+  });
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
   const [autoReminderOpen, setAutoReminderOpen] = useState<number | null>(null);
   const [customSubject, setCustomSubject] = useState('');
@@ -318,6 +331,15 @@ export function AdminEventsTab() {
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
                       {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
                       {ev.recordingId && <span className="text-purple-400">Recording #{ev.recordingId}</span>}
+                      {isPast && !eventHasWatchPath(ev as any) && (
+                        <span
+                          className="text-amber-400/90"
+                          data-testid="admin-event-no-recording"
+                          title="Past session with no recordingId and no youtubeUrl — Historical cannot show Watch"
+                        >
+                          No recording linked
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 sm:flex-col sm:items-end">
@@ -802,6 +824,12 @@ export function AdminEventsTab() {
                   onClick={() => {
                     setEventsFilter(value);
                     if (value !== "upcoming") setPastExpanded(true);
+                    try {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("tab", "events");
+                      url.searchParams.set("filter", value);
+                      window.history.replaceState(null, "", url.pathname + url.search);
+                    } catch { /* history unavailable */ }
                   }}
                   className={`min-h-11 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
                     eventsFilter === value
