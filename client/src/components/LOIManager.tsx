@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { trpc } from "@/lib/trpc";
 import { FileText, Mail, Building, TrendingUp, Calendar, DollarSign, Eye, Loader2 } from "lucide-react";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
+import { LoiAnswersPanel } from "@/components/admin/LoiAnswersPanel";
 import { toast } from "sonner";
 
 export function LOIManager() {
@@ -251,113 +252,7 @@ export function LOIManager() {
                   </Badge>
                 </div>
 
-                {/* Contact Information */}
-                <div className="space-y-3">
-                  <h3 className="font-bold text-[#1a472a]">Contact Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-[#1a472a]/80">Name:</span>
-                      <p className="font-medium text-[#1a472a]">{selectedLOI.fullName}</p>
-                    </div>
-                    <div>
-                      <span className="text-[#1a472a]/80">Email:</span>
-                      <p className="font-medium text-[#1a472a]">{selectedLOI.email}</p>
-                    </div>
-                    {selectedLOI.phone && (
-                      <div>
-                        <span className="text-[#1a472a]/80">Phone:</span>
-                        <p className="font-medium text-[#1a472a]">{selectedLOI.phone}</p>
-                      </div>
-                    )}
-                    {selectedLOI.organization && (
-                      <div>
-                        <span className="text-[#1a472a]/80">Organization:</span>
-                        <p className="font-medium text-[#1a472a]">{selectedLOI.organization}</p>
-                      </div>
-                    )}
-                    {selectedLOI.role && (
-                      <div>
-                        <span className="text-[#1a472a]/80">Role:</span>
-                        <p className="font-medium text-[#1a472a]">{selectedLOI.role}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Investment Details */}
-                <div className="space-y-3">
-                  <h3 className="font-bold text-[#1a472a]">Investment Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-[#1a472a]/80">Pledge Amount:</span>
-                      <p className="font-bold text-[#7dd87d] text-lg">
-                        ${selectedLOI.pledgeAmount.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[#1a472a]/80">Investor Type:</span>
-                      <p className="font-medium text-[#1a472a]">
-                        {investorTypeLabels[selectedLOI.investorType]}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <span className="text-[#1a472a]/80">Investment Timeline:</span>
-                      <p className="font-medium text-[#1a472a]">
-                        {timelineLabels[selectedLOI.investmentTimeline]}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Preferences */}
-                {(selectedLOI.geographicPreference || selectedLOI.sectorInterests) && (
-                  <div className="space-y-3">
-                    <h3 className="font-bold text-[#1a472a]">Preferences</h3>
-                    {selectedLOI.geographicPreference && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Geographic Preference:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.geographicPreference}</p>
-                      </div>
-                    )}
-                    {selectedLOI.sectorInterests && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Sector Interests:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.sectorInterests}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Additional Information */}
-                {(selectedLOI.motivations || selectedLOI.questionsForTeam || selectedLOI.additionalNotes) && (
-                  <div className="space-y-3">
-                    <h3 className="font-bold text-[#1a472a]">Additional Information</h3>
-                    {selectedLOI.motivations && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Motivations:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.motivations}</p>
-                      </div>
-                    )}
-                    {selectedLOI.questionsForTeam && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Questions:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.questionsForTeam}</p>
-                      </div>
-                    )}
-                    {selectedLOI.additionalNotes && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Additional Notes:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.additionalNotes}</p>
-                      </div>
-                    )}
-                    {selectedLOI.referralSource && (
-                      <div>
-                        <span className="text-[#1a472a]/80 text-sm">Referral Source:</span>
-                        <p className="text-[#1a472a]">{selectedLOI.referralSource}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <LoiAnswersPanel loi={selectedLOI} />
 
                 {/* Status Update Actions */}
                 <div className="space-y-3 pt-4 border-t">

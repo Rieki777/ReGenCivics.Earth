@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { adminStatusChipClass } from "@/lib/adminContrast";
 import { investorTriageEmptyCopy, countInvestorTriage } from "@/lib/investorTriage";
+import { InvestorInquiryAnswersPanel } from "@/components/admin/InvestorInquiryAnswersPanel";
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -204,9 +205,9 @@ export function AdminInvestorsTab({
                               </Badge>
                             )}
                           </div>
-                          {investor.motivation && (
+                          {investor.motivations && (
                             <p className="text-sm text-[#1a472a]/75 mt-2 line-clamp-2">
-                              {investor.motivation}
+                              {investor.motivations}
                             </p>
                           )}
                         </div>
@@ -270,14 +271,7 @@ export function AdminInvestorsTab({
                   </SheetHeader>
 
                   <div className="flex-1 min-h-0 overflow-y-auto space-y-6 px-6 py-4">
-                    {/* Contact Info */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Email</p>
-                        <a href={`mailto:${investor.email}`} className="text-[#4a7c59] hover:underline break-all">
-                          {investor.email}
-                        </a>
-                      </div>
                       <div>
                         <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Status</p>
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass(investor.status)}`}>
@@ -288,92 +282,9 @@ export function AdminInvestorsTab({
                         <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Submitted</p>
                         <p className="text-[#1a472a]">{new Date(investor.createdAt).toLocaleString()}</p>
                       </div>
-                      {investor.organization && (
-                        <div>
-                          <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide">Organization</p>
-                          <p className="text-[#1a472a]">{investor.organization}</p>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Investment Details */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                      <p className="text-xs font-medium text-amber-800 uppercase tracking-wide mb-3">Investment Details</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        {investor.investmentRange && (
-                          <div>
-                            <p className="text-xs text-amber-600 font-medium">Investment Range</p>
-                            <p className="text-amber-900 font-semibold">{investor.investmentRange}</p>
-                          </div>
-                        )}
-                        {investor.investorType && (
-                          <div>
-                            <p className="text-xs text-amber-600 font-medium">Investor Type</p>
-                            <p className="text-amber-900 font-semibold capitalize">{investor.investorType?.replace(/_/g, ' ')}</p>
-                          </div>
-                        )}
-                        {investor.timeline && (
-                          <div>
-                            <p className="text-xs text-amber-600 font-medium">Timeline</p>
-                            <p className="text-amber-900 font-semibold capitalize">{investor.timeline?.replace(/_/g, ' ')}</p>
-                          </div>
-                        )}
-                        {investor.accreditedStatus && (
-                          <div>
-                            <p className="text-xs text-amber-600 font-medium">Accredited Status</p>
-                            <p className="text-amber-900 font-semibold capitalize">{investor.accreditedStatus?.replace(/_/g, ' ')}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Primary Interest */}
-                    {investor.primaryInterest && (
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Primary Interest</p>
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${adminStatusChipClass("committed")}`}>
-                          {investor.primaryInterest?.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Motivation */}
-                    {investor.motivation && (
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Motivation</p>
-                        <div className="bg-[#f0ebe3] rounded-lg p-4">
-                          <p className="text-[#1a472a] whitespace-pre-wrap">{investor.motivation}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Experience */}
-                    {investor.experience && (
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Investment Experience</p>
-                        <div className="bg-[#f0ebe3] rounded-lg p-4">
-                          <p className="text-[#1a472a] whitespace-pre-wrap">{investor.experience}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Questions */}
-                    {investor.questions && (
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">Questions</p>
-                        <div className="bg-[#f0ebe3] rounded-lg p-4">
-                          <p className="text-[#1a472a] whitespace-pre-wrap">{investor.questions}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* How They Heard */}
-                    {investor.howHeard && (
-                      <div>
-                        <p className="text-xs font-medium text-[#1a472a]/75 uppercase tracking-wide mb-2">How They Heard About Us</p>
-                        <p className="text-[#1a472a]">{investor.howHeard}</p>
-                      </div>
-                    )}
+                    <InvestorInquiryAnswersPanel inquiry={investor} />
 
                     {/* Activity Timeline */}
                     <Suspense fallback={null}><ActivityTimeline email={investor.email} contactType="investor" contactId={investor.id} /></Suspense>
