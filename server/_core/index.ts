@@ -1079,26 +1079,11 @@ async function startServer() {
       const windowStart = new Date(now.getTime() + 20 * 60 * 60 * 1000); // 20h from now
       const windowEnd = new Date(now.getTime() + 28 * 60 * 60 * 1000);   // 28h from now
 
-      // #7. Auto-update event status based on time
-      const liveThreshold = new Date(now.getTime() - 30 * 60 * 1000);   // started >30min ago
-      const completedThreshold = now;                                      // endTime has passed
-      // Mark events as live if they started within the last 30 min and are still "upcoming"
-      await database.update(eventsTable)
-        .set({ status: "live" })
-        .where(dbAnd(
-          dbEq(eventsTable.status, "upcoming"),
-          dbLte(eventsTable.startTime, now),
-          dbGte(eventsTable.startTime, liveThreshold)
-        ));
-      // Mark events as completed if their endTime has passed
-      const { lt: dbLt, sql: dbSql, isNotNull: dbIsNotNull } = await import("drizzle-orm");
-      await database.update(eventsTable)
-        .set({ status: "completed" })
-        .where(dbAnd(
-          dbSql`${eventsTable.status} IN ('upcoming','live')`,
-          dbIsNotNull(eventsTable.endTime),
-          dbLt(eventsTable.endTime as any, completedThreshold)
-        ));
+      // #7. Auto-update event status (respects endTime; start-only → completed after start)
+      const { sweepEventStatuses } = await import("../lib/eventStatusSweep");
+      await sweepEventStatuses(now);
+      const { sql: dbSql, isNotNull: dbIsNotNull } = await import("drizzle-orm");
+      const { isOpenForUpcomingReminders } = await import("@shared/eventAutoReminders");
 
       // Find upcoming events in the reminder window that haven't been reminded yet.
       // Events with auto-reminders enabled are owned by runAutoEventReminders
@@ -1171,6 +1156,21 @@ async function startServer() {
           dbEq(eventsTable.reminderSent, 0),
         ));
       for (const event of dueScheduled) {
+        // Skip past / cancelled sessions — do not send after endTime (or start if no end).
+        if (
+          event.status === "cancelled" ||
+          event.status === "completed" ||
+          !isOpenForUpcomingReminders({
+            startTime: event.startTime,
+            endTime: event.endTime,
+            now,
+          })
+        ) {
+          await database.update(eventsTable)
+            .set({ reminderSent: 1, reminderScheduledFor: null })
+            .where(dbEq(eventsTable.id, event.id));
+          continue;
+        }
         const signups = await database
           .select()
           .from(signupsTable)
