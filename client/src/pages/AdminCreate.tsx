@@ -478,6 +478,7 @@ export function HarvestPage() {
           <section className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm font-semibold text-[#1a472a] uppercase tracking-wide">Publications</h2>
+              <span className="text-[11px] text-[#2d5a3d]">Open one to hand drafts to Outbound Social or Outbound Write — nothing posts until you confirm there.</span>
               {(publicationsList.data ?? []).slice(0, 6).map((pub) => (
                 <button key={pub.id}
                   onClick={() => setOpenPublicationId((current) => current === pub.id ? null : pub.id)}
