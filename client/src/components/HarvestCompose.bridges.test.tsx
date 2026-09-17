@@ -190,15 +190,15 @@ describe("PublicationReview Harvest → Outbound bridges", () => {
     );
   });
 
-  it("surfaces an honest reason when social body is empty", () => {
-    reviewData.items[0] = { id: 11, status: "ready", body: "   " };
+  it("hides Social bridge for whitespace-only LinkedIn body and shows Add draft body reason", () => {
+    reviewData.items[0] = { id: 11, status: "ready", body: "   \n\t  " };
     render(<PublicationReview publicationId={1} />);
     expect(screen.queryByRole("link", { name: /Open in Outbound Social/ })).toBeNull();
     expect(screen.getByText(/Add draft body before opening Outbound Social/)).toBeDefined();
   });
 
-  it("surfaces an honest reason when email body is empty", () => {
-    reviewData.items[1] = { id: 15, status: "ready", body: "" };
+  it("hides Write bridge for whitespace-only email body and shows Add draft body reason", () => {
+    reviewData.items[1] = { id: 15, status: "ready", body: "   \n\t  " };
     render(<PublicationReview publicationId={1} />);
     expect(screen.queryByRole("link", { name: /Continue as newsletter/ })).toBeNull();
     expect(screen.getByText(/Add draft body before continuing as a newsletter/)).toBeDefined();
@@ -211,6 +211,35 @@ describe("PublicationReview Harvest → Outbound bridges", () => {
     expect(screen.queryByRole("link", { name: /Open in Outbound Social/ })).toBeNull();
     expect(screen.queryByRole("link", { name: /Continue as newsletter/ })).toBeNull();
     expect(screen.getAllByText(/Weekly note/i).length).toBeGreaterThan(0);
+  });
+
+
+  it("hides Social bridge when open editor draft is whitespace-only (unsaved)", async () => {
+    const user = userEvent.setup();
+    render(<PublicationReview publicationId={1} />);
+    // Open the LinkedIn in-row editor (preview click).
+    await user.click(screen.getAllByTitle("Open the full draft to read and edit it")[0]);
+    const editor = screen.getByDisplayValue("Soil first. Governance second.");
+    await user.clear(editor);
+    await user.type(editor, "   ");
+    expect(screen.queryByRole("link", { name: /Open in Outbound Social/ })).toBeNull();
+    expect(screen.getByText(/Add draft body before opening Outbound Social/)).toBeDefined();
+  });
+
+  it("queues Social handoff from open editor draft text, not only saved item.body", async () => {
+    const user = userEvent.setup();
+    render(<PublicationReview publicationId={1} />);
+    await user.click(screen.getAllByTitle("Open the full draft to read and edit it")[0]);
+    const editor = screen.getByDisplayValue("Soil first. Governance second.");
+    await user.clear(editor);
+    await user.type(editor, "Live unsaved social draft.");
+    const link = screen.getByRole("link", { name: /Open in Outbound Social/ });
+    link.addEventListener("click", (e) => e.preventDefault());
+    await user.click(link);
+    expect(sessionStorage.getItem(BROADCAST_FILL_STORAGE_KEY)).toBe("Live unsaved social draft.");
+    expect(toastSuccess).toHaveBeenCalledWith(
+      expect.stringMatching(/editor draft.*Nothing was posted/i),
+    );
   });
 
   it("keeps per-target handoffs on multi-target publications", () => {
