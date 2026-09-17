@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
+import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
@@ -38,6 +39,30 @@ export function AdminEventsTab() {
   const { data: signupCounts = [] } = trpc.events.signupCounts.useQuery();
   const { data: autoReminders = [] } = trpc.events.listAutoReminders.useQuery();
   const { data: agendaSuggestions = [] } = trpc.events.listAgendaSuggestions.useQuery({});
+  const { data: allRecordings = [] } = trpc.recordings.adminList.useQuery(undefined, { staleTime: 60_000 });
+  const pastRecordingIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const ev of allEvents as Array<{ recordingId?: number | null }>) {
+      if (ev.recordingId != null && ev.recordingId > 0) ids.add(ev.recordingId);
+    }
+    return [...ids];
+  }, [allEvents]);
+  const { data: letterStatuses = [] } = trpc.recordings.postSessionLetterStatuses.useQuery(
+    { recordingIds: pastRecordingIds },
+    { enabled: pastRecordingIds.length > 0, staleTime: 60_000 },
+  );
+  const recordingById = useMemo(() => {
+    const map = new Map<number, (typeof allRecordings)[number]>();
+    for (const r of allRecordings as Array<{ id: number }>) map.set(r.id, r as any);
+    return map;
+  }, [allRecordings]);
+  const letterByRecordingId = useMemo(() => {
+    const map = new Map<number, { issueId: number; status: string }>();
+    for (const row of letterStatuses as Array<{ recordingId: number; issueId: number; status: string }>) {
+      map.set(row.recordingId, { issueId: row.issueId, status: row.status });
+    }
+    return map;
+  }, [letterStatuses]);
   const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); setFormData(defaultForm); } });
   const updateMutation = trpc.events.update.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
   const deleteMutation = trpc.events.delete.useMutation({ onSuccess: () => refetch() });
@@ -442,6 +467,24 @@ export function AdminEventsTab() {
                     </Button>
                   </div>
                 </div>
+
+                {isPast && (
+                  <AfterSessionChecklist
+                    event={ev as any}
+                    recording={
+                      ev.recordingId != null
+                        ? (recordingById.get(ev.recordingId) as any) ?? { id: ev.recordingId }
+                        : null
+                    }
+                    letter={
+                      ev.recordingId != null
+                        ? letterByRecordingId.get(ev.recordingId) ?? null
+                        : null
+                    }
+                    isPast={isPast}
+                    onMarkedCompleted={() => { void refetch(); }}
+                  />
+                )}
 
                 {/* Guest speaker info display */}
                 {(ev as any).guestSpeakerName && (
