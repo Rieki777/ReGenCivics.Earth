@@ -4,11 +4,12 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
-import { investorInquiries as investorInquiriesTbl } from "../../drizzle/schema";
+import { desc, eq, sql } from "drizzle-orm";
+import { contactNotes, investorInquiries as investorInquiriesTbl } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled, getNotificationTypeForPath } from "../notify-with-prefs";
+import { isReminderNote } from "@shared/contactReminders";
 
 export const investorInquiriesRouter = router({
   // Submit a new investor inquiry (public - no login required)
@@ -785,6 +786,18 @@ export const contactNotesRouter = router({
     .input(z.object({ contactType: z.string(), contactId: z.number() }))
     .query(async ({ input }) => {
       return await db.getContactNotes(input.contactType, input.contactId);
+    }),
+
+  /** All notes for a contact type (Investors list reminder chips). No new table. */
+  listByType: adminProcedure
+    .input(z.object({ contactType: z.string() }))
+    .query(async ({ input }) => {
+      const dbc = await getDb();
+      if (!dbc) return [];
+      const rows = await dbc.select().from(contactNotes)
+        .where(eq(contactNotes.contactType, input.contactType))
+        .orderBy(desc(contactNotes.createdAt));
+      return rows.filter((r) => isReminderNote(r.note));
     }),
 
   create: adminProcedure
