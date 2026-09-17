@@ -22,6 +22,7 @@ import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import { ENV } from "../_core/env";
 import { linkRecordingToMatchingEvent } from "./recordingEventLink";
+import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
 
 const log = logger("recording-finalize");
 
@@ -131,6 +132,8 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     forumPostId: recording.forumPostId,
   }).catch((err) => log.error("notify error:", err));
 
+  // ── 4. Outbound draft (never auto-send) when overview/summary exists ──
+  await maybeAutoDraftPostSessionLetter(recordingId);
 }
 
 // ── Forum post creation (fallback when no event thread matches) ──

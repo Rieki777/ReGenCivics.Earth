@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Loader2, Save, Scissors, Search, Trash2 } from "lucide-react";
+import { ExternalLink, Loader2, Mail, Save, Scissors, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
+import { isLetterLayout } from "@shared/letterLayout";
 
 type RecordingRow = {
   id: number;
@@ -61,6 +64,22 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
     onSuccess: () => {
       onChanged();
     },
+  });
+  const draftLetter = trpc.recordings.draftPostSessionLetter.useMutation({
+    onSuccess: (res) => {
+      queueOutboundWriteFill({
+        subject: res.subject,
+        body: res.body,
+        layout: isLetterLayout(res.layout) ? res.layout : "announcement",
+      });
+      toast.success(
+        res.created
+          ? `Draft letter #${res.id} created — opening Outbound Write`
+          : `Draft letter #${res.id} ready — opening Outbound Write`,
+      );
+      window.location.href = res.writeHref;
+    },
+    onError: (err) => toast.error(err.message || "Could not create draft"),
   });
   const published = hasEditedCut(row);
   const dirty = (draft ?? "").trim() !== (row.editedYoutubeUrl ?? "").trim();
@@ -172,6 +191,27 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
         {setCut.error && (
           <p className="text-xs text-red-700">{setCut.error.message}</p>
         )}
+
+        <div className="pt-1 border-t border-stone-100">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            data-testid="draft-session-letter"
+            onClick={() => draftLetter.mutate({ recordingId: row.id })}
+            disabled={draftLetter.isPending}
+          >
+            {draftLetter.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+            ) : (
+              <Mail className="w-3.5 h-3.5 mr-1" />
+            )}
+            Draft session letter
+          </Button>
+          <p className="text-[11px] text-stone-500 mt-1">
+            Creates an Outbound Write draft (never auto-sends). Same recording reuses one draft.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
