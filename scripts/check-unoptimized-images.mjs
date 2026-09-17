@@ -32,7 +32,7 @@ const EXCLUDED_PREFIXES = [
   'android-chrome',
   'mstile',
   'globe-',
-  'blog-hero',
+  'blog-hero',   'regencivics-logo-dark-transparent-rounded.png',
 ];
 
 async function scanDir(dir, relative = '') {

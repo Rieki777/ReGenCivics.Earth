@@ -50,7 +50,7 @@ describe("markdownLetterDocument", () => {
   it("adds forest chrome for announcement", () => {
     const html = markdownLetterDocument("Hi **{{name}}**\n\n[Open](https://regencivics.earth/apply)", "announcement");
     expect(html).toContain("ReGen Civics");
-    expect(html).toContain("regencivics-logo-dark-transparent-rounded.webp");
+    expect(html).toContain("regencivics-logo-dark-transparent-rounded.png");
     expect(html).toContain('bgcolor="#4a7c59"');
     expect(html).toContain("{{name}}");
     expect(html).toContain("<!DOCTYPE html>");

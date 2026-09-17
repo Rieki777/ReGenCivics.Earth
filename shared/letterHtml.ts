@@ -53,7 +53,7 @@ function letterHeader(): string {
   return `
     <tr>
       <td bgcolor="#1a472a" style="background-color:#1a472a;padding:28px 20px;text-align:center;">
-        <img src="${LETTER_LOGO_URL}" width="52" height="52" alt="ReGen Civics" style="display:block;margin:0 auto 10px auto;background:#ffffff;border-radius:10px;padding:4px;" />
+        <img src="${LETTER_LOGO_URL}" width="72" height="72" alt="ReGen Civics" style="display:block;margin:0 auto 10px auto;background:#ffffff;border-radius:12px;padding:4px;" />
         <p style="color:#7dd87d;margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;">ReGen Civics</p>
         <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:12px;font-family:Georgia,'Times New Roman',serif;">An Infinite Game for the ReGenerative Renaissance</p>
       </td>
