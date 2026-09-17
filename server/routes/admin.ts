@@ -13,15 +13,14 @@ import { ENV } from "../_core/env";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
+import { appendBufferMedia } from "../lib/buffer-media";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 import { isOutboundWriteSurface } from "@shared/outboundWriteFill";
 import {
-  adminSiteContextBlock,
   guardAssistantSendClaim,
   OUTBOUND_WRITE_ASSISTANT_BLOCK,
   OUTBOUND_WRITE_SURFACE_BLOCK,
 } from "../lib/adminAIPrompt";
-import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
 
 /**
  * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
@@ -395,6 +394,8 @@ export const adminRouter = router({
             /** Legacy one-body-to-all (still accepted when posts omitted). */
             text: z.string().min(1).max(3000).optional(),
             link: z.string().url().optional(),
+            /** Public direct image URL → Buffer media[photo] (+ thumbnail). */
+            imageUrl: z.string().url().optional(),
             profileIds: z.array(z.string()).min(1).optional(),
             scheduledAt: z.string().optional(),
           })
@@ -429,7 +430,7 @@ export const adminRouter = router({
             params.append("access_token", token);
             params.append("profile_ids[]", job.profileId);
             params.append("text", job.text);
-            if (input.link) params.append("media[link]", input.link);
+            appendBufferMedia(params, { link: input.link, imageUrl: input.imageUrl });
             if (input.scheduledAt) {
               params.append("scheduled_at", input.scheduledAt);
               params.append("now", "false");
@@ -544,15 +545,6 @@ Follow the hard publishing rules: no em-dashes, no contrast framing, no AI fille
 
       const writeBlock = `${OUTBOUND_WRITE_ASSISTANT_BLOCK}${onWriteCompose ? OUTBOUND_WRITE_SURFACE_BLOCK : ""}`;
 
-      const siteBlock = `\n\n${adminSiteContextBlock()}`;
-      let voiceBlock = "";
-      try {
-        const voice = await loadAdminVoiceContextBlock({ ownerId: ctx.user.id });
-        if (voice.trim()) voiceBlock = `\n\n${voice}`;
-      } catch {
-        // Fail-soft: site map alone still prevents invented URLs.
-      }
-
       const systemPrompt = `You are an AI admin assistant for ReGen Civics  -  a regenerative civilization project coordinating land projects, alliance organizations, and investors.
 
 You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
@@ -596,15 +588,13 @@ Example:
 Only propose an execute action when you have the specific id or key from the conversation or context. Never invent ids. For anything destructive or high-stakes (deleting records, bans, rejections, sending money, mass email, public posts), do NOT use execute; tell the admin to do it themselves.
 
 ## Current Context
-${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}${siteBlock}${voiceBlock}
+${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}
 
 ## Communication Style
 - Be direct, warm, and efficient
 - Use bullet points for lists
 - Flag urgent items (old inquiries, stale applications)
 - Suggest concrete next steps
-- Never invent site URLs; use Canonical site URLs or ask
-- Match Rye's voice from the Voice / second brain block when present
 - When you don't know something specific about the data, say so  -  you can only see what the admin shares with you`;
 
       const llmMessages = [
