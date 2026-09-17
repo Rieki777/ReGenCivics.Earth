@@ -293,7 +293,13 @@ export function AdminOutboundWrite({
               <Button
                 type="button"
                 className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                disabled={sendPreview.isPending || saveDraft.isPending}
+                disabled={
+                  sendPreview.isPending
+                  || saveDraft.isPending
+                  || !subject.trim()
+                  || !body.trim()
+                  || audienceCount < 1
+                }
                 onClick={() => void handlePreview()}
               >
                 {(sendPreview.isPending || saveDraft.isPending) ? (
