@@ -118,4 +118,50 @@ describe("draftBroadcastFromHarvest", () => {
     expect(result.voice).toBeNull();
     expect(result.grounded).toBe(false);
   });
+
+  it("adaptMaster skips Harvest grounding and passes a no-new-facts nudge", async () => {
+    const loadGrounding = vi.fn(async () => ({
+      ideas: [{ id: 1, title: "Should not load", summary: "Nope.", sourceRefs: [] }],
+      sourceRefs: ["s1"],
+    }));
+    const draftOne = vi.fn(async (_seed, _channel, opts: { nudge?: string }) => {
+      expect(opts.nudge).toMatch(/Stay within the facts/i);
+      expect(opts.nudge).toMatch(/Do not invent/i);
+      return { body: "Channel native rewrite.", flags: [] } satisfies DraftResult;
+    });
+    const result = await draftBroadcastFromHarvest(
+      7,
+      {
+        intent: "Master text about the food forest opening Friday.",
+        channels: ["twitter", "linkedin"],
+        mode: "adaptMaster",
+      },
+      {
+        loadGrounding: loadGrounding as never,
+        draftOne: draftOne as never,
+        packMeta: async () => null,
+      },
+    );
+    expect(loadGrounding).not.toHaveBeenCalled();
+    expect(result.grounded).toBe(false);
+    expect(result.sources).toEqual([]);
+    expect(result.drafts).toHaveLength(2);
+    const seed = draftOne.mock.calls[0][0] as { summary: string };
+    expect(seed.summary).toContain("Master text about the food forest opening Friday.");
+    expect(seed.summary).toContain("No Harvest ideas were available");
+  });
+
+  it("adaptMaster requires a non-empty master intent", async () => {
+    await expect(
+      draftBroadcastFromHarvest(
+        7,
+        { intent: "   ", channels: ["twitter"], mode: "adaptMaster" },
+        {
+          loadGrounding: async () => ({ ideas: [], sourceRefs: [] }),
+          draftOne: async () => ({ body: "x", flags: [] }),
+          packMeta: async () => null,
+        },
+      ),
+    ).rejects.toThrow(/master draft/i);
+  });
 });

@@ -295,6 +295,48 @@ export function AdminBroadcastPanel() {
     toast.success("Adapted master into each channel (length-aware).");
   }
 
+  async function handleLlmAdaptMasterToChannels() {
+    if (!text.trim()) {
+      toast.error("Write a master draft first.");
+      return;
+    }
+    const channels = selectedChannels as BroadcastChannelId[];
+    try {
+      const res = await draftFromHarvest.mutateAsync({
+        intent: text.trim(),
+        channels,
+        link: link.trim().startsWith("http") ? link.trim() : undefined,
+        mode: "adaptMaster",
+      });
+      setDrafts(res.drafts);
+      setDraftSources(res.sources);
+      setDraftVoice(res.voice);
+      setDraftGrounded(res.grounded);
+      if (res.drafts.length > 0) {
+        setChannelBodies(prev => {
+          const next = { ...prev };
+          for (const d of res.drafts) next[d.channel] = d.text;
+          return next;
+        });
+        if (selectedChannels.includes(res.drafts[0].channel)) {
+          setActiveChannelTab(res.drafts[0].channel);
+        }
+      }
+      if (res.errors.length > 0) {
+        toast.warning(`Adapted ${res.drafts.length}, ${res.errors.length} channel${res.errors.length === 1 ? "" : "s"} failed.`);
+      } else {
+        toast.success("LLM adapted master into each channel.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/Owner access required/i.test(msg)) {
+        toast.error("Harvest drafts are owner-only. Open The Harvest as the owner.");
+        return;
+      }
+      toast.error(msg || "Could not LLM-adapt master to channels.");
+    }
+  }
+
   async function handleDraftFromHarvest() {
     const channels = (selectedChannels.length > 0 ? selectedChannels : ["twitter"]) as BroadcastChannelId[];
     try {
@@ -770,10 +812,27 @@ export function AdminBroadcastPanel() {
                   >
                     Adapt master → each
                   </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-[#1a472a]/30 text-[#1a472a]"
+                    data-testid="llm-adapt-master-to-channels"
+                    onClick={() => void handleLlmAdaptMasterToChannels()}
+                    disabled={draftFromHarvest.isPending}
+                  >
+                    {draftFromHarvest.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    LLM adapt master → each
+                  </Button>
                 </div>
               </div>
               <p className="text-xs text-[#1a472a]/80">
                 Empty channel boxes fall back to the master draft when posting. Adapt clips to each network&apos;s length.
+                LLM adapt rewrites channel-native via Harvest draft (same path as Draft with Harvest), without inventing facts beyond the master.
               </p>
               <Tabs
                 value={activeChannelTab || selectedChannels[0]}

@@ -50,6 +50,8 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), message: vi.fn() },
 }));
 
+import { toast } from "sonner";
+
 function selectChannel(label: string) {
   const box = screen.getByText(label).closest("label");
   expect(box).toBeTruthy();
@@ -225,5 +227,74 @@ describe("AdminBroadcastPanel", () => {
     expect((screen.getByTestId("broadcast-message") as HTMLTextAreaElement).value).toBe(
       "From the assistant.",
     );
+  });
+
+  it("shows LLM adapt master → each only when multiple channels are selected", () => {
+    render(<AdminBroadcastPanel />);
+    expect(screen.queryByTestId("llm-adapt-master-to-channels")).toBeNull();
+    selectChannel("X / Twitter");
+    expect(screen.queryByTestId("llm-adapt-master-to-channels")).toBeNull();
+    selectChannel("LinkedIn");
+    expect(screen.getByTestId("llm-adapt-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("adapt-master-to-channels")).toBeDefined();
+    expect(screen.getByTestId("llm-adapt-master-to-channels").textContent).toMatch(
+      /LLM adapt master/i,
+    );
+  });
+
+  it("LLM adapt with empty master toasts and does not call draftBroadcast", async () => {
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+    fireEvent.click(screen.getByTestId("llm-adapt-master-to-channels"));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(toast.error).toHaveBeenCalledWith("Write a master draft first.");
+    expect(draftMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("LLM adapt with filled master calls draftBroadcast and fills channel bodies", async () => {
+    draftMutateAsync.mockResolvedValue({
+      drafts: [
+        { channel: "twitter", label: "X / Twitter", text: "Short X rewrite.", charCount: 16, maxChars: 280 },
+        {
+          channel: "linkedin",
+          label: "LinkedIn",
+          text: "Longer LinkedIn rewrite for builders.",
+          charCount: 38,
+          maxChars: 3000,
+        },
+      ],
+      sources: [],
+      grounded: false,
+      voice: null,
+      errors: [],
+    });
+    render(<AdminBroadcastPanel />);
+    selectChannel("X / Twitter");
+    selectChannel("LinkedIn");
+    fireEvent.change(screen.getByTestId("broadcast-message"), {
+      target: { value: "  Master village update for all networks.  " },
+    });
+    fireEvent.click(screen.getByTestId("llm-adapt-master-to-channels"));
+    await waitFor(() => expect(draftMutateAsync).toHaveBeenCalled());
+    expect(draftMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "Master village update for all networks.",
+        channels: ["twitter", "linkedin"],
+        mode: "adaptMaster",
+      }),
+    );
+    await waitFor(() => {
+      expect((screen.getByTestId("channel-body-twitter") as HTMLTextAreaElement).value).toBe(
+        "Short X rewrite.",
+      );
+    });
+    fireEvent.click(screen.getByTestId("channel-tab-linkedin"));
+    await waitFor(() => {
+      expect((screen.getByTestId("channel-body-linkedin") as HTMLTextAreaElement).value).toBe(
+        "Longer LinkedIn rewrite for builders.",
+      );
+    });
+    expect(toast.success).toHaveBeenCalledWith("LLM adapted master into each channel.");
   });
 });
