@@ -33,6 +33,7 @@ import {
   notifications,
   users,
   recordings,
+  events,
   roles as rolesCatalog,
   roleHolders,
   playerProfiles,
@@ -643,6 +644,140 @@ export const bountiesRouter = router({
         }
       }
       return { bounties: pendingBounties, heldRoles, reviewBounties };
+    }),
+
+  // ── Maintainer: Call Tasks / Role Holders board ───────────────────────────
+  adminCallTaskBoard: maintainerProcedure
+    .input(z.object({
+      filter: z.enum(["open", "overdue", "unassigned", "done"]).default("open"),
+      limit: z.number().int().min(1).max(300).default(100),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { rows: [], counts: { open: 0, overdue: 0, unassigned: 0, done: 0, stuck: 0 } };
+      const {
+        callTaskBoardFilterMatch,
+        countCallTaskBoard,
+        isCallTaskStuck,
+      } = await import("../../shared/callTaskBoard");
+
+      const rows = await db
+        .select()
+        .from(bounties)
+        .where(eq(bounties.sourceType, "call_task"))
+        .orderBy(desc(bounties.updatedAt))
+        .limit(Math.min(input.limit * 3, 300));
+
+      if (!rows.length) {
+        return { rows: [], counts: { open: 0, overdue: 0, unassigned: 0, done: 0, stuck: 0 } };
+      }
+
+      const ids = rows.map((b) => b.id);
+      const doers = await db
+        .select()
+        .from(bountyRoles)
+        .where(and(inArray(bountyRoles.bountyId, ids), eq(bountyRoles.role, "doer")));
+      const doerByBounty = new Map(doers.map((r) => [r.bountyId, r]));
+
+      const ownerIds = [...new Set(doers.map((d) => d.userId).filter((id): id is number => id != null))];
+      const ownerRows = ownerIds.length
+        ? await db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(inArray(users.id, ownerIds))
+        : [];
+      const ownerById = new Map(ownerRows.map((u) => [u.id, u]));
+
+      // Role-holder fallback when doer unassigned: match bounty.roleSlug → roleHolders.userId
+      const slugs = [...new Set(rows.map((r) => r.roleSlug).filter((s): s is string => Boolean(s)))];
+      const holderRows = slugs.length
+        ? await db.select().from(roleHolders).where(inArray(roleHolders.roleSlug, slugs))
+        : [];
+      const holderBySlug = new Map(holderRows.map((h) => [h.roleSlug, h]));
+      const holderUserIds = [...new Set(holderRows.map((h) => h.userId).filter((id): id is number => id != null))];
+      const missingHolderIds = holderUserIds.filter((id) => !ownerById.has(id));
+      if (missingHolderIds.length) {
+        const extra = await db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(inArray(users.id, missingHolderIds));
+        for (const u of extra) ownerById.set(u.id, u);
+      }
+
+      const recordingIds = [...new Set(rows.map((r) => r.recordingId).filter((id): id is number => id != null))];
+      const recordingRows = recordingIds.length
+        ? await db
+            .select({ id: recordings.id, title: recordings.title })
+            .from(recordings)
+            .where(inArray(recordings.id, recordingIds))
+        : [];
+      const recordingById = new Map(recordingRows.map((r) => [r.id, r]));
+
+      const eventRows = recordingIds.length
+        ? await db
+            .select({ id: events.id, title: events.title, recordingId: events.recordingId })
+            .from(events)
+            .where(inArray(events.recordingId, recordingIds))
+        : [];
+      const eventByRecordingId = new Map(
+        eventRows
+          .filter((e) => e.recordingId != null)
+          .map((e) => [e.recordingId as number, e]),
+      );
+
+      const nowMs = Date.now();
+      const enriched = rows.map((b) => {
+        const doer = doerByBounty.get(b.id) ?? null;
+        let ownerUserId = doer?.userId ?? null;
+        let ownerSource: "doer" | "role_holder" | null = ownerUserId != null ? "doer" : null;
+        if (ownerUserId == null && b.roleSlug) {
+          const holder = holderBySlug.get(b.roleSlug);
+          if (holder?.userId != null) {
+            ownerUserId = holder.userId;
+            ownerSource = "role_holder";
+          }
+        }
+        const owner = ownerUserId != null ? ownerById.get(ownerUserId) ?? null : null;
+        const recording = b.recordingId != null ? recordingById.get(b.recordingId) ?? null : null;
+        const event = b.recordingId != null ? eventByRecordingId.get(b.recordingId) ?? null : null;
+        const like = {
+          sourceType: b.sourceType,
+          workStatus: b.workStatus,
+          expiresAt: b.expiresAt,
+          createdAt: b.createdAt,
+          updatedAt: b.updatedAt,
+          ownerUserId,
+        };
+        return {
+          id: b.id,
+          title: b.title,
+          workStatus: b.workStatus,
+          roleSlug: b.roleSlug,
+          expiresAt: b.expiresAt,
+          createdAt: b.createdAt,
+          updatedAt: b.updatedAt,
+          recordingId: b.recordingId,
+          ownerUserId,
+          ownerSource,
+          ownerName: owner?.name ?? owner?.email ?? null,
+          recordingTitle: recording?.title ?? null,
+          eventId: event?.id ?? null,
+          eventTitle: event?.title ?? null,
+          stuck: isCallTaskStuck(like, nowMs),
+          _like: like,
+        };
+      });
+
+      const counts = countCallTaskBoard(
+        enriched.map((r) => r._like),
+        nowMs,
+      );
+      const filtered = enriched
+        .filter((r) => callTaskBoardFilterMatch(r._like, input.filter, nowMs))
+        .slice(0, input.limit)
+        .map(({ _like, ...rest }) => rest);
+
+      return { rows: filtered, counts };
     }),
 
   // ── Maintainer: attach unmatched merge to a role ──────────────────────────

@@ -11,6 +11,7 @@ import {
   ShieldX,
   Unlock,
 } from "lucide-react";
+import { AdminCallTaskBoard } from "@/components/admin/AdminCallTaskBoard";
 
 const TIER_LABELS: Record<string, string> = {
   trivial: "Trivial",
@@ -273,6 +274,8 @@ export function AdminTasksTab() {
   const refetch = () => { void queue.refetch(); };
 
   return (
+    <div className="space-y-6">
+    <AdminCallTaskBoard />
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -347,6 +350,7 @@ export function AdminTasksTab() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
 
