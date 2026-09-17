@@ -199,6 +199,23 @@ describe("Which sessions are in which feed", () => {
   it("gives the Season 2 feed all thirteen weeks", () => {
     expect(selectForFeed(catalogFallbackRows(NOW), "season2")).toHaveLength(13);
   });
+
+  it("keeps Admin special / festival rows off every subscribe feed", () => {
+    const festival = row({
+      id: 999,
+      title: "ReGen Civics Fall Equinox Seasonal Festival",
+      type: "special",
+      season: null,
+      episodeNumber: null,
+      startTime: new Date("2026-09-27T15:00:00Z"),
+      endTime: new Date("2026-09-27T17:00:00Z"),
+    });
+    const mixed = [...catalogFallbackRows(NOW), festival];
+    for (const kind of ["all", "open-access", "season2"] as const) {
+      const titles = selectForFeed(mixed, kind).map((r) => r.title);
+      expect(titles).not.toContain(festival.title);
+    }
+  });
 });
 
 describe("Cancellations", () => {
