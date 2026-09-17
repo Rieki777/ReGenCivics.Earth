@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildOperatorPulseItems,
   eventHasWatchPath,
+  formatOperatorPulsePingMessage,
   isApplicationWaitingReview,
   isInvestorNeedsActionStatus,
   isOpenOrOverdueCallTask,
   isOutboundFailedOrStuck,
+  operatorPulseMorningDue,
   recordingNeedsCut,
   OUTBOUND_STUCK_SENDING_MS,
 } from "./operatorPulse";
@@ -121,5 +123,56 @@ describe("buildOperatorPulseItems", () => {
         callTasksOpenOrOverdue: 0,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("operatorPulseMorningDue", () => {
+  const utc = (iso: string) => new Date(iso);
+
+  it("does not fire before 08:00 Pacific", () => {
+    expect(operatorPulseMorningDue(utc("2026-08-31T14:00:00Z"), null)).toBe(false);
+  });
+
+  it("fires on the first tick at or after 08:00 Pacific", () => {
+    expect(operatorPulseMorningDue(utc("2026-08-31T15:00:00Z"), null)).toBe(true);
+  });
+
+  it("fires only once on the same Pacific day", () => {
+    expect(operatorPulseMorningDue(utc("2026-08-31T16:00:00Z"), "2026-08-31")).toBe(false);
+    expect(operatorPulseMorningDue(utc("2026-09-01T02:00:00Z"), "2026-08-31")).toBe(false);
+  });
+
+  it("fires again the next Pacific morning", () => {
+    expect(operatorPulseMorningDue(utc("2026-09-01T15:00:00Z"), "2026-08-31")).toBe(true);
+  });
+});
+
+describe("formatOperatorPulsePingMessage", () => {
+  it("includes counts and deep links", () => {
+    const { title, body } = formatOperatorPulsePingMessage(
+      [
+        {
+          id: "outbound-failed",
+          label: "Failed or stuck Outbound sends",
+          count: 2,
+          href: "/admin?tab=outbound&surface=history",
+          severity: "high",
+        },
+        {
+          id: "investors",
+          label: "Investors need action",
+          count: 1,
+          href: "/admin?tab=investors&filter=needs_action",
+          severity: "medium",
+        },
+      ],
+      "https://regencivics.earth/",
+    );
+    expect(title).toContain("2 items");
+    expect(title).toContain("(3)");
+    expect(body).toContain("2 Failed or stuck Outbound sends");
+    expect(body).toContain("https://regencivics.earth/admin?tab=outbound&surface=history");
+    expect(body).toContain("https://regencivics.earth/admin?tab=investors&filter=needs_action");
+    expect(body).toContain("Overview: https://regencivics.earth/admin");
   });
 });
