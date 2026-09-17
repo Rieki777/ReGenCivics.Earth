@@ -24,6 +24,7 @@ import {
   parseDraftAgentOutput,
   stripEmailPii,
 } from "../lib/emailDraftAgent";
+import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
 
 const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 const sourceZ = z.enum([
@@ -312,6 +313,7 @@ export const outboundRouter = router({
         input.currentLayout ?? "announcement",
       );
 
+      const voiceContextBlock = await loadAdminVoiceContextBlock().catch(() => "");
       const res = await invokeLLM({
         messages: [
           {
@@ -320,6 +322,7 @@ export const outboundRouter = router({
               audienceLabel: input.audienceLabel ?? "active subscribers",
               recipientCount: input.recipientCount ?? 0,
               currentLayout: input.currentLayout ?? "announcement",
+              voiceContextBlock,
             }),
           },
           ...withDraft,

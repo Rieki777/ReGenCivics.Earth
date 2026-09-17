@@ -20,6 +20,7 @@ import {
   parseDraftAgentOutput,
   stripEmailPii,
 } from "../lib/emailDraftAgent";
+import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
 import { letterSkipsSendWrap, TEMPLATE_KEY_RE } from "../../shared/letterLayout";
 import { renderLetterPdfBase64 } from "../lib/letterPdf";
 import { EMAIL_TOPIC_KEYS, MARKETING_PAUSE_DAYS, type EmailTopicKey } from "../../shared/emailPrefs";
@@ -1001,6 +1002,7 @@ export const emailRouter = router({
         input.currentLayout ?? "plain",
       );
 
+      const voiceContextBlock = await loadAdminVoiceContextBlock().catch(() => "");
       const res = await invokeLLM({
         messages: [
           {
@@ -1009,6 +1011,7 @@ export const emailRouter = router({
               statusLabel: input.statusLabel ?? "applicants",
               recipientCount: input.recipientCount ?? 0,
               currentLayout: input.currentLayout ?? "plain",
+              voiceContextBlock,
             }),
           },
           ...withDraft,

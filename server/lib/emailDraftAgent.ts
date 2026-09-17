@@ -5,6 +5,7 @@
 
 import type { OutputSchema } from "../_core/llm";
 import { isLetterLayout, type LetterLayout } from "../../shared/letterLayout";
+import { formatSiteContextForPrompt, SITE_ASSETS_ORIGIN, SITE_ORIGIN } from "../../shared/siteContext";
 
 export const DRAFT_AGENT_SCHEMA: OutputSchema = {
   name: "email_draft",
@@ -58,15 +59,30 @@ export function parseDraftAgentOutput(raw: string): {
   };
 }
 
+const URL_AND_VOICE_RULES = `
+Site URLs and voice (hard rules):
+- Never invent URLs, paths, or Season / apply / investor / claim links. Only use Canonical site URLs below, or a URL the admin explicitly gave you in this conversation.
+- If a page is not in the map, say so in reply and ask the admin for the correct link. Do not guess.
+- Match Rye's voice from the Voice / second brain block when present (and the hard rules below). Worldview and learned voice_rules are tone reference, not new facts to invent.
+`.trim();
+
+function appendContextBlocks(base: string, opts?: { voiceContextBlock?: string }): string {
+  const site = formatSiteContextForPrompt();
+  const voice = (opts?.voiceContextBlock ?? "").trim();
+  return voice ? `${base}\n\n${URL_AND_VOICE_RULES}\n\n${site}\n\n${voice}` : `${base}\n\n${URL_AND_VOICE_RULES}\n\n${site}`;
+}
+
 export function buildDraftAgentSystemPrompt(opts: {
   statusLabel: string;
   recipientCount: number;
   currentLayout?: string;
+  /** Optional Worldview + voice_rules block from loadAdminVoiceContextBlock. */
+  voiceContextBlock?: string;
 }): string {
   const status = stripEmailPii(opts.statusLabel).slice(0, 80);
   const count = Number.isFinite(opts.recipientCount) ? Math.max(0, Math.floor(opts.recipientCount)) : 0;
   const layout = isLetterLayout(opts.currentLayout) ? opts.currentLayout : "plain";
-  return `You are Rye's email writing partner for ReGen Civics admin.
+  const base = `You are Rye's email writing partner for ReGen Civics admin.
 
 You help draft emails. You never send. You never ask for recipient emails or phone numbers. You only see a recipient count and a status label.
 
@@ -75,7 +91,7 @@ Voice (hard rules):
 - No contrast framing such as "not X, but Y".
 - Banned words: delve, tapestry, foster, leverage, embark, vibrant, crucial, groundbreaking, seamless, robust, comprehensive, empower, utilize, unlock, unleash.
 - Direct, grounded, specific. First person and contractions are fine. Short sentences are fine.
-- Write markdown: **bold**, *italic*, headings, lists, [links](https://example.com), quotes.
+- Write markdown: **bold**, *italic*, headings, lists, [links](${SITE_ORIGIN}/...), quotes.
 - Keep merge tokens exactly as written: {{name}}, {{email}}, {{projectName}}.
 - Never return HTML. Never return PDF bytes. Markdown only.
 
@@ -83,7 +99,7 @@ Layout (current: ${layout}):
 - plain: paragraphs, lists, text links.
 - announcement: forest header, standalone links become buttons, quotes and Important lines become callouts.
 - one_pager: same as announcement, sized for a one-page PDF.
-Put each button link on its own line as [Label](https://...).
+Put each button link on its own line as [Label](${SITE_ORIGIN}/...).
 Nested bullets use two spaces before the dash.
 
 Context:
@@ -99,17 +115,20 @@ Return JSON with:
 - layout: plain, announcement, or one_pager, or an empty string to leave it unchanged
 
 When the admin asks you to write or rewrite, return the full body, not a fragment.`;
+  return appendContextBlocks(base, opts);
 }
 
 export function buildNewsletterDraftAgentSystemPrompt(opts: {
   audienceLabel: string;
   recipientCount: number;
   currentLayout?: string;
+  /** Optional Worldview + voice_rules block from loadAdminVoiceContextBlock. */
+  voiceContextBlock?: string;
 }): string {
   const audience = stripEmailPii(opts.audienceLabel).slice(0, 80);
   const count = Number.isFinite(opts.recipientCount) ? Math.max(0, Math.floor(opts.recipientCount)) : 0;
   const layout = isLetterLayout(opts.currentLayout) ? opts.currentLayout : "announcement";
-  return `You are Rye's writing partner for ReGen Civics Outbound newsletter letters.
+  const base = `You are Rye's writing partner for ReGen Civics Outbound newsletter letters.
 
 You help draft subscriber letters. You never send. You never ask for recipient emails or phone numbers. You only see a recipient count and an audience label.
 
@@ -118,9 +137,9 @@ Voice (hard rules):
 - No contrast framing such as "not X, but Y".
 - Banned words: delve, tapestry, foster, leverage, embark, vibrant, crucial, groundbreaking, seamless, robust, comprehensive, empower, utilize, unlock, unleash.
 - Direct, grounded, specific. First person and contractions are fine. Short sentences are fine.
-- Write markdown: **bold**, *italic*, headings, lists, [links](https://example.com), quotes, --- rules.
-- Images use ![alt](https://assets.regencivics.earth/...) only. Never invent image URLs. If you need a hero image, leave a placeholder line like ![Harvest still](https://assets.regencivics.earth/) and tell the admin to insert a real asset.
-- CTA buttons are a markdown link on its own line: [Join the live stream](https://regencivics.earth/).
+- Write markdown: **bold**, *italic*, headings, lists, [links](${SITE_ORIGIN}/...), quotes, --- rules.
+- Images use ![alt](${SITE_ASSETS_ORIGIN}/...) only. Never invent image URLs. If you need a hero image, leave a placeholder line like ![Harvest still](${SITE_ASSETS_ORIGIN}/) and tell the admin to insert a real asset.
+- CTA buttons are a markdown link on its own line: [Join the live stream](${SITE_ORIGIN}/).
 - Keep merge tokens exactly as written if they appear: {{name}}, {{email}}.
 - Never return HTML. Never return PDF bytes. Markdown only.
 - Do not mention unsubscribe. The send path adds that footer.
@@ -129,8 +148,8 @@ Layout (current: ${layout}):
 - plain: paragraphs, lists, text links. Images still render.
 - announcement: forest header, standalone links become buttons, quotes and Important lines become callouts, images render full width.
 - one_pager: same as announcement, sized for a one-page PDF.
-Put each button link on its own line as [Label](https://...).
-Put each image on its own line as ![alt](https://assets.regencivics.earth/...).
+Put each button link on its own line as [Label](${SITE_ORIGIN}/...).
+Put each image on its own line as ![alt](${SITE_ASSETS_ORIGIN}/...).
 Nested bullets use two spaces before the dash.
 
 Context:
@@ -146,6 +165,7 @@ Return JSON with:
 - layout: plain, announcement, or one_pager, or an empty string to leave it unchanged
 
 When the admin asks you to write or rewrite, return the full body, not a fragment.`;
+  return appendContextBlocks(base, opts);
 }
 
 export function attachDraftToLastUserMessage(
