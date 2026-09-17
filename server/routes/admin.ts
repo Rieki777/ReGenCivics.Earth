@@ -5,21 +5,35 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { executableActionCatalog } from "./adminActions";
-import { eq, sql, count, like, gte, and, inArray } from "drizzle-orm";
-import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers } from "../../drizzle/schema";
+import { eq, sql, count, like, gte, and, inArray, ne } from "drizzle-orm";
+import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
+import {
+  buildOperatorPulseItems,
+  emptyOperatorPulse,
+  eventHasWatchPath,
+  isApplicationWaitingReview,
+  isInvestorNeedsActionStatus,
+  isOpenOrOverdueCallTask,
+  isOutboundFailedOrStuck,
+  recordingNeedsCut,
+  type OperatorPulseResult,
+} from "../../shared/operatorPulse";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
 import { ENV } from "../_core/env";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
+import { appendBufferMedia } from "../lib/buffer-media";
 import { isBroadcastComposeSurface } from "@shared/broadcastChannels";
 import { isOutboundWriteSurface } from "@shared/outboundWriteFill";
 import {
+  adminSiteContextBlock,
   guardAssistantSendClaim,
   OUTBOUND_WRITE_ASSISTANT_BLOCK,
   OUTBOUND_WRITE_SURFACE_BLOCK,
 } from "../lib/adminAIPrompt";
+import { loadAdminVoiceContextBlock } from "../lib/adminVoiceContext";
 
 /**
  * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
@@ -125,6 +139,139 @@ export async function computeEcosystemSnapshot() {
   };
 }
 
+
+/**
+ * Operator Pulse: one read for the Overview "Needs you today" stack.
+ * Counts actionable queues with deep links; rows with count 0 are omitted.
+ */
+export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<OperatorPulseResult> {
+  const drizzleDb = await getDb();
+  if (!drizzleDb) return emptyOperatorPulse(new Date(nowMs).toISOString());
+
+  const now = new Date(nowMs);
+
+  const [
+    eventRows,
+    recordingRows,
+    appStatusRows,
+    outboundRows,
+    bountyRows,
+  ] = await Promise.all([
+    drizzleDb
+      .select({
+        id: eventsTable.id,
+        status: eventsTable.status,
+        startTime: eventsTable.startTime,
+        endTime: eventsTable.endTime,
+        youtubeUrl: eventsTable.youtubeUrl,
+        recordingId: eventsTable.recordingId,
+        recYoutube: recordings.youtubeUrl,
+        recEdited: recordings.editedYoutubeUrl,
+        recRiverside: recordings.riversideUrl,
+      })
+      .from(eventsTable)
+      .leftJoin(recordings, eq(eventsTable.recordingId, recordings.id))
+      .where(ne(eventsTable.status, "cancelled")),
+    drizzleDb
+      .select({
+        id: recordings.id,
+        editedYoutubeUrl: recordings.editedYoutubeUrl,
+      })
+      .from(recordings),
+    drizzleDb
+      .select({ status: applicationsTable.status })
+      .from(applicationsTable),
+    drizzleDb
+      .select({
+        id: newsletterIssues.id,
+        status: newsletterIssues.status,
+        failedCount: newsletterIssues.failedCount,
+        updatedAt: newsletterIssues.updatedAt,
+        createdAt: newsletterIssues.createdAt,
+        sentAt: newsletterIssues.sentAt,
+      })
+      .from(newsletterIssues)
+      .where(inArray(newsletterIssues.status, ["sending", "sent", "failed"])),
+    drizzleDb
+      .select({
+        id: bounties.id,
+        sourceType: bounties.sourceType,
+        workStatus: bounties.workStatus,
+        expiresAt: bounties.expiresAt,
+        roleSlug: bounties.roleSlug,
+      })
+      .from(bounties)
+      .where(eq(bounties.sourceType, "call_task")),
+  ]);
+
+  const investors = await db.getAllInvestorInquiries();
+
+  let pastEventsNoWatch = 0;
+  for (const ev of eventRows) {
+    const endMs = ev.endTime ? new Date(ev.endTime as Date).getTime() : NaN;
+    const startMs = ev.startTime ? new Date(ev.startTime as Date).getTime() : NaN;
+    const isPast =
+      ev.status === "completed" ||
+      (Number.isFinite(endMs) ? endMs < nowMs : Number.isFinite(startMs) && startMs < nowMs);
+    if (!isPast) continue;
+    const hasWatch = eventHasWatchPath({
+      eventYoutubeUrl: ev.youtubeUrl,
+      recordingId: ev.recordingId,
+      youtubeUrl: ev.recYoutube,
+      editedYoutubeUrl: ev.recEdited,
+      riversideUrl: ev.recRiverside,
+    });
+    if (!hasWatch) pastEventsNoWatch += 1;
+  }
+
+  const recordingsNeedCut = recordingRows.filter((r) => recordingNeedsCut(r)).length;
+  const investorsNeedsAction = investors.filter((i) =>
+    isInvestorNeedsActionStatus((i.status as string) || "new"),
+  ).length;
+  const applicationsWaitingReview = appStatusRows.filter((r) =>
+    isApplicationWaitingReview(r.status as string),
+  ).length;
+  const outboundFailedOrStuck = outboundRows.filter((r) =>
+    isOutboundFailedOrStuck(
+      {
+        status: r.status,
+        failedCount: r.failedCount,
+        updatedAt: r.updatedAt,
+        createdAt: r.createdAt,
+        sentAt: r.sentAt,
+      },
+      nowMs,
+    ),
+  ).length;
+  const callTasksOpenOrOverdue = bountyRows.filter((r) =>
+    isOpenOrOverdueCallTask(
+      {
+        sourceType: r.sourceType,
+        workStatus: r.workStatus,
+        expiresAt: r.expiresAt,
+        roleSlug: r.roleSlug,
+      },
+      nowMs,
+    ),
+  ).length;
+
+  // All six product rows are queryable with current schema.
+  const deferred: OperatorPulseResult["deferred"] = [];
+
+  return {
+    generatedAt: now.toISOString(),
+    items: buildOperatorPulseItems({
+      pastEventsNoWatch,
+      recordingsNeedCut,
+      investorsNeedsAction,
+      applicationsWaitingReview,
+      outboundFailedOrStuck,
+      callTasksOpenOrOverdue,
+    }),
+    deferred,
+  };
+}
+
 export type EcosystemSnapshot = NonNullable<Awaited<ReturnType<typeof computeEcosystemSnapshot>>>;
 
 // Admin router
@@ -162,6 +309,11 @@ export const adminRouter = router({
   // Ecosystem snapshot: aggregate KPIs across domains for the Overview dashboard.
   ecosystemSnapshot: adminProcedure.query(async () => {
     return computeEcosystemSnapshot();
+  }),
+
+  // Operator Pulse: daily "Needs you today" actionable stack for Overview.
+  operatorPulse: adminProcedure.query(async () => {
+    return computeOperatorPulse();
   }),
 
   // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
@@ -393,6 +545,8 @@ export const adminRouter = router({
             /** Legacy one-body-to-all (still accepted when posts omitted). */
             text: z.string().min(1).max(3000).optional(),
             link: z.string().url().optional(),
+            /** Public direct image URL → Buffer media[photo] (+ thumbnail). */
+            imageUrl: z.string().url().optional(),
             profileIds: z.array(z.string()).min(1).optional(),
             scheduledAt: z.string().optional(),
           })
@@ -427,7 +581,7 @@ export const adminRouter = router({
             params.append("access_token", token);
             params.append("profile_ids[]", job.profileId);
             params.append("text", job.text);
-            if (input.link) params.append("media[link]", input.link);
+            appendBufferMedia(params, { link: input.link, imageUrl: input.imageUrl });
             if (input.scheduledAt) {
               params.append("scheduled_at", input.scheduledAt);
               params.append("now", "false");
@@ -542,6 +696,15 @@ Follow the hard publishing rules: no em-dashes, no contrast framing, no AI fille
 
       const writeBlock = `${OUTBOUND_WRITE_ASSISTANT_BLOCK}${onWriteCompose ? OUTBOUND_WRITE_SURFACE_BLOCK : ""}`;
 
+      const siteBlock = `\n\n${adminSiteContextBlock()}`;
+      let voiceBlock = "";
+      try {
+        const voice = await loadAdminVoiceContextBlock({ ownerId: ctx.user.id });
+        if (voice.trim()) voiceBlock = `\n\n${voice}`;
+      } catch {
+        // Fail-soft: site map alone still prevents invented URLs.
+      }
+
       const systemPrompt = `You are an AI admin assistant for ReGen Civics  -  a regenerative civilization project coordinating land projects, alliance organizations, and investors.
 
 You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
@@ -585,13 +748,15 @@ Example:
 Only propose an execute action when you have the specific id or key from the conversation or context. Never invent ids. For anything destructive or high-stakes (deleting records, bans, rejections, sending money, mass email, public posts), do NOT use execute; tell the admin to do it themselves.
 
 ## Current Context
-${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}
+${contextBlock || "No specific context provided."}${broadcastBlock}${writeBlock}${harvestBlock}${siteBlock}${voiceBlock}
 
 ## Communication Style
 - Be direct, warm, and efficient
 - Use bullet points for lists
 - Flag urgent items (old inquiries, stale applications)
 - Suggest concrete next steps
+- Never invent site URLs; use Canonical site URLs or ask
+- Match Rye's voice from the Voice / second brain block when present
 - When you don't know something specific about the data, say so  -  you can only see what the admin shares with you`;
 
       const llmMessages = [
