@@ -220,6 +220,40 @@ export const recordingsRouter = router({
     }),
 
 
+  // Admin: which recordings already have a post-session Outbound letter (draft/sent).
+  postSessionLetterStatuses: adminProcedure
+    .input(z.object({
+      recordingIds: z.array(z.number().int().positive()).max(200),
+    }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database || input.recordingIds.length === 0) return [] as Array<{
+        recordingId: number;
+        issueId: number;
+        status: string;
+      }>;
+      const { newsletterIssues } = await import("../../drizzle/schema");
+      const { inArray } = await import("drizzle-orm");
+      const { postSessionLetterIdempotencyKey } = await import("../../shared/postSessionLetter");
+      const keys = input.recordingIds.map((id) => postSessionLetterIdempotencyKey(id));
+      const rows = await database
+        .select({
+          id: newsletterIssues.id,
+          status: newsletterIssues.status,
+          idempotencyKey: newsletterIssues.idempotencyKey,
+        })
+        .from(newsletterIssues)
+        .where(inArray(newsletterIssues.idempotencyKey, keys));
+      const out: Array<{ recordingId: number; issueId: number; status: string }> = [];
+      for (const row of rows) {
+        const key = row.idempotencyKey ?? "";
+        const m = /^post-session-letter:rec:(\d+)$/.exec(key);
+        if (!m) continue;
+        out.push({ recordingId: Number(m[1]), issueId: row.id, status: row.status });
+      }
+      return out;
+    }),
+
   // Admin: upsert Outbound draft summarizing this session (never auto-sends).
   draftPostSessionLetter: adminProcedure
     .input(z.object({
