@@ -190,7 +190,7 @@ export function AdminOverviewTab({
               {(() => {
                 const pending =
                   (applications?.filter((a: any) => a.status === "pending").length || 0) +
-                  (investors?.filter((i: any) => i.status === "pending").length || 0) +
+                  (investors?.filter((i: any) => i.status === "new").length || 0) +
                   (inquiries?.filter((i: any) => i.status === "pending" || i.status === "new")
                     .length || 0);
                 const reviewed =

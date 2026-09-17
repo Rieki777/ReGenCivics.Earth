@@ -86,9 +86,9 @@ export async function computeEcosystemSnapshot() {
   const invBy = (s: string) => investors.filter((i) => ((i.status as string) || "new") === s).length;
   const inqBy = (s: string) => inquiries.filter((i) => ((i.status as string) || "new") === s).length;
   const n = (rows: { c: number }[]) => Number(rows[0]?.c ?? 0);
-  // Align with Investors admin "pending review": status new|pending.
+  // Align with Investors admin "pending review": status new only.
   // Archived is a separate status, so it never lands in this bucket.
-  const investorPendingReview = invBy("new") + invBy("pending");
+  const investorPendingReview = invBy("new");
 
   return {
     generatedAt: new Date().toISOString(),
@@ -314,21 +314,6 @@ export const adminRouter = router({
   // Operator Pulse: daily "Needs you today" actionable stack for Overview.
   operatorPulse: adminProcedure.query(async () => {
     return computeOperatorPulse();
-  }),
-
-  // Ops notify channel status (booleans only — never return secrets).
-  // Telegram/WhatsApp = server/_core/notify.ts; owner email = OWNER_EMAIL fail-soft.
-  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored here.
-  opsNotifyStatus: adminProcedure.query(async () => {
-    const telegram =
-      Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) &&
-      Boolean(process.env.TELEGRAM_CHAT_ID?.trim());
-    const whatsapp =
-      Boolean(process.env.WHATSAPP_PHONE_NUMBER_ID?.trim()) &&
-      Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim()) &&
-      Boolean(process.env.WHATSAPP_TO_NUMBER?.trim());
-    const ownerEmail = Boolean(process.env.OWNER_EMAIL?.trim());
-    return { telegram, whatsapp, ownerEmail };
   }),
 
   // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has

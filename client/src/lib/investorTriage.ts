@@ -5,12 +5,12 @@
  * "pending review" / "needs action" means so counts don't drift.
  *
  * Product assumption: archived is a terminal status (not a separate flag).
- * "New" and "pending" are both waiting on admin; Overview "new" = pending review
- * = those statuses only (archived never appears in that bucket).
+ * Only "new" is waiting on an admin first look; archived never appears in
+ * that bucket.
  */
 
 /** Statuses that still need an admin first look / reply. */
-export const INVESTOR_PENDING_REVIEW_STATUSES = ["new", "pending"] as const;
+export const INVESTOR_PENDING_REVIEW_STATUSES = ["new"] as const;
 
 export type InvestorTriageFilter =
   | "needs_action"
@@ -18,7 +18,6 @@ export type InvestorTriageFilter =
   | "duplicates"
   | "all"
   | "new"
-  | "pending"
   | "contacted"
   | "in_discussion"
   | "committed"
@@ -165,7 +164,7 @@ export function investorTriageEmptyCopy(filter: string): { title: string; hint: 
     case "needs_action":
       return {
         title: "Nothing needs action",
-        hint: "No pending (non-archived) investor inquiries. Switch to All to browse history.",
+        hint: "No new investor inquiries need review. Switch to All to browse history.",
       };
     case "overdue":
       return {
