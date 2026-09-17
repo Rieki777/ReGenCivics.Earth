@@ -13,6 +13,7 @@ import {
   resolveWatchUrl,
   truncateOneLine,
 } from "@/lib/eventTemporal";
+import { pickAudienceCta } from "@shared/audienceCta";
 
 function fmtTs(sec: number): string {
   const s = Math.max(0, Math.floor(sec));
@@ -34,6 +35,10 @@ export type PastEventRecordingProps = {
   recordingId?: number | null;
   eventYoutubeUrl?: string | null;
   forumThreadId?: number | null;
+  /** For primary audience CTA heuristic (type / season / title). */
+  eventType?: string | null;
+  eventSeason?: string | null;
+  eventTitle?: string | null;
 };
 
 function usePastRecording(props: PastEventRecordingProps) {
@@ -73,6 +78,12 @@ const watchCompactClass =
 
 const watchPrimaryClass =
   "inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors text-sm";
+
+const audienceCtaClass =
+  "inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#0d2818] px-4 py-2 rounded-xl font-semibold transition-colors text-sm";
+
+const discussLinkClass =
+  "inline-flex items-center self-center text-sm text-[#7dd87d]/90 hover:text-[#7dd87d] underline-offset-2 hover:underline px-1";
 
 /** Compact Watch for the collapsed bar — stopPropagation so expand does not toggle. */
 export function PastEventCollapsedWatch(props: PastEventRecordingProps) {
@@ -317,8 +328,9 @@ export function RecordingDetail({ id }: { id: number }) {
 }
 
 /**
- * Expanded past-event body: Watch (primary), forum link, RecordingDetail or
- * distinct empty states. Intentionally omits CalendarCta / reminder / join / agenda.
+ * Expanded past-event body: Watch, one primary audience CTA, optional Discuss
+ * text link, RecordingDetail or distinct empty states. Intentionally omits
+ * CalendarCta / reminder / join / agenda.
  */
 export function PastEventExpandedPanel(props: PastEventRecordingProps & {
   description?: string | null;
@@ -334,6 +346,11 @@ export function PastEventExpandedPanel(props: PastEventRecordingProps & {
     recordingId,
   } = props;
   const { watchUrl, forumPostId, hasRecordingId, isLoading, resolvedRecordingId } = usePastRecording(props);
+  const audienceCta = pickAudienceCta({
+    type: props.eventType,
+    season: props.eventSeason,
+    title: props.eventTitle,
+  });
 
   let emptyState: ReactNode = null;
   if (!hasRecordingId) {
@@ -367,7 +384,7 @@ export function PastEventExpandedPanel(props: PastEventRecordingProps & {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
         {watchUrl && (
           <a
             href={watchUrl}
@@ -381,13 +398,20 @@ export function PastEventExpandedPanel(props: PastEventRecordingProps & {
             <ExternalLink className="w-4 h-4 opacity-80" />
           </a>
         )}
+        <Link
+          href={audienceCta.path}
+          data-testid="past-event-audience-cta"
+          className={audienceCtaClass}
+        >
+          {audienceCta.label}
+        </Link>
         {forumPostId && (
           <Link
             href={`/community/post/${forumPostId}`}
             data-testid="past-event-discuss"
-            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-[#7dd87d] px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-[#7dd87d]/30"
+            className={discussLinkClass}
           >
-            Discuss on Forum
+            Discuss
           </Link>
         )}
       </div>
