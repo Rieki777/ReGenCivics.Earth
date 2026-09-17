@@ -87,7 +87,15 @@ function AdminDashboard() {
   const [appView, setAppView] = useState<string | null>(() => params.get("view"));
   const [investorSearch, setInvestorSearch] = useState("");
   const [appSearch, setAppSearch] = useState("");
-  const [investorStatusFilter, setInvestorStatusFilter] = useState<string>("needs_action");
+  const [investorStatusFilter, setInvestorStatusFilter] = useState<string>(() => {
+    if (initial.tab === "investors") return params.get("filter") || "needs_action";
+    return "needs_action";
+  });
+  const [eventsFilter, setEventsFilter] = useState<string | null>(() => {
+    if (initial.tab !== "events") return null;
+    const f = params.get("filter");
+    return f === "past" || f === "upcoming" || f === "all" ? f : null;
+  });
   const [showDrafts, setShowDrafts] = useState(false);
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [notifCenterOpen, setNotifCenterOpen] = useState(false);
@@ -109,6 +117,12 @@ function AdminDashboard() {
     else if (nextTab !== activeTab) setOpenRecordId(null);
     if (extras?.status !== undefined) setAppStatus(extras.status || null);
     if (extras?.view !== undefined) setAppView(extras.view || null);
+    if (extras?.filter !== undefined) {
+      if (nextTab === "investors") setInvestorStatusFilter(extras.filter || "needs_action");
+      if (nextTab === "events") setEventsFilter(extras.filter || null);
+    } else if (nextTab !== "events" && nextTab !== activeTab) {
+      setEventsFilter(null);
+    }
     recordAdminVisit(nextTab);
     writeAdminContinueFromTab(nextTab);
   };
@@ -128,12 +142,19 @@ function AdminDashboard() {
       else if (activeTab !== "applications") url.searchParams.delete("view");
       if (activeTab === "outbound") url.searchParams.set("surface", outboundSurface);
       else url.searchParams.delete("surface");
+      if (activeTab === "investors" && investorStatusFilter && investorStatusFilter !== "all") {
+        url.searchParams.set("filter", investorStatusFilter);
+      } else if (activeTab === "events" && eventsFilter) {
+        url.searchParams.set("filter", eventsFilter);
+      } else if (activeTab !== "investors") {
+        url.searchParams.delete("filter");
+      }
       const next = url.pathname + url.search;
       if (next !== window.location.pathname + window.location.search) {
         window.history.pushState(null, "", next);
       }
     } catch { /* history unavailable */ }
-  }, [activeTab, inquiryType, openRecordId, appStatus, appView, outboundSurface]);
+  }, [activeTab, inquiryType, openRecordId, appStatus, appView, outboundSurface, investorStatusFilter, eventsFilter]);
 
   useEffect(() => {
     const onPop = () => {
@@ -147,6 +168,13 @@ function AdminDashboard() {
       setOpenRecordId(open ? Number(open) : null);
       setAppStatus(p.get("status"));
       setAppView(p.get("view"));
+      const filter = p.get("filter");
+      if (resolved.tab === "investors" && filter) setInvestorStatusFilter(filter);
+      if (resolved.tab === "events" && (filter === "past" || filter === "upcoming" || filter === "all")) {
+        setEventsFilter(filter);
+      } else if (resolved.tab !== "events") {
+        setEventsFilter(null);
+      }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
