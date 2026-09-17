@@ -11,9 +11,9 @@ import {
 const base = { fullName: "Ada", email: "ada@example.com", createdAt: new Date().toISOString() };
 
 describe("investor triage vocabulary", () => {
-  it("treats only new as pending review; pending and archived are not", () => {
+  it("treats new and pending as pending review; archived is not", () => {
     expect(isInvestorPendingReview({ ...base, status: "new" })).toBe(true);
-    expect(isInvestorPendingReview({ ...base, status: "pending" })).toBe(false);
+    expect(isInvestorPendingReview({ ...base, status: "pending" })).toBe(true);
     expect(isInvestorPendingReview({ ...base, status: "archived" })).toBe(false);
     expect(isInvestorNeedsAction({ ...base, status: "archived" })).toBe(false);
   });
@@ -26,12 +26,12 @@ describe("investor triage vocabulary", () => {
       { ...base, id: 4, status: "contacted", email: "d@example.com" },
     ];
     const counts = countInvestorTriage(rows);
-    expect(counts.pendingReview).toBe(1);
+    expect(counts.pendingReview).toBe(2);
     expect(counts.archived).toBe(1);
     expect(counts.total).toBe(4);
   });
 
-  it("defaults needs_action to new non-archived only", () => {
+  it("defaults needs_action to pending non-archived only", () => {
     const rows = [
       { ...base, id: 1, status: "new" },
       { ...base, id: 2, status: "archived", email: "x@example.com" },
@@ -54,13 +54,12 @@ describe("investor triage vocabulary", () => {
     expect(countInvestorTriage(rows).duplicateRows).toBe(2);
   });
 
-  it("marks new >48h as overdue; pending, archived, and contacted are never overdue", () => {
+  it("marks pending >48h as overdue; archived and contacted are never overdue", () => {
     const now = Date.parse("2026-09-16T17:00:00Z");
     const old = new Date(now - 50 * 3_600_000).toISOString();
     const recent = new Date(now - 10 * 3_600_000).toISOString();
     expect(isInvestorOverdue({ ...base, status: "new", createdAt: old }, now)).toBe(true);
     expect(isInvestorOverdue({ ...base, status: "new", createdAt: recent }, now)).toBe(false);
-    expect(isInvestorOverdue({ ...base, status: "pending", createdAt: old }, now)).toBe(false);
     expect(isInvestorOverdue({ ...base, status: "archived", createdAt: old }, now)).toBe(false);
     expect(isInvestorOverdue({ ...base, status: "contacted", createdAt: old }, now)).toBe(false);
     const rows = [
@@ -68,5 +67,18 @@ describe("investor triage vocabulary", () => {
       { ...base, id: 2, status: "new", email: "r@example.com", createdAt: recent },
     ];
     expect(filterInvestorsForTriage(rows, { filter: "overdue" }).map((r) => r.id)).toEqual([1]);
+  });
+
+  it("filters due_reminders by parsed note ids, independent of status", () => {
+    const rows = [
+      { ...base, id: 1, status: "contacted" },
+      { ...base, id: 2, status: "new", email: "b@example.com" },
+      { ...base, id: 3, status: "archived", email: "c@example.com" },
+    ];
+    const dueReminderIds = new Set([1, 3]);
+    expect(
+      filterInvestorsForTriage(rows, { filter: "due_reminders", dueReminderIds }).map((r) => r.id),
+    ).toEqual([1, 3]);
+    expect(filterInvestorsForTriage(rows, { filter: "due_reminders" }).map((r) => r.id)).toEqual([]);
   });
 });
