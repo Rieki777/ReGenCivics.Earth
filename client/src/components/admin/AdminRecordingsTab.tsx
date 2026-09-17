@@ -13,9 +13,12 @@ import {
   Send,
   Radio,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
+import { isLetterLayout } from "@shared/letterLayout";
 
 export function AdminRecordingsTab() {
   const { data: recs = [], refetch, isLoading } = trpc.recordings.adminList.useQuery();
@@ -27,6 +30,22 @@ export function AdminRecordingsTab() {
     },
   });
   const deleteMutation = trpc.recordings.delete.useMutation({ onSuccess: () => refetch() });
+  const draftLetter = trpc.recordings.draftPostSessionLetter.useMutation({
+    onSuccess: (res) => {
+      queueOutboundWriteFill({
+        subject: res.subject,
+        body: res.body,
+        layout: isLetterLayout(res.layout) ? res.layout : "announcement",
+      });
+      toast.success(
+        res.created
+          ? `Draft letter #${res.id} created`
+          : `Draft letter #${res.id} ready (idempotent)`,
+      );
+      window.location.href = res.writeHref;
+    },
+    onError: (err) => toast.error(err.message || "Could not create draft"),
+  });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [editSummary, setEditSummary] = useState('');
@@ -151,6 +170,16 @@ export function AdminRecordingsTab() {
                   <Send className="w-3 h-3 mr-1" /> Resend Email
                 </Button>
               )}
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="draft-session-letter"
+                onClick={() => draftLetter.mutate({ recordingId: rec.id })}
+                disabled={draftLetter.isPending}
+              >
+                <Mail className="w-3 h-3 mr-1" />
+                {draftLetter.isPending ? 'Drafting…' : 'Draft session letter'}
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"
