@@ -195,7 +195,7 @@ function categories(row: FeedRow): string[] {
  * UID is entitled to skip an update like that, and the old LOCATION would have
  * stayed on subscribers' calendars.
  */
-export const FEED_CONTENT_REVISED_AT = new Date("2026-09-14T00:00:00Z");
+export const FEED_CONTENT_REVISED_AT = new Date("2026-09-17T00:00:00Z");
 
 /** The later of the row's last edit and the last change to how rows render. */
 export function lastChanged(row: FeedRow): Date {
@@ -227,10 +227,24 @@ export function toIcsEvent(row: FeedRow): IcsEvent {
   };
 }
 
+/**
+ * Sessions that belong on the public subscribe feeds.
+ *
+ * "All Sessions" means Open Access + Season 2 weeks — not workshops, festivals,
+ * or Admin "special" one-offs. Those stay on /schedule when published, but they
+ * must not land on every subscriber's phone. Rieki, 2026-09-16: keep Seasonal
+ * Festivals off the calendar feeds for now.
+ */
+export function isFeedSession(row: FeedRow): boolean {
+  if (row.type === "open") return true;
+  return episodeWeek(row) != null;
+}
+
 export function selectForFeed(rows: FeedRow[], kind: FeedKind): FeedRow[] {
-  if (kind === "all") return rows;
-  if (kind === "season2") return rows.filter((r) => episodeWeek(r) != null);
-  return rows.filter(isPublicSession);
+  const sessions = rows.filter(isFeedSession);
+  if (kind === "all") return sessions;
+  if (kind === "season2") return sessions.filter((r) => episodeWeek(r) != null);
+  return sessions.filter(isPublicSession);
 }
 
 const FEED_META: Record<FeedKind, { name: string; description: string }> = {
