@@ -2,7 +2,7 @@
  * Deterministic post-session Outbound letter markdown (draft only — never sends).
  * Uses siteContext canonical URLs for the primary CTA.
  */
-import { absoluteSiteUrl } from "./siteContext";
+import { pickAudienceCta, type AudienceCta } from "./audienceCta";
 
 export const POST_SESSION_LETTER_KEY_PREFIX = "post-session-letter:rec:";
 
@@ -10,43 +10,18 @@ export function postSessionLetterIdempotencyKey(recordingId: number): string {
   return `${POST_SESSION_LETTER_KEY_PREFIX}${recordingId}`;
 }
 
-export type PostSessionCta = {
-  path: string;
-  label: string;
-  url: string;
-};
+/** @deprecated Prefer pickAudienceCta — same heuristic, shared with Schedule past cards. */
+export type PostSessionCta = AudienceCta;
 
 /**
- * Simple heuristic from event type / season. Falls back to /connect placeholder.
- * Paths must stay inside siteContext allowlist.
+ * Same as pickAudienceCta (siteContext allowlist). Kept for post-session letter callers.
  */
 export function pickPostSessionCta(event?: {
   type?: string | null;
   season?: string | null;
   title?: string | null;
 } | null): PostSessionCta {
-  const type = (event?.type ?? "").toLowerCase();
-  const season = (event?.season ?? "").toLowerCase();
-  const title = (event?.title ?? "").toLowerCase();
-  const blob = `${type} ${season} ${title}`;
-
-  if (type === "episode" || season.includes("season 2") || blob.includes("season 2") || blob.includes("s2")) {
-    return { path: "/season2", label: "Explore Season 2", url: absoluteSiteUrl("/season2") };
-  }
-  if (blob.includes("claim") && blob.includes("seed")) {
-    return { path: "/claim-seeds", label: "Claim SEEDS", url: absoluteSiteUrl("/claim-seeds") };
-  }
-  if (blob.includes("loi") || blob.includes("letter of intent")) {
-    return { path: "/loi", label: "Share a letter of intent", url: absoluteSiteUrl("/loi") };
-  }
-  if (blob.includes("apply") || blob.includes("application")) {
-    return { path: "/apply", label: "Apply to join", url: absoluteSiteUrl("/apply") };
-  }
-  if (type === "open" || blob.includes("open access")) {
-    return { path: "/schedule", label: "See upcoming sessions", url: absoluteSiteUrl("/schedule") };
-  }
-  // Admin can swap in Write; connect is a safe default CTA.
-  return { path: "/connect", label: "Connect with us", url: absoluteSiteUrl("/connect") };
+  return pickAudienceCta(event);
 }
 
 export type PostSessionLetterInput = {

@@ -78,22 +78,28 @@ describe("PastEventCtaGate", () => {
 });
 
 describe("PastEventExpandedPanel", () => {
-  it("shows Watch + Discuss + RecordingDetail and never calendar/reminder labels", () => {
+  it("shows Watch + audience CTA + Discuss text link + RecordingDetail and never calendar/reminder labels", () => {
     render(
       <PastEventExpandedPanel
         eventId={1}
         recordingId={9}
         eventYoutubeUrl="https://youtu.be/event"
+        eventType="open"
+        eventTitle="Open Access September"
         description="Past OA session"
       />,
     );
 
     const watch = screen.getByTestId("past-event-watch-expanded");
     expect(watch).toHaveAttribute("href", "https://youtu.be/edited-cut");
+    const cta = screen.getByTestId("past-event-audience-cta");
+    expect(cta).toHaveAttribute("href", "/schedule");
+    expect(cta).toHaveTextContent("See upcoming sessions");
     expect(screen.getByTestId("past-event-discuss")).toHaveAttribute(
       "href",
       "/community/post/42",
     );
+    expect(screen.getByTestId("past-event-discuss")).toHaveTextContent("Discuss");
     expect(screen.getByTestId("recording-detail")).toBeTruthy();
     expect(screen.getByText("Chapters")).toBeTruthy();
     expect(screen.getByText("Follow-ups")).toBeTruthy();
@@ -112,5 +118,29 @@ describe("PastEventExpandedPanel", () => {
     expect(screen.getByTestId("past-empty-no-recording")).toHaveTextContent(
       "No recording linked yet",
     );
+  });
+
+  it("picks Season 2 CTA from event type episode", () => {
+    render(
+      <PastEventExpandedPanel
+        eventId={1}
+        recordingId={9}
+        eventType="episode"
+        eventTitle="Episode 4"
+      />,
+    );
+    expect(screen.getByTestId("past-event-audience-cta")).toHaveAttribute("href", "/season2");
+  });
+
+  it("defaults audience CTA to /connect", () => {
+    render(
+      <PastEventExpandedPanel
+        eventId={1}
+        recordingId={9}
+        eventType="special"
+        eventTitle="Community jam"
+      />,
+    );
+    expect(screen.getByTestId("past-event-audience-cta")).toHaveAttribute("href", "/connect");
   });
 });
