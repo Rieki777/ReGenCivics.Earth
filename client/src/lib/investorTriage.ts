@@ -5,12 +5,12 @@
  * "pending review" / "needs action" means so counts don't drift.
  *
  * Product assumption: archived is a terminal status (not a separate flag).
- * "New" and "pending" are both waiting on admin; Overview "new" = pending review
- * = those statuses only (archived never appears in that bucket).
+ * Only "new" is waiting on an admin first look; archived never appears in
+ * that bucket.
  */
 
 /** Statuses that still need an admin first look / reply. */
-export const INVESTOR_PENDING_REVIEW_STATUSES = ["new", "pending"] as const;
+export const INVESTOR_PENDING_REVIEW_STATUSES = ["new"] as const;
 
 export type InvestorTriageFilter =
   | "needs_action"
@@ -19,7 +19,6 @@ export type InvestorTriageFilter =
   | "due_reminders"
   | "all"
   | "new"
-  | "pending"
   | "contacted"
   | "in_discussion"
   | "committed"
@@ -36,7 +35,9 @@ export type InvestorLike = {
   createdAt?: string | Date | null;
 };
 
-export function normalizeInvestorStatus(status: string | null | undefined): string {
+export function normalizeInvestorStatus(
+  status: string | null | undefined,
+): string {
   return (status || "new").toLowerCase();
 }
 
@@ -54,7 +55,10 @@ export function isInvestorNeedsAction(inv: InvestorLike): boolean {
   return isInvestorPendingReview(inv) && !isInvestorArchived(inv);
 }
 
-export function isInvestorOverdue(inv: InvestorLike, nowMs: number = Date.now()): boolean {
+export function isInvestorOverdue(
+  inv: InvestorLike,
+  nowMs: number = Date.now(),
+): boolean {
   if (!inv.createdAt) return false;
   if (isInvestorArchived(inv)) return false;
   if (!isInvestorPendingReview(inv)) return false;
@@ -63,17 +67,26 @@ export function isInvestorOverdue(inv: InvestorLike, nowMs: number = Date.now())
   return ageH >= 48;
 }
 
-export function buildDuplicateInvestorEmails(investors: InvestorLike[]): Set<string> {
+export function buildDuplicateInvestorEmails(
+  investors: InvestorLike[],
+): Set<string> {
   const counts: Record<string, number> = {};
   for (const inv of investors) {
     const email = (inv.email || "").trim().toLowerCase();
     if (!email) continue;
     counts[email] = (counts[email] || 0) + 1;
   }
-  return new Set(Object.entries(counts).filter(([, c]) => c > 1).map(([e]) => e));
+  return new Set(
+    Object.entries(counts)
+      .filter(([, c]) => c > 1)
+      .map(([e]) => e),
+  );
 }
 
-export function countInvestorTriage(investors: InvestorLike[]): {
+export function countInvestorTriage(
+  investors: InvestorLike[],
+  nowMs?: number,
+): {
   total: number;
   /** Alias used by ecosystem snapshot `investors.new` — pending review only. */
   pendingReview: number;
@@ -89,7 +102,7 @@ export function countInvestorTriage(investors: InvestorLike[]): {
   for (const inv of investors) {
     if (isInvestorArchived(inv)) archived += 1;
     if (isInvestorPendingReview(inv)) pendingReview += 1;
-    if (isInvestorOverdue(inv)) overdue += 1;
+    if (isInvestorOverdue(inv, nowMs ?? Date.now())) overdue += 1;
     const email = (inv.email || "").trim().toLowerCase();
     if (email && dupes.has(email)) duplicateRows += 1;
   }
@@ -102,7 +115,10 @@ export function countInvestorTriage(investors: InvestorLike[]): {
   };
 }
 
-export function investorMatchesSearch(inv: InvestorLike, search: string): boolean {
+export function investorMatchesSearch(
+  inv: InvestorLike,
+  search: string,
+): boolean {
   if (!search) return true;
   const q = search.toLowerCase();
   return (
@@ -123,6 +139,8 @@ export function filterInvestorsForTriage(
     filter: string;
     search?: string;
     duplicateEmails?: Set<string>;
+    /** Clock used to evaluate the overdue filter, primarily for deterministic tests. */
+    nowMs?: number;
     /** Investor ids with a reminder due today or overdue (parsed from notes). */
     dueReminderIds?: Set<number>;
   },
@@ -137,7 +155,7 @@ export function filterInvestorsForTriage(
       case "needs_action":
         return isInvestorNeedsAction(inv);
       case "overdue":
-        return isInvestorOverdue(inv);
+        return isInvestorOverdue(inv, opts.nowMs ?? Date.now());
       case "duplicates": {
         const email = (inv.email || "").trim().toLowerCase();
         return Boolean(email && dupes.has(email));
@@ -165,12 +183,15 @@ export function filterInvestorsForTriage(
 }
 
 /** Empty-state copy for the active triage filter. */
-export function investorTriageEmptyCopy(filter: string): { title: string; hint: string } {
+export function investorTriageEmptyCopy(filter: string): {
+  title: string;
+  hint: string;
+} {
   switch (filter) {
     case "needs_action":
       return {
         title: "Nothing needs action",
-        hint: "No pending (non-archived) investor inquiries. Switch to All to browse history.",
+        hint: "No new investor inquiries need review. Switch to All to browse history.",
       };
     case "overdue":
       return {
