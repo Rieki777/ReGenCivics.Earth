@@ -137,6 +137,8 @@ export function partitionEventsByTemporal<T extends EventTemporalInput>(
 /**
  * Public Schedule past rule: same wall-clock as admin (endTime else startTime),
  * plus treat completed/cancelled status as past even if timestamps are missing.
+ * Cancelled still counts as "past" so Upcoming excludes them; Historical uses
+ * {@link isPublicHistoricalEvent} which drops cancelled entirely.
  */
 export function isScheduleEventPast(
   event: EventTemporalInput,
@@ -144,6 +146,27 @@ export function isScheduleEventPast(
 ): boolean {
   if (event.status === "completed" || event.status === "cancelled") return true;
   return isEventPastForAdmin(event, nowMs);
+}
+
+/** True for cancelled / American canceled (public shelf must hide both). */
+export function isScheduleEventCancelled(
+  event: Pick<EventTemporalInput, "status"> | { status?: string | null },
+): boolean {
+  const s = (event.status ?? "").toLowerCase();
+  return s === "cancelled" || s === "canceled";
+}
+
+/**
+ * Public /schedule Historical shelf: past sessions that actually ran
+ * (completed or wall-clock past). Cancelled phantoms stay off this list;
+ * ICS still emits STATUS:CANCELLED via the calendar feed separately.
+ */
+export function isPublicHistoricalEvent(
+  event: EventTemporalInput,
+  nowMs: number = Date.now(),
+): boolean {
+  if (isScheduleEventCancelled(event)) return false;
+  return isScheduleEventPast(event, nowMs);
 }
 
 /** Prefer edited cut, then raw YouTube, then Riverside, then event.youtubeUrl. */
