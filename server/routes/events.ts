@@ -260,9 +260,16 @@ export const eventsRouter = router({
         .orderBy(asc(events.startTime))
         .limit(input?.limit ?? 50);
 
+      // Public projection never lists cancelled/canceled — even when
+      // includeCompleted feeds /schedule Historical. Admin Events still uses
+      // adminList (full rows). Calendar ICS emits STATUS:CANCELLED separately.
+      const isCancelledStatus = (status: string | null | undefined) => {
+        const s = (status ?? "").toLowerCase();
+        return s === "cancelled" || s === "canceled";
+      };
       const visible = input?.includeCompleted
-        ? all
-        : all.filter(e => e.status !== "cancelled" && e.status !== "completed");
+        ? all.filter(e => !isCancelledStatus(e.status))
+        : all.filter(e => !isCancelledStatus(e.status) && e.status !== "completed");
       return visible.map(e => toPublicEvent(e, !!ctx.user));
     }),
 

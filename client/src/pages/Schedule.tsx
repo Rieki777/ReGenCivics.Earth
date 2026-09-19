@@ -41,6 +41,7 @@ import {
 } from "@/components/schedule/PastEventRecording";
 import {
   isScheduleEventPast,
+  isPublicHistoricalEvent,
   toMs,
   resolveEventStart,
 } from "@/lib/eventTemporal";
@@ -136,6 +137,8 @@ export default function Schedule() {
 
   // Filter events based on the active tab — same past rule as admin
   // (endTime if present else startTime) plus completed/cancelled status.
+  // Historical drops cancelled/canceled so phantom OA cancellations never
+  // appear as past cards (ICS CANCELLED emission is unchanged).
   const filteredEvents = activeTab === "upcoming"
     ? upcomingEvents
         .filter((e) => !isScheduleEventPast(e as any))
@@ -145,7 +148,7 @@ export default function Schedule() {
           return aTime - bTime;
         })
     : upcomingEvents
-        .filter((e) => isScheduleEventPast(e as any))
+        .filter((e) => isPublicHistoricalEvent(e as any))
         .sort((a, b) => {
           const aTime = toMs(resolveEventStart(a as any)) ?? 0;
           const bTime = toMs(resolveEventStart(b as any)) ?? 0;

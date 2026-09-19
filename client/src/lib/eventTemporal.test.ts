@@ -5,6 +5,8 @@ import {
   formatDurationSeconds,
   isEventPastForAdmin,
   isScheduleEventPast,
+  isScheduleEventCancelled,
+  isPublicHistoricalEvent,
   partitionEventsByTemporal,
   resolveWatchUrl,
   eventHasWatchPath,
@@ -194,6 +196,57 @@ describe("isScheduleEventPast", () => {
           endTime: "2026-09-16T14:00:00.000Z",
           status: "upcoming",
         },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("isScheduleEventCancelled / isPublicHistoricalEvent", () => {
+  it("recognises cancelled and canceled", () => {
+    expect(isScheduleEventCancelled({ status: "cancelled" })).toBe(true);
+    expect(isScheduleEventCancelled({ status: "canceled" })).toBe(true);
+    expect(isScheduleEventCancelled({ status: "CANCELLED" })).toBe(true);
+    expect(isScheduleEventCancelled({ status: "completed" })).toBe(false);
+    expect(isScheduleEventCancelled({ status: "upcoming" })).toBe(false);
+  });
+
+  it("hides cancelled from public Historical even when wall-clock past", () => {
+    expect(
+      isPublicHistoricalEvent(
+        {
+          startTime: "2026-09-01T18:00:00.000Z",
+          endTime: "2026-09-01T19:00:00.000Z",
+          status: "cancelled",
+        },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isPublicHistoricalEvent(
+        { startTime: "2026-09-01T18:00:00.000Z", status: "canceled" },
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps completed past sessions (Watch path) on Historical", () => {
+    expect(
+      isPublicHistoricalEvent(
+        {
+          startTime: "2026-09-10T18:00:00.000Z",
+          endTime: "2026-09-10T19:30:00.000Z",
+          status: "completed",
+        },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps wall-clock past upcoming-status rows on Historical", () => {
+    expect(
+      isPublicHistoricalEvent(
+        { startTime: "2026-09-01T18:00:00.000Z", status: "upcoming" },
         NOW,
       ),
     ).toBe(true);
