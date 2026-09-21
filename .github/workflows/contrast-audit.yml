@@ -33,7 +33,7 @@ jobs:
       # this workflow ran node 20 / pnpm 8 against engines >=22.19 / pnpm 10
       # and called a preview script that did not exist; it always failed).
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
         uses: actions/setup-node@v7
