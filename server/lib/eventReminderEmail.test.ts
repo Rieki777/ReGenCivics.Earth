@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
-import { CALL_START_OFFSET_MINUTES } from "@shared/eventAutoReminders";
+import { ALWAYS_INCLUDED_FOOTER_TEXT, CALL_START_OFFSET_MINUTES } from "@shared/eventAutoReminders";
+import { APP_BASE_URL } from "../_core/email";
 import {
   buildAutoReminderHtml,
   reminderJoinLabel,
@@ -78,6 +79,56 @@ describe("reminderJoinUrl", () => {
     expect(reminderJoinUrl({ riversideRoomUrl: RIVERSIDE_ROOM_URL })).toBe(JOIN_URL);
     expect(reminderJoinLabel("https://zoom.us/j/123")).toBe("Join on Zoom");
     expect(reminderJoinLabel(JOIN_URL)).toBe("Join the call");
+  });
+
+  it("sends the link every events row actually stores to /join, not back out raw", () => {
+    // The assertion above passes against the constant, and it passed the whole
+    // time this was broken. Rows store the old `?t=` token link. When the
+    // constant moved to the wvhy-zyit room on 2026-09-14, an exact comparison
+    // stopped matching the rows, and every auto-reminder's join button went to
+    // the stored old link. Test against what is in the database, not the constant.
+    const stored =
+      "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b";
+    expect(reminderJoinUrl({ riversideRoomUrl: stored })).toBe(JOIN_URL);
+    expect(reminderJoinUrl({ riversideRoomUrl: `  ${stored}  ` })).toBe(JOIN_URL);
+  });
+});
+
+describe("buildAutoReminderHtml for someone on the always-include list", () => {
+  const html = buildAutoReminderHtml({
+    title: "Week 3: Game & Organisation Co-Creation Part 1",
+    startTime: new Date("2026-10-10T18:00:00Z"),
+    joinUrl: JOIN_URL,
+    offsetMinutes: 60,
+    alwaysIncluded: true,
+  });
+
+  it("says why they get it and gives a way to stop that works", () => {
+    expect(html).toContain(ALWAYS_INCLUDED_FOOTER_TEXT);
+    expect(html).toContain(`href="${APP_BASE_URL}/connect"`);
+  });
+
+  it("leaves out the preferences link, which does nothing without a subscriber row", () => {
+    expect(html).not.toContain("Manage email preferences");
+    expect(html).not.toContain("You are receiving this as a reminder for this event.");
+  });
+
+  it("still carries the session and the join link", () => {
+    expect(html).toContain("Week 3: Game &amp; Organisation Co-Creation Part 1");
+    expect(html).toContain(`href="${JOIN_URL}"`);
+    expect(html).toContain("Starting in about an hour");
+    expect(html).not.toContain("—");
+  });
+
+  it("reads 'Upcoming session' for a send that is not at a standard offset", () => {
+    const manual = buildAutoReminderHtml({
+      title: "Week 3",
+      startTime: new Date("2026-10-10T18:00:00Z"),
+      joinUrl: JOIN_URL,
+      offsetMinutes: 0,
+      alwaysIncluded: true,
+    });
+    expect(manual).toContain("Upcoming session");
   });
 });
 

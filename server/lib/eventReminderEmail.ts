@@ -1,7 +1,11 @@
 import { APP_BASE_URL } from "../_core/email";
-import { offsetLead } from "@shared/eventAutoReminders";
+import {
+  ALWAYS_INCLUDED_FOOTER_TEXT,
+  ALWAYS_INCLUDED_STOP_PATH,
+  offsetLead,
+} from "@shared/eventAutoReminders";
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
-import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { JOIN_URL, isDefaultRoomUrl } from "@shared/sessionLinks";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
 
 type ReminderEmailInput = {
@@ -13,15 +17,47 @@ type ReminderEmailInput = {
   joinUrl: string;
   offsetMinutes: number;
   /** Signed community prefs URL. Footer CTA is Manage email preferences. */
-  preferencesUrl: string;
+  preferencesUrl?: string;
+  /**
+   * The recipient is on ALWAYS_INCLUDE_REMINDER_RECIPIENTS. They never signed
+   * up, so the footer says why they are getting this and how to stop, in place
+   * of a preferences link that would do nothing for them.
+   */
+  alwaysIncluded?: boolean;
 };
 
+function footerHtml(input: ReminderEmailInput): string {
+  const schedule = `<a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a>`;
+  if (input.alwaysIncluded) {
+    const stop = `${APP_BASE_URL}${ALWAYS_INCLUDED_STOP_PATH}`;
+    return `${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:#7dd87d;">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.<br/>
+            ${schedule}`;
+  }
+  const prefs = input.preferencesUrl
+    ? ` · <a href="${escapeHtml(input.preferencesUrl)}" style="color:#999;">Manage email preferences</a>`
+    : "";
+  return `You are receiving this as a reminder for this event.<br/>
+            ${schedule}${prefs}`;
+}
+
+/**
+ * The join button's target: /join for our studio, a genuinely different room
+ * or a Zoom link as stored.
+ *
+ * This compared against RIVERSIDE_ROOM_URL by exact string until 2026-09-21.
+ * Every events row stores the old `?t=` token link, so while the constant held
+ * that same link the rows matched and fell through to /join. When the constant
+ * moved to the wvhy-zyit room on 2026-09-14, no row matched any more, and every
+ * auto-reminder's join button sent people to the stored old link instead of
+ * /join. isDefaultRoomUrl matches any link into the studio, whatever form it
+ * was stored in.
+ */
 export function reminderJoinUrl(opts: {
   riversideRoomUrl?: string | null;
   zoomUrl?: string | null;
 }): string {
   const stored = opts.riversideRoomUrl?.trim();
-  if (stored && stored !== RIVERSIDE_ROOM_URL) return stored;
+  if (stored && !isDefaultRoomUrl(stored)) return stored;
   const zoom = opts.zoomUrl?.trim();
   if (zoom) return zoom;
   return JOIN_URL;
@@ -80,8 +116,7 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
             <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
           </div>
           <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:12px;margin:0;">You are receiving this as a reminder for this event.<br/>
-            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${escapeHtml(input.preferencesUrl)}" style="color:#999;">Manage email preferences</a></p>
+            <p style="color:#888;font-size:12px;margin:0;">${footerHtml(input)}</p>
           </div>
         </div>`;
 }

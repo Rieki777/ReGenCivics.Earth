@@ -270,6 +270,43 @@ export type ReminderRecipient = {
   name: string;
 };
 
+/**
+ * People who get every session reminder, whatever the session's audience.
+ *
+ * Each audience mode reaches a different list. Season 2 reminders go only to
+ * land projects with an approved or active application, and they ignore
+ * per-event signups entirely, so signing someone up for every session reaches
+ * them for Open Access and silently not for the thirteen Season 2 weeks. This
+ * list is the way to put one person on every reminder, from every send path:
+ * the auto-reminder offsets, the daily signup blast, and admin-scheduled and
+ * manual sends.
+ *
+ * Adding someone is a one-line change. Emails lowercase. Recipients here get a
+ * footer explaining why and how to stop (see ALWAYS_INCLUDED_FOOTER_TEXT),
+ * because they never signed up for anything.
+ */
+export const ALWAYS_INCLUDE_REMINDER_RECIPIENTS: readonly ReminderRecipient[] = [
+  // Added 2026-09-21 at Rye's request.
+  { email: "franz@integrity.earth", name: "Franz" },
+];
+
+export function isAlwaysIncluded(email: string): boolean {
+  const needle = email.trim().toLowerCase();
+  return ALWAYS_INCLUDE_REMINDER_RECIPIENTS.some((r) => r.email === needle);
+}
+
+/**
+ * Footer for someone on ALWAYS_INCLUDE_REMINDER_RECIPIENTS.
+ *
+ * Not the usual "Manage email preferences" link: opt-outs are stored on the
+ * newsletter subscriber row, and these people usually have none, so that link
+ * would silently do nothing. Mail from noreply@ drops replies, and the site
+ * routes replies through the Connect form, so that is the working way to stop.
+ */
+export const ALWAYS_INCLUDED_FOOTER_TEXT =
+  "You get every ReGen Civics session reminder because our team added you. To stop them, tell us at";
+export const ALWAYS_INCLUDED_STOP_PATH = "/connect";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function mergeRecipients(groups: Array<Array<{ email?: string | null; name?: string | null }>>): ReminderRecipient[] {

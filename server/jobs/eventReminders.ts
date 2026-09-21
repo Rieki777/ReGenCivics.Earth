@@ -28,7 +28,10 @@ import { buildAutoReminderHtml, reminderJoinUrl } from "../lib/eventReminderEmai
 import { audienceForTopic, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import type { EmailTopicKey } from "@shared/emailPrefs";
 import {
+  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
   canEnableAutoReminders,
+  defaultAudienceMode,
+  isAlwaysIncluded,
   dueOffsets,
   isDuplicateKeyError,
   isOpenForUpcomingReminders,
@@ -57,6 +60,72 @@ export type AutoReminderJobReport = {
   skipped: number;
   errors: string[];
 };
+
+/**
+ * ALWAYS_INCLUDE_REMINDER_RECIPIENTS, minus anyone who has since muted this
+ * topic or paused community mail. Most people on the list have no subscriber
+ * row, so this usually removes nobody, but if one of them later subscribes and
+ * mutes, that choice has to win over the list.
+ */
+export async function alwaysIncludedRecipients(topic: EmailTopicKey): Promise<ReminderRecipient[]> {
+  if (ALWAYS_INCLUDE_REMINDER_RECIPIENTS.length === 0) return [];
+  const blocked = await emailsBlockingTopic(topic);
+  return ALWAYS_INCLUDE_REMINDER_RECIPIENTS.filter((r) => !blocked.has(r.email.toLowerCase()));
+}
+
+/**
+ * Send one reminder to each always-include recipient for a session reached by
+ * a send path that predates auto-reminders: the daily signup blast for events
+ * without auto-reminders, admin-scheduled custom reminders, and the manual
+ * "send reminders" button. Those paths read only event_signups, so without this
+ * a person on the list would miss any session that goes through them.
+ *
+ * Sent one message per recipient, through the tested auto-reminder template.
+ * The older paths put up to 50 signups into a single `to:` field, where every
+ * recipient sees every other address, and nobody added here should see, or be
+ * seen by, those people. `exclude` skips anyone the caller already emailed.
+ */
+export async function sendToAlwaysIncluded(
+  event: Event,
+  opts: {
+    subject: string;
+    bodyText?: string | null;
+    /** Picks the lead line. An offset that is not a standard one reads "Upcoming session". */
+    offsetMinutes: number;
+    exclude?: Iterable<string>;
+  },
+): Promise<number> {
+  const topic = communityTopicForAudience(defaultAudienceMode(event));
+  const skip = new Set([...(opts.exclude ?? [])].map((e) => e.trim().toLowerCase()));
+  const recipients = (await alwaysIncludedRecipients(topic)).filter((r) => !skip.has(r.email));
+  if (recipients.length === 0) return 0;
+
+  const joinUrl = reminderJoinUrl({ riversideRoomUrl: event.riversideRoomUrl, zoomUrl: event.zoomUrl });
+  let sent = 0;
+  for (const recipient of recipients) {
+    const html = buildAutoReminderHtml({
+      title: event.title,
+      startTime: event.startTime,
+      timezone: event.timezone,
+      description: event.description,
+      bodyText: opts.bodyText,
+      joinUrl,
+      offsetMinutes: opts.offsetMinutes,
+      alwaysIncluded: true,
+    });
+    await sendEmail({
+      to: [recipient.email],
+      subject: opts.subject,
+      html,
+      template: "event_reminder",
+      recipientName: recipient.name,
+    }).catch((err) => {
+      log.error("always-include reminder failed", { eventId: event.id, email: recipient.email, err });
+    });
+    sent += 1;
+  }
+  return sent;
+}
 
 export async function listEnabledAutoReminderEventIds(): Promise<Set<number>> {
   const database = await getDb();
@@ -158,6 +227,9 @@ export async function resolveAutoReminderRecipients(opts: {
     }
   }
 
+  // Last, so a person who is also in the real audience keeps that entry.
+  groups.push(await alwaysIncludedRecipients(communityTopicForAudience(opts.audienceMode)));
+
   const merged = mergeRecipients(groups);
   if (opts.audienceMode === "season2_approved") {
     const blocked = await emailsBlockingTopic("season2");
@@ -221,6 +293,7 @@ async function sendOffset(
       joinUrl,
       offsetMinutes,
       preferencesUrl: prefsUrl,
+      alwaysIncluded: isAlwaysIncluded(recipient.email),
     });
     await sendEmail({
       to: [recipient.email],

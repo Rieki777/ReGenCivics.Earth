@@ -1108,7 +1108,7 @@ async function startServer() {
       // Find upcoming events in the reminder window that haven't been reminded yet.
       // Events with auto-reminders enabled are owned by runAutoEventReminders
       // (offsets + audience rules) so this 20-28h signup blast skips them.
-      const { listEnabledAutoReminderEventIds, runAutoEventReminders } = await import("../jobs/eventReminders");
+      const { listEnabledAutoReminderEventIds, runAutoEventReminders, sendToAlwaysIncluded } = await import("../jobs/eventReminders");
       const autoEnabledIds = await listEnabledAutoReminderEventIds();
       const upcomingInWindow = await database
         .select()
@@ -1131,6 +1131,14 @@ async function startServer() {
           .select()
           .from(signupsTable)
           .where(dbAnd(dbEq(signupsTable.eventId, event.id), dbEq(signupsTable.signupType, "reminder")));
+        // Before the empty check below, so a session nobody has signed up for
+        // still reaches the always-include list. Sent one per recipient, never
+        // into the shared `to:` batches further down.
+        totalSent += await sendToAlwaysIncluded(event, {
+          subject: `Tomorrow: ${event.title}`,
+          offsetMinutes: 24 * 60,
+          exclude: signups.map((s) => s.email),
+        });
         if (!signups.length) {
           await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
           continue;
@@ -1199,6 +1207,12 @@ async function startServer() {
             dbEq(signupsTable.signupType, "reminder"),
             dbSql`${signupsTable.cancelledAt} IS NULL`,
           ));
+        scheduledSent += await sendToAlwaysIncluded(event, {
+          subject: event.reminderCustomSubject?.trim() || `Reminder: ${event.title}`,
+          bodyText: event.reminderCustomBody?.trim() || null,
+          offsetMinutes: 0,
+          exclude: signups.map((s) => s.email),
+        });
         if (signups.length) {
           const dateStr = event.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
           const timeStr = event.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });

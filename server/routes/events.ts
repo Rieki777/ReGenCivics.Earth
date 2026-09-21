@@ -10,9 +10,10 @@ import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoReminderSends, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
 import { recordings, applications, users } from "../../drizzle/schema";
-import { resolveAutoReminderRecipients } from "../jobs/eventReminders";
+import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eventReminders";
 import {
   ALLOWED_AUTO_REMINDER_OFFSETS,
+  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
   AUTO_REMINDER_AUDIENCE_MODES,
   CUSTOM_APPLICATION_STATUSES,
   NEWSLETTER_AUDIENCE_SOURCES,
@@ -988,7 +989,10 @@ export const eventsRouter = router({
           isNull(eventSignups.cancelledAt), // #18, skip unsubscribed
         ));
 
-      if (!signups.length) return { sent: 0, message: "No signups for this event" };
+      // The always-include list still hears about a session nobody signed up for.
+      if (!signups.length && ALWAYS_INCLUDE_REMINDER_RECIPIENTS.length === 0) {
+        return { sent: 0, message: "No signups for this event" };
+      }
 
       const dateStr = event.startTime.toLocaleDateString("en-US", {
         weekday: "long", year: "numeric", month: "long", day: "numeric"
@@ -1065,6 +1069,15 @@ export const eventsRouter = router({
           .catch(err => console.error(`[events.sendReminders] email error for ${signup.email}:`, err));
         totalSent++;
       }
+
+      // Same subject and body, but their own footer: the per-event unsubscribe
+      // link above cancels an event_signups row, and these people have none.
+      totalSent += await sendToAlwaysIncluded(event, {
+        subject,
+        bodyText: input.customBody?.trim() || null,
+        offsetMinutes: 0,
+        exclude: signups.map((s) => s.email),
+      });
 
       await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
       return { sent: totalSent };

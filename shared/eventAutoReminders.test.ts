@@ -16,7 +16,32 @@ import {
   AUTO_REMINDER_SWEEP_MINUTES,
   CALL_START_OFFSET_MINUTES,
   DEFAULT_AUTO_REMINDER_OFFSETS,
+  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
+  isAlwaysIncluded,
 } from "@shared/eventAutoReminders";
+
+describe("ALWAYS_INCLUDE_REMINDER_RECIPIENTS", () => {
+  it("holds only well-formed, lowercase, unique addresses", () => {
+    // mergeRecipients lowercases and drops anything malformed, so a typo here
+    // would not fail loudly: the person would just silently get nothing.
+    const emails = ALWAYS_INCLUDE_REMINDER_RECIPIENTS.map((r) => r.email);
+    expect(new Set(emails).size).toBe(emails.length);
+    for (const email of emails) {
+      expect(email).toBe(email.trim().toLowerCase());
+      expect(email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+    }
+    expect(mergeRecipients([[...ALWAYS_INCLUDE_REMINDER_RECIPIENTS]]).map((r) => r.email)).toEqual(emails);
+  });
+
+  it("includes Franz", () => {
+    expect(isAlwaysIncluded("franz@integrity.earth")).toBe(true);
+  });
+
+  it("matches regardless of case or stray whitespace, and nobody else", () => {
+    expect(isAlwaysIncluded("  Franz@Integrity.Earth ")).toBe(true);
+    expect(isAlwaysIncluded("someone@integrity.earth")).toBe(false);
+  });
+});
 
 describe("defaultAudienceMode", () => {
   it("maps Season 2 episodes to approved land projects", () => {
