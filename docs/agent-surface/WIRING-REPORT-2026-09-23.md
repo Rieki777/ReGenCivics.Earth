@@ -283,43 +283,64 @@ Eight items. The spec's data model proposed eleven new tables; three survive.
 
 ---
 
-## 7. Open questions for Rye
+## 7. Questions
 
-Answers needed before phase 0. Nothing here can be settled from the code.
+Three of these the code answers on its own, and they are recorded as settled
+rather than asked. Three need Rye.
 
-1. **Which role system is authoritative for the "roles filled" signal?** Village
-   OS has both `roles` + `role_holders` (migration 0002) and `org_roles` +
-   `org_role_assignments` (the Org Map). A project could pass the signal under
-   one and fail under the other.
+### Settled by the code
 
-2. **Where do entry paths live, and who states them?** The four paths (core
-   team, resident, business, investor) with a gate type each are the one part
-   of the spec with no carrier in either codebase. Related: `housing_availability`
-   and `accommodations` already model resident capacity, so the resident path
-   may already be half answered while the other three are not.
+**S1. Which role system carries the "roles filled" signal?** `org_roles` plus
+`org_role_assignments`, and the "currently filled" test is
+`ended_at IS NULL`. Migration `0049_org_roles.sql` says why in its own header:
+until then "role" meant two unrelated things. `roles` is a permission-group
+carrier whose `capabilities` JSON feeds the capability gate, holding seeded
+bundles like founders-circle. `org_roles` is the sociocratic chart people
+actually read, seats with an aim, a domain, accountabilities and a holder
+linked to a real user row. The bridge between them is deliberately not built.
+The Game signal is about the chart, so it reads the chart.
 
-3. **Should `agentCalls` extend `analyticsEvents` or stand alone?**
-   `analyticsEvents` exists, and it already carries `ref` and `props`, so a ref token already flows through it. Against it: agent call
-   logging wants per-call latency, result count and tool version, and mixing
-   machine traffic into a table that feeds human analytics will distort
-   whatever reads it today.
+**S2. Which four-way vocabulary wins?** Two of the three survive, at different
+levels, and they are not competing.
 
-4. **The corpus split in section 5.** Explainers in the repo and tool copy in
+- **Network level: `playerPaths.path` wins.** It is a shipped MySQL enum,
+  `["investor", "land_project", "ally", "player"]`, with a unique constraint
+  per user, a tier detector writing `coCreatorEarnedAt` and `stewardEarnedAt`,
+  and on-chain RGVoice bonus claims hanging off it. It is also what `llms.txt`
+  already publishes as the Four Primary Participation Paths. Changing it is a
+  migration plus a data change with token economics attached.
+- **Village level: core team, resident, business, investor is a different
+  axis** and survives as its own vocabulary. It describes what someone does
+  inside one village, not which funnel they arrived through.
+- **The spec's funnels A/B/C/D do not become a schema.** They are a lens for
+  writing tool descriptions. A and D both land in `player` or `ally`, so they
+  do not map one to one onto anything, and they should not try to.
+
+**S3. `/plan-ceo-review`.** Not implemented anywhere. Recommend writing the
+command rather than dropping the reference, since `docs/GOLDEN_RULE.md` step 1
+is a documented gate that three worktrees also carry. Roughly a half-page
+skill. Proceeding on that basis unless told otherwise.
+
+### Needing Rye
+
+1. **Where do entry paths live, and who states them?** The four village-level
+   paths with a gate type each (open, apply, invite-only, closed) are the one
+   concept with no carrier in either codebase. `village_brief` is prose
+   sections with an audience and a confirm status, not structured fields.
+   `housing_availability` is per-structure housing counts, so it half answers
+   resident capacity and says nothing about the other three paths. This is the
+   real gap and it shapes the schema.
+
+2. **Should `agentCalls` extend `analyticsEvents` or stand alone?**
+   `analyticsEvents` exists, and it already carries `ref` and `props`, so a ref
+   token already flows through it. Against it: agent call logging wants
+   per-call latency, result count and tool version, and mixing machine traffic
+   into a table that feeds human analytics will distort whatever reads it
+   today. Recommend standalone.
+
+3. **The corpus split in section 5.** Explainers in the repo and tool copy in
    the database, or both in the database and accept that "one corpus" means one
    database table rather than one file tree.
-
-5. **Three overlapping four-way vocabularies, one already public.** `llms.txt`
-   publishes "Four Primary Participation Paths": Investor, Land Project,
-   Alliance Partner, Player. The spec has funnels A/B/C/D (contributors, land
-   projects, investors, players) and separately four paths into a village (core
-   team, resident, business, investor). These need to be one vocabulary before
-   anything writes them into a schema, and the published one has a claim to
-   winning.
-
-6. **`/plan-ceo-review` does not exist as a command.** `docs/GOLDEN_RULE.md`
-   step 1 names it and nothing implements it, in either repo or in
-   `~/.claude/`. The gate has been run by hand for this slice (section 9). Worth
-   deciding whether to write the command or drop the reference.
 
 ---
 
@@ -329,7 +350,7 @@ Answers needed before phase 0. Nothing here can be settled from the code.
 
 | # | Task | Why only Rye |
 |---|---|---|
-| 1 | Answer the six open questions above | Architecture and vocabulary calls on his own systems |
+| 1 | Answer the three open questions in section 7. Three others the code settled | Architecture and vocabulary calls on his own systems |
 | 2 | Put `OPENROUTER_API_KEY` in the shell or the local `.env` | It is in Railway; the phase -2 LLM half is one command behind it |
 | 3 | Run the four baseline questions in Muse, Gemini and ChatGPT, paste into `docs/agent-baseline/control-2026-09-23.md` | His own signed-in browser; no credential should reach a repo |
 | 4 | Read this report and the baseline findings | The spec's own hard stop before phase 0 |
