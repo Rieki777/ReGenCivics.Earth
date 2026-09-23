@@ -173,7 +173,7 @@ const CATALOG: Array<{
     id: "recordings-need-cut",
     label: "Recordings need cut",
     severity: "medium",
-    href: "/admin?tab=edited-cuts",
+    href: "/admin?tab=edited-cuts&filter=needs_cut",
     countKey: "recordingsNeedCut",
   },
   {
