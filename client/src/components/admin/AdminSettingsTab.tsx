@@ -16,7 +16,7 @@ import {
 
 const SECTIONS = [
   { id: "broadcast", label: "Broadcast settings", blurb: "Buffer token and Farcaster handle", Comp: BufferSettingsPanel },
-  { id: "notifications", label: "Notification preferences", blurb: "What you get pinged about", Comp: NotificationPreferences },
+  { id: "notifications", label: "Notification preferences", blurb: "Email routing and chat-alert channel status", Comp: NotificationPreferences },
   { id: "reviewers", label: "Reviewer emails", blurb: "Who gets application review mail", Comp: ReviewerEmailManager },
   { id: "email", label: "Email settings", blurb: "Sending domain and from-address", Comp: EmailSettings },
   { id: "scheduled", label: "Scheduled emails", blurb: "Queued letters waiting to send", Comp: ScheduledEmailsManager },
