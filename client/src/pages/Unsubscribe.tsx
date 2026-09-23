@@ -13,6 +13,7 @@ import { Mail, CheckCircle2, AlertCircle, ArrowLeft, Shield, Leaf } from "lucide
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SEO } from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
+import { WHATSAPP_COMMUNITY_URL } from "@shared/communityLinks";
 
 type UnsubState = "idle" | "loading" | "success" | "error";
 
@@ -220,7 +221,7 @@ export default function Unsubscribe() {
                 </a>{" "}
                 or{" "}
                 <a
-                  href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34"
+                  href={WHATSAPP_COMMUNITY_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#7dd87d]/80 underline hover:text-[#7dd87d]"
