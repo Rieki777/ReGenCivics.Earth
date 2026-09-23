@@ -1561,6 +1561,10 @@ setTimeout(async () => {
 // Idempotent via unique (eventId, offsetMinutes).
 setTimeout(async () => {
   const run = async () => {
+    // Keep the Interoperability Circle's weekly rows on the vote's slot first,
+    // so a new week has its reminder config before the reminder pass reads it.
+    const { syncInteropCircle } = await import("../lib/interopCircle");
+    await syncInteropCircle({ force: true });
     const { runAutoEventReminders } = await import("../jobs/eventReminders");
     await runAutoEventReminders();
   };

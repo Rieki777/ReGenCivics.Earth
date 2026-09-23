@@ -7,44 +7,30 @@
  *
  * The Circle's time is a live, rolling vote rather than a fixed slot. Each
  * browser raises a hand for every slot it can make and can change them at any
- * time, the tally refreshes every few seconds, and the slot with the most
- * hands is the slot the group meets in. As
- * people join and leave the lead moves and the calendar buttons follow it.
+ * time. The vote feeds the scheduled slot (see shared/interopCircle.ts and
+ * ADR-56): the weekly sessions are real events rows with sign-ups, reminders
+ * and a calendar feed, and this page reads them back through
+ * interopSessions.schedule.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock, ExternalLink, Video, Wrench } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, Video, Wrench } from 'lucide-react';
+import { INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlotKey } from '@shared/interopCircle';
+import { CALENDAR_FEEDS } from '@/lib/calendarLinks';
+import { SubscribeButtons } from '@/components/CalendarCta';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
 import { BackButton } from '@/components/BackButton';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
 
-type SlotKey = 'tue' | 'wed' | 'thu';
-
-function isSlotKey(v: string): v is SlotKey {
-  return v === 'tue' || v === 'wed' || v === 'thu';
-}
-
-interface Slot {
-  key: SlotKey;
-  /** 0 = Sunday, matching Date#getDay. */
-  weekday: number;
-  label: string;
-  /** Pacific wall-clock hour, 24h. */
-  hourPT: number;
-  zones: string;
-}
-
-const SLOTS: Slot[] = [
-  { key: 'tue', weekday: 2, label: 'Tuesdays, 10:00am PT', hourPT: 10, zones: '10:00am PT · 1:00pm ET · 6:00pm UK' },
-  { key: 'wed', weekday: 3, label: 'Wednesdays, 4:00pm PT', hourPT: 16, zones: '4:00pm PT · 7:00pm ET' },
-  { key: 'thu', weekday: 4, label: 'Thursdays, 6:00pm PT', hourPT: 18, zones: '6:00pm PT · 9:00pm ET' },
-];
+type SlotKey = InteropSlotKey;
+const SLOTS = INTEROP_SLOTS;
 
 const VOTER_KEY_STORAGE = 'interop-voter-key';
 const VOTE_STORAGE = 'interop-my-vote';
 const NAME_STORAGE = 'interop-my-name';
+const EMAIL_STORAGE = 'interop-my-email';
 
 /** A random id this browser keeps, so someone with no account still gets one vote. */
 function readVoterKey(): string {
@@ -75,84 +61,24 @@ function writeStored(key: string, value: string) {
   }
 }
 
-/**
- * The next date a slot falls on, as a UTC instant.
- * Pacific is UTC-7 through November 1, 2026, which covers every session this
- * page schedules; the offset is applied explicitly so the instant is right
- * whatever timezone the visitor's browser is in.
- */
-const PT_OFFSET_HOURS = 7;
-
-function nextOccurrence(slot: Slot, from: Date = new Date()): Date {
-  const candidate = new Date(Date.UTC(
-    from.getUTCFullYear(),
-    from.getUTCMonth(),
-    from.getUTCDate(),
-    slot.hourPT + PT_OFFSET_HOURS,
-    0, 0, 0,
-  ));
-  while (candidate.getUTCDay() !== slot.weekday || candidate.getTime() <= from.getTime()) {
-    candidate.setUTCDate(candidate.getUTCDate() + 1);
-  }
-  return candidate;
-}
-
-function formatPacificDate(d: Date): string {
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/Los_Angeles',
+function formatSession(d: Date | string): string {
+  return new Date(d).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    timeZone: 'America/Los_Angeles', timeZoneName: 'short',
   });
-}
-
-/** YYYYMMDDTHHMMSSZ, the shape both Google Calendar and .ics want. */
-function icsStamp(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-}
-
-const SESSION_MINUTES = 90;
-
-function googleCalendarUrl(slot: Slot): string {
-  const start = nextOccurrence(slot);
-  const end = new Date(start.getTime() + SESSION_MINUTES * 60_000);
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: 'ReGen Civics: Interoperability Circle',
-    dates: `${icsStamp(start)}/${icsStamp(end)}`,
-    details: 'Weekly working group for the tools under the land projects. Details and the live time vote: https://regencivics.earth/interop-sessions',
-    location: 'Online',
-    recur: 'RRULE:FREQ=WEEKLY',
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function icsHref(slot: Slot): string {
-  const start = nextOccurrence(slot);
-  const end = new Date(start.getTime() + SESSION_MINUTES * 60_000);
-  const body = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//ReGen Civics//Interoperability Circle//EN',
-    'BEGIN:VEVENT',
-    `DTSTART:${icsStamp(start)}`,
-    `DTEND:${icsStamp(end)}`,
-    'RRULE:FREQ=WEEKLY',
-    'SUMMARY:ReGen Civics: Interoperability Circle',
-    'DESCRIPTION:Weekly working group for the tools under the land projects. https://regencivics.earth/interop-sessions',
-    'LOCATION:Online',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
-  return `data:text/calendar;charset=utf8,${encodeURIComponent(body)}`;
 }
 
 export default function InteropSessions() {
   const [voterKey, setVoterKey] = useState('');
   const [mySlots, setMySlots] = useState<SlotKey[]>([]);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     setVoterKey(readVoterKey());
     // Stored as a comma list; a single key from before multi-select parses the same.
-    setMySlots(readStored(VOTE_STORAGE).split(',').filter(isSlotKey));
+    setMySlots(readStored(VOTE_STORAGE).split(',').filter(isInteropSlotKey));
+    setEmail(readStored(EMAIL_STORAGE));
     setName(readStored(NAME_STORAGE));
   }, []);
 
@@ -163,6 +89,22 @@ export default function InteropSessions() {
   const setSlots = trpc.interopSessions.setSlots.useMutation({
     onSuccess: () => { void tally.refetch(); },
   });
+  const schedule = trpc.interopSessions.schedule.useQuery(undefined, { refetchInterval: 60_000 });
+  const join = trpc.interopSessions.join.useMutation({
+    onSuccess: () => { void schedule.refetch(); },
+  });
+
+  function submitJoin(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    writeStored(EMAIL_STORAGE, trimmed);
+    writeStored(NAME_STORAGE, name);
+    join.mutate({ email: trimmed, name: name.trim() || undefined });
+  }
+
+  const scheduledSlot = schedule.data?.slot ? interopSlot(schedule.data.slot) : null;
+  const sessions = schedule.data?.sessions ?? [];
 
   const counts = useMemo(() => {
     const map: Record<string, { count: number; names: string[] }> = {};
@@ -179,9 +121,8 @@ export default function InteropSessions() {
     for (const s of SLOTS) if (counts[s.key].count > counts[best.key].count) best = s;
     return counts[best.key].count > 0 ? best : null;
   }, [counts]);
+  const movingSoon = scheduledSlot && leader && leader.key !== scheduledSlot.key && !schedule.data?.pinned;
 
-  const calendarSlot = leader ?? SLOTS[0];
-  const nextDate = formatPacificDate(nextOccurrence(calendarSlot));
 
   function toggleSlot(slot: SlotKey) {
     if (!voterKey) return;
@@ -395,33 +336,78 @@ export default function InteropSessions() {
 
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-white/75 mb-1">
-                  {leader
-                    ? <>Right now the Circle meets <span className="text-white font-semibold">{leader.label}</span>.</>
-                    : <>No hands up yet. The first pick sets the slot.</>}
+                  {scheduledSlot
+                    ? <>The Circle meets <span className="text-white font-semibold">{scheduledSlot.label}</span>.</>
+                    : leader
+                      ? <>Right now the vote leads for <span className="text-white font-semibold">{leader.label}</span>.</>
+                      : <>No hands up yet. The first pick sets the slot.</>}
                 </p>
-                <p className="text-white/50 text-sm mb-4">Next session: {nextDate}. Times shown in Pacific.</p>
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href={googleCalendarUrl(calendarSlot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#e3ac4f] hover:bg-[#f0c36c] text-[#2b1f06] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Add the Circle to Google Calendar
-                  </a>
-                  <a
-                    href={icsHref(calendarSlot)}
-                    download="regen-civics-interoperability-circle.ics"
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
-                  >
-                    Apple or Outlook
-                  </a>
-                </div>
-                <p className="text-white/40 text-xs mt-3">
-                  The calendar buttons follow the leading slot, so grab them again if the lead moves.
-                </p>
+                {movingSoon && (
+                  <p className="text-[#e3ac4f] text-sm mb-1">
+                    {leader.label} has taken the lead. If it holds for a day, sessions more than three days out move
+                    there and everyone signed up gets an email.
+                  </p>
+                )}
+                {schedule.data?.pinned && (
+                  <p className="text-white/50 text-sm mb-1">The organizers have set this time for now. The vote keeps counting.</p>
+                )}
+                {sessions.length > 0 && (
+                  <ul className="text-white/60 text-sm mt-2 space-y-0.5 tabular-nums">
+                    {sessions.map((s) => <li key={s.id}>{formatSession(s.startTime)}</li>)}
+                  </ul>
+                )}
               </div>
+            </section>
+          </AnimatedSection>
+
+          {/* Join */}
+          <AnimatedSection>
+            <section id="join" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+              <div className="flex items-center gap-3 mb-3">
+                <Mail className="w-5 h-5 text-[#7dd87d]" />
+                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Join the Circle</p>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Get the reminders and the room link</h2>
+              <p className="text-white/75 mb-5">
+                Sign up once and you are on every week. You get a reminder the day before and an hour before, with
+                the link to join. If the vote moves the time, we email you the new one.
+                {(schedule.data?.members ?? 0) === 1 && <> 1 person is in so far.</>}
+                {(schedule.data?.members ?? 0) > 1 && <> {schedule.data!.members} people are in so far.</>}
+              </p>
+
+              {join.isSuccess ? (
+                <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-6">
+                  <CheckCircle2 className="w-5 h-5" />
+                  {join.data?.alreadyMember ? 'You were already in. See you there.' : 'You are in. Check your email for the details.'}
+                </p>
+              ) : (
+                <form onSubmit={submitJoin} className="flex flex-col sm:flex-row gap-3 mb-2">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    maxLength={320}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    aria-label="Email"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={join.isPending}
+                    className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60"
+                  >
+                    {join.isPending ? 'Joining...' : 'Join the Circle'}
+                  </button>
+                </form>
+              )}
+              {join.isError && (
+                <p className="text-red-300 text-sm mb-4">{join.error.message || 'That did not go through. Try again in a minute.'}</p>
+              )}
+              <p className="text-white/40 text-xs mb-6">Your name comes from the field above. Every email has a link to leave.</p>
+
+              <p className="text-white/75 mb-3">Or put it on your calendar. This calendar follows the vote, so it moves when the Circle moves.</p>
+              <SubscribeButtons feed={CALENDAR_FEEDS.interopCircle} />
             </section>
           </AnimatedSection>
 

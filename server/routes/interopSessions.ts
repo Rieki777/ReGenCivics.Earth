@@ -13,63 +13,40 @@
  *
  * The `slot` column holds that voter's slots as a comma list ("tue,thu"). Rows
  * written before multi-select hold a single key, which parses the same way.
+ *
+ * The vote decides the time; server/lib/interopCircle.ts turns it into real
+ * weekly `events` rows, so sign-ups, reminders, calendar feeds and the admin
+ * Events tab work the same as for every other session.
  */
 
-import { publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { interopTimeVotes } from "../../drizzle/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { eventSignups, interopTimeVotes } from "../../drizzle/schema";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import {
+  INTEROP_PIN_SETTING,
+  INTEROP_SLOT_KEYS as INTEROP_SLOTS,
+  interopSlot,
+  parseSlots,
+  serializeSlots,
+} from "@shared/interopCircle";
+import {
+  addCircleSignups,
+  ensureVotesTable as ensureTable,
+  leaveCircle,
+  resolveCircleState,
+  sendCircleWelcome,
+  syncInteropCircle,
+  upcomingCircleRows,
+} from "../lib/interopCircle";
+import { setSiteSetting } from "../db";
 
-/**
- * The table this router owns (drizzle/0246_interop_time_votes.sql).
- *
- * Deploys do not run migrations, and this page went up with the Circle's first
- * invitation, so the router makes sure its own table is there before it reads
- * or writes. CREATE TABLE IF NOT EXISTS is idempotent and runs once per
- * process; when the migration has already been applied by hand, this is a
- * no-op. Remove the guard once 0246 is confirmed applied in production.
- */
-let tableReady: Promise<void> | null = null;
+/** How many upcoming weeks the page and admin panel list. */
+const SCHEDULE_PREVIEW = 4;
 
-function ensureTable(database: NonNullable<Awaited<ReturnType<typeof getDb>>>): Promise<void> {
-  if (!tableReady) {
-    tableReady = database
-      .execute(sql`CREATE TABLE IF NOT EXISTS interopTimeVotes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        slot VARCHAR(24) NOT NULL,
-        voterKey VARCHAR(64) NOT NULL,
-        displayName VARCHAR(80) NULL,
-        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY interop_vote_voter_idx (voterKey),
-        KEY interop_vote_slot_idx (slot)
-      )`)
-      .then(() => undefined)
-      .catch((err) => {
-        // A failed guard must not take the page down: reset so the next call
-        // retries, and let the caller's own error handling answer empty.
-        tableReady = null;
-        console.error("[interopSessions] ensureTable failed:", err);
-      });
-  }
-  return tableReady;
-}
-
-/** The weekly slots on offer. Keep in sync with client/src/pages/InteropSessions.tsx. */
-export const INTEROP_SLOTS = ["tue", "wed", "thu"] as const;
-type InteropSlot = typeof INTEROP_SLOTS[number];
-
-/** A stored comma list, reduced to known slots in canonical order. */
-export function parseSlots(stored: string | null | undefined): InteropSlot[] {
-  const parts = new Set((stored ?? "").split(",").map((p) => p.trim()));
-  return INTEROP_SLOTS.filter((s) => parts.has(s));
-}
-
-/** The canonical comma list for a set of slots, deduplicated and ordered. */
-export function serializeSlots(slots: readonly string[]): string {
-  return parseSlots(slots.join(",")).join(",");
-}
+export { INTEROP_SLOT_KEYS as INTEROP_SLOTS, parseSlots, serializeSlots } from "@shared/interopCircle";
 
 export const interopSessionsRouter = router({
   /**
@@ -144,6 +121,7 @@ export const interopSessionsRouter = router({
           set: { slot: stored, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
         });
 
+      void syncInteropCircle();
       return { ok: true as const };
     }),
 
@@ -184,4 +162,126 @@ export const interopSessionsRouter = router({
       await database.delete(interopTimeVotes).where(eq(interopTimeVotes.voterKey, input.voterKey));
       return { ok: true as const };
     }),
+  /**
+   * Public: the Circle as scheduled, which is what the calendar and reminders
+   * follow. It can trail the live vote by the settle window, and sessions
+   * inside the freeze window never move.
+   */
+  schedule: publicProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return { slot: null, pinned: false, sessions: [] as { id: number; startTime: Date; status: string }[], members: 0 };
+    await syncInteropCircle();
+    const now = new Date();
+    const state = await resolveCircleState(database, now);
+    const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+    const nextId = rows[0]?.id;
+    let members = 0;
+    if (nextId) {
+      const [row] = await database
+        .select({ n: sql<number>`count(*)` })
+        .from(eventSignups)
+        .where(and(eq(eventSignups.eventId, nextId), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)));
+      members = Number(row?.n ?? 0);
+    }
+    return {
+      slot: state.slot,
+      pinned: state.pinned != null,
+      sessions: rows.slice(0, SCHEDULE_PREVIEW).map((r) => ({ id: r.id, startTime: r.startTime, status: r.status })),
+      members,
+    };
+  }),
+
+  /**
+   * Public: join the Circle. Signs this email up for every upcoming week, and
+   * the sync carries them onto each new week as it is added. Joining again
+   * re-activates someone who left.
+   */
+  join: publicProcedure
+    .input(z.object({
+      email: z.string().trim().toLowerCase().email().max(320),
+      name: z.string().trim().max(120).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await syncInteropCircle({ force: true });
+      const now = new Date();
+      const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+      if (!rows.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No Circle sessions are scheduled yet." });
+
+      const ids = rows.map((r) => r.id);
+      const already = await database
+        .select({ id: eventSignups.id })
+        .from(eventSignups)
+        .where(and(inArray(eventSignups.eventId, ids), eq(eventSignups.email, input.email), isNull(eventSignups.cancelledAt)))
+        .limit(1);
+
+      const name = input.name && input.name.length > 0 ? input.name : null;
+      await addCircleSignups(database, ids, [{ email: input.email, name }]);
+
+      const state = await resolveCircleState(database, now);
+      if (!already.length) {
+        sendCircleWelcome({
+          email: input.email,
+          name,
+          nextId: rows[0].id,
+          nextStart: new Date(rows[0].startTime),
+          slotLabel: interopSlot(state.slot).label,
+        }).catch((err) => console.error("[interopSessions] welcome email failed:", err));
+      }
+      return { ok: true as const, alreadyMember: already.length > 0 };
+    }),
+
+  /** Public: leave the Circle (every future week). Same trust level as events.unsubscribe. */
+  leave: publicProcedure
+    .input(z.object({ email: z.string().trim().toLowerCase().email().max(320) }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await leaveCircle(database, input.email);
+      return { ok: true as const };
+    }),
+
+  /** Admin: the vote, the pin, the applied slot, and the upcoming weeks. */
+  adminState: adminProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = new Date();
+    const state = await resolveCircleState(database, now);
+    const rows = await upcomingCircleRows(database, now);
+    const ids = rows.map((r) => r.id);
+    const counts = ids.length
+      ? await database
+          .select({ eventId: eventSignups.eventId, n: sql<number>`count(*)` })
+          .from(eventSignups)
+          .where(and(inArray(eventSignups.eventId, ids), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)))
+          .groupBy(eventSignups.eventId)
+      : [];
+    const byId = new Map(counts.map((c) => [c.eventId, Number(c.n)]));
+    return {
+      ...state,
+      sessions: rows.map((r) => ({
+        id: r.id,
+        startTime: r.startTime,
+        status: r.status,
+        manualOverride: !!r.manualOverride,
+        signups: byId.get(r.id) ?? 0,
+      })),
+    };
+  }),
+
+  /** Admin: pin the Circle to a slot (overrides the vote), or clear the pin. Runs the sync now. */
+  adminPin: adminProcedure
+    .input(z.object({ slot: z.enum(INTEROP_SLOTS).nullable() }))
+    .mutation(async ({ input }) => {
+      await setSiteSetting(INTEROP_PIN_SETTING, input.slot ?? "");
+      const result = await syncInteropCircle({ force: true });
+      return { ok: true as const, result };
+    }),
+
+  /** Admin: run the sync now instead of waiting for the next sweep. */
+  adminSync: adminProcedure.mutation(async () => {
+    const result = await syncInteropCircle({ force: true });
+    return { ok: true as const, result };
+  }),
 });
