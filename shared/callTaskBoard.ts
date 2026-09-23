@@ -3,9 +3,18 @@
  * Reuses call_task bounty vocabulary (workStatus, expiresAt, doer assignment).
  */
 
-export type CallTaskBoardFilter = "open" | "overdue" | "unassigned" | "done";
+export type CallTaskBoardFilter =
+  | "needs_people"
+  | "open"
+  | "overdue"
+  | "unassigned"
+  | "done";
+
+/** Morning / default: stuck OR unassigned — work that needs a human owner. */
+export const CALL_TASK_BOARD_DEFAULT_FILTER: CallTaskBoardFilter = "needs_people";
 
 export const CALL_TASK_BOARD_FILTERS: CallTaskBoardFilter[] = [
+  "needs_people",
   "open",
   "overdue",
   "unassigned",
@@ -102,6 +111,15 @@ export function isCallTaskStuck(
   return false;
 }
 
+/** Stuck or unassigned — morning queue / "needs people". */
+export function isCallTaskNeedsPeople(
+  row: CallTaskBoardRowLike,
+  nowMs: number = Date.now(),
+): boolean {
+  if (!isCallTaskRow(row)) return false;
+  return isCallTaskStuck(row, nowMs) || isCallTaskUnassigned(row);
+}
+
 /** Which board filters a row belongs to (a row may match several). */
 export function callTaskBoardFilterMatch(
   row: CallTaskBoardRowLike,
@@ -110,6 +128,8 @@ export function callTaskBoardFilterMatch(
 ): boolean {
   if (!isCallTaskRow(row)) return false;
   switch (filter) {
+    case "needs_people":
+      return isCallTaskNeedsPeople(row, nowMs);
     case "open":
       return isCallTaskOpen(row);
     case "overdue":
@@ -141,10 +161,22 @@ export function countCallTaskBoard(
 ): CallTaskBoardCounts {
   const callTasks = rows.filter(isCallTaskRow);
   return {
+    needs_people: callTasks.filter((r) => isCallTaskNeedsPeople(r, nowMs)).length,
     open: callTasks.filter((r) => isCallTaskOpen(r)).length,
     overdue: callTasks.filter((r) => isCallTaskOverdue(r, nowMs)).length,
     unassigned: callTasks.filter((r) => isCallTaskUnassigned(r)).length,
     done: callTasks.filter((r) => isCallTaskDone(r)).length,
     stuck: callTasks.filter((r) => isCallTaskStuck(r, nowMs)).length,
+  };
+}
+
+export function emptyCallTaskBoardCounts(): CallTaskBoardCounts {
+  return {
+    needs_people: 0,
+    open: 0,
+    overdue: 0,
+    unassigned: 0,
+    done: 0,
+    stuck: 0,
   };
 }
