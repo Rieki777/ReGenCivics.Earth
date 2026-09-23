@@ -6,8 +6,9 @@
  * every play runs on.
  *
  * The Circle's time is a live, rolling vote rather than a fixed slot. Each
- * browser holds one vote it can move at any time, the tally refreshes every
- * few seconds, and the slot in the lead is the slot the group meets in. As
+ * browser raises a hand for every slot it can make and can change them at any
+ * time, the tally refreshes every few seconds, and the slot with the most
+ * hands is the slot the group meets in. As
  * people join and leave the lead moves and the calendar buttons follow it.
  */
 
@@ -20,6 +21,10 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
 
 type SlotKey = 'tue' | 'wed' | 'thu';
+
+function isSlotKey(v: string): v is SlotKey {
+  return v === 'tue' || v === 'wed' || v === 'thu';
+}
 
 interface Slot {
   key: SlotKey;
@@ -141,13 +146,13 @@ function icsHref(slot: Slot): string {
 
 export default function InteropSessions() {
   const [voterKey, setVoterKey] = useState('');
-  const [myVote, setMyVote] = useState<SlotKey | ''>('');
+  const [mySlots, setMySlots] = useState<SlotKey[]>([]);
   const [name, setName] = useState('');
 
   useEffect(() => {
     setVoterKey(readVoterKey());
-    const stored = readStored(VOTE_STORAGE);
-    if (stored === 'tue' || stored === 'wed' || stored === 'thu') setMyVote(stored);
+    // Stored as a comma list; a single key from before multi-select parses the same.
+    setMySlots(readStored(VOTE_STORAGE).split(',').filter(isSlotKey));
     setName(readStored(NAME_STORAGE));
   }, []);
 
@@ -155,7 +160,7 @@ export default function InteropSessions() {
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
-  const vote = trpc.interopSessions.vote.useMutation({
+  const setSlots = trpc.interopSessions.setSlots.useMutation({
     onSuccess: () => { void tally.refetch(); },
   });
 
@@ -178,12 +183,15 @@ export default function InteropSessions() {
   const calendarSlot = leader ?? SLOTS[0];
   const nextDate = formatPacificDate(nextOccurrence(calendarSlot));
 
-  function castVote(slot: SlotKey) {
+  function toggleSlot(slot: SlotKey) {
     if (!voterKey) return;
-    setMyVote(slot);
-    writeStored(VOTE_STORAGE, slot);
+    const next = SLOTS.map((s) => s.key).filter((k) =>
+      k === slot ? !mySlots.includes(k) : mySlots.includes(k),
+    );
+    setMySlots(next);
+    writeStored(VOTE_STORAGE, next.join(','));
     writeStored(NAME_STORAGE, name);
-    vote.mutate({ slot, voterKey, displayName: name.trim() || undefined });
+    setSlots.mutate({ slots: next, voterKey, displayName: name.trim() || undefined });
   }
 
   return (
@@ -236,14 +244,19 @@ export default function InteropSessions() {
               <div className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Video className="w-5 h-5 text-[#7dd87d]" />
-                  <h3 className="text-white font-bold">Bring a 3 to 5 minute video to Saturday</h3>
+                  <h3 className="text-white font-bold">Bring a 3 to 5 minute video or live presentation to Saturday</h3>
                 </div>
-                <p className="text-white/80 text-sm">
-                  Everyone joining Season Two comes to Saturday's session with a 3 to 5 minute video or
-                  presentation about their project. Make it social media style: the vision and purpose of
-                  what you are aiming to create, not a technical walkthrough. Filmed on a phone is perfect.
-                  It becomes part of the Season Two introduction and your crowdpooling campaign.
+                <p className="text-white/80 text-sm mb-3">
+                  Everyone joining Season Two comes to Saturday's session with a 3 to 5 minute video about
+                  their project, or ready to give that presentation live. Make it social media style: the
+                  vision and purpose of what you are aiming to create. Save the technical detail for the
+                  weeks ahead. It becomes part of the Season Two introduction and your crowdpooling campaign.
                 </p>
+                <ul className="text-white/80 text-sm list-disc pl-5 space-y-1">
+                  <li>Keep it tight. Five minutes is the hard stop.</li>
+                  <li>Keep it concise and coherent: one project, one clear story.</li>
+                  <li>Film in landscape mode, with your phone turned sideways. A phone is all you need.</li>
+                </ul>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -309,9 +322,9 @@ export default function InteropSessions() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">When the Circle meets</h2>
               <p className="text-white/75 mb-6">
-                Ninety minutes, every week. The slot with the most hands is the slot we run in, and it keeps
-                counting as people join and leave. Move your hand whenever your week changes and the session
-                moves with the group.
+                Ninety minutes, every week. Tap every slot you can make. The slot with the most hands is the
+                slot we run in, and it keeps counting as people join and leave. Change your picks whenever your
+                week changes and the session moves with the group.
               </p>
 
               <label className="block mb-5">
@@ -332,7 +345,7 @@ export default function InteropSessions() {
                   const { count, names } = counts[slot.key];
                   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                   const isLeader = leader?.key === slot.key && count > 0;
-                  const isMine = myVote === slot.key;
+                  const isMine = mySlots.includes(slot.key);
                   return (
                     <div
                       key={slot.key}
@@ -352,8 +365,9 @@ export default function InteropSessions() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => castVote(slot.key)}
-                          disabled={!voterKey || vote.isPending}
+                          onClick={() => toggleSlot(slot.key)}
+                          disabled={!voterKey || setSlots.isPending}
+                          aria-pressed={isMine}
                           className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 ${
                             isMine
                               ? 'bg-[#7dd87d] text-[#1a472a]'

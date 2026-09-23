@@ -6082,7 +6082,7 @@ export const brainTelegramUpdates = mysqlTable("brain_telegram_updates", {
  */
 export const interopTimeVotes = mysqlTable("interopTimeVotes", {
   id: int("id").autoincrement().primaryKey(),
-  /** Slot key, one of the weekly options the page offers (tue, wed, thu). */
+  /** Comma list of the weekly slots this voter can make ("tue", "tue,thu"). */
   slot: varchar("slot", { length: 24 }).notNull(),
   /** Random per-browser id, or the signed-in user id. */
   voterKey: varchar("voterKey", { length: 64 }).notNull(),

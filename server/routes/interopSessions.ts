@@ -3,13 +3,16 @@
  *
  * The Circle is a standing weekly working group for the people building the
  * tools under the land projects. Its meeting time is not fixed once: every
- * participant holds one changeable vote for a weekly slot, and the slot with
- * the most hands is the one the session runs in. As people join and leave, the
- * lead moves and the group follows it.
+ * participant raises a hand for each weekly slot they can make (one, several or
+ * all), and the slot with the most hands is the one the session runs in. As
+ * people join and leave, the lead moves and the group follows it.
  *
  * Public on purpose. Most of the people in this circle do not have an account
  * on the site, so the browser holds a random voterKey and that key owns the
  * vote. One row per key, updated in place.
+ *
+ * The `slot` column holds that voter's slots as a comma list ("tue,thu"). Rows
+ * written before multi-select hold a single key, which parses the same way.
  */
 
 import { publicProcedure, router } from "../_core/trpc";
@@ -55,6 +58,18 @@ function ensureTable(database: NonNullable<Awaited<ReturnType<typeof getDb>>>): 
 
 /** The weekly slots on offer. Keep in sync with client/src/pages/InteropSessions.tsx. */
 export const INTEROP_SLOTS = ["tue", "wed", "thu"] as const;
+type InteropSlot = typeof INTEROP_SLOTS[number];
+
+/** A stored comma list, reduced to known slots in canonical order. */
+export function parseSlots(stored: string | null | undefined): InteropSlot[] {
+  const parts = new Set((stored ?? "").split(",").map((p) => p.trim()));
+  return INTEROP_SLOTS.filter((s) => parts.has(s));
+}
+
+/** The canonical comma list for a set of slots, deduplicated and ordered. */
+export function serializeSlots(slots: readonly string[]): string {
+  return parseSlots(slots.join(",")).join(",");
+}
 
 export const interopSessionsRouter = router({
   /**
@@ -84,8 +99,9 @@ export const interopSessionsRouter = router({
       return { slots: empty, total: 0 };
     }
 
+    const parsed = rows.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
     const slots = INTEROP_SLOTS.map((slot) => {
-      const forSlot = rows.filter((r) => r.slot === slot);
+      const forSlot = parsed.filter((r) => r.slots.includes(slot));
       const names = forSlot
         .map((r) => (r.displayName ?? "").trim())
         .filter((n) => n.length > 0)
@@ -93,12 +109,47 @@ export const interopSessionsRouter = router({
       return { slot, count: forSlot.length, names };
     });
 
-    return { slots, total: rows.filter((r) => INTEROP_SLOTS.includes(r.slot as typeof INTEROP_SLOTS[number])).length };
+    // total counts people, not hands: someone who can make all three is one voter.
+    return { slots, total: parsed.filter((r) => r.slots.length > 0).length };
   }),
 
   /**
-   * Public: cast or move a vote. The same voterKey always owns the same row,
-   * so voting again moves that person's hand instead of stuffing the count.
+   * Public: set every slot this voter can make. The same voterKey always owns
+   * the same row, so calling again replaces that person's hands instead of
+   * stuffing the count. An empty list withdraws the vote.
+   */
+  setSlots: publicProcedure
+    .input(z.object({
+      slots: z.array(z.enum(INTEROP_SLOTS)).max(INTEROP_SLOTS.length),
+      voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+      displayName: z.string().trim().max(80).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return { ok: false as const };
+      await ensureTable(database);
+
+      const stored = serializeSlots(input.slots);
+      if (stored.length === 0) {
+        await database.delete(interopTimeVotes).where(eq(interopTimeVotes.voterKey, input.voterKey));
+        return { ok: true as const };
+      }
+
+      const name = input.displayName && input.displayName.length > 0 ? input.displayName : null;
+
+      await database
+        .insert(interopTimeVotes)
+        .values({ slot: stored, voterKey: input.voterKey, displayName: name })
+        .onDuplicateKeyUpdate({
+          set: { slot: stored, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
+        });
+
+      return { ok: true as const };
+    }),
+
+  /**
+   * Public: single-slot vote, kept for pages loaded before multi-select
+   * shipped. Replaces the voter's hands with this one slot.
    */
   vote: publicProcedure
     .input(z.object({
