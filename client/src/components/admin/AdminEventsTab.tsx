@@ -25,6 +25,7 @@ import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
 import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventReminderCronHealth";
 import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
+import { LiveSessionRunbook } from "@/components/admin/LiveSessionRunbook";
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
@@ -468,6 +469,10 @@ export function AdminEventsTab() {
                     </Button>
                   </div>
                 </div>
+
+                {!isPast && (temporalPhase === "live" || (ev as any).status === "live") && (
+                  <LiveSessionRunbook eventId={ev.id} eventTitle={ev.title} />
+                )}
 
                 {isPast && (
                   <AfterSessionChecklist

@@ -3,7 +3,6 @@
  * Counts + deep links come from admin.operatorPulse (server of truth).
  * "Connect chat alerts" teaches Telegram group + WhatsApp destination setup
  * for morning pulse / recording-ready / event announces (server/_core/notify.ts).
- * Per-channel badges read admin.opsNotifyStatus booleans only (no secrets).
  */
 import { useState, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
@@ -13,12 +12,16 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Megaphone,
   MessageCircle,
+  Radio,
   Scissors,
   ScrollText,
+  Sprout,
   TrendingUp,
   AlertTriangle,
+  FileText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { AdminHrefExtras } from "@/lib/adminNav";
@@ -33,17 +36,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChannelStatusBadge, OpsNotifyChannelBadges } from "./OpsNotifyChannelBadges";
 
 type SelectTab = (tab: string, extras?: AdminHrefExtras) => void;
 
 const ICONS: Record<string, LucideIcon> = {
-  "outbound-failed": Megaphone,
-  "call-tasks": ScrollText,
-  applications: Building2,
-  investors: TrendingUp,
-  "recordings-need-cut": Scissors,
+  "reminder-cron": Clock,
   "past-events-no-watch": Calendar,
+  "recordings-need-cut": Scissors,
+  "live-runbook": Radio,
+  "call-tasks": ScrollText,
+  investors: TrendingUp,
+  "outbound-failed": Megaphone,
+  "outbound-drafts": FileText,
+  outreach: Sprout,
+  applications: Building2,
 };
 
 function severityStyles(severity: OperatorPulseSeverity): string {
@@ -77,6 +83,18 @@ function parseHref(href: string): { tab: string; extras?: AdminHrefExtras; path?
   } catch {
     return { tab: "overview" };
   }
+}
+
+function StatusDot({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1" title={ok ? `${label} configured` : `${label} not configured`}>
+      <span
+        className={`inline-block w-1.5 h-1.5 rounded-full ${ok ? "bg-emerald-500" : "bg-amber-400"}`}
+        aria-hidden
+      />
+      <span className="text-[10px] font-medium text-[#1a472a]/65">{label}</span>
+    </span>
+  );
 }
 
 function StepList({ steps }: { steps: ReactNode[] }) {
@@ -181,7 +199,13 @@ export function AdminNeedsYou({
           <span className="hidden sm:inline">Connect chat alerts</span>
           <span className="sm:hidden">Telegram / WhatsApp</span>
         </Button>
-        <OpsNotifyChannelBadges status={notifyStatus} testId="admin-ops-notify-status" />
+        {notifyStatus && (
+          <span className="inline-flex items-center gap-2" data-testid="admin-ops-notify-status">
+            <StatusDot ok={emailOk} label="Email" />
+            <StatusDot ok={telegramOk} label="Telegram" />
+            <StatusDot ok={whatsappOk} label="WhatsApp" />
+          </span>
+        )}
         {fresh && (
           <span className="text-xs text-[#1a472a]/55 ml-auto tabular-nums" title={data?.generatedAt}>
             Updated {fresh}
@@ -189,7 +213,7 @@ export function AdminNeedsYou({
         )}
       </div>
       <p className="text-sm text-[#1a472a]/70 mb-3">
-        The morning stack — tap a row to jump into the right admin filter.
+        Morning ops arc — reminders → closeout → live runbook → tasks → investors → outbound → outreach. Tap a row to jump in.
       </p>
 
       {items.length === 0 ? (
@@ -247,18 +271,20 @@ export function AdminNeedsYou({
             {/* Status strip */}
             <div className="rounded-2xl border border-[#1a472a]/12 bg-white/70 px-3 py-2.5 flex flex-wrap gap-3 items-center">
               <span className="text-xs font-semibold text-[#1a472a]/55 uppercase tracking-wide">Status</span>
-              <OpsNotifyChannelBadges status={notifyStatus} />
+              <StatusDot ok={emailOk} label="Email" />
+              <StatusDot ok={telegramOk} label="Telegram" />
+              <StatusDot ok={whatsappOk} label="WhatsApp" />
               <span className="text-[11px] text-[#1a472a]/50">
-                Enabled = env present · not connected = missing vars. Tokens never leave the server.
+                Green = env present · amber = not set yet
               </span>
             </div>
 
             {/* Telegram */}
             <section className="rounded-2xl border border-[#1a472a]/12 bg-white p-4 space-y-3">
-              <h4 className="font-bold text-[#1a472a] flex items-center gap-2 flex-wrap">
+              <h4 className="font-bold text-[#1a472a] flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${telegramOk ? "bg-emerald-500" : "bg-amber-400"}`} />
                 Telegram group
                 <span className="text-xs font-normal text-[#1a472a]/55">(real group chat)</span>
-                <ChannelStatusBadge ok={telegramOk} label="Telegram" />
               </h4>
               <p className="text-xs text-[#1a472a]/65">
                 Telegram supports a true group: put the bot in your ReGen admin group and
@@ -300,10 +326,10 @@ export function AdminNeedsYou({
 
             {/* WhatsApp */}
             <section className="rounded-2xl border border-[#1a472a]/12 bg-white p-4 space-y-3">
-              <h4 className="font-bold text-[#1a472a] flex items-center gap-2 flex-wrap">
+              <h4 className="font-bold text-[#1a472a] flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${whatsappOk ? "bg-emerald-500" : "bg-amber-400"}`} />
                 WhatsApp
                 <span className="text-xs font-normal text-[#1a472a]/55">(one destination number)</span>
-                <ChannelStatusBadge ok={whatsappOk} label="WhatsApp" />
               </h4>
               <p className="text-xs text-[#1a472a]/65 rounded-xl bg-amber-50 border border-amber-200/80 px-3 py-2">
                 <strong>Honest limit:</strong> this stack uses Meta WhatsApp Cloud API and texts{" "}
@@ -348,11 +374,8 @@ export function AdminNeedsYou({
 
             {/* Also note */}
             <section className="rounded-2xl border border-[#1a472a]/10 bg-[#1a472a]/[0.03] px-4 py-3 space-y-2 text-xs text-[#1a472a]/70">
-              <p className="flex items-center gap-2 flex-wrap">
-                <strong className="text-[#1a472a]">Also:</strong>
-                <ChannelStatusBadge ok={emailOk} label="Email" />
-              </p>
               <p>
+                <strong className="text-[#1a472a]">Also:</strong>{" "}
                 <CodeChip>OWNER_EMAIL</CodeChip> already gets the fail-soft morning-pulse email
                 (via Resend) — that is separate from Telegram / WhatsApp.
               </p>

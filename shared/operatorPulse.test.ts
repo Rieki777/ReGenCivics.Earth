@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   buildOperatorPulseItems,
+  emptyOperatorPulseCounts,
   eventHasWatchPath,
   formatOperatorPulsePingMessage,
   isApplicationWaitingReview,
   isInvestorNeedsActionStatus,
   isOpenOrOverdueCallTask,
+  isOutboundDraftWaiting,
   isOutboundFailedOrStuck,
+  isReminderCronPulseIssue,
   operatorPulseMorningDue,
   recordingNeedsCut,
   OUTBOUND_STUCK_SENDING_MS,
@@ -48,6 +51,20 @@ describe("status helpers", () => {
     expect(isInvestorNeedsActionStatus("pending")).toBe(true);
     expect(isInvestorNeedsActionStatus("archived")).toBe(false);
     expect(isInvestorNeedsActionStatus("contacted")).toBe(false);
+  });
+
+  it("reminder cron pulse only for unconfigured/stale", () => {
+    expect(isReminderCronPulseIssue("unconfigured")).toBe(true);
+    expect(isReminderCronPulseIssue("stale")).toBe(true);
+    expect(isReminderCronPulseIssue("ok")).toBe(false);
+    expect(isReminderCronPulseIssue("not_tracked_yet")).toBe(false);
+    expect(isReminderCronPulseIssue(null)).toBe(false);
+  });
+
+  it("outbound drafts waiting", () => {
+    expect(isOutboundDraftWaiting({ status: "draft" })).toBe(true);
+    expect(isOutboundDraftWaiting({ status: "Draft" })).toBe(true);
+    expect(isOutboundDraftWaiting({ status: "sent" })).toBe(false);
   });
 });
 
@@ -93,45 +110,47 @@ describe("isOpenOrOverdueCallTask", () => {
 });
 
 describe("buildOperatorPulseItems", () => {
-  it("omits zero counts and sorts high severity first", () => {
+  it("follows morning ops-arc order and omits zeros", () => {
     const items = buildOperatorPulseItems({
+      ...emptyOperatorPulseCounts(),
       pastEventsNoWatch: 3,
-      recordingsNeedCut: 0,
       investorsNeedsAction: 2,
       applicationsWaitingReview: 1,
       outboundFailedOrStuck: 4,
-      callTasksOpenOrOverdue: 0,
+      outboundDraftsWaiting: 2,
+      outreachRipe: 5,
+      reminderCronIssues: 1,
+      callTasksOpenOrOverdue: 7,
+      liveRunbookNeedsOwners: 1,
+      recordingsNeedCut: 2,
     });
     expect(items.map((i) => i.id)).toEqual([
-      "outbound-failed",
-      "applications",
-      "investors",
+      "reminder-cron",
       "past-events-no-watch",
+      "recordings-need-cut",
+      "live-runbook",
+      "call-tasks",
+      "investors",
+      "outbound-failed",
+      "outbound-drafts",
+      "outreach",
+      "applications",
     ]);
-    expect(items[0].href).toContain("surface=history");
-    expect(items.find((i) => i.id === "investors")?.href).toContain("filter=needs_action");
+    expect(items.find((i) => i.id === "call-tasks")?.href).toBe(
+      "/admin?tab=call-tasks&filter=needs_people",
+    );
+    expect(items.find((i) => i.id === "recordings-need-cut")?.href).toContain("filter=needs_cut");
+    expect(items.find((i) => i.id === "outbound-drafts")?.href).toContain("surface=write");
+    expect(items.find((i) => i.id === "outreach")?.href).toBe("/admin-create");
   });
 
   it("returns empty when clear", () => {
-    expect(
-      buildOperatorPulseItems({
-        pastEventsNoWatch: 0,
-        recordingsNeedCut: 0,
-        investorsNeedsAction: 0,
-        applicationsWaitingReview: 0,
-        outboundFailedOrStuck: 0,
-        callTasksOpenOrOverdue: 0,
-      }),
-    ).toEqual([]);
+    expect(buildOperatorPulseItems(emptyOperatorPulseCounts())).toEqual([]);
   });
 
   it("deep-links call tasks to Stuck + Unassigned morning filter", () => {
     const items = buildOperatorPulseItems({
-      pastEventsNoWatch: 0,
-      recordingsNeedCut: 0,
-      investorsNeedsAction: 0,
-      applicationsWaitingReview: 0,
-      outboundFailedOrStuck: 0,
+      ...emptyOperatorPulseCounts(),
       callTasksOpenOrOverdue: 5,
     });
     expect(items).toHaveLength(1);
