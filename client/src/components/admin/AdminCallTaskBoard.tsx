@@ -1,6 +1,6 @@
 /**
  * Admin Call Tasks / Role Holders board.
- * Filters: Open / Overdue / Unassigned / Done. Stone/forest admin styles.
+ * Filters: Stuck+Unassigned (default) / Open / Overdue / Unassigned / Done.
  */
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
@@ -8,7 +8,9 @@ import { AlertTriangle, Loader2, ScrollText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import {
+  CALL_TASK_BOARD_DEFAULT_FILTER,
   CALL_TASK_BOARD_FILTERS,
+  emptyCallTaskBoardCounts,
   type CallTaskBoardFilter,
 } from "@shared/callTaskBoard";
 
@@ -29,6 +31,7 @@ type BoardRow = {
 };
 
 const FILTER_LABELS: Record<CallTaskBoardFilter, string> = {
+  needs_people: "Stuck + Unassigned",
   open: "Open",
   overdue: "Overdue",
   unassigned: "Unassigned",
@@ -51,7 +54,7 @@ function readFilterFromUrl(): CallTaskBoardFilter {
   } catch {
     /* no window */
   }
-  return "open";
+  return CALL_TASK_BOARD_DEFAULT_FILTER;
 }
 
 export function AdminCallTaskBoard() {
@@ -63,13 +66,7 @@ export function AdminCallTaskBoard() {
   );
 
   const rows = (board.data?.rows ?? []) as BoardRow[];
-  const counts = board.data?.counts ?? {
-    open: 0,
-    overdue: 0,
-    unassigned: 0,
-    done: 0,
-    stuck: 0,
-  };
+  const counts = board.data?.counts ?? emptyCallTaskBoardCounts();
 
   const stuckCount = useMemo(
     () => rows.filter((r) => r.stuck).length,
@@ -95,8 +92,8 @@ export function AdminCallTaskBoard() {
           <ScrollText className="w-4 h-4" /> Call Tasks board
         </CardTitle>
         <CardDescription>
-          Open call tasks and role-holder ownership. Overdue uses expiresAt; stuck flags overdue,
-          stale unassigned (&gt;3d), or stale in review (&gt;7d).
+          Morning default is Stuck + Unassigned (work that needs people). Overdue uses expiresAt;
+          stuck flags overdue, stale unassigned (&gt;3d), or stale in review (&gt;7d). Existing filters unchanged.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

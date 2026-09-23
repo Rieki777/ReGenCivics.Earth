@@ -19,6 +19,7 @@ import { ActivitySparkline } from "./ActivitySparkline";
 import { AdminGovernancePanel } from "./AdminGovernancePanel";
 import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
 import { AdminNeedsYou } from "./AdminNeedsYou";
+import { AdminEventReminderCronHealth } from "./AdminEventReminderCronHealth";
 import { AdminContinueRow } from "./AdminContinueRow";
 import { inquiryTypeForPath } from "@/lib/adminInquiry";
 import { applicationHref, type AdminHrefExtras } from "@/lib/adminNav";
@@ -79,6 +80,8 @@ export function AdminOverviewTab({
     <div className="space-y-6">
       {/* Work waiting on you first. Everything else is context. */}
       <AdminNeedsYou onSelectTab={setActiveTab} inquiries={inquiries} applications={applications} investors={investors} onInvestorFilter={setInvestorStatusFilter} />
+
+      <AdminEventReminderCronHealth compact />
 
       <AdminContinueRow onSelectTab={setActiveTab} />
 
@@ -190,7 +193,7 @@ export function AdminOverviewTab({
               {(() => {
                 const pending =
                   (applications?.filter((a: any) => a.status === "pending").length || 0) +
-                  (investors?.filter((i: any) => i.status === "new").length || 0) +
+                  (investors?.filter((i: any) => i.status === "pending").length || 0) +
                   (inquiries?.filter((i: any) => i.status === "pending" || i.status === "new")
                     .length || 0);
                 const reviewed =
