@@ -208,11 +208,34 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
 
   const investors = await db.getAllInvestorInquiries();
 
-    let reminderCronIssues = 0;
-    let pastEventsNoWatch = 0;
-    const liveEventIds: number[] = [];
-  // Reminder cron issue row: only unconfigured or stale, matching the Overview strip.   let reminderCronIssues = 0;   
-    try {     const { buildEventReminderCronHealth, EVENT_REMINDER_CRON_LAST_OK_KEY } = await import("../../shared/eventReminderCronHealth");     const { getSiteSetting } = await import("../db");     const [enabledRow] = await drizzleDb.select({ n: count() }).from(eventAutoReminders).where(eq(eventAutoReminders.enabled, 1));     const [deliveryRow] = await drizzleDb.select({ last: sql<Date | string | null>`MAX(${eventAutoReminderSends.sentAt})` }).from(eventAutoReminderSends);     let lastDeliveryAt: string | null = null;     const rawDelivery = deliveryRow?.last ?? null;     if (rawDelivery) {       const d = rawDelivery instanceof Date ? rawDelivery : new Date(rawDelivery);       if (Number.isFinite(d.getTime())) lastDeliveryAt = d.toISOString();     }     const lastCronOkRaw = await getSiteSetting(EVENT_REMINDER_CRON_LAST_OK_KEY);     const health = buildEventReminderCronHealth({       cronSecretConfigured: Boolean(process.env.CRON_SECRET?.trim()),       lastCronOkAt: lastCronOkRaw,       lastDeliveryAt,       enabledAutoReminderEvents: Number(enabledRow?.n ?? 0),       nowMs,     });     if (isReminderCronPulseIssue(health.status)) reminderCronIssues = 1;   } catch {     // Fail-soft until cron-health support is present.   }    let pastEventsNoWatch = 0;   const liveEventIds: number[] = [];
+  // Reminder cron issue row: only unconfigured or stale, matching the Overview strip.
+  let reminderCronIssues = 0;
+  try {
+    const { buildEventReminderCronHealth, EVENT_REMINDER_CRON_LAST_OK_KEY } = await import("../../shared/eventReminderCronHealth");
+    const { getSiteSetting } = await import("../db");
+    const [enabledRow] = await drizzleDb.select({ n: count() }).from(eventAutoReminders).where(eq(eventAutoReminders.enabled, 1));
+    const [deliveryRow] = await drizzleDb.select({ last: sql<Date | string | null>`MAX(${eventAutoReminderSends.sentAt})` }).from(eventAutoReminderSends);
+    let lastDeliveryAt: string | null = null;
+    const rawDelivery = deliveryRow?.last ?? null;
+    if (rawDelivery) {
+      const d = rawDelivery instanceof Date ? rawDelivery : new Date(rawDelivery);
+      if (Number.isFinite(d.getTime())) lastDeliveryAt = d.toISOString();
+    }
+    const lastCronOkRaw = await getSiteSetting(EVENT_REMINDER_CRON_LAST_OK_KEY);
+    const health = buildEventReminderCronHealth({
+      cronSecretConfigured: Boolean(process.env.CRON_SECRET?.trim()),
+      lastCronOkAt: lastCronOkRaw,
+      lastDeliveryAt,
+      enabledAutoReminderEvents: Number(enabledRow?.n ?? 0),
+      nowMs,
+    });
+    if (isReminderCronPulseIssue(health.status)) reminderCronIssues = 1;
+  } catch {
+    // Fail-soft until cron-health support is present.
+  }
+
+  let pastEventsNoWatch = 0;
+  const liveEventIds: number[] = [];
   for (const ev of eventRows) {
     const endMs = ev.endTime ? new Date(ev.endTime as Date).getTime() : NaN;
     const startMs = ev.startTime ? new Date(ev.startTime as Date).getTime() : NaN;
