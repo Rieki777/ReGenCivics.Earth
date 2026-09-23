@@ -72,7 +72,7 @@ export const QUESTIONS = [
 const DEFAULT_MODELS = [
   "openai/gpt-4o-mini",
   "google/gemini-2.5-flash",
-  "x-ai/grok-4-fast",
+  "x-ai/grok-4.3",
   "perplexity/sonar",
 ];
 
