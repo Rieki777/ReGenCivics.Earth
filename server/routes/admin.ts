@@ -6,7 +6,7 @@ import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { executableActionCatalog } from "./adminActions";
 import { eq, sql, count, like, gte, and, inArray, ne } from "drizzle-orm";
-import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties, eventAutoReminders, eventAutoReminderSends } from "../../drizzle/schema";
+import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties, harvestIdeas, eventAutoReminders, eventAutoReminderSends } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
 import {
   buildOperatorPulseItems,
@@ -15,12 +15,12 @@ import {
   isApplicationWaitingReview,
   isInvestorNeedsActionStatus,
   isOpenOrOverdueCallTask,
-  isOutboundFailedOrStuck,
+  isOutboundFailedOrStuck,   isOutboundDraftWaiting,   isReminderCronPulseIssue,
   recordingNeedsCut,
   type OperatorPulseResult,
-} from "../../shared/operatorPulse";
+} from "../../shared/operatorPulse"; import {   LIVE_SESSION_ROLES,   buildLiveSessionChecklist,   liveSessionRunbookNeedsOwners, } from "../../shared/liveSessionRunbook";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
-import { ENV } from "../_core/env";
+import { ENV } from "../_core/env"; import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
 import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
 
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
@@ -193,7 +193,7 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
         sentAt: newsletterIssues.sentAt,
       })
       .from(newsletterIssues)
-      .where(inArray(newsletterIssues.status, ["sending", "sent", "failed"])),
+      .where(inArray(newsletterIssues.status, ["draft", "sending", "sent", "failed"])),
     drizzleDb
       .select({
         id: bounties.id,
@@ -208,14 +208,14 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
 
   const investors = await db.getAllInvestorInquiries();
 
-  let pastEventsNoWatch = 0;
+  // Reminder cron issue row: only unconfigured or stale, matching the Overview strip.   let reminderCronIssues = 0;   try {     const { buildEventReminderCronHealth, EVENT_REMINDER_CRON_LAST_OK_KEY } = await import("../../shared/eventReminderCronHealth");     const { getSiteSetting } = await import("../db");     const [enabledRow] = await drizzleDb.select({ n: count() }).from(eventAutoReminders).where(eq(eventAutoReminders.enabled, 1));     const [deliveryRow] = await drizzleDb.select({ last: sql<Date | string | null>`MAX(${eventAutoReminderSends.sentAt})` }).from(eventAutoReminderSends);     let lastDeliveryAt: string | null = null;     const rawDelivery = deliveryRow?.last ?? null;     if (rawDelivery) {       const d = rawDelivery instanceof Date ? rawDelivery : new Date(rawDelivery);       if (Number.isFinite(d.getTime())) lastDeliveryAt = d.toISOString();     }     const lastCronOkRaw = await getSiteSetting(EVENT_REMINDER_CRON_LAST_OK_KEY);     const health = buildEventReminderCronHealth({       cronSecretConfigured: Boolean(process.env.CRON_SECRET?.trim()),       lastCronOkAt: lastCronOkRaw,       lastDeliveryAt,       enabledAutoReminderEvents: Number(enabledRow?.n ?? 0),       nowMs,     });     if (isReminderCronPulseIssue(health.status)) reminderCronIssues = 1;   } catch {     // Fail-soft until cron-health support is present.   }    let pastEventsNoWatch = 0;   const liveEventIds: number[] = [];
   for (const ev of eventRows) {
     const endMs = ev.endTime ? new Date(ev.endTime as Date).getTime() : NaN;
     const startMs = ev.startTime ? new Date(ev.startTime as Date).getTime() : NaN;
     const isPast =
       ev.status === "completed" ||
       (Number.isFinite(endMs) ? endMs < nowMs : Number.isFinite(startMs) && startMs < nowMs);
-    if (!isPast) continue;
+    const isLive =       ev.status === "live" ||       (Number.isFinite(startMs) &&         startMs <= nowMs &&         (Number.isFinite(endMs) ? endMs > nowMs : false));     if (isLive && !isPast) liveEventIds.push(ev.id);     if (!isPast) continue;
     const hasWatch = eventHasWatchPath({
       eventYoutubeUrl: ev.youtubeUrl,
       recordingId: ev.recordingId,
@@ -226,7 +226,7 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
     if (!hasWatch) pastEventsNoWatch += 1;
   }
 
-  const recordingsNeedCut = recordingRows.filter((r) => recordingNeedsCut(r)).length;
+  let liveRunbookNeedsOwners = 0;   if (liveEventIds.length > 0) {     try {       const { loadLiveSessionRunbookBag } = await import("../lib/liveSessionRunbookStore");       const bag = await loadLiveSessionRunbookBag();       for (const id of liveEventIds) {         if (liveSessionRunbookNeedsOwners(bag[String(id)] ?? null)) liveRunbookNeedsOwners += 1;       }     } catch {       liveRunbookNeedsOwners = liveEventIds.length;     }   }    const recordingsNeedCut = recordingRows.filter((r) => recordingNeedsCut(r)).length;
   const investorsNeedsAction = investors.filter((i) =>
     isInvestorNeedsActionStatus((i.status as string) || "new"),
   ).length;
@@ -258,17 +258,17 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
   ).length;
 
   // All six product rows are queryable with current schema.
-  const deferred: OperatorPulseResult["deferred"] = [];
+  const outboundDraftsWaiting = outboundRows.filter((r) => isOutboundDraftWaiting(r)).length;   const outreachRipe = Number(harvestRipeRows[0]?.n ?? 0);    const deferred: OperatorPulseResult["deferred"] = [];
 
   return {
     generatedAt: now.toISOString(),
     items: buildOperatorPulseItems({
-      pastEventsNoWatch,
-      recordingsNeedCut,
+      reminderCronIssues,       pastEventsNoWatch,
+      recordingsNeedCut,       liveRunbookNeedsOwners,
       investorsNeedsAction,
       applicationsWaitingReview,
       outboundFailedOrStuck,
-      callTasksOpenOrOverdue,
+      callTasksOpenOrOverdue,       outboundDraftsWaiting,       outreachRipe,
     }),
     deferred,
   };
@@ -360,7 +360,7 @@ export const adminRouter = router({
     });
   }),
 
-  // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
+  // Live-session runbook: owners + handoff notes for an in-flight event.   liveSessionRunbook: adminProcedure     .input(z.object({ eventId: z.number().int().positive() }))     .query(async ({ input }) => {       const { getLiveSessionRunbookMeta } = await import("../lib/liveSessionRunbookStore");       const meta = await getLiveSessionRunbookMeta(input.eventId);       const items = buildLiveSessionChecklist(meta);       return { eventId: input.eventId, meta, items, roles: [...LIVE_SESSION_ROLES] };     }),    setLiveSessionRunbookRole: adminProcedure     .input(z.object({       eventId: z.number().int().positive(),       roleId: z.enum(["host", "tech", "chat", "recording", "outreach_handoff"]),       owner: z.string().max(120).nullable().optional(),       roleSlug: z.string().max(80).nullable().optional(),       handoffNotes: z.string().max(500).nullable().optional(),     }))     .mutation(async ({ input }) => {       const { patchLiveSessionRunbook } = await import("../lib/liveSessionRunbookStore");       const meta = await patchLiveSessionRunbook(input.eventId, {         [input.roleId]: {           owner: input.owner ?? null,           roleSlug: input.roleSlug ?? null,           handoffNotes: input.handoffNotes ?? null,         },       });       return { ok: true as const, meta, items: buildLiveSessionChecklist(meta) };     }),    // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
   // the "leadership team" report to the CEO grounded only in that data. Returns
   // the snapshot alongside so the client can render KPIs + narrative together.
   briefing: adminProcedure
