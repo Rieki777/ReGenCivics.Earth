@@ -134,7 +134,7 @@ Every concept in the spec, and the real thing that carries it.
 
 | Spec tool | Carried by | Verdict |
 |---|---|---|
-| `find_land_projects` | `organisations` (id, orgId, name, url, description, status, regenerativeScore, regenerativeTier, forumPostId) + the new listing projection | **Extend.** `organisations` is the land project. It lacks region, entry terms, capacity and paths; those come from the village projection, not from new columns on `organisations` |
+| `find_land_projects` | `organisations` (id, orgId, name, url, description, status, regenerativeScore, regenerativeTier, forumPostId) joined to `projectPaths` | **Extend.** `organisations` is the land project. It lacks region, entry terms, capacity and paths; those come from `projectPaths` and the listing projection, never from new columns on `organisations` |
 | `match_skills_to_projects` | `projectNeeds`, `playerOffers`, `needsOffersMatches`, matched by `server/jobs/needsOffersMatcher.ts` | **Extend.** Tags, `bioregionId` and `timeWindow` are already the matching keys. `bioregions` and `userBioregions` are the region vocabulary the spec asks for as `agentSkills` |
 | `find_ways_to_contribute` | `questCompletions`, `quests` via `server/routes/game.ts`, `bounties`, forum | **Extend** |
 | `get_upcoming_sessions` | `events` (type, startTime, endTime, timezone, status, season, episodeNumber, maxAttendees) | **Exists, use as is.** Open Access Sessions and Season Two episodes are already one table with a `season` and `episodeNumber`. Filter `startTime > now()` |
@@ -158,7 +158,7 @@ Every concept in the spec, and the real thing that carries it.
 | `agentLeads` | `projectJoinRequests` + `investorInquiries` + `generalInquiries` | **Extend.** Three inboxes exist; a fourth would be the dead end the spec warns about |
 | `agentStewardChecks` | `batchJobRuns` + the projection's own `lastSyncedAt` | **Mostly drop.** Freshness is computed from village activity, so the audit trail is the sync log |
 | `agentToolDefs` | `siteSettings`, `adminAutomations` | **New, but small.** `siteSettings` is the precedent for deploy-free config |
-| `agentCalls` | `analyticsEvents` | **Extend or new.** See open question 3 |
+| `agentCalls` | New, standalone | **New per R2.** `analyticsEvents` carries `ref` already, but agent traffic would distort what reads it for humans |
 | `agentAttribution` | `referrals`, `shareEvents` | **Extend.** `referrals` carries `referralCode`, `source`, `context`, `landingUrl` and three conversion timestamps (`signedUpAt`, `firstQuestAt`, `firstContributionAt`), which is the rung ladder already modelled. It keys on a referring user, so agent calls need their own issuer |
 | `agentOutcomes` | `analyticsEvents`, `tierEvents`, `questCompletions` | **Extend** |
 | `agentRankingWeights` | `siteSettings` | **Extend** |
@@ -171,10 +171,10 @@ self-assessment". All four are, from tables that exist:
 
 | Signal | Computed from | Notes |
 |---|---|---|
-| Roles defined and filled, at least one beyond the founder | `roles` + `role_holders` (role_id, user_id, granted_by, granted_at); also `org_roles` + `org_role_assignments` | Two role systems exist. Which one is authoritative is **open question 1** |
+| Roles defined and filled, at least one beyond the founder | `org_roles` + `org_role_assignments`, filled meaning `ended_at IS NULL` | **Settled as S1.** `roles` + `role_holders` is the permission-group carrier, a different object; `0049`'s header separates them |
 | A decision recorded in the last 12 months | `ballots` (subject_type, subject_ref, open_key, circle_id, title, doc_markdown, method) + `ballot_votes`, from `0089_governance_engine.sql` | A real governance engine, not a flag |
 | Contribution legible, activity in the last 90 days | `quest_claims` (status reaches `consented`) and `gratitude_log` | Two independent signals of the same thing |
-| Entry path published | No single carrier today | **The one real gap. Open question 2** |
+| Entry path published | `projectPaths` in regen-civics, `source` naming who stated it | **Settled as R1.** The one real gap, and the new table that closes it |
 
 ### Everything else
 
@@ -209,7 +209,7 @@ live DB data to third parties.
 
 | Tool | Reads | Mirror of |
 |---|---|---|
-| `find_land_projects` | `organisations` joined to `villageListings` | `organisations` list query in `server/routes/orgRatings.ts` / `community.ts` |
+| `find_land_projects` | `organisations` joined to `projectPaths` and `villageListings` | `organisations` list query in `server/routes/orgRatings.ts` / `community.ts` |
 | `match_skills_to_projects` | `projectNeeds` filtered by tags, `bioregionId`, `timeWindow` | `server/routes/needsOffers.ts` + `server/jobs/needsOffersMatcher.ts` ranking |
 | `find_ways_to_contribute` | `quests`, `bounties`, forum entry | `server/routes/game.ts`, `bounties.ts` |
 | `get_upcoming_sessions` | `events` where `startTime > now()` and `status` live | `server/routes/events.ts` |
@@ -260,7 +260,7 @@ The resolution that keeps both rules, and the one this report recommends:
 
 These are different kinds of text with different review needs, and treating
 them as one corpus is what creates the conflict. Flagged for Rye as
-**open question 4**, because it is a direction choice rather than a fact.
+**R3**, and Rye chose the split: bodies in the repo, tool copy in the database.
 
 ---
 
@@ -271,7 +271,8 @@ Everything else is an extension. This is the whole new-build list.
 | New thing | Where | Why nothing existing carries it |
 |---|---|---|
 | `village_listing` type in `shared_items` plus its builder | Village OS | The publish frame exists; this type does not |
-| `village_paths`: four rows per village, gate type, capacity, what is asked | Village OS | No table carries "how a newcomer joins this village". The real gap, settled as R1 |
+| `projectPaths`: four rows per project, gate type, capacity, what is asked, plus `source` | regen-civics | No table carries "how a newcomer joins this project". The real gap, settled as R1. Lives here because 12 of 15 land projects do not run a fork |
+| A declaration surface that fills `projectPaths` rows with `source: village_os` | Village OS | Later, and no longer a prerequisite. An upgrade that makes a row authoritative |
 | `villageListings` table (the index) | regen-civics | The projection has to land somewhere joinable |
 | Peer sweep client: fetch, verify signature against pinned key, upsert | regen-civics | Village OS has the peer client; ReGen Civics does not |
 | `agentToolDefs` with a live-version resolver | regen-civics | `siteSettings` is the precedent but not the shape |
@@ -279,7 +280,15 @@ Everything else is an extension. This is the whole new-build list.
 | The public REST agent layer plus MCP | regen-civics | CSRF blocks tRPC. `embed.ts` is the pattern |
 | `/.well-known/mcp`, `/agents.md`, `/openapi.json` | regen-civics | Absent, confirmed by the phase -2 crawl |
 
-Eight items. The spec's data model proposed eleven new tables; three survive.
+Nine items, and only the first three are needed before a tool can answer. The
+spec's data model proposed eleven new tables; four survive (`projectPaths`,
+`villageListings`, `agentToolDefs`, `agentQueryGaps`), plus `agentCalls` per R2.
+
+Note what the R1 revision did to the critical path. The only two items on the
+Village OS side are now both optional at the start: a village that runs a fork
+gets an authoritative, self-refreshing row, and a village that does not gets a
+declared one. Nothing in the seeker-facing tools waits on a village adopting
+anything.
 
 ---
 
@@ -323,12 +332,49 @@ skill. Proceeding on that basis unless told otherwise.
 
 ### Answered by Rye, 2026-09-23
 
-**R1. Entry paths: a new `village_paths` table in Village OS.** Four rows per
-village: path, gate type (`open | apply | invite-only | closed`), capacity, and
-what is asked of a person. Stated during admin onboarding, projected into the
-listing. This follows the move `0049` already made when it took the org chart
-out of the `app_config` `content` document and into rows, for the reason that
-header gives: free-text values with no link to real records.
+**R1. Entry paths: a new `projectPaths` table in the ReGen Civics database.**
+Revised from the first answer, which put the table in Village OS. Rye's
+instinct was that ReGen Civics has to hold and coordinate this, and the
+registry settles it.
+
+**The number that decided it: `organisations` holds 15 land projects, and at
+most 3 of them run a Village OS fork** (3 rows in `custom_game_applications`,
+Amora among them, and 0 approved `org_claims`). Entry paths held only in
+Village OS would give `find_land_projects` a door for 3 projects out of 15.
+Empty results are the thing the spec names as what kills a connector, and the
+consumer-app control confirms the stakes: ChatGPT answered the same question
+with six real Oregon projects and their entry terms.
+
+Shape: four rows per project keyed to `organisations.orgId`, carrying path,
+gate type (`open | apply | invite-only | closed`), capacity, and what is asked
+of a person. Two more columns carry the design:
+
+- **`source: village_os`** — the project runs a fork. The row is projected from
+  that village's own declaration on each sweep, refreshes itself, and is
+  authoritative. Eligible for game-verified.
+- **`source: declared`** — no fork. A steward states it once through the
+  existing claim flow, or an admin enters it. Known tier, never presented as
+  vetted.
+
+That column is what keeps authority honest. A `village_os` row is the village
+speaking for itself; a `declared` row is ReGen Civics saying what it believes.
+The two-tier model already in the spec is exactly the right distinction and it
+must never be blurred.
+
+**Routing falls out of what exists.** `projectJoinRequests` already carries
+`stewardUserId`, `targetType` and `targetId`. Delivery branches on `source`:
+into the village's own Game for `village_os`, to the steward for `declared`.
+One switch, one inbox, no second dead-end admin queue.
+
+**The sequencing consequence, which is the real win.** This decouples phase 1
+from phase 2. Entry paths and routing ship for all 15 projects without a single
+village adopting anything. The Village OS declaration surface stops being a
+prerequisite and becomes an upgrade that makes a row authoritative. It also
+removes this slice's dependency on the Sept 26 cohort date.
+
+The Village OS side still gets its own table later, and when it does, `0049`'s
+lesson applies there: rows, not a `content` document, for the reason that
+header gives.
 
 **R2. Agent call logging stands alone**, as `agentCalls`, with per-call
 latency, result count, tool version and platform. `resultCount: 0` is the
@@ -340,7 +386,7 @@ the JSON-LD from one copy. Tool descriptions and response templates go in
 `agentToolDefs`, versioned, editable without a deploy. The spec's two
 non-negotiables both hold once the two kinds of text are named separately.
 
-### Original wording of the three, for the record
+### Original wording of the three, for the record (R1 below was revised; see R1 above)
 
 1. **Where do entry paths live, and who states them?** The four village-level
    paths with a gate type each (open, apply, invite-only, closed) are the one
@@ -367,21 +413,22 @@ non-negotiables both hold once the two kinds of text are named separately.
 
 ### Rye
 
-| # | Task | Why only Rye |
+| # | Task | State |
 |---|---|---|
-| 1 | Read this report and the baseline findings. The six questions in section 7 are all now answered | Architecture and vocabulary calls on his own systems |
-| 2 | Put `OPENROUTER_API_KEY` in the shell or the local `.env` | It is in Railway; the phase -2 LLM half is one command behind it |
-| 3 | Run the four baseline questions in Muse, Gemini and ChatGPT, paste into `docs/agent-baseline/control-2026-09-23.md` | His own signed-in browser; no credential should reach a repo |
+| 1 | Answer the six questions in section 7 | **Done 2026-09-23.** Three settled from the code, three answered by Rye, all recorded above |
+| 2 | `OPENROUTER_API_KEY` for the baseline's LLM half | **Done.** Rye authorised pulling it from Railway; run at 2026-09-23 |
+| 3 | The consumer-app control | **Done for ChatGPT**, run logged out, 0 of 4 mentions. Gemini and Muse need an account Claude Code will not create, and Rye has agreed to proceed without them |
 | 4 | Read this report and the baseline findings | The spec's own hard stop before phase 0 |
 
-### Claude Code, once those land
+### Claude Code, once Rye has read both
 
 | # | Task |
 |---|---|
-| 5 | Re-run `node scripts/agent-baseline/run.mjs` with the key, fold the LLM half and the control into the baseline |
+| 5 | Rewrite the spec's phase table against this report, so what remains is a plan rather than a spec with corrections layered on it |
 | 6 | Phase 0: four or five new explainers in `shared/learn/`, reusing the existing format |
-| 7 | Phase 4 ahead of phase 5, per the baseline recommendation: extend `crawler-content.ts` over the 94 blank routes, add the three missing well-known files |
-| 8 | Phase 1: the `village_listing` type, the sweep client, `villageListings` |
+| 7 | Phase 4 ahead of phase 5: extend `crawler-content.ts` over the 94 blank routes, `/schedule` first, and add the three missing well-known files |
+| 8 | `projectPaths` plus the `declared` entry path for the 12 projects with no fork. This no longer waits on Village OS |
+| 9 | Phase 1 proper: the `village_listing` type, the sweep client, `villageListings`, and `projectPaths` rows with `source: village_os` |
 
 ---
 
