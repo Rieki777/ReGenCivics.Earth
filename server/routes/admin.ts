@@ -21,6 +21,7 @@ import {
 } from "../../shared/operatorPulse";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
 import { ENV } from "../_core/env";
+import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
@@ -86,9 +87,9 @@ export async function computeEcosystemSnapshot() {
   const invBy = (s: string) => investors.filter((i) => ((i.status as string) || "new") === s).length;
   const inqBy = (s: string) => inquiries.filter((i) => ((i.status as string) || "new") === s).length;
   const n = (rows: { c: number }[]) => Number(rows[0]?.c ?? 0);
-  // Align with Investors admin "pending review": status new only.
+  // Align with Investors admin "pending review": status new|pending.
   // Archived is a separate status, so it never lands in this bucket.
-  const investorPendingReview = invBy("new");
+  const investorPendingReview = invBy("new") + invBy("pending");
 
   return {
     generatedAt: new Date().toISOString(),
@@ -314,6 +315,14 @@ export const adminRouter = router({
   // Operator Pulse: daily "Needs you today" actionable stack for Overview.
   operatorPulse: adminProcedure.query(async () => {
     return computeOperatorPulse();
+  }),
+
+  // Ops notify channel status (booleans only — never return secrets).
+  // Shape: { emailConfigured, telegramConfigured, whatsappConfigured }.
+  // Presence checks live in getOpsNotifyChannelStatus (mirrors notify.ts / notifyOwner).
+  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored.
+  opsNotifyStatus: adminProcedure.query(async () => {
+    return getOpsNotifyChannelStatus();
   }),
 
   // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
