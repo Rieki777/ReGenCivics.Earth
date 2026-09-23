@@ -91,3 +91,15 @@ export function clearOutboundWriteFill(): void {
     /* private mode */
   }
 }
+
+/**
+ * Preview send / confirm require non-whitespace subject and body.
+ * Mirrors Social's broadcastBodiesReady gate for empty Post Now / Preview.
+ * Draft template saves use their own checks; do not reuse this for optional drafts.
+ */
+export function outboundWriteContentReady(subject: string, body: string): boolean {
+  return subject.trim().length > 0 && body.trim().length > 0;
+}
+
+/** Shared copy for UI toast / server PRECONDITION when content is empty. */
+export const OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE = "Write a subject and body first.";
