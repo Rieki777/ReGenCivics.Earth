@@ -4,6 +4,7 @@ import * as db from "../db";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { audienceForTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
+import { WHATSAPP_COMMUNITY_URL } from "../../shared/communityLinks";
 import { ENV } from "../_core/env";
 
 const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -252,7 +253,7 @@ async function sendDigestEmails(
         <p style="font-size: 13px; color: #1a472a; font-weight: bold; margin: 0 0 10px;">Connect with the community</p>
         <p style="margin: 0; font-size: 13px; line-height: 2; color: #4a5568;">
           <a href="${APP_BASE_URL}/community?utm_source=email&utm_medium=digest" style="color: #1a472a; text-decoration: none; font-weight: 600;">Community Forum</a> &nbsp;|&nbsp;
-          <a href="https://chat.whatsapp.com/GX2NiNyKNIFAJfFoqBMauT" style="color: #1a472a; text-decoration: none;">WhatsApp</a> &nbsp;|&nbsp;
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #1a472a; text-decoration: none;">WhatsApp</a> &nbsp;|&nbsp;
           <a href="https://discord.gg/regencivics" style="color: #1a472a; text-decoration: none;">Discord</a> &nbsp;|&nbsp;
           <a href="https://youtube.com/@regencivics" style="color: #1a472a; text-decoration: none;">YouTube</a>
         </p>
