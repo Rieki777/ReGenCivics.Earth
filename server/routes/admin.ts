@@ -258,7 +258,7 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
   ).length;
 
   // All six product rows are queryable with current schema.
-  const outboundDraftsWaiting = outboundRows.filter((r) => isOutboundDraftWaiting(r)).length;   const outreachRipe = Number(harvestRipeRows[0]?.n ?? 0);    const deferred: OperatorPulseResult["deferred"] = [];
+  const outboundDraftsWaiting = outboundRows.filter((r) => isOutboundDraftWaiting(r)).length;   const outreachRipe = 0;    const deferred: OperatorPulseResult["deferred"] = [];
 
   return {
     generatedAt: now.toISOString(),
