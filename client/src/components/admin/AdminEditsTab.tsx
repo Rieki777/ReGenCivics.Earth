@@ -17,6 +17,7 @@ import { ExternalLink, Loader2, Mail, Save, Scissors, Search, Trash2 } from "luc
 import { toast } from "sonner";
 import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
 import { isLetterLayout } from "@shared/letterLayout";
+import { AdminRecordingCloseoutQueue } from "@/components/admin/AdminRecordingCloseoutQueue";
 
 type RecordingRow = {
   id: number;
@@ -57,12 +58,14 @@ function RawLink({ videoId }: { videoId: string | null }) {
 
 function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () => void }) {
   const [draft, setDraft] = useState(row.editedYoutubeUrl ?? "");
+  const utils = trpc.useUtils();
   useEffect(() => {
     setDraft(row.editedYoutubeUrl ?? "");
   }, [row.editedYoutubeUrl]);
   const setCut = trpc.recordings.setEditedCut.useMutation({
     onSuccess: () => {
       onChanged();
+      void utils.recordings.adminCloseoutQueue.invalidate();
     },
   });
   const draftLetter = trpc.recordings.draftPostSessionLetter.useMutation({
@@ -95,7 +98,7 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
   }
 
   return (
-    <Card className="border-stone-200">
+    <Card className="border-stone-200" data-edited-cut-id={row.id} id={`edited-cut-${row.id}`}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 space-y-1">
@@ -214,6 +217,7 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
 
@@ -287,6 +291,8 @@ export default function AdminEditsTab() {
   })();
 
   return (
+    <div className="space-y-6" data-testid="admin-edits-tab">
+    <AdminRecordingCloseoutQueue />
     <Card>
       <CardHeader className="space-y-3">
         <CardTitle className="flex items-center gap-2">
@@ -381,5 +387,6 @@ export default function AdminEditsTab() {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
