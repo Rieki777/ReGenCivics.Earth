@@ -217,8 +217,7 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
         </div>
       </CardContent>
     </Card>
-    </div>
-  );
+      );
 }
 
 export default function AdminEditsTab() {
