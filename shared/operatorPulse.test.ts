@@ -124,6 +124,20 @@ describe("buildOperatorPulseItems", () => {
       }),
     ).toEqual([]);
   });
+
+  it("deep-links call tasks to Stuck + Unassigned morning filter", () => {
+    const items = buildOperatorPulseItems({
+      pastEventsNoWatch: 0,
+      recordingsNeedCut: 0,
+      investorsNeedsAction: 0,
+      applicationsWaitingReview: 0,
+      outboundFailedOrStuck: 0,
+      callTasksOpenOrOverdue: 5,
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe("call-tasks");
+    expect(items[0].href).toBe("/admin?tab=call-tasks&filter=needs_people");
+  });
 });
 
 describe("operatorPulseMorningDue", () => {

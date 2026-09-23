@@ -152,7 +152,7 @@ const CATALOG: Array<{
     id: "call-tasks",
     label: "Open or overdue call tasks",
     severity: "high",
-    href: "/admin?tab=call-tasks",
+    href: "/admin?tab=call-tasks&filter=needs_people",
     countKey: "callTasksOpenOrOverdue",
   },
   {

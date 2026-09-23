@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
+import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventReminderCronHealth";
 import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
 import {
   adminEventStatusLabel,
@@ -934,7 +935,10 @@ export function AdminEventsTab() {
         );
       })()}
 
-      {/* Setup reminder */}
+      {/* Live cron health + setup */}
+      <div className="mt-4 space-y-3">
+        <AdminEventReminderCronHealth />
+      </div>
       <Card className="bg-[#0a1f14] border-yellow-800/30 mt-4">
         <CardHeader className="pb-2">
           <CardTitle className="text-yellow-400 text-sm flex items-center gap-2"><Clock size={14} /> Auto-Reminder Cron Setup</CardTitle>

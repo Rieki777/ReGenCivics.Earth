@@ -649,17 +649,18 @@ export const bountiesRouter = router({
   // ── Maintainer: Call Tasks / Role Holders board ───────────────────────────
   adminCallTaskBoard: maintainerProcedure
     .input(z.object({
-      filter: z.enum(["open", "overdue", "unassigned", "done"]).default("open"),
+      filter: z.enum(["needs_people", "open", "overdue", "unassigned", "done"]).default("needs_people"),
       limit: z.number().int().min(1).max(300).default(100),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
-      if (!db) return { rows: [], counts: { open: 0, overdue: 0, unassigned: 0, done: 0, stuck: 0 } };
       const {
         callTaskBoardFilterMatch,
         countCallTaskBoard,
+        emptyCallTaskBoardCounts,
         isCallTaskStuck,
       } = await import("../../shared/callTaskBoard");
+      if (!db) return { rows: [], counts: emptyCallTaskBoardCounts() };
 
       const rows = await db
         .select()
@@ -669,7 +670,7 @@ export const bountiesRouter = router({
         .limit(Math.min(input.limit * 3, 300));
 
       if (!rows.length) {
-        return { rows: [], counts: { open: 0, overdue: 0, unassigned: 0, done: 0, stuck: 0 } };
+        return { rows: [], counts: emptyCallTaskBoardCounts() };
       }
 
       const ids = rows.map((b) => b.id);
