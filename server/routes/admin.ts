@@ -21,6 +21,8 @@ import {
 } from "../../shared/operatorPulse";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
 import { ENV } from "../_core/env";
+import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
+
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
@@ -316,19 +318,12 @@ export const adminRouter = router({
     return computeOperatorPulse();
   }),
 
-  // Ops notify channel status (booleans only — never return secrets).
-  // Telegram/WhatsApp = server/_core/notify.ts; owner email = OWNER_EMAIL fail-soft.
-  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored here.
+  // Ops notify channel status (booleans only  never return secrets).
+  // Shape: { emailConfigured, telegramConfigured, whatsappConfigured }.
+  // Presence checks live in getOpsNotifyChannelStatus (mirrors notify.ts / notifyOwner).
+  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored.
   opsNotifyStatus: adminProcedure.query(async () => {
-    const telegram =
-      Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) &&
-      Boolean(process.env.TELEGRAM_CHAT_ID?.trim());
-    const whatsapp =
-      Boolean(process.env.WHATSAPP_PHONE_NUMBER_ID?.trim()) &&
-      Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim()) &&
-      Boolean(process.env.WHATSAPP_TO_NUMBER?.trim());
-    const ownerEmail = Boolean(process.env.OWNER_EMAIL?.trim());
-    return { telegram, whatsapp, ownerEmail };
+      return getOpsNotifyChannelStatus();
   }),
 
   // Event-reminder cron health for Admin Events / Overview.
