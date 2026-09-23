@@ -271,7 +271,7 @@ Everything else is an extension. This is the whole new-build list.
 | New thing | Where | Why nothing existing carries it |
 |---|---|---|
 | `village_listing` type in `shared_items` plus its builder | Village OS | The publish frame exists; this type does not |
-| Entry paths with gate type and capacity per path | Village OS | No table carries "how a newcomer joins this village". The real gap |
+| `village_paths`: four rows per village, gate type, capacity, what is asked | Village OS | No table carries "how a newcomer joins this village". The real gap, settled as R1 |
 | `villageListings` table (the index) | regen-civics | The projection has to land somewhere joinable |
 | Peer sweep client: fetch, verify signature against pinned key, upsert | regen-civics | Village OS has the peer client; ReGen Civics does not |
 | `agentToolDefs` with a live-version resolver | regen-civics | `siteSettings` is the precedent but not the shape |
@@ -321,7 +321,26 @@ command rather than dropping the reference, since `docs/GOLDEN_RULE.md` step 1
 is a documented gate that three worktrees also carry. Roughly a half-page
 skill. Proceeding on that basis unless told otherwise.
 
-### Needing Rye
+### Answered by Rye, 2026-09-23
+
+**R1. Entry paths: a new `village_paths` table in Village OS.** Four rows per
+village: path, gate type (`open | apply | invite-only | closed`), capacity, and
+what is asked of a person. Stated during admin onboarding, projected into the
+listing. This follows the move `0049` already made when it took the org chart
+out of the `app_config` `content` document and into rows, for the reason that
+header gives: free-text values with no link to real records.
+
+**R2. Agent call logging stands alone**, as `agentCalls`, with per-call
+latency, result count, tool version and platform. `resultCount: 0` is the
+no-result metric. Machine traffic stays out of `analyticsEvents`.
+
+**R3. The corpus splits by kind of text.** Explainer bodies stay in
+`shared/learn/`, where they already feed the React page, the crawler HTML and
+the JSON-LD from one copy. Tool descriptions and response templates go in
+`agentToolDefs`, versioned, editable without a deploy. The spec's two
+non-negotiables both hold once the two kinds of text are named separately.
+
+### Original wording of the three, for the record
 
 1. **Where do entry paths live, and who states them?** The four village-level
    paths with a gate type each (open, apply, invite-only, closed) are the one
@@ -350,7 +369,7 @@ skill. Proceeding on that basis unless told otherwise.
 
 | # | Task | Why only Rye |
 |---|---|---|
-| 1 | Answer the three open questions in section 7. Three others the code settled | Architecture and vocabulary calls on his own systems |
+| 1 | Read this report and the baseline findings. The six questions in section 7 are all now answered | Architecture and vocabulary calls on his own systems |
 | 2 | Put `OPENROUTER_API_KEY` in the shell or the local `.env` | It is in Railway; the phase -2 LLM half is one command behind it |
 | 3 | Run the four baseline questions in Muse, Gemini and ChatGPT, paste into `docs/agent-baseline/control-2026-09-23.md` | His own signed-in browser; no credential should reach a repo |
 | 4 | Read this report and the baseline findings | The spec's own hard stop before phase 0 |
