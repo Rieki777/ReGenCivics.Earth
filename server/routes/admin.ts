@@ -6,7 +6,7 @@ import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { executableActionCatalog } from "./adminActions";
 import { eq, sql, count, like, gte, and, inArray, ne } from "drizzle-orm";
-import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties } from "../../drizzle/schema";
+import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties, eventAutoReminders, eventAutoReminderSends } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
 import {
   buildOperatorPulseItems,
@@ -21,7 +21,6 @@ import {
 } from "../../shared/operatorPulse";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
 import { ENV } from "../_core/env";
-import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { getBufferAccessToken } from "../lib/buffer-token";
@@ -318,11 +317,52 @@ export const adminRouter = router({
   }),
 
   // Ops notify channel status (booleans only — never return secrets).
-  // Shape: { emailConfigured, telegramConfigured, whatsappConfigured }.
-  // Presence checks live in getOpsNotifyChannelStatus (mirrors notify.ts / notifyOwner).
-  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored.
+  // Telegram/WhatsApp = server/_core/notify.ts; owner email = OWNER_EMAIL fail-soft.
+  // TELEGRAM_BRAIN_* is a different bot and is intentionally ignored here.
   opsNotifyStatus: adminProcedure.query(async () => {
-    return getOpsNotifyChannelStatus();
+    const telegram =
+      Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) &&
+      Boolean(process.env.TELEGRAM_CHAT_ID?.trim());
+    const whatsapp =
+      Boolean(process.env.WHATSAPP_PHONE_NUMBER_ID?.trim()) &&
+      Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim()) &&
+      Boolean(process.env.WHATSAPP_TO_NUMBER?.trim());
+    const ownerEmail = Boolean(process.env.OWNER_EMAIL?.trim());
+    return { telegram, whatsapp, ownerEmail };
+  }),
+
+  // Event-reminder cron health for Admin Events / Overview.
+  // Env presence + known schedule + real last delivery / last cron OK (no secrets).
+  eventReminderCronHealth: adminProcedure.query(async () => {
+    const { buildEventReminderCronHealth, EVENT_REMINDER_CRON_LAST_OK_KEY } = await import(
+      "../../shared/eventReminderCronHealth"
+    );
+    const { getSiteSetting } = await import("../db");
+    const drizzleDb = await getDb();
+    let lastDeliveryAt: string | null = null;
+    let enabledAutoReminderEvents = 0;
+    if (drizzleDb) {
+      const [enabledRow] = await drizzleDb
+        .select({ n: count() })
+        .from(eventAutoReminders)
+        .where(eq(eventAutoReminders.enabled, 1));
+      enabledAutoReminderEvents = Number(enabledRow?.n ?? 0);
+      const [deliveryRow] = await drizzleDb
+        .select({ last: sql<Date | string | null>`MAX(${eventAutoReminderSends.sentAt})` })
+        .from(eventAutoReminderSends);
+      const raw = deliveryRow?.last ?? null;
+      if (raw) {
+        const d = raw instanceof Date ? raw : new Date(raw);
+        if (Number.isFinite(d.getTime())) lastDeliveryAt = d.toISOString();
+      }
+    }
+    const lastCronOkRaw = await getSiteSetting(EVENT_REMINDER_CRON_LAST_OK_KEY);
+    return buildEventReminderCronHealth({
+      cronSecretConfigured: Boolean(process.env.CRON_SECRET?.trim()),
+      lastCronOkAt: lastCronOkRaw,
+      lastDeliveryAt,
+      enabledAutoReminderEvents,
+    });
   }),
 
   // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
