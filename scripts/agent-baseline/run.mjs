@@ -199,31 +199,43 @@ const c = await crawl(base);
 writeFileSync(join(outDir, `crawl-${stamp}.json`), JSON.stringify(c, null, 2));
 console.log(`  ${c.routes.length} urls, ${JSON.stringify(c.counts)}`);
 
+// The LLM half is expensive and its JSON is the artifact, so a run without a
+// key reuses today's answers rather than dropping them. Regenerating the
+// report on the site half alone used to blank section 2, which quietly
+// replaced a completed measurement with the word "Pending".
+const askFile = join(outDir, `ask-${stamp}.json`);
 let a = null;
 if (process.env.OPENROUTER_API_KEY) {
   console.log(`asking models ...`);
   a = await ask({});
-  writeFileSync(join(outDir, `ask-${stamp}.json`), JSON.stringify(a, null, 2));
+  writeFileSync(askFile, JSON.stringify(a, null, 2));
+} else if (existsSync(askFile)) {
+  a = JSON.parse(readFileSync(askFile, "utf8"));
+  console.log(`reusing today's LLM answers from ${askFile} (no key set)`);
 } else {
   console.log(`skipping the LLM half: OPENROUTER_API_KEY is not set`);
 }
 
-// The consumer-app half is a file Rye fills in by hand, so the report links it
-// and counts how many of the twelve slots (3 apps x 4 questions) have an
-// answer, rather than inlining a mostly-empty template.
+// The consumer-app half is hand-written, so the report links it and counts
+// recorded verdicts rather than inlining it. Counting a template's empty code
+// fences was the first approach and it reported "0 of 0" the moment the file
+// stopped being a template, which is a false negative about our own evidence.
+// A settled `mentioned: **yes**` or `**no**` line is what a finished entry
+// looks like, whatever shape the prose around it takes.
 const controlFile = join(outDir, `control-${stamp}.md`);
 let control;
 if (existsSync(controlFile)) {
   const txt = readFileSync(controlFile, "utf8");
-  const slots = [...txt.matchAll(/\*\*Answer, verbatim:\*\*\s*\n+```([\s\S]*?)```/g)];
-  const filled = slots.filter((m) => m[1].trim().length > 0).length;
-  control = `${filled} of ${slots.length} answers recorded in [\`control-${stamp}.md\`](./control-${stamp}.md).${
-    filled === slots.length
-      ? ""
-      : `\n\n**Pending Rye.** Task 1 of the handoff table: open Muse, Gemini and ChatGPT signed in, ask the four questions above verbatim, and paste each answer into that file. This half is not automated because the apps need Rye's own signed-in session, and no credential should reach a script or a repo. Twenty minutes.`
-  }`;
+  const recorded = [...txt.matchAll(/mentioned:\s*\*\*(yes|no)\*\*/gi)];
+  const noMention = recorded.filter((m) => m[1].toLowerCase() === "no").length;
+  control =
+    recorded.length === 0
+      ? `**Pending.** No answers recorded yet in [\`control-${stamp}.md\`](./control-${stamp}.md).`
+      : `${recorded.length} answers recorded in [\`control-${stamp}.md\`](./control-${stamp}.md), ` +
+        `ReGen Civics unmentioned in ${noMention} of them. Method and the apps still ` +
+        `needing an account are in that file.`;
 } else {
-  control = `**Pending Rye.** No \`control-${stamp}.md\` yet.`;
+  control = `**Pending.** No \`control-${stamp}.md\` yet.`;
 }
 
 const file = join(outDir, `BASELINE-${stamp}.md`);
