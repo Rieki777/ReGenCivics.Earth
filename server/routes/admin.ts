@@ -20,8 +20,8 @@ import {
   type OperatorPulseResult,
 } from "../../shared/operatorPulse"; import {   LIVE_SESSION_ROLES,   buildLiveSessionChecklist,   liveSessionRunbookNeedsOwners, } from "../../shared/liveSessionRunbook";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
-import { ENV } from "../_core/env"; import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";  
-import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus";
+import { ENV } from "../_core/env"; import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus"; var liveEventIds: number[] = []; var pastEventsNoWatch = 0; var reminderCronIssues = 0;  
+import { getOpsNotifyChannelStatus } from "../_core/opsNotifyStatus"; var liveEventIds: number[] = []; var pastEventsNoWatch = 0; var reminderCronIssues = 0;
 
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
