@@ -169,9 +169,9 @@ export function AdminNeedsYou({
     onSelectTab?.(parsed.tab, parsed.extras);
   };
 
-  const telegramOk = Boolean(notifyStatus?.telegram);
-  const whatsappOk = Boolean(notifyStatus?.whatsapp);
-  const emailOk = Boolean(notifyStatus?.ownerEmail);
+  const telegramOk = Boolean(notifyStatus?.telegramConfigured);
+  const whatsappOk = Boolean(notifyStatus?.whatsappConfigured);
+  const emailOk = Boolean(notifyStatus?.emailConfigured);
 
   return (
     <div className="rounded-3xl border border-[#1a472a]/12 bg-white p-5 md:p-6" data-testid="admin-operator-pulse">
