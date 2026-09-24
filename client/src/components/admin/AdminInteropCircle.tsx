@@ -14,7 +14,9 @@ import { trpc } from "@/lib/trpc";
 import {
   INTEROP_FREEZE_HOURS,
   INTEROP_LEAD_SETTLE_HOURS,
+  INTEROP_SLOT_KEYS,
   INTEROP_SLOTS,
+  buildSlot,
   interopSlot,
   type InteropSlotKey,
 } from "@shared/interopCircle";
@@ -40,9 +42,28 @@ export function AdminInteropCircle() {
   };
   const pin = trpc.interopSessions.adminPin.useMutation({ onSuccess: refresh });
   const sync = trpc.interopSessions.adminSync.useMutation({ onSuccess: refresh });
+  const setOffered = trpc.interopSessions.adminSetOfferedSlots.useMutation({ onSuccess: refresh });
 
   const data = state.data;
-  const busy = pin.isPending || sync.isPending;
+  const offered = data?.offered ?? INTEROP_SLOTS;
+  const busy = pin.isPending || sync.isPending || setOffered.isPending;
+
+  /** Toggle a weekday on or off the offer, keeping every other slot's hour. */
+  function toggleOffered(key: InteropSlotKey) {
+    const has = offered.some((o) => o.key === key);
+    const next = has
+      ? offered.filter((o) => o.key !== key)
+      : [...offered, buildSlot(key, 12)];
+    if (!next.length) return; // A vote with no slots is a page with nothing to click.
+    setOffered.mutate({ slots: next.map((o) => ({ key: o.key, hourPT: o.hourPT })) });
+  }
+
+  /** Move one offered slot to another Pacific hour. */
+  function setHour(key: InteropSlotKey, hourPT: number) {
+    setOffered.mutate({
+      slots: offered.map((o) => ({ key: o.key, hourPT: o.key === key ? hourPT : o.hourPT })),
+    });
+  }
   const lastResult = pin.data?.result ?? sync.data?.result;
 
   return (
@@ -64,7 +85,7 @@ export function AdminInteropCircle() {
         {data && (
           <>
             <div className="grid gap-2 sm:grid-cols-3">
-              {INTEROP_SLOTS.map((s) => (
+              {offered.map((s) => (
                 <div
                   key={s.key}
                   className={`rounded-lg border p-3 ${data.slot === s.key ? "border-[#7dd87d] bg-[#7dd87d]/10" : "border-white/10"}`}
@@ -91,7 +112,7 @@ export function AdminInteropCircle() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="vote">Follow the vote</SelectItem>
-                  {INTEROP_SLOTS.map((s) => (
+                  {offered.map((s) => (
                     <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -102,8 +123,54 @@ export function AdminInteropCircle() {
               </Button>
             </div>
             {data.pinned && (
-              <p className="text-amber-300">Pinned to {interopSlot(data.pinned).label}. The vote keeps counting but does not move sessions.</p>
+              <p className="text-amber-300">Pinned to {interopSlot(data.pinned, offered).label}. The vote keeps counting but does not move sessions.</p>
             )}
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-white/70 mb-1">Slots on offer</p>
+              <p className="text-white/40 text-xs mb-3">
+                Which weekdays people can raise a hand for, and the Pacific hour each one runs at. Changing this
+                rebuilds the upcoming weeks. Votes for a day you remove stop counting but are not deleted, so
+                putting it back restores them.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {INTEROP_SLOT_KEYS.map((key) => {
+                  const on = offered.find((o) => o.key === key);
+                  return (
+                    <div key={key} className={`flex items-center gap-3 rounded-lg border p-2 ${on ? "border-[#7dd87d]/50 bg-[#7dd87d]/5" : "border-white/10"}`}>
+                      <label className="flex items-center gap-2 text-white/80 cursor-pointer min-h-[44px]">
+                        <input
+                          type="checkbox"
+                          checked={!!on}
+                          disabled={busy}
+                          onChange={() => toggleOffered(key)}
+                          className="w-4 h-4 accent-[#7dd87d]"
+                        />
+                        <span className="w-24">{buildSlot(key, on?.hourPT ?? 12).label.split(",")[0]}</span>
+                      </label>
+                      {on && (
+                        <select
+                          value={on.hourPT}
+                          disabled={busy}
+                          onChange={(e) => setHour(key, Number(e.target.value))}
+                          aria-label={`Pacific hour for ${key}`}
+                          className="bg-white/5 border border-white/20 rounded-lg px-2 py-1 text-white text-xs min-h-[44px]"
+                        >
+                          {Array.from({ length: 24 }, (_, h) => (
+                            <option key={h} value={h} className="bg-[#0a1f14]">
+                              {buildSlot(key, h).label.split(", ")[1]}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {setOffered.isError && (
+                <p className="text-red-300 mt-2">{setOffered.error.message}</p>
+              )}
+            </div>
+
             {lastResult && (
               <p className="text-white/60">
                 Last sync: {lastResult.inserted} added, {lastResult.moved} moved, {lastResult.notified} move emails sent.

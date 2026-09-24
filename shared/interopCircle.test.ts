@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   INTEROP_LEAD_SETTLE_HOURS,
+  buildSlot,
   circleWeekKey,
   interopSlot,
   leadingSlot,
+  parseOfferedSlots,
   parseSlots,
   resolveCircleSlot,
+  serializeOfferedSlots,
   serializeSlots,
   upcomingSlotStarts,
 } from "./interopCircle";
@@ -16,7 +19,11 @@ describe("interop slot lists", () => {
   });
 
   it("parses a comma list in canonical order and drops unknown keys", () => {
-    expect(parseSlots("thu, tue,fri,,")).toEqual(["tue", "thu"]);
+    // Every weekday is a valid key now that the offered set is a setting, so
+    // "fri" parses; only genuine nonsense is dropped.
+    expect(parseSlots("thu, tue,,")).toEqual(["tue", "thu"]);
+    expect(parseSlots("thu, tue,fri,,")).toEqual(["tue", "thu", "fri"]);
+    expect(parseSlots("thu,xyz,tue,123")).toEqual(["tue", "thu"]);
   });
 
   it("treats empty and null as no slots", () => {
@@ -84,5 +91,66 @@ describe("circle dates", () => {
   it("includes this week's session when it is still ahead", () => {
     const starts = upcomingSlotStarts(interopSlot("thu"), new Date("2026-09-23T12:00:00Z"), 1);
     expect(starts[0].toISOString()).toBe("2026-09-25T01:00:00.000Z"); // Thu 24th 18:00 PDT
+  });
+});
+
+describe("offered slots are a setting, not a deploy", () => {
+  it("falls back to the original three when nothing is stored", () => {
+    const slots = parseOfferedSlots(null);
+    expect(slots.map((s) => s.key)).toEqual(["tue", "wed", "thu"]);
+    expect(slots.map((s) => s.hourPT)).toEqual([10, 16, 18]);
+  });
+
+  it("reads a stored set, including a weekday the Circle never offered before", () => {
+    const slots = parseOfferedSlots('[{"key":"mon","hourPT":9},{"key":"fri","hourPT":14}]');
+    expect(slots.map((s) => s.key)).toEqual(["mon", "fri"]);
+    expect(slots.map((s) => s.hourPT)).toEqual([9, 14]);
+  });
+
+  it("always returns weekday order, whatever order was stored", () => {
+    const slots = parseOfferedSlots('[{"key":"sat","hourPT":9},{"key":"mon","hourPT":9},{"key":"thu","hourPT":9}]');
+    expect(slots.map((s) => s.key)).toEqual(["mon", "thu", "sat"]);
+  });
+
+  it("collapses a duplicated key rather than offering it twice", () => {
+    const slots = parseOfferedSlots('[{"key":"tue","hourPT":9},{"key":"tue","hourPT":15}]');
+    expect(slots).toHaveLength(1);
+    expect(slots[0].hourPT).toBe(15);
+  });
+
+  it("falls back rather than throwing on anything unreadable", () => {
+    // This feeds a public page: a bad paste into a settings field must not
+    // take the vote down.
+    for (const bad of ["", "   ", "not json", "{}", "[]", '[{"key":"xyz"}]', '[{"key":"tue","hourPT":99}]', "null"]) {
+      const slots = parseOfferedSlots(bad);
+      expect(slots.length, bad).toBeGreaterThan(0);
+    }
+  });
+
+  it("derives the label and the other-zone line from the hour", () => {
+    const slot = buildSlot("mon", 9);
+    expect(slot.label).toBe("Mondays, 9:00am PT");
+    expect(slot.weekday).toBe(1);
+    // Eastern is a fixed three hours ahead; the line must agree with the hour.
+    expect(slot.zones).toContain("9:00am PT");
+    expect(slot.zones).toContain("12:00pm ET");
+  });
+
+  it("names midnight and noon without going to 0 or 13", () => {
+    expect(buildSlot("tue", 0).label).toBe("Tuesdays, 12:00am PT");
+    expect(buildSlot("tue", 12).label).toBe("Tuesdays, 12:00pm PT");
+    expect(buildSlot("tue", 13).label).toBe("Tuesdays, 1:00pm PT");
+  });
+
+  it("round-trips through the stored shape", () => {
+    const chosen = [{ key: "wed" as const, hourPT: 8 }, { key: "sun" as const, hourPT: 20 }];
+    const slots = parseOfferedSlots(serializeOfferedSlots(chosen));
+    expect(slots.map((s) => [s.key, s.hourPT])).toEqual([["wed", 8], ["sun", 20]]);
+  });
+
+  it("still labels a slot that has been taken off the offer", () => {
+    // A vote cast before a day was retired still renders somewhere.
+    const offered = parseOfferedSlots('[{"key":"mon","hourPT":9}]');
+    expect(interopSlot("thu", offered).label).toBe("Thursdays, 6:00pm PT");
   });
 });

@@ -168,9 +168,14 @@ export default function Schedule() {
     const params = new URLSearchParams(window.location.search);
     const unsubEventId = params.get('unsubscribe');
     const unsubEmail = params.get('email');
-    if (unsubEventId && unsubEmail) {
+    // New mail carries a signed token; links already in inboxes carry the
+    // address. Either is forwarded as-is and the server decides which it trusts.
+    const unsubToken = params.get('token');
+    if (unsubEventId && (unsubToken || unsubEmail)) {
       unsubscribeMutation.mutate(
-        { eventId: parseInt(unsubEventId, 10), email: unsubEmail },
+        unsubToken
+          ? { eventId: parseInt(unsubEventId, 10), token: unsubToken }
+          : { eventId: parseInt(unsubEventId, 10), email: unsubEmail! },
         {
           onSuccess: () => {
             toast.success("You've been unsubscribed from reminders for this event.");
@@ -184,6 +189,7 @@ export default function Schedule() {
       const url = new URL(window.location.href);
       url.searchParams.delete('unsubscribe');
       url.searchParams.delete('email');
+      url.searchParams.delete('token');
       window.history.replaceState({}, '', url.pathname);
     }
   }, []);

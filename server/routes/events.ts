@@ -4,7 +4,20 @@
  * Also handles per-event reminder email signups.
  */
 
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+
+/**
+ * An unsubscribe link carrying a signed token rather than the address.
+ *
+ * The old shape put the recipient's email in a query string, so it reached
+ * browser history, referrers and any log along the way, and let anyone who
+ * knew an address cancel that person's reminders. The token proves the caller
+ * received the mail and says nothing else.
+ */
+async function unsubscribeUrlFor(eventId: number, email: string): Promise<string> {
+  const token = await buildPrefsToken(email);
+  return `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&token=${encodeURIComponent(token)}`;
+}
 import { z } from "zod";
 import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
@@ -32,7 +45,7 @@ import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
 import { notifyNewEvent } from "../_core/notify";
-import { audienceForTopic } from "../lib/emailPrefs";
+import { audienceForTopic, buildPrefsToken, verifyPrefsToken } from "../lib/emailPrefs";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
@@ -383,7 +396,7 @@ export const eventsRouter = router({
               <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
             </div>
             <div style="background:#f0f7f0;padding:16px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-              <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${APP_BASE_URL}/schedule?unsubscribe=${input.eventId}&email=${encodeURIComponent(input.email)}" style="color:#999;">Unsubscribe</a></p>
+              <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${await unsubscribeUrlFor(input.eventId, input.email)}" style="color:#999;">Unsubscribe</a></p>
             </div>
           </div>`;
 
@@ -1300,21 +1313,37 @@ export const eventsRouter = router({
       return { success: true, alreadyCheckedIn: false, tokensAwarded: attendanceReward, eventTitle: event.title };
     }),
 
-  // ── #18. Public: unsubscribe from event reminders ────────
+  /**
+   * Public: unsubscribe from event reminders.
+   *
+   * Prefers a signed token, which proves the caller received mail at that
+   * address. A bare email is still accepted, because unsubscribe links already
+   * sitting in people's inboxes have to keep working: an opt-out that fails is
+   * worse than one that can be abused, and this direction only ever removes
+   * someone from mail they can rejoin. New mail carries tokens (see
+   * unsubscribeUrlFor), so the bare path can be dropped once the old links have
+   * aged out. Rate limited either way, which is what stops it being a tool for
+   * unsubscribing a list in bulk.
+   */
   unsubscribe: publicProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
     .input(z.object({
       eventId: z.number(),
-      email: z.string().email(),
-    }))
+      email: z.string().email().optional(),
+      token: z.string().min(16).max(2048).optional(),
+    }).refine((v) => v.email || v.token, { message: "An email or a token is required." }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const email = input.token ? await verifyPrefsToken(input.token) : input.email;
+      if (!email) throw new TRPCError({ code: "FORBIDDEN", message: "That unsubscribe link is not valid any more." });
 
       await database.update(eventSignups)
         .set({ cancelledAt: new Date() })
         .where(and(
           eq(eventSignups.eventId, input.eventId),
-          eq(eventSignups.email, input.email),
+          eq(eventSignups.email, email),
         ));
 
       // The Circle is one standing sign-up spread across weekly rows. Leaving
@@ -1325,7 +1354,7 @@ export const eventsRouter = router({
         .from(events)
         .where(eq(events.id, input.eventId))
         .limit(1);
-      if (ev?.season === INTEROP_CIRCLE_SEASON) await leaveCircle(database, input.email);
+      if (ev?.season === INTEROP_CIRCLE_SEASON) await leaveCircle(database, email);
 
       return { success: true };
     }),
@@ -1363,7 +1392,7 @@ export const eventsRouter = router({
 
       let totalSent = 0;
       for (const signup of signups) {
-        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
+        const unsubscribeUrl = await unsubscribeUrlFor(event.id, signup.email);
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
           <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
@@ -1447,7 +1476,7 @@ export const eventsRouter = router({
 
       let totalSent = 0;
       for (const signup of signups) {
-        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
+        const unsubscribeUrl = await unsubscribeUrlFor(event.id, signup.email);
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
           <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>

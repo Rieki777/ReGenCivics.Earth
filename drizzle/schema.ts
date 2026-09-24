@@ -6095,3 +6095,25 @@ export const interopTimeVotes = mysqlTable("interopTimeVotes", {
   index("interop_vote_slot_idx").on(table.slot),
 ]));
 export type InteropTimeVote = typeof interopTimeVotes.$inferSelect;
+
+/**
+ * The Interoperability Circle's tools directory (drizzle/0247_interop_tools.sql).
+ * One row per person, not per session: a repo is a property of the person, so
+ * storing it on event_signups would copy it onto every weekly row.
+ */
+export const interopTools = mysqlTable("interopTools", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Owns the row. Joining again updates in place. */
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 120 }),
+  /** Where the tool lives. Optional: someone without a repo is still in the circle. */
+  repoUrl: varchar("repoUrl", { length: 500 }),
+  /** The agent they run on it, free text ("Claude Code", "Devin", "my own"). */
+  agent: varchar("agent", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("interop_tools_email_idx").on(table.email),
+  index("interop_tools_updated_idx").on(table.updatedAt),
+]));
+export type InteropTool = typeof interopTools.$inferSelect;

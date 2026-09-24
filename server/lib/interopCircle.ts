@@ -30,6 +30,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { events, eventSignups, eventAutoReminders, interopTimeVotes } from "../../drizzle/schema";
 import { getDb, getSiteSetting, setSiteSetting } from "../db";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { buildPrefsToken } from "./emailPrefs";
 import { SESSION_TIME_ZONE, zoneName } from "@shared/sessionClock";
 import {
   INTEROP_APPLIED_SETTING,
@@ -169,8 +170,18 @@ function circleEmailShell(heading: string, bodyHtml: string, footerHtml: string)
   </div>`;
 }
 
-function unsubscribeLink(eventId: number, email: string): string {
-  return `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&email=${encodeURIComponent(email)}`;
+/**
+ * Leaving the Circle, as a link in the footer of its own mail.
+ *
+ * Carries a signed token rather than the address in the query string. The
+ * older shape (?unsubscribe=<id>&email=<address>) let anyone who could guess
+ * an address cancel that person's sign-ups, and put the address itself into
+ * browser history, referrers and server logs. The token proves the caller read
+ * mail sent to that address, and proves nothing else.
+ */
+async function unsubscribeLink(email: string): Promise<string> {
+  const token = await buildPrefsToken(email);
+  return `${APP_BASE_URL}/interop-sessions?leave=${encodeURIComponent(token)}`;
 }
 
 function escapeHtml(s: string): string {
@@ -375,7 +386,7 @@ async function notifyMove(database: Db, movedIds: number[], slotLabel: string, n
       `${hello}<p style="color:#444;line-height:1.7;">The group's time vote moved, so the Interoperability Circle moves with it. Your upcoming sessions are now:</p>
        <ul style="color:#444;line-height:1.7;">${whenList}</ul>
        <p style="color:#444;line-height:1.7;">If you subscribed to the calendar feed, your calendar updates on its own. Reminders still arrive the day before and an hour before.</p>`,
-      `You are signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${unsubscribeLink(first.id, email)}" style="color:#999;">Leave the Circle</a>`,
+      `You are signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${await unsubscribeLink(email)}" style="color:#999;">Leave the Circle</a>`,
     );
     try {
       await sendEmail({ to: [email], subject: `The Interoperability Circle moved to ${slotLabel}`, html, template: "interop_circle_moved" });
@@ -397,7 +408,7 @@ export async function sendCircleWelcome(opts: { email: string; name: string | nu
      <p style="color:#444;line-height:1.7;">Bring a link to your repo, a sentence or two on what your tool does and who it serves, and the bot or agent you would put to work.</p>
      <p style="color:#444;line-height:1.7;"><a href="${APP_BASE_URL}/calendar/interop-circle.ics" style="color:#1a472a;">Subscribe to the Circle calendar</a> and it keeps itself up to date.</p>
      <p style="color:#444;line-height:1.7;">Want a profile too? <a href="${APP_BASE_URL}/interop-sessions#join" style="color:#1a472a;">Create one on ReGen Civics</a>. Profiles will soon run on the shared infrastructure the Circle is building.</p>`,
-    `You signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${unsubscribeLink(opts.nextId, opts.email)}" style="color:#999;">Leave the Circle</a>`,
+    `You signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${await unsubscribeLink(opts.email)}" style="color:#999;">Leave the Circle</a>`,
   );
   await sendEmail({ to: [opts.email], subject: "You are signed up for the Interoperability Circle", html, template: "interop_circle_welcome" });
 }

@@ -13,7 +13,28 @@
  */
 import { wallTimeInZoneToUtc, SESSION_TIME_ZONE } from "./sessionClock";
 
-export type InteropSlotKey = "tue" | "wed" | "thu";
+/**
+ * The vocabulary is every weekday, so adding a fourth option is a setting
+ * rather than a deploy. Which days are actually offered, and at what Pacific
+ * hour, lives in site_settings under INTEROP_SLOTS_SETTING; the keys stay a
+ * fixed union so zod, the database column and the types cannot drift from each
+ * other the way a free-form slot id would.
+ */
+export type InteropSlotKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+
+export const INTEROP_SLOT_KEYS: [InteropSlotKey, ...InteropSlotKey[]] = [
+  "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+];
+
+/** 0 = Sunday, matching Date#getDay. */
+const WEEKDAY_OF: Record<InteropSlotKey, number> = {
+  sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6,
+};
+
+const DAY_NAME: Record<InteropSlotKey, string> = {
+  sun: "Sundays", mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays",
+  thu: "Thursdays", fri: "Fridays", sat: "Saturdays",
+};
 
 export interface InteropSlot {
   key: InteropSlotKey;
@@ -25,17 +46,106 @@ export interface InteropSlot {
   zones: string;
 }
 
-export const INTEROP_SLOTS: readonly InteropSlot[] = [
-  { key: "tue", weekday: 2, label: "Tuesdays, 10:00am PT", hourPT: 10, zones: "10:00am PT · 1:00pm ET · 6:00pm UK" },
-  { key: "wed", weekday: 3, label: "Wednesdays, 4:00pm PT", hourPT: 16, zones: "4:00pm PT · 7:00pm ET" },
-  { key: "thu", weekday: 4, label: "Thursdays, 6:00pm PT", hourPT: 18, zones: "6:00pm PT · 9:00pm ET" },
+/** site_settings key holding the offered slots as JSON: [{ "key": "tue", "hourPT": 10 }]. */
+export const INTEROP_SLOTS_SETTING = "interop_circle_offered_slots";
+
+/** What the Circle offered before the set became configurable. */
+export const DEFAULT_SLOT_HOURS: { key: InteropSlotKey; hourPT: number }[] = [
+  { key: "tue", hourPT: 10 },
+  { key: "wed", hourPT: 16 },
+  { key: "thu", hourPT: 18 },
 ];
 
-export const INTEROP_SLOT_KEYS = INTEROP_SLOTS.map((s) => s.key) as [InteropSlotKey, ...InteropSlotKey[]];
+function hour12(hour: number): string {
+  const h = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h}:00${hour < 12 ? "am" : "pm"}`;
+}
+
+/**
+ * The other-timezone line, derived rather than written by hand so it cannot
+ * contradict the hour beside it. Eastern is a fixed three hours ahead of
+ * Pacific; the UK is not, so it is asked of Intl rather than assumed.
+ */
+function zonesFor(hourPT: number, at: Date = new Date()): string {
+  const pt = `${hour12(hourPT)} PT`;
+  const et = `${hour12((hourPT + 3) % 24)} ET`;
+  let uk = "";
+  try {
+    const utc = new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate(), hourPT + 7, 0, 0));
+    const ukHour = Number(
+      new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "numeric", hour12: false }).format(utc),
+    );
+    if (Number.isFinite(ukHour)) uk = ` · ${hour12(ukHour)} UK`;
+  } catch {
+    // No Intl data for London: the PT and ET halves still stand on their own.
+  }
+  return `${pt} · ${et}${uk}`;
+}
+
+/** A full slot from its key and Pacific hour. Label and zones are derived. */
+export function buildSlot(key: InteropSlotKey, hourPT: number): InteropSlot {
+  const hour = Number.isFinite(hourPT) ? Math.min(23, Math.max(0, Math.trunc(hourPT))) : 0;
+  return {
+    key,
+    weekday: WEEKDAY_OF[key],
+    hourPT: hour,
+    label: `${DAY_NAME[key]}, ${hour12(hour)} PT`,
+    zones: zonesFor(hour),
+  };
+}
 
 export function isInteropSlotKey(v: unknown): v is InteropSlotKey {
-  return v === "tue" || v === "wed" || v === "thu";
+  return typeof v === "string" && (INTEROP_SLOT_KEYS as readonly string[]).includes(v);
 }
+
+/**
+ * The offered slots, from the stored setting, falling back to the defaults.
+ *
+ * Anything unreadable falls back rather than throwing: this feeds a public
+ * page, and a bad paste into a settings field should not take the vote down.
+ * Duplicate keys collapse, and the result is always in weekday order so the
+ * page and the tally agree without either sorting.
+ */
+export function parseOfferedSlots(raw: string | null | undefined): InteropSlot[] {
+  let parsed: unknown = null;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  const rows = Array.isArray(parsed) ? parsed : DEFAULT_SLOT_HOURS;
+  const byKey = new Map<InteropSlotKey, number>();
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const key = (row as { key?: unknown }).key;
+    const hourPT = (row as { hourPT?: unknown }).hourPT;
+    if (!isInteropSlotKey(key)) continue;
+    const hour = typeof hourPT === "number" ? hourPT : Number(hourPT);
+    if (!Number.isFinite(hour) || hour < 0 || hour > 23) continue;
+    byKey.set(key, Math.trunc(hour));
+  }
+  const chosen = byKey.size > 0 ? byKey : new Map(DEFAULT_SLOT_HOURS.map((d) => [d.key, d.hourPT] as const));
+  return INTEROP_SLOT_KEYS.filter((k) => chosen.has(k)).map((k) => buildSlot(k, chosen.get(k)!));
+}
+
+/** Serialise an offered set back to the setting's shape. */
+export function serializeOfferedSlots(slots: readonly { key: InteropSlotKey; hourPT: number }[]): string {
+  const seen = new Set<InteropSlotKey>();
+  const rows = INTEROP_SLOT_KEYS
+    .map((k) => slots.find((s) => s.key === k))
+    .filter((s): s is { key: InteropSlotKey; hourPT: number } => {
+      if (!s || seen.has(s.key)) return false;
+      seen.add(s.key);
+      return true;
+    })
+    .map((s) => ({ key: s.key, hourPT: Math.min(23, Math.max(0, Math.trunc(s.hourPT))) }));
+  return JSON.stringify(rows.length ? rows : DEFAULT_SLOT_HOURS);
+}
+
+/** The default offered set, for callers with no settings access (tests, fallbacks). */
+export const INTEROP_SLOTS: readonly InteropSlot[] = parseOfferedSlots(null);
 
 /** A stored comma list ("tue,thu"), reduced to known slots in canonical order. */
 export function parseSlots(stored: string | null | undefined): InteropSlotKey[] {
@@ -48,8 +158,18 @@ export function serializeSlots(slots: readonly string[]): string {
   return parseSlots(slots.join(",")).join(",");
 }
 
-export function interopSlot(key: InteropSlotKey): InteropSlot {
-  return INTEROP_SLOTS.find((s) => s.key === key)!;
+/**
+ * A slot by key, from an offered set when one is to hand.
+ *
+ * Never returns undefined: a vote cast for a slot that has since been retired
+ * still has to render its own label somewhere, so an unknown key falls back to
+ * its default hour rather than crashing the page that reads it.
+ */
+export function interopSlot(key: InteropSlotKey, offered?: readonly InteropSlot[]): InteropSlot {
+  const found = (offered ?? INTEROP_SLOTS).find((s) => s.key === key);
+  if (found) return found;
+  const fallback = DEFAULT_SLOT_HOURS.find((d) => d.key === key);
+  return buildSlot(key, fallback ? fallback.hourPT : 10);
 }
 
 export const INTEROP_CIRCLE_TITLE = "Interoperability Circle";

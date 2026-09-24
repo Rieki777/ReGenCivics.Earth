@@ -22,14 +22,18 @@
 import { adminProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { eventSignups, interopTimeVotes } from "../../drizzle/schema";
+import { eventSignups, interopTimeVotes, interopTools } from "../../drizzle/schema";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   INTEROP_PIN_SETTING,
+  INTEROP_SLOTS_SETTING,
   INTEROP_SLOT_KEYS as INTEROP_SLOTS,
+  type InteropSlotKey,
   interopSlot,
+  parseOfferedSlots,
   parseSlots,
+  serializeOfferedSlots,
   serializeSlots,
 } from "@shared/interopCircle";
 import {
@@ -41,10 +45,27 @@ import {
   syncInteropCircle,
   upcomingCircleRows,
 } from "../lib/interopCircle";
-import { setSiteSetting } from "../db";
+import { getSiteSetting, setSiteSetting } from "../db";
+import { cleanAgent, cleanRepoUrl } from "@shared/interopTools";
+import { verifyPrefsToken } from "../lib/emailPrefs";
 
 /** How many upcoming weeks the page and admin panel list. */
 const SCHEDULE_PREVIEW = 4;
+
+/** How many directory entries the page shows. */
+const DIRECTORY_LIMIT = 60;
+
+/**
+ * Which slots the Circle currently offers, from site_settings.
+ *
+ * Read per request rather than cached, because the whole point of moving this
+ * out of the code was that changing it should not need a deploy, and a cache
+ * would mean it also needed a restart. It is one settings read beside reads
+ * that already hit the database.
+ */
+async function offeredSlots() {
+  return parseOfferedSlots(await getSiteSetting(INTEROP_SLOTS_SETTING));
+}
 
 /** How many named hands the page shows per slot, and how many rows we read to find them. */
 const NAMES_PER_SLOT = 40;
@@ -58,10 +79,10 @@ const NAME_SCAN_LIMIT = 300;
  * and the bucket is shared by everyone behind one office or VPN address. It is
  * there to make minting fresh voterKeys in a loop slow, not to police a person.
  *
- * CONTACT_LIMIT is tight, because join and leave act on an email address the
- * caller merely typed. join sends that address a welcome email and forces a
- * full circle sync, so without a ceiling it is both a way to mail a stranger
- * repeatedly and a cheap way to make the server do expensive work on demand.
+ * CONTACT_LIMIT is tight, because join sends a welcome email to an address the
+ * caller merely typed, which is the one thing here that reaches a stranger's
+ * inbox. leave now needs a signed token, so it is no longer a way to cancel
+ * somebody else, but it stays capped because verifying a token is still work.
  */
 const VOTE_LIMIT = { windowMs: 60_000, max: 20 };
 const CONTACT_LIMIT = { windowMs: 60_000, max: 5 };
@@ -92,19 +113,27 @@ export function cleanDisplayName(raw: string | undefined | null): string | null 
  * distinct combination ("tue", "tue,thu", ...) rather than per slot. There are
  * at most a handful of combinations however many people vote, which is what
  * lets the count stay exact without reading the table.
+ *
+ * Counted against the slots currently on offer, not against every weekday the
+ * vocabulary allows. Retiring a day leaves its votes in the table on purpose,
+ * so putting it back restores them; but while it is off the offer it must not
+ * show in a count the page cannot display, or the total disagrees with the
+ * columns beneath it.
  */
 export function countsFromCombos(
   combos: { slot: string; count: number }[],
+  offeredKeys: readonly string[] = INTEROP_SLOTS,
 ): { perSlot: Record<string, number>; total: number } {
+  const offer = new Set(offeredKeys);
   const perSlot: Record<string, number> = {};
-  for (const key of INTEROP_SLOTS) perSlot[key] = 0;
+  for (const key of offeredKeys) perSlot[key] = 0;
   let total = 0;
   for (const row of combos) {
     const n = Number(row.count);
     if (!Number.isFinite(n) || n <= 0) continue;
-    const slots = parseSlots(row.slot);
+    const slots = parseSlots(row.slot).filter((k) => offer.has(k));
     if (!slots.length) continue;
-    // Counts people, not hands: someone who can make all three is one voter.
+    // Counts people, not hands: someone who can make every slot is one voter.
     total += n;
     for (const s of slots) perSlot[s] = (perSlot[s] ?? 0) + n;
   }
@@ -119,9 +148,11 @@ export const interopSessionsRouter = router({
    * The page polls this, so it stays cheap: two grouped reads, no joins.
    */
   tally: publicProcedure.query(async () => {
+    const offered = await offeredSlots();
+    const keys = offered.map((s) => s.key);
     const database = await getDb();
-    const empty = INTEROP_SLOTS.map((slot) => ({ slot, count: 0, names: [] as string[] }));
-    if (!database) return { slots: empty, total: 0 };
+    const empty = keys.map((slot) => ({ slot, count: 0, names: [] as string[] }));
+    if (!database) return { slots: empty, total: 0, offered };
     await ensureTable(database);
 
     // The counts come from a grouped aggregate so they stay exact however many
@@ -145,12 +176,12 @@ export const interopSessionsRouter = router({
     } catch (err) {
       // The page keeps its shape on a database hiccup: zero hands, no error.
       console.error("[interopSessions] tally failed:", err);
-      return { slots: empty, total: 0 };
+      return { slots: empty, total: 0, offered };
     }
 
-    const { perSlot, total } = countsFromCombos(combos);
+    const { perSlot, total } = countsFromCombos(combos, keys);
     const parsed = named.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
-    const slots = INTEROP_SLOTS.map((slot) => {
+    const slots = keys.map((slot) => {
       const names: string[] = [];
       const seen = new Set<string>();
       for (const row of parsed) {
@@ -165,7 +196,43 @@ export const interopSessionsRouter = router({
       return { slot, count: perSlot[slot] ?? 0, names };
     });
 
-    return { slots, total };
+    return { slots, total, offered };
+  }),
+
+  /**
+   * Public: the tools directory, which is the point of the Circle collecting
+   * repos at all. Names, repos and agents only. The email that owns each row
+   * is the key, never the output: people gave it for reminders, not for a
+   * public list, and a scrapeable page of addresses is how that becomes spam.
+   */
+  directory: publicProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return { entries: [] as { name: string | null; repoUrl: string | null; agent: string | null }[], total: 0 };
+    try {
+      const rows = await database
+        .select({
+          name: interopTools.name,
+          repoUrl: interopTools.repoUrl,
+          agent: interopTools.agent,
+        })
+        .from(interopTools)
+        .orderBy(desc(interopTools.updatedAt))
+        .limit(DIRECTORY_LIMIT);
+      const [countRow] = await database.select({ n: sql<number>`count(*)` }).from(interopTools);
+      const entries = rows
+        .map((r) => ({
+          name: cleanDisplayName(r.name),
+          // Cleaned again on the way out: rows written before the cleaner, or
+          // by any future caller, still have to be safe to put in an href.
+          repoUrl: cleanRepoUrl(r.repoUrl),
+          agent: cleanAgent(r.agent),
+        }))
+        .filter((r) => r.name || r.repoUrl || r.agent);
+      return { entries, total: Number(countRow?.n ?? 0) };
+    } catch (err) {
+      console.error("[interopSessions] directory failed:", err);
+      return { entries: [], total: 0 };
+    }
   }),
 
   /**
@@ -187,7 +254,10 @@ export const interopSessionsRouter = router({
       if (!database) return { ok: false as const };
       await ensureTable(database);
 
-      const stored = serializeSlots(input.slots);
+      // Only slots currently on offer count. A stale tab holding a retired
+      // slot would otherwise keep voting for a time nobody can pick any more.
+      const offered = new Set((await offeredSlots()).map((o) => o.key));
+      const stored = serializeSlots(input.slots.filter((k) => offered.has(k)));
       if (stored.length === 0) {
         await database.delete(interopTimeVotes).where(eq(interopTimeVotes.voterKey, input.voterKey));
         return { ok: true as const };
@@ -286,13 +356,26 @@ export const interopSessionsRouter = router({
     .input(z.object({
       email: z.string().trim().toLowerCase().email().max(320),
       name: z.string().trim().max(120).optional(),
+      // The tools directory. Both optional: someone with no repo yet is still
+      // part of the circle, and the sign-up stays one field for anyone in a hurry.
+      repoUrl: z.string().max(500).optional(),
+      agent: z.string().max(200).optional(),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await syncInteropCircle({ force: true });
+
+      // Read first, and only sync when there is nothing to join. syncInteropCircle
+      // already debounces itself to once a minute, and forcing past that on every
+      // sign-up made a public endpoint able to demand a full circle rebuild on
+      // demand. The one case that genuinely needs the rebuild is the first person
+      // through the door before any week exists.
       const now = new Date();
-      const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+      let rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+      if (!rows.length) {
+        await syncInteropCircle({ force: true });
+        rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+      }
       if (!rows.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No Circle sessions are scheduled yet." });
 
       const ids = rows.map((r) => r.id);
@@ -304,6 +387,25 @@ export const interopSessionsRouter = router({
 
       const name = input.name && input.name.length > 0 ? input.name : null;
       await addCircleSignups(database, ids, [{ email: input.email, name }]);
+
+      // The directory is keyed by email and updated in place, so someone who
+      // signs up again with a repo fills in what they left blank the first time.
+      // A blank field never erases what is already there.
+      const repoUrl = cleanRepoUrl(input.repoUrl);
+      const agent = cleanAgent(input.agent);
+      if (repoUrl || agent || name) {
+        await database
+          .insert(interopTools)
+          .values({ email: input.email, name, repoUrl, agent })
+          .onDuplicateKeyUpdate({
+            set: {
+              ...(name ? { name } : {}),
+              ...(repoUrl ? { repoUrl } : {}),
+              ...(agent ? { agent } : {}),
+              updatedAt: sql`CURRENT_TIMESTAMP`,
+            },
+          });
+      }
 
       const state = await resolveCircleState(database, now);
       if (!already.length) {
@@ -318,14 +420,24 @@ export const interopSessionsRouter = router({
       return { ok: true as const, alreadyMember: already.length > 0 };
     }),
 
-  /** Public: leave the Circle (every future week). Same trust level as events.unsubscribe. */
+  /**
+   * Public: leave the Circle (every future week).
+   *
+   * Takes the signed token from the email footer, not a bare address. Taking an
+   * address meant anyone who knew someone's email could cancel their sign-ups,
+   * and the person would only find out by not being reminded. The token is the
+   * same one the preferences centre issues, so it proves the caller received
+   * mail at that address.
+   */
   leave: publicProcedure
     .use(rateLimited(CONTACT_LIMIT))
-    .input(z.object({ email: z.string().trim().toLowerCase().email().max(320) }))
+    .input(z.object({ token: z.string().min(16).max(2048) }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await leaveCircle(database, input.email);
+      const email = await verifyPrefsToken(input.token);
+      if (!email) throw new TRPCError({ code: "FORBIDDEN", message: "That unsubscribe link is not valid any more." });
+      await leaveCircle(database, email);
       return { ok: true as const };
     }),
 
@@ -347,6 +459,9 @@ export const interopSessionsRouter = router({
     const byId = new Map(counts.map((c) => [c.eventId, Number(c.n)]));
     return {
       ...state,
+      // The offered set is a setting, so the panel edits what is live rather
+      // than what happened to be compiled into the admin bundle.
+      offered: await offeredSlots(),
       sessions: rows.map((r) => ({
         id: r.id,
         startTime: r.startTime,
@@ -358,6 +473,25 @@ export const interopSessionsRouter = router({
   }),
 
   /** Admin: pin the Circle to a slot (overrides the vote), or clear the pin. Runs the sync now. */
+  /**
+   * Admin: choose which weekdays the Circle offers and at what Pacific hour.
+   * An empty list is refused rather than stored, because a vote with no slots
+   * is a page with nothing to click.
+   */
+  adminSetOfferedSlots: adminProcedure
+    .input(z.object({
+      slots: z.array(z.object({
+        key: z.enum(INTEROP_SLOTS),
+        hourPT: z.number().int().min(0).max(23),
+      })).min(1).max(INTEROP_SLOTS.length),
+    }))
+    .mutation(async ({ input }) => {
+      await setSiteSetting(INTEROP_SLOTS_SETTING, serializeOfferedSlots(input.slots as { key: InteropSlotKey; hourPT: number }[]));
+      // The scheduled slot may no longer be on offer, so rebuild the weeks.
+      const result = await syncInteropCircle({ force: true });
+      return { ok: true as const, offered: await offeredSlots(), synced: result != null };
+    }),
+
   adminPin: adminProcedure
     .input(z.object({ slot: z.enum(INTEROP_SLOTS).nullable() }))
     .mutation(async ({ input }) => {

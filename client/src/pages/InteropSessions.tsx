@@ -13,9 +13,10 @@
  * interopSessions.schedule.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, UserRound, Video, Wrench } from 'lucide-react';
 import { INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlotKey } from '@shared/interopCircle';
+import { repoLabel } from '@shared/interopTools';
 import { CALENDAR_FEEDS } from '@/lib/calendarLinks';
 import { SubscribeButtons } from '@/components/CalendarCta';
 import { AuthDialog } from '@/components/AuthDialog';
@@ -25,14 +26,18 @@ import { PageWrapper } from '@/components/PageWrapper';
 import { BackButton } from '@/components/BackButton';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
+import { seasonTwoPhase } from '@shared/seasonTwoPhase';
 
 type SlotKey = InteropSlotKey;
-const SLOTS = INTEROP_SLOTS;
+/** Fallback only. The offered set comes from the server so admin can change it. */
+const DEFAULT_SLOTS = INTEROP_SLOTS;
 
 const VOTER_KEY_STORAGE = 'interop-voter-key';
 const VOTE_STORAGE = 'interop-my-vote';
 const NAME_STORAGE = 'interop-my-name';
 const EMAIL_STORAGE = 'interop-my-email';
+const REPO_STORAGE = 'interop-my-repo';
+const AGENT_STORAGE = 'interop-my-agent';
 
 /** 32 hex characters of CSPRNG output, or a last-resort fallback where crypto is absent. */
 function randomKeyBody(): string {
@@ -93,6 +98,10 @@ export default function InteropSessions() {
   const [mySlots, setMySlots] = useState<SlotKey[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [repoUrl, setRepoUrl] = useState('');
+  const [agent, setAgent] = useState('');
+  // Set when someone arrives on a ?leave=<token> link from the Circle's own mail.
+  const [leftCircle, setLeftCircle] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
@@ -102,6 +111,8 @@ export default function InteropSessions() {
     setMySlots(readStored(VOTE_STORAGE).split(',').filter(isInteropSlotKey));
     setEmail(readStored(EMAIL_STORAGE));
     setName(readStored(NAME_STORAGE));
+    setRepoUrl(readStored(REPO_STORAGE));
+    setAgent(readStored(AGENT_STORAGE));
   }, []);
 
   // Signed-in members get their account email prefilled, unless they typed one.
@@ -109,6 +120,7 @@ export default function InteropSessions() {
     if (user?.email) setEmail((current) => current || user.email!);
   }, [user?.email]);
 
+  const emailRef = useRef<HTMLInputElement | null>(null);
   const tally = trpc.interopSessions.tally.useQuery(undefined, {
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
@@ -117,9 +129,24 @@ export default function InteropSessions() {
     onSuccess: () => { void tally.refetch(); },
   });
   const schedule = trpc.interopSessions.schedule.useQuery(undefined, { refetchInterval: 60_000 });
+  const directory = trpc.interopSessions.directory.useQuery(undefined, { refetchInterval: 60_000 });
   const join = trpc.interopSessions.join.useMutation({
-    onSuccess: () => { void schedule.refetch(); },
+    onSuccess: () => { void schedule.refetch(); void directory.refetch(); },
   });
+  const leave = trpc.interopSessions.leave.useMutation({
+    onSuccess: () => { setLeftCircle(true); void schedule.refetch(); },
+  });
+
+  // The Circle's mail links here with a signed token rather than an address, so
+  // leaving is one click from the footer and nobody can cancel a stranger.
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('leave');
+    if (!token) return;
+    leave.mutate({ token });
+    // Drop the token from the URL so it does not sit in history or get shared.
+    window.history.replaceState({}, '', window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function submitJoin(e: React.FormEvent) {
     e.preventDefault();
@@ -127,11 +154,23 @@ export default function InteropSessions() {
     if (!trimmed) return;
     writeStored(EMAIL_STORAGE, trimmed);
     writeStored(NAME_STORAGE, name);
-    join.mutate({ email: trimmed, name: name.trim() || undefined });
+    writeStored(REPO_STORAGE, repoUrl);
+    writeStored(AGENT_STORAGE, agent);
+    join.mutate({
+      email: trimmed,
+      name: name.trim() || undefined,
+      repoUrl: repoUrl.trim() || undefined,
+      agent: agent.trim() || undefined,
+    });
   }
 
-  const scheduledSlot = schedule.data?.slot ? interopSlot(schedule.data.slot) : null;
+  const scheduledSlot = schedule.data?.slot ? interopSlot(schedule.data.slot, tally.data?.offered) : null;
   const sessions = schedule.data?.sessions ?? [];
+
+  // The offered slots are a setting, so the page renders whatever the server
+  // says rather than a list compiled into the bundle. The defaults only stand
+  // in for the first render before the tally lands.
+  const SLOTS = useMemo(() => tally.data?.offered ?? DEFAULT_SLOTS, [tally.data]);
 
   const counts = useMemo(() => {
     const map: Record<string, { count: number; names: string[] }> = {};
@@ -140,15 +179,26 @@ export default function InteropSessions() {
       if (map[row.slot]) map[row.slot] = { count: row.count, names: row.names };
     }
     return map;
-  }, [tally.data]);
+  }, [tally.data, SLOTS]);
 
-  const total = SLOTS.reduce((sum, s) => sum + counts[s.key].count, 0);
+  const total = SLOTS.reduce((sum, s) => sum + (counts[s.key]?.count ?? 0), 0);
   const leader = useMemo(() => {
     let best = SLOTS[0];
-    for (const s of SLOTS) if (counts[s.key].count > counts[best.key].count) best = s;
-    return counts[best.key].count > 0 ? best : null;
-  }, [counts]);
+    for (const s of SLOTS) if ((counts[s.key]?.count ?? 0) > (counts[best.key]?.count ?? 0)) best = s;
+    return best && (counts[best.key]?.count ?? 0) > 0 ? best : null;
+  }, [counts, SLOTS]);
   const movingSoon = scheduledSlot && leader && leader.key !== scheduledSlot.key && !schedule.data?.pinned;
+  // Recomputed on render rather than stored, so an open tab retires the
+  // Selection Day copy at the cutoff without needing a reload.
+  const seasonTwoOpen = seasonTwoPhase() === 'before';
+  // Raising a hand and being reachable are different things: the vote is
+  // anonymous, so without this a slot can win with nobody we can write to.
+  const votedButNotJoined = mySlots.length > 0 && !join.isSuccess;
+
+  function focusEmail() {
+    emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    emailRef.current?.focus({ preventScroll: true });
+  }
 
 
   function toggleSlot(slot: SlotKey) {
@@ -194,14 +244,15 @@ export default function InteropSessions() {
             <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <Calendar className="w-5 h-5 text-[#7dd87d]" />
-                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Starts Saturday</p>
+                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">
+                  {seasonTwoOpen ? 'Starts Saturday' : 'Running now'}
+                </p>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">ReGen Civics Season Two</h2>
               <p className="text-white/75 mb-4">
-                Thirteen weeks with thirteen land projects, starting with Selection Day on Saturday,
-                September 26. Each week the cohort designs one layer of their game: governance, legal and
-                land structure, economics, financing, then a shared crowdpooling launch where the world
-                decides what to pool into.
+                {seasonTwoOpen
+                  ? 'Thirteen weeks with thirteen land projects, starting with Selection Day on Saturday, September 26. Each week the cohort designs one layer of their game: governance, legal and land structure, economics, financing, then a shared crowdpooling launch where the world decides what to pool into.'
+                  : 'Thirteen weeks with thirteen land projects, already under way. Each week the cohort designs one layer of their game: governance, legal and land structure, economics, financing, then a shared crowdpooling launch where the world decides what to pool into. The schedule has every session, past and upcoming.'}
               </p>
               <p className="text-white/75 mb-6">
                 This is for you if you hold a land project, or a recipe, a play, a game for regenerating a
@@ -209,6 +260,7 @@ export default function InteropSessions() {
                 commons. Any scale.
               </p>
 
+              {seasonTwoOpen && (
               <div className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Video className="w-5 h-5 text-[#7dd87d]" />
@@ -226,20 +278,21 @@ export default function InteropSessions() {
                   <li>Film in landscape mode, with your phone turned sideways. A phone is all you need.</li>
                 </ul>
               </div>
+              )}
 
               <div className="flex flex-wrap gap-3">
                 <a
-                  href="/season2"
+                  href={seasonTwoOpen ? '/season2' : '/schedule'}
                   className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
                 >
-                  Season Two, and how it works
+                  {seasonTwoOpen ? 'Season Two, and how it works' : 'Every session, past and upcoming'}
                 </a>
                 <a
-                  href="/schedule"
+                  href={seasonTwoOpen ? '/schedule' : '/season2'}
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
                 >
                   <Calendar className="w-4 h-4" />
-                  Add all sessions to your calendar
+                  {seasonTwoOpen ? 'Add all sessions to your calendar' : 'Season Two, and how it works'}
                 </a>
               </div>
             </section>
@@ -383,9 +436,67 @@ export default function InteropSessions() {
                     {sessions.map((s) => <li key={s.id}>{formatSession(s.startTime)}</li>)}
                   </ul>
                 )}
+
+                {votedButNotJoined && (
+                  <div className="mt-5 pt-5 border-t border-white/10">
+                    <p className="text-white/75 text-sm mb-3">
+                      Your hand is counted, and it is anonymous. If you want the room link and a reminder before
+                      the session, leave an email too.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={focusEmail}
+                      className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm min-h-[44px]"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Get the reminders too
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           </AnimatedSection>
+
+          {/* The register the sign-up builds: what the movement is actually running. */}
+          {(directory.data?.entries.length ?? 0) > 0 && (
+            <AnimatedSection>
+              <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <Wrench className="w-5 h-5 text-[#7dd87d]" />
+                  <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">The register</p>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">What we are bringing</h2>
+                <p className="text-white/75 mb-5">
+                  Every repo and agent people have added so far. This is the list the first session starts from,
+                  and it grows every time somebody signs up. Add yours below.
+                </p>
+                <ul className="divide-y divide-white/10">
+                  {directory.data!.entries.map((entry, i) => (
+                    <li key={i} className="py-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-white font-medium">{entry.name ?? 'Someone'}</span>
+                      {entry.repoUrl && (
+                        <a
+                          href={entry.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="inline-flex items-center gap-1 text-[#7dd87d] hover:text-[#9de89d] text-sm underline underline-offset-2"
+                        >
+                          {repoLabel(entry.repoUrl)}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                      {entry.agent && <span className="text-white/60 text-sm">builds with {entry.agent}</span>}
+                    </li>
+                  ))}
+                </ul>
+                {(directory.data!.total ?? 0) > directory.data!.entries.length && (
+                  <p className="text-white/40 text-xs mt-4">
+                    Showing the {directory.data!.entries.length} most recently updated of {directory.data!.total}.
+                  </p>
+                )}
+              </section>
+            </AnimatedSection>
+          )}
 
           {/* Join: optional. Anyone can come; signing up adds reminders, recaps and a profile. */}
           <AnimatedSection>
@@ -416,30 +527,64 @@ export default function InteropSessions() {
               {(schedule.data?.members ?? 0) === 1 && <p className="text-white/50 text-sm mb-3">1 person has signed up so far.</p>}
               {(schedule.data?.members ?? 0) > 1 && <p className="text-white/50 text-sm mb-3">{schedule.data!.members} people have signed up so far.</p>}
 
+              {leftCircle && (
+                <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-4">
+                  <CheckCircle2 className="w-5 h-5" />
+                  You have left the Circle. No more reminders. Sign up again below whenever you want back in.
+                </p>
+              )}
+              {leave.isError && (
+                <p className="text-red-300 text-sm mb-4">{leave.error.message || 'That leave link is not valid any more.'}</p>
+              )}
               {join.isSuccess ? (
                 <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-4">
                   <CheckCircle2 className="w-5 h-5" />
                   {join.data?.alreadyMember ? 'You were already signed up. See you there.' : 'You are signed up. Check your email for the details.'}
                 </p>
               ) : (
-                <form onSubmit={submitJoin} className="flex flex-col sm:flex-row gap-3 mb-2">
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    maxLength={320}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    aria-label="Email for Circle reminders and recaps"
-                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={join.isPending}
-                    className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60"
-                  >
-                    {join.isPending ? 'Signing up...' : 'Send me reminders and recaps'}
-                  </button>
+                <form onSubmit={submitJoin} className="mb-2">
+                  <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                    <input
+                      ref={emailRef}
+                      type="email"
+                      required
+                      value={email}
+                      maxLength={320}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email"
+                      aria-label="Email for Circle reminders and recaps"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={join.isPending}
+                      className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60 min-h-[44px]"
+                    >
+                      {join.isPending ? 'Signing up...' : 'Send me reminders and recaps'}
+                    </button>
+                  </div>
+                  {/* The tools directory. Both optional, and second, so the
+                      shortest path through this form is still one field. */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="url"
+                      value={repoUrl}
+                      maxLength={500}
+                      onChange={(e) => setRepoUrl(e.target.value)}
+                      placeholder="Your repo (optional)"
+                      aria-label="The repository your tool lives in, optional"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    />
+                    <input
+                      type="text"
+                      value={agent}
+                      maxLength={120}
+                      onChange={(e) => setAgent(e.target.value)}
+                      placeholder="Your agent (optional)"
+                      aria-label="The agent you build with, optional"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    />
+                  </div>
                 </form>
               )}
               {join.isError && (
@@ -447,6 +592,8 @@ export default function InteropSessions() {
               )}
               <p className="text-white/40 text-xs mb-5">
                 An email is all reminders need. Your name comes from the field above. Every email has a link to leave.
+                The repo and agent build the register of what the movement is running, so the first session can start
+                from a real list instead of a blank screen. Leave them empty if you would rather not say.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 mb-8">
