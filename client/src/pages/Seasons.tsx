@@ -8,7 +8,9 @@
  *
  * Until 2026-09-24 this page called the incubator "Spring" and ran three
  * different four-season models at once (the hero, the rhythm cards, and a
- * "project growth cycle"). Rye's ruling that day: the incubator is Winter.
+ * "project growth cycle"). Rye's rulings that day: the incubator is the Design
+ * Season (winter); the seasons go by Design, Resource, Build, and Rest; the
+ * timelines are loose this first year; Season 2 applications are closed.
  * The seasons now come from shared/regenYear.ts, Season 2's weeks from
  * shared/season2Curriculum.ts, its dates from shared/sessionClock.ts, and every
  * word about the Fund from shared/fund.ts. Nothing on this page restates them.
@@ -57,6 +59,8 @@ import {
   type RegenSeasonKey,
 } from "@shared/regenYear";
 import { FUND } from "@shared/fund";
+import { APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
+import { ApplicationsNotice } from "@/components/ApplicationsNotice";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 const WINTER = SEASON_LOOK.winter;
@@ -140,7 +144,7 @@ const JOURNEY: Stop[] = [
     color: "#d4a574",
     at: "past",
     items: [
-      "Our first cohort of regenerative land projects went through the incubator together",
+      "43 land projects applied, 16 presented, and 13 became our first cohort",
       "The Regenerative Infinite Games framework, built and tested",
       "The 13-week curriculum, developed and refined",
       "The first alliance partners and the idea of crowdpooling",
@@ -149,7 +153,7 @@ const JOURNEY: Stop[] = [
   {
     id: "long-winter",
     when: "2022 to 2026",
-    title: "The long winter",
+    title: "The long build",
     label: "Rest, research, and building the tools",
     color: "#d4a574",
     at: "past",
@@ -164,7 +168,7 @@ const JOURNEY: Stop[] = [
   {
     id: "s2-winter",
     when: windowLabel("winter", S2_WINTER_YEAR),
-    title: "Season 2 · Winter",
+    title: "Season 2 · Design",
     label: "Thirteen land projects design their games",
     color: SEASON_LOOK.winter.color,
     at: [2, "winter"],
@@ -178,7 +182,7 @@ const JOURNEY: Stop[] = [
   {
     id: "s2-spring",
     when: windowLabel("spring", S2_WINTER_YEAR),
-    title: "Spring",
+    title: "Resource",
     label: "The shared crowdpool",
     color: SEASON_LOOK.spring.color,
     at: [2, "spring"],
@@ -191,7 +195,7 @@ const JOURNEY: Stop[] = [
   {
     id: "s2-summer",
     when: windowLabel("summer", S2_WINTER_YEAR),
-    title: "Summer",
+    title: "Build",
     label: "On the land",
     color: SEASON_LOOK.summer.color,
     at: [2, "summer"],
@@ -203,7 +207,7 @@ const JOURNEY: Stop[] = [
   {
     id: "s2-fall",
     when: windowLabel("fall", S2_WINTER_YEAR),
-    title: "Fall",
+    title: "Rest",
     label: "Harvest and rest",
     color: SEASON_LOOK.fall.color,
     at: [2, "fall"],
@@ -216,11 +220,14 @@ const JOURNEY: Stop[] = [
   {
     id: "s3",
     when: `From ${MONTH[TURNING_POINTS.winter.month - 1]} ${S2_WINTER_YEAR + 1}`,
-    title: "Season 3 · Winter",
-    label: "The wheel turns",
+    title: "Season 3 · Design",
+    label: "The Handoff Festival",
     color: SEASON_LOOK.winter.color,
     at: [3, "winter"],
-    items: ["A new cohort of land projects sits down to design their games"],
+    items: [
+      "The Season 2 cohort celebrates its harvest and hands the wheel on",
+      "A new cohort of land projects sits down to design their games",
+    ],
   },
 ];
 
@@ -251,7 +258,7 @@ export default function Seasons() {
       {/* ── 1. The wheel ── */}
       <SeasonWheel now={now} />
 
-      {/* ── 2. This winter: Season 2 ── */}
+      {/* ── 2. This season: Season 2 opens with the Design Season ── */}
       <section id="season-2" className="relative py-20 px-4 bg-gradient-to-b from-[#0d2818] via-[#0e3334] to-[#0d2818]">
         <div className="container mx-auto max-w-5xl">
           <AnimatedSection animation="fade-in" className="text-center mb-12">
@@ -260,16 +267,17 @@ export default function Seasons() {
               style={{ color: WINTER.color, background: `${WINTER.color}14`, borderColor: `${WINTER.color}40` }}
             >
               <WINTER.Icon className="h-4 w-4" aria-hidden="true" />
-              Winter {S2_WINTER_YEAR} · Season 2
+              Season 2 · the Design Season, {S2_WINTER_YEAR}
             </p>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-5 leading-tight" style={display}>
-              This winter, thirteen land projects{" "}
+              This season, thirteen land projects{" "}
               <span style={{ color: WINTER.color }}>design their games</span>
             </h2>
             <p className="text-lg text-white/85 max-w-3xl mx-auto leading-relaxed safe-prose">
-              Season 2 is our winter incubator. For 13 weeks, thirteen regenerative land projects
-              design how their villages decide, share value, hold roles, and stay legal and fair.
-              On the last week they launch into one shared crowdpool, and spring begins.
+              Season 2 opens with the Design Season and our incubator. For 13 weeks, thirteen
+              regenerative land projects design how their villages decide, share value, hold roles,
+              and stay legal and fair. On the last week they launch into one shared crowdpool, and
+              the Resource Season begins.
             </p>
           </AnimatedSection>
 
@@ -317,11 +325,11 @@ export default function Seasons() {
                 {status.phase === "after" && (
                   <>
                     <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
-                      Season 2's winter is complete
+                      Season 2's Design Season is complete
                     </h3>
                     <p className="text-white/80 safe-prose">
-                      The cohort designed their games and launched their crowdpool together. Spring
-                      is here: see what they are calling in.
+                      The cohort designed their games and launched their crowdpool together. The
+                      Resource Season is here: see what they are calling in.
                     </p>
                   </>
                 )}
@@ -370,6 +378,8 @@ export default function Seasons() {
             </div>
           </AnimatedSection>
 
+          <ApplicationsNotice className="mb-12" />
+
           {/* How the weeks work */}
           <div className="grid md:grid-cols-3 gap-5 mb-12">
             {[
@@ -414,7 +424,7 @@ export default function Seasons() {
                   </div>
                   <div>
                     <span className="block text-xl md:text-2xl font-bold text-white" style={display}>
-                      The 13 weeks of winter
+                      The 13 weeks of the Design Season
                     </span>
                     <span className="block text-white/70 text-sm">
                       {WEEKS[0]?.start && WEEKS[12]?.start
@@ -478,7 +488,7 @@ export default function Seasons() {
         <div className="container mx-auto max-w-5xl">
           <AnimatedSection animation="fade-in" className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-5" style={display}>
-              Who each winter <span style={{ color: SEASON_LOOK.spring.color }}>cohort</span> is for
+              Who each <span style={{ color: SEASON_LOOK.spring.color }}>cohort</span> is for
             </h2>
             <p className="text-lg text-white/80 max-w-3xl mx-auto safe-prose">
               Land projects of every size and stage, anywhere on Earth, plus the alliance partners who
@@ -614,17 +624,18 @@ export default function Seasons() {
         </div>
       </section>
 
-      {/* ── 4. The gatherings that turn the year ── */}
+      {/* ── 4. A recap and passoff at every turn ── */}
       <section className="py-20 px-4 bg-gradient-to-b from-[#0d2818] to-[#10301f]">
         <div className="container mx-auto max-w-5xl">
           <AnimatedSection animation="fade-in" className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-5" style={display}>
-              A gathering at every <span className="text-[#d4a574]">turn</span>
+              A recap and passoff at every <span className="text-[#d4a574]">turn</span>
             </h2>
             <p className="text-lg text-white/80 max-w-3xl mx-auto safe-prose">
-              Each season opens with a gathering near a solstice or equinox, online or on the land. We
-              reflect on the season we're leaving, co-create the one ahead, and choose our roles, quests,
-              and projects for it.
+              At every solstice and equinox, online or on the land, the season we're leaving recaps
+              what it grew and passes off to the season ahead. We reflect, co-create what comes next,
+              and choose our roles, quests, and projects. The September turn is the big one: the
+              Handoff Festival, where the outgoing cohort hands the wheel to the new one.
             </p>
           </AnimatedSection>
 
@@ -645,7 +656,7 @@ export default function Seasons() {
                       <div className="flex items-center gap-2 mb-2">
                         <look.Icon className="w-5 h-5" style={{ color: look.color }} aria-hidden="true" />
                         <h3 className="text-lg font-bold text-white" style={display}>
-                          {s.name} begins
+                          {s.title} begins
                         </h3>
                       </div>
                       <p className="text-sm text-white/75 leading-relaxed">{s.gathering}</p>
@@ -687,8 +698,9 @@ export default function Seasons() {
               Season by <span className="text-[#7dd87d]">season</span>
             </h2>
             <p className="text-white/75 mt-4 max-w-2xl mx-auto safe-prose">
-              From the first cohort in 2022, through a long winter of building, to Season 2 and its first
-              full turn of the wheel.
+              From the first cohort in 2022, through a long stretch of building, to Season 2 and its
+              first full turn of the wheel. The dates ahead are loose: we'll shape them to what this
+              year needs.
             </p>
           </AnimatedSection>
 
@@ -775,8 +787,9 @@ export default function Seasons() {
             Find your <span className="text-[#7dd87d]">season</span>
           </h2>
           <p className="text-lg text-white/80 mb-8 safe-prose">
-            Land projects start in winter. Investors and allies come in through spring. Everyone is
-            welcome on the land in summer and at the harvest in fall.
+            Land projects start in the Design Season. Investors and allies come in through the
+            Resource Season. Everyone is welcome on the land in the Build Season and at the harvest
+            in the Rest Season.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             {status.phase === "before" ? (
@@ -795,7 +808,7 @@ export default function Seasons() {
               </Button>
             )}
             <Button asChild size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl font-bold min-h-11">
-              <Link href="/apply">Apply for the next cohort</Link>
+              <Link href="/apply">{APPLY_BUTTON_LABEL}</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10 min-h-11">
               <Link href="/schedule">

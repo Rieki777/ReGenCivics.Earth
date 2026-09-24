@@ -38,10 +38,10 @@ export default function SeasonalRhythmSection() {
     const next = nextRegenSeason(key);
     return {
       emoji: SEASON_EMOJI[key],
-      name: s.name,
+      name: s.title,
       color: SEASON_LOOK[key].color,
-      months: `${MONTH[TURNING_POINTS[key].month - 1]} to ${MONTH[TURNING_POINTS[next].month - 1]}`,
-      theme: `${s.verb}. ${s.headline}`,
+      months: `${s.pattern} pattern · ${MONTH[TURNING_POINTS[key].month - 1]} to ${MONTH[TURNING_POINTS[next].month - 1]}, loosely`,
+      theme: s.headline,
       description: s.summary,
       roles: SEASON_ROLES[key],
       current: key === current,
@@ -140,8 +140,9 @@ export default function SeasonalRhythmSection() {
               Macro: The Four Seasons
             </h3>
             <p style={{ margin: 0, lineHeight: 1.6, color: "#e8e4de" }}>
-              Equinox to solstice and round again, roughly 91 days each. The big
-              arcs of our year: design, resource, build, and rest.
+              Design, Resource, Build, and Rest, loosely following winter, spring,
+              summer, and fall. Roughly 91 days each, turning at the solstices and
+              equinoxes.
             </p>
           </div>
           <div
@@ -297,8 +298,9 @@ export default function SeasonalRhythmSection() {
               marginRight: "auto",
             }}
           >
-            At the turn of each season, the community gathers (online or in person) for a
-            festival that marks the transition. Three movements:
+            At every solstice and equinox we hold a recap and passoff, online or in person,
+            as one season hands to the next. The September one is the big Handoff Festival,
+            where the outgoing cohort hands the wheel to the new one. Three movements:
           </p>
 
           <div

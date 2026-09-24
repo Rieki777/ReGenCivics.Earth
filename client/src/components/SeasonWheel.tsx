@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ChevronLeft, ChevronRight, MapPin, Pause, Play, Wind } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Compass, MapPin, Pause, Play, Wind } from "lucide-react";
 import {
   REGEN_SEASONS,
   REGEN_SEASON_ORDER,
@@ -25,6 +25,7 @@ import {
 import { SEASON_THEMES } from "@/lib/seasons";
 import { SEASON_LOOK } from "@/lib/seasonLook";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { trpc } from "@/lib/trpc";
 
 // ─── Look ───────────────────────────────────────────────────────────────────
 
@@ -241,10 +242,10 @@ export function SeasonWheel({ now }: { now?: Date }) {
 
   const opening =
     span.progress < 0.15
-      ? `We're entering ${REGEN_SEASONS[current].name.toLowerCase()}`
+      ? `We're entering the ${REGEN_SEASONS[current].title}`
       : span.progress > 0.85
-        ? `${REGEN_SEASONS[upNext].name} is almost here`
-        : `We're in ${REGEN_SEASONS[current].name.toLowerCase()}`;
+        ? `The ${REGEN_SEASONS[upNext].title} is almost here`
+        : `We're in the ${REGEN_SEASONS[current].title}`;
 
   return (
     <section
@@ -294,9 +295,10 @@ export function SeasonWheel({ now }: { now?: Date }) {
             The ReGen Civics <span style={{ color: look.color }} className="transition-colors duration-700">Year</span>
           </h1>
           <p className="text-lg md:text-xl text-white/85 leading-relaxed safe-prose">
-            Our year turns through four seasons. We design in winter, crowdpool in spring,
-            build on the land in summer, and rest in fall. Then the wheel comes back around
-            and a new cohort of land projects begins.
+            Our year turns through four seasons: Design, Resource, Build, and Rest. They
+            loosely follow the pattern of winter, spring, summer, and fall, so every land
+            project can find its rhythm in them, wherever it is on Earth. Then the wheel comes
+            back around and a new cohort of land projects begins.
           </p>
         </header>
 
@@ -516,7 +518,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
                       id={`regen-year-tab-${key}`}
                       aria-selected={isSel}
                       aria-controls="regen-year-panel"
-                      aria-label={`${s.name}: ${s.verb}${status === "Now" ? ", where we are now" : ""}`}
+                      aria-label={`${s.title}, the ${s.pattern.toLowerCase()} of our year${status === "Now" ? ", where we are now" : ""}`}
                       tabIndex={isSel ? 0 : -1}
                       onClick={() => choose(key)}
                       onKeyDown={onTabKey}
@@ -529,7 +531,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
                         style={{ color: LOOK[key].color }}
                       >
                         <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {s.name}
+                        {s.pattern}
                       </span>
                       <span
                         className="text-lg sm:text-2xl font-bold text-white leading-tight"
@@ -562,8 +564,8 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 {playing ? "Stop" : "Turn the wheel"}
               </button>
               <p className="max-w-sm text-xs text-white/70 leading-relaxed">
-                The Game's seasons follow the work, so they run one season ahead of the
-                northern calendar. Your own land keeps its own seasons.
+                A loose connection to the wheel of the year. The Game's seasons follow the
+                work, and your own land keeps its own seasons.
               </p>
             </div>
           </div>
@@ -597,7 +599,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 className="text-sm font-bold uppercase tracking-[0.2em] mb-1"
                 style={{ color: look.color }}
               >
-                {season.name} · {season.verb}
+                {season.title} <span className="opacity-70">· {season.pattern}</span>
               </p>
               <h2
                 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight"
@@ -662,14 +664,14 @@ export function SeasonWheel({ now }: { now?: Date }) {
                     className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-white/20 px-3 text-sm text-white/85 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
                   >
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    {REGEN_SEASONS[previousRegenSeason(selected)].name}
+                    {REGEN_SEASONS[previousRegenSeason(selected)].verb}
                   </button>
                   <button
                     type="button"
                     onClick={() => choose(nextRegenSeason(selected))}
                     className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-white/20 px-3 text-sm text-white/85 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
                   >
-                    {REGEN_SEASONS[nextRegenSeason(selected)].name}
+                    {REGEN_SEASONS[nextRegenSeason(selected)].verb}
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
@@ -677,8 +679,116 @@ export function SeasonWheel({ now }: { now?: Date }) {
             </div>
           </div>
         </div>
+
+        {/* Loose timelines, said plainly (Rye, 2026-09-24) */}
+        <div
+          className="mt-10 md:mt-12 mx-auto max-w-3xl rounded-2xl border border-[#d4a574]/45 bg-[#d4a574]/10 p-5 md:p-6 flex items-start gap-4"
+          role="note"
+        >
+          <Compass className="h-6 w-6 shrink-0 text-[#e8c9a0] mt-0.5" aria-hidden="true" />
+          <div>
+            <p className="font-bold text-[#f3dcc0] mb-1">Loose timelines, on purpose</p>
+            <p className="text-sm md:text-base text-white/85 leading-relaxed safe-prose">
+              This is our first full turn of the wheel, so we'll adjust the seasons to meet our
+              needs this year. Treat these dates as a guide. The goal is a clear, steady pattern
+              once we get going.
+            </p>
+          </div>
+        </div>
+
+        {/* How to play the chosen season */}
+        <div className="mt-12 md:mt-16">
+          <div key={`play-${selected}`} className="rw-panel-in">
+            <div className="text-center mb-6">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: look.color }}>
+                How to play the {season.title}
+              </p>
+              <h2
+                className="text-2xl md:text-3xl font-bold text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Find your move this season
+              </h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {season.play.map((move) => (
+                <Link
+                  key={move.href + move.who}
+                  href={move.href}
+                  className="group flex flex-col rounded-2xl border bg-white/[0.05] p-5 transition-colors hover:bg-white/[0.09] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  style={{ borderColor: `${look.color}40` }}
+                >
+                  <span className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: look.color }}>
+                    {move.who}
+                  </span>
+                  <span className="mt-2 text-white/90 leading-relaxed safe-prose">{move.what}</span>
+                  <span className="mt-auto pt-4 inline-flex items-center gap-1.5 font-semibold" style={{ color: look.color }}>
+                    {move.label}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <SeasonRoles season={selected} color={look.color} title={season.title} />
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+/** Tolerates the json column: an array of season keys, or anything else. */
+function roleSeasons(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+  if (typeof raw === "string") {
+    try {
+      return roleSeasons(JSON.parse(raw));
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * The Game roles active in a season, read live from the roles table (the same
+ * source as /team). Roles that belong to fewer seasons come first, so the
+ * season's own roles lead and the year-round ones follow.
+ */
+function SeasonRoles({ season, color, title }: { season: RegenSeasonKey; color: string; title: string }) {
+  const rolesQuery = trpc.roles.list.useQuery(undefined, { staleTime: 60_000 });
+  const inSeason = (rolesQuery.data ?? [])
+    .filter((r) => r.kind === "game")
+    .map((r) => ({ title: r.title, seasons: roleSeasons(r.seasons) }))
+    .filter((r) => r.seasons.includes(season))
+    .sort((a, b) => a.seasons.length - b.seasons.length)
+    .slice(0, 6);
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+      {inSeason.length > 0 && (
+        <>
+          <span className="text-white/75 mr-1">Roles in the {title}:</span>
+          {inSeason.map((r) => (
+            <span
+              key={r.title}
+              className="rounded-full border px-3 py-1 text-white/90"
+              style={{ borderColor: `${color}55`, background: `${color}14` }}
+            >
+              {r.title}
+            </span>
+          ))}
+        </>
+      )}
+      <Link
+        href="/team"
+        className="inline-flex min-h-11 items-center gap-1.5 px-2 font-semibold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 rounded"
+        style={{ color }}
+      >
+        Meet the roles
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </div>
   );
 }
 

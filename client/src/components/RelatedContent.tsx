@@ -142,7 +142,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   },
   seasons: {
     pages: [
-      { href: "/apply", title: "Apply Now", description: "Submit your application for the next season of the incubator." },
+      { href: "/apply", title: "Apply Anytime", description: "Season 2 is closed. Apply anytime for the next season of the incubator." },
       { href: "/schedule", title: "Open Sessions", description: "Attend a community session to learn more before applying." },
       { href: "/game", title: "Play the Game", description: "Start contributing as a player while you prepare your application." },
     ],
@@ -161,7 +161,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
       { href: "/team", title: "Meet the Team", description: "Get to know the people you'll be working with." },
       { href: "/apply", title: "Apply", description: "Ready to join? Submit your application." },
     ],
-    blog: { slug: "remembering-season-1", title: "Remembering Season 1", excerpt: "A look back at the first 16 regenerative land projects in our program." },
+    blog: { slug: "remembering-season-1", title: "Remembering Season 1", excerpt: "A look back at our first cohort: 43 applied, 16 presented, 13 were selected." },
   },
   team: {
     pages: [

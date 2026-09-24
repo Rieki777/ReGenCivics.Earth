@@ -25,7 +25,7 @@ Regenerative land projects apply for the 13-week incubator program. Projects:
 - Design their economic game
 - Access alliance support
 - Attract investment
-Season 2 starts September 2026.
+Season 2 began in September 2026. Season 2 applications are closed; apply anytime for the next season.
 
 ### Alliance Partner Path
 Organizations join the network of groups co-creating the ReGenerative Renaissance. Alliance partners:
@@ -92,8 +92,16 @@ Governance token designed for fund decisions, letting holders participate in inv
 
 ## Current Programs and Initiatives
 
+### The ReGen Civics Year
+The year turns through four seasons named for what they are for, loosely following winter, spring, summer, and fall:
+- Design Season: land projects design their games in the 13-week incubator; we build the tools
+- Resource Season: crowdpooling, investor conversations, onboarding roles
+- Build Season: on the land, planting, building, festivals
+- Rest Season: harvest gatherings, rest, and village life
+Each solstice and equinox holds a recap and passoff; the September one is the Handoff Festival. Timelines are loose in this first full turn. Details: https://regencivics.earth/seasons
+
 ### Season 2 Incubator
-13-week program starting September 2026 for regenerative land projects. Participants receive:
+The 13-week Design Season incubator that began in September 2026 for regenerative land projects. Applications for Season 2 are closed; land projects can apply anytime for the next season. Participants receive:
 - Governance framework development
 - Tokenomics design support
 - Community building assistance

@@ -88,7 +88,7 @@ const siteNavigationSchema = {
     {
       "@type": "SiteNavigationElement",
       "name": "Apply",
-      "description": "Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications open now.",
+      "description": "Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications are closed; apply anytime for the next season.",
       "url": `${BASE_URL}/apply`
     },
     {

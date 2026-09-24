@@ -73,6 +73,8 @@ import { SEO } from "@/components/SEO";
 import { Season2Calendar } from "@/components/Season2Calendar";
 import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
+import { ApplicationsNotice } from "@/components/ApplicationsNotice";
+import { APPLY_ANYTIME_LINE, APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -355,7 +357,7 @@ function ReadinessCheck() {
           <p className="text-white/75 leading-relaxed mb-5">{msg.body}</p>
           <Link href="/apply">
             <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-6">
-              Apply for Season Two
+              {APPLY_BUTTON_LABEL}
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
@@ -511,8 +513,8 @@ const SELECTION: {
   cta?: { href: string; label: string; external?: boolean };
 }[] = [
   {
-    title: "Apply by September 11th",
-    body: "Applications close September 11th. Every project that applies is taken seriously regardless of scale, geography, or stage. Season One took 13 projects out of the 46 that applied. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
+    title: "Applications closed September 11th",
+    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took 13 projects out of the 43 that applied, after 16 presented. ${APPLY_ANYTIME_LINE}`,
   },
   {
     title: "Shortlisted projects make a pitch video",
@@ -644,7 +646,7 @@ export default function Season2() {
                 size="lg"
                 className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
               >
-                Apply for Season Two
+                {APPLY_BUTTON_LABEL}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -663,6 +665,8 @@ export default function Season2() {
             Free to apply. Free to take part. Everything we build together gets
             open-sourced.
           </p>
+
+          <ApplicationsNotice showLink={false} className="mt-8 max-w-xl mx-auto" />
 
           <div className="mt-10">
             <Countdown />
@@ -774,7 +778,7 @@ export default function Season2() {
                 size="lg"
                 className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
               >
-                Apply for Season Two
+                {APPLY_BUTTON_LABEL}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -1933,16 +1937,12 @@ export default function Season2() {
               An investor buying into the alliance is buying a cohort the public
               already chose to put money, land, and labor into.
             </FaqItem>
-            <FaqItem q="When do applications close and when does the season start?">
-              Applications close September 11th, and we approve shortlisted
-              projects on a rolling basis, so applying earlier gives you more
-              time to prepare. We'll let you know by September 5th (or sooner if
-              you apply early) whether you're shortlisted, and you'll have until
-              September 14th to submit a short pitch video. Every pitch video is
-              shared publicly to give your project exposure, unless you ask us not
-              to. Season Two then begins on the Equinox with a selection day held
-              in public, where a season council of members from previous seasons'
-              projects picks the 13 projects.
+            <FaqItem q="Can I still apply, and when does the season start?">
+              Season Two applications closed September 11th. Shortlisted projects
+              sent in their pitch videos by September 14th, and Season Two begins
+              on the Equinox with a selection day held in public, where a season
+              council of members from previous seasons' projects picks the 13
+              projects. {APPLY_ANYTIME_LINE}
             </FaqItem>
           </div>
         </div>
@@ -1977,7 +1977,7 @@ export default function Season2() {
           <p className="text-white/75 text-lg leading-relaxed mb-8">
             If you're building with other people, on the land, and you want your
             model held to the standard the world will apply when you go out and
-            raise, bring it to the season. Season One took 13 projects out of 46.
+            raise, bring it to the next season. Season One took 13 projects out of 43.
           </p>
 
           <Link href="/apply">
@@ -1985,7 +1985,7 @@ export default function Season2() {
               size="lg"
               className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-10"
             >
-              Apply for Season Two
+              {APPLY_BUTTON_LABEL}
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
@@ -1993,7 +1993,7 @@ export default function Season2() {
           {/* What happens next */}
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
             {[
-              { icon: CheckCircle2, t: "Apply by September 11th", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
+              { icon: CheckCircle2, t: "Apply anytime", d: "A short application about your project and team. Season Two applications closed September 11th; we hold new ones for the next season and email you as it gets close." },
               { icon: Clock, t: "Pitch by September 14th", d: "We let shortlisted projects know by September 5th, then you have until September 14th to submit a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
               { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins. Graduating projects go live together in one shared crowdpooling campaign at the end." },
             ].map((s) => {
@@ -2009,7 +2009,7 @@ export default function Season2() {
           </div>
 
           <p className="mt-8 text-sm text-[#d4a574]/80 font-medium tracking-wide">
-            Applications close September 11th · Thirteen seats · Rolling shortlisting
+            Season Two applications are closed · Apply anytime for the next season
           </p>
 
           {/* Nominate + newsletter fallback */}
@@ -2031,7 +2031,7 @@ export default function Season2() {
         </AnimatedSection>
       </section>
 
-      <StickyThumbCta href="/apply" label="Apply for Season Two" where="season2_sticky_cta" page="/season2" />
+      <StickyThumbCta href="/apply" label={APPLY_BUTTON_LABEL} where="season2_sticky_cta" page="/season2" />
     </div>
   );
 }

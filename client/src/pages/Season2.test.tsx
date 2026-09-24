@@ -133,7 +133,7 @@ describe("Season2 page", () => {
   });
 
   it("states the Season One selection rate", () => {
-    expect(body()).toMatch(/13 projects out of the 46 that applied/i);
+    expect(body()).toMatch(/13 projects out of the 43 that applied/i);
   });
 
   it("closes on the play CTA", () => {

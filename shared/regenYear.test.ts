@@ -7,6 +7,7 @@ import {
   regenSeasonOn,
   regenSeasonSpan,
 } from "./regenYear";
+import { APPLICATIONS, APPLICATIONS_STATUS, APPLY_BUTTON_LABEL } from "./applicationWindow";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
 
@@ -80,8 +81,60 @@ describe("the wheel", () => {
       "crucial",
     ];
     for (const s of Object.values(REGEN_SEASONS)) {
-      const text = [s.headline, s.summary, s.opensWith, s.gathering, ...s.happens].join(" ").toLowerCase();
+      const text = [
+        s.headline,
+        s.summary,
+        s.opensWith,
+        s.gathering,
+        ...s.happens,
+        ...s.play.flatMap((m) => [m.who, m.what, m.label]),
+      ]
+        .join(" ")
+        .toLowerCase();
       for (const word of banned) expect(text).not.toContain(word);
     }
+    const status = [APPLICATIONS_STATUS, APPLY_BUTTON_LABEL].join(" ").toLowerCase();
+    for (const word of banned) expect(status).not.toContain(word);
+  });
+
+  it("names each season for what it is for, and keeps the wheel-of-the-year pattern", () => {
+    expect(REGEN_SEASON_ORDER.map((k) => REGEN_SEASONS[k].title)).toEqual([
+      "Design Season",
+      "Resource Season",
+      "Build Season",
+      "Rest Season",
+    ]);
+    expect(REGEN_SEASON_ORDER.map((k) => REGEN_SEASONS[k].pattern)).toEqual([
+      "Winter",
+      "Spring",
+      "Summer",
+      "Fall",
+    ]);
+  });
+
+  it("opens the Design Season with the Handoff Festival and every other turn with a recap and passoff", () => {
+    expect(REGEN_SEASONS.winter.gathering).toMatch(/Handoff Festival/);
+    for (const key of ["spring", "summer", "fall"] as const) {
+      expect(REGEN_SEASONS[key].gathering).toMatch(/^Recap and passoff/);
+    }
+  });
+
+  it("gives every season three ways to play, each an internal link", () => {
+    for (const s of Object.values(REGEN_SEASONS)) {
+      expect(s.play).toHaveLength(3);
+      for (const move of s.play) {
+        expect(move.href.startsWith("/")).toBe(true);
+        expect(move.label.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("applications between intakes", () => {
+  it("says Season 2 is closed and anyone can apply anytime, with no email until the next season is close", () => {
+    expect(APPLICATIONS.reviewing).toBe(false);
+    expect(APPLICATIONS_STATUS).toMatch(/Season 2 applications are closed\./);
+    expect(APPLICATIONS_STATUS).toMatch(/apply anytime for the next season/);
+    expect(APPLICATIONS_STATUS).toMatch(/won't get emails about it until we get closer/);
   });
 });

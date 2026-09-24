@@ -22,6 +22,7 @@ import * as db from "../db";
 import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
 import { FUND } from "../../shared/fund";
 import { REGEN_SEASONS, REGEN_SEASON_ORDER } from "../../shared/regenYear";
+import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
 import {
@@ -229,7 +230,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Apply to the ReGen Civics incubator</h1>
-        <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 starts September 2026 and applications are open now.</p>
+        <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 began in September 2026. ${escapeHtml(APPLICATIONS_STATUS)}</p>
         <h2>What the program covers</h2>
         <ul>
           ${SEASON2_CURRICULUM.map((ep) => `<li>Week ${ep.week}: ${escapeHtml(ep.title)}.</li>`).join("\n          ")}
@@ -239,19 +240,20 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     `,
   },
   // Read from shared/regenYear.ts, the same definition the page renders. This
-  // block used to say Season 1 graduated in 2025 and 2026; it ran in 2022.
+  // block used to say Season 1 graduated in 2025 and 2026; it ran in 2022 (43
+  // applications, 16 presented, 13 selected, per Rye 2026-09-24).
   "/seasons": {
     html: `
       <article>
         <h1>Seasons: the ReGen Civics Year</h1>
-        <p>ReGen Civics runs on a yearly wheel of four seasons. Each numbered Season starts in winter with a new cohort of regenerative land projects and follows it once around the wheel. The Game's seasons follow the work, so they run one season ahead of the northern calendar and turn at the solstices and equinoxes.</p>
+        <p>ReGen Civics runs on a yearly wheel of four seasons named for what they are for: Design, Resource, Build, and Rest. They loosely follow winter, spring, summer, and fall, and turn at the solstices and equinoxes with a recap and passoff; the September one is the Handoff Festival, when the outgoing cohort hands the wheel to the new one on Selection Day. Each numbered Season starts with a Design Season and a new cohort of regenerative land projects and follows it once around the wheel. Timelines are loose in this first full turn and adjust to what the year needs.</p>
         <ul>
           ${REGEN_SEASON_ORDER.map((key) => {
             const s = REGEN_SEASONS[key];
-            return `<li><strong>${escapeHtml(s.name)}: ${escapeHtml(s.verb.toLowerCase())}.</strong> ${escapeHtml(s.summary)}</li>`;
+            return `<li><strong>${escapeHtml(s.title)} (${escapeHtml(s.pattern.toLowerCase())}).</strong> ${escapeHtml(s.summary)}</li>`;
           }).join("\n          ")}
         </ul>
-        <p>Season 1 was the first incubator, in 2022, followed by a long winter of building the tools. Season 2 opened at the September 2026 equinox with a public Selection Day, and its 13-week winter incubator runs to the December solstice, when the cohort launches a shared crowdpool. If you steward land and want your project in a future cohort, <a href="/apply">apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
+        <p>Season 1 was the first incubator, in 2022: 43 land projects applied, 16 presented, and 13 were selected. A long stretch of building the tools followed. Season 2 opened at the September 2026 equinox with a public Selection Day, and its 13-week Design Season runs to the December solstice, when the cohort launches a shared crowdpool. ${escapeHtml(APPLICATIONS_STATUS)} <a href="/apply">Apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
       </article>
     `,
   },

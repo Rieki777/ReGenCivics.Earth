@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { toast } from 'sonner';
+import { APPLICATIONS_STATUS, APPLY_BUTTON_LABEL } from '@shared/applicationWindow';
 import {
   Calendar,
   Clock,
@@ -794,21 +795,21 @@ export default function Schedule() {
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Want to Join <span className="text-[#7dd87d]">Season 2</span>?
+            Want to join the <span className="text-[#7dd87d]">next season</span>?
           </h2>
           <p className="text-white/70 mb-8 safe-prose">
-            Applications are now open for land projects interested in joining the next Season cohort.
+            {APPLICATIONS_STATUS}
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/seasons">
               <Button size="lg" variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 rounded-xl">
-                Learn About Next Season
+                Learn about the seasons
               </Button>
             </Link>
             <Link href="/apply">
               <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
-                Apply Now
+                {APPLY_BUTTON_LABEL}
               </Button>
             </Link>
           </div>

@@ -399,6 +399,23 @@ export const STORIES: Record<string, Story> = {
    */
   "seasons-page": {
     title: "/seasons: the ReGen Civics Year",
+    setup: () => {
+      // The roles table as /team reads it, after the 2026-09-24 season moves.
+      mockData["roles.list"] = [
+        { title: "Season Facilitator", kind: "game", seasons: ["winter"] },
+        { title: "Incubator Guide", kind: "game", seasons: ["winter", "spring"] },
+        { title: "Game Designer", kind: "game", seasons: ["winter", "spring"] },
+        { title: "Skills Builder", kind: "game", seasons: ["winter"] },
+        { title: "Tool Curator", kind: "game", seasons: ["winter", "spring"] },
+        { title: "Alliance Weaver", kind: "game", seasons: ["spring", "summer"] },
+        { title: "Outreach Writer", kind: "game", seasons: ["spring", "summer"] },
+        { title: "Storyteller", kind: "game", seasons: ["winter", "spring", "summer"] },
+        { title: "Quest Steward", kind: "game", seasons: ["winter", "spring", "summer"] },
+        { title: "Treasury Steward", kind: "game", seasons: ["winter", "spring", "summer", "fall"] },
+        { title: "Forum Gardener", kind: "game", seasons: ["winter", "spring", "summer", "fall"] },
+        { title: "Fund Steward", kind: "fund", seasons: ["winter", "spring", "summer", "fall"] },
+      ];
+    },
     render: () => (
       <div className="-m-6">
         <Seasons />

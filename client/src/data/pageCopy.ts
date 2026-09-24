@@ -122,7 +122,7 @@ export const pageCopy = {
     CTA: {
       heading: "Want Your Project Listed Here?",
       body: "If you are a land project looking to crowd pool contributions from your community, create a campaign and show people what you actually need.",
-      applyLabel: "Apply for Season 2",
+      applyLabel: "Apply for the next season",
       joinSessionLabel: "Join Open Session",
     },
   },

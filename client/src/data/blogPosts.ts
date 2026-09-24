@@ -363,7 +363,7 @@ Traditional investment models force a false choice: either you have money and th
 
 We do not operate on arbitrary fiscal quarters or academic semesters. ReGen Civics follows the rhythm of the seasons, beginning each major cycle at an Equinox or Solstice.
 
-Season 2 begins at the September Equinox 2026, offering 13 weeks of intensive support that mirrors the growing season.
+Season 2 began at the September Equinox 2026 with the Design Season: 13 weeks of intensive support while land projects design their games. From there the year turns through the Resource, Build, and Rest seasons.
 
 ## 4. Quest-Based Learning and Contribution
 
@@ -393,9 +393,9 @@ Welcome to the Infinite Game.`,
   {
     id: '2',
     slug: 'remembering-season-1',
-    title: 'Remembering Season 1: The First 16 Regenerative Land Projects',
+    title: 'Remembering Season 1: Our First Regenerative Land Projects',
     excerpt: 'A look back at the pioneering land projects that launched the ReGen Civics movement, from California to Costa Rica, Portugal to Ecuador.',
-    content: `In the spring of 2022, something remarkable began. Sixteen regenerative land projects from around the world came together for what would become the first season of ReGen Civics.
+    content: `In 2022, something remarkable began. Forty-three regenerative land projects from around the world applied, sixteen presented, and thirteen became the first cohort of ReGen Civics.
 
 Watch the full video to hear the stories of these pioneering projects and the lessons they learned along the way.
 
@@ -763,8 +763,10 @@ See you in the game!`,
     id: '8',
     slug: 'how-to-apply-for-season-2',
     title: 'How to Apply for Season 2: Complete Application Guide',
-    excerpt: 'Step-by-step tutorial on submitting your land project application for ReGen Civics Season 2. Learn what information you need and how to present your project effectively.',
-    content: `Ready to apply for Season 2? This guide walks you through every step of the application process.
+    excerpt: 'Step-by-step tutorial on submitting your land project application for the next ReGen Civics season. Learn what information you need and how to present your project effectively.',
+    content: `**Update, September 2026:** Season 2 applications closed on September 11. You can apply anytime for the next season. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season. The steps below still describe how to apply.
+
+Ready to apply? This guide walks you through every step of the application process.
 
 ## What You Will Need
 
@@ -1176,7 +1178,7 @@ Whether you are an investor looking to support regenerative land projects with r
 
 **For Investors**: [Schedule a call](/schedule) to discuss how you can contribute to the fund while supporting specific projects you care about.
 
-**For Land Projects**: [Apply for Season 2](/seasons) to begin the evaluation process and potentially access funding through our network.
+**For Land Projects**: [Apply for the next season](/apply) to begin the evaluation process and potentially access funding through our network.
 
 The ReGenerative Renaissance needs capital to flow to the land. ReGen Civics is building the infrastructure to make that happen safely and effectively.
 
@@ -1359,7 +1361,7 @@ If you can answer "yes" to all four, you may be a good candidate for our fund.
 
 1. Review your project against the four pillars
 2. Gather documentation for due diligence
-3. [Apply for Season 2](/seasons) to begin the evaluation process
+3. [Apply for the next season](/apply) to begin the evaluation process
 
 **For Investors Seeking Quality Projects:**
 
@@ -1369,7 +1371,7 @@ If you can answer "yes" to all four, you may be a good candidate for our fund.
 
 The ReGenerative Renaissance needs strong foundations. These four pillars ensure that the projects we support have what it takes to succeed for generations.
 
-[Apply for Season 2](/seasons)`,
+[Apply for the next season](/apply)`,
     author: 'ReGen Civics Team',
     date: 'Feb 5, 2026',
     readTime: '10 min read',

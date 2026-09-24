@@ -5,6 +5,8 @@
  */
 import { useState } from "react";
 import { Link } from "wouter";
+import { ApplicationsNotice } from "@/components/ApplicationsNotice";
+import { APPLICATIONS_STATUS } from "@shared/applicationWindow";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { ReadableScrim } from "@/components/ReadableScrim";
@@ -209,7 +211,7 @@ export default function Land() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
             <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Season 2 Applications Open - September 2026</span>
+              <span>Season 2 applications are closed · Apply anytime for the next season</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]/80">|</span>
             <Link href="/apply">
@@ -397,7 +399,7 @@ export default function Land() {
                 style={{ fontFamily: "var(--font-accent)" }}
               >
                 <Calendar className="w-5 h-5" />
-                Applications Open
+                Apply anytime
               </div>
             </Link>
             <h2
@@ -410,6 +412,7 @@ export default function Land() {
             <p className="text-xl text-white/70 max-w-3xl mx-auto text-shadow-subtle">
               Whether you're just starting or ready to scale, we have a path for you
             </p>
+            <ApplicationsNotice showLink={false} className="mt-8 max-w-2xl mx-auto" />
           </AnimatedSection>
 
           {/* What We're Looking For - Collapsible Criteria.
@@ -1060,8 +1063,7 @@ export default function Land() {
                 Ready to <span className="text-[#7dd87d]">Begin?</span>
               </h2>
               <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto">
-                Season 2 applications are open now for September 2026. Applications take around 15 minutes.
-                The team reviews every submission and follows up directly.
+                {APPLICATIONS_STATUS} Applications take around 15 minutes.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/apply">

@@ -18,6 +18,8 @@ import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";
+import { ApplicationsNotice } from "@/components/ApplicationsNotice";
+import { APPLICATIONS_STATUS } from "@shared/applicationWindow";
 import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { PageWrapper } from "@/components/PageWrapper";
 import { analytics } from "@/lib/analytics";
@@ -144,8 +146,8 @@ const GARDENER_FIELD_KEYS: Array<keyof FormData> = [
 /** Trusted grounding for the Gardener so she can answer program questions. */
 const GARDENER_CONTEXT = [
   "This is the ReGen Civics land project application for the next incubator season.",
-  "Facts you can share if asked: applying is free. Season 2 applications are for September 2026.",
-  "Review takes roughly 4 to 8 weeks after submission, and decisions land before season kickoff.",
+  `Facts you can share if asked: applying is free. ${APPLICATIONS_STATUS}`,
+  "Season 2 began with Selection Day on September 26, 2026. Applications made now are held for the next season, and review happens closer to its start.",
   "If a project is picked, the team commits about one day a week during the season.",
   "Projects at any stage are welcome: ecovillages, food forests, intentional communities, regenerative farms.",
   "After the talk, the review screen also lets them pin the land on the map, add website and video links, and attach documents.",
@@ -392,7 +394,7 @@ export default function Apply() {
       <SEO {...pageSEO.apply} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Apply", url: "/apply" }]} />
       <JsonLD data={schemas.faqPage([
         { question: "Who can apply to ReGen Civics?", answer: "Any regenerative land project (ecovillages, food forests, intentional communities, regenerative farms) can apply. Projects at any stage are welcome." },
-        { question: "When do applications open?", answer: "Season 2 applications are open now for September 2026. Apply to be part of the next incubator cohort." },
+        { question: "When do applications open?", answer: APPLICATIONS_STATUS },
         { question: "Is there a fee to apply?", answer: "No. There is no fee to apply to the ReGen Civics program." },
         { question: "How long does the application process take?", answer: "The review process typically takes 4–8 weeks after submission. You will be notified by email of the decision." },
       ])} />
@@ -454,6 +456,8 @@ export default function Apply() {
             Join the ReGen Civics Alliance
           </p>
         </div>
+
+        <ApplicationsNotice tone="light" showLink={false} className="mb-8" />
 
         {/* Chat-first: the Gardener leads the application. */}
         {mode === "talk" && (

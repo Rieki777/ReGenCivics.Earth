@@ -56,7 +56,7 @@ const contextConfig: Record<PageContext, {
     icon: <Leaf className="w-5 h-5 text-[#7dd87d]" />,
     headline: "Steward the Land",
     subline: "Stay connected with the land project community",
-    body: "Get updates on Season 2 land project applications, community calls, and regenerative practice resources. Join the movement.",
+    body: "Get updates on the next season's land project applications, community calls, and regenerative practice resources.",
     cta: "Keep Me Updated",
     successMessage: "You're in! We'll keep you informed about land project opportunities and community events.",
   },

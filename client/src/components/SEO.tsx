@@ -191,7 +191,7 @@ export const pageSEO = {
   },
   apply: {
     title: 'Apply: Land Project Application | ReGen Civics',
-    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications open now for September 2026.',
+    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications are closed; apply anytime for the next season.',
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
     image: '/og/seasons.jpg',
     url: '/apply'
@@ -219,7 +219,7 @@ export const pageSEO = {
   },
   fund: {
     title: 'The ReGen Civics Fund | Regenerative Land Investment',
-    description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 2 starts September 2026.',
+    description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 2 began in September 2026.',
     keywords: 'regenerative fund, land investment, impact fund, regenerative capital, crowd-pooling, land project funding',
     image: 'https://regencivics.earth/og/fund.jpg',
     url: '/fund'

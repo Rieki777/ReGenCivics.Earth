@@ -9,27 +9,36 @@
  * whole site to fall at the September 2026 equinox, the same week Season 2's
  * winter began.
  *
- * Rye's ruling, 2026-09-24: the incubator is Winter.
+ * Rye's rulings, 2026-09-24:
  *
- *   Winter  design    tools, systems, governance; land projects design their games
- *   Spring  resource  crowdpooling, investors, onboarding roles; springing to life
- *   Summer  build     hands in the soil: gardens, buildings, festivals on the land
- *   Fall    rest      rest and abundance: harvest gatherings, healing, village life
+ *   Design Season    (winter)  tools, systems, governance; land projects design their games
+ *   Resource Season  (spring)  crowdpooling, investors, onboarding roles; springing to life
+ *   Build Season     (summer)  hands in the soil: gardens, buildings, festivals on the land
+ *   Rest Season      (fall)    rest and abundance: harvest gatherings, healing, village life
  *
- * The Game's seasons follow the work, so they run one season ahead of the
- * northern calendar. Winter opens at the September equinox with Selection Day
- * and runs the 13-week incubator. Spring opens at the December solstice, when
- * week 13 launches the shared crowdpool and it runs its roughly 90 days. Summer
- * opens at the March equinox, which is planting season. Fall opens at the June
- * solstice. This is the shape of the 2022 Four Seasons Protocol
- * (Winter: local, inward; Spring: global, outward; Summer: local, outward;
- * Fall: local, inward) moved one quarter to fit the program as it actually
- * runs. Moving a boundary is a one-line change in TURNING_POINTS.
+ * The seasons go by what they are for (Design, Resource, Build, Rest). Winter,
+ * spring, summer and fall are the pattern they loosely follow, the connection
+ * to the wheel of the year, kept in the imagery. That keeps the rhythm readable
+ * on southern hemisphere and equatorial land, where the calendar seasons differ.
  *
- * Numbering. Each numbered Season starts in winter with a new cohort and
- * follows it once around the wheel. Everything before Season 2 opened is
- * Season 1: the first incubator in 2022 and the long build that followed it,
- * which the site has always shown as winter.
+ * Every solstice and equinox holds a recap and passoff from one season to the
+ * next. The September one is the big one, the Handoff Festival: the outgoing
+ * cohort celebrates its harvest and hands the wheel to the new cohort on
+ * Selection Day.
+ *
+ * Timing is loose on purpose in this first turn of the wheel. The Game's
+ * seasons follow the work, so they run one season ahead of the northern
+ * calendar: Design opens at the September equinox with Selection Day and runs
+ * the 13-week incubator; Resource opens at the December solstice, when week 13
+ * launches the shared crowdpool; Build opens at the March equinox, planting
+ * season; Rest opens at the June solstice. We adjust as the year needs, with
+ * the goal of a clear pattern once we get going. Moving a boundary is a
+ * one-line change in TURNING_POINTS.
+ *
+ * Numbering. Each numbered Season starts with a Design Season and a new cohort,
+ * and follows it once around the wheel. Everything before Season 2 opened is
+ * Season 1: the first incubator in 2022 (43 applications, 16 presented, 13
+ * selected) and the long build that followed it.
  */
 
 export type RegenSeasonKey = "winter" | "spring" | "summer" | "fall";
@@ -42,12 +51,25 @@ export const REGEN_SEASON_ORDER: readonly RegenSeasonKey[] = [
   "fall",
 ] as const;
 
+export type PlayMove = {
+  /** Who this move is for. "Land projects" */
+  who: string;
+  /** What to do, in one short line. */
+  what: string;
+  /** Where to do it. */
+  href: string;
+  /** The link text. */
+  label: string;
+};
+
 export type RegenSeason = {
   key: RegenSeasonKey;
-  /** "Winter" */
-  name: string;
+  /** The season's name, by what it is for. "Design Season" */
+  title: string;
   /** One word for what the season is for. "Design" */
   verb: string;
+  /** The wheel-of-the-year season it loosely follows. "Winter" */
+  pattern: string;
   /** The line that says it plainly. */
   headline: string;
   /** Two or three sentences in Rye's voice. */
@@ -62,6 +84,8 @@ export type RegenSeason = {
   opensWith: string;
   /** What that gathering is for, in one line. */
   gathering: string;
+  /** How to play this season: a move for each kind of player, with a link. */
+  play: PlayMove[];
   /** Where to go from here, for someone reading about this season. */
   cta: { label: string; href: string };
 };
@@ -69,11 +93,12 @@ export type RegenSeason = {
 export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
   winter: {
     key: "winter",
-    name: "Winter",
+    title: "Design Season",
     verb: "Design",
+    pattern: "Winter",
     headline: "We design the game.",
     summary:
-      "The technical season. We gather close and do the computer work: designing tools, systems, and governance. New land projects sit down with their core teams and design their games, so everything is ready to come alive in spring.",
+      "The technical season. We gather close and do the computer work: designing tools, systems, and governance. New land projects sit down with their core teams and design their games, so everything is ready to come alive in the Resource Season.",
     happens: [
       "A new cohort of land projects designs their games in the 13-week incubator",
       "Governance, roles, economies, and token models get drafted",
@@ -82,14 +107,21 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Inward",
     place: "Mostly online",
-    opensWith: "Selection Day at the September equinox",
-    gathering: "Selection Day. The season council chooses the new cohort, live and in public.",
+    opensWith: "the Handoff Festival and Selection Day at the September equinox",
+    gathering:
+      "The Handoff Festival. The outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day.",
+    play: [
+      { who: "Land projects", what: "Follow the incubator as this cohort designs their games.", href: "/season2", label: "Follow Season 2" },
+      { who: "Builders", what: "Build the tools under the land projects with us, weekly.", href: "/interop-sessions", label: "Join the Interoperability Circle" },
+      { who: "Players", what: "Pick up a quest and start earning your place in the Game.", href: "/game", label: "Play the Game" },
+    ],
     cta: { label: "See Season 2", href: "/season2" },
   },
   spring: {
     key: "spring",
-    name: "Spring",
+    title: "Resource Season",
     verb: "Resource",
+    pattern: "Spring",
     headline: "We spring to life.",
     summary:
       "The designs are done, so we open the doors. Each project launches its crowdpool and asks for everything it needs to come alive: hands, roles, tools, materials, and money. We talk with investors, welcome people into roles, and receive the energy and resources that flow in.",
@@ -101,14 +133,21 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Outward",
     place: "Mostly online",
-    opensWith: "the crowdpool launch at the December solstice",
-    gathering: "The crowdpool launch. The cohort opens its doors and invites everyone in.",
+    opensWith: "a recap and passoff, and the crowdpool launch, at the December solstice",
+    gathering:
+      "Recap and passoff from Design to Resource. The cohort launches its crowdpool together and invites everyone in.",
+    play: [
+      { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
+      { who: "Land projects", what: "Learn how a crowdpool works before yours goes live.", href: "/crowd-pooling", label: "How crowdpooling works" },
+      { who: "Investors", what: "Tell us what you'd back with a non-binding Letter of Intent for the Fund.", href: "/loi", label: "Send a Letter of Intent" },
+    ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },
   },
   summer: {
     key: "summer",
-    name: "Summer",
+    title: "Build Season",
     verb: "Build",
+    pattern: "Summer",
     headline: "We get our hands in the soil.",
     summary:
       "Everyone goes outside. We plant gardens, raise buildings, and throw work parties and festivals on the land projects. This is where the designs meet the ground, and where we have a great time making the magic happen.",
@@ -120,27 +159,38 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Outward",
     place: "On the land",
-    opensWith: "the March equinox gathering",
-    gathering: "We head out to the land together to plant, build, and celebrate.",
+    opensWith: "a recap and passoff at the March equinox",
+    gathering: "Recap and passoff from Resource to Build. We head out to the land together to plant and raise.",
+    play: [
+      { who: "Everyone", what: "Find a land project near you and show up for a work day.", href: "/map", label: "Open the map" },
+      { who: "Players", what: "Come to work parties, land visits, and festivals.", href: "/schedule", label: "See what's coming up" },
+      { who: "Travelers", what: "Visit the network's land projects aboard the ReGen Ship.", href: "/ship", label: "Meet the ReGen Ship" },
+    ],
     cta: { label: "Explore the land projects", href: "/map" },
   },
   fall: {
     key: "fall",
-    name: "Fall",
+    title: "Rest Season",
     verb: "Rest",
+    pattern: "Fall",
     headline: "We rest in the abundance.",
     summary:
-      "The season of rest and abundance. Harvest festivals and gatherings fill the land projects, and then we take real time off: self-care, healing, and time in our villages. Many of us do other work. Then the wheel turns back to winter and a new cohort begins.",
+      "The season of rest and abundance. Harvest festivals and gatherings fill the land projects, and then we take real time off: self-care, healing, and time in our villages. Many of us do other work. Then the wheel turns back to the Design Season and a new cohort begins.",
     happens: [
       "Harvest festivals and gatherings at land projects",
       "Rest, self-care, and healing",
       "Time with family and village life",
-      "Next winter's cohort of land projects applies",
+      "Next season's cohort of land projects applies",
     ],
     flow: "Inward",
     place: "On the land",
-    opensWith: "the June solstice gathering",
-    gathering: "We gather at the land projects for the harvest, and then we rest.",
+    opensWith: "a recap and passoff at the June solstice",
+    gathering: "Recap and passoff from Build to Rest. The harvest begins, and then we rest.",
+    play: [
+      { who: "Everyone", what: "Come to a harvest gathering at a land project.", href: "/schedule", label: "See the gatherings" },
+      { who: "Players", what: "Share what you learned and thank the people who showed up.", href: "/community", label: "Go to the community" },
+      { who: "Land projects", what: "Apply anytime for the next season's cohort.", href: "/apply", label: "Apply for the next season" },
+    ],
     cta: { label: "Meet the community", href: "/community" },
   },
 };

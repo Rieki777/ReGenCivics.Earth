@@ -129,7 +129,7 @@ const glossaryEntries: GlossaryEntry[] = [
   // Program & Community
   {
     term: "Season",
-    definition: "A structured program cycle (typically 13 weeks) where land projects go through an incubator process. Each season follows natural rhythms: Spring (planting), Summer (growing), Fall (harvesting), Winter (resting).",
+    definition: "Our year turns through four seasons named for what they are for: the Design Season (the 13-week incubator, where land projects design their games), the Resource Season (crowdpooling), the Build Season (on the land), and the Rest Season (harvest and rest). They loosely follow winter, spring, summer, and fall. A numbered Season, like Season 2, is one cohort's full turn of the wheel.",
     category: "Program & Community",
     relatedLink: "/seasons",
     relatedLabel: "Seasons",
