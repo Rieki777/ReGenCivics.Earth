@@ -88,8 +88,24 @@ function MyceliumBackground() {
 
 const socialLinks = [
   {
+    name: "Hylo",
+    description: "Preferred gather place — join the Hylo SEEDS group to coordinate with regenerators",
+    icon: Globe,
+    url: HYLO_SEEDS_URL,
+    color: "#2d6a4f",
+    recommended: true,
+  },
+  {
+    name: "Holos",
+    description: "Preferred gather place — join the Holos Regen Civics holon for community coordination",
+    icon: Network,
+    url: HOLOS_REGEN_CIVICS_URL,
+    color: "#6b5b95",
+    recommended: true,
+  },
+  {
     name: "WhatsApp Community",
-    description: "Join our active community chat for real-time updates and discussions",
+    description: "Active chat for real-time updates (also available; Hylo + Holos preferred for gathering)",
     icon: MessageCircle,
     url: WHATSAPP_COMMUNITY_URL,
     color: "#25d366",
@@ -117,22 +133,6 @@ const socialLinks = [
     icon: Youtube,
     url: YOUTUBE_CHANNEL_URL,
     color: "#ff0000",
-    recommended: false,
-  },
-  {
-    name: "Hylo",
-    description: "Hylo SEEDS group — coordinate with regenerators on Hylo",
-    icon: Globe,
-    url: HYLO_SEEDS_URL,
-    color: "#2d6a4f",
-    recommended: false,
-  },
-  {
-    name: "Holos",
-    description: "Holos Regen Civics holon — gather in the Regen Civics holon",
-    icon: Network,
-    url: HOLOS_REGEN_CIVICS_URL,
-    color: "#6b5b95",
     recommended: false,
   },
 ];
@@ -197,10 +197,10 @@ export default function Socials() {
               Welcome to the <span className="text-[#7dd87d]">ReGenerative Renaissance!</span>
             </h1>
             <p className="text-white/70 text-lg max-w-xl mx-auto">
-              You're now part of our growing community. Here's the easiest way to get involved today and follow along with our journey.
+              You're now part of our growing community. Prefer <span className="text-[#7dd87d] font-medium">Hylo</span> and <span className="text-[#7dd87d] font-medium">Holos</span> as your primary places to gather and coordinate — then follow along on YouTube and the other channels below.
             </p>
             <p className="text-white/70 text-sm max-w-xl mx-auto mt-4">
-              Most social media is overwhelmed with bots, scams, and fraud now. For this reason we encourage all conversations to happen on our own forums where we enforce strict standards for quality and fraud/bot control.
+              Most social media is overwhelmed with bots, scams, and fraud now. We encourage gathering on Hylo and Holos (and our own forums) where community standards for quality and fraud/bot control are stronger than on open chat apps.
             </p>
           </div>
 
