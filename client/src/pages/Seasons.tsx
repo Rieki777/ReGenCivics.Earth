@@ -54,6 +54,7 @@ import { JOIN_PATH, SEEDS_YOUTUBE_URL } from "@shared/sessionLinks";
 import {
   REGEN_SEASONS,
   REGEN_SEASON_ORDER,
+  SEASON_ONE,
   TURNING_POINTS,
   regenSeasonSpan,
   type RegenSeasonKey,
@@ -138,13 +139,13 @@ const S2_WINTER_YEAR = 2026;
 const JOURNEY: Stop[] = [
   {
     id: "s1",
-    when: "2022",
+    when: String(SEASON_ONE.year),
     title: "Season 1",
     label: "The first incubator",
     color: "#d4a574",
     at: "past",
     items: [
-      "43 land projects applied, 16 presented, and 13 became our first cohort",
+      `${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} became our first cohort`,
       "The Regenerative Infinite Games framework, built and tested",
       "The 13-week curriculum, developed and refined",
       "The first alliance partners and the idea of crowdpooling",

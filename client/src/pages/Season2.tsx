@@ -75,6 +75,7 @@ import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
 import { APPLY_ANYTIME_LINE, APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
+import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -514,7 +515,7 @@ const SELECTION: {
 }[] = [
   {
     title: "Applications closed September 11th",
-    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took 13 projects out of the 43 that applied, after 16 presented. ${APPLY_ANYTIME_LINE}`,
+    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. ${APPLY_ANYTIME_LINE}`,
   },
   {
     title: "Shortlisted projects make a pitch video",
@@ -1641,9 +1642,9 @@ export default function Season2() {
             <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
               <div className="grid grid-cols-3 gap-4 max-w-2xl">
                 {[
-                  { stat: "46", label: "projects applied" },
-                  { stat: "21", label: "shortlisted to pitch" },
-                  { stat: "13", label: "chosen by the community" },
+                  { stat: String(SEASON_ONE_FACTS.applied), label: "projects applied" },
+                  { stat: String(SEASON_ONE_FACTS.presented), label: "selected to present" },
+                  { stat: String(SEASON_ONE_FACTS.selected), label: "chosen by the community" },
                 ].map((m) => (
                   <div key={m.label} className="text-center">
                     <div className="text-3xl md:text-5xl font-bold text-[#7dd87d] drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" style={display}>
@@ -1977,7 +1978,8 @@ export default function Season2() {
           <p className="text-white/75 text-lg leading-relaxed mb-8">
             If you're building with other people, on the land, and you want your
             model held to the standard the world will apply when you go out and
-            raise, bring it to the next season. Season One took 13 projects out of 43.
+            raise, bring it to the next season. Season One took {SEASON_ONE_FACTS.selected} projects out of{" "}
+            {SEASON_ONE_FACTS.applied}.
           </p>
 
           <Link href="/apply">

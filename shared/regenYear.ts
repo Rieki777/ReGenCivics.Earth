@@ -43,6 +43,13 @@
 
 export type RegenSeasonKey = "winter" | "spring" | "summer" | "fall";
 
+/**
+ * Season 1 in numbers (Rye, 2026-09-24). Until that day the site said 46
+ * applied (and 21 shortlisted) on /season2, 16 projects on the blog, and 2021
+ * or "2025 and 2026" elsewhere. Read these; don't retype them.
+ */
+export const SEASON_ONE = { year: 2022, applied: 43, presented: 16, selected: 13 } as const;
+
 /** Clockwise around the wheel, starting where each numbered Season starts. */
 export const REGEN_SEASON_ORDER: readonly RegenSeasonKey[] = [
   "winter",
