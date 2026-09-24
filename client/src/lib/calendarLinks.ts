@@ -54,11 +54,13 @@ function feed(path: string): CalendarFeed {
   };
 }
 
-/** The three things a reader can subscribe to. */
+/** The things a reader can subscribe to. */
 export const CALENDAR_FEEDS = {
   all: feed("/calendar/all.ics"),
   openAccess: feed("/calendar/open-access.ics"),
   season2: feed("/calendar/season2.ics"),
+  /** Follows the Circle's time vote, so it moves when the group moves. */
+  interopCircle: feed("/calendar/interop-circle.ics"),
 } as const;
 
 /**

@@ -35,6 +35,8 @@ import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
 import { syncCatalogEvents } from "../lib/syncCatalogEvents";
+import { leaveCircle, syncInteropCircle } from "../lib/interopCircle";
+import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 import {
   SEASON2_EPISODE_DATES,
@@ -105,6 +107,9 @@ async function ensureEventsSeed() {
       await database.insert(events).values(SEED_EVENTS as any);
     }
     await syncCatalogEvents();
+    // Weekly Interoperability Circle rows, from the live time vote. Throttled
+    // to one run a minute, so this costs nothing on most list calls.
+    await syncInteropCircle();
   } catch {
     // Non-fatal, seed runs once, fails silently if table not ready yet
   }
@@ -255,11 +260,14 @@ export const eventsRouter = router({
       await ensureEventsSeed();
       await sweepEventStatuses();
 
-      const all = await database
+      // Newest `limit` rows, returned oldest first. Ordering ascending before
+      // the limit kept the oldest rows and, once the weekly Circle rows piled
+      // up, would have cut upcoming sessions off /schedule.
+      const all = (await database
         .select()
         .from(events)
-        .orderBy(asc(events.startTime))
-        .limit(input?.limit ?? 50);
+        .orderBy(desc(events.startTime))
+        .limit(input?.limit ?? 50)).reverse();
 
       // Public projection never lists cancelled/canceled — even when
       // includeCompleted feeds /schedule Historical. Admin Events still uses
@@ -1341,6 +1349,16 @@ export const eventsRouter = router({
           eq(eventSignups.eventId, input.eventId),
           eq(eventSignups.email, input.email),
         ));
+
+      // The Circle is one standing sign-up spread across weekly rows. Leaving
+      // from any week's email leaves every future week, so the sync does not
+      // carry this person onto the next week it adds.
+      const [ev] = await database
+        .select({ season: events.season })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (ev?.season === INTEROP_CIRCLE_SEASON) await leaveCircle(database, input.email);
 
       return { success: true };
     }),

@@ -6,44 +6,55 @@
  * every play runs on.
  *
  * The Circle's time is a live, rolling vote rather than a fixed slot. Each
- * browser holds one vote it can move at any time, the tally refreshes every
- * few seconds, and the slot in the lead is the slot the group meets in. As
- * people join and leave the lead moves and the calendar buttons follow it.
+ * browser raises a hand for every slot it can make and can change them at any
+ * time. The vote feeds the scheduled slot (see shared/interopCircle.ts and
+ * ADR-56): the weekly sessions are real events rows with sign-ups, reminders
+ * and a calendar feed, and this page reads them back through
+ * interopSessions.schedule.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock, ExternalLink, Video, Wrench } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, UserRound, Video, Wrench } from 'lucide-react';
+import { INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlotKey } from '@shared/interopCircle';
+import { CALENDAR_FEEDS } from '@/lib/calendarLinks';
+import { SubscribeButtons } from '@/components/CalendarCta';
+import { AuthDialog } from '@/components/AuthDialog';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
 import { BackButton } from '@/components/BackButton';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
 
-type SlotKey = 'tue' | 'wed' | 'thu';
-
-interface Slot {
-  key: SlotKey;
-  /** 0 = Sunday, matching Date#getDay. */
-  weekday: number;
-  label: string;
-  /** Pacific wall-clock hour, 24h. */
-  hourPT: number;
-  zones: string;
-}
-
-const SLOTS: Slot[] = [
-  { key: 'tue', weekday: 2, label: 'Tuesdays, 10:00am PT', hourPT: 10, zones: '10:00am PT · 1:00pm ET · 6:00pm UK' },
-  { key: 'wed', weekday: 3, label: 'Wednesdays, 4:00pm PT', hourPT: 16, zones: '4:00pm PT · 7:00pm ET' },
-  { key: 'thu', weekday: 4, label: 'Thursdays, 6:00pm PT', hourPT: 18, zones: '6:00pm PT · 9:00pm ET' },
-];
+type SlotKey = InteropSlotKey;
+const SLOTS = INTEROP_SLOTS;
 
 const VOTER_KEY_STORAGE = 'interop-voter-key';
 const VOTE_STORAGE = 'interop-my-vote';
 const NAME_STORAGE = 'interop-my-name';
+const EMAIL_STORAGE = 'interop-my-email';
 
-/** A random id this browser keeps, so someone with no account still gets one vote. */
+/** 32 hex characters of CSPRNG output, or a last-resort fallback where crypto is absent. */
+function randomKeyBody(): string {
+  try {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  }
+}
+
+/**
+ * A random id this browser keeps, so someone with no account still gets one vote.
+ *
+ * The key is a bearer credential: anyone holding it can change or withdraw that
+ * vote. Math.random seeded alongside Date.now was guessable enough that knowing
+ * roughly when someone voted narrowed the search, so this uses the CSPRNG and
+ * falls back only where crypto is genuinely absent.
+ */
 function readVoterKey(): string {
-  const fresh = 'v' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  const fresh = 'v' + randomKeyBody();
   try {
     const existing = window.localStorage.getItem(VOTER_KEY_STORAGE);
     if (existing && /^[A-Za-z0-9_-]{8,64}$/.test(existing)) return existing;
@@ -70,94 +81,57 @@ function writeStored(key: string, value: string) {
   }
 }
 
-/**
- * The next date a slot falls on, as a UTC instant.
- * Pacific is UTC-7 through November 1, 2026, which covers every session this
- * page schedules; the offset is applied explicitly so the instant is right
- * whatever timezone the visitor's browser is in.
- */
-const PT_OFFSET_HOURS = 7;
-
-function nextOccurrence(slot: Slot, from: Date = new Date()): Date {
-  const candidate = new Date(Date.UTC(
-    from.getUTCFullYear(),
-    from.getUTCMonth(),
-    from.getUTCDate(),
-    slot.hourPT + PT_OFFSET_HOURS,
-    0, 0, 0,
-  ));
-  while (candidate.getUTCDay() !== slot.weekday || candidate.getTime() <= from.getTime()) {
-    candidate.setUTCDate(candidate.getUTCDate() + 1);
-  }
-  return candidate;
-}
-
-function formatPacificDate(d: Date): string {
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/Los_Angeles',
+function formatSession(d: Date | string): string {
+  return new Date(d).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    timeZone: 'America/Los_Angeles', timeZoneName: 'short',
   });
-}
-
-/** YYYYMMDDTHHMMSSZ, the shape both Google Calendar and .ics want. */
-function icsStamp(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-}
-
-const SESSION_MINUTES = 90;
-
-function googleCalendarUrl(slot: Slot): string {
-  const start = nextOccurrence(slot);
-  const end = new Date(start.getTime() + SESSION_MINUTES * 60_000);
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: 'ReGen Civics: Interoperability Circle',
-    dates: `${icsStamp(start)}/${icsStamp(end)}`,
-    details: 'Weekly working group for the tools under the land projects. Details and the live time vote: https://regencivics.earth/interop-sessions',
-    location: 'Online',
-    recur: 'RRULE:FREQ=WEEKLY',
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function icsHref(slot: Slot): string {
-  const start = nextOccurrence(slot);
-  const end = new Date(start.getTime() + SESSION_MINUTES * 60_000);
-  const body = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//ReGen Civics//Interoperability Circle//EN',
-    'BEGIN:VEVENT',
-    `DTSTART:${icsStamp(start)}`,
-    `DTEND:${icsStamp(end)}`,
-    'RRULE:FREQ=WEEKLY',
-    'SUMMARY:ReGen Civics: Interoperability Circle',
-    'DESCRIPTION:Weekly working group for the tools under the land projects. https://regencivics.earth/interop-sessions',
-    'LOCATION:Online',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
-  return `data:text/calendar;charset=utf8,${encodeURIComponent(body)}`;
 }
 
 export default function InteropSessions() {
   const [voterKey, setVoterKey] = useState('');
-  const [myVote, setMyVote] = useState<SlotKey | ''>('');
+  const [mySlots, setMySlots] = useState<SlotKey[]>([]);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [authOpen, setAuthOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     setVoterKey(readVoterKey());
-    const stored = readStored(VOTE_STORAGE);
-    if (stored === 'tue' || stored === 'wed' || stored === 'thu') setMyVote(stored);
+    // Stored as a comma list; a single key from before multi-select parses the same.
+    setMySlots(readStored(VOTE_STORAGE).split(',').filter(isInteropSlotKey));
+    setEmail(readStored(EMAIL_STORAGE));
     setName(readStored(NAME_STORAGE));
   }, []);
+
+  // Signed-in members get their account email prefilled, unless they typed one.
+  useEffect(() => {
+    if (user?.email) setEmail((current) => current || user.email!);
+  }, [user?.email]);
 
   const tally = trpc.interopSessions.tally.useQuery(undefined, {
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
-  const vote = trpc.interopSessions.vote.useMutation({
+  const setSlots = trpc.interopSessions.setSlots.useMutation({
     onSuccess: () => { void tally.refetch(); },
   });
+  const schedule = trpc.interopSessions.schedule.useQuery(undefined, { refetchInterval: 60_000 });
+  const join = trpc.interopSessions.join.useMutation({
+    onSuccess: () => { void schedule.refetch(); },
+  });
+
+  function submitJoin(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    writeStored(EMAIL_STORAGE, trimmed);
+    writeStored(NAME_STORAGE, name);
+    join.mutate({ email: trimmed, name: name.trim() || undefined });
+  }
+
+  const scheduledSlot = schedule.data?.slot ? interopSlot(schedule.data.slot) : null;
+  const sessions = schedule.data?.sessions ?? [];
 
   const counts = useMemo(() => {
     const map: Record<string, { count: number; names: string[] }> = {};
@@ -174,16 +148,18 @@ export default function InteropSessions() {
     for (const s of SLOTS) if (counts[s.key].count > counts[best.key].count) best = s;
     return counts[best.key].count > 0 ? best : null;
   }, [counts]);
+  const movingSoon = scheduledSlot && leader && leader.key !== scheduledSlot.key && !schedule.data?.pinned;
 
-  const calendarSlot = leader ?? SLOTS[0];
-  const nextDate = formatPacificDate(nextOccurrence(calendarSlot));
 
-  function castVote(slot: SlotKey) {
+  function toggleSlot(slot: SlotKey) {
     if (!voterKey) return;
-    setMyVote(slot);
-    writeStored(VOTE_STORAGE, slot);
+    const next = SLOTS.map((s) => s.key).filter((k) =>
+      k === slot ? !mySlots.includes(k) : mySlots.includes(k),
+    );
+    setMySlots(next);
+    writeStored(VOTE_STORAGE, next.join(','));
     writeStored(NAME_STORAGE, name);
-    vote.mutate({ slot, voterKey, displayName: name.trim() || undefined });
+    setSlots.mutate({ slots: next, voterKey, displayName: name.trim() || undefined });
   }
 
   return (
@@ -236,14 +212,19 @@ export default function InteropSessions() {
               <div className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Video className="w-5 h-5 text-[#7dd87d]" />
-                  <h3 className="text-white font-bold">Bring a 3 to 5 minute video to Saturday</h3>
+                  <h3 className="text-white font-bold">Bring a 3 to 5 minute video or live presentation to Saturday</h3>
                 </div>
-                <p className="text-white/80 text-sm">
-                  Everyone joining Season Two comes to Saturday's session with a 3 to 5 minute video or
-                  presentation about their project. Make it social media style: the vision and purpose of
-                  what you are aiming to create, not a technical walkthrough. Filmed on a phone is perfect.
-                  It becomes part of the Season Two introduction and your crowdpooling campaign.
+                <p className="text-white/80 text-sm mb-3">
+                  Everyone joining Season Two comes to Saturday's session with a 3 to 5 minute video about
+                  their project, or ready to give that presentation live. Make it social media style: the
+                  vision and purpose of what you are aiming to create. Save the technical detail for the
+                  weeks ahead. It becomes part of the Season Two introduction and your crowdpooling campaign.
                 </p>
+                <ul className="text-white/80 text-sm list-disc pl-5 space-y-1">
+                  <li>Keep it tight. Five minutes is the hard stop.</li>
+                  <li>Keep it concise and coherent: one project, one clear story.</li>
+                  <li>Film in landscape mode, with your phone turned sideways. A phone is all you need.</li>
+                </ul>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -309,9 +290,9 @@ export default function InteropSessions() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">When the Circle meets</h2>
               <p className="text-white/75 mb-6">
-                Ninety minutes, every week. The slot with the most hands is the slot we run in, and it keeps
-                counting as people join and leave. Move your hand whenever your week changes and the session
-                moves with the group.
+                Ninety minutes, every week. Tap every slot you can make. The slot with the most hands is the
+                slot we run in, and it keeps counting as people join and leave. Change your picks whenever your
+                week changes and the session moves with the group.
               </p>
 
               <label className="block mb-5">
@@ -332,7 +313,7 @@ export default function InteropSessions() {
                   const { count, names } = counts[slot.key];
                   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                   const isLeader = leader?.key === slot.key && count > 0;
-                  const isMine = myVote === slot.key;
+                  const isMine = mySlots.includes(slot.key);
                   return (
                     <div
                       key={slot.key}
@@ -352,8 +333,9 @@ export default function InteropSessions() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => castVote(slot.key)}
-                          disabled={!voterKey || vote.isPending}
+                          onClick={() => toggleSlot(slot.key)}
+                          disabled={!voterKey || setSlots.isPending}
+                          aria-pressed={isMine}
                           className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 ${
                             isMine
                               ? 'bg-[#7dd87d] text-[#1a472a]'
@@ -381,35 +363,126 @@ export default function InteropSessions() {
 
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-white/75 mb-1">
-                  {leader
-                    ? <>Right now the Circle meets <span className="text-white font-semibold">{leader.label}</span>.</>
-                    : <>No hands up yet. The first pick sets the slot.</>}
+                  {scheduledSlot
+                    ? <>The Circle meets <span className="text-white font-semibold">{scheduledSlot.label}</span>.</>
+                    : leader
+                      ? <>Right now the vote leads for <span className="text-white font-semibold">{leader.label}</span>.</>
+                      : <>No hands up yet. The first pick sets the slot.</>}
                 </p>
-                <p className="text-white/50 text-sm mb-4">Next session: {nextDate}. Times shown in Pacific.</p>
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href={googleCalendarUrl(calendarSlot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#e3ac4f] hover:bg-[#f0c36c] text-[#2b1f06] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Add the Circle to Google Calendar
-                  </a>
-                  <a
-                    href={icsHref(calendarSlot)}
-                    download="regen-civics-interoperability-circle.ics"
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
-                  >
-                    Apple or Outlook
-                  </a>
-                </div>
-                <p className="text-white/40 text-xs mt-3">
-                  The calendar buttons follow the leading slot, so grab them again if the lead moves.
-                </p>
+                {movingSoon && (
+                  <p className="text-[#e3ac4f] text-sm mb-1">
+                    {leader.label} has taken the lead. If it holds for a day, sessions more than three days out move
+                    there and everyone signed up gets an email.
+                  </p>
+                )}
+                {schedule.data?.pinned && (
+                  <p className="text-white/50 text-sm mb-1">The organizers have set this time for now. The vote keeps counting.</p>
+                )}
+                {sessions.length > 0 && (
+                  <ul className="text-white/60 text-sm mt-2 space-y-0.5 tabular-nums">
+                    {sessions.map((s) => <li key={s.id}>{formatSession(s.startTime)}</li>)}
+                  </ul>
+                )}
               </div>
             </section>
           </AnimatedSection>
+
+          {/* Join: optional. Anyone can come; signing up adds reminders, recaps and a profile. */}
+          <AnimatedSection>
+            <section id="join" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+              <div className="flex items-center gap-3 mb-3">
+                <Mail className="w-5 h-5 text-[#7dd87d]" />
+                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Optional</p>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Come as you are, or sign up for more</h2>
+              <p className="text-white/75 mb-4">
+                Anyone can come to the Circle, no sign-up needed. Add the calendar below and every invite carries
+                the room link. Signing up gets you three more things:
+              </p>
+              <ul className="space-y-3 mb-6">
+                {[
+                  ['Email reminders', 'The day before and an hour before, with the room link. If the vote moves the time, you hear first.'],
+                  ['Recaps', 'After each session: what we built, what we agreed, and what comes next.'],
+                  ['A profile', 'Your place on ReGen Civics, which will soon run on the shared infrastructure this Circle is building.'],
+                ].map(([title, body]) => (
+                  <li key={title} className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-[#7dd87d] shrink-0 mt-0.5" />
+                    <p className="text-white/75">
+                      <span className="text-white font-semibold">{title}.</span> {body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              {(schedule.data?.members ?? 0) === 1 && <p className="text-white/50 text-sm mb-3">1 person has signed up so far.</p>}
+              {(schedule.data?.members ?? 0) > 1 && <p className="text-white/50 text-sm mb-3">{schedule.data!.members} people have signed up so far.</p>}
+
+              {join.isSuccess ? (
+                <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-4">
+                  <CheckCircle2 className="w-5 h-5" />
+                  {join.data?.alreadyMember ? 'You were already signed up. See you there.' : 'You are signed up. Check your email for the details.'}
+                </p>
+              ) : (
+                <form onSubmit={submitJoin} className="flex flex-col sm:flex-row gap-3 mb-2">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    maxLength={320}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    aria-label="Email for Circle reminders and recaps"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={join.isPending}
+                    className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60"
+                  >
+                    {join.isPending ? 'Signing up...' : 'Send me reminders and recaps'}
+                  </button>
+                </form>
+              )}
+              {join.isError && (
+                <p className="text-red-300 text-sm mb-4">{join.error.message || 'That did not go through. Try again in a minute.'}</p>
+              )}
+              <p className="text-white/40 text-xs mb-5">
+                An email is all reminders need. Your name comes from the field above. Every email has a link to leave.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 mb-8">
+                {isAuthenticated ? (
+                  <a
+                    href="/profile"
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <UserRound className="w-4 h-4" />
+                    Your profile
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAuthOpen(true)}
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <UserRound className="w-4 h-4" />
+                    Create your profile
+                  </button>
+                )}
+                <span className="text-white/50 text-sm">Sign in with Google or email.</span>
+              </div>
+
+              <p className="text-white/75 mb-3">
+                Just want it on your calendar? This calendar follows the vote, so it moves when the Circle moves.
+              </p>
+              <SubscribeButtons feed={CALENDAR_FEEDS.interopCircle} />
+            </section>
+          </AnimatedSection>
+          <AuthDialog
+            open={authOpen}
+            onOpenChange={setAuthOpen}
+            onLogin={() => setAuthOpen(false)}
+            title="Create your ReGen Civics profile"
+          />
 
           {/* Prep */}
           <AnimatedSection>
