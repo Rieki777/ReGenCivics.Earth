@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { SessionAnnounceButtons } from "@/components/admin/SessionAnnounceButtons";
 import {
   LIVE_SESSION_ROLE_HINTS,
   LIVE_SESSION_ROLE_LABELS,
@@ -40,9 +41,13 @@ function draftsFromItems(items: LiveSessionChecklistItem[]): Record<LiveSessionR
 export function LiveSessionRunbook({
   eventId,
   eventTitle,
+  startTime,
+  timeZone,
 }: {
   eventId: number;
   eventTitle?: string | null;
+  startTime?: string | Date | null;
+  timeZone?: string | null;
 }) {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.admin.liveSessionRunbook.useQuery(
@@ -134,6 +139,13 @@ export function LiveSessionRunbook({
         Assign host / tech / chat / recording / outreach handoff while the room is live. Notes
         carry into closeout — nothing auto-sends.
       </p>
+
+      <SessionAnnounceButtons
+        eventId={eventId}
+        title={eventTitle}
+        startTime={startTime}
+        timeZone={timeZone}
+      />
 
       <ul className="space-y-2.5">
         {LIVE_SESSION_ROLES.map((roleId) => {

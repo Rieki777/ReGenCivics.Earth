@@ -472,7 +472,12 @@ export function AdminEventsTab() {
                 </div>
 
                 {!isPast && (temporalPhase === "live" || (ev as any).status === "live") && (
-                  <LiveSessionRunbook eventId={ev.id} eventTitle={ev.title} />
+                  <LiveSessionRunbook
+                    eventId={ev.id}
+                    eventTitle={ev.title}
+                    startTime={ev.startTime}
+                    timeZone={ev.timezone}
+                  />
                 )}
 
                 {isPast && (
