@@ -260,8 +260,8 @@ importers:
         specifier: ^22.6.2
         version: 22.6.2(@types/node@26.6.2)
       supercluster:
-        specifier: ^8.0.1
-        version: 8.0.1
+        specifier: ^9.1.0
+        version: 9.1.0
       superjson:
         specifier: ^1.13.3
         version: 1.13.3
@@ -8467,8 +8467,8 @@ packages:
   stylis@4.3.6:
     resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
 
-  supercluster@8.0.1:
-    resolution: {integrity: sha512-IiOea5kJ9iqzD2t7QJq/cREyLHTtSmUT6gQsweojg9WH2sYJqZK9SswTu6jrscO6D1G5v5vYZ9ru/eq85lXeZQ==}
+  supercluster@9.1.0:
+    resolution: {integrity: sha512-WMhsJPm8Tf9f5mKxJ1D0mB5tbCMOFi8wTrm/LGnsJHGg8xkeNT/TWDZuFauOGRISnclbYgnxD7g3xJAfQO3FLg==}
 
   superjson@1.13.3:
     resolution: {integrity: sha512-mJiVjfd2vokfDxsQPOwJ/PtanO87LhpYY88ubI5dUB1Ab58Txbyje3+jpm+/83R/fevaq/107NNhtYBLuoTrFg==}
@@ -19136,8 +19136,9 @@ snapshots:
 
   stylis@4.3.6: {}
 
-  supercluster@8.0.1:
+  supercluster@9.1.0:
     dependencies:
+      '@types/geojson': 7946.0.16
       kdbush: 4.1.0
 
   superjson@1.13.3:
