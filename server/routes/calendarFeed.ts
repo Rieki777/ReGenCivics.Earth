@@ -9,6 +9,7 @@
  *   GET /calendar/event/:id.ics     one session
  *   GET /regen-civics-all-events.ics  legacy alias, see below
  *   GET /join                       durable redirect into the live room
+ *   GET /join?e=<eventId>           same, routed to that event's stored URL
  *
  * Raw Express rather than tRPC: calendar clients issue a plain unauthenticated
  * GET and expect `text/calendar`. tRPC's JSON envelope would be meaningless.
@@ -30,7 +31,11 @@ import {
   type FeedKind,
   type FeedRow,
 } from "../lib/calendarFeed";
+import { eq } from "drizzle-orm";
+import { getDb } from "../db";
+import { events } from "../../drizzle/schema";
 import { RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { parseJoinEventId, resolveJoinRedirectTarget } from "../lib/joinRedirect";
 
 const log = logger("calendar-feed");
 
@@ -124,12 +129,42 @@ export function registerCalendarFeedRoutes(app: Express): void {
   /**
    * The join link that goes into every calendar invite and every reminder
    * email. Invites live on people's phones for months, so they must never
-   * carry the Riverside studio URL directly: that URL carries a token, and if
-   * the token ever rotates, a hardcoded invite is dead with no way to fix it.
-   * One redirect, changed in one place.
+   * carry the meeting-platform URL directly: if the room ever rotates, a
+   * hardcoded invite is dead with no way to fix it. One redirect, changed in
+   * one place.
+   *
+   * Optional `?e=<eventId>`: look up that event and redirect to its stored
+   * riversideRoomUrl (else zoomUrl), http(s) only. Missing/invalid id or no
+   * safe stored URL → shared studio (same as plain /join).
    */
-  app.get("/join", (_req: Request, res: Response) => {
+  app.get("/join", async (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "public, max-age=300");
-    res.redirect(302, RIVERSIDE_ROOM_URL);
+
+    const eventId = parseJoinEventId(req.query.e);
+    if (eventId == null) {
+      res.redirect(302, RIVERSIDE_ROOM_URL);
+      return;
+    }
+
+    let target = RIVERSIDE_ROOM_URL;
+    try {
+      const database = await getDb();
+      if (database) {
+        const [row] = await database
+          .select({
+            riversideRoomUrl: events.riversideRoomUrl,
+            zoomUrl: events.zoomUrl,
+          })
+          .from(events)
+          .where(eq(events.id, eventId))
+          .limit(1);
+        target = resolveJoinRedirectTarget(row ?? null);
+      }
+    } catch (err) {
+      log.error("join redirect event lookup failed", { eventId, err });
+      target = RIVERSIDE_ROOM_URL;
+    }
+
+    res.redirect(302, target);
   });
 }
