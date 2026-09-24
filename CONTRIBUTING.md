@@ -2,6 +2,16 @@
 
 This project is built by a distributed community. Your contributions matter. Here's how to get involved.
 
+## Canonical contributor guide
+
+The unified contributor system for all three Rieki777 repositories lives in
+[`Bioregional-Infinite-Game`](https://github.com/Rieki777/Bioregional-Infinite-Game). It covers
+the shared flow for human and AI contributors: Git trailers for AI attribution, the Hypha
+governance proposal draft that fires after a PR merges, and the OSS adoption strategy. This file
+is the repo-specific overlay for ReGenCivics.Earth. Read the canonical guide first when the
+question is about the contributor system itself; read this file and `CLAUDE.md` when the question
+is about this codebase.
+
 ## Getting Claude
 
 The whole project is set up so Claude can read the codebase and start building immediately. If you don't have a Claude account yet, [get a free week of Claude Cowork here](https://claude.ai/referral/v8oHxjZJxg?s=cowork&v=apps). One week is enough to ship your first pull request.
