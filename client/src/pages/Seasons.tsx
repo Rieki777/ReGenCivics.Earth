@@ -681,7 +681,7 @@ export default function Seasons() {
           <AnimatedSection animation="fade-in" className="text-center mb-14">
             <p className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30 text-[#d4a574] font-medium text-sm">
               <Star className="w-4 h-4" aria-hidden="true" />
-              The journey so far
+              The story so far
             </p>
             <h2 className="text-3xl md:text-5xl font-bold text-white" style={display}>
               Season by <span className="text-[#7dd87d]">season</span>
