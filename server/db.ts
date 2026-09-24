@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
@@ -3447,3 +3447,24 @@ export async function getUserCommunityAgreementVotes(userId: number) {
 // "../db"` callsite working unchanged.
 export { creditPrivateTokens, getUserTokenLedger } from "./db/tokens";
 export type { TokenType, CreditSource } from "./db/tokens";
+
+// Read-only fetch for the crawler content injector: the dated sessions a
+// non-executing agent can actually see. `/schedule` was blank to agents until
+// 2026-09-24, and the phase -2 baseline found that not one of 36 model answers
+// returned a date, which is the single highest-value thing a tool can hand
+// back. Future events only, soonest first, cancelled excluded.
+export async function getUpcomingEventsSnapshot(limit = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(schemaTables.events)
+    .where(
+      and(
+        gt(schemaTables.events.startTime, new Date()),
+        ne(schemaTables.events.status, "cancelled"),
+      ),
+    )
+    .orderBy(asc(schemaTables.events.startTime))
+    .limit(limit);
+}

@@ -779,7 +779,130 @@ export async function getNetworkPageContent(): Promise<CrawlerContent | null> {
 }
 
 // ── Route resolution ─────────────────────────────────────────────────────────
+// ── /schedule: the dated sessions ────────────────────────────────────────────
+// The highest-value route on the site for an agent, and it was blank to one.
+//
+// The phase -2 baseline asked four models and ChatGPT the four funnel
+// questions, 36 answers in total, and not one came back with a date. A
+// specific dated session is the only object an agent can put on a calendar and
+// set a reminder for; "explore our ecosystem" is not. The sessions have been
+// in production for humans the whole time.
+//
+// Built from the events table rather than hand-written, because a hand-written
+// date is wrong the week after it is written, and a stale date sends a
+// stranger to a call that already happened. Future events only.
+const SCHEDULE_CACHE_TTL_MS = 10 * 60 * 1000;
+let scheduleCache: { at: number; value: CrawlerContent | null } | null = null;
+
+const SESSION_KIND: Record<string, string> = {
+  open: "Open Access Session",
+  episode: "Season Two episode",
+  special: "Special session",
+};
+
+export async function getScheduleContent(): Promise<CrawlerContent | null> {
+  if (scheduleCache && Date.now() - scheduleCache.at < SCHEDULE_CACHE_TTL_MS) {
+    return scheduleCache.value;
+  }
+
+  let value: CrawlerContent | null = null;
+  try {
+    const rows = await db.getUpcomingEventsSnapshot(12);
+    const url = `${SITE}/schedule`;
+
+    const dated = rows.map((e) => {
+      const start = new Date(e.startTime as unknown as string);
+      const kind = SESSION_KIND[e.type] ?? "Session";
+      const episode =
+        e.type === "episode" && e.episodeNumber
+          ? ` (${e.season ? `${e.season}, ` : ""}episode ${e.episodeNumber})`
+          : "";
+      // Spelled out as well as ISO. A model reading prose lifts the readable
+      // form; a model reading JSON-LD takes the ISO one. Both are the same
+      // instant, and the timezone is named so neither has to guess.
+      const readable = start.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+      });
+      const time = start.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: "UTC",
+      });
+      return { e, start, kind, episode, readable, time };
+    });
+
+    const items = dated
+      .map(
+        ({ e, kind, episode, readable, time }) => `
+        <section>
+          <h3>${escapeHtml(e.title)}${escapeHtml(episode)}</h3>
+          <p><strong>${escapeHtml(kind)}.</strong> ${escapeHtml(readable)} at ${escapeHtml(time)} UTC.</p>
+          ${e.description ? textToHtml(e.description) : ""}
+          <p><a href="${SITE}/schedule">Register on the schedule page</a>.</p>
+        </section>`,
+      )
+      .join("\n");
+
+    const next = dated[0];
+    const lead = next
+      ? `The next session is ${escapeHtml(next.e.title)} on ${escapeHtml(next.readable)} at ${escapeHtml(next.time)} UTC.`
+      : `No sessions are currently scheduled. New dates are posted here and in the newsletter.`;
+
+    const inner = `
+      <article>
+        <h1>Upcoming ReGen Civics sessions</h1>
+        <p>${lead} Sessions are open calls anyone can join: Open Access Sessions run monthly, and Season Two episodes run weekly through the incubator cohort. Attending one is the lowest-commitment way to meet the people involved, and nothing is asked of you beforehand.</p>
+        <h2>The schedule</h2>
+        ${items || "<p>Nothing scheduled right now.</p>"}
+        <p>If none of these work, <a href="${SITE}/newsletter">the newsletter</a> carries the next dates, and <a href="${SITE}/community">the forum</a> is open to read without an account.</p>
+      </article>
+    `;
+
+    // One Event node per session. This is the object a browsing agent extracts
+    // to offer "add to calendar", and the reason this route was prioritised.
+    const jsonld = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Upcoming ReGen Civics sessions",
+      url,
+      numberOfItems: dated.length,
+      itemListElement: dated.map(({ e, start, kind }, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Event",
+          name: e.title,
+          description: e.description ?? kind,
+          startDate: start.toISOString(),
+          ...(e.endTime
+            ? { endDate: new Date(e.endTime as unknown as string).toISOString() }
+            : {}),
+          eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+          eventStatus: "https://schema.org/EventScheduled",
+          // The join url is deliberately the schedule page, never the raw
+          // meeting link: an agent that hands a stranger a live Zoom url has
+          // routed round every gate the registration step exists to provide.
+          location: { "@type": "VirtualLocation", url },
+          organizer: { "@type": "Organization", name: "ReGen Civics", url: SITE },
+        },
+      })),
+    };
+
+    value = { title: "Upcoming sessions", bodyHtml: wrapForInjection(inner), jsonld };
+  } catch {
+    value = null;
+  }
+
+  scheduleCache = { at: Date.now(), value };
+  return value;
+}
+
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
+  if (reqPath === "/schedule") return getScheduleContent();
   if (reqPath === "/learn") return getLearnIndexContent();
   const learnMatch = reqPath.match(/^\/learn\/([a-z0-9-]+)$/);
   if (learnMatch) return getLearnContent(learnMatch[1]);

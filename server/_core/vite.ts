@@ -177,35 +177,29 @@ export function serveStatic(app: Express) {
   // Same treatment for the root index.html: serve the substituted template
   // for `/` directly so the static middleware does not return the raw file
   // with placeholders. The catch-all below handles every other SPA route.
-  let rootIndexHtmlCache: string | null = null;
-  app.get("/", (_req, res, next) => {
-    // The church's front door goes to the catch-all, which is the only handler
-    // that knows about hosts. This one substitutes a nonce and nothing else: no
-    // meta, no JSON-LD, no crawler body. So when core-crawler landed, every
-    // church SUBPAGE answered as a church and `core.regencivics.earth/` still
-    // answered as ReGen Civics — the one URL anybody types. Found by probing
-    // the deployed site rather than by reading the diff, which showed nothing
-    // wrong because nothing in the diff was wrong.
-    if (isCoreHost(_req.headers.host)) return next();
-
-    const indexPath = path.resolve(distPath, "index.html");
-    if (!rootIndexHtmlCache || process.env.NODE_ENV === "development") {
-      try { rootIndexHtmlCache = fs.readFileSync(indexPath, "utf-8"); } catch { /* fall through */ }
-    }
-    if (!rootIndexHtmlCache) {
-      res.sendFile(indexPath);
-      return;
-    }
-    const nonce = (res.locals.nonce as string) || "";
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    // no-store (not no-cache): prevents browsers from revalidating via
-    // 304 with a stale body. With nonce-based CSP, a 304 response would
-    // serve cached HTML carrying an old nonce alongside a fresh CSP
-    // header carrying a new nonce, and the browser would block every
-    // inline script and style as a nonce mismatch.
-    res.setHeader("Cache-Control", "no-store, must-revalidate");
-    res.send(applyNonce(rootIndexHtmlCache, nonce));
-  });
+  // There is deliberately NO dedicated `/` handler here any more.
+  //
+  // There used to be one, and it substituted a nonce and nothing else: no
+  // meta, no JSON-LD, no crawler body. The church host was routed past it to
+  // the catch-all when core-crawler landed, for exactly that reason, and the
+  // note left behind said so. The hub host was not, so the homepage kept
+  // answering with an empty shell while `PAGE_CONTENT["/"]` sat in
+  // crawler-content.ts fully written and never served.
+  //
+  // Measured on production 2026-09-23 by the phase -2 baseline: `/` returned
+  // 16.6 KB of HTML, a correct <title>, and zero characters of body text. The
+  // most linked page on the site was the one page an agent could not read, and
+  // the content for it had already been written.
+  //
+  // The handler existed to beat express.static to `/`. That reason is gone:
+  // the static middleware below is mounted with `index: false`, so it does not
+  // answer a directory request at all, and `/` falls through to the catch-all.
+  // The catch-all applies the same nonce, sets the same no-store header, and
+  // additionally injects meta, JSON-LD and the crawler body. It is strictly
+  // the better handler for this route.
+  //
+  // If a fast path for `/` is ever wanted again, it has to call
+  // resolveCrawlerContent, or this regression comes straight back.
 
   // Vite hashes all asset filenames (e.g. index-abc123.js), so it's safe to
   // cache them for 1 year. HTML is explicitly excluded so every .html

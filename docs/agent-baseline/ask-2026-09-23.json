@@ -1,0 +1,2190 @@
+{
+  "ranAt": "2026-09-23T21:56:15.530Z",
+  "models": [
+    "openai/gpt-4o-mini",
+    "google/gemini-2.5-flash",
+    "x-ai/grok-4.3",
+    "perplexity/sonar"
+  ],
+  "arms": [
+    "cold",
+    "sited"
+  ],
+  "judgeModel": "openai/gpt-4o-mini",
+  "runs": [
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "cold",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 11014,
+      "answer": "There are several regenerative land projects in Oregon that would welcome your skills as a carpenter. Below are a couple of opportunities you might consider:\n\n### 1. **Olalla Creek Haven**\n- **Location**: Klamath Mountains, Oregon\n- **Opportunity**: They are seeking versatile farm crew members who may also have carpentry skills.\n- **Roles and Responsibilities**:\n  - Manage and support general farm operations.\n  - Assist in various tasks related to maintaining the farm, which may include working on the infrastructure.\n  - Engage in agritourism events and educational programs, possibly bringing in your carpentry expertise for renovations and improvements.\n- **Requirements**: Experience in regenerative farming practices and the ability to work independently and as part of a team. They welcome skills in carpentry, plumbing, electrical work, event coordination, and social media marketing.\n- **Living Arrangements**: The project offers barn living quarters as part of the trade.\n- **To Apply**: Email your resume and cover letter to jalashbrook@comcast.net. [Oregon Farm Link](https://oregonfarmlink.org/job/olalla-creek-haven-is-our-organic-regenerative-educational-farm-dream-seeking-1-2-all-round-roles-for-work-trade-part-time-or-for-the-right-fit-full-time/)\n\n### 2. **Rahane Forest Farm**\n- **Location**: Columbia Gorge, Oregon\n- **Opportunity**: They seek volunteers with experience in permaculture to help transition their homestead.\n- **Roles and Responsibilities**:\n  - Help in creating and implementing a permaculture plan, which would likely involve building and carpentry work.\n  - Work on various projects pertaining to sustainable forestry and maintaining the land.\n- **Requirements**: Experience in carpentry and a willingness to engage in various projects focused on sustainability.\n- **Living Arrangements**: You would stay in a small wooden yurt with access to shared community spaces.\n- **To Apply**: Contact them through the permaculture forum where their listing is posted. [Permies](https://permies.com/t/132813/Volunteers-landmates-wanted-transition-homestead)\n\n### 3. **Rogue Valley Regenerative Farming Fellowship**\n- **Location**: Hanley Rd, Central Point, OR\n- **Opportunity**: They are looking for fellows to engage in sustainable farming initiatives.\n- **Roles and Responsibilities**:\n  - Part of your skills as a carpenter could be utilized in building infrastructure or improving facilities on the farm.\n- **Requirements**: They seek individuals who can commit to the farming practices, which include methods like no-till and organic practices. A vehicle is required.\n- **Compensation**: The fellowship pays $17.58/hour for 14 hours a week. \n- **To Apply**: Visit the Oregon Farm Corps website for more details. [Oregon Farm Corps](https://www.oregonfarmcorps.org/rff)\n\nThese projects not only allow you to apply your carpentry skills but also contribute to sustainable land management practices and community building.",
+      "citedUrls": [
+        "https://oregonfarmlink.org/job/olalla-creek-haven-is-our-organic-regenerative-educational-farm-dream-seeking-1-2-all-round-roles-for-work-trade-part-time-or-for-the-right-fit-full-time/",
+        "https://www.oregonfarmcorps.org/apprenticeship",
+        "https://permies.com/t/132813/Volunteers-landmates-wanted-transition-homestead",
+        "https://wwoofusa.org/en/host/19740",
+        "https://wwoofusa.org/en/host/19868",
+        "https://www.oregonfarmcorps.org/rff",
+        "https://oregonfarmlink.org/land-seekers/after-2-years-renovating-stewarding-with-one-landowner-we-are-ready-to-expand-on-a-new-property-maybe-with-you/",
+        "https://wwoofusa.org/en/host/25689"
+      ],
+      "usage": {
+        "prompt_tokens": 2736,
+        "completion_tokens": 631,
+        "total_tokens": 3367,
+        "cost": 0.007789,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.000789,
+          "upstream_inference_prompt_cost": 0.0004104,
+          "upstream_inference_completions_cost": 0.0003786
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "oregonfarmlink.org",
+          "permies.com",
+          "oregonfarmcorps.org",
+          "wwoofusa.org"
+        ],
+        "answerChars": 2958
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer effectively provides specific projects that a carpenter in Oregon could join, detailing skills needed and application processes."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "cold",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 10378,
+      "answer": "Bringing people onto your 40 acres without it turning into a mess is definitely manageable with the right support. Here are some options for maintaining control while offering memorable experiences:\n\n1. **Land Caretaker Services**: If you're looking for a long-term steward for your land, consider hiring a land caretaker. They can live on-site and help manage daily activities, ensuring that everything runs smoothly and that your property is respected. Services like [Land Caretaker](https://landcaretaker.com/) provide a network of vetted stewards matched for long-term fit.\n\n2. **Glamping and Retreat Management**: If you're interested in turning part of your land into a glamping site, companies like [Branch Out Glamping](https://branchoutglamping.com/) can help create and manage luxury stays. They provide full-service support, handling everything from setup to guest services, allowing you to focus on showcasing your land.\n\n3. **Partnering with Outdoor Hospitality Consultants**: If you're considering developing campgrounds or RV parks, consulting services like [EOB Consulting](https://eob-consulting.com/outdoor-hospitality-consultant/) offer guidance on transforming your property sustainably and profitably.\n\n4. **Active Management Partnerships**: Companies like [Revel Range](https://www.revelrange.com/) provide hands-on property management specifically for rural and mountain properties. They offer proactive care, ensuring that your property is properly managed and well-maintained throughout any events or stays.\n\n5. **Camphosting Services**: Partnering with a service like [VLC Partnership](https://www.vanlifecampgrounds.com/partner) allows you to host van lifers or other travelers on your land while an on-site host manages day-to-day operations. This keeps your property organized and ensures that guests have a positive experience.\n\n6. **Event Venue Management**: If you want to host events, services like [Odeyso Estates](https://www.odeysoestates.com/events) can help manage everything from logistics to cleanup, allowing you to focus on the enjoyment of your events.\n\n7. **Vacation Rental Management**: For short-term rentals, [Ruralis](https://ruralis.com/en-us/services/) provides flexible management solutions, helping you set up local teams for cleaning and maintenance while optimizing your bookings.\n\nThese services can help ensure that you maintain control over your property while providing enjoyable experiences for your guests, minimizing the risk of a mess.",
+      "citedUrls": [
+        "https://landcaretaker.com/",
+        "https://gatherhospitalitymanagement.com/",
+        "https://www.vanlifecampgrounds.com/partner",
+        "https://www.odeysoestates.com/events",
+        "https://branchoutglamping.com/",
+        "https://www.revelrange.com/",
+        "https://eob-consulting.com/outdoor-hospitality-consultant/",
+        "https://ruralis.com/en-us/services/"
+      ],
+      "usage": {
+        "prompt_tokens": 2285,
+        "completion_tokens": 502,
+        "total_tokens": 2787,
+        "cost": 0.00764395,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00064395,
+          "upstream_inference_prompt_cost": 0.00034275,
+          "upstream_inference_completions_cost": 0.0003012
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "landcaretaker.com",
+          "branchoutglamping.com",
+          "eob-consulting.com",
+          "revelrange.com",
+          "vanlifecampgrounds.com",
+          "odeysoestates.com",
+          "ruralis.com",
+          "gatherhospitalitymanagement.com"
+        ],
+        "answerChars": 2497
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This response provides relevant management options for hosting on private land, but does not mention ReGen Civics at all."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "cold",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 12560,
+      "answer": "Investing in a regenerative village where your family can live involves selecting a community that aligns with both your investment goals and your lifestyle preferences. Several options are currently available across various locations, each with its own structure and benefits. Here are some pathways you might consider:\n\n### 1. **WuWei Village in Guatemala**\nWuWei Village offers a unique investment model where investors can acquire shares in a holding company that owns land and village assets. The investment starts from **$25,000 USD**, and shareholders benefit from collective ownership, discounted stays, and the opportunity for future residency. The village focuses on regenerative practices, including agroforestry and renewable energy, which enhances both ecological and financial vitality. \n\n- **Minimum Investment**: $25,000 USD\n- **Resident-Aligned Investments**: Options for preferential access to housing range from $80,000 to $300,000 USD for various types of homes.\n- **Learn more**: [WuWei Village](https://wuweivillage.com/invest/)\n\n### 2. **Lega Vera Regenerative Farm Village in Panama**\nLega Vera provides an option for individuals to purchase homesites with the potential to build a sustainable lifestyle. The project is designed to foster a community that values intergenerational connection and regenerative living practices.\n\n- **Process**: Fill an application, select a homesite, and place a fully refundable deposit. Final purchase is expected by Summer 2026.\n- **Homesite Ownership**: While farming is not required, residents are encouraged to create productive homesites.\n- **Learn more**: [Lega Vera](https://legavera.com/faq)\n\n### 3. **The ARK in Costa Rica**\nThe ARK offers titled lots and fractional ownership, ideal for families looking to relocate or invest part-time. Ownership includes profit-sharing rights and rental management options, allowing for income generation even when you are not present.\n\n- **Prices**: Titled lots start from **$375,000**, and fractional ownership options begin at **$24,900**.\n- **Learn more**: [The ARK](https://theark.world/)\n\n### 4. **Magenta Village in Costa Rica**\nMagenta provides a titled property of at least 5,000 square meters, with essential infrastructure in place for those looking to build their future home. This model supports building rental homes to generate income.\n\n- **Flexibility**: You can purchase even if you don't plan to live full-time.\n- **Learn more**: [Magenta Village](https://magentavillage.com/faq/)\n\n### 5. **Aluna Community**\nAluna is structured as a co-ownership model where members buy shares that help shape and build the community. This collaborative approach may appeal to those looking for a tight-knit living situation.\n\n- **Investment**: Shares start at **$20,000** and go up to **$30,000** depending on the phase.\n- **Learn more**: [Aluna Community](https://alunavillage.com/)\n\n### 6. **Minimum Viable Society**\nThis model allows you to pay a monthly subscription that vests into land ownership over time, making it accessible for families without needing large upfront capital.\n\n- **Monthly Subscription**: Ranges from **$350-450**, leading to outright ownership of a lot.\n- **Community Focus**: Aimed at creating a multi-generational community.\n- **Learn more**: [Minimum Viable Society](https://minimumviablesociety.com/)\n\n### Key Considerations\n- **Visit the Sites**: If possible, arrange site visits to experience the community firsthand.\n- **Community Values**: Ensure the community's values align with your own family’s lifestyle and long-term goals.\n- **Legal and Financial Advice**: Consult with professionals to help navigate the investment structure and implications.\n\nEach of these villages offers unique lifestyles and investment structures that can accommodate families looking to live in regenerative communities. Choose one that resonates with your values and future plans!",
+      "citedUrls": [
+        "https://wuweivillage.com/invest/",
+        "https://legavera.com/faq",
+        "https://theark.world/",
+        "https://magentavillage.com/faq/",
+        "https://alunavillage.com/",
+        "https://minimumviablesociety.com/",
+        "https://oasa.earth/villages/",
+        "https://invest.starseedvillage.com/"
+      ],
+      "usage": {
+        "prompt_tokens": 2441,
+        "completion_tokens": 820,
+        "total_tokens": 3261,
+        "cost": 0.00785815,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00085815,
+          "upstream_inference_prompt_cost": 0.00036615,
+          "upstream_inference_completions_cost": 0.000492
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "wuweivillage.com",
+          "legavera.com",
+          "theark.world",
+          "magentavillage.com",
+          "alunavillage.com",
+          "minimumviablesociety.com",
+          "oasa.earth",
+          "invest.starseedvillage.com"
+        ],
+        "answerChars": 3902
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "The answer provides a detailed overview of various regenerative village options, enabling the questioner to take actionable steps this week."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "cold",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 11061,
+      "answer": "If you're currently unable to move or relocate but are eager to contribute to building a regenerative future, there are several impactful actions you can take from home or your current location:\n\n1. **Share Your Knowledge and Skills**:\n   - Consider teaching workshops or providing mentorship in areas where you have expertise, such as permaculture design, sustainable building, or community organizing. You can do this through virtual platforms, sharing your knowledge with others who wish to learn ([ReGenerativa](https://regenerativa.earth/contribute/)).\n\n2. **Participate in Online Initiatives**:\n   - Engage in online community projects or networks. For instance, you can get involved on platforms like Substack or YouTube, where you can help by reviewing content, giving feedback, and fostering discussions to build community connections ([Wenet](https://wenet.substack.com/p/ways-non-digital-members-can-plug)).\n\n3. **Volunteer Virtually**:\n   - Look for remote volunteer opportunities that match your skills. For example, you could become an Ecosystem Synergy Steward or a Regenerative Futures Advisor, where you can work with teams to strategize and craft narratives for regenerative futures ([Points of Light](https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e)).\n\n4. **Contribute to Community Documentation**:\n   - Write articles or create tutorials that document regenerative practices or share research findings. This can help build a knowledge base for others interested in regeneration ([ReGenerativa](https://regenerativa.earth/contribute/)).\n\n5. **Join Online Learning Programs**:\n   - Enroll in courses that focus on regenerative practices. For example, you can take courses in regenerative design that teach you about applying ecosystem intelligence to social impact projects, which will enhance your ability to contribute meaningfully to the movement ([Regenerate Change](https://regeneratechange.com/rdcm-online/)).\n\n6. **Support Financially**:\n   - If you have the means, consider donating to renewable energy projects, community sustainability funds, or any initiatives focused on regeneration ([ReGenerativa](https://regenerativa.earth/contribute/)).\n\n7. **Engage in Storytelling**:\n   - Participate in storytelling initiatives that inspire and envision a sustainable future. This could involve writing or sharing stories that highlight regenerative practices or personal experiences ([Points of Light](https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e)).\n\nBy leveraging your skills and resources creatively and collaboratively, you can make a significant impact in the regenerative movement from where you are now.",
+      "citedUrls": [
+        "https://regenerativa.earth/contribute/",
+        "https://sovereignsoil.manus.space/opportunities",
+        "https://wenet.substack.com/p/ways-non-digital-members-can-plug",
+        "https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734",
+        "https://regenerativa.earth/bootstrap/",
+        "https://terrenity.substack.com/p/get-a-paid-career-in-regenerative",
+        "https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e",
+        "https://regeneratechange.com/rdcm-online/"
+      ],
+      "usage": {
+        "prompt_tokens": 2270,
+        "completion_tokens": 569,
+        "total_tokens": 2839,
+        "cost": 0.0076819,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0006819,
+          "upstream_inference_prompt_cost": 0.0003405,
+          "upstream_inference_completions_cost": 0.0003414
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "regenerativa.earth",
+          "wenet.substack.com",
+          "engage.pointsoflight.org",
+          "regeneratechange.com",
+          "sovereignsoil.manus.space",
+          "terrenity.substack.com"
+        ],
+        "answerChars": 2712
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 0,
+        "inventions": [],
+        "recommendedInstead": [
+          "ReGenerativa",
+          "Wenet",
+          "Points of Light",
+          "Regenerate Change"
+        ],
+        "note": "This answer provides some useful general advice but fails to directly address ReGen Civics or any specific information about it."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "sited",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 3912,
+      "answer": "I can't perform a live search or access specific web pages, including the site you mentioned, but I can suggest a general approach to finding regenerative land projects in Oregon.\n\nTo find a regenerative land project to join, you might want to look for organizations or networks focused on ecological restoration, permaculture, and sustainable land practices. Consider checking local NGOs, community groups, or cooperative extensions that focus on regenerative agriculture or land stewardship.\n\nIn terms of what they might ask of you as a carpenter, typical responsibilities could include:\n\n1. **Building Structures**: Assisting in the construction of green buildings, shelters, or farm infrastructure that aligns with regenerative practices.\n2. **Site Design**: Collaborating in the design of land-use plans that promote biodiversity and sustainable practices.\n3. **Education and Workshops**: Participating in or leading workshops to share your skills with other community members.\n4. **Volunteering Time**: Contributing a certain number of hours to the project, which may not always be carpentry but could include various tasks.\n\nTo get specific opportunities and requirements, directly visiting the [regencivics.earth](http://regencivics.earth) website or contacting local regenerative agriculture organizations in Oregon would be beneficial.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 128,
+        "completion_tokens": 248,
+        "total_tokens": 376,
+        "cost": 0.007168,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.000168,
+          "upstream_inference_prompt_cost": 0.0000192,
+          "upstream_inference_completions_cost": 0.0001488
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "http://regencivics.earth"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 1345
+      },
+      "judged": {
+        "accuracy": 1,
+        "actionability": 1,
+        "inventions": [],
+        "recommendedInstead": [
+          "local NGOs",
+          "community groups",
+          "cooperative extensions"
+        ],
+        "note": "This answer provides a good framework for finding regenerative land projects but lacks specific connections to ReGen Civics."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "sited",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 3011,
+      "answer": "I couldn't find specific information from the website regencivics.earth regarding how to bring people onto your 40 acres in an organized manner. However, to manage visitors effectively and minimize chaos, you might consider consulting with professionals in areas such as land management, event planning, or community engagement. \n\nIf you're looking for structured ways to utilize your land for gatherings—like workshops, retreats, or recreational activities—working with local civic organizations could also be beneficial. They can provide guidance on best practices, permits, and community expectations. \n\nIf you have more specific aspects or types of engagements in mind, feel free to share, and I can provide more tailored suggestions!",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 128,
+        "completion_tokens": 133,
+        "total_tokens": 261,
+        "cost": 0.007099,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.000099,
+          "upstream_inference_prompt_cost": 0.0000192,
+          "upstream_inference_completions_cost": 0.0000798
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 738
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 0,
+        "inventions": [],
+        "recommendedInstead": [
+          "local civic organizations",
+          "event planners",
+          "land management professionals"
+        ],
+        "note": "This answer does not provide specific information about ReGen Civics and offers general advice that may not directly address the user's needs."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "sited",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 5417,
+      "answer": "I couldn't directly search the website \"regencivics.earth\" for you, but I can guide you on how to approach investing in a regenerative village where your family could live.\n\n1. **Research Regenerative Villages**: Start by looking into existing regenerative villages or intentional communities that emphasize sustainability, ecological practices, and social cohesion. Websites focused on regenerative living often have directories or case studies.\n\n2. **Identify Investment Opportunities**: Many regenerative villages operate as cooperatives or community land trusts, providing ways for individuals or families to invest in land or development projects. Check if there are investment groups or shareholder opportunities mentioned on the site.\n\n3. **Engage with Communities**: Consider reaching out to these communities for investment opportunities. Often, community leaders are looking for like-minded individuals who want to help build the village.\n\n4. **Evaluate Membership Options**: Some villages may offer membership options that provide rights to live on the land in exchange for investment or time contribution. \n\n5. **Participate in Development**: Understand what type of infrastructure, sustainability measures, or community initiatives are being planned. Your investment might contribute to housing, renewable energy, or community facilities.\n\n6. **Consider Personal Values**: Ensure that the values of the community resonate with your family's goals for living sustainably and in harmony with nature.\n\nYou might want to explore [regencivics.earth](https://regencivics.earth) directly to find specific programs, partnerships, or investment vehicles that align with your vision for a regenerative lifestyle.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 120,
+        "completion_tokens": 307,
+        "total_tokens": 427,
+        "cost": 0.0072022,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0002022,
+          "upstream_inference_prompt_cost": 0.000018,
+          "upstream_inference_completions_cost": 0.0001842
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 1715
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 1,
+        "inventions": [],
+        "recommendedInstead": [
+          "regencivics.earth"
+        ],
+        "note": "This answer provides practical steps for someone looking to invest in and participate in a regenerative village lifestyle."
+      }
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "arm": "sited",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 5734,
+      "answer": "I couldn't find any specific information directly from the website regencivics.earth, but I can suggest some general ideas based on common initiatives related to regenerative practices. Here are a few ways you can help build something regenerative while staying in one place:\n\n1. **Educate Yourself and Others**: Utilize online resources and courses to learn about sustainability and regenerative practices. Share knowledge with friends and community members through discussions, social media, or virtual workshops.\n\n2. **Support Local Regenerative Projects**: If there are local organizations or initiatives focused on regenerative agriculture, permaculture, or community gardens, consider supporting them through donations or offering your expertise even if you can’t physically participate.\n\n3. **Start a Virtual Community**: Create or join online groups centered on regenerative practices. This could be a forum for sharing resources, ideas, and support for regenerative projects.\n\n4. **Engage in Online Activism**: Participate in campaigns or movements that advocate for regenerative policies at local, national, or global levels. This can include signing petitions, writing to legislators, or amplifying messages on social media.\n\n5. **Develop Resources**: If you have skills in writing, graphic design, or video production, consider creating educational materials that can help spread the word about regenerative practices.\n\n6. **Plan for Future Involvement**: Use this time to strategize how you might get involved in regenerative projects when you are able to move. This could include researching funding opportunities, potential partnerships, or other resources.\n\nCheck out the site directly for more specific initiatives or resources that align with your interests in regenerative practices.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 123,
+        "completion_tokens": 321,
+        "total_tokens": 444,
+        "cost": 0.00721105,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00021105,
+          "upstream_inference_prompt_cost": 0.00001845,
+          "upstream_inference_completions_cost": 0.0001926
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 1802
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 1,
+        "inventions": [],
+        "recommendedInstead": [
+          "regencivics.earth"
+        ],
+        "note": "This answer provides general ways to engage with regenerative practices but fails to directly address ReGen Civics."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "cold",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 9486,
+      "answer": "Yes, as a carpenter in Oregon, there are several regenerative land projects you could potentially join. Many farms and homesteads are looking for individuals with a variety of skills, and carpentry is often a valuable asset for building and maintaining infrastructure.\n\nHere are some examples of regenerative land projects in Oregon and what they might ask of you, with a focus on opportunities where your carpentry skills would be beneficial:\n\n**Projects with Direct Carpentry Needs:**\n\n*   **Olalla Creek Haven (Winston, OR):** This 21-acre regenerative farm is seeking versatile individuals for work-trade. While they are looking for \"all-around farm crew members,\" they specifically mention \"Bonus: experience in carpentry\" as a desirable skill. They are also remodeling barn living quarters as part of the farm's development, which would likely benefit from carpentry expertise. They would ask you to help with general farm operations, care for animals and gardens, support agritourism and educational programs, and contribute to farm improvements. They offer work/housing trade and a percentage of future farm proceeds [oregonfarmlink.org](https://oregonfarmlink.org/job/olalla-creek-haven-is-our-organic-regenerative-educational-farm-dream-seeking-1-2-all-round-roles-for-work-trade-part-time-or-for-the-right-fit-full-time/).\n*   **Rahane Forest Farm (60 miles east of Portland):** This 80-acre permaculture-focused homestead is seeking experienced individuals (preferably a couple) to help transition their organic homestead to a permaculture model. They specifically mention \"rebuilding the woodshed and replastering our cob greenhouse\" as projects for the year. This clearly indicates a need for building skills. They offer accommodation in a small wooden yurt with running water and a stove, access to a shared community kitchen, and an opportunity to learn ancestral skills [permies.com](https://permies.com/t/132813/Volunteers-landmates-wanted-transition-homestead).\n*   **Last Minute Ranch (Crescent Lake, OR):** This \"petting-ranch-tour start up\" is looking for WWOOFers to help with various tasks. While not explicitly stating carpentry, they mention \"building hugelkultur beds,\" \"fencing,\" and \"organizing tools,\" which could involve some basic construction or repair. They offer room and board in exchange for 2-6 hours of work, 4-5 days a week [wwoofusa.org](https://wwoofusa.org/en/host/19740).\n*   **Land Seekers (Various Locations, OR):** One posting on Oregon Farm Link from land seekers looking for a new property mentions needing a \"Shop/Garage: 500+sq.ft. concrete floor, 8+ft ceilings, 20+ft wide door\" and a \"Barn: preferred, or permission & resources to build (min. 1,000 sq.ft.).\" They state, \"We can build, if you invest for materials.\" This indicates a strong need for construction skills, and if you were to partner with them, your carpentry would be invaluable for building these structures [oregonfarmlink.org](https://oregonfarmlink.org/land-seekers/after-2-years-renovating-stewarding-with-one-landowner-we-are-ready-to-expand-on-a-new-property-maybe-with-you/).\n\n**Projects Where Carpentry Could Be an Asset (Though Not Explicitly Stated):**\n\n*   **Oregon Farm Corps Apprenticeship Program:** This program offers immersive, hands-on farming experience at various host farms. While no experience is required, they recommend \"physical or outdoor work experience.\" Many host farms would likely benefit from general maintenance and building skills, which could include carpentry. You would learn regenerative and sustainable agriculture practices, enhance soil health, and participate in educational events, receiving a wage as an employee of the Host Farm [oregonfarmcorps.org](https://www.oregonfarmcorps.org/apprenticeship).\n*   **Rogue Valley Regenerative Farming Fellowship:** This fellowship focuses on no-till, low-till, and organic practices. While the primary role is farm-related, any farm operation often has ongoing needs for repairs, small construction projects, or building infrastructure. Your carpentry skills could be a valuable bonus to their team [oregonfarmcorps.org](https://www.oregonfarmcorps.org/rff).\n*   **27-acre sustainable homestead (Coast Range Mtns of OR):** This WWOOF host practices biological pest control, holistic management, permaculture, and regenerative agriculture. On a homestead of this size, there are always building projects or repairs that come up, and your carpentry skills would be a great asset [wwoofusa.org](https://wwoofusa.org/en/host/19868).\n*   **Resilient Homestead (SW Oregon):** This homesteader owns over 100 acres in the National Forest and is focused on stewarding the land sustainably. With such a large property, there are likely many opportunities for building and repair projects, making your carpentry skills highly desirable [permies.com](https://permies.com/t/169925/jobs-offered/experiences/Resilient-Homestead-Oregon).\n\n**What they would generally ask of you:**\n\nBeyond specific carpentry tasks, these projects generally look for individuals who are:",
+      "citedUrls": [
+        "https://oregonfarmlink.org/job/olalla-creek-haven-is-our-organic-regenerative-educational-farm-dream-seeking-1-2-all-round-roles-for-work-trade-part-time-or-for-the-right-fit-full-time/",
+        "https://permies.com/t/132813/Volunteers-landmates-wanted-transition-homestead",
+        "https://www.oregonfarmcorps.org/apprenticeship",
+        "https://wwoofusa.org/en/host/19740",
+        "https://wwoofusa.org/en/host/19868",
+        "https://www.oregonfarmcorps.org/rff",
+        "https://permies.com/t/169925/jobs-offered/experiences/Resilient-Homestead-Oregon",
+        "https://oregonfarmlink.org/land-seekers/after-2-years-renovating-stewarding-with-one-landowner-we-are-ready-to-expand-on-a-new-property-maybe-with-you/"
+      ],
+      "usage": {
+        "prompt_tokens": 2847,
+        "completion_tokens": 1200,
+        "total_tokens": 4047,
+        "cost": 0.0108541,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0038541,
+          "upstream_inference_prompt_cost": 0.0008541,
+          "upstream_inference_completions_cost": 0.003
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "oregonfarmlink.org",
+          "permies.com",
+          "wwoofusa.org",
+          "oregonfarmcorps.org"
+        ],
+        "answerChars": 5055
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "The answer provides specific opportunities and details on regenerative land projects but does not reference ReGen Civics at all."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "cold",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 6541,
+      "answer": "Bringing people onto your 40-acre property while maintaining order and preventing a \"mess\" can be achieved with the help of various services that specialize in property management, event coordination, and unique hospitality models.\n\nHere's a breakdown of who can help:\n\n**1. Full-Service Glamping/Camping Partners:**\n\n*   **Branch Out Glamping** [branchoutglamping.com] and **Revel Range** [revelrange.com] offer partnerships to transform your land into glamping or camping destinations. They handle everything from setup, guest services, operations, marketing, and reservation management. They often co-invest and focus on creating a high-quality, low-density experience, with Revel Range emphasizing remote, scenic locations and even renting out entire ranches for private use.\n*   **VAN LIFE CAMPGROUNDS (VLC Partnership)** [vanlifecampgrounds.com] provides a unique model where they act as an active partner to help you build a \"Van Life Campground.\" They bring a camphost to live on-site and run daily operations, including weekly programming like dinners and bonfires. They also manage bookings, marketing, and content, allowing you to focus on other aspects of your vision for the land.\n\n**2. Property Management for Rural and Mountain Properties:**\n\n*   **Revel Range** [revelrange.com] also offers comprehensive property management, maintenance, and monetization services specifically for rural and mountain properties. They are \"boots-on-the-ground,\" proactive, and handle routine work such as snow removal, road grading, trash management, and general upkeep. They understand the unique challenges of managing properties in these environments, including wildlife issues and optimizing outdoor spaces.\n*   **Gather Hospitality** [gatherhospitalitymanagement.com] provides comprehensive, hands-on management for park owners and operators, focusing on delivering exceptional outdoor hospitality experiences.\n\n**3. Remote/Digital Property Management with Local Support:**\n\n*   **Ruralis** [ruralis.com] specializes in the digital management of short-term rentals. They handle booking processes, 24/7 guest support, identity verification, and review management. While you retain the operational side (like in-person check-in, cleaning, and maintenance), Ruralis can help you find and coordinate a local team (cleaners, electricians, handymen) to support these activities. They provide tools like a cleaning staff app to manage tasks and report issues.\n\n**4. Live-in Caretakers/Stewards:**\n\n*   **Land Caretaker** [landcaretaker.com] connects property owners with vetted, background-checked, and reference-verified families or couples who are looking for long-term live-in stewardship roles. They can manage and maintain your ranch, estate, or rural property, ensuring consistent care and oversight.\n\n**5. Event Venue Management:**\n\n*   If you're interested in hosting events, **Odeyso Estates** [odeysoestates.com] (an example of a private venue) demonstrates the kind of services that can be provided. They offer purpose-built spaces for gatherings, including professional cleaning crews and coordination of external vendors like tent rentals, catering, and DJs. They emphasize handling everything \"from booking to cleanup,\" ensuring a smooth experience for both you and your guests.\n\n**6. Consultants for Outdoor Hospitality:**\n\n*   **EOB Consulting** [eob-consulting.com] specializes in guiding clients through every phase of developing and improving outdoor hospitality properties, such as transforming raw land into campgrounds or RV parks.\n\nBy considering these options, you can choose a partner or service that aligns with your specific vision for your 40 acres and helps you manage the logistics of bringing people onto your property responsibly.",
+      "citedUrls": [
+        "https://landcaretaker.com/",
+        "https://www.odeysoestates.com/events",
+        "https://gatherhospitalitymanagement.com/",
+        "https://www.vanlifecampgrounds.com/partner",
+        "https://branchoutglamping.com/",
+        "https://www.revelrange.com/",
+        "https://ruralis.com/en-us/services/",
+        "https://eob-consulting.com/outdoor-hospitality-consultant/"
+      ],
+      "usage": {
+        "prompt_tokens": 2457,
+        "completion_tokens": 776,
+        "total_tokens": 3233,
+        "cost": 0.0096771,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0026771,
+          "upstream_inference_prompt_cost": 0.0007371,
+          "upstream_inference_completions_cost": 0.00194
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "landcaretaker.com",
+          "odeysoestates.com",
+          "gatherhospitalitymanagement.com",
+          "vanlifecampgrounds.com",
+          "branchoutglamping.com",
+          "revelrange.com",
+          "ruralis.com",
+          "eob-consulting.com"
+        ],
+        "answerChars": 3759
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "The answer provides a variety of suggestions for managing land but does not mention ReGen Civics."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "cold",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 10809,
+      "answer": "Investing in a regenerative village with the intention of living there offers various pathways, from direct land ownership to co-ownership models and even subscription-based access. Here's a breakdown of how you might approach this, based on the provided information:\n\n**1. Direct Purchase of Titled Lots:**\n\nSeveral regenerative villages offer titled lots, giving you outright ownership of a parcel of land where you can build your home.\n\n*   **Magenta Village (Costa Rica):** Offers titled properties registered in your name, with minimum sizes of 5,000 square meters. These come with essential infrastructure (roads, water, electricity) and permits to build. You don't need to live there full-time and can build a rental home for income [magentavillage.com].\n*   **The ARK (Costa Rica):** Provides \"full freehold title\" lots starting from $375,000, allowing you to build your home to your design. These also include profit-sharing rights and discounts on amenities [theark.world].\n*   **Lega Vera (Panama):** Sells individual homesites where you can build your future home. They encourage site visits to choose your lot, and the purchase is completed once final entitlements are secured (anticipated Summer 2026). They allow for shared compounds and multigenerational living with a limit of 12 residents per property [legavera.com].\n*   **Aluna Community (near Aluna):** While Aluna itself is co-owned, a nearby capsule offers titled lots starting around $45,000 for 1.2 acres [alunavillage.com].\n\n**2. Co-ownership Models with Preferential Housing Access:**\n\nThese models involve buying shares in a company that owns the village's land and assets, which can grant you preferential access or even dedicated housing.\n\n*   **WuWei Village (Guatemala):** This village operates on a share-based model. By investing specific amounts, you can gain \"Resident-Aligned Investor\" status, which provides preferential access to housing.\n    *   An investment of $80,000 USD could grant preferential access to a studio residence.\n    *   Higher investments, such as $125,000 for a one-bedroom home or $200,000 for a two-bedroom home, are also available.\n    *   Note that final investment thresholds might vary based on specific home design and materials [wuweivillage.com].\n    *   Investors acquire proportional ownership in the Sociedad Anónima (S.A.) holding company that owns all land and village assets, meaning you own shares in the entity that owns the property, rather than the property directly [wuweivillage.com].\n*   **Aluna Community:** This community uses a co-ownership structure where members hold a defined share connected to a specific area of the property.\n    *   Phase 2 shares are anticipated at $25,000, and Phase 3 at $30,000, aiming for 12 family units total.\n    *   Joining requires completing a process and receiving full alignment from existing members [alunavillage.com].\n\n**3. Fractional Ownership:**\n\nThis option allows for part-time residency and shared use of a home.\n\n*   **The ARK (Costa Rica):** Offers fractional ownership starting from $24,900. One share grants you 4 weeks per year on the property in a fully furnished 2-bedroom Casita. Purchasing 12 shares equates to owning a full home [theark.world].\n\n**4. Subscription-Based Ownership Path:**\n\nAn innovative model that reduces upfront costs and allows for gradual ownership.\n\n*   **Minimum Viable Society:** In this model, land is put into a trust and sold off to subscription members over three years.\n    *   You don't need a large down payment. Instead, you pay a monthly subscription ($350-450/month, or custom housing tiers from $200-1,000/month).\n    *   Over three years, your subscription vests into land ownership, and you own a lot outright (400-1000m²) [minimumviablesociety.com].\n\n**5. Token-Based Investment (Future or Supportive Role):**\n\nWhile not directly for residency at present, some projects mention token involvement for support.\n\n*   **Starseed Village:** Mentions $SV and $LAND tokens to show support and benefit, suggesting a potential future role in its ecosystem [invest.starseedvillage.com].\n\n**Key Considerations for Families:**\n\n*   **Community Structure:** Understand if the village is governed by an HOA (like Lega Vera) or a shared company.\n*   **Age Ranges:** Lega Vera, for example, is designed to welcome all ages and encourages intergenerational connection [legavera.com].\n*   **Residency Requirements:** Some villages may not require full-time residency (Magenta Village, The ARK fractional), while others are clearly geared towards full-time community living.\n*   **Building Your Home:** Assess if you can build a custom home (Titled Lots, WuWei Resident-Aligned Investor, Aluna) or if homes are pre-designed.\n*   **Legal Structure:** Understand the legal framework. WuWei Village operates as a Sociedad Anónima under Guatemalan law [wuweivillage.com]. OASA offers a Swiss association + land trust model that can be adopted by villages, which could provide asset protection [oasa.earth].\n*   **Minimum Investment:** These range significantly, from $25,000 for",
+      "citedUrls": [
+        "https://wuweivillage.com/invest/",
+        "https://legavera.com/faq",
+        "https://theark.world/",
+        "https://magentavillage.com/faq/",
+        "https://alunavillage.com/",
+        "https://oasa.earth/villages/",
+        "https://minimumviablesociety.com/",
+        "https://invest.starseedvillage.com/"
+      ],
+      "usage": {
+        "prompt_tokens": 2697,
+        "completion_tokens": 1200,
+        "total_tokens": 3897,
+        "cost": 0.0108091,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0038091,
+          "upstream_inference_prompt_cost": 0.0008091,
+          "upstream_inference_completions_cost": 0.003
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "wuweivillage.com",
+          "legavera.com",
+          "theark.world",
+          "magentavillage.com",
+          "alunavillage.com",
+          "oasa.earth",
+          "minimumviablesociety.com",
+          "invest.starseedvillage.com"
+        ],
+        "answerChars": 5081
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 0,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer provides a thorough guide on investing in regenerative villages but doesn't mention ReGen Civics at all."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "cold",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 7731,
+      "answer": "Even if you can't physically move, you can significantly contribute to building a regenerative future through various virtual and low-physical-exertion activities. The key is leveraging your skills, knowledge, and network.\n\nHere's how you can help:\n\n**1. Knowledge and Documentation:**\n\n*   **Write articles, create tutorials, or document projects:** Share your expertise by contributing to knowledge bases. This could involve explaining regenerative concepts, detailing processes, or documenting successful initiatives [regenerativa.earth](https://regenerativa.earth/contribute/).\n*   **Share research and insights:** Contribute to developing research-backed strategies by analyzing systemic factors, identifying promising capacities within institutions, and designing regenerative infrastructures [engage.pointsoflight.org](https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734).\n*   **Contribute to storytelling:** If you enjoy writing, you can help tell stories of social innovations with transformative impact. This could involve writing articles, creating engaging content, or contributing to editorial work [engage.pointsoflight.org](https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e).\n*   **Review and provide feedback:** If content is being created (articles, videos), you can offer valuable verbal feedback or notes on what resonates and how it applies to real-life skills [wenet.substack.com](https://wenet.substack.com/p/ways-non-digital-members-can-plug).\n\n**2. Community Building and Organizing (Virtual):**\n\n*   **Community Organizing and Outreach:** Help grow and coordinate networks, especially across diaspora communities [sovereignsoil.manus.space](https://sovereignsoil.manus.space/opportunities).\n*   **Administrative Support:** Offer your skills for administrative tasks that support ongoing projects and community initiatives [regenerativa.earth](https://regenerativa.earth/contribute/).\n*   **Event Organization:** Even virtually, you can assist with planning and coordinating online events, workshops, or meetings [regenerativa.earth](https://regenerativa.earth/contribute/).\n*   **Facilitate dialogues:** Help guide multi-stakeholder dialogues and participatory processes to encourage institutions towards regenerative change [engage.pointsoflight.org](https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734).\n*   **Amplify through personal networks:** Share content and encourage your contacts to engage with regenerative initiatives. Personal recommendations can be very effective [wenet.substack.com](https://wenet.substack.com/p/ways-non-digital-members-can-plug).\n\n**3. Sharing Expertise and Mentorship:**\n\n*   **Teach workshops or mentor others:** If you have expertise in areas like permaculture design, sustainable building, renewable energy, or community organizing, you can teach virtual workshops or mentor individuals [regenerativa.earth](https://regenerativa.earth/contribute/).\n*   **Advise on specific projects:** If you have specialized knowledge, such as in regenerative agriculture, solar, or water systems, you can offer advisory services remotely [sovereignsoil.manus.space](https://sovereignsoil.manus.space/opportunities).\n*   **Technical assistance:** Provide technical support for projects or initiatives [regenerativa.earth](https://regenerativa.earth/contribute/).\n\n**4. Financial and Resource Contribution (Indirectly):**\n\n*   **Financial donations:** If you have the means, financial contributions are always valuable [regenerativa.earth](https://regenerativa.earth/contribute/).\n*   **Identify resources:** You can help research and identify potential sources for materials, tools, seeds, or plants that could benefit regenerative projects [regenerativa.earth](https://regenerativa.earth/contribute/).\n\n**5. Learning and Advocacy:**\n\n*   **Engage with content:** Spend time watching videos, listening to podcasts, or reading articles related to regenerative practices. This builds shared understanding and energy [wenet.substack.com](https://wenet.substack.com/p/ways-non-digital-members-can-plug).\n*   **Join open collectives:** Connect with groups like Regen Tribe, re:build, Gaianet, or Green Pill Network to coordinate resources and practice \"radical collaboration\" [terrenity.substack.com](https://terrenity.substack.com/p/get-a-paid-career-in-regenerative).\n*   **Dismantle oppressive patterns:** Engage with justice-based frameworks and ecological principles to understand and help dismantle systemic issues [regeneratechange.com](https://regeneratechange.com/rdcm-online/).\n\nMany organizations are actively seeking remote and low-mobility contributions. Look for \"Ecosystem Synergy Steward\" or \"Regenerative Futures Advisor\" roles, which often involve virtual collaboration and research [engage.pointsoflight.org](https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734), [engage.pointsoflight.org](https://engage.pointsoflight.org/opportunities/6",
+      "citedUrls": [
+        "https://regenerativa.earth/contribute/",
+        "https://sovereignsoil.manus.space/opportunities",
+        "https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734",
+        "https://wenet.substack.com/p/ways-non-digital-members-can-plug",
+        "https://regenerativa.earth/bootstrap/",
+        "https://terrenity.substack.com/p/get-a-paid-career-in-regenerative",
+        "https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e",
+        "https://regeneratechange.com/rdcm-online/"
+      ],
+      "usage": {
+        "prompt_tokens": 2464,
+        "completion_tokens": 1200,
+        "total_tokens": 3664,
+        "cost": 0.0107392,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0037392,
+          "upstream_inference_prompt_cost": 0.0007392,
+          "upstream_inference_completions_cost": 0.003
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "regenerativa.earth",
+          "engage.pointsoflight.org",
+          "wenet.substack.com",
+          "sovereignsoil.manus.space",
+          "terrenity.substack.com",
+          "regeneratechange.com"
+        ],
+        "answerChars": 5043
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "regenerativa.earth",
+          "engage.pointsoflight.org",
+          "wenet.substack.com",
+          "sovereignsoil.manus.space",
+          "terrenity.substack.com",
+          "regeneratechange.com"
+        ],
+        "note": "This answer provides numerous actionable virtual activities for someone unable to move, encouraging meaningful contributions to regenerative efforts."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "sited",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 6575,
+      "answer": "Based on the information available on Regencivics.earth, here's what you might find regarding regenerative land projects in Oregon and what they would ask of you as a carpenter:\n\n**Finding Regenerative Land Projects in Oregon:**\n\nWhile the site doesn't have a direct \"projects in Oregon\" filter, you could explore the following avenues on [regencivics.earth](https://regencivics.earth):\n\n*   **\"Projects\" Section:** Navigate to the \"Projects\" section of the website. Many projects are listed, and while not all might specify a location, some will. You'd need to browse through them to see if any are in Oregon or are seeking remote support for projects that could eventually come to Oregon.\n*   **\"People\" Section:** Look for individuals or organizations in the \"People\" section who are based in Oregon or have listed \"Oregon\" as a region of interest in their profiles. Connecting with these individuals might lead you to projects.\n*   **\"Groups\" Section:** Similar to \"People,\" explore the \"Groups\" section. There might be groups focused on specific regions or types of regenerative work that could have a presence in Oregon.\n*   **\"Community\" or \"Forum\" (if available):** If there's a community forum or discussion board, it would be a good place to post your interest and ask if anyone knows of projects in Oregon seeking carpenters.\n\n**What They Would Ask of You as a Carpenter:**\n\nThe site emphasizes the importance of diverse skills and contributions to regenerative projects. As a carpenter, here's what you could expect them to ask of you, based on the general principles outlined on [regencivics.earth](https://regencivics.earth):\n\n*   **Practical Skills:** They would undoubtedly value your carpentry skills for building and repairing infrastructure essential to regenerative land projects. This could include:\n    *   Constructing shelters, outbuildings, or communal spaces.\n    *   Building raised garden beds, trellises, and other agricultural structures.\n    *   Creating fencing or animal enclosures.\n    *   Repairing existing structures.\n    *   Designing and building sustainable, eco-friendly structures using natural materials.\n*   **Collaboration and Community Engagement:** A core tenet of Regencivics is collaboration. You would be expected to work effectively with others from diverse backgrounds, share your knowledge, and contribute to a positive community environment. This might involve:\n    *   Working in teams with other volunteers or paid staff.\n    *   Participating in group decision-making processes.\n    *   Mentoring or teaching others basic carpentry skills.\n*   **Alignment with Regenerative Principles:** You would be expected to understand and embody the principles of regenerative design and living. This means:\n    *   A commitment to ecological restoration and sustainability.\n    *   An interest in using local and sustainable materials where possible.\n    *   An understanding of permaculture principles or a willingness to learn.\n    *   A desire to create structures that support the health of the land and its inhabitants.\n*   **Contribution and Reciprocity:** Regencivics promotes a model of \"contribution and reciprocity.\" This means you would offer your skills, and in return, you might receive:\n    *   Experience and learning opportunities.\n    *   Community and connection.\n    *   Potentially, food, lodging, or other forms of compensation depending on the project and its funding model. Some projects might be volunteer-based, while others might offer paid positions or stipends.\n*   **Proactive Engagement:** The platform encourages individuals to be proactive. This means you might be asked to:\n    *   Propose your own carpentry projects that align with the goals of a regenerative site.\n    *   Take initiative in identifying needs for carpentry work on a project.\n    *   Document your work and share your learning with the community.\n\nIn essence, a regenerative land project would not just ask for your hands-on carpentry skills but also your commitment to their overarching mission of ecological and social regeneration, your ability to collaborate, and your willingness to learn and contribute within a community framework.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 133,
+        "completion_tokens": 867,
+        "total_tokens": 1000,
+        "cost": 0.0092074,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0022074,
+          "upstream_inference_prompt_cost": 0.0000399,
+          "upstream_inference_completions_cost": 0.0021675
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 4188
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer would provide a carpenter in Oregon with specific avenues to explore regenerative land projects and outline expectations, enabling actionable next steps."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "sited",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 4846,
+      "answer": "Based on the information on [regencivics.earth](https://www.regencivics.earth/), you're looking for guidance on \"regenerative land stewardship\" to bring people onto your 40 acres without it becoming a mess.\n\nRegenCivics.Earth highlights that regenerative land stewardship is about developing practices that care for the land, water, and wildlife, while also supporting communities and the local economy. This approach can help you manage access and activities in a way that benefits both your land and the people who visit it.\n\nSpecifically, their resources suggest focusing on:\n\n*   **Understanding your land's capacity:** Before bringing people on, it's crucial to assess your 40 acres to understand its ecological limits and what activities it can sustainably support. This can involve identifying sensitive areas, water sources, and wildlife habitats.\n*   **Developing clear guidelines and agreements:** To prevent \"a mess,\" you'll need to establish clear rules and expectations for visitors regarding their behavior, waste management, access points, and any specific activities they can or cannot engage in. This could involve creating a simple \"Land Use Agreement\" or a set of \"Visitor Guidelines.\"\n*   **Education and engagement:** Informing your visitors about regenerative principles and the importance of caring for the land can empower them to be responsible stewards themselves. This could include signage, introductory talks, or even participatory activities related to land care.\n*   **Community involvement:** If you're looking to host groups or involve others in a more structured way, RegenCivics.Earth's focus on \"civics\" implies considering how to foster a sense of shared responsibility and collaboration among those who use your land. This might involve creating a \"community of practice\" around your land or seeking input from potential users on how to best manage access.\n\nWhile [regencivics.earth](https://www.regencivics.earth/) doesn't explicitly name a specific type of professional to \"help with that,\" the principles they advocate for would be supported by:\n\n*   **Ecological consultants or land managers:** To help you assess your land's capacity and develop sustainable land use plans.\n*   **Community organizers or facilitators:** If you intend to bring groups onto your land and want to foster a sense of shared responsibility and collective care.\n*   **Legal professionals:** To help you draft robust land use agreements or liability waivers for visitors.\n\nEssentially, you'd be looking for people who can help you integrate ecological stewardship with community engagement and clear governance, aligning with the principles of regenerative land management.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 132,
+        "completion_tokens": 533,
+        "total_tokens": 665,
+        "cost": 0.0083721,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0013721,
+          "upstream_inference_prompt_cost": 0.0000396,
+          "upstream_inference_completions_cost": 0.0013325
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://www.regencivics.earth/"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 2691
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "Ecological consultants",
+          "Community organizers",
+          "Legal professionals"
+        ],
+        "note": "This answer provides specific and actionable steps related to regenerative land stewardship, making it useful for someone looking to manage their land effectively."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "sited",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 9202,
+      "answer": "Investing in a regenerative village that your family could live in, based on the information from [regencivics.earth](https://regencivics.earth), involves understanding their \"Pattern Language\" and the various \"patterns\" that contribute to a thriving regenerative community. While the site doesn't offer direct investment opportunities in specific villages, it outlines the principles and elements necessary to *create* or *participate in* such a village.\n\nHere's how you can approach it, drawing from the site's content:\n\n**1. Understand the Core Principles & \"Pattern Language\":**\n\n*   **Regenerative Culture:** The foundation is a \"culture of regeneration,\" where human activity enriches rather than depletes the environment and fosters healthy social systems [regencivics.earth](https://regencivics.earth). This means your investment is not just financial, but also in embracing and contributing to this culture.\n*   **\"Pattern Language\" as a Framework:** Regencivics uses a \"pattern language\" to describe the repeatable, scalable, and interconnected elements that make up regenerative communities. Familiarize yourself with this language as it defines what you'd be \"investing\" in, both literally and figuratively [regencivics.earth](https://regencivics.earth).\n\n**2. Identify Key \"Patterns\" for Family Living and Community:**\n\nThe site details numerous patterns that are crucial for a family to thrive in a regenerative village. When considering where to invest your time, energy, and resources, look for these elements:\n\n*   **Village Scale:** Regenerative villages are typically designed for human-scale interaction and community, fostering strong relationships and shared purpose. This is key for family integration.\n*   **Shared Infrastructure:** Villages often feature shared resources like common spaces, tools, and potentially even kitchens or childcare facilities, which can reduce individual burden and foster community [regencivics.earth](https://regencivics.earth).\n*   **Ecological Integration:** Look for communities that deeply integrate with their natural surroundings, focusing on practices like regenerative agriculture, water harvesting, and biodiversity enhancement. This provides a healthy environment for your family [regencivics.earth](https://regencivics.earth).\n*   **Economic Resilience:** A regenerative village aims for economic models that are local, circular, and fair. This might involve local currencies, community-supported agriculture, and diverse livelihood opportunities that could support your family [regencivics.earth](https://regencivics.earth).\n*   **Governance and Decision-Making:** Understand how decisions are made within the community. Regenerative villages often employ inclusive, participatory governance models that ensure everyone's voice, including families', is heard [regencivics.earth](https://regencivics.earth).\n*   **Learning and Skill-Sharing:** Many regenerative communities emphasize lifelong learning and the sharing of skills, which can be invaluable for children's education and adult development [regencivics.earth](https://regencivics.earth).\n\n**3. Approaches to \"Investing\":**\n\nSince direct investment avenues aren't explicitly listed for specific villages, consider these approaches based on the site's philosophy:\n\n*   **\"Invest\" in Learning and Connection:**\n    *   **Study the Pattern Language:** Deeply understand the concepts presented on Regencivics. This knowledge will equip you to evaluate existing villages or contribute to new ones effectively.\n    *   **Connect with Existing Initiatives:** Search for communities or projects that explicitly state they are building \"regenerative villages\" or adopting a \"pattern language\" approach. These might be listed on other platforms or networks dedicated to ecovillages and intentional communities.\n*   **\"Invest\" Your Skills and Time:**\n    *   **Active Participation:** Many developing regenerative villages need skilled individuals (e.g., in ecological design, community organizing, sustainable building, education, agriculture). Your \"investment\" could be your time and expertise, which might lead to residency or co-ownership opportunities.\n    *   **Volunteer or Apprenticeship:** Consider short-term immersion in an existing community to gain experience and build relationships. This is a form of investment in your own learning and potential future integration.\n*   **Financial Contribution (Indirectly or Directly through specific projects):**\n    *   **Land Trusts or Cooperatives:** Some regenerative communities are structured as land trusts or co-operatives. Investing in shares or membership in these structures could provide a pathway to living there. This would require finding specific organizations.\n    *   **Funding Specific Projects:** If a community is developing, they might seek funding for specific infrastructure (e.g., a shared community building, water systems, regenerative agriculture initiatives). Contributing to these could be a way to become involved and potentially secure a place.\n    *   **Support Organizations Promoting Regenerative Development:** While not directly investing in a village for your family, supporting organizations like Regencivics themselves (if they had a donation or membership model) indirectly helps the movement grow, increasing the likelihood of more such villages emerging.\n\n**In summary:** To invest in a regenerative village for your family, you need to understand the comprehensive framework provided by [regencivics.earth](https://regencivics.earth). This involves learning the \"Pattern Language,\" identifying communities that embody these patterns, and then finding ways to contribute – whether through your skills, time, or direct financial support to specific, aligned projects or community structures. The emphasis is on co-creation and active participation, not just passive financial investment.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 123,
+        "completion_tokens": 1159,
+        "total_tokens": 1282,
+        "cost": 0.0099344,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0029344,
+          "upstream_inference_prompt_cost": 0.0000369,
+          "upstream_inference_completions_cost": 0.0028975
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 5895
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer provides a comprehensive, accurate strategy for investing in a regenerative village, emphasizing practical steps and engagement with community principles."
+      }
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "arm": "sited",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 5478,
+      "answer": "Even if you can't move right now, there are still many ways to contribute to building something regenerative, especially within the framework of Regencivics.earth's principles. Based on their site, here are some actions you can take:\n\n*   **Engage in \"Regenerative Sensemaking\" and \"Conscious Collaboration\"**: Regencivics.earth emphasizes the importance of shared understanding and collaborative action. You can contribute by [regencivics.earth](https://regencivics.earth/blog/what-is-regencivics/) actively participating in online discussions, offering your insights, and helping to synthesize information. This could involve reading articles, analyzing data, and contributing to the collective understanding of regenerative solutions.\n*   **Share Your Knowledge and Expertise**: Do you have a particular skill, an area of knowledge, or life experience that could be valuable? You can share this through [regencivics.earth](https://regencivics.earth/blog/what-is-regencivics/) writing, contributing to online forums, or even acting as a remote mentor. For example, if you have experience in sustainable agriculture, you could share best practices. If you're good at organizing information, you could help curate resources.\n*   **Support \"Regenerative Storytelling\"**: Regencivics.earth highlights the power of narratives in shaping our future. You can contribute by [regencivics.earth](https://regencivics.earth/blog/what-is-regencivics/) identifying and sharing compelling stories of regenerative projects or individuals, helping to amplify positive examples, and counter dominant narratives that may hinder progress. This could involve finding articles, videos, or podcasts and sharing them within your networks.\n*   **Contribute to \"Distributed Governance\" and \"Adaptive Action\"**: While these might sound like they require physical presence, the principles behind them can be supported remotely. You could [regencivics.earth](https://regencivics.earth/blog/what-is-regencivics/) help by researching different models of governance, analyzing their effectiveness, or suggesting ways to improve decision-making processes in regenerative initiatives. This could involve remote participation in online working groups or providing feedback on proposed frameworks.\n*   **Educate Yourself and Others**: A fundamental step in any regenerative movement is understanding the problems and potential solutions. You can dedicate your time to [regencivics.earth](https://regencivics.earth/blog/what-is-regencivics/) learning more about regenerative practices, ecological principles, and societal transformation. Then, you can share this knowledge with your friends, family, and online communities, effectively becoming an advocate from your current location.\n*   **Participate in Online Communities and Networks**: Regencivics.earth aims to foster a \"network of networks.\" You can actively seek out and join online communities focused on regenerative themes. Your participation in discussions, resource sharing, and collaborative ideation can be a significant contribution, even without physical movement.\n\nIn essence, your ability to think, learn, communicate, and connect are powerful tools for regeneration, regardless of your physical mobility. Focus on contributing your intellectual and communicative capacities to the collective effort.",
+      "citedUrls": [],
+      "usage": {
+        "prompt_tokens": 128,
+        "completion_tokens": 678,
+        "total_tokens": 806,
+        "cost": 0.0087334,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0017334,
+          "upstream_inference_prompt_cost": 0.0000384,
+          "upstream_inference_completions_cost": 0.001695
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth/blog/what-is-regencivics/"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 3334
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "regencivics.earth"
+        ],
+        "note": "The answer provides specific and actionable ways for a person to contribute to regenerative projects online without physical movement."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "cold",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 27087,
+      "answer": "**Yes, there are several regenerative land projects, permaculture sites, intentional communities, and eco-farms in Oregon that welcome volunteers or work-traders with carpentry/building skills, often in exchange for housing and sometimes meals or stipends.**[[1]](https://helpstay.com/stays/Permaculture-Wedding-Venue-Oregon)[[2]](https://wwoofusa.org/en/host/55111)\n\nThese emphasize soil health, biodiversity, native habitat restoration, no-till/low-till methods, cover cropping, rotational grazing, and related practices. As a carpenter, your skills in building, maintenance, natural structures, infrastructure (e.g., high tunnels, fences, tiny homes, or repairs), or related tasks would be particularly valuable, as many sites list carpentry or general building explicitly among needed help.[[2]](https://wwoofusa.org/en/host/55111)[[3]](https://wwoofusa.org/en/host/57733)\n\n### Promising Options\nHere are some relevant examples (availability changes, so check current listings):\n\n- **Intentional communities and permaculture co-ops via WWOOF or similar platforms** (e.g., a 53-year-old egalitarian commune/permiculture farm on ~280 acres in coastal Oregon): These often seek volunteers for farm work, maintenance, and explicitly **basic to advanced carpentry**, plus tasks like high-tunnel setup, water systems, fencing, or general homestead repairs. Work is typically 20–25+ hours/week in exchange for housing (sometimes camping or shared). Longer stays or strong fits can lead to membership discussions.[[2]](https://wwoofusa.org/en/host/55111)[[2]](https://wwoofusa.org/en/host/55111)\n\n- **Terra Vida Academy (Vernonia, northwest Oregon coast range)**: A permaculture demonstration site and wedding venue focused on land restoration. They seek volunteers (including long-term caretakers) for building/maintenance alongside gardening and events. Expect ~25 hours/week for housing (tiny home or cabin options) plus a food stipend. Minimum commitment around 60 days; car helpful for off-site access but not always required.[[1]](https://helpstay.com/stays/Permaculture-Wedding-Venue-Oregon)\n\n- **Other WWOOF/Workaway/HelpStay regenerative or permaculture hosts across Oregon** (Willamette Valley, near Eugene, Portland area, Cottage Grove, etc.): Many biodynamic/regenerative farms, food forests, homesteads, and eco-projects list building, natural construction (e.g., cob, fences, structures), infrastructure, or repairs as volunteer tasks. Examples include sites doing high-tunnel builds, bus renovations, greenhouse repairs, or general homestead construction.[[3]](https://wwoofusa.org/en/host/57733)[[4]](https://wwoofusa.org/en/host/50015)\n\n- **Additional projects**:\n  - **Red Earth Descendants / Turtle Island Permaculture Institute (TIPI)** near Talent/Phoenix: Indigenous-led permaculture and restoration on certified organic land; hosts work parties and Friday farm meet-ups for community involvement.[[5]](https://theashlandchronicle.com/red-earth-descendants-invite-you-to-learn-more-about-permaculture/)\n  - **Broken Arrow Ranch & Sanctuary (Central Oregon)**: Regenerative stewardship with rotational grazing, habitat restoration, and waterway projects—hands-on volunteer or participation opportunities may arise.[[6]](https://www.broken-arrow-ranch-and-sanctuary.com/regenerative-land)\n  - Urban or coalition efforts like Portland Placemaking Coalition or Regenerate the Gorge (bioregional regeneration across the Columbia Gorge area) focus on regenerative agriculture, food systems, and landscape-scale work.[[7]](https://www.portlandplacemaking.org/about)[[8]](https://regeneratecascadia.org/welcome-regenerate-the-gorge/)\n\nLarger operations like Source Farms (Willamette Valley regenerative farm with hospitality/education components) or ranching networks (e.g., via Sustainable Northwest) are more commercial or producer-focused but could have indirect opportunities.[[9]](https://stumptownsavings.com/p/ground-source-farms-regenerative-farming-oregon)[[10]](https://www.sustainablenorthwest.org/regenerativeranching)\n\n### What They Typically Ask of You\nExpectations vary but commonly include:\n- **Time commitment** — Minimum 2–8 weeks (sometimes 1+ months preferred); longer stays favored for deeper involvement or membership tracks. Seasonal (spring–fall often busiest).\n- **Work hours** — 20–30 hours/week (e.g., 5–6 hours/day, 5 days/week), mixing building/carpentry, farm/garden tasks, maintenance, animal care, or events. Self-directed initiative is often valued.\n- **Skills and fit** — Physical fitness and comfort with outdoor/manual labor (lifting, shoveling, varied weather). Carpentry, woodworking, or building experience is a strong plus and frequently highlighted. Interest in permaculture, regenerative practices, community living, or self-reliance helps. Some prefer prior farm/permaculture knowledge but welcome eager learners.[[11]](https://wwoofusa.org/en/host/22612)\n- **Logistics** — Reliable communication/references; sometimes a vehicle, background info, or visa compliance (for non-US). No smoking/drugs/alcohol on many sites; respect for community rules, shared chores (cooking/cleaning), and eco-friendly living.\n- **Other** — Some offer paths to longer-term roles, apprenticeships, or community membership for compatible people. Paid fellowships (e.g., Rogue Valley Regenerative Farming Fellowship) exist but are competitive, part-time, farming-focused, and may not emphasize building.[[12]](https://www.oregonfarmcorps.org/rff)\n\n### How to Get Started\nSearch and apply via **WWOOF USA** (wwoofusa.org—many Oregon hosts), Workaway, HelpStay, or Worldpackers for eco/permaculture listings. Contact hosts directly with details on your carpentry experience, availability, and interest in regenerative land work. Check sites like oregonfarmcorps.org or local land trusts for events/work parties.[[13]](https://www.worldpackers.com/search/skill_eco?state=oregon)\n\nReach out soon, as popular spots fill up, especially for peak seasons. These are often collaborative, hands-on environments where your trade skills can directly support restoration and community goals. If you're seeking paid employment or long-term land access, mention that when inquiring, as some communities discuss membership for strong contributors. Good luck!",
+      "citedUrls": [
+        "https://helpstay.com/stays/Permaculture-Wedding-Venue-Oregon",
+        "https://wwoofusa.org/en/host/55111",
+        "https://wwoofusa.org/en/host/57733",
+        "https://wwoofusa.org/en/host/50015",
+        "https://theashlandchronicle.com/red-earth-descendants-invite-you-to-learn-more-about-permaculture/",
+        "https://www.broken-arrow-ranch-and-sanctuary.com/regenerative-land",
+        "https://www.portlandplacemaking.org/about",
+        "https://regeneratecascadia.org/welcome-regenerate-the-gorge/",
+        "https://stumptownsavings.com/p/ground-source-farms-regenerative-farming-oregon",
+        "https://www.sustainablenorthwest.org/regenerativeranching",
+        "https://wwoofusa.org/en/host/22612",
+        "https://www.oregonfarmcorps.org/rff",
+        "https://www.worldpackers.com/search/skill_eco?state=oregon"
+      ],
+      "usage": {
+        "prompt_tokens": 44945,
+        "completion_tokens": 2416,
+        "total_tokens": 47361,
+        "cost": 0.08899565,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 3072,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.08899565,
+          "upstream_inference_prompt_cost": 0.05295565,
+          "upstream_inference_completions_cost": 0.00604
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1026,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 6
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "helpstay.com",
+          "wwoofusa.org",
+          "theashlandchronicle.com",
+          "broken-arrow-ranch-and-sanctuary.com",
+          "portlandplacemaking.org",
+          "regeneratecascadia.org",
+          "stumptownsavings.com",
+          "sustainablenorthwest.org",
+          "oregonfarmcorps.org",
+          "worldpackers.com"
+        ],
+        "answerChars": 6273
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "WWOOF USA",
+          "Workaway",
+          "HelpStay",
+          "Worldpackers",
+          "oregonfarmcorps.org"
+        ],
+        "note": "This response provides a detailed guide for someone interested in joining regenerative land projects in Oregon, including actionable steps and specific organizations to contact."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "cold",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 21596,
+      "answer": "**Land management consultants, specialized security/access firms, agritourism/event planners, and platforms like LandTrust can help you open your 40 acres to visitors (guests, paid users, events, or recreation) while minimizing damage, litter, liability, or chaos.**[[1]](https://www.landwiseconsultants.com/)[[2]](https://landtrust.com/landowners)\n\nThese professionals focus on controlled access, infrastructure (e.g., trails, signage, parking), rules/enforcement, visitor education (e.g., Leave No Trace principles), monitoring, and legal protections like waivers or recreational use statutes that limit landowner liability in many U.S. states.\n\n### Key Types of Helpers and What They Offer\n- **Land Management and Recreation Consultants/Firms**: Experts in developing private outdoor recreation on acreage (trails, shooting/archery ranges, camping/glamping sites, or multi-use areas) while preserving the land. They handle site assessments, sustainable design, infrastructure builds, due diligence (zoning, environmental factors), and operations to avoid overuse or degradation. Examples include firms like LandWise Consultants (outdoor hospitality focus) or Recreation Land Improvement (custom private facilities).[[1]](https://www.landwiseconsultants.com/)[[3]](https://www.recreationlandimprovement.com/) Private land management companies (e.g., those targeting 100+ acre estates, though scalable advice applies) emphasize stewardship, wildlife/forestry balance, and ROI without turning the property into a free-for-all.\n\n- **Security, Patrol, and Access Control Services**: For visitor screening, patrols, trespass prevention, and enforcement on open land or estates. They manage gates, monitor behavior, handle incidents, and deter issues like unauthorized camping or damage. Look for estate/rural specialists (e.g., Global Risk Solutions, Honeybadger Solutions, or local patrol firms) that offer visitor management protocols, vendor/contractor oversight, and discreet presence.[[4]](https://www.grsprotection.com/estate-security-for-outdoor-living-spaces/)[[5]](https://www.grsprotection.com/security-services/property-security/)[[6]](https://honeybadgersolution.com/residential-security-services/) Digital visitor management systems (registration, badges, logs) integrate well here for accountability.\n\n- **Agritourism, Events, and Venue Consultants**: If your goal involves hosting paid experiences (farm stays, tours, weddings, festivals, or educational visits), these pros help design viable programs, navigate permits/zoning, create engaging yet low-impact activities, and manage operations/marketing. They address revenue diversification while protecting the land and ensuring compliance. Firms like AgVenturesUS, Hospitality Uncut, or others specializing in farms/wineries provide concept development, feasibility studies, programming, and training.[[7]](https://agventuresus.com/what-we-do/)[[8]](https://hospitalityuncut.com/agritourism-events)\n\n- **Access Platforms and Marketplaces (e.g., LandTrust)**: Low-effort options for hosting paying recreational users (hunting, hiking, etc.) with built-in controls—you set rules, prices, dates, and approvals. They handle marketing, guest verification, waivers, and often include liability insurance coverage, helping prevent messes through structured, insured access.[[2]](https://landtrust.com/landowners)\n\n### Additional Support\n- **Legal/Insurance Experts**: Property attorneys for easements, access agreements, or conservation tools; insurance brokers for liability policies tailored to visitors/recreation. Recreational use statutes in most states offer protections when access is free or low-fee for recreational purposes.[[9]](https://www.uwyo.edu/haub/_files/_docs/ruckelshaus/pubs/public-trails-private-lands-handbook.pdf)\n- **Infrastructure and Stewardship Pros**: Companies building trails, parking, waste facilities, or signage to guide use and contain impact.\n\n### Next Steps\nStart by clarifying your vision (casual guests vs. paid/commercial use; frequency; activities) and location (for local regs/zoning). Search for “private land recreation consultant [your state]” or “estate security [your area],” or contact platforms like LandTrust directly. Many offer initial consultations. Combine services (e.g., consultant for planning + security for operations) for best results. This keeps things orderly, sustainable, and enjoyable for everyone while protecting your property.",
+      "citedUrls": [
+        "https://www.landwiseconsultants.com/",
+        "https://landtrust.com/landowners",
+        "https://www.recreationlandimprovement.com/",
+        "https://www.grsprotection.com/estate-security-for-outdoor-living-spaces/",
+        "https://www.grsprotection.com/security-services/property-security/",
+        "https://honeybadgersolution.com/residential-security-services/",
+        "https://agventuresus.com/what-we-do/",
+        "https://hospitalityuncut.com/agritourism-events",
+        "https://www.uwyo.edu/haub/_files/_docs/ruckelshaus/pubs/public-trails-private-lands-handbook.pdf"
+      ],
+      "usage": {
+        "prompt_tokens": 21972,
+        "completion_tokens": 1988,
+        "total_tokens": 23960,
+        "cost": 0.0502846,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 2048,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0502846,
+          "upstream_inference_prompt_cost": 0.0253146,
+          "upstream_inference_completions_cost": 0.00497
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1054,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 4
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "landwiseconsultants.com",
+          "landtrust.com",
+          "recreationlandimprovement.com",
+          "grsprotection.com",
+          "honeybadgersolution.com",
+          "agventuresus.com",
+          "hospitalityuncut.com",
+          "uwyo.edu"
+        ],
+        "answerChars": 4451
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 1,
+        "inventions": [],
+        "recommendedInstead": [
+          "LandWise Consultants",
+          "LandTrust",
+          "AgVenturesUS",
+          "Hospitality Uncut",
+          "Global Risk Solutions",
+          "Honeybadger Solutions"
+        ],
+        "note": "This answer provides a variety of resources to assist in properly managing land for guests, but doesn't address ReGen Civics."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "cold",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 23058,
+      "answer": "**To invest in (and potentially live in) a regenerative village—typically an ecovillage or intentional community emphasizing ecological restoration, permaculture, renewable energy, shared resources, and sustainability—you generally join or help develop an existing or forming community rather than making a purely passive financial investment.**[[1]](https://icmatch.org/community-types-2/join-or-start-an-ecovillage/)[[2]](https://offgriddestinations.com/how-to-join-an-eco-community/)\n\nThese are often structured around cooperative ownership, community land trusts (CLTs), housing co-ops, or similar models that prioritize long-term stewardship over speculation. Your \"investment\" usually combines financial commitments (home purchases, equity shares, fees, or loans) with sweat equity (labor contributions) and governance participation. The goal is resident ownership or long-term leasing that allows your family to live there while supporting regenerative practices.\n\n### Step 1: Research and Identify Opportunities\nStart by exploring established directories and networks to find regenerative-focused communities (ecovillages, agrihoods, or permaculture villages) that are open to new members or forming:\n\n- **Foundation for Intentional Community (ic.org)**: Comprehensive global directory of intentional communities, filterable by type (e.g., ecovillage), location, and features like openness to visitors or new members.[[3]](https://ecostarters.com/explore-these-top-websites-for-eco-villages-and-intentional-communities/)\n- **Global Ecovillage Network (ecovillage.org or GEN)**: Maps and listings of ecovillages worldwide, with resources on regenerative practices.[[3]](https://ecostarters.com/explore-these-top-websites-for-eco-villages-and-intentional-communities/)\n- **ICmatch.org**: Connects seekers with forming communities; includes resources on ecovillages and related types.[[1]](https://icmatch.org/community-types-2/join-or-start-an-ecovillage/)\n- Others: Communityfinders.com, Eurotopia (Europe-focused), or regional networks.[[3]](https://ecostarters.com/explore-these-top-websites-for-eco-villages-and-intentional-communities/)\n\nLook for family-friendly options with amenities like shared childcare, schools, or flexible housing. Many emphasize values alignment (e.g., sociocratic governance, conflict resolution training, and ecological covenants).[[2]](https://offgriddestinations.com/how-to-join-an-eco-community/)\n\n### Step 2: Visit, Trial, and Assess Fit\nMost communities require in-person visits before membership:\n- Attend tours, workshops, open days, or work-exchange programs (e.g., via WWOOF for permaculture experience).\n- Participate in trial periods (weeks to months) involving shared meals, work bees, and meetings.[[2]](https://offgriddestinations.com/how-to-join-an-eco-community/)[[4]](https://www.littlehousesforsale.com/off-grid-living/communities)\n- Evaluate governance (often sociocracy or consensus), daily life, costs, climate/location, and family suitability. Many use staged processes: inquirer → explorer/provisional → full member.[[5]](https://rachelcarsonecovillage.org/equity-membership/)\n\nExamples of processes:\n- **Burns Village & Farm** (Tennessee, agrihood/cohousing model): Virtual sessions, site tours, $150 Explorer fee (applied to membership) for insider access, then commit to buying a home ($360k–$700k range for townhomes/flats). Homes projected ready late 2027.[[6]](https://burnsvillagefarm.com/blog-3/become-a-member)\n- **Earthaven Ecovillage** (North Carolina): Multi-year path with visits, service hours, joining a \"pod\" (neighborhood entity), fees, and labor contributions.[[7]](https://www.earthaven.org/membership/)\n- **Dancing Rabbit Ecovillage** (Missouri): CLT model—lease small plots affordably (~$25/month), own improvements (homes/buildings); focus on sustainability guidelines.[[8]](https://www.dancingrabbit.org/ecovillage-life/our-land/dancing-rabbit-land-trust/)\n- Others like O.U.R. Ecovillage (Canada, multi-stakeholder co-op with shares) or Common Ground Ecovillage (North Carolina) have tiered memberships with application fees and commitments.[[9]](https://casaclan.com/projects/our-ecovillage/)\n\n### Step 3: Understand Financial and Ownership Models\nInvestment varies widely; expect a mix of upfront costs and ongoing obligations:\n- **Home/lot purchase**: In some (e.g., Burns or Tasman Ecovillage in Australia), buy property outright or lots (starting ~$69k in one case) within the community layout, often with design covenants for low-impact building.[[10]](https://tasmanecovillage.org.au/interested)\n- **Equity shares or co-op membership**: Buy shares in a housing co-op, real estate investment co-op (REIC), or multi-stakeholder co-op. Examples include refundable deposits, equity tranches (e.g., $3,500+), or investment shares (price varies; one co-op has a $100 application fee).[[1]](https://icmatch.org/community-types-2/join-or-start-an-ecovillage/)[[2]](https://offgriddestinations.com/how-to-join-an-eco-community/)\n- **CLT or leasehold models**: Land held in trust (non-speculative); members lease plots long-term and own buildings/improvements. Affordable entry but limited resale upside.[[8]](https://www.dancingrabbit.org/ecovillage-life/our-land/dancing-rabbit-land-trust/)\n- **Other**: Loans to the project (e.g., Ecovillage Georgia offers residential loans for land use rights), tokens/NFTs for access/rights (e.g., some Portugal projects), or crowdfunding/private investment for new developments.[[11]](https://ecovillagegeorgia.ge/join-ecovillage-georgia/)[[12]](https://oasa.earth/papers/rethinking-wealth-economics-regenerative-commons/)\n- **Ongoing**: Monthly/annual dues, work contributions (e.g., hours per week), shared infrastructure costs. Some have joining fees or equity buy-ins that may be partially refundable.[[4]](https://www.littlehousesforsale.com/off-grid-living/communities)\n\nFor purely financial regenerative investments (without living there), consider farmland REITs, notes supporting organic/regenerative farms, or landscape funds—but these are separate from resident communities.[[13]](https://www.bcg.com/publications/2025/investment-opportunity-regenerative-landscapes)\n\n### Step 4: Legal, Practical, and Family Considerations\n- **Structures**: Common ones include co-ops (housing or multi-stakeholder), nonprofits/land trusts for collective ownership, or LLCs with covenants. Consult lawyers for zoning (multi-use often needed), securities laws (if raising capital), and residency rules.[[1]](https://icmatch.org/community-types-2/join-or-start-an-ecovillage/)\n- **For families**: Prioritize communities with explicit family policies, diverse age ranges, or on-site education. Factor in costs for multiple people and shared responsibilities.\n- **Risks and exit**: Communities screen for fit to ensure sustainability. Have clear agreements on finances, decision-making, and leaving (e.g., selling improvements or shares). Governance training and conflict resolution are often required.[[2]](https://offgriddestinations.com/how-to-join-an-eco-community/)\n- **Starting your own**: If no match exists, gather a core team (include permaculture and intentional community experience), secure land (via purchase, trust, or partnership), create a business plan, handle zoning, and recruit via the directories above. Funding can include member fees, grants, crowdfunding, or blended finance.[[1]](https://icmatch.org/community-types-2/join-or-start-an-ecovillage/)[[14]](https://www.coalescenceecovillage.com/blog/the-19-steps-how-people-typically-start-an-ecovillage)\n\n### Next Actions and Advice\n1. Browse the directories and contact 3–5 communities for visits or info packets.\n2. Attend events or virtual sessions.\n3. Engage professionals: real estate attorney, financial advisor familiar with co-ops/CLTs, and possibly a community consultant.\n4. Assess your finances, values alignment, and willingness to participate actively—living in these places is collaborative, not passive.\n\nSuccess depends on finding (or building) a values-aligned group. Many communities welcome inquiries and offer resources for prospective members. Start with ic.org or GEN for the broadest options, and verify current availability directly, as openings change. This path combines investment with lifestyle, but requires time, relationship-building, and due diligence.",
+      "citedUrls": [
+        "https://icmatch.org/community-types-2/join-or-start-an-ecovillage/",
+        "https://offgriddestinations.com/how-to-join-an-eco-community/",
+        "https://ecostarters.com/explore-these-top-websites-for-eco-villages-and-intentional-communities/",
+        "https://www.littlehousesforsale.com/off-grid-living/communities",
+        "https://rachelcarsonecovillage.org/equity-membership/",
+        "https://burnsvillagefarm.com/blog-3/become-a-member",
+        "https://www.earthaven.org/membership/",
+        "https://www.dancingrabbit.org/ecovillage-life/our-land/dancing-rabbit-land-trust/",
+        "https://casaclan.com/projects/our-ecovillage/",
+        "https://tasmanecovillage.org.au/interested",
+        "https://ecovillagegeorgia.ge/join-ecovillage-georgia/",
+        "https://oasa.earth/papers/rethinking-wealth-economics-regenerative-commons/",
+        "https://www.bcg.com/publications/2025/investment-opportunity-regenerative-landscapes",
+        "https://www.coalescenceecovillage.com/blog/the-19-steps-how-people-typically-start-an-ecovillage"
+      ],
+      "usage": {
+        "prompt_tokens": 45545,
+        "completion_tokens": 2694,
+        "total_tokens": 48239,
+        "cost": 0.07364065,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 19072,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.07364065,
+          "upstream_inference_prompt_cost": 0.03690565,
+          "upstream_inference_completions_cost": 0.006735
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 963,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 6
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "icmatch.org",
+          "offgriddestinations.com",
+          "ecostarters.com",
+          "littlehousesforsale.com",
+          "rachelcarsonecovillage.org",
+          "burnsvillagefarm.com",
+          "earthaven.org",
+          "dancingrabbit.org",
+          "casaclan.com",
+          "tasmanecovillage.org.au",
+          "ecovillagegeorgia.ge",
+          "oasa.earth",
+          "bcg.com",
+          "coalescenceecovillage.com"
+        ],
+        "answerChars": 8370
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "Foundation for Intentional Community",
+          "Global Ecovillage Network",
+          "ICmatch.org"
+        ],
+        "note": "This answer provides detailed steps to find and invest in regenerative villages, enabling a family to begin their search for potential communities to live in."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "cold",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 24686,
+      "answer": "**You can contribute meaningfully to regenerative efforts (like regenerative agriculture, permaculture, ecosystem restoration, soil health, or even regenerative finance/ReFi) entirely from home through digital, research, advocacy, creative, or citizen science work.** These build knowledge, networks, funding, or awareness that supports on-the-ground projects, even if you can't physically participate right now.[[1]](https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e)\n\nHere are practical, accessible options tailored to limited mobility:\n\n### 1. Join Online Communities and Collaborate Remotely\n- Participate in global regenerative networks for discussions, idea-sharing, and virtual events. Examples include Ecosystem Restoration Communities (online courses and community support for restoration projects), Project Biome (a regenerative collective for collaboration across domains like ecology and social innovation), or permaculture-focused forums and groups tied to organizations like Regeneration International or the Permaculture Association.[[2]](https://projectbiome.org/)\n- Engage with ReFi (regenerative finance) communities if blockchain/crypto appeals—these use web3 tools for funding ecological projects, carbon credits, and public goods (e.g., via platforms like Gitcoin for quadratic funding of sustainability initiatives or KlimaDAO for carbon retirement).[[3]](https://www.bitcoininsider.org/article/181465/regenerative-finance-101-guide-cryptos-refi-movement)\n\n### 2. Volunteer Virtually or Contribute Skills Remotely\n- Look for virtual volunteer roles in storytelling, strategy, research, education, marketing, or advisory work. One example is the **Regenerative Futures Advisor** role (via M4A Foundation/CrowdDoing), which involves crafting solarpunk narratives, systems thinking, and sharing transformative stories—ideal for visionaries or writers.[[1]](https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e)\n- Check platforms like Idealist or VolunteerMatch for remote opportunities in sustainability (e.g., graphic design, writing, data analysis, or virtual assistance for eco-organizations). Open-source projects like One Community Global seek remote volunteers for research, documentation, or design on sustainable systems (e.g., greenhouse landscapes or permaculture elements).[[4]](https://www.idealist.org/en/volunteer-opportunity/d30c0a0300a749c29e9909f58230812c-seeking-botanisthorticulturist-to-design-landscape-for-open-source-sustainable-greenhouse-one-community-global-team)\n- Offer skills in research, policy input, content creation, or translation for regenerative ag groups.\n\n### 3. Participate in Citizen Science from Home\n- Contribute data or observations without leaving your space:\n  - Use apps like **iNaturalist** to document biodiversity (plants, insects, birds) in your immediate surroundings or via photos/videos.\n  - Explore platforms like the One Million Voices of Agroecology map: register locations/practices, evaluate regenerative methods, and connect with others.[[5]](https://theoryandpractice.citizenscienceassociation.org/articles/10.5334/cstp.727)\n  - Join projects like Biodiversity in Urban Gardens (BUG) or similar citizen soil/biodiversity observatories for sharing observations that support broader research.[[6]](https://www.cnps.org/landscapes-for-change/biodiversity-in-urban-gardens/)\n- Take free or low-cost online courses on soil health, regenerative practices, or citizen science (e.g., via FutureLearn or org-specific programs) and apply insights by sharing findings or experimenting on a small indoor scale.[[7]](https://www.permaculture.org.uk/research/grow-citizen-soil-observatory)\n\n### 4. Advocate, Educate, and Create Content\n- Raise awareness through writing (op-eds, blog posts, social media), sharing resources on regenerative agriculture's benefits (soil restoration, biodiversity, carbon sequestration), or advocating for supportive policies.[[8]](https://regeneration.org/nexus/regenerative-agriculture)\n- Create or curate stories, visuals, or educational materials that highlight regenerative models—this amplifies the movement without physical effort.\n- Support by \"voting with your wallet\" where possible: research and promote regenerative-sourced products or donate to verified restoration projects if feasible.\n\n### 5. Start Tiny at Home (If Any Movement Is Possible) and Plan Ahead\n- Even limited activity allows small experiments like windowsill herbs, microgreens, or container plants using regenerative principles (no-till, cover cropping ideas, composting if accessible, biodiversity focus). These build personal soil knowledge and can connect to larger movements.[[9]](https://food52.com/story/28502-camilla-marcus-my-regenerative-kitchen)\n- Use downtime for learning, journaling project ideas, or mapping local regenerative opportunities for when mobility improves.\n\nStart small: Pick one community or platform to join today, complete a short online course, or make one contribution (like an iNaturalist observation or social post). Many organizations welcome remote input and value diverse perspectives. Search \"remote volunteer regenerative agriculture\" or \"virtual citizen science ecology\" for current listings, as opportunities evolve.[[10]](https://www.ziprecruiter.com/e/What-is-a-Regenerative-Agriculture-Remote-job)\n\nYour desire to help is valuable—remote contributions scale impact by connecting people, ideas, and resources. If you share more about your skills, interests (e.g., writing, tech, research), or location, I can refine suggestions further.",
+      "citedUrls": [
+        "https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e",
+        "https://projectbiome.org/",
+        "https://www.bitcoininsider.org/article/181465/regenerative-finance-101-guide-cryptos-refi-movement",
+        "https://www.idealist.org/en/volunteer-opportunity/d30c0a0300a749c29e9909f58230812c-seeking-botanisthorticulturist-to-design-landscape-for-open-source-sustainable-greenhouse-one-community-global-team",
+        "https://theoryandpractice.citizenscienceassociation.org/articles/10.5334/cstp.727",
+        "https://www.cnps.org/landscapes-for-change/biodiversity-in-urban-gardens/",
+        "https://www.permaculture.org.uk/research/grow-citizen-soil-observatory",
+        "https://regeneration.org/nexus/regenerative-agriculture",
+        "https://food52.com/story/28502-camilla-marcus-my-regenerative-kitchen",
+        "https://www.ziprecruiter.com/e/What-is-a-Regenerative-Agriculture-Remote-job"
+      ],
+      "usage": {
+        "prompt_tokens": 20953,
+        "completion_tokens": 2096,
+        "total_tokens": 23049,
+        "cost": 0.04928085,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 2048,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.04928085,
+          "upstream_inference_prompt_cost": 0.02404085,
+          "upstream_inference_completions_cost": 0.00524
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1035,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 4
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "engage.pointsoflight.org",
+          "projectbiome.org",
+          "bitcoininsider.org",
+          "idealist.org",
+          "theoryandpractice.citizenscienceassociation.org",
+          "cnps.org",
+          "permaculture.org.uk",
+          "regeneration.org",
+          "food52.com",
+          "ziprecruiter.com"
+        ],
+        "answerChars": 5625
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "Ecosystem Restoration Communities",
+          "Project Biome",
+          "Regeneration International",
+          "Permaculture Association"
+        ],
+        "note": "The response provides a variety of actionable ideas for contributing to regenerative initiatives from home, but does not mention ReGen Civics."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "sited",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 12747,
+      "answer": "**Yes, ReGen Civics (regencivics.earth) is a platform designed around regenerative land projects.** It functions as both a fund and a game/community system to support them.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nFrom the site's GitHub README (which describes the live platform) and the community page:\n\n- **ReGen Civics** backs regenerative land projects with real capital through community-governed proposals and trust-weighted voting. Land projects receive funding, community support, and coordination tools. It operates on a local-food-backed economy with open governance.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n- The \"game\" aspect involves players completing quests to earn contribution scores and $ReGen tokens, helping build bioregional food economies. This forms the community and backs the currency.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n- The community forum (regencivics.earth/community) is where regenerators, land projects, and partners coordinate: sharing land-based practices, forming teams, discussing governance/finance, and celebrating quests. Discussions are public; joining is free via creating a profile to start contributing.[[2]](https://regencivics.earth/community)\n\nAs a carpenter in Oregon, your skills (e.g., building structures, infrastructure, or site work) align well with regenerative land projects, which often need hands-on construction, permaculture setups, or community builds. The platform emphasizes forming teams and matching contributors with projects, so highlighting your trade could help connect you.\n\n**What they would ask of you:** Create a free profile on the community site, browse the member directory or \"people seeking teams\" section, and start participating—complete quests, contribute to discussions/proposals in the Assembly, earn tokens/scores through involvement, and engage in governance (e.g., via Hypha DAO votes). It's open to anyone interested in regeneration; no specific barriers mentioned for Oregon residents or tradespeople. The system evolves via community proposals.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nNote that direct browsing of the main site returned limited content (possibly under development or dynamic), but the community/forum is active and the GitHub provides the core details. Check regencivics.earth/community directly to explore current projects, quests, or team needs.",
+      "citedUrls": [
+        "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+        "https://regencivics.earth/community"
+      ],
+      "usage": {
+        "prompt_tokens": 25001,
+        "completion_tokens": 1240,
+        "total_tokens": 26241,
+        "cost": 0.04181205,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 16704,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.04181205,
+          "upstream_inference_prompt_cost": 0.01371205,
+          "upstream_inference_completions_cost": 0.0031
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 662,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 5
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+          "https://regencivics.earth/community"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 2485
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "regencivics.earth/community",
+          "GitHub README of ReGen Civics"
+        ],
+        "note": "This response would empower a carpenter in Oregon by providing clear actionable steps to engage with a regenerative land project."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "sited",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 10993,
+      "answer": "**ReGen Civics (regencivics.earth) supports regenerative land projects like yours by providing capital, community-building tools, coordination infrastructure, open governance, and a contribution-based system (via quests, tokens, and a local-food-backed economy) to help organize people and activities sustainably.**[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nFrom the project's GitHub/README description of the live site:\n\n- It runs **\"The Fund\"** (community-governed via proposals and trust-weighted voting) that backs regenerative land projects with real capital.\n- It includes **\"The Game\"** where players complete quests, earn contribution scores and $ReGen tokens, and help build bioregional food economies.\n- Land projects specifically receive **capital, community, and coordination infrastructure**.\n- The platform includes features like a quest system, forum (regencivics.earth/community), player profiles, citizenship tiers, event management, and self-evolving governance (rules change via community proposals that can execute automatically).[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nThis setup is designed to foster organized, regenerative communities on land without chaos—emphasizing shared stewardship, economic alignment with local regeneration, and transparent decision-making. Related discussions (e.g., videos on the Regen Civics Alliance) highlight support for \"Regenerative Villages\" where communities co-create with land-based projects, including governance, conflict transformation, and resource pooling.[[2]](https://rutube.ru/video/3663123b36073c33035bcb6d0d71d5f6/)\n\nCheck the forum or platform directly for how to get involved or propose a project.",
+      "citedUrls": [
+        "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+        "https://rutube.ru/video/3663123b36073c33035bcb6d0d71d5f6/"
+      ],
+      "usage": {
+        "prompt_tokens": 23874,
+        "completion_tokens": 1173,
+        "total_tokens": 25047,
+        "cost": 0.0439318,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 13184,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0439318,
+          "upstream_inference_prompt_cost": 0.0159993,
+          "upstream_inference_completions_cost": 0.0029325
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 732,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 5
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md"
+        ],
+        "hasDate": false,
+        "competitorsCited": [
+          "rutube.ru"
+        ],
+        "answerChars": 1735
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer provides detailed and accurate information about how ReGen Civics can assist with organizing a community on your land."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "sited",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 12527,
+      "answer": "**ReGen Civics (regencivics.earth) positions itself as a combined fund and game/platform for regenerative land projects, including regenerative villages/communities.**[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nIt operates as two integrated systems:\n- **The Fund**: Provides real capital to regenerative land projects. These are governed by the community via proposals and trust-weighted voting. Land projects receive funding, community support, and coordination tools/infrastructure.\n- **The Game**: Builds the community through quests, contribution scores, and $ReGen tokens. Participants help create bioregional food economies that back the currency. The rules evolve via governance (proposals in the Assembly at /assembly, refined by the community, with binding votes on Hypha DAO on Base; changes can execute automatically or via gated pipelines).[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nKey elements from the project description include a quest system, forum (/community), player profiles, citizenship tiers, crowdfunding/campaign tools, event management, and an economic layer (contribution scoring, gratitude tokens, harvest distribution, governance). It emphasizes a local-food-backed economy and open governance.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\n**To invest and potentially live in such a village**:\n- Participate in the game/platform on regencivics.earth to earn $ReGen tokens and contribution scores through quests. This builds toward funding and supporting real regenerative land projects/villages.\n- Use the fund/crowdfunding mechanisms to direct capital to vetted regenerative land projects (including those themed around regenerative villages/communities). Governance allows community input on proposals.\n- Engage with the broader Regen Civics alliance ecosystem, which supports communities building decentralized regenerative bioregional economies and regenerative villages—pooling resources, designing organizations (e.g., DAOs), handling land acquisition, governance, economics, and more.[[2]](https://rutube.ru/video/3663123b36073c33035bcb6d0d71d5f6/)\n\nThe platform aims to give land projects capital + community + coordination so participants can co-create thriving, land-stewarded villages that meet shared needs. Actual residency would likely involve joining or forming a project/community through the platform’s tools, quests, and governance (e.g., via the forum, Assembly, or related events/campaigns). Details on specific investment mechanics, token utility for housing/land access, or residency pathways would be on the live site (regencivics.earth), forum, or Assembly sections.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nNote that much of the detailed site content appears lightly indexed or dynamic; the GitHub repo for the codebase provides the core overview of how the fund/game works.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)",
+      "citedUrls": [
+        "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+        "https://rutube.ru/video/3663123b36073c33035bcb6d0d71d5f6/"
+      ],
+      "usage": {
+        "prompt_tokens": 23729,
+        "completion_tokens": 1321,
+        "total_tokens": 25050,
+        "cost": 0.03912055,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 13184,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.03912055,
+          "upstream_inference_prompt_cost": 0.01581805,
+          "upstream_inference_completions_cost": 0.0033025
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 668,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 4
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md"
+        ],
+        "hasDate": false,
+        "competitorsCited": [
+          "rutube.ru"
+        ],
+        "answerChars": 3022
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [
+          "$ReGen tokens are used for participating in the platform and earning through quests.",
+          "Trust-weighted voting is used for governance in community proposals.",
+          "The economic layer includes contribution scoring and gratitude tokens."
+        ],
+        "recommendedInstead": [],
+        "note": "This answer provides a detailed pathway for investing in and potentially living within regenerative villages through ReGen Civics."
+      }
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "arm": "sited",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 13603,
+      "answer": "**From regencivics.earth (and its associated GitHub repo describing the live platform), ReGen Civics is a combined fund and game/platform for regenerative land projects.** Players complete quests, earn contribution scores and $ReGen tokens, and help fund real-world regeneration while building bioregional food economies. The system includes open governance, a quest system, forum, player profiles, citizenship tiers, and more.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nThe live site emphasizes community coordination for the “Regenerative Renaissance.” Even if you can’t physically relocate or do on-site work right now, you can participate remotely/online in these ways:\n\n- **Join the community forum** at regencivics.earth/community. This is the main hub where regenerators, land projects, and alliance partners share what works on the land, form teams, discuss governance/finance, ask questions, and celebrate completed quests. All discussions are public; create a free profile to start contributing.[[2]](https://regencivics.earth/community)\n- **Browse the member directory** and connect with others (including people seeking teams) to collaborate remotely on ideas, projects, or support.[[2]](https://regencivics.earth/community)\n- **Play the game and do quests** — earn tokens/scores through contributions that support regenerative efforts (quests appear tied to the platform’s economic and coordination layers).[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n- **Participate in governance** — proposals form in the Assembly section; the community signals/refines them, with binding votes on Hypha DAO. Rules evolve via player input.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n- **Build and share** — If you create something useful (e.g., tools, content, or code), share it in the forum. The platform is community-built and open to contributions.[[1]](https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md)\n\nCheck the community guidelines on the site for details on getting started. This setup is explicitly designed for distributed participation in regenerative work, making it accessible without physical movement.",
+      "citedUrls": [
+        "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+        "https://regencivics.earth/community"
+      ],
+      "usage": {
+        "prompt_tokens": 24071,
+        "completion_tokens": 1246,
+        "total_tokens": 25317,
+        "cost": 0.03936055,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 13184,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.03936055,
+          "upstream_inference_prompt_cost": 0.01624555,
+          "upstream_inference_completions_cost": 0.003115
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 729,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        },
+        "server_tool_use_details": {
+          "web_search_requests": 4
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://github.com/Rieki777/ReGenCivics.Earth/blob/main/README.md",
+          "https://regencivics.earth/community"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 2220
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "regencivics.earth",
+          "GitHub repo for ReGen Civics"
+        ],
+        "note": "This answer provides specific actions a person can take online to actively contribute to regenerative efforts without having to move."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "cold",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 5745,
+      "answer": "Yes — there are **regenerative land projects in Oregon** that could fit a carpenter, and one especially relevant example is a **regenerative land stewardship project / mini CSA in North Willamette**. They list **farm-related building projects** and **fence construction** among the work, and they also mention a **100-foot high tunnel** project for interested people with building skills.[7]\n\nWhat they would ask of you:\n- Be available for about **25 hours/week** over **5 half-days**.[7]\n- Be physically able to handle **labor-intensive farm work**, including **kneeling or bending for long periods** and **lifting up to 50 pounds**.[7]\n- Help with a mix of farm and land tasks such as **soil preparation, planting, weeding, harvesting, trellising, mulching, fruit processing, animal care, fencing management, and habitat restoration**.[7]\n- Potentially work on **construction projects** like **fence construction**, a **high tunnel**, or even **renovating a school bus** for WWOOFers to stay in.[7]\n- Answer a short application with questions about **why you want to WWOOF now**, what **animal describes your personality**, and whether you have experience with **hard physical labor**.[7]\n\nIf you want a more explicitly *carpentry-focused* Oregon opportunity, **Olalla Creek Haven** is another good match in concept: they’re seeking people with experience in **carpentry, plumbing, or electrical** as a bonus skill set, alongside general farm and grounds maintenance.[1] Their role also includes helping with **farm support, habitat/workshop needs, and agritourism setup**.[1]\n\nIf you want, I can also narrow this down to:\n- **paid** Oregon opportunities,\n- **WWOOF/work-trade** options,\n- or places that need **actual carpentry/building** more than farm labor.",
+      "citedUrls": [
+        "https://oregonfarmlink.org/job/olalla-creek-haven-is-our-organic-regenerative-educational-farm-dream-seeking-1-2-all-round-roles-for-work-trade-part-time-or-for-the-right-fit-full-time/",
+        "https://www.oregonfarmcorps.org/apprenticeship",
+        "https://www.oregonfarmcorps.org/rff",
+        "https://wwoofusa.org/en/host/19740",
+        "https://permies.com/t/132813/Volunteers-landmates-wanted-transition-homestead",
+        "https://wwoofusa.org/en/host/19868",
+        "https://oregonfarmlink.org/land-seekers/after-2-years-renovating-stewarding-with-one-landowner-we-are-ready-to-expand-on-a-new-property-maybe-with-you/",
+        "https://wwoofusa.org/en/host/25689",
+        "https://www.blm.gov/sites/default/files/docs/2024-12/nwor-plan-update-fall24.pdf",
+        "https://www.dfw.state.or.us/conservationstrategy/OCRF/meetings/docs/2024/Jun_4/OCRF%20Spring%20RFP%202024_%20Submitted%20Projects_landscape%20view.pdf",
+        "https://www.blm.gov/sites/default/files/docs/2022-03/nwor-plan-update-spr22.pdf",
+        "https://www.fs.usda.gov/r06/deschutes/projects/archive",
+        "https://www.nrcs.usda.gov/state-offices/oregon/klamath-county",
+        "https://www.dfw.state.or.us/agency/commission/minutes/24/06_Jun/K-%20OCRF/Exhibit%20K_Attachment%203_OCRF%20Submitted%20Projects%20Overview.pdf",
+        "https://wwoofusa.org/en/host/57733",
+        "https://www.blm.gov/sites/default/files/docs/2023-05/sworegon-restoration-factsheet.pdf",
+        "https://www.nrcs.usda.gov/programs-initiatives/regional-conservation-partnership-program/oregon/regional-conservation",
+        "https://www.oregon.gov/energy/energy-oregon/Oregon%20Climate%20Action%20Commission/Lay%20of%20the%20Land.pdf",
+        "https://www.blm.gov/sites/default/files/orwa-plan-nwor-planupdate-fall18.pdf",
+        "https://www.blm.gov/sites/default/files/docs/2022-07/nwor-plan-update-sum22.pdf",
+        "https://www.blm.gov/sites/default/files/docs/2026-03/nwor-plan-update-win26.pdf",
+        "https://www.oregon.gov/oweb/grants/small-grants/pages/small-grants.aspx",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC7147789/",
+        "https://www.blm.gov/sites/default/files/orwa-plan-nwor-planupdate-summer18.pdf",
+        "https://www.nrcs.usda.gov/programs-initiatives/environmental-quality-incentives-program/oregon/environmental-quality"
+      ],
+      "usage": {
+        "prompt_tokens": 2811,
+        "completion_tokens": 405,
+        "total_tokens": 3216,
+        "cost": 0.01522,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00822,
+          "upstream_inference_prompt_cost": 0.002811,
+          "upstream_inference_completions_cost": 0.005409
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "oregonfarmlink.org",
+          "oregonfarmcorps.org",
+          "wwoofusa.org",
+          "permies.com",
+          "blm.gov",
+          "dfw.state.or.us",
+          "fs.usda.gov",
+          "nrcs.usda.gov",
+          "oregon.gov",
+          "pmc.ncbi.nlm.nih.gov"
+        ],
+        "answerChars": 1763
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "WWOOF USA",
+          "Olalla Creek Haven"
+        ],
+        "note": "This answer would guide a carpenter in Oregon to specific regenerative projects where they can contribute their skills."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "cold",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 8006,
+      "answer": "If you want to bring people onto **40 acres** without it becoming a mess, the people you’re looking for are usually **event/land management partners**, **venue operators**, or **outdoor hospitality consultants** who handle the on-the-ground logistics, rules, and cleanup.[4][1][18]\n\nA few examples from the results:\n\n- **Open Venues** says it helps property owners rent land for events and handles **site visits** and **day-of event management**, plus pricing and policies.[4]\n- **VLC Partnership / Van Life Campgrounds** offers an on-site **camphost**, booking/marketing, and programming for land used as a hosted destination.[2]\n- **Gather Hospitality** provides **full-service park operations management** for outdoor hospitality properties.[3]\n- **Branch Out Glamping** offers **full-service support** including setup, guest services, operations, and marketing/distribution for landowners.[5]\n- **Revel Range** provides hands-on **property management, maintenance, and monetization** for rural and mountain properties, including on-site care.[6]\n- **Ruralis** helps set up a local team for cleaning, maintenance, and guest support, while the owner retains some operational responsibility.[7]\n\nIf your main concern is preventing chaos, look for a provider that explicitly includes:\n\n- **On-site management**\n- **Guest screening / booking management**\n- **Parking, waste, and cleanup plans**\n- **Noise and neighbor rules**\n- **Insurance and risk management**\n- **Post-event restoration**\n\nThat’s also consistent with event guidance: organizers are expected to plan, manage, and monitor safety and define who is responsible for each part of the operation.[1]\n\nIf you want, I can help you narrow this down into:\n- **events only**\n- **glamping / camping**\n- **RV or van-lifer hosting**\n- **long-term stewardship / caretaker**\n- **a mix of all of the above**",
+      "citedUrls": [
+        "https://landcaretaker.com/",
+        "https://www.vanlifecampgrounds.com/partner",
+        "https://gatherhospitalitymanagement.com/",
+        "https://www.odeysoestates.com/events",
+        "https://branchoutglamping.com/",
+        "https://www.revelrange.com/",
+        "https://eob-consulting.com/outdoor-hospitality-consultant/",
+        "https://ruralis.com/en-us/services/",
+        "https://brodies.com/insights/health-and-safety/temporary-use-of-land-to-host-events-health-and-safety-duties/",
+        "https://www.blm.gov/policy/im-2011-019",
+        "https://planning.lacounty.gov/long-range-planning/events-ordinance/",
+        "https://openvenues.com/become-a-venue-partner/",
+        "https://www.blm.gov/press-release/blm-issues-special-recreational-permit-burning-man",
+        "https://assets-global.website-files.com/5d3aa33f5216e339f691d9ee/5d8b423a3cb747b79e28fb40_Hosting-an-Event-Guide.pdf",
+        "https://www.countyofmonterey.gov/government/departments-a-h/housing-community-development/permit-center/special-events-getting-started",
+        "https://www.mountalexander.vic.gov.au/files/assets/public/v/2/files/2.-community-amp-wellbeing/host-an-event/event-toolkit-including-waste-wise-events-covid-19-updated-june-2022.pdf",
+        "https://www.westerncape.gov.za/events/sites/events.westerncape.gov.za/files/attachments/City%20of%20Cape%20Town%20Events%20Policy%20approved%20by%20Council%2029%20October%202008_2.pdf",
+        "https://cairngorms.co.uk/resource/docs/publications/27022009/CNPA.Paper.797.Guidance%20for%20Organised%20Outdoor%20Access%20Events%20in%20the%20Cairngorms%20National%20Park.pdf",
+        "https://www.stalbans.gov.uk/guidance-event-organisers-using-council-land",
+        "https://www.nelincs.gov.uk/wp-content/uploads/2020/05/Use-of-council-land-and-open-spaces-policy-A11y-May20.pdf",
+        "https://www.eastdunbarton.gov.uk/services/a-z-of-services/people-communities/event-management-guidance-plan/",
+        "https://www.stalbans.gov.uk/sites/default/files/documents/publications/StAlbans%20Event%20Protocol.pdf",
+        "https://www.yorku.ca/unit/institutionalevents/resources/step-by-step-planning/",
+        "https://www.nelincs.gov.uk/assets/uploads/2019/05/4.-Council-Land-Use-Policy.pdf",
+        "https://www.nelincs.gov.uk/assets/uploads/2020/05/Use-of-council-land-and-open-spaces-policy-A11y-May20.pdf",
+        "https://www.beacons-npa.gov.uk/wp-content/uploads/OrganisingEventsGuideFINAL-June-9th-2017-LL.pdf",
+        "https://www2.gov.bc.ca/assets/gov/public-safety-and-emergency-services/emergency-preparedness-response-recovery/local-government/majorplannedeventsguidelines.pdf"
+      ],
+      "usage": {
+        "prompt_tokens": 2319,
+        "completion_tokens": 405,
+        "total_tokens": 2724,
+        "cost": 0.01472,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00772,
+          "upstream_inference_prompt_cost": 0.002319,
+          "upstream_inference_completions_cost": 0.005401
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "landcaretaker.com",
+          "vanlifecampgrounds.com",
+          "gatherhospitalitymanagement.com",
+          "odeysoestates.com",
+          "branchoutglamping.com",
+          "revelrange.com",
+          "eob-consulting.com",
+          "ruralis.com",
+          "brodies.com",
+          "blm.gov",
+          "planning.lacounty.gov",
+          "openvenues.com",
+          "assets-global.website-files.com",
+          "countyofmonterey.gov",
+          "mountalexander.vic.gov.au",
+          "westerncape.gov.za",
+          "cairngorms.co.uk",
+          "stalbans.gov.uk",
+          "nelincs.gov.uk",
+          "eastdunbarton.gov.uk",
+          "yorku.ca",
+          "beacons-npa.gov.uk",
+          "www2.gov.bc.ca"
+        ],
+        "answerChars": 1856
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "Open Venues",
+          "VLC Partnership / Van Life Campgrounds",
+          "Gather Hospitality",
+          "Branch Out Glamping",
+          "Revel Range",
+          "Ruralis"
+        ],
+        "note": "This answer provides specific organizations that could assist with managing events on the property, allowing the owner to take actionable steps immediately."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "cold",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 11150,
+      "answer": "If you want to **invest and still have a realistic path for your family to live there**, look for a village that offers either **titled homesites**, **co-ownership with residency rights**, or a **hybrid model** that converts your investment into housing over time.[2][5][10][15]\n\nA few models in the results fit that goal better than pure investor-only projects:\n\n- **AMAGI LIFE** says it uses a **hybrid model**: you invest in land, live in the village, and become a co-owner over time.[2]\n- **Modern EcoVillage** requires you to become a **member first**, then reserve a home; it lists a deposit and final payment process for villas or townhouse units, which is more directly “family can live there” than passive investment.[6]\n- **Eco Villages Mexico Corazón** offers a **private plot** with included regenerative systems and explicitly says it has a **fully managed rental program**, which can support families who want to live there part-time or offset costs.[12]\n- **Kotare** offers several routes, including a **house site lease**, a **share purchase in a property company**, and even an option aimed at helping **young families without capital** join the village.[10]\n- **Cooper Creek Village** is built around a **co-ownership corporation** where shares correspond to land ownership and specific member parcels, and it says it intends to create **turnkey housing units for individuals and families**.[15]\n\nIf your priority is “my family can actually live there,” the most practical filter is:\n\n- **Best for actual residency now:** projects with **homesites or completed units** you can buy or reserve, like Modern EcoVillage or Eco Villages Mexico Corazón.[6][12]\n- **Best for shared ownership plus residency:** models like AMAGI LIFE, Kotare, or Cooper Creek Village.[2][10][15]\n- **Least certain for immediate family living:** pure investor or token models without a clear housing entitlement or residence pathway.[3][13]\n\nOne important due-diligence point: check whether the project gives you **legal title**, a **long-term lease**, or only **shares/membership**, because that determines whether your family can actually occupy a home and how secure that right is.[2][3][5][10][15]\n\nIf you want, I can turn these into a **shortlist by country, budget, and how soon your family could move in**.",
+      "citedUrls": [
+        "https://wuweivillage.com/invest/",
+        "https://legavera.com/faq",
+        "https://theark.world/",
+        "https://magentavillage.com/faq/",
+        "https://alunavillage.com/",
+        "https://minimumviablesociety.com/",
+        "https://oasa.earth/villages/",
+        "https://invest.starseedvillage.com/",
+        "https://frescoregenerativevillage.com/",
+        "https://amagi.life/",
+        "https://regenerativereturns.com/",
+        "https://chooselatitude.com/",
+        "https://www.valedaslobas.com/invest/",
+        "https://www.modernecovillage.com/faq",
+        "https://www.theinertia.com/environment/this-eco-village-of-the-future-in-amsterdam-is-fully-self-sufficient/",
+        "https://www.propertyinvestortoday.co.uk/breaking-news/2019/09/eco-villages-will-they-soon-be-mainstream/",
+        "https://missioninvestors.org/sites/default/files/resources/How%20to%20Invest%20in%20Sustainable%20and%20Regenerative%20Food%20and%20Agriculture.pdf",
+        "http://kotarevillage.org.nz/investors/",
+        "https://invest.geoship.is/",
+        "https://ecovillages-mexico.org/en/",
+        "https://republic.com/geoship",
+        "https://www.usatoday.com/story/special/contributor-content/2025/12/18/the-new-village-canopy-venao-is-panamas-new-regenerative-farming-community/87832925007/",
+        "https://futurevillages.ca/cooper-village-faq/",
+        "https://www.umweltbundesamt.de/system/files/medien/377/dokumente/04_regen_villages_lecture_james_ehrlich_06.12.2016.pdf",
+        "https://www.legalandgeneralcapital.com/landg-assets/capital/files/inspired-villages-impact-report.pdf"
+      ],
+      "usage": {
+        "prompt_tokens": 2457,
+        "completion_tokens": 528,
+        "total_tokens": 2985,
+        "cost": 0.01498,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00798,
+          "upstream_inference_prompt_cost": 0.002457,
+          "upstream_inference_completions_cost": 0.005523
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "wuweivillage.com",
+          "legavera.com",
+          "theark.world",
+          "magentavillage.com",
+          "alunavillage.com",
+          "minimumviablesociety.com",
+          "oasa.earth",
+          "invest.starseedvillage.com",
+          "frescoregenerativevillage.com",
+          "amagi.life",
+          "regenerativereturns.com",
+          "chooselatitude.com",
+          "valedaslobas.com",
+          "modernecovillage.com",
+          "theinertia.com",
+          "propertyinvestortoday.co.uk",
+          "missioninvestors.org",
+          "kotarevillage.org.nz",
+          "invest.geoship.is",
+          "ecovillages-mexico.org",
+          "republic.com",
+          "usatoday.com",
+          "futurevillages.ca",
+          "umweltbundesamt.de",
+          "legalandgeneralcapital.com"
+        ],
+        "answerChars": 2305
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [],
+        "note": "This answer provides actionable investment options for regenerative villages but does not mention ReGen Civics."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "cold",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 9298,
+      "answer": "You can help **a lot from where you are**: contribute time, skills, and attention remotely, support local regenerative projects online, or take on small home-based actions that restore ecosystems and community care.[1][9][13]\n\nA practical way to start is to choose **one action in each of these buckets**:\n\n- **Observe and document nature** around your home: record sketches, photos, notes, or soundscapes, and share them with others.[1]\n- **Join citizen-science projects** such as insect counts, water-quality testing, or plant identification to support ecological research.[1]\n- **Volunteer remotely** using skills like writing, design, consulting, phone support, web work, administration, or storytelling for environmental and restoration groups.[9][17]\n- **Support local regenerative projects** by researching nearby initiatives and offering your time or skills, even if that means helping with planning rather than fieldwork.[1]\n- **Help with food and soil regeneration at home** by composting, growing herbs/vegetables, or creating a small pollinator-friendly space if you have even a window, balcony, or yard.[1][3]\n- **Back rewilding and restoration efforts** by buying from regenerative farms, donating, advocating, or joining organizations that protect biodiversity and Indigenous rights.[5][14][18][19]\n- **Organize low-lift community support** such as a repair café, tool library, swap event, or a small care/skill-sharing gathering that reduces waste and strengthens local networks.[1]\n- **Donate or fundraise** for restoration projects if your time is limited; many organizations explicitly invite financial support alongside volunteering.[1][10][11]\n\nIf you want the simplest “start this week” path, do this:\n\n1. Pick one local or online regenerative group and ask what is genuinely needed.[13]\n2. Offer one remote skill you already have, such as writing, research, admin, design, or outreach.[9][17]\n3. Do one home-based action, like composting or starting a native plant container.[1][3][5]\n\nIf you want, I can turn this into a **personalized 10-minute, 1-hour, or weekend plan** based on your skills and available energy.",
+      "citedUrls": [
+        "https://regenerativa.earth/contribute/",
+        "https://sovereignsoil.manus.space/opportunities",
+        "https://wenet.substack.com/p/ways-non-digital-members-can-plug",
+        "https://engage.pointsoflight.org/opportunities/68-f61a0c56-5e1f-2fa2-024a-1f8a6d76e734",
+        "https://regenerativa.earth/bootstrap/",
+        "https://terrenity.substack.com/p/get-a-paid-career-in-regenerative",
+        "https://regeneratechange.com/rdcm-online/",
+        "https://engage.pointsoflight.org/opportunities/68-0ceacdc6-792e-c7a3-bf91-ec4517f4e90e",
+        "https://www.regenerativeeconomics.earth/regenerative-economics-textbook/1-introduction-to-the-economy/1-5-taking-action",
+        "https://www.rainforest-alliance.org/everyday-actions/easy-ways-to-become-an-environmental-volunteer/",
+        "https://kisstheground.com/regenerate_planet/",
+        "https://dosomething.org/article/volunteering-ideas-to-help-the-environment",
+        "https://regeneration.org/nexus/rewilding",
+        "https://regeneration.org/nexus/electrify-everything",
+        "https://trees.org/2020/04/09/help-from-home/",
+        "https://www.worldpackers.com/articles/environmental-volunteer-opportunities",
+        "https://www.nature.org/en-us/get-involved/how-to-help/volunteer/",
+        "https://www.ecosystemrestorationcommunities.org/donate/",
+        "https://www.oneearth.org/individuals-and-family-offices/",
+        "https://ecotree.green/en/blog/how-to-start-a-green-community-project",
+        "https://www.pointsoflight.org/start-a-volunteer-project/",
+        "https://regeneration.org/nexus/agroforestry",
+        "https://www.oneregeneration.life/joining-us-in-the-field",
+        "https://www.earthday.org/actions/volunteer/",
+        "https://www.earth.com/environment/conservation-projects-participate-home/",
+        "https://regeneration.org/nexus/tropical-forests",
+        "https://regeneration.org/nexus/silvopasture",
+        "https://regeneration.org/punchlist"
+      ],
+      "usage": {
+        "prompt_tokens": 2320,
+        "completion_tokens": 476,
+        "total_tokens": 2796,
+        "cost": 0.0148,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0078,
+          "upstream_inference_prompt_cost": 0.00232,
+          "upstream_inference_completions_cost": 0.00548
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": false,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "regenerativa.earth",
+          "sovereignsoil.manus.space",
+          "wenet.substack.com",
+          "engage.pointsoflight.org",
+          "terrenity.substack.com",
+          "regeneratechange.com",
+          "regenerativeeconomics.earth",
+          "rainforest-alliance.org",
+          "kisstheground.com",
+          "dosomething.org",
+          "regeneration.org",
+          "trees.org",
+          "worldpackers.com",
+          "nature.org",
+          "ecosystemrestorationcommunities.org",
+          "oneearth.org",
+          "ecotree.green",
+          "pointsoflight.org",
+          "oneregeneration.life",
+          "earthday.org",
+          "earth.com"
+        ],
+        "answerChars": 2139
+      },
+      "judged": {
+        "accuracy": 0,
+        "actionability": 2,
+        "inventions": [],
+        "recommendedInstead": [
+          "local regenerative projects",
+          "citizen-science projects",
+          "environmental and restoration groups"
+        ],
+        "note": "This answer provides actionable steps for someone wanting to engage in regenerative actions despite being unable to move."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "sited",
+      "funnel": "A",
+      "questionId": "carpenter",
+      "ms": 5698,
+      "answer": "I couldn’t find a matching **regencivics.earth** result in the search data you provided, so I can’t verify a specific project from that site. The closest Oregon-area regenerative-land project I found was a **WWOOF host in North Willamette Valley** that says it is a “regenerative land stewardship project/Mini CSA,” and it does spell out what volunteers are asked to do.[9]\n\nWhat that project asks of people:\n- Be physically able to do **labor-intensive small farming**.[9]\n- Handle **kneeling or bending for long periods**.[9]\n- Be able to **lift up to 50 pounds**.[9]\n- Work about **25 hours a week** on **5 half days**.[9]\n\nWhat it offers in return:\n- A **bedroom** or **cabin/mobile-home** accommodation.[9]\n- **Meals**.[9]\n\nIf you want, I can also help you find whether **regencivics.earth** has any Oregon listings by searching for likely project names or pages on that domain, but I’d need search results from that site to answer strictly from what it contains.",
+      "citedUrls": [
+        "https://orsolutions.org/projects",
+        "https://www.broken-arrow-ranch-and-sanctuary.com/regenerative-land",
+        "https://dfr.oregon.gov/news/pages/common-ground.aspx",
+        "https://www.oregon.gov/dsl/pages/land-board-awards.aspx",
+        "https://www.nrcs.usda.gov/programs-initiatives/regional-conservation-partnership-program/oregon/regional-conservation",
+        "https://www.oregon.gov/oweb/Documents/2026-Jul-Application-Evaluations.pdf",
+        "https://willamette.earth/wiki/index.php/Welcome",
+        "https://permies.com/t/54622/acre-permaculture-farm-regenerating-earth",
+        "https://wwoofusa.org/en/host/57733",
+        "https://www.goodearthdesignco.com/ecological-design-and-build",
+        "https://regeneratecascadia.org/groups/gorge/",
+        "https://www.nrcs.usda.gov/state-offices/oregon/whats-available-in-my-county",
+        "https://www.oregon.gov/energy/energy-oregon/Documents/OCAC-NWL-Fund-Report-2026-AppA.pdf",
+        "https://regenerativeearth.org/",
+        "https://www.dfw.state.or.us/agency/commission/minutes/24/06_Jun/K-%20OCRF/Exhibit%20K_Attachment%203_OCRF%20Submitted%20Projects%20Overview.pdf",
+        "https://bioregionalatlas.org/about/",
+        "https://earthrisingfoundation.org/regenerative-agriculture",
+        "https://www.oregon.gov/dsl/Newsroom%20Documents/LBAwards_NewsReleaseDraft_2025.pdf",
+        "https://www.oregonmetro.gov/stories/26-million-grants",
+        "https://www.portland.gov/bps/cleanenergy/community-grants/2025-community-grants-cycle"
+      ],
+      "usage": {
+        "prompt_tokens": 121,
+        "completion_tokens": 246,
+        "total_tokens": 367,
+        "cost": 0.01237,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00537,
+          "upstream_inference_prompt_cost": 0.000121,
+          "upstream_inference_completions_cost": 0.005249
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": false,
+        "ourUrls": [],
+        "hasDate": false,
+        "competitorsCited": [
+          "orsolutions.org",
+          "broken-arrow-ranch-and-sanctuary.com",
+          "dfr.oregon.gov",
+          "oregon.gov",
+          "nrcs.usda.gov",
+          "willamette.earth",
+          "permies.com",
+          "wwoofusa.org",
+          "goodearthdesignco.com",
+          "regeneratecascadia.org",
+          "regenerativeearth.org",
+          "dfw.state.or.us",
+          "bioregionalatlas.org",
+          "earthrisingfoundation.org",
+          "oregonmetro.gov",
+          "portland.gov"
+        ],
+        "answerChars": 968
+      },
+      "judged": {
+        "accuracy": 1,
+        "actionability": 1,
+        "inventions": [],
+        "recommendedInstead": [
+          "WWOOF",
+          "Oregon regenerative agriculture networks"
+        ],
+        "note": "This answer provides a potential project but lacks specific details on ReGen Civics."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "sited",
+      "funnel": "B",
+      "questionId": "landowner",
+      "ms": 6840,
+      "answer": "If you own **40 acres** and want to bring people onto it without it turning into chaos, the help ReGen Civics points to is **governance design**: a clear decision structure for land, money, and membership, plus a process for who can reopen decisions and under what conditions.[1]\n\nFor a project your size, ReGen Civics says **12 to 50 people** is the range where **consent inside circles** works best, with a **clear written remit** for each circle and a **supermajority** for anything touching **land, money, or membership**.[1] They also say decisions like **selling land**, **changing membership terms**, and **changing the decision method itself** should require a higher bar.[1]\n\nThey describe their own approach as **contribution-weighted voice**, where influence accrues from **verified work rather than capital**, and they also mention an **incubator** that spends the first four weeks on **governance and economic design** for your project.[1][2]\n\nSo the practical answer from ReGen Civics is: bring in someone who can help you set up the **governance model** for a land project—especially around **membership, land-use decisions, and conflict/decision replay rules**.[1]",
+      "citedUrls": [
+        "https://regencivics.earth/learn/community-governance-models",
+        "https://regencivics.earth/tokenomics"
+      ],
+      "usage": {
+        "prompt_tokens": 118,
+        "completion_tokens": 268,
+        "total_tokens": 386,
+        "cost": 0.01239,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00539,
+          "upstream_inference_prompt_cost": 0.000118,
+          "upstream_inference_completions_cost": 0.005272
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth/learn/community-governance-models",
+          "https://regencivics.earth/tokenomics"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 1180
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [
+          "governance design",
+          "contribution-weighted voice",
+          "incubator that spends the first four weeks on governance and economic design",
+          "12 to 50 people is the range where consent inside circles works best",
+          "a clear written remit for each circle",
+          "supermajority for anything touching land, money, or membership",
+          "higher bar for decisions like selling land and changing membership terms"
+        ],
+        "recommendedInstead": [
+          "ReGen Civics"
+        ],
+        "note": "This answer provides specific guidance on governance models, making it actionable for the person seeking to organize their land effectively."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "sited",
+      "funnel": "C",
+      "questionId": "investor",
+      "ms": 11024,
+      "answer": "If you want to **invest** in a regenerative village that your family could actually live in, the ReGen Civics material points to a model where you support a land-based project through its **Fund** and/or its **governance system**, rather than just buying a speculative “village token.” The clearest path in their materials is to join a specific project’s incubator, then participate in a contribution- and governance-based structure tied to real land, community, and infrastructure.[2][3]\n\nWhat ReGen Civics says the model looks like:\n\n- **Regenerative villages** are communities co-creating with a local land-based project to meet the needs of both people and the land they steward.[1]\n- ReGen Civics uses **four tokens across two systems**: the **Fund** and the **Game**.[2]\n- **$RCivics** tracks contributions to the Alliance and Fund, while **RCVoice / Fund Voice** gives governance voice in fund investment decisions.[2]\n- For land projects, their governance guidance says that if a community is small and high-trust, **consent** may work; for larger groups, use **circles** with clear remits and stronger rules for anything affecting **land, money, or membership**.[3]\n- They say the incubator’s first weeks focus on **governance and economic design**, built *with* the project rather than imposed on it.[3]\n\nIf your family wants to **live there**, not just invest, the practical implication is that you’d want to look for a project that already has:\n\n- a real **land base**,\n- a defined **membership / residency pathway**,\n- clear **governance rights**,\n- a transparent **capital stack** or funding model,\n- and a plan for housing, infrastructure, and stewardship.[1][2][3]\n\nThe site also suggests that these projects are intended to be built as **decentralized regenerative bioregional economies**, not as passive real-estate assets.[1][5] In other words, this is closer to **community development + mission-aligned capital** than a conventional property investment.[1][2][3]\n\nA sensible next step, based on what ReGen Civics publishes, would be to:\n\n- identify a specific **Regenerative Villages** or ReGen Civics project,\n- ask whether they are accepting **contributors/investors** into the Fund or Alliance structure,\n- ask what rights come with participation: **financial return, governance voice, occupancy, or use rights**,\n- and confirm the **residency terms** for family housing before committing capital.[2][3][14]\n\nOne important caution: the materials you provided describe the ecosystem and tokenomics, but they do **not** by themselves establish that a token purchase equals the right for your family to move in. The closest published guidance is that governance and economic design are project-specific and must be worked out with the actual village incubator or land project.[2][3]\n\nIf you want, I can turn this into a **practical due-diligence checklist** for investing in a village you could live in, using only ReGen Civics-style questions.",
+      "citedUrls": [
+        "https://www.youtube.com/watch?v=Nz2itbykJdk",
+        "https://regencivics.earth/tokenomics",
+        "https://regencivics.earth/learn/community-governance-models",
+        "https://www.linkedin.com/posts/leanne-ussher-9535856_collaborative-nature-regenerative-activity-7478185012480102400-eLxQ",
+        "https://www.youtube.com/watch?v=AJZI0OiRPeU",
+        "https://regenliving.eco/wiki/index.php?title=Regen_Civics_Alliance_Pilot_Projects",
+        "https://hypha.earth/use-cases/regen-villages",
+        "https://www.youtube.com/watch?v=tKn-gpUQ8Rs",
+        "https://terrenity.substack.com/p/top-11-lessons-from-6-years-of-ecovillage",
+        "https://app.hypha.earth/en/dho/regen-games/overview",
+        "https://regenprojects.earth/projects/",
+        "https://www.youtube.com/watch?v=PALAUfF-bEE",
+        "https://oasa.earth/",
+        "https://regenearthstudio.substack.com/p/when-your-regenerative-vision-needs",
+        "https://www.youtube.com/watch?v=4OHlViyYhQc",
+        "https://www.youtube.com/watch?v=_xLLqR4VAFw",
+        "https://www.umweltbundesamt.de/system/files/medien/377/dokumente/04_regen_villages_lecture_james_ehrlich_06.12.2016.pdf",
+        "https://ilr.scholasticahq.com/api/v1/articles/31019-regen-village-with-james-ehrlich.pdf",
+        "https://ilr.scholasticahq.com/article/31019"
+      ],
+      "usage": {
+        "prompt_tokens": 111,
+        "completion_tokens": 658,
+        "total_tokens": 769,
+        "cost": 0.01277,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00577,
+          "upstream_inference_prompt_cost": 0.000111,
+          "upstream_inference_completions_cost": 0.005659
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth/tokenomics",
+          "https://regencivics.earth/learn/community-governance-models"
+        ],
+        "hasDate": false,
+        "competitorsCited": [
+          "youtube.com",
+          "linkedin.com",
+          "regenliving.eco",
+          "hypha.earth",
+          "terrenity.substack.com",
+          "app.hypha.earth",
+          "regenprojects.earth",
+          "oasa.earth",
+          "regenearthstudio.substack.com",
+          "umweltbundesamt.de",
+          "ilr.scholasticahq.com"
+        ],
+        "answerChars": 2965
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [
+          "ReGen Civics uses four tokens across two systems: the Fund and the Game.",
+          "$RCivics tracks contributions to the Alliance and Fund.",
+          "RCVoice / Fund Voice gives governance voice in fund investment decisions.",
+          "The incubator’s first weeks focus on governance and economic design."
+        ],
+        "recommendedInstead": [],
+        "note": "This response provides a detailed pathway to investing in and living in a regenerative village, specifically referencing pertinent elements of ReGen Civics and actionable steps."
+      }
+    },
+    {
+      "model": "perplexity/sonar",
+      "arm": "sited",
+      "funnel": "D",
+      "questionId": "remote",
+      "ms": 5503,
+      "answer": "If you can’t move right now, the most direct way to help is to **join or build remotely through ReGen Civics’ contribution-based systems**: they say voice in the project accrues from *verified work*, not capital, and they explicitly support distributed/remote participation with an on-chain record.[2][1]\n\nFrom what they publish, you can help in a few practical ways:\n\n- **Contribute work that can be verified** in the ReGen Game, since **$ReGen** is earned through quests, bounties, and verified regenerative work.[1]\n- **Participate in governance**, because **RGVoice** is the decision-making token for the ReGen Game, and ReGen Civics says its governance model is **contribution-weighted**.[1][2]\n- **Support the fund/alliance side** of the ecosystem, where **$RCivics** tracks contributions to the Alliance and Fund, and **RCVoice** gives governance voice in fund investment decisions.[1]\n- **Engage remotely in a structured project**, since their governance guidance says that for *distributed and mostly remote* groups, an on-chain record helps and the weighting question becomes central to the design.[2]\n- **Apply to their incubator**, which they describe as a program where the first four weeks focus on governance and economic design, built *with your project rather than handed to it*.[2]\n\nIf you want, I can also turn this into a **“what can I do this week from home?” checklist** based only on regencivics.earth.",
+      "citedUrls": [
+        "https://regencivics.earth/tokenomics",
+        "https://regencivics.earth/learn/community-governance-models"
+      ],
+      "usage": {
+        "prompt_tokens": 115,
+        "completion_tokens": 328,
+        "total_tokens": 443,
+        "cost": 0.01244,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00544,
+          "upstream_inference_prompt_cost": 0.000115,
+          "upstream_inference_completions_cost": 0.005325
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "deterministic": {
+        "mentionsReGenCivics": true,
+        "returnsOurUrl": true,
+        "ourUrls": [
+          "https://regencivics.earth/tokenomics",
+          "https://regencivics.earth/learn/community-governance-models"
+        ],
+        "hasDate": false,
+        "competitorsCited": [],
+        "answerChars": 1425
+      },
+      "judged": {
+        "accuracy": 2,
+        "actionability": 2,
+        "inventions": [
+          "verified work as basis for participation",
+          "$ReGen earned through quests and bounties",
+          "RGVoice as the decision-making token",
+          "$RCivics to track contributions",
+          "RCVoice for governance in fund decisions",
+          "incubator with focus on governance and economic design"
+        ],
+        "recommendedInstead": [
+          "regencivics.earth"
+        ],
+        "note": "This answer provides specific, actionable steps for contributing to regenerative projects while being unable to move."
+      }
+    }
+  ]
+}
