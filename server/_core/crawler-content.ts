@@ -21,6 +21,8 @@
 import * as db from "../db";
 import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
 import { FUND } from "../../shared/fund";
+import { REGEN_SEASONS, REGEN_SEASON_ORDER } from "../../shared/regenYear";
+import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
 import {
   LEARN_ARTICLES,
@@ -230,21 +232,26 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 starts September 2026 and applications are open now.</p>
         <h2>What the program covers</h2>
         <ul>
-          <li>Weeks 1 to 4: foundation. Governance, tokenomics, community structure.</li>
-          <li>Weeks 5 to 8: growth. Marketing, partnerships, funding strategies.</li>
-          <li>Weeks 9 to 12: scale. Expansion, replication, impact measurement.</li>
-          <li>Week 13: demo day. Pitch to investors and showcase achievements.</li>
+          ${SEASON2_CURRICULUM.map((ep) => `<li>Week ${ep.week}: ${escapeHtml(ep.title)}.</li>`).join("\n          ")}
         </ul>
         <p><strong>What support do projects get?</strong> Governance frameworks, token economics design, investor preparation, marketing support, legal templates, and access to the alliance network. <strong>Do projects retain ownership?</strong> Yes, always. Read <a href="/seasons">how seasons work</a> and <a href="/blog/how-to-apply-for-season-2">the application guide</a>, then apply on this page.</p>
       </article>
     `,
   },
+  // Read from shared/regenYear.ts, the same definition the page renders. This
+  // block used to say Season 1 graduated in 2025 and 2026; it ran in 2022.
   "/seasons": {
     html: `
       <article>
-        <h1>Seasons: how the incubator runs</h1>
-        <p>ReGen Civics runs in seasons. Each season, a cohort of regenerative land projects moves through the 13-week incubator (an accelerator for land projects) together: building governance, designing their economic game, and preparing for investment, with demo day at the end. Season 1 graduated its first cohort in 2025 and 2026. Season 2 begins September 2026.</p>
-        <p>Between seasons, the community keeps playing: quests continue, the forum stays active, and alliance partners support projects year round. If you steward land and want your project in the next cohort, <a href="/apply">apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
+        <h1>Seasons: the ReGen Civics Year</h1>
+        <p>ReGen Civics runs on a yearly wheel of four seasons. Each numbered Season starts in winter with a new cohort of regenerative land projects and follows it once around the wheel. The Game's seasons follow the work, so they run one season ahead of the northern calendar and turn at the solstices and equinoxes.</p>
+        <ul>
+          ${REGEN_SEASON_ORDER.map((key) => {
+            const s = REGEN_SEASONS[key];
+            return `<li><strong>${escapeHtml(s.name)}: ${escapeHtml(s.verb.toLowerCase())}.</strong> ${escapeHtml(s.summary)}</li>`;
+          }).join("\n          ")}
+        </ul>
+        <p>Season 1 was the first incubator, in 2022, followed by a long winter of building the tools. Season 2 opened at the September 2026 equinox with a public Selection Day, and its 13-week winter incubator runs to the December solstice, when the cohort launches a shared crowdpool. If you steward land and want your project in a future cohort, <a href="/apply">apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
       </article>
     `,
   },

@@ -1,21 +1,19 @@
-export type Season = "spring" | "summer" | "fall" | "winter";
+import { regenSeasonOn, type RegenSeasonKey } from "@shared/regenYear";
+
+export type Season = RegenSeasonKey;
 
 /**
  * ReGen Civics tracks a game season rather than the calendar season.
- * Season 1 ("The First Build") runs until the next season begins at the
- * September 2026 equinox. Until then we stay in "winter" regardless of
- * calendar month, because Season 1 is a winter-coded season in our cycle.
- * After the equinox the calendar-aligned rotation takes over.
+ *
+ * Until 2026-09-24 this switched to the calendar at the September 2026
+ * equinox, which put the whole site in fall the same week Season 2's winter
+ * began. The Game's seasons now come from shared/regenYear.ts, the one
+ * definition of the ReGen Civics Year: winter designs (the incubator), spring
+ * resources, summer builds, fall rests. They run one season ahead of the
+ * northern calendar, so the September equinox opens winter.
  */
 export function getCurrentSeason(): Season {
-  const now = new Date();
-  const season2Start = new Date("2026-09-22T00:00:00Z");
-  if (now < season2Start) return "winter";
-  const month = now.getMonth(); // 0-11
-  if (month >= 2 && month <= 4) return "spring";
-  if (month >= 5 && month <= 7) return "summer";
-  if (month >= 8 && month <= 10) return "fall";
-  return "winter";
+  return regenSeasonOn(new Date());
 }
 
 // On-brand seasonal palettes. Each gradient is rooted in the deep forest
@@ -44,7 +42,7 @@ export const SEASON_THEMES: Record<
     bgOpacity: 0.14,
     image: "/images/seasons/fall.webp",
   },
-  // Winter (Season 1): a frosted evergreen night, not a flat blue. Deep
+  // Winter (the design season, and all of Season 1): a frosted evergreen night, not a flat blue. Deep
   // forest base easing into a cool teal frost, with the signature green
   // accent so the command-center button reads as on-brand. The gradient is
   // also the fallback if the seasonal village image is missing.

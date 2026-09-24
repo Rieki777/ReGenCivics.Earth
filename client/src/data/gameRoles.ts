@@ -4,6 +4,7 @@
  */
 
 import { spring, amber, forest } from "@/lib/design-tokens";
+import { getCurrentSeason } from "@/lib/seasons";
 
 export interface GameRole {
   title: string;
@@ -95,7 +96,8 @@ export const gameRoles: GameRole[] = [
     ],
     seed: "All scheduled sessions held on time through the season",
     harvest: "Land projects report feeling supported (Season Festival survey, target: 4+/5 average)",
-    seasons: ["spring"],
+    // The incubator is winter (Rye, 2026-09-24), so its two roles moved one season earlier.
+    seasons: ["winter"],
     assignment: "Filled, seeking 1-2 co-facilitators",
     color: spring.base,
   },
@@ -186,7 +188,7 @@ export const gameRoles: GameRole[] = [
     ],
     seed: "Weekly check-ins with every guided project completed through the season",
     harvest: "Guided projects hitting their own self-set milestones (target: 70%+ on track)",
-    seasons: ["spring", "summer"],
+    seasons: ["winter", "spring"],
     assignment: "Open, 2 positions",
     color: forest.sage,
   },
@@ -1008,28 +1010,32 @@ export const seasons: Season[] = [
   {
     name: "Winter",
     emoji: "\u2744\uFE0F",
-    months: "Dec - Feb",
-    theme: "Building & Preparing",
+    months: "Sep to Dec",
+    theme: "Design",
     description:
-      "We build the tools, write the code, upgrade our systems and processes. This is the season of deep work: architecture, game design, skill creation, infrastructure. The builders and designers are in their element.",
+      "We build the tools, write the code, upgrade our systems and processes, and a new cohort of land projects designs their games in the incubator. This is the season of deep work: architecture, game design, governance, skill creation, infrastructure. The builders and designers are in their element.",
+    // "Lead Builder" and "Quest Author" never matched a role title, so the
+    // Team scorecard greyed out the Grand Builder and Quest Steward all winter.
     activeRoles: [
-      "Lead Builder",
+      "Grand Builder",
       "Security Reviewer",
       "Game Designer",
       "Skills Builder",
       "Tool Curator",
-      "Quest Author",
+      "Quest Steward",
+      "Season Facilitator",
+      "Incubator Guide",
     ],
     color: spring.base,
-    current: true,
+    current: getCurrentSeason() === "winter",
   },
   {
     name: "Spring",
     emoji: "\u{1F338}",
-    months: "Mar - May",
-    theme: "Incubation & Growth",
+    months: "Dec to Mar",
+    theme: "Resource",
     description:
-      "The incubator opens. Land projects apply, get matched with guides, and begin their journey. The community is buzzing with new energy, new faces, new ideas. Outreach is at full volume.",
+      "The designs are done and the doors open. Land projects launch their crowdpools, people step into roles, and investors come to the table. The community is buzzing with new energy, new faces, new ideas. Outreach is at full volume.",
     activeRoles: [
       "Season Facilitator",
       "Incubator Guide",
@@ -1039,33 +1045,28 @@ export const seasons: Season[] = [
       "Storyteller",
     ],
     color: spring.base,
-    current: false,
+    current: getCurrentSeason() === "spring",
   },
   {
     name: "Summer",
     emoji: "\u2600\uFE0F",
-    months: "Jun - Aug",
-    theme: "Festivals & Village Building",
+    months: "Mar to Jun",
+    theme: "Build",
     description:
-      "We go on the ground. Village building festivals, in-person gatherings, land project visits, community celebrations. The digital work meets the physical world. This is where the theory becomes soil under your feet.",
-    activeRoles: [
-      "Season Facilitator",
-      "Alliance Weaver",
-      "Storyteller",
-      "Incubator Guide",
-    ],
+      "We go on the ground. Planting, building, village festivals, in-person gatherings, land project visits, community celebrations. The digital work meets the physical world. This is where the theory becomes soil under your feet.",
+    activeRoles: ["Alliance Weaver", "Storyteller"],
     color: amber.tan,
-    current: false,
+    current: getCurrentSeason() === "summer",
   },
   {
     name: "Fall",
     emoji: "\u{1F342}",
-    months: "Sep - Nov",
-    theme: "Rest & Reflection",
+    months: "Jun to Sep",
+    theme: "Rest",
     description:
       "We step out of our Infinite Game roles and focus on family, in-person village life, personal projects. The community rests. The treasury and forum roles keep a gentle rhythm, but the pace slows intentionally. We compost what we learned.",
     activeRoles: ["Treasury Steward", "Forum Gardener"],
     color: amber.tan,
-    current: false,
+    current: getCurrentSeason() === "fall",
   },
 ];

@@ -60,7 +60,9 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 ## Seasons + roles
 
-**Season**. A 6-month cohort container. Aligned with equinoxes/solstices. Season 1 was "The First Build" (2025 spring → fall). Season 2 begins March Equinox 2026. See `SEASONS_HISTORY.md`.
+**The ReGen Civics Year**. One turn of the wheel of four seasons (ADR-57, canonical in `shared/regenYear.ts`). **Winter: design** (the incubator; tools, systems, governance; land projects design their games). **Spring: resource** (crowdpooling, investors, onboarding roles). **Summer: build** (on the land: gardens, buildings, festivals). **Fall: rest** (harvest gatherings, rest, healing, village life). The Game's seasons follow the work, so they run one season ahead of the northern calendar: winter opens at the September equinox, spring at the December solstice, summer at the March equinox, fall at the June solstice. Never call the incubator "Spring"; it is Winter.
+
+**Season** (numbered: "Season 2"). A cohort's year. Each numbered Season starts in winter with a new cohort of land projects and follows it once around the wheel. Season 1 was the first incubator (2022) plus the long winter of building that followed, through the September 2026 equinox; its contributor roles are recorded as "The First Build" in `SEASONS_HISTORY.md`. Season 2 opened at the September 2026 equinox (Selection Day 2026-09-26). Lowercase "season" (winter, spring, summer, fall) means one quarter of the year.
 
 **Role** / **Stewardship Role**. One of the 13 named roles per season (The Gardener, The Weaver, The Guide, The Tender, The Architect, The Keeper, etc). Each role has a season facilitator, character art (card + scene format), Seed/Harvest metrics, and compensation band. See `seasons/season-1-the-first-build.md` and the `regen-seasonal-roles` + `regen-character-art` skills.
 

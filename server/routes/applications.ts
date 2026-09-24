@@ -219,7 +219,7 @@ export const applicationsRouter = router({
       try {
         await notifyIfEnabled("applicationSubmissions", {
           title: `New Application: ${application.projectName}`,
-          content: `A new land project application has been submitted for the Spring Season.\n\n**Project:** ${application.projectName}\n**Type:** ${application.projectType}\n**Location:** ${application.location}\n\nReview it in the admin dashboard.`,
+          content: `A new land project application has been submitted for the winter incubator.\n\n**Project:** ${application.projectName}\n**Type:** ${application.projectType}\n**Location:** ${application.location}\n\nReview it in the admin dashboard.`,
         });
 
         // Send transactional confirmation email to the applicant
@@ -257,7 +257,7 @@ export const applicationsRouter = router({
 
         await notifyOwner({
           title: `Application Confirmation - ${application.projectName}`,
-          content: `**CONFIRMATION COPY FOR APPLICANT**\n\nThank you for applying to the ReGen Civics Spring Season!\n\n**Project Name:** ${application.projectName}\n**Project Type:** ${application.projectType}\n**Location:** ${application.location}\n**Vision:** ${application.vision?.substring(0, 200)}...\n\nWe will review your application and get back to you soon.\n\n---\nPlease forward this confirmation to the applicant.`,
+          content: `**CONFIRMATION COPY FOR APPLICANT**\n\nThank you for applying to the ReGen Civics winter incubator!\n\n**Project Name:** ${application.projectName}\n**Project Type:** ${application.projectType}\n**Location:** ${application.location}\n**Vision:** ${application.vision?.substring(0, 200)}...\n\nWe will review your application and get back to you soon.\n\n---\nPlease forward this confirmation to the applicant.`,
         });
       } catch (e) {
         console.warn("Failed to send notification:", e);

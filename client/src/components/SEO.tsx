@@ -141,9 +141,9 @@ export const pageSEO = {
     url: '/'
   },
   seasons: {
-    title: 'Seasons: Join Our Regenerative Journey',
-    description: 'Apply for Season 2 of ReGen Civics starting September 2026. Build your regenerative portfolio, connect with land projects, and join the incubator.',
-    keywords: 'regenerative season, land project application, regenerative portfolio, impact investment opportunity, ecovillage funding, sustainable land development',
+    title: 'Seasons: The ReGen Civics Year',
+    description: 'The ReGen Civics year turns through four seasons: land projects design their games in winter, crowdpool in spring, build on the land in summer, and rest in fall.',
+    keywords: 'regenerative seasons, land project incubator, crowdpooling, regenerative land projects, ecovillage, land project accelerator, regenerative economy',
     image: '/og/seasons.jpg',
     url: '/seasons'
   },

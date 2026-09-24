@@ -13,6 +13,17 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (seasons): The ReGen Civics Year wheel, and the incubator is Winter
+
+- **One wheel at the top of /seasons.** Four quarters around the village painting for each season, a pulsing NOW pill placed by how far into the season we are, corner tabs (arrow keys, Home and End), "Turn the wheel" to play the year once around, and a panel saying what each season is for. The painting, particles and background follow the chosen season; reduced motion drops the particles and pulses.
+- **The incubator is Winter (Rye, 2026-09-24).** Winter designs, Spring resources (crowdpooling), Summer builds on the land, Fall rests. One definition in `shared/regenYear.ts` (ADR-57), read by the page, the /team rhythm cards, the gameRoles season list, `getCurrentSeason()` and the /seasons crawler prose. The site theme had flipped to fall at the equinox; it is back in winter.
+- **Every "Spring" incubator label fixed:** the /seasons hero and growth cycle, the /team rhythm cards, the Bionomics Season 2 entry, the new-application notification and applicant confirmation copy. The Season Facilitator and Incubator Guide roles moved to winter with the incubator.
+- **Season 2 reads the shared clock.** A Selection Day card (week N of 13 once the season runs), and the 13 weeks with their real dates from the shared curriculum. Fund lines come from `shared/fund.ts`; the orphan "$300k initial operations funding" and "quarterly distributions from Year 3" lines are gone.
+- **Crawlers:** /seasons prose renders from the shared model (it said Season 1 graduated in 2025 and 2026; it ran in 2022), and /apply's week list renders from the shared curriculum (it promised a week 13 demo day).
+- Source: this session. Harness stories `seasons-page`, `season-wheel-spring`, `team-season-rhythm`.
+
+Carryover: Rye to confirm the turning points (one season ahead of the calendar), what a Season number counts, and Season 1's year and cohort size; /apply still says applications are open while /season2 says they closed September 11; the /team scorecard still shows Season 1's roles.
+
 ## 2026-09-02 (admin): Click-first admin, one Applications workspace, phone drawer
 
 - **Applications is one place.** `/admin/applications` redirects to `/admin?tab=applications`. Reviews (status cards, email, open a project) and List, search, export share a toggle. Detail back goes to that tab.

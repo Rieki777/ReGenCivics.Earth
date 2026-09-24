@@ -481,7 +481,7 @@ const TIMELINE: TimelineNode[] = [
   },
   {
     year: "2022",
-    title: "The first incubator: Spring Season 1",
+    title: "The first incubator: Season 1",
     body:
       "Land projects, mentors, and the first version of the seasonal rhythm. ReGen Civics is formed.",
   },
@@ -504,10 +504,10 @@ const TIMELINE: TimelineNode[] = [
       "We rapidly develop and deploy the Bioregional Games, Land-Based Games, and the ReGen Civics home site. The first land project pilots adopt and adapt the Game structure.",
   },
   {
-    year: "Fall 2026",
-    title: "Season 2 (Spring)",
+    year: "Late 2026",
+    title: "Season 2 (Winter)",
     body:
-      "Thirteen land projects will go through the open-source process of co-creating their Games. The season ends with the first Crowdpooling Season, where projects pool various forms of capital to evolve their work.",
+      "Thirteen land projects go through the open-source process of co-creating their Games. Winter ends with the first Crowdpooling Season, our spring, where projects pool various forms of capital to evolve their work.",
   },
   {
     year: "Looking ahead",

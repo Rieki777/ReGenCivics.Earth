@@ -15,6 +15,9 @@ import { AdminAIAssistant } from "@/components/AdminAIAssistant";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { DictationButton } from "@/components/admin/dictation";
+import Seasons from "@/pages/Seasons";
+import { SeasonWheel } from "@/components/SeasonWheel";
+import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 
 export type Story = {
   title: string;
@@ -385,6 +388,40 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="max-w-6xl">
         <AdminEventAnalytics />
+      </div>
+    ),
+  },
+
+  /**
+   * /seasons: the ReGen Civics Year wheel on top of the page. Check the wheel
+   * at 390 and 1280, that every corner tab clears the ring, and that the
+   * panel, particles and village painting all follow the chosen season.
+   */
+  "seasons-page": {
+    title: "/seasons: the ReGen Civics Year",
+    render: () => (
+      <div className="-m-6">
+        <Seasons />
+      </div>
+    ),
+  },
+
+  /** /team's rhythm cards, which read the same four seasons as the wheel. */
+  "team-season-rhythm": {
+    title: "/team: The Rhythm of the Infinite Game",
+    render: () => (
+      <div className="-m-6">
+        <SeasonalRhythmSection />
+      </div>
+    ),
+  },
+
+  /** The wheel alone, as it looks in the middle of spring. */
+  "season-wheel-spring": {
+    title: "Season wheel on 2027-01-20 (spring, Season 2)",
+    render: () => (
+      <div className="-m-6">
+        <SeasonWheel now={new Date("2027-01-20T18:00:00Z")} />
       </div>
     ),
   },

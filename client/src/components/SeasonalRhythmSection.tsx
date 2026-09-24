@@ -1,50 +1,52 @@
+import {
+  REGEN_SEASONS,
+  REGEN_SEASON_ORDER,
+  TURNING_POINTS,
+  nextRegenSeason,
+  type RegenSeasonKey,
+} from "@shared/regenYear";
+import { getCurrentSeason } from "@/lib/seasons";
+import { SEASON_LOOK } from "@/lib/seasonLook";
+
+const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const SEASON_EMOJI: Record<RegenSeasonKey, string> = {
+  winter: "❄️",
+  spring: "🌱",
+  summer: "☀️",
+  fall: "🍂",
+};
+
+/** Who tends each season most. Chips only; the roles themselves live on /team. */
+const SEASON_ROLES: Record<RegenSeasonKey, string[]> = {
+  winter: ["Game designers", "Builders", "Incubator guides"],
+  spring: ["Storytellers", "Weavers", "Investors"],
+  summer: ["Hosts", "Land partners", "Work crews"],
+  fall: ["Harvesters", "Healers", "Villagers"],
+};
+
+/**
+ * The four cards read the ReGen Civics Year from shared/regenYear.ts. Until
+ * 2026-09-24 they carried their own copy, which called the incubator Spring,
+ * gave calendar months that disagreed with the Game, and pinned "current" to
+ * Winter by hand.
+ */
 export default function SeasonalRhythmSection() {
-  const seasons = [
-    {
-      emoji: "❄️",
-      name: "Winter",
-      color: "#7dd87d",
-      months: "Dec – Mar",
-      theme: "Building & Preparing",
-      description:
-        "The quiet season. We plan, build infrastructure, and prepare the soil for what comes next. Internal work, deep conversations, strategy sessions.",
-      roles: ["Builders", "Strategists", "Stewards"],
-      current: true,
-    },
-    {
-      emoji: "🌸",
-      name: "Spring",
-      color: "#7dd87d",
-      months: "Mar – Jun",
-      theme: "Incubation & Growth",
-      description:
-        "New projects sprout. The incubator opens, land projects apply, and the community rallies around what wants to grow.",
-      roles: ["Incubators", "Mentors", "Scouts"],
-      current: false,
-    },
-    {
-      emoji: "☀️",
-      name: "Summer",
-      color: "#d4a574",
-      months: "Jun – Sep",
-      theme: "Festivals & Village Building",
-      description:
-        "We gather in person. Festivals, land visits, village builds, and the energy of shared physical work under open sky.",
-      roles: ["Organizers", "Hosts", "Land Partners"],
-      current: false,
-    },
-    {
-      emoji: "🍂",
-      name: "Fall",
-      color: "#d4a574",
-      months: "Sep – Dec",
-      theme: "Rest & Reflection",
-      description:
-        "Harvest what grew. Reflect on what worked, compost what didn't, and let the community rest before the next cycle begins.",
-      roles: ["Harvesters", "Storytellers", "Council Members"],
-      current: false,
-    },
-  ];
+  const current = getCurrentSeason();
+  const seasons = REGEN_SEASON_ORDER.map((key) => {
+    const s = REGEN_SEASONS[key];
+    const next = nextRegenSeason(key);
+    return {
+      emoji: SEASON_EMOJI[key],
+      name: s.name,
+      color: SEASON_LOOK[key].color,
+      months: `${MONTH[TURNING_POINTS[key].month - 1]} to ${MONTH[TURNING_POINTS[next].month - 1]}`,
+      theme: `${s.verb}. ${s.headline}`,
+      description: s.summary,
+      roles: SEASON_ROLES[key],
+      current: key === current,
+    };
+  });
 
   const festivalSteps = [
     {
@@ -138,8 +140,8 @@ export default function SeasonalRhythmSection() {
               Macro: The Four Seasons
             </h3>
             <p style={{ margin: 0, lineHeight: 1.6, color: "#e8e4de" }}>
-              Solstice to solstice, roughly 91 days each. The big arcs of our
-              year, from building to growing to gathering to resting.
+              Equinox to solstice and round again, roughly 91 days each. The big
+              arcs of our year: design, resource, build, and rest.
             </p>
           </div>
           <div
@@ -168,11 +170,11 @@ export default function SeasonalRhythmSection() {
           </div>
         </div>
 
-        {/* 3. Four Season Cards */}
+        {/* 3. Four Season Cards, two by two so they never wrap three and one */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 22rem), 1fr))",
             gap: "1.25rem",
             marginBottom: "3.5rem",
           }}

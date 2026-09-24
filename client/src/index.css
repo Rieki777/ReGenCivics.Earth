@@ -2892,3 +2892,74 @@ html[data-contrast="high"] *:focus-visible {
   box-shadow: 0 0 0 2px #ffd700, 0 0 26px rgba(255, 215, 0, 0.38), 0 10px 26px rgba(0, 0, 0, 0.28);
   animation: gratitude-bloom-pulse 2.2s ease-out;
 }
+
+/* ════════════════════════════════════════════════════════════
+   The ReGen Civics Year wheel (SeasonWheel.tsx, top of /seasons).
+   Season particles drift over the hero, a dashed ring flows
+   clockwise inside the wheel, and a white marker pulses at "now".
+   Reduced motion: no particles, no flow, no pulse.
+   ════════════════════════════════════════════════════════════ */
+.rw-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rw-particle {
+  position: absolute;
+  top: -24px;
+  display: block;
+  will-change: transform, opacity;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.rw-fall {
+  animation-name: rw-fall;
+}
+.rw-rise {
+  top: auto;
+  bottom: -16px;
+  animation-name: rw-rise;
+  animation-timing-function: ease-in-out;
+}
+@keyframes rw-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: var(--rw-opacity, 0.8); }
+  85% { opacity: var(--rw-opacity, 0.8); }
+  100% { transform: translate3d(var(--rw-drift, 30px), 110vh, 0) rotate(var(--rw-spin, 270deg)); opacity: 0; }
+}
+@keyframes rw-rise {
+  0% { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: var(--rw-opacity, 0.9); }
+  50% { transform: translate3d(calc(var(--rw-drift, 20px) * -0.5), -35vh, 0) scale(1); }
+  80% { opacity: var(--rw-opacity, 0.9); }
+  100% { transform: translate3d(var(--rw-drift, 20px), -70vh, 0) scale(0.7); opacity: 0; }
+}
+.rw-flow {
+  animation: rw-flow 7s linear infinite;
+}
+@keyframes rw-flow {
+  to { stroke-dashoffset: -96; }
+}
+.rw-now-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rw-now-pulse 2.4s ease-out infinite;
+}
+@keyframes rw-now-pulse {
+  0% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+.rw-panel-in {
+  animation: rw-panel-in 0.45s ease-out both;
+}
+@keyframes rw-panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-particles { display: none; }
+  .rw-flow,
+  .rw-panel-in { animation: none; }
+  .rw-now-pulse { animation: none; opacity: 0; }
+}

@@ -1,250 +1,612 @@
 /**
- * Seasons Page
- * Design: Fantasy forest theme with 13 standing stones representing weeks
- * Colors: Spring greens, golden highlights, soft earth tones
+ * Seasons: the ReGen Civics Year.
+ *
+ * The page opens on the wheel (SeasonWheel): the four seasons, what each one is
+ * for, and where we are right now. Below it: this winter's Season 2 incubator,
+ * who each cohort is for and how it is chosen, the gatherings that turn the
+ * year, the journey so far, and the way in.
+ *
+ * Until 2026-09-24 this page called the incubator "Spring" and ran three
+ * different four-season models at once (the hero, the rhythm cards, and a
+ * "project growth cycle"). Rye's ruling that day: the incubator is Winter.
+ * The seasons now come from shared/regenYear.ts, Season 2's weeks from
+ * shared/season2Curriculum.ts, its dates from shared/sessionClock.ts, and every
+ * word about the Fund from shared/fund.ts. Nothing on this page restates them.
  */
 
-import { useState } from 'react';
-import { Link } from 'wouter';
-import { SeasonalRhythmSection } from '@/components/SeasonalRhythmSection';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  BookOpen, 
-  Target, 
-  Sprout,
-  ChevronDown,
-  ChevronUp,
+import { useMemo, useState } from "react";
+import { Link } from "wouter";
+import {
   ArrowRight,
+  BookOpen,
+  Building,
+  Calendar,
   CheckCircle,
-  Sparkles,
-  TreeDeciduous,
-  Home as HomeIcon,
+  ChevronDown,
+  Clock,
   Compass,
   MapPin,
-  Heart,
-  Leaf,
-  Building,
-  Star
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AnimatedSection } from '@/components/AnimatedSection';
-import { SEO, pageSEO } from '@/components/SEO';
+  Moon,
+  Radio,
+  Sparkles,
+  Star,
+  Users,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
-import { cdnImg } from "@/lib/utils";
-import { ReadableScrim } from "@/components/ReadableScrim";
+import { SeasonWheel } from "@/components/SeasonWheel";
+import { SEASON_LOOK } from "@/lib/seasonLook";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
+import {
+  SEASON2_EPISODE_DATES,
+  SESSION_DURATION_HOURS,
+  SESSION_START_HOUR_PT,
+  sessionEndUtc,
+  sessionStartUtc,
+} from "@shared/sessionClock";
+import { JOIN_PATH, SEEDS_YOUTUBE_URL } from "@shared/sessionLinks";
+import {
+  REGEN_SEASONS,
+  REGEN_SEASON_ORDER,
+  TURNING_POINTS,
+  regenSeasonSpan,
+  type RegenSeasonKey,
+} from "@shared/regenYear";
+import { FUND } from "@shared/fund";
 
+const display = { fontFamily: "var(--font-display)" } as const;
+const WINTER = SEASON_LOOK.winter;
 
-/**
- * The thirteen weeks, from shared/season2Curriculum.ts.
- *
- * This page held its own copy until 2026-09-07 and was one of four places the
- * curriculum lived. Rye picked this list as the canonical one that day, so it
- * moved into shared/ where the calendar feed, the events table and /season2 all
- * read it. Editing the titles here would put the drift straight back.
- */
-const weeklyTopics = SEASON2_CURRICULUM.map((ep) => ({
-  week: ep.week,
-  title: ep.title,
-  description: ep.description,
-}));
+const pacificDay = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  timeZone: "America/Los_Angeles",
+});
+const pacificShort = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  timeZone: "America/Los_Angeles",
+});
+
+function hourLabel(h: number) {
+  return `${h % 12 || 12}${h < 12 ? "am" : "pm"}`;
+}
+const SESSION_TIME = `${hourLabel(SESSION_START_HOUR_PT)} Pacific`;
+
+/** The thirteen weeks with their real dates, from the shared curriculum and clock. */
+const WEEKS = SEASON2_CURRICULUM.map((ep) => {
+  const ymd = SEASON2_EPISODE_DATES[ep.week - 1];
+  return { ...ep, start: ymd ? sessionStartUtc(ymd) : null };
+});
+
+type Season2Status =
+  | { phase: "before"; selectionDay: Date }
+  | { phase: "during"; week: number; title: string; next: Date | null }
+  | { phase: "after" };
+
+function season2Status(now: Date): Season2Status {
+  const first = WEEKS[0]?.start;
+  const lastYmd = SEASON2_EPISODE_DATES[SEASON2_EPISODE_DATES.length - 1];
+  if (!first) return { phase: "after" };
+  if (now < first) return { phase: "before", selectionDay: first };
+  if (now > sessionEndUtc(lastYmd)) return { phase: "after" };
+  let week = 1;
+  WEEKS.forEach((w) => {
+    if (w.start && now >= w.start) week = w.week;
+  });
+  const next = WEEKS[week]?.start ?? null;
+  return { phase: "during", week, title: WEEKS[week - 1].title, next };
+}
+
+// ─── The journey, placed on the wheel ───────────────────────────────────────
+
+const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "Sep to Dec 2026", "Dec 2026 to Mar 2027": one season of a cohort's year. */
+function windowLabel(key: RegenSeasonKey, winterYear: number) {
+  const next = REGEN_SEASON_ORDER[(REGEN_SEASON_ORDER.indexOf(key) + 1) % 4];
+  const startYear = key === "winter" || key === "spring" ? winterYear : winterYear + 1;
+  const endYear = key === "winter" ? winterYear : winterYear + 1;
+  const a = MONTH[TURNING_POINTS[key].month - 1];
+  const b = MONTH[TURNING_POINTS[next].month - 1];
+  return startYear === endYear ? `${a} to ${b} ${endYear}` : `${a} ${startYear} to ${b} ${endYear}`;
+}
+
+type Stop = {
+  id: string;
+  when: string;
+  title: string;
+  label: string;
+  color: string;
+  /** Where this stop sits on the wheel, for working out past, now and next. */
+  at: [seasonNumber: number, season: RegenSeasonKey] | "past";
+  items: string[];
+};
+
+const S2_WINTER_YEAR = 2026;
+
+const JOURNEY: Stop[] = [
+  {
+    id: "s1",
+    when: "2022",
+    title: "Season 1",
+    label: "The first incubator",
+    color: "#d4a574",
+    at: "past",
+    items: [
+      "Our first cohort of regenerative land projects went through the incubator together",
+      "The Regenerative Infinite Games framework, built and tested",
+      "The 13-week curriculum, developed and refined",
+      "The first alliance partners and the idea of crowdpooling",
+    ],
+  },
+  {
+    id: "long-winter",
+    when: "2022 to 2026",
+    title: "The long winter",
+    label: "Rest, research, and building the tools",
+    color: "#d4a574",
+    at: "past",
+    items: [
+      "Tokenomics and the two tokens of the Game, designed",
+      "Quests, Games, and crowdpooling built out",
+      "Hypha DAO governance, implemented and refined",
+      "The Fund designed and Letters of Intent opened",
+      "Legal and regulatory research for the Fund",
+    ],
+  },
+  {
+    id: "s2-winter",
+    when: windowLabel("winter", S2_WINTER_YEAR),
+    title: "Season 2 · Winter",
+    label: "Thirteen land projects design their games",
+    color: SEASON_LOOK.winter.color,
+    at: [2, "winter"],
+    items: [
+      "Selection Day opens the season in public",
+      "13 weeks: governance, Game Guides, economies, tokens, legal structures",
+      "The ReGen Game template and custom land games",
+      "$ReGen and RGVoice live on Base for the Game",
+    ],
+  },
+  {
+    id: "s2-spring",
+    when: windowLabel("spring", S2_WINTER_YEAR),
+    title: "Spring",
+    label: "The shared crowdpool",
+    color: SEASON_LOOK.spring.color,
+    at: [2, "spring"],
+    items: [
+      "The cohort launches one shared crowdpool",
+      "Roles filled, tools lent, time and materials pledged",
+      `Letters of Intent build toward the Fund's founding event (target launch ${FUND.launchTarget})`,
+    ],
+  },
+  {
+    id: "s2-summer",
+    when: windowLabel("summer", S2_WINTER_YEAR),
+    title: "Summer",
+    label: "On the land",
+    color: SEASON_LOOK.summer.color,
+    at: [2, "summer"],
+    items: [
+      "Gardens planted and buildings raised across the cohort's land",
+      "Work parties, land visits, and festivals",
+    ],
+  },
+  {
+    id: "s2-fall",
+    when: windowLabel("fall", S2_WINTER_YEAR),
+    title: "Fall",
+    label: "Harvest and rest",
+    color: SEASON_LOOK.fall.color,
+    at: [2, "fall"],
+    items: [
+      "Harvest gatherings at the land projects",
+      "Rest, healing, and village life",
+      "Season 3 applications",
+    ],
+  },
+  {
+    id: "s3",
+    when: `From ${MONTH[TURNING_POINTS.winter.month - 1]} ${S2_WINTER_YEAR + 1}`,
+    title: "Season 3 · Winter",
+    label: "The wheel turns",
+    color: SEASON_LOOK.winter.color,
+    at: [3, "winter"],
+    items: ["A new cohort of land projects sits down to design their games"],
+  },
+];
+
+function stopStatus(stop: Stop, now: Date): "complete" | "active" | "future" {
+  if (stop.at === "past") return "complete";
+  const span = regenSeasonSpan(now);
+  const [n, key] = stop.at;
+  const here = span.seasonNumber * 4 + REGEN_SEASON_ORDER.indexOf(span.season);
+  const there = n * 4 + REGEN_SEASON_ORDER.indexOf(key);
+  if (there < here) return "complete";
+  if (there === here) return "active";
+  return "future";
+}
+
+// ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function Seasons() {
-  const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
-  const [whoWeAreLookingForOpen, setWhoWeAreLookingForOpen] = useState(false);
+  const now = useMemo(() => new Date(), []);
+  const status = useMemo(() => season2Status(now), [now]);
+  const [curriculumOpen, setCurriculumOpen] = useState(false);
+  const [selectionOpen, setSelectionOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
+    <div className="min-h-screen bg-[#0d2818]">
       <BackButton />
       <SEO {...pageSEO.seasons} />
-      
-      {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={cdnImg("https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg")}
-            alt="Seasons"
-            className="w-full h-full object-cover"
-            width="1920"
-            height="1080"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a]/60 via-[#1a472a]/40 to-[#1a472a]" />
-        </div>
-        
-        <AnimatedSection animation="fade-in" className="relative z-10 container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
-            <Sprout className="w-5 h-5 text-[#7dd87d]" />
-            <span className="text-white font-medium">Season 2 Starting September 2026</span>
-          </div>
-          
-          <ReadableScrim block className="max-w-3xl mx-auto mb-8">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              <span className="text-[#7dd87d]">"Spring"</span> Season
-            </h1>
 
-            <p className="text-xl md:text-2xl text-white/90 safe-prose">
-              13 weeks of transformation, learning, and growth to take your regenerative land project from a few core team members to a thriving village and minimum viable economy.
+      {/* ── 1. The wheel ── */}
+      <SeasonWheel now={now} />
+
+      {/* ── 2. This winter: Season 2 ── */}
+      <section id="season-2" className="relative py-20 px-4 bg-gradient-to-b from-[#0d2818] via-[#0e3334] to-[#0d2818]">
+        <div className="container mx-auto max-w-5xl">
+          <AnimatedSection animation="fade-in" className="text-center mb-12">
+            <p
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 text-sm font-semibold border"
+              style={{ color: WINTER.color, background: `${WINTER.color}14`, borderColor: `${WINTER.color}40` }}
+            >
+              <WINTER.Icon className="h-4 w-4" aria-hidden="true" />
+              Winter {S2_WINTER_YEAR} · Season 2
             </p>
-          </ReadableScrim>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/schedule">
-              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
-                <Calendar className="mr-2 w-5 h-5" />
-                View Schedule & RSVP
-              </Button>
-            </Link>
-            <Link href="/apply">
-              <Button 
-                size="lg" 
-                className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:via-yellow-500 hover:to-amber-600 text-[#1a472a] font-bold rounded-xl shadow-lg shadow-amber-400/50 hover:shadow-amber-500/60 hover:scale-105 transition-all duration-300 px-8 py-6 text-lg border-2 border-amber-300"
-              >
-                <span className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-xl blur opacity-30 animate-pulse"></span>
-                <span className="relative flex items-center gap-2">
-                  🌱 Apply for Season 2
-                  <ArrowRight className="w-5 h-5" />
-                </span>
-              </Button>
-            </Link>
-          </div>
-        </AnimatedSection>
-      </section>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-5 leading-tight" style={display}>
+              This winter, thirteen land projects{" "}
+              <span style={{ color: WINTER.color }}>design their games</span>
+            </h2>
+            <p className="text-lg text-white/85 max-w-3xl mx-auto leading-relaxed safe-prose">
+              Season 2 is our winter incubator. For 13 weeks, thirteen regenerative land projects
+              design how their villages decide, share value, hold roles, and stay legal and fair.
+              On the last week they launch into one shared crowdpool, and spring begins.
+            </p>
+          </AnimatedSection>
 
-      {/* Who We're Looking For - Collapsible */}
-      <section className="py-8 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <Collapsible open={whoWeAreLookingForOpen} onOpenChange={setWhoWeAreLookingForOpen}>
-            <CollapsibleTrigger className="w-full">
-              <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30 hover:border-[#7dd87d]/50 transition-all cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#7dd87d]/30 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-[#7dd87d]" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-xl font-bold text-white">Who We're Looking For</h3>
-                      <p className="text-white/60 text-sm">Click to learn about ideal candidates for Season 2</p>
-                    </div>
-                  </div>
-                  {whoWeAreLookingForOpen ? (
-                    <ChevronUp className="w-6 h-6 text-[#7dd87d]" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 text-white/70" />
-                  )}
+          {/* Where Season 2 is right now */}
+          <AnimatedSection animation="slide-up" className="mb-12">
+            <div
+              className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6"
+              style={{ borderColor: `${WINTER.color}55` }}
+            >
+              <div
+                className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{ background: `${WINTER.color}22` }}
+              >
+                {status.phase === "during" ? (
+                  <Radio className="w-7 h-7" style={{ color: WINTER.color }} aria-hidden="true" />
+                ) : (
+                  <Calendar className="w-7 h-7" style={{ color: WINTER.color }} aria-hidden="true" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                {status.phase === "before" && (
+                  <>
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
+                      Selection Day is open to everyone
+                    </h3>
+                    <p className="text-white/80 safe-prose">
+                      {pacificDay.format(status.selectionDay)}, {SESSION_TIME}. Every applying project
+                      shares what they are building, and the season council chooses the thirteen live
+                      on the call. Come and watch.
+                    </p>
+                  </>
+                )}
+                {status.phase === "during" && (
+                  <>
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
+                      Week {status.week} of 13: {status.title}
+                    </h3>
+                    <p className="text-white/80 safe-prose">
+                      The cohort meets Saturdays at {SESSION_TIME}, and the sessions stream on the SEEDS
+                      channel for anyone who wants to follow along.
+                      {status.next ? ` Next session: ${pacificDay.format(status.next)}.` : ""}
+                    </p>
+                  </>
+                )}
+                {status.phase === "after" && (
+                  <>
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
+                      Season 2's winter is complete
+                    </h3>
+                    <p className="text-white/80 safe-prose">
+                      The cohort designed their games and launched their crowdpool together. Spring
+                      is here: see what they are calling in.
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 md:flex-col md:items-stretch">
+                {status.phase === "before" && (
+                  <a
+                    href={JOIN_PATH}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                    style={{ background: WINTER.color, color: WINTER.ink }}
+                  >
+                    Join Selection Day
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                )}
+                {status.phase === "during" && (
+                  <a
+                    href={SEEDS_YOUTUBE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                    style={{ background: WINTER.color, color: WINTER.ink }}
+                  >
+                    Watch on the SEEDS channel
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                )}
+                {status.phase === "after" && (
+                  <Link
+                    href="/crowd-pooling"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                    style={{ background: SEASON_LOOK.spring.color, color: SEASON_LOOK.spring.ink }}
+                  >
+                    See the crowdpool
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
+                <Link
+                  href="/schedule"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/25 px-5 py-2.5 font-semibold text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                >
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
+                  Full schedule
+                </Link>
+              </div>
+            </div>
+          </AnimatedSection>
+
+          {/* How the weeks work */}
+          <div className="grid md:grid-cols-3 gap-5 mb-12">
+            {[
+              {
+                Icon: Clock,
+                title: `${SESSION_DURATION_HOURS}-hour live sessions`,
+                body: `Every Saturday at ${SESSION_TIME}: examples, tools, lessons, practical how-to's, and open questions.`,
+              },
+              {
+                Icon: BookOpen,
+                title: "Weekly deliverables",
+                body: "Practical assignments between sessions, so every lesson lands straight in your own project.",
+              },
+              {
+                Icon: Users,
+                title: "Peer learning",
+                body: "Thirteen projects working side by side, sharing what works and building alliances that last.",
+              },
+            ].map(({ Icon, title, body }, i) => (
+              <AnimatedSection key={title} animation="slide-up" delay={i * 80}>
+                <div className="h-full rounded-2xl bg-white/5 border border-white/10 p-6">
+                  <Icon className="w-8 h-8 mb-4" style={{ color: WINTER.color }} aria-hidden="true" />
+                  <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+                  <p className="text-white/75 text-sm leading-relaxed">{body}</p>
                 </div>
+              </AnimatedSection>
+            ))}
+          </div>
+
+          {/* The thirteen weeks */}
+          <Collapsible open={curriculumOpen} onOpenChange={setCurriculumOpen}>
+            <CollapsibleTrigger className="w-full rounded-2xl border bg-white/5 p-5 md:p-6 text-left transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              style={{ borderColor: `${WINTER.color}40` }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: `${WINTER.color}22` }}
+                  >
+                    <Calendar className="w-6 h-6" style={{ color: WINTER.color }} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span className="block text-xl md:text-2xl font-bold text-white" style={display}>
+                      The 13 weeks of winter
+                    </span>
+                    <span className="block text-white/70 text-sm">
+                      {WEEKS[0]?.start && WEEKS[12]?.start
+                        ? `${pacificShort.format(WEEKS[0].start)} to ${pacificShort.format(WEEKS[12].start)}, Saturdays at ${SESSION_TIME}`
+                        : "Saturdays through the winter"}
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`w-6 h-6 shrink-0 transition-transform duration-300 ${curriculumOpen ? "rotate-180" : ""}`}
+                  style={{ color: WINTER.color }}
+                  aria-hidden="true"
+                />
               </div>
             </CollapsibleTrigger>
-            
             <CollapsibleContent>
-              <div className="mt-4 bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/20">
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Land Projects */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-[#7dd87d]/20 rounded-full flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-[#7dd87d]" />
+              <ol className="mt-4 space-y-2">
+                {WEEKS.map((w) => {
+                  const isNow = status.phase === "during" && status.week === w.week;
+                  return (
+                    <li
+                      key={w.week}
+                      className="rounded-xl border bg-white/[0.04] p-4 md:p-5"
+                      style={{ borderColor: isNow ? `${WINTER.color}99` : "rgba(255,255,255,0.1)" }}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span
+                          className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold"
+                          style={{ background: `${WINTER.color}22`, color: WINTER.color }}
+                        >
+                          {w.week}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <h4 className="text-base md:text-lg font-semibold text-white">{w.title}</h4>
+                            {w.start && <span className="text-xs text-white/65">{pacificShort.format(w.start)}</span>}
+                            {w.audience === "public" && (
+                              <span
+                                className="text-[0.65rem] font-bold uppercase tracking-wider rounded-full px-2 py-0.5"
+                                style={{ background: WINTER.color, color: WINTER.ink }}
+                              >
+                                Open to everyone
+                              </span>
+                            )}
+                            {isNow && <span className="text-xs font-semibold" style={{ color: WINTER.color }}>This week</span>}
+                          </div>
+                          <p className="mt-1 text-sm text-white/75 leading-relaxed safe-prose">{w.description}</p>
+                        </div>
                       </div>
-                      <h4 className="text-lg font-bold text-white">Land Projects</h4>
+                    </li>
+                  );
+                })}
+              </ol>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      </section>
+
+      {/* ── 3. Who each cohort is for, and how it is chosen ── */}
+      <section className="py-20 px-4 bg-[#0d2818]">
+        <div className="container mx-auto max-w-5xl">
+          <AnimatedSection animation="fade-in" className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-5" style={display}>
+              Who each winter <span style={{ color: SEASON_LOOK.spring.color }}>cohort</span> is for
+            </h2>
+            <p className="text-lg text-white/80 max-w-3xl mx-auto safe-prose">
+              Land projects of every size and stage, anywhere on Earth, plus the alliance partners who
+              help them grow.
+            </p>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {[
+              {
+                Icon: MapPin,
+                title: "Land projects",
+                intro: "The minimum to apply:",
+                items: [
+                  "Land stewardship commitment (owned, leased, or in acquisition)",
+                  "Core team of 3 or more committed members",
+                  "Clear regenerative vision and values alignment",
+                  "Capacity to take part fully in all 13 weeks",
+                  "Willingness to share learnings with the network",
+                ],
+              },
+              {
+                Icon: Building,
+                title: "Alliance partners",
+                intro: "Organizations that support land projects:",
+                items: [
+                  "Construction, housing, energy, and infrastructure providers",
+                  "Organizational, economic, and ecological design wisdom",
+                  "Legal, governance, or technology expertise",
+                  "Funding, investment, or financial services",
+                  "Any other support for regenerative land projects",
+                ],
+              },
+            ].map(({ Icon, title, intro, items }) => (
+              <AnimatedSection key={title} animation="slide-up">
+                <div className="h-full rounded-2xl bg-white/5 border border-[#7dd87d]/20 p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />
                     </div>
-                    <p className="text-white/70 mb-4">
-                      Regenerative land projects minimum requirements:
-                    </p>
-                    <ul className="space-y-2 text-white/60 text-sm">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Land stewardship commitment (owned, leased, or in acquisition)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Core team of 3+ committed members</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Clear regenerative vision and values alignment</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Capacity to participate fully in 13-week program</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Willingness to share learnings with the network</span>
-                      </li>
-                    </ul>
+                    <h3 className="text-xl font-bold text-white">{title}</h3>
                   </div>
-                  
-                  {/* Alliance Partners */}
+                  <p className="text-white/75 mb-3 text-sm">{intro}</p>
+                  <ul className="space-y-2">
+                    {items.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-white/80 text-sm">
+                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 shrink-0" aria-hidden="true" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+
+          <div className="mb-8 rounded-2xl border border-[#7dd87d]/40 bg-[#7dd87d]/10 p-6 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-[#7dd87d]/25 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-[#7dd87d] mb-1">Free to apply and take part, for now</h3>
+              <p className="text-white/80 text-sm leading-relaxed safe-prose">
+                Applying and taking part is currently free for selected projects. As the program grows we
+                intend to introduce application and participation fees to sustain the ecosystem. For now,
+                if you are chosen, your commitment and full participation is your contribution.
+              </p>
+            </div>
+          </div>
+
+          <Collapsible open={selectionOpen} onOpenChange={setSelectionOpen}>
+            <CollapsibleTrigger className="w-full rounded-2xl border border-white/15 bg-white/5 p-5 md:p-6 text-left transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center shrink-0">
+                    <Compass className="w-6 h-6 text-[#7dd87d]" aria-hidden="true" />
+                  </div>
                   <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-[#7dd87d]/20 rounded-full flex items-center justify-center">
-                        <Building className="w-5 h-5 text-[#7dd87d]" />
-                      </div>
-                      <h4 className="text-lg font-bold text-white">Alliance Partners</h4>
-                    </div>
-                    <p className="text-white/70 mb-4">
-                      Organizations that support land projects and want to join a powerful ecosystem of change-makers.
-                    </p>
-                    <ul className="space-y-2 text-white/60 text-sm">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Construction, housing, energy, infrastructure providers</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Organizational, economic, ecological design wisdom</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Legal, governance, or technology expertise</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Funding, investment, or financial services</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                        <span>Any support for regenerative land projects</span>
-                      </li>
-                    </ul>
+                    <span className="block text-xl md:text-2xl font-bold text-white" style={display}>
+                      How the thirteen are chosen
+                    </span>
+                    <span className="block text-white/70 text-sm">
+                      A season council of past projects and allies picks each cohort, in public
+                    </span>
                   </div>
                 </div>
-                
-                {/* What You Get */}
-                <div className="mt-8 pt-8 border-t border-white/10">
-                  <h4 className="text-lg font-bold text-white mb-4 text-center">What You'll Receive</h4>
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <Heart className="w-6 h-6 text-[#7dd87d] mx-auto mb-2" />
-                      <p className="text-white/70 text-sm">Mentorship & peer support from experienced projects</p>
+                <ChevronDown
+                  className={`w-6 h-6 shrink-0 text-[#7dd87d] transition-transform duration-300 ${selectionOpen ? "rotate-180" : ""}`}
+                  aria-hidden="true"
+                />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-6 md:p-8">
+                <p className="text-white/80 mb-6 safe-prose">
+                  The thirteen projects for each season are selected by representatives of the previous
+                  seasons' allies and land projects.
+                </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {[
+                    ["Peer review", "Past participants evaluate applications from real-world experience."],
+                    ["Quality", "High-potential projects, so each cohort becomes strong case studies for the movement."],
+                    ["Range", "From just starting to mature, from 1 acre to 50,000, from any country."],
+                    ["Readiness", "Projects show the commitment and capacity to take part fully."],
+                  ].map(([title, body]) => (
+                    <div key={title} className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-[#7dd87d] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <h4 className="font-semibold text-white mb-1">{title}</h4>
+                        <p className="text-white/70 text-sm">{body}</p>
+                      </div>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <Leaf className="w-6 h-6 text-[#7dd87d] mx-auto mb-2" />
-                      <p className="text-white/70 text-sm">Governance & economic tools for your community</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <Users className="w-6 h-6 text-[#7dd87d] mx-auto mb-2" />
-                      <p className="text-white/70 text-sm">Network of allied projects & organizations</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <Target className="w-6 h-6 text-[#7dd87d] mx-auto mb-2" />
-                      <p className="text-white/70 text-sm">Path to funding & investment opportunities</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                
-                {/* Apply CTA */}
-                <div className="mt-8 text-center">
-                  <Link href="/apply">
-                    <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
-                      🌱 Apply for Season 2 Now
-                      <ArrowRight className="ml-2 w-5 h-5" />
-                    </Button>
-                  </Link>
+                <div className="mt-8 pt-6 border-t border-white/10 flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <Star className="w-5 h-5 text-amber-400" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-amber-400 mb-2">Priority for projects that support more projects</h4>
+                    <p className="text-white/80 text-sm leading-relaxed safe-prose">
+                      We give priority to land projects working toward becoming a case study and incubator
+                      themselves: tracking and mapping their process, developing a unique "play" (a
+                      replicable protocol others can learn from), and planning to host teams who come to
+                      learn and run those protocols on their own land. Our deepest priority is the projects
+                      that want to support more projects.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CollapsibleContent>
@@ -252,653 +614,199 @@ export default function Seasons() {
         </div>
       </section>
 
-      {/* Season Structure */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              The Incubator <span className="text-[#7dd87d]">Structure</span>
-            </h2>
-            <p className="text-lg text-white/70 max-w-3xl mx-auto safe-prose">
-              Each week is designed to bring you down the path of being ready to create and/or expand your Game into a thriving village and "minimum viable economy" designed to meet all your community needs.
-            </p>
-          </div>
-
-          {/* Key Features */}
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
-              <div className="w-16 h-16 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-[#7dd87d]" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">2 Hour Sessions</h3>
-              <p className="text-white/60">Weekly live sessions with examples, tools, lessons, practical how-to's, and Q&A dialogue.</p>
-            </div>
-            
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
-              <div className="w-16 h-16 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-[#7dd87d]" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Weekly Deliverables</h3>
-              <p className="text-white/60">Practical assignments due during the week to apply learnings directly to your project.</p>
-            </div>
-            
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
-              <div className="w-16 h-16 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-[#7dd87d]" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Peer Learning</h3>
-              <p className="text-white/60">Connect with fellow land projects, share experiences, and build lasting alliances.</p>
-            </div>
-          </div>
-
-          {/* Session Format */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/20 mb-16">
-            <h3 className="text-2xl font-bold text-white mb-6 text-center">Each Session Format</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-4xl mb-3">📚</div>
-                <h4 className="font-bold text-[#7dd87d] mb-2">Examples & Lessons</h4>
-                <p className="text-white/60 text-sm">Real-world case studies, tools, and frameworks from successful regenerative projects.</p>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl mb-3">🛠️</div>
-                <h4 className="font-bold text-[#7dd87d] mb-2">Practical How-To's</h4>
-                <p className="text-white/60 text-sm">Step-by-step guidance on implementing concepts in your specific context.</p>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl mb-3">💬</div>
-                <h4 className="font-bold text-[#7dd87d] mb-2">Questions & Dialogue</h4>
-                <p className="text-white/60 text-sm">Interactive Q&A and peer discussion to deepen understanding and solve challenges.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 13 Weeks Curriculum - Collapsible Dropdown */}
-          <div className="mb-16">
-            <Collapsible 
-              open={expandedWeek !== null || expandedWeek === 0}
-              onOpenChange={(open) => setExpandedWeek(open ? 1 : null)}
-            >
-              <CollapsibleTrigger className="w-full">
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 cursor-pointer hover:bg-white/15 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-[#7dd87d]/20 rounded-full flex items-center justify-center">
-                        <Calendar className="w-7 h-7 text-[#7dd87d]" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-2xl font-bold text-white">
-                          <span className="text-[#7dd87d]">13 Weeks</span> of Transformation
-                        </h3>
-                        <p className="text-white/60">Click to view the full curriculum schedule</p>
-                      </div>
-                    </div>
-                    <ChevronDown className="w-6 h-6 text-[#7dd87d]" />
-                  </div>
-                </div>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="mt-4">
-                <div className="space-y-3">
-                  {weeklyTopics.map((topic) => (
-                    <div 
-                      key={topic.week}
-                      className="bg-white/5 backdrop-blur-sm rounded-xl border border-[#7dd87d]/20 overflow-hidden transition-all duration-300 hover:border-[#7dd87d]/40"
-                    >
-                      <button
-                        onClick={() => setExpandedWeek(expandedWeek === topic.week ? -1 : topic.week)}
-                        className="w-full flex items-center justify-between p-4 text-left"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-[#7dd87d]/20 rounded-full flex items-center justify-center text-[#7dd87d] font-bold">
-                            {topic.week}
-                          </div>
-                          <h4 className="text-lg font-semibold text-white">{topic.title}</h4>
-                        </div>
-                        {expandedWeek === topic.week ? (
-                          <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-white/70" />
-                        )}
-                      </button>
-                      
-                      {expandedWeek === topic.week && (
-                        <div className="px-4 pb-4 pt-0">
-                          <div className="pl-14">
-                            <p className="text-white/70 mb-3">{topic.description}</p>
-                            <div className="flex items-center gap-2 text-sm text-white/70">
-                              <Clock className="w-4 h-4" />
-                              <span>2 hours</span>
-                              <span className="mx-2">•</span>
-                              <span>Date TBD (selected during Open Access Session)</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Link to full schedule */}
-                <div className="mt-6 text-center">
-                  <Link href="/schedule">
-                    <Button variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10">
-                      <Calendar className="mr-2 w-4 h-4" />
-                      View Full Schedule & RSVP
-                    </Button>
-                  </Link>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        </div>
-      </section>
-
-      {/* Selection Process */}
-      <section className="py-20 px-4 bg-[#0d2818]">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              Selection <span className="text-[#7dd87d]">Process</span>
-            </h2>
-            <p className="text-lg text-white/70">
-              How the 13 projects are chosen for each Season
-            </p>
-          </div>
-
-          {/* Free Participation Banner */}
-          <div className="mb-8 bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-2xl p-6 flex items-start gap-4">
-            <div className="w-10 h-10 bg-[#7dd87d]/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Sparkles className="w-5 h-5 text-[#7dd87d]" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-[#7dd87d] mb-1">Currently Free to Apply and Participate</h3>
-              <p className="text-white/70 text-sm leading-relaxed safe-prose">
-                Applying and participating in the Season is currently free for selected projects. As the program grows and matures, we intend to introduce application and participation fees to sustain the ecosystem. For now, if you are chosen, your commitment and full participation is your contribution.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/20">
-            <div className="flex items-start gap-6 mb-8">
-              <div className="w-16 h-16 bg-[#7dd87d]/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <Compass className="w-8 h-8 text-[#7dd87d]" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3">Community-Led Selection</h3>
-                <p className="text-white/70">
-                  The 13 projects for each season are selected by representatives of previous season's allies and land projects.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="flex items-start gap-4">
-                <CheckCircle className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-semibold text-white mb-1">Peer Review</h4>
-                  <p className="text-white/60 text-sm">Previous participants evaluate applications based on real-world experience.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-semibold text-white mb-1">Quality Standards</h4>
-                  <p className="text-white/60 text-sm">Ensure only high-potential projects are selected to provide the best case studies for our movement.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-semibold text-white mb-1">Diversity Focus</h4>
-                  <p className="text-white/60 text-sm">Global geographic and project-type diversity strengthens the cohort. From just starting to mature, from 1 acre to 50,000, from any country.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-semibold text-white mb-1">Readiness Assessment</h4>
-                  <p className="text-white/60 text-sm">Projects must demonstrate commitment and capacity to participate fully.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Case-Study Priority Callout */}
-            <div className="mt-8 pt-8 border-t border-[#7dd87d]/20">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Star className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-amber-400 mb-2">Priority Given to Projects That Support More Projects</h4>
-                  <p className="text-white/70 text-sm leading-relaxed safe-prose">
-                    We give priority to land projects that are actively working toward becoming a case-study and incubator themselves. This means projects that are tracking and mapping their process, developing a unique "play" (a replicable protocol others can learn from), and intending to host teams who come to learn and implement those protocols on their own land. Our deepest priority is to support the projects that want to support more projects.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Outcomes */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              What You'll <span className="text-[#7dd87d]">Achieve</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">
-              <TreeDeciduous className="w-10 h-10 text-[#7dd87d] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Thriving Village</h3>
-              <p className="text-white/60 text-sm">Expand from a few core members to a thriving, self-sustaining community.</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">
-              <Target className="w-10 h-10 text-[#7dd87d] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Minimum Viable Economy</h3>
-              <p className="text-white/60 text-sm">Build economic systems designed to meet all community needs.</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">
-              <Users className="w-10 h-10 text-[#7dd87d] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Alliance Network</h3>
-              <p className="text-white/60 text-sm">Join a supportive network of aligned projects and organizations.</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">
-              <Sparkles className="w-10 h-10 text-[#7dd87d] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Resilient Future</h3>
-              <p className="text-white/60 text-sm">Create a thriving and resilient foundation for generations to come.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Season Roadmap */}
-      <section className="py-20 px-4 bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
+      {/* ── 4. The gatherings that turn the year ── */}
+      <section className="py-20 px-4 bg-gradient-to-b from-[#0d2818] to-[#10301f]">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              The <span className="text-[#7dd87d]">Roadmap</span>
+          <AnimatedSection animation="fade-in" className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-5" style={display}>
+              A gathering at every <span className="text-[#d4a574]">turn</span>
             </h2>
-            <p className="text-lg text-white/70 max-w-3xl mx-auto">
-              Our journey unfolds across seasons, each building on the last to create a thriving ecosystem.
+            <p className="text-lg text-white/80 max-w-3xl mx-auto safe-prose">
+              Each season opens with a gathering near a solstice or equinox, online or on the land. We
+              reflect on the season we're leaving, co-create the one ahead, and choose our roles, quests,
+              and projects for it.
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Season 2 - Upcoming */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-8 border-2 border-[#7dd87d]/40">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center">
-                  <Sprout className="w-6 h-6 text-[#1a472a]" />
-                </div>
-                <div>
-                  <span className="text-[#7dd87d] text-sm font-semibold">Accepting Applications</span>
-                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 2 - September 2026</h3>
-                </div>
-              </div>
-              <p className="text-white/80 mb-4 safe-prose">
-                <strong className="text-[#7dd87d]">Building the Portfolio:</strong> Season 2 focuses on onboarding quality regenerative land projects into our portfolio, conducting token swaps with founding alliance and land projects, creating the initial governance systems for the fund, and expanding the portfolio pipeline.
-              </p>
-              <ul className="space-y-2 text-white/70 text-sm">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                  <span>Onboard initial portfolio projects onto Base (Coinbase's blockchain)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                  <span>Conduct token swaps with founding alliance and land projects</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                  <span>Build governance and operational infrastructure</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                  <span>Develop alliance partnerships</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                  <span>Expand portfolio pipeline with quality "Plays" and "Games"</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Season 3 - Future */}
-            <div className="bg-gradient-to-br from-amber-500/20 to-transparent rounded-2xl p-8 border-2 border-amber-500/40">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
-                  <Target className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <span className="text-amber-400 text-sm font-semibold">Future</span>
-                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 3</h3>
-                </div>
-              </div>
-              <p className="text-white/80 mb-4 safe-prose">
-                <strong className="text-amber-400">Fund Activation:</strong> Season 3 will focus on getting our fund ready to send and receive capital for land project investments.
-              </p>
-              <ul className="space-y-2 text-white/70 text-sm">
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>Complete legal and compliance audit</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>Activate fund to receive and deploy capital</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>Begin investments into portfolio land projects</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>Scale alliance network and support services</span>
-                </li>
-              </ul>
-              <div className="mt-4 p-3 bg-amber-500/20 rounded-xl border border-amber-500/30">
-                <p className="text-amber-200 text-sm">
-                  <strong>Capital Commitments:</strong> We are currently taking commitments for capital. Initial operations funding capped at $300k until full fund activation.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-white/60 text-sm">
-              Before we will make investments into land projects, we'll onboard the initial portfolio projects onto Base (Coinbase's blockchain)  and the network governance and Council established to effectively steward the funds we receive.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* The Rhythm of the Infinite Game */}
-      <SeasonalRhythmSection />
-
-      {/* The Project Growth Cycle (renamed from Regenerative Journey) */}
-      <section className="py-20 px-4 bg-gradient-to-b from-[#0d2818] to-[#1a472a]">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white" style={{ fontFamily: 'var(--font-display)' }}>
-              The Project{" "}
-              <span className="text-[#7dd87d]">Growth Cycle</span>
-            </h2>
-            <p className="text-xl text-white/70 max-w-3xl mx-auto">
-              Land projects move through these phases at their own pace, from first formation to thriving abundance
-            </p>
-          </div>
-
-          {/* Seasons Image */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <img
-              src={cdnImg("https://assets.regencivics.earth/YSvQAoALDuGiALPV.jpg")}
-              alt="Seasonal journey from assessment to abundance"
-              loading="lazy"
-              width="1200"
-              height="800"
-              className="w-full rounded-2xl border-4 border-[#7dd87d]/30 shadow-xl"
-            />
-          </div>
-
-          {/* Season Details Grid */}
-          <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            {/* Winter - Assessment */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#2d5a3d]/40 overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2d5a3d] flex items-center justify-center">
-                    <Compass className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Assessment</h3>
-                    <p className="text-xs text-white/60">(Winter Season)</p>
-                  </div>
-                </div>
-                <p className="text-sm text-[#7dd87d] font-medium px-2 py-1 bg-[#7dd87d]/10 rounded inline-block mb-2">Wisdom Work, Preparations and Administration</p>
-                <p className="text-white/70 text-base leading-relaxed">Land projects are securing the Land, forming core teams, and setting intentions. ReGen Civics is improving Game Models, conducting administrative tasks and preparing for Spring.</p>
-              </div>
-            </div>
-
-            {/* Spring - Planting */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#7dd87d]/40 overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#7dd87d] flex items-center justify-center">
-                    <Sprout className="w-5 h-5 text-[#1a472a]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Planting</h3>
-                    <p className="text-xs text-white/60">(Spring Season)</p>
-                  </div>
-                </div>
-                <p className="text-sm text-[#7dd87d] font-medium px-2 py-1 bg-[#7dd87d]/10 rounded inline-block mb-2">Co-Creating Our Games, Together</p>
-                <p className="text-white/70 text-base leading-relaxed">Each Spring Season we take a cohort of 13 land projects through an open-source journey, building all the foundations you need to accept capital from other people!</p>
-              </div>
-            </div>
-
-            {/* Summer - Growth */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#4a7c59]/40 overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#4a7c59] flex items-center justify-center">
-                    <TreeDeciduous className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Growth</h3>
-                    <p className="text-xs text-white/60">(Summer Season)</p>
-                  </div>
-                </div>
-                <p className="text-sm text-[#7dd87d] font-medium px-2 py-1 bg-[#7dd87d]/10 rounded inline-block mb-2">Evolving and Building our Projects</p>
-                <p className="text-white/70 text-base leading-relaxed">Summer comes after a successful spring when you're funded and the real work of building begins. Our Alliance Partners help establish physical foundations.</p>
-              </div>
-            </div>
-
-            {/* Autumn - Abundance */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#7dd87d]/40 overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#7dd87d] flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-[#1a472a]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Abundance</h3>
-                    <p className="text-xs text-white/60">(Autumn Season)</p>
-                  </div>
-                </div>
-                <p className="text-sm text-[#7dd87d] font-medium px-2 py-1 bg-[#7dd87d]/10 rounded inline-block mb-2">Enjoying our Abundance</p>
-                <p className="text-white/70 text-base leading-relaxed">Autumn is when we rest, celebrate, enjoy, love, reflect and nourish ourselves as we prepare for another year growing the ReGenerative Renaissance.</p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-center text-sm text-white/70 italic mt-6">
-            These phases describe a project's growth, not the community's seasonal rhythm above. Projects who have completed their own "Assessment" phase are invited to apply for the Spring Season Incubator.
-          </p>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 px-4 bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-            Ready to Begin Your <span className="text-[#7dd87d]">Journey</span>?
-          </h2>
-          <p className="text-lg text-white/70 mb-8 safe-prose">
-            Season 2 starts September 2026. Join us for an open access session to learn more, or apply now to be considered for the next cohort.
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/schedule">
-              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
-                <Calendar className="mr-2 w-5 h-5" />
-                RSVP for Open Session
-              </Button>
-            </Link>
-            <Link href="/apply">
-              <Button 
-                size="lg" 
-                className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:via-yellow-500 hover:to-amber-600 text-[#1a472a] font-bold rounded-xl shadow-lg shadow-amber-400/50 hover:shadow-amber-500/60 hover:scale-105 transition-all duration-300 px-8 py-6 text-lg border-2 border-amber-300"
-              >
-                <span className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-xl blur opacity-30 animate-pulse"></span>
-                <span className="relative flex items-center gap-2">
-                  🌱 Apply for Season 2
-                  <ArrowRight className="w-5 h-5" />
-                </span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Season Timeline */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent to-[#0d2818]/50">
-        <div className="container mx-auto max-w-4xl">
-          <AnimatedSection animation="slide-up">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
-                <Star className="w-4 h-4 text-[#d4a574]" />
-                <span className="text-[#d4a574] font-medium text-sm">The Journey So Far</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                Season <span className="text-[#7dd87d]">Timeline</span>
-              </h2>
-              <p className="text-white/60 mt-3 max-w-xl mx-auto">From the first cohort to a growing global network of regenerative land projects.</p>
-            </div>
           </AnimatedSection>
 
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#7dd87d]/40 via-[#d4a574]/40 to-[#7dd87d]/10 -translate-x-px hidden sm:block" />
-
-            {[
-              {
-                season: "Season 1",
-                period: "Spring Season · 2021",
-                status: "complete" as const,
-                color: "#7dd87d",
-                outcomes: [
-                  "First cohort of 13 land projects incubated",
-                  "Regenerative Infinite Games framework built and evolved",
-                  "13-week curriculum developed & refined",
-                  "Alliance network foundations established",
-                  "Crowd pooling platform conceived",
-                ],
-                side: "left",
-              },
-              {
-                season: "Building Phase",
-                period: "2021-2026",
-                status: "complete" as const,
-                color: "#d4a574",
-                outcomes: [
-                  "Expanded network with international projects",
-                  "DAO governance structures implemented and refined",
-                  "Tokenomics framework designed",
-                  "Fund structure finalized and investor outreach begun",
-                  "Quests, Games, CrowdPooling structures built out",
-                  "Admin panel for coordinating projects and applications built",
-                  "Tooling for the Fund and Games built, tested, and refined",
-                  "Legal and regulatory exploration to design the Fund",
-                ],
-                side: "right",
-              },
-              {
-                season: "Season 2",
-                period: "Spring Season - September 2026",
-                status: "active" as const,
-                color: "#ffd700",
-                outcomes: [
-                  "Upcoming cohort opens September Equinox",
-                  "Live investor due diligence for fund launch",
-                  "ReGen Games and custom land games rollout",
-                  "Fund governance and $RCivics token live",
-                  "ReGen Game Governance and $ReGen token live",
-                  "Accepting LOIs for the Fund",
-                  "Built out a 'ReGen Game' template for land projects",
-                ],
-                side: "left",
-              },
-              {
-                season: "Season 3+",
-                period: "2027 and Beyond",
-                status: "future" as const,
-                color: "#a0aec0",
-                outcomes: [
-                  "Fund reaches $20M+ threshold & goes live",
-                  "Quarterly distributions begin (Year 3)",
-                  "Network expands to 30+ projects globally",
-                  "Bioregional hubs established on 4+ continents",
-                  "Regenerative economy networking across our Earth",
-                ],
-                side: "right",
-              },
-            ].map((item, idx) => (
-              <AnimatedSection key={item.season} animation="slide-up" delay={idx * 100}>
-                <div className={`relative flex items-start gap-6 mb-10 sm:mb-12 ${
-                  item.side === "right" ? "sm:flex-row-reverse sm:text-right" : ""
-                }`}>
-                  {/* Node */}
-                  <div className="relative z-10 shrink-0">
+          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {REGEN_SEASON_ORDER.map((key, i) => {
+              const s = REGEN_SEASONS[key];
+              const look = SEASON_LOOK[key];
+              return (
+                <li key={key}>
+                  <AnimatedSection animation="slide-up" delay={i * 80} className="h-full">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-lg ${
-                        item.status === "complete"
-                          ? "bg-[#1a472a]"
-                          : item.status === "active"
-                          ? "bg-[#1a472a] animate-pulse"
-                          : "bg-[#0d2818]"
-                      }`}
-                      style={{ borderColor: item.color }}
+                      className="h-full rounded-2xl border bg-white/[0.04] p-5"
+                      style={{ borderColor: `${look.color}40` }}
                     >
-                      {item.status === "complete" ? (
-                        <CheckCircle className="w-7 h-7" style={{ color: item.color }} />
-                      ) : item.status === "active" ? (
-                        <Sprout className="w-7 h-7" style={{ color: item.color }} />
-                      ) : (
-                        <Sparkles className="w-6 h-6" style={{ color: item.color, opacity: 0.5 }} />
-                      )}
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] mb-3" style={{ color: look.color }}>
+                        {TURNING_POINTS[key].label}
+                      </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <look.Icon className="w-5 h-5" style={{ color: look.color }} aria-hidden="true" />
+                        <h3 className="text-lg font-bold text-white" style={display}>
+                          {s.name} begins
+                        </h3>
+                      </div>
+                      <p className="text-sm text-white/75 leading-relaxed">{s.gathering}</p>
                     </div>
-                  </div>
+                  </AnimatedSection>
+                </li>
+              );
+            })}
+          </ol>
 
-                  {/* Content */}
-                  <div className={`flex-1 min-w-0 glass-panel rounded-2xl p-5 ${item.side === "right" ? "sm:mr-6" : "sm:ml-6"}`}>
-                    <div className={`flex items-center gap-3 mb-3 flex-wrap ${item.side === "right" ? "sm:justify-end" : ""}`}>
-                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                        {item.season}
-                      </h3>
-                      <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{
-                          backgroundColor: `${item.color}20`,
-                          color: item.color,
-                          border: `1px solid ${item.color}40`,
-                        }}
-                      >
-                        {item.status === "complete" ? "Complete" : item.status === "active" ? "Opening Now" : "Coming Soon"}
-                      </span>
-                      <span className="text-white/60 text-sm ml-auto">{item.period}</span>
+          <AnimatedSection animation="slide-up">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-5">
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                <Moon className="w-6 h-6 text-[#f0ebe3]" aria-hidden="true" />
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-bold text-white mb-1" style={display}>
+                  The moon keeps time inside each season
+                </h3>
+                <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
+                  Gratitude rounds follow the lunar cycle, and the Open Access Sessions meet with the new
+                  moon. The seasons set the big arc of the year; the moon sets its heartbeat.
+                </p>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ── 5. The journey so far ── */}
+      <section className="py-20 px-4 bg-gradient-to-b from-[#10301f] to-[#0d2818]">
+        <div className="container mx-auto max-w-4xl">
+          <AnimatedSection animation="fade-in" className="text-center mb-14">
+            <p className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30 text-[#d4a574] font-medium text-sm">
+              <Star className="w-4 h-4" aria-hidden="true" />
+              The journey so far
+            </p>
+            <h2 className="text-3xl md:text-5xl font-bold text-white" style={display}>
+              Season by <span className="text-[#7dd87d]">season</span>
+            </h2>
+            <p className="text-white/75 mt-4 max-w-2xl mx-auto safe-prose">
+              From the first cohort in 2022, through a long winter of building, to Season 2 and its first
+              full turn of the wheel.
+            </p>
+          </AnimatedSection>
+
+          <ol className="relative">
+            <div
+              aria-hidden="true"
+              className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px -translate-x-px bg-gradient-to-b from-[#d4a574]/40 via-[#8fd8e8]/40 to-[#8fd8e8]/10 hidden sm:block"
+            />
+            {JOURNEY.map((stop, idx) => {
+              const st = stopStatus(stop, now);
+              const right = idx % 2 === 1;
+              return (
+                <li key={stop.id} className="mb-10 sm:mb-12">
+                  <AnimatedSection animation="slide-up" delay={Math.min(idx, 3) * 80}>
+                    <div className={`relative flex items-start gap-5 sm:gap-6 ${right ? "sm:flex-row-reverse sm:text-right" : ""}`}>
+                      <div className="relative z-10 shrink-0">
+                        <div
+                          className="w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-lg bg-[#0d2818]"
+                          style={{
+                            borderColor: stop.color,
+                            boxShadow: st === "active" ? `0 0 0 6px ${stop.color}26, 0 0 24px ${stop.color}66` : undefined,
+                          }}
+                        >
+                          {st === "complete" ? (
+                            <CheckCircle className="w-7 h-7" style={{ color: stop.color }} aria-hidden="true" />
+                          ) : st === "active" ? (
+                            <span className="relative flex h-4 w-4">
+                              <span
+                                className="absolute inline-flex h-full w-full rounded-full opacity-60 motion-safe:animate-ping"
+                                style={{ background: stop.color }}
+                              />
+                              <span className="relative inline-flex h-4 w-4 rounded-full" style={{ background: stop.color }} />
+                            </span>
+                          ) : (
+                            <Sparkles className="w-6 h-6" style={{ color: stop.color, opacity: 0.6 }} aria-hidden="true" />
+                          )}
+                        </div>
+                      </div>
+                      <div className={`flex-1 min-w-0 glass-panel rounded-2xl p-5 ${right ? "sm:mr-6" : "sm:ml-6"}`}>
+                        <div className={`flex items-center gap-2 mb-2 flex-wrap ${right ? "sm:justify-end" : ""}`}>
+                          <h3 className="text-white font-bold text-lg" style={display}>
+                            {stop.title}
+                          </h3>
+                          <span
+                            className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                            style={{ backgroundColor: `${stop.color}22`, color: stop.color, border: `1px solid ${stop.color}55` }}
+                          >
+                            {st === "complete" ? "Complete" : st === "active" ? "Now" : "Coming"}
+                          </span>
+                        </div>
+                        <p className="text-white/65 text-sm mb-1">{stop.when}</p>
+                        <p className="text-white font-semibold mb-3">{stop.label}</p>
+                        <ul className="space-y-1.5">
+                          {stop.items.map((item) => (
+                            <li key={item} className={`flex items-start gap-2 text-white/75 text-sm ${right ? "sm:flex-row-reverse" : ""}`}>
+                              <span style={{ color: stop.color }} className="mt-0.5 shrink-0" aria-hidden="true">
+                                •
+                              </span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                    <ul className={`space-y-1.5 ${item.side === "right" ? "sm:text-right" : ""}`}>
-                      {item.outcomes.map((o) => (
-                        <li key={o} className="flex items-start gap-2 text-white/70 text-sm">
-                          {item.side !== "right" && <span style={{ color: item.color }} className="mt-0.5 shrink-0">›</span>}
-                          <span>{o}</span>
-                          {item.side === "right" && <span style={{ color: item.color }} className="mt-0.5 shrink-0 sm:hidden">‹</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </AnimatedSection>
-            ))}
+                  </AnimatedSection>
+                </li>
+              );
+            })}
+          </ol>
+
+          <p className="text-center text-sm text-white/65 max-w-2xl mx-auto safe-prose">
+            {FUND.statementShort}{" "}
+            <Link href="/fund" className="underline underline-offset-4 hover:text-white">
+              How the Fund works
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* ── 6. The way in ── */}
+      <section className="py-20 px-4 bg-[#0d2818]">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6" style={display}>
+            Find your <span className="text-[#7dd87d]">season</span>
+          </h2>
+          <p className="text-lg text-white/80 mb-8 safe-prose">
+            Land projects start in winter. Investors and allies come in through spring. Everyone is
+            welcome on the land in summer and at the harvest in fall.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {status.phase === "before" ? (
+              <Button asChild size="lg" className="rounded-xl font-bold min-h-11" style={{ background: WINTER.color, color: WINTER.ink }}>
+                <a href={JOIN_PATH}>
+                  Join Selection Day
+                  <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
+                </a>
+              </Button>
+            ) : (
+              <Button asChild size="lg" className="rounded-xl font-bold min-h-11" style={{ background: WINTER.color, color: WINTER.ink }}>
+                <Link href="/season2">
+                  Follow Season 2
+                  <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
+            <Button asChild size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl font-bold min-h-11">
+              <Link href="/apply">Apply for the next cohort</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10 min-h-11">
+              <Link href="/schedule">
+                <Calendar className="mr-2 w-5 h-5" aria-hidden="true" />
+                Open Access Sessions
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Related Content */}
       <RelatedContent pages={relatedContentMap.seasons.pages} blog={relatedContentMap.seasons.blog} />
     </div>
   );
