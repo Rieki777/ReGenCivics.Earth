@@ -13,6 +13,17 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (seasons, round 2): Design, Resource, Build, Rest; one applications status; the site-wide audit
+
+- **Season names lead with what they are for** (Rye's ruling): the Design, Resource, Build, and Rest Seasons, loosely following winter, spring, summer, and fall, with the wheel-of-the-year imagery kept. `shared/regenYear.ts` carries `title` and `pattern`; the wheel, /seasons, /team's rhythm cards, the Glossary, the AI video tutor and the crawler prose all read it (ADR-58).
+- **On /seasons:** a "Loose timelines, on purpose" note; a recap and passoff at every solstice and equinox with the September Handoff Festival; and a "How to play this season" strip (three moves per season plus the roles active that season, live from the roles table).
+- **Season 2 applications are closed, everywhere.** `shared/applicationWindow.ts` holds the status, the apply-anytime promise, and a `reviewing` switch. `ApplicationsNotice` shows it on /seasons, /season2, /land and /apply; the success page and the applicant confirmation email stop promising a 1 to 2 week review; /schedule, the exit popup, the digest, SEO, structured data, crawler prose, llms files and the site assistant say the same thing. Every "Apply for Season Two" button now says "Apply for the next season".
+- **Season 1 facts corrected:** 2022, 43 applications, 16 presented, 13 selected (the blog, /season2, related content, crawler prose, the site assistant).
+- **Audit:** code, public files and stored database text were swept for the old model; the database was clean. Season 2 roles drafted in `seasons/season-2-the-first-turn.md` with one organizer per season, pending Rye's confirmation.
+- Source: this session, second round.
+
+Carryover: Rye to confirm the four organizer names and bands; flip `APPLICATIONS.reviewing` when the next intake opens; the Assembly Steward role is missing from the roles table.
+
 ## 2026-09-24 (seasons): The ReGen Civics Year wheel, and the incubator is Winter
 
 - **One wheel at the top of /seasons.** Four quarters around the village painting for each season, a pulsing NOW pill placed by how far into the season we are, corner tabs (arrow keys, Home and End), "Turn the wheel" to play the year once around, and a panel saying what each season is for. The painting, particles and background follow the chosen season; reduced motion drops the particles and pulses.

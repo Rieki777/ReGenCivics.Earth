@@ -37,6 +37,13 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Total base budget:** 7,800,000 $ReGen ($78,000) per season across all 14 roles
 - **Full details:** [`seasons/season-1-the-first-build.md`](seasons/season-1-the-first-build.md)
 
+### Season 2: The First Turn (draft)
+- **Dates:** Loose. From the September 2026 equinox (Selection Day 2026-09-26) around the wheel to the next Handoff Festival, about September 2027
+- **Shape:** Design Season (winter), Resource Season (spring), Build Season (summer), Rest Season (fall), with a recap and passoff at each solstice and equinox (`shared/regenYear.ts`, ADR-57, ADR-58)
+- **Roles:** the Season 1 roles, re-mapped to the flow, plus four Season Organizers (one per season), drafted and awaiting Rye's confirmation of names and bands
+- **Key changes:** the incubator is the Design Season; Season Facilitator and Incubator Guide moved one season earlier with it
+- **Full details:** [`seasons/season-2-the-first-turn.md`](seasons/season-2-the-first-turn.md)
+
 ---
 
 ## Cross-Season Tracking

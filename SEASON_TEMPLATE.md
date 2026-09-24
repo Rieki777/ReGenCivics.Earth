@@ -2,7 +2,7 @@
 
 How to assemble season N+1 instead of inventing it. Written from Season 1 (The First Build, `seasons/season-1-the-first-build.md`) and `SEASONS_HISTORY.md`, with the ritual spine from improvement 3 of `MISSION_FOUNDATIONS_15_IMPROVEMENTS_2026-07-16.md`. The `regen-seasonal-roles` skill produces the role and art artifacts; this template holds the season's shape and rhythm.
 
-A season is a 6-month cohort container bounded by equinoxes and solstices (see DOMAIN-LANGUAGE.md). Earth's own calendar is the event calendar. That is the one thing no commercial live-ops team can copy.
+A numbered Season is one cohort's full turn of the wheel: the Design, Resource, Build, and Rest seasons, loosely following winter, spring, summer, and fall (see DOMAIN-LANGUAGE.md, ADR-57 and ADR-58, and `shared/regenYear.ts`). Each of the four turns at a solstice or equinox with a recap and passoff; the September one is the Handoff Festival, where the outgoing cohort hands the wheel to the new one on Selection Day. Earth's own calendar is the event calendar. That is the one thing no commercial live-ops team can copy.
 
 ---
 
@@ -52,14 +52,16 @@ A season runs on a spine of recurring rituals. Small, cheap to run, and they com
 
 ## 3. Season boundaries reference
 
-| Season start | Boundary |
-|---|---|
-| Spring | March equinox (~Mar 20) |
-| Summer | June solstice (~Jun 21) |
-| Fall | September equinox (~Sep 22) |
-| Winter | December solstice (~Dec 21) |
+The Game's seasons run one season ahead of the northern calendar, and the timelines are loose in this first full turn (Rye, 2026-09-24). Canonical in `shared/regenYear.ts` (`TURNING_POINTS`).
 
-Cohort seasons run 6 months (two wheel-seasons); the ritual spine repeats its weekly rhythm throughout and can carry two mid-season moments in a 6-month container.
+| Season (pattern) | Opens at | Opening gathering |
+|---|---|---|
+| Design (winter) | September equinox (~Sep 22) | The Handoff Festival and Selection Day |
+| Resource (spring) | December solstice (~Dec 21) | Recap and passoff, and the crowdpool launch |
+| Build (summer) | March equinox (~Mar 20) | Recap and passoff |
+| Rest (fall) | June solstice (~Jun 21) | Recap and passoff |
+
+A numbered Season runs a full year, one turn of the wheel; the ritual spine repeats its weekly rhythm through each of the four seasons, and each season's organizer runs its recap and passoff.
 
 ## 4. What closes a season (definition of done)
 
