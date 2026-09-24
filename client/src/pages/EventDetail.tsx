@@ -25,6 +25,7 @@ import {
 import { trpc } from '@/lib/trpc';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
+import { siteJoinUrl } from '@/lib/calendarLinks';
 
 export default function EventDetail() {
   const params = useParams<{ id: string }>();
@@ -262,13 +263,13 @@ export default function EventDetail() {
                 {/* Join link */}
                 {(event.riversideRoomUrl || event.zoomUrl) && (
                   <a
-                    href={event.riversideRoomUrl ?? event.zoomUrl ?? '#'}
+                    href={siteJoinUrl(event.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 ${event.riversideRoomUrl ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#2d8cff] hover:bg-[#2681eb]'} text-white px-5 py-3 rounded-xl font-semibold transition-colors`}
+                    className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-xl font-semibold transition-colors"
                   >
                     <Video className="w-5 h-5" />
-                    {event.riversideRoomUrl ? 'Join on Riverside' : 'Join on Zoom'}
+                    Join the call
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 )}
