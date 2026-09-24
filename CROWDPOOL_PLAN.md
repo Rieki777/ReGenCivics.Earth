@@ -13,8 +13,8 @@ the single place the current state lives.
 **ReGen Civics is a cooperative, and the cooperative is the fund.** A global, in-real-life
 game in which members build ecovillages together by pooling everything they have: time,
 money, equipment, land, knowledge, networks and roles. Members govern one seat, one vote.
-Money is one resource among many and usually the smaller part, typically ten to twenty
-per cent of what a project needs.
+Money is one resource among many and usually the smaller part. Campaigns are encouraged
+to ask for 10 to 30 per cent money, and 0 per cent is allowed (ruled 2026-09-24).
 
 **Home jurisdiction: Liechtenstein.** Ruled 2026-09-14. Liechtenstein uses the Swiss
 franc, so the unit of account does not change. Swiss analysis stops; what carries over
@@ -26,7 +26,8 @@ is kept in `legal-research/`.
 |---|---|---|---|
 | The fund | Anyone contributing **CHF 250,000 or more** through a campaign | The cooperative, held by a licensed custodian until close | Membership: one seat, one vote, $RCivics one per franc, routing |
 | The partner platform | Anyone contributing less than the minimum | A crowdfunding platform we partner with and do not run. Recommended: straight to the project, on the platform's terms. Not yet ruled. | Whatever the platform offers. No fund tokens. A voice through the crowd circle |
-| In kind | Everyone | One project, through the needs registry | The Game side: RGVoice and $ReGen. No fund tokens. Whether it counts toward crowd seats is open |
+| In kind | Everyone | One project, through the needs registry | That campaign's own tokens (form open). Never RGVoice or $ReGen, never $RCivics. Whether it counts toward crowd seats is open |
+| Money loans | Lenders | The project, to meet its money ask up front (who borrows and through what is open) | Interest. No tokens of any kind |
 
 The minimum is the price of a direct seat. Below it the voice is collective: the **crowd
 circle**, one person one vote, elects delegates to the assembly, one seat for every
@@ -114,6 +115,15 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | 2026-09-14 | **Below the minimum goes to a partner crowdfunding platform** we do not operate. Its total is still counted on the campaign page. Who receives that money is open; recommended: the project directly. |
 | 2026-09-14 | "Money goes to ReGen Civics, never to a project" (2026-09-04) now applies to the fund channel only. |
 | 2026-09-14 | **The crowd circle is in.** Everyone who contributes below the minimum has a voice through a crowd circle: one person one vote inside it, and it elects delegates to the assembly, one delegate seat per CHF 250,000 the crowd has contributed together. A delegate holds one vote, like every seat. Rye's principle: everyone has a voice relative to their contribution, the fund is infrastructure for the whole network, and no single person or small group holds disproportionate value. |
+| 2026-09-24 | **Money share is a soft default.** Campaigns are encouraged to ask for 10 to 30% money; 0% is allowed. Nothing blocks a number outside the band. Replaces "typically ten to twenty per cent". |
+| 2026-09-24 | **Crowdpool contributions earn no RGVoice and no $ReGen.** Replaces the 2026-09-14 table row that gave in-kind "the Game side: RGVoice and $ReGen". |
+| 2026-09-24 | **In-kind earns that campaign's own tokens.** What the token is, what it carries, who issues it and when are open. |
+| 2026-09-24 | **Only money earns $RCivics**, including inside a mixed proposal. |
+| 2026-09-24 | **One proposal may mix money, equipment and committed time to reach the minimum** (Rye's example: CHF 100,000 money, CHF 75,000 equipment, CHF 75,000 of time over two years). Whether the minimum is set per campaign, what counts and how it is valued are open. The 2026-09-14 rows on the fund minimum stand for money-only contributions until those are answered. |
+| 2026-09-24 | **Money loans can meet a campaign's money ask.** Loan money is value the project receives up front. Lenders earn interest, not tokens. Who borrows, who lends and on what terms are open. |
+| 2026-09-24 | **The in-kind half has landed when confirmed value reaches 100% of the in-kind ask** by close; delivery is tracked afterwards. Narrows locked decision 4 of 2026-07-17 for the close test only. Who confirms is open. |
+| 2026-09-24 | The pledge simulator keeps "Fill a need" with a real Apply, Offer or Sign up button; "Offer time" goes. |
+| 2026-09-24 | The open questions these answers raise (89 for Rye, 15 for counsel) are listed with options and recommendations in `legal-research/Crowdpool_questions_2026-09-24.md`, kept out of git beside the legal research. |
 
 ---
 

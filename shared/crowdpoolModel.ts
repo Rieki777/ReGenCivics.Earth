@@ -88,8 +88,11 @@ export const MONEY_CHANNELS = {
   },
   inKind: {
     recipient: "one project, through the needs registry",
-    /** The Game side (RGVoice, $ReGen), never the Fund side. */
-    side: "game",
+    /**
+     * Ruled 2026-09-24: in-kind earns that campaign's own tokens, never RGVoice
+     * or $ReGen and never $RCivics. What the campaign token is stays open.
+     */
+    earns: "campaign tokens",
     fundTokens: false,
     directSeat: false,
     /** OPEN: whether in-kind counts toward crowd-circle delegate seats. */
