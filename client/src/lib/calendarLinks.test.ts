@@ -20,6 +20,7 @@ import {
   formatStartWithReference,
   pacificReference,
   resolveRoomUrl,
+  siteJoinUrl,
   viewerIsPacific,
 } from "./calendarLinks";
 import { JOIN_URL, RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
@@ -116,13 +117,21 @@ describe("resolveRoomUrl", () => {
     expect(resolveRoomUrl("  ")).toBe(JOIN_URL);
   });
 
-  it("leaves a genuine per-event room alone, including a lookalike studio name", () => {
-    expect(resolveRoomUrl("https://riverside.com/studio/other")).toBe(
-      "https://riverside.com/studio/other",
-    );
+  it("never returns a raw meeting URL — always the site /join hook", () => {
+    expect(resolveRoomUrl("https://riverside.com/studio/other")).toBe(JOIN_URL);
+    expect(resolveRoomUrl("https://zoom.us/j/999")).toBe(JOIN_URL);
     expect(resolveRoomUrl("https://riverside.com/studio/rieki-cordon-riekis-studio-2")).toBe(
-      "https://riverside.com/studio/rieki-cordon-riekis-studio-2",
+      JOIN_URL,
     );
+  });
+});
+
+describe("siteJoinUrl", () => {
+  it("adds ?e=<id> for a positive event id and stays plain /join otherwise", () => {
+    expect(siteJoinUrl(42)).toBe(`${JOIN_URL}?e=42`);
+    expect(siteJoinUrl(null)).toBe(JOIN_URL);
+    expect(siteJoinUrl(0)).toBe(JOIN_URL);
+    expect(siteJoinUrl()).toBe(JOIN_URL);
   });
 });
 
