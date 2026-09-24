@@ -19,7 +19,7 @@
  * Events tab work the same as for every other session.
  */
 
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { eventSignups, interopTimeVotes } from "../../drizzle/schema";
@@ -46,6 +46,71 @@ import { setSiteSetting } from "../db";
 /** How many upcoming weeks the page and admin panel list. */
 const SCHEDULE_PREVIEW = 4;
 
+/** How many named hands the page shows per slot, and how many rows we read to find them. */
+const NAMES_PER_SLOT = 40;
+const NAME_SCAN_LIMIT = 300;
+
+/**
+ * Every mutation on this router is public and unauthenticated, so each one
+ * carries a per-IP ceiling. Two tiers:
+ *
+ * VOTE_LIMIT is generous, because moving your own hands a few times is normal
+ * and the bucket is shared by everyone behind one office or VPN address. It is
+ * there to make minting fresh voterKeys in a loop slow, not to police a person.
+ *
+ * CONTACT_LIMIT is tight, because join and leave act on an email address the
+ * caller merely typed. join sends that address a welcome email and forces a
+ * full circle sync, so without a ceiling it is both a way to mail a stranger
+ * repeatedly and a cheap way to make the server do expensive work on demand.
+ */
+const VOTE_LIMIT = { windowMs: 60_000, max: 20 };
+const CONTACT_LIMIT = { windowMs: 60_000, max: 5 };
+
+/**
+ * Display names are shown to everyone who opens the page, so they are trimmed,
+ * length-bounded, and stripped of the characters that let a name escape its
+ * own line: control characters, zero-width joiners and bidi overrides. React
+ * escapes the markup; this is about a name that renders as something other
+ * than what it says. Applied on the way out as well as in, because rows
+ * written before this existed still have to render safely.
+ */
+export function cleanDisplayName(raw: string | undefined | null): string | null {
+  if (typeof raw !== "string") return null;
+  const stripped = raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "")
+    .trim()
+    .slice(0, 80);
+  return stripped.length > 0 ? stripped : null;
+}
+
+/**
+ * Fold per-combination row counts into per-slot hand counts.
+ *
+ * The slot column holds a comma list, so the grouped read returns one row per
+ * distinct combination ("tue", "tue,thu", ...) rather than per slot. There are
+ * at most a handful of combinations however many people vote, which is what
+ * lets the count stay exact without reading the table.
+ */
+export function countsFromCombos(
+  combos: { slot: string; count: number }[],
+): { perSlot: Record<string, number>; total: number } {
+  const perSlot: Record<string, number> = {};
+  for (const key of INTEROP_SLOTS) perSlot[key] = 0;
+  let total = 0;
+  for (const row of combos) {
+    const n = Number(row.count);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const slots = parseSlots(row.slot);
+    if (!slots.length) continue;
+    // Counts people, not hands: someone who can make all three is one voter.
+    total += n;
+    for (const s of slots) perSlot[s] = (perSlot[s] ?? 0) + n;
+  }
+  return { perSlot, total };
+}
+
 export { INTEROP_SLOT_KEYS as INTEROP_SLOTS, parseSlots, serializeSlots } from "@shared/interopCircle";
 
 export const interopSessionsRouter = router({
@@ -59,35 +124,48 @@ export const interopSessionsRouter = router({
     if (!database) return { slots: empty, total: 0 };
     await ensureTable(database);
 
-    let rows: { slot: string; displayName: string | null; updatedAt: Date }[] = [];
+    // The counts come from a grouped aggregate so they stay exact however many
+    // people vote; only the names are a bounded sample. Reading every row to
+    // count them capped the tally at the read limit, silently, once the Circle
+    // outgrew it.
+    let combos: { slot: string; count: number }[] = [];
+    let named: { slot: string; displayName: string | null }[] = [];
     try {
-      rows = await database
-        .select({
-          slot: interopTimeVotes.slot,
-          displayName: interopTimeVotes.displayName,
-          updatedAt: interopTimeVotes.updatedAt,
-        })
-        .from(interopTimeVotes)
-        .orderBy(desc(interopTimeVotes.updatedAt))
-        .limit(2000);
+      [combos, named] = await Promise.all([
+        database
+          .select({ slot: interopTimeVotes.slot, count: sql<number>`count(*)` })
+          .from(interopTimeVotes)
+          .groupBy(interopTimeVotes.slot),
+        database
+          .select({ slot: interopTimeVotes.slot, displayName: interopTimeVotes.displayName })
+          .from(interopTimeVotes)
+          .orderBy(desc(interopTimeVotes.updatedAt))
+          .limit(NAME_SCAN_LIMIT),
+      ]);
     } catch (err) {
       // The page keeps its shape on a database hiccup: zero hands, no error.
       console.error("[interopSessions] tally failed:", err);
       return { slots: empty, total: 0 };
     }
 
-    const parsed = rows.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
+    const { perSlot, total } = countsFromCombos(combos);
+    const parsed = named.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
     const slots = INTEROP_SLOTS.map((slot) => {
-      const forSlot = parsed.filter((r) => r.slots.includes(slot));
-      const names = forSlot
-        .map((r) => (r.displayName ?? "").trim())
-        .filter((n) => n.length > 0)
-        .slice(0, 40);
-      return { slot, count: forSlot.length, names };
+      const names: string[] = [];
+      const seen = new Set<string>();
+      for (const row of parsed) {
+        if (!row.slots.includes(slot) || names.length >= NAMES_PER_SLOT) continue;
+        const name = cleanDisplayName(row.displayName);
+        // One line per person: a wall of the same name is the cheapest way to
+        // deface a public list.
+        if (!name || seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        names.push(name);
+      }
+      return { slot, count: perSlot[slot] ?? 0, names };
     });
 
-    // total counts people, not hands: someone who can make all three is one voter.
-    return { slots, total: parsed.filter((r) => r.slots.length > 0).length };
+    return { slots, total };
   }),
 
   /**
@@ -96,10 +174,13 @@ export const interopSessionsRouter = router({
    * stuffing the count. An empty list withdraws the vote.
    */
   setSlots: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
     .input(z.object({
       slots: z.array(z.enum(INTEROP_SLOTS)).max(INTEROP_SLOTS.length),
       voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
-      displayName: z.string().trim().max(80).optional(),
+      // Bounded well above the column so a long paste is trimmed by
+      // cleanDisplayName rather than rejected with nothing to show for it.
+      displayName: z.string().max(200).optional(),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -112,7 +193,7 @@ export const interopSessionsRouter = router({
         return { ok: true as const };
       }
 
-      const name = input.displayName && input.displayName.length > 0 ? input.displayName : null;
+      const name = cleanDisplayName(input.displayName);
 
       await database
         .insert(interopTimeVotes)
@@ -130,17 +211,20 @@ export const interopSessionsRouter = router({
    * shipped. Replaces the voter's hands with this one slot.
    */
   vote: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
     .input(z.object({
       slot: z.enum(INTEROP_SLOTS),
       voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
-      displayName: z.string().trim().max(80).optional(),
+      // Bounded well above the column so a long paste is trimmed by
+      // cleanDisplayName rather than rejected with nothing to show for it.
+      displayName: z.string().max(200).optional(),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) return { ok: false as const };
       await ensureTable(database);
 
-      const name = input.displayName && input.displayName.length > 0 ? input.displayName : null;
+      const name = cleanDisplayName(input.displayName);
 
       await database
         .insert(interopTimeVotes)
@@ -154,6 +238,7 @@ export const interopSessionsRouter = router({
 
   /** Public: drop a vote entirely, for someone whose week stops working. */
   withdraw: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
     .input(z.object({ voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/) }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -197,6 +282,7 @@ export const interopSessionsRouter = router({
    * re-activates someone who left.
    */
   join: publicProcedure
+    .use(rateLimited(CONTACT_LIMIT))
     .input(z.object({
       email: z.string().trim().toLowerCase().email().max(320),
       name: z.string().trim().max(120).optional(),
@@ -234,6 +320,7 @@ export const interopSessionsRouter = router({
 
   /** Public: leave the Circle (every future week). Same trust level as events.unsubscribe. */
   leave: publicProcedure
+    .use(rateLimited(CONTACT_LIMIT))
     .input(z.object({ email: z.string().trim().toLowerCase().email().max(320) }))
     .mutation(async ({ input }) => {
       const database = await getDb();

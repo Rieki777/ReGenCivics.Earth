@@ -34,9 +34,27 @@ const VOTE_STORAGE = 'interop-my-vote';
 const NAME_STORAGE = 'interop-my-name';
 const EMAIL_STORAGE = 'interop-my-email';
 
-/** A random id this browser keeps, so someone with no account still gets one vote. */
+/** 32 hex characters of CSPRNG output, or a last-resort fallback where crypto is absent. */
+function randomKeyBody(): string {
+  try {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  }
+}
+
+/**
+ * A random id this browser keeps, so someone with no account still gets one vote.
+ *
+ * The key is a bearer credential: anyone holding it can change or withdraw that
+ * vote. Math.random seeded alongside Date.now was guessable enough that knowing
+ * roughly when someone voted narrowed the search, so this uses the CSPRNG and
+ * falls back only where crypto is genuinely absent.
+ */
 function readVoterKey(): string {
-  const fresh = 'v' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  const fresh = 'v' + randomKeyBody();
   try {
     const existing = window.localStorage.getItem(VOTER_KEY_STORAGE);
     if (existing && /^[A-Za-z0-9_-]{8,64}$/.test(existing)) return existing;
