@@ -234,4 +234,25 @@ describe("reminderUnsubscribeUrl", () => {
     );
     expect(reminderUnsubscribeUrl("ada@farm.example", 9, "list")).toContain("/email-preferences");
   });
+
+  it("carries a token instead of the address when one is given", () => {
+    // New mail is tokenised: the address stops travelling in a query string,
+    // where it reached browser history, referrers and every log on the way.
+    const url = reminderUnsubscribeUrl("ada@farm.example", 9, "event_signup", "signed.token.value");
+    expect(url).toContain("/schedule?unsubscribe=9&token=signed.token.value");
+    expect(url).not.toContain("ada%40farm.example");
+    expect(url).not.toContain("ada@farm.example");
+  });
+
+  it("still falls back to the address, so links already in inboxes keep working", () => {
+    // An opt-out that fails is worse than one that can be abused.
+    expect(reminderUnsubscribeUrl("ada@farm.example", 9, "event_signup", undefined)).toContain(
+      "email=ada%40farm.example",
+    );
+  });
+
+  it("escapes a token that contains URL-significant characters", () => {
+    const url = reminderUnsubscribeUrl("ada@farm.example", 9, "event_signup", "a+b/c=d&e");
+    expect(url).toContain("token=a%2Bb%2Fc%3Dd%26e");
+  });
 });

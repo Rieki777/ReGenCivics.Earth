@@ -117,20 +117,35 @@ describe("countsFromCombos", () => {
     expect(total).toBe(0);
   });
 
-  it("drops rows for slots the page no longer offers", () => {
-    // Retiring a slot must not leave orphaned rows inflating the total.
-    const { perSlot, total } = countsFromCombos([
-      { slot: "tue", count: 2 },
-      { slot: "sat", count: 99 },
-      { slot: "", count: 5 },
-    ]);
+  it("drops rows for slots that are not on offer", () => {
+    // Saturday is a valid weekday now, so this is about the OFFER, not the
+    // vocabulary: a day that is off the offer must not inflate a total the
+    // page cannot show columns for.
+    const { perSlot, total } = countsFromCombos(
+      [
+        { slot: "tue", count: 2 },
+        { slot: "sat", count: 99 },
+        { slot: "nonsense", count: 7 },
+        { slot: "", count: 5 },
+      ],
+      ["tue", "wed", "thu"],
+    );
     expect(perSlot.tue).toBe(2);
     expect(total).toBe(2);
     expect(perSlot.sat).toBeUndefined();
   });
 
-  it("counts a combination of a known and an unknown slot once, under the known one", () => {
-    const { perSlot, total } = countsFromCombos([{ slot: "tue,sat", count: 6 }]);
+  it("counts a retired day again once it is put back on the offer", () => {
+    const combos = [{ slot: "tue,sat", count: 4 }];
+    expect(countsFromCombos(combos, ["tue", "wed", "thu"]).perSlot.sat).toBeUndefined();
+    const back = countsFromCombos(combos, ["tue", "wed", "thu", "sat"]);
+    expect(back.perSlot.sat).toBe(4);
+    // Still one voter, not two: the row is one person who can make both.
+    expect(back.total).toBe(4);
+  });
+
+  it("counts a combination of an offered and an unoffered slot once, under the offered one", () => {
+    const { perSlot, total } = countsFromCombos([{ slot: "tue,sat", count: 6 }], ["tue", "wed", "thu"]);
     expect(perSlot.tue).toBe(6);
     expect(total).toBe(6);
   });

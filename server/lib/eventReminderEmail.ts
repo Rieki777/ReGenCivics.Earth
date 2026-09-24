@@ -169,10 +169,24 @@ export function buildSignupReminderHtml(input: {
   });
 }
 
-/** Per-event signup cancel URL. List / community reminders use managePreferencesUrl instead. */
-export function reminderUnsubscribeUrl(email: string, eventId: number, mode: "event_signup" | "list"): string {
+/**
+ * Per-event signup cancel URL. List / community reminders use managePreferencesUrl instead.
+ *
+ * Takes the token rather than minting it, so this stays synchronous and every
+ * caller decides once where the signing happens. Passing no token falls back to
+ * the address, which keeps links in already-sent mail working.
+ */
+export function reminderUnsubscribeUrl(
+  email: string,
+  eventId: number,
+  mode: "event_signup" | "list",
+  token?: string,
+): string {
   if (mode === "event_signup") {
-    return `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&email=${encodeURIComponent(email)}`;
+    const q = token
+      ? `token=${encodeURIComponent(token)}`
+      : `email=${encodeURIComponent(email)}`;
+    return `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&${q}`;
   }
   return `${APP_BASE_URL}/email-preferences`;
 }
