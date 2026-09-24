@@ -36,9 +36,18 @@ export function registerPresenceRoutes(app: Express): void {
   app.post("/api/presence/heartbeat", (req: Request, res: Response) => {
     try {
       // Use an existing session cookie, or fall back to a generated ID
+      const cookieSession =
+        req.cookies && typeof req.cookies["session_id"] === "string"
+          ? (req.cookies["session_id"] as string)
+          : undefined;
+      const headerSession = req.headers["x-session-id"];
+      const headerId =
+        typeof headerSession === "string" && headerSession.length > 0
+          ? headerSession
+          : undefined;
       const sessionId =
-        (req.cookies && req.cookies["session_id"]) ||
-        req.headers["x-session-id"] as string ||
+        cookieSession ||
+        headerId ||
         `anon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       activeSessions.set(sessionId, { lastSeen: Date.now() });
@@ -52,19 +61,13 @@ export function registerPresenceRoutes(app: Express): void {
 
   /**
    * Returns the current active-user count after pruning stale sessions.
-   * Includes momentum padding while user count is low.
+   * Honest count only — no momentum / display padding.
    */
   app.get("/api/presence/count", (_req: Request, res: Response) => {
     try {
       pruneStale();
-      const realCount = activeSessions.size;
-
-      // Momentum padding: add a random offset of 13-21 to the real count.
-      // TODO: Remove this padding once real active users consistently exceed 50.
-      const padding = Math.floor(Math.random() * 9) + 13;
-      const displayCount = realCount + padding;
-
-      res.json({ count: displayCount });
+      const count = activeSessions.size;
+      res.json({ count });
     } catch (error) {
       console.error("Presence count error:", error);
       res.status(500).json({ count: 0 });
