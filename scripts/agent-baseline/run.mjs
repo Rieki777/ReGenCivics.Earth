@@ -10,7 +10,7 @@
  * Run: node scripts/agent-baseline/run.mjs [baseUrl]
  * Writes: docs/agent-baseline/BASELINE-<YYYY-MM-DD>.md plus the two JSON files.
  */
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { crawl, DEFAULT_BASE } from "./crawl.mjs";
@@ -83,7 +83,7 @@ function crawlSection(c) {
   return lines.join("\n");
 }
 
-function askSection(a) {
+function askSection(a, askStamp) {
   if (!a) {
     return [
       "## 2. What models say to the four questions",
@@ -104,6 +104,8 @@ function askSection(a) {
   const lines = [];
   lines.push("## 2. What models say to the four questions");
   lines.push("");
+  if (askStamp !== stamp) lines.push(`**Answers from the ${askStamp} run**, reused because no key was set for this one.
+`);
   lines.push(`Models: ${a.models.map((m) => `\`${m}\``).join(", ")}. Judge: \`${a.judgeModel}\`. Two arms per question: **cold** (web search on, unscoped: the real control) and **sited** (search pushed at regencivics.earth).`);
   lines.push("");
   lines.push("| Model | Arm | Q | Mentioned | Our url | Has a date | Accuracy | Actionable |");
@@ -173,7 +175,7 @@ served. \`/.well-known/mcp\`, \`/agents.md\` and \`/openapi.json\` are not.
 
 ${crawlSection(c)}
 
-${askSection(a)}
+${askSection(a, askStamp)}
 
 ## 3. Control: the consumer apps
 
@@ -203,15 +205,29 @@ console.log(`  ${c.routes.length} urls, ${JSON.stringify(c.counts)}`);
 // key reuses today's answers rather than dropping them. Regenerating the
 // report on the site half alone used to blank section 2, which quietly
 // replaced a completed measurement with the word "Pending".
-const askFile = join(outDir, `ask-${stamp}.json`);
+// Reuse the most recent run of each, not today's. A re-run the day after the
+// baseline was finished used to write a hollow report saying "Pending" for two
+// halves that were complete, because the filenames are date-stamped and the
+// date had rolled over. Whatever is reused is labelled with its own date, so a
+// stale half is visible rather than silently presented as current.
+const latest = (prefix, ext) => {
+  const hits = readdirSync(outDir)
+    .filter((f) => f.startsWith(prefix) && f.endsWith(ext))
+    .sort();
+  return hits.length ? hits[hits.length - 1] : null;
+};
+
+const askName = latest("ask-", ".json");
 let a = null;
+let askStamp = stamp;
 if (process.env.OPENROUTER_API_KEY) {
   console.log(`asking models ...`);
   a = await ask({});
-  writeFileSync(askFile, JSON.stringify(a, null, 2));
-} else if (existsSync(askFile)) {
-  a = JSON.parse(readFileSync(askFile, "utf8"));
-  console.log(`reusing today's LLM answers from ${askFile} (no key set)`);
+  writeFileSync(join(outDir, `ask-${stamp}.json`), JSON.stringify(a, null, 2));
+} else if (askName) {
+  a = JSON.parse(readFileSync(join(outDir, askName), "utf8"));
+  askStamp = askName.slice(4, 14);
+  console.log(`reusing LLM answers from ${askName} (no key set)`);
 } else {
   console.log(`skipping the LLM half: OPENROUTER_API_KEY is not set`);
 }
@@ -222,20 +238,20 @@ if (process.env.OPENROUTER_API_KEY) {
 // stopped being a template, which is a false negative about our own evidence.
 // A settled `mentioned: **yes**` or `**no**` line is what a finished entry
 // looks like, whatever shape the prose around it takes.
-const controlFile = join(outDir, `control-${stamp}.md`);
+const controlName = latest("control-", ".md");
 let control;
-if (existsSync(controlFile)) {
-  const txt = readFileSync(controlFile, "utf8");
+if (controlName) {
+  const txt = readFileSync(join(outDir, controlName), "utf8");
   const recorded = [...txt.matchAll(/mentioned:\s*\*\*(yes|no)\*\*/gi)];
   const noMention = recorded.filter((m) => m[1].toLowerCase() === "no").length;
   control =
     recorded.length === 0
-      ? `**Pending.** No answers recorded yet in [\`control-${stamp}.md\`](./control-${stamp}.md).`
-      : `${recorded.length} answers recorded in [\`control-${stamp}.md\`](./control-${stamp}.md), ` +
+      ? `**Pending.** No answers recorded yet in [\`${controlName}\`](./${controlName}).`
+      : `${recorded.length} answers recorded in [\`${controlName}\`](./${controlName}), ` +
         `ReGen Civics unmentioned in ${noMention} of them. Method and the apps still ` +
         `needing an account are in that file.`;
 } else {
-  control = `**Pending.** No \`control-${stamp}.md\` yet.`;
+  control = `**Pending.** No control file yet.`;
 }
 
 const file = join(outDir, `BASELINE-${stamp}.md`);
