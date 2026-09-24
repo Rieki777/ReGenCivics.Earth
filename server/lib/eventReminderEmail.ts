@@ -2,10 +2,13 @@ import { APP_BASE_URL } from "../_core/email";
 import {
   ALWAYS_INCLUDED_FOOTER_TEXT,
   ALWAYS_INCLUDED_STOP_PATH,
+  defaultAudienceMode,
   offsetLead,
+  type EventKindForReminders,
 } from "@shared/eventAutoReminders";
+import type { EmailTopicKey } from "@shared/emailPrefs";
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
-import { JOIN_URL, isDefaultRoomUrl } from "@shared/sessionLinks";
+import { JOIN_URL } from "@shared/sessionLinks";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
 
 type ReminderEmailInput = {
@@ -14,7 +17,13 @@ type ReminderEmailInput = {
   timezone?: string | null;
   description?: string | null;
   bodyText?: string | null;
-  joinUrl: string;
+  /**
+   * When set, the join CTA is /join?e=<id> so GET /join can route to this
+   * event's stored room. Prefer this over a raw platform URL.
+   */
+  eventId?: number | null;
+  /** @deprecated Ignored — href always comes from reminderJoinUrl({ eventId }). Kept so older call sites type-check. */
+  joinUrl?: string;
   offsetMinutes: number;
   /** Signed community prefs URL. Footer CTA is Manage email preferences. */
   preferencesUrl?: string;
@@ -41,31 +50,41 @@ function footerHtml(input: ReminderEmailInput): string {
 }
 
 /**
- * The join button's target: /join for our studio, a genuinely different room
- * or a Zoom link as stored.
+ * Durable join URL for reminder emails: always the site /join hook.
+ * Never a raw Riverside/Zoom/Holos URL — GET /join redirects to the room
+ * (see server/routes/calendarFeed.ts + server/lib/joinRedirect.ts).
  *
- * This compared against RIVERSIDE_ROOM_URL by exact string until 2026-09-21.
- * Every events row stores the old `?t=` token link, so while the constant held
- * that same link the rows matched and fell through to /join. When the constant
- * moved to the wvhy-zyit room on 2026-09-14, no row matched any more, and every
- * auto-reminder's join button sent people to the stored old link instead of
- * /join. isDefaultRoomUrl matches any link into the studio, whatever form it
- * was stored in.
+ * With a positive eventId → `/join?e=<id>` so /join can route to that event's
+ * stored URL. Without an id → plain `/join` (shared studio).
+ * riversideRoomUrl / zoomUrl are accepted for call-site compatibility only;
+ * they never appear in the returned href.
  */
-export function reminderJoinUrl(opts: {
+export function reminderJoinUrl(opts?: {
+  eventId?: number | null;
   riversideRoomUrl?: string | null;
   zoomUrl?: string | null;
 }): string {
-  const stored = opts.riversideRoomUrl?.trim();
-  if (stored && !isDefaultRoomUrl(stored)) return stored;
-  const zoom = opts.zoomUrl?.trim();
-  if (zoom) return zoom;
+  const id = opts?.eventId;
+  if (typeof id === "number" && Number.isInteger(id) && id > 0) {
+    return `${JOIN_URL}?e=${id}`;
+  }
   return JOIN_URL;
 }
 
-export function reminderJoinLabel(joinUrl: string): string {
-  if (/zoom\.(us|com)/i.test(joinUrl)) return "Join on Zoom";
+/** User-facing join CTA — never names Riverside, Zoom, or any platform. */
+export function reminderJoinLabel(_joinUrl?: string): string {
   return "Join the call";
+}
+
+/**
+ * Prefs-page mute highlight for signup / scheduled-custom reminder blasts.
+ * Matches the auto-reminder sweep's communityTopicForAudience mapping.
+ */
+export function reminderMuteTopic(event: EventKindForReminders): EmailTopicKey {
+  const mode = defaultAudienceMode(event);
+  if (mode === "season2_approved") return "season2";
+  if (mode === "open_access") return "open_access";
+  return "events";
 }
 
 function formatSessionWhen(startTime: Date): { dateStr: string; timeStr: string } {
@@ -98,8 +117,9 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
   const body = (input.bodyText ?? input.description ?? "").trim();
   const title = escapeHtml(input.title);
   const bodyHtml = body ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${escapeHtml(body)}</p>` : "";
-  const joinUrl = input.joinUrl || JOIN_URL;
-  const joinLabel = reminderJoinLabel(joinUrl);
+  // Reminder emails always use the durable /join hook (never a raw room URL).
+  const joinUrl = reminderJoinUrl({ eventId: input.eventId });
+  const joinLabel = reminderJoinLabel();
   const lead = escapeHtml(offsetLead(input.offsetMinutes));
 
   return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -119,6 +139,34 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
             <p style="color:#888;font-size:12px;margin:0;">${footerHtml(input)}</p>
           </div>
         </div>`;
+}
+
+/**
+ * Signup-blast / scheduled-custom reminder HTML: same builder as the auto-
+ * reminder sweep (prefs footer, Pacific clock, local-time CTA, join label).
+ */
+export function buildSignupReminderHtml(input: {
+  title: string;
+  startTime: Date;
+  timezone?: string | null;
+  description?: string | null;
+  bodyText?: string | null;
+  eventId?: number | null;
+  riversideRoomUrl?: string | null;
+  zoomUrl?: string | null;
+  offsetMinutes: number;
+  preferencesUrl: string;
+}): string {
+  return buildAutoReminderHtml({
+    title: input.title,
+    startTime: input.startTime,
+    timezone: input.timezone,
+    description: input.description,
+    bodyText: input.bodyText,
+    eventId: input.eventId,
+    offsetMinutes: input.offsetMinutes,
+    preferencesUrl: input.preferencesUrl,
+  });
 }
 
 /** Per-event signup cancel URL. List / community reminders use managePreferencesUrl instead. */

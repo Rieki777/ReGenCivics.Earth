@@ -100,7 +100,11 @@ export async function sendToAlwaysIncluded(
   const recipients = (await alwaysIncludedRecipients(topic)).filter((r) => !skip.has(r.email));
   if (recipients.length === 0) return 0;
 
-  const joinUrl = reminderJoinUrl({ riversideRoomUrl: event.riversideRoomUrl, zoomUrl: event.zoomUrl });
+  const joinUrl = reminderJoinUrl({
+    eventId: event.id,
+    riversideRoomUrl: event.riversideRoomUrl,
+    zoomUrl: event.zoomUrl,
+  });
   let sent = 0;
   for (const recipient of recipients) {
     const html = buildAutoReminderHtml({
@@ -109,6 +113,7 @@ export async function sendToAlwaysIncluded(
       timezone: event.timezone,
       description: event.description,
       bodyText: opts.bodyText,
+      eventId: event.id,
       joinUrl,
       offsetMinutes: opts.offsetMinutes,
       alwaysIncluded: true,
@@ -275,6 +280,7 @@ async function sendOffset(
   audienceMode: AutoReminderAudienceMode,
 ) {
   const joinUrl = reminderJoinUrl({
+    eventId: event.id,
     riversideRoomUrl: event.riversideRoomUrl,
     zoomUrl: event.zoomUrl,
   });
@@ -290,6 +296,7 @@ async function sendOffset(
       timezone: event.timezone,
       description: event.description,
       bodyText: customBody,
+      eventId: event.id,
       joinUrl,
       offsetMinutes,
       preferencesUrl: prefsUrl,
