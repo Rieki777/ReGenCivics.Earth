@@ -201,10 +201,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     timeout-minutes: 10
-    # Advisory, not blocking (audit Phase 1: honest gates). LHCI 'collect' has
-    # been failing on main for weeks and turning every run red, which trains
-    # reviewers to ignore red. It still runs and uploads reports; it just no
-    # longer fails the workflow. Re-block once the collect step is reliable.
+    # Was advisory because "LHCI 'collect' has been failing on main for weeks and
+    # turning every run red, which trains reviewers to ignore red", with a note to
+    # re-block once collect was reliable. The cause is now found and fixed in
+    # .lighthouserc.json: `serve -s` rewrites every not-found request to
+    # index.html, so /api/img (which serves every image on the page) and the tRPC
+    # calls all returned HTML with status 200. The performance assertions were
+    # measuring that, not the site. They are gone; accessibility and SEO, which
+    # read the built DOM and were passing all along, are what remains.
+    #
+    # Still advisory for now, deliberately. The assertions that survive are the
+    # ones that were already green, so flipping this to blocking in the same
+    # change would be claiming a gate on evidence from a broken run. Let it be
+    # honest across a few runs on main first, then drop this line.
     continue-on-error: true
 
     steps:
