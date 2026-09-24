@@ -89,6 +89,17 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
   });
 
+  it("serves /schedule, which was blank to agents until 2026-09-24", async () => {
+    // With no DATABASE_URL this renders the empty-sessions copy, which is the
+    // right assertion for the serving path: the question here is whether the
+    // route reaches getScheduleContent at all. crawler-schedule.test.ts mocks
+    // the rows and checks the dates themselves.
+    const html = await (await fetch(`${base}/schedule`)).text();
+    expect(html).toContain("Upcoming ReGen Civics sessions");
+    expect(html).toContain('id="__crawler_content__"');
+    expect(html).toContain('"@type":"ItemList"');
+  });
+
   it("leaves a route with no authored content empty, so the check can fail", async () => {
     // The known negative. Without one, every assertion above would also pass
     // against a server that injected the same blob into every response.
