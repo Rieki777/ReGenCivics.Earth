@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Users,
 } from "lucide-react";
+import { siteJoinUrl } from '@/lib/calendarLinks';
 import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
 import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventReminderCronHealth";
@@ -269,14 +270,14 @@ export function AdminEventsTab() {
                   placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Riverside Room URL <span className="text-purple-400 font-normal">(primary join link)</span></Label>
+                <Label className="text-white/70 text-xs">Video room URL <span className="text-purple-400 font-normal">(where /join sends people for this event)</span></Label>
                 <Input value={formData.riversideRoomUrl} onChange={e => setFormData(f => ({ ...f, riversideRoomUrl: e.target.value }))}
-                  placeholder="https://riverside.fm/studio/..." className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
+                  placeholder="https://…" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/70 font-normal">(fallback, only shown if no Riverside)</span></Label>
+                <Label className="text-white/70 text-xs">Backup meeting URL <span className="text-white/70 font-normal">(used if the video room URL is empty)</span></Label>
                 <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
-                  placeholder="https://us06web.zoom.us/..." className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
+                  placeholder="https://…" className="bg-white/10 border-white/25 text-white placeholder:text-white/70 mt-1" />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
@@ -356,7 +357,7 @@ export function AdminEventsTab() {
                       {!isPast && autoReminderMap[ev.id]?.enabled && (
                         <span className="text-blue-300">Auto-remind on</span>
                       )}
-                      {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
+                      {(ev.riversideRoomUrl || ev.zoomUrl) && <a href={siteJoinUrl(ev.id)} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Join link ↗</a>}
                       {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
                       {ev.recordingId && <span className="text-purple-400">Recording #{ev.recordingId}</span>}
                       {isPast && !eventHasWatchPath(ev as any) && (
@@ -566,12 +567,12 @@ export function AdminEventsTab() {
                           <p className="text-white/85 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
                         )}
                         <div className="flex gap-2 pt-1 flex-wrap">
-                          <span className="bg-[#0a66c2] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>
+                          <span className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Join the call</span>
                           <span className="border-2 border-[#1a472a] text-[#1a472a] px-4 py-2 rounded-lg text-xs font-bold">View Schedule</span>
                         </div>
                       </div>
                       <div className="bg-[#f0f7f0] px-5 py-3 text-center">
-                        <p className="text-gray-300 text-xs m-0">You signed up for a reminder for this event.</p>
+                        <p className="text-gray-300 text-xs m-0">Manage email preferences · View all events</p>
                       </div>
                     </div>
 
@@ -646,7 +647,7 @@ export function AdminEventsTab() {
                                   ? <CheckCheck size={14} className="text-green-400 flex-shrink-0" />
                                   : <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />}
                                 <span className={hasJoinLink ? 'text-white/70' : 'text-red-300'}>
-                                  {hasJoinLink ? 'Join link is set' : 'No join link set (Zoom or Riverside URL missing)'}
+                                  {hasJoinLink ? 'Join link is set' : 'No join link set (video room or backup URL missing)'}
                                 </span>
                               </div>
 
