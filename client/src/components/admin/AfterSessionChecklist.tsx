@@ -14,6 +14,7 @@ import {
   Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SessionAnnounceButtons } from "@/components/admin/SessionAnnounceButtons";
 import { trpc } from "@/lib/trpc";
 import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
 import { isLetterLayout } from "@shared/letterLayout";
@@ -35,6 +36,8 @@ type EventLike = {
   status?: string | null;
   recordingId?: number | null;
   youtubeUrl?: string | null;
+  startTime?: string | Date | null;
+  timezone?: string | null;
 };
 
 function readOverrides(eventId: number): AfterSessionOverrides {
@@ -178,6 +181,13 @@ export function AfterSessionChecklist({
           {progress.pendingAction > 0 ? ` · ${progress.pendingAction} open` : ""}
         </span>
       </div>
+
+      <SessionAnnounceButtons
+        eventId={event.id}
+        title={event.title}
+        startTime={event.startTime}
+        timeZone={event.timezone}
+      />
 
       <ul className="space-y-1.5">
         {items.map((item) => {
