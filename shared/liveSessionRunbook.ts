@@ -26,7 +26,7 @@ export const LIVE_SESSION_ROLE_LABELS: Record<LiveSessionRoleId, string> = {
 
 export const LIVE_SESSION_ROLE_HINTS: Record<LiveSessionRoleId, string> = {
   host: "Facilitates the room and holds the arc",
-  tech: "Riverside / stream / AV",
+  tech: "Stream / AV",
   chat: "Moderates chat and Q&A",
   recording: "Confirms capture + raw land",
   outreach_handoff: "Who picks up post-session outreach",

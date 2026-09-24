@@ -51,6 +51,18 @@ export function isDefaultRoomUrl(url: string | null | undefined): boolean {
 export const JOIN_PATH = "/join";
 export const JOIN_URL = `${SITE_ORIGIN}${JOIN_PATH}`;
 
+/**
+ * Site join href for UI and emails. With a positive event id → `/join?e=<id>`
+ * so GET /join can route to that event's stored room. Without → plain `/join`.
+ * Never returns a raw Riverside/Zoom/Holos URL.
+ */
+export function siteJoinUrl(eventId?: number | null): string {
+  if (typeof eventId === "number" && Number.isInteger(eventId) && eventId > 0) {
+    return `${JOIN_URL}?e=${eventId}`;
+  }
+  return JOIN_URL;
+}
+
 /** SEEDS carries the livestream and the reruns for every season. */
 export const SEEDS_YOUTUBE_URL = "https://www.youtube.com/@SEEDSRegenerativeEconomies";
 /** Opens YouTube with the subscribe confirmation dialog already up. */
