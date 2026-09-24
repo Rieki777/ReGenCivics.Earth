@@ -1,7 +1,7 @@
 /**
  * Schedule Page
  * Design: Magical community gathering space theme
- * Features: Calendar integration, Riverside studio info
+ * Features: Calendar integration, live session join info
  */
 
 import { useState, useEffect } from 'react';
@@ -46,7 +46,6 @@ import {
   resolveEventStart,
 } from "@/lib/eventTemporal";
 import {
-  RIVERSIDE_INFO,
   upcomingEventsFallback,
   upcomingOpenAccessSessions as listUpcomingOpenAccessSessions,
   parseCompactUtc,
@@ -60,7 +59,7 @@ import {
 } from "@/lib/seasonEvents";
 import {
   eventFeed,
-  resolveRoomUrl,
+  siteJoinUrl,
   formatLocalDate,
   formatLocalDateShort,
   formatRangeWithReference,
@@ -345,25 +344,25 @@ export default function Schedule() {
 
       <CalendarOptions />
 
-      {/* Riverside Studio Info */}
+      {/* Live call join info */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
             <div className="flex items-center gap-3 mb-4">
               <Video className="w-6 h-6 text-[#7dd87d]" />
-              <h2 className="text-xl font-bold text-white">All Episodes via Riverside</h2>
+              <h2 className="text-xl font-bold text-white">Join every episode live</h2>
             </div>
 
             <p className="text-white/60 text-sm mb-4">Join via your browser. No download required.</p>
 
             <a
-              href={resolveRoomUrl(null)}
+              href={siteJoinUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
             >
               <Video className="w-5 h-5" />
-              Join on Riverside
+              Join the call
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
@@ -561,7 +560,7 @@ export default function Schedule() {
                     <button
                       type="button"
                       onClick={toggleExpand}
-                      className="p-1 rounded-lg hover:bg-white/10"
+                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg hover:bg-white/10"
                       aria-label={effectiveExpanded === event.id ? "Collapse event" : "Expand event"}
                     >
                       {effectiveExpanded === event.id ? (
@@ -622,27 +621,15 @@ export default function Schedule() {
                         </div>
                       ) : null}
 
-                      {(event as any).riversideRoomUrl ? (
-                        <a
-                          href={resolveRoomUrl((event as any).riversideRoomUrl)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                        >
-                          <Video className="w-5 h-5" />
-                          Join on Riverside
-                        </a>
-                      ) : (
-                        <a
-                          href={resolveRoomUrl((event as any).riversideRoomUrl)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
-                        >
-                          <Video className="w-5 h-5" />
-                          Join on Riverside
-                        </a>
-                      )}
+                      <a
+                        href={siteJoinUrl(event.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                      >
+                        <Video className="w-5 h-5" />
+                        Join the call
+                      </a>
 
                       {reminderSuccess?.id === event.id ? (
                         <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm border ${reminderSuccess.type === 'waitlist' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 'bg-[#7dd87d]/20 text-[#7dd87d] border-[#7dd87d]/30'}`}>
@@ -784,8 +771,8 @@ export default function Schedule() {
             
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
               <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-[#7dd87d]">2</div>
-              <h3 className="font-bold text-white mb-2">Join on Riverside or YouTube</h3>
-              <p className="text-white/60 text-sm">Open the room link in your browser at the scheduled time. No download needed.</p>
+              <h3 className="font-bold text-white mb-2">Join the call or watch on YouTube</h3>
+              <p className="text-white/60 text-sm">Open the join link in your browser at the scheduled time. No download needed.</p>
             </div>
             
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">

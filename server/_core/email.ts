@@ -8,6 +8,13 @@ import { Resend } from 'resend';
 import { logger } from './logger';
 import { signTrackedUrl } from '../emailTracking';
 import { FUND } from '../../shared/fund';
+import {
+  WHATSAPP_COMMUNITY_URL,
+  DISCORD_INVITE_URL,
+  YOUTUBE_CHANNEL_URL,
+  HYLO_SEEDS_URL,
+  HOLOS_REGEN_CIVICS_URL,
+} from '../../shared/communityLinks';
 
 const log = logger('email');
 
@@ -104,13 +111,19 @@ function getEmailFooter(): string {
       <div style="text-align: center; margin-bottom: 20px;">
         <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
         <div style="margin: 15px 0;">
-          <a href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34" style="display: inline-block; margin: 0 10px; color: #25D366; text-decoration: none; font-size: 14px; font-weight: bold;">
+          <a href="${HYLO_SEEDS_URL}" style="display: inline-block; margin: 0 8px; color: #2d6a4f; text-decoration: none; font-size: 14px; font-weight: bold;">
+            Hylo
+          </a>
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="display: inline-block; margin: 0 8px; color: #6b5b95; text-decoration: none; font-size: 14px; font-weight: bold;">
+            Holos
+          </a>
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="display: inline-block; margin: 0 8px; color: #25D366; text-decoration: none; font-size: 14px; font-weight: bold;">
             &#x1F4AC; WhatsApp
           </a>
-          <a href="https://discord.gg/8aTzTxH3Qe" style="display: inline-block; margin: 0 10px; color: #5865F2; text-decoration: none; font-size: 14px; font-weight: bold;">
+          <a href="${DISCORD_INVITE_URL}" style="display: inline-block; margin: 0 8px; color: #5865F2; text-decoration: none; font-size: 14px; font-weight: bold;">
             &#x1F3AE; Discord
           </a>
-          <a href="https://www.youtube.com/@SEEDSRegenerativeEconomies" style="display: inline-block; margin: 0 10px; color: #FF0000; text-decoration: none; font-size: 14px; font-weight: bold;">
+          <a href="${YOUTUBE_CHANNEL_URL}" style="display: inline-block; margin: 0 8px; color: #FF0000; text-decoration: none; font-size: 14px; font-weight: bold;">
             &#x25B6; YouTube
           </a>
         </div>
@@ -131,11 +144,14 @@ function getEmailFooter(): string {
           </a>
         </p>
         <p style="color: #4a7c59; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
-          Or join us on
-          <a href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34" style="color: #25D366;">WhatsApp</a>
+          Prefer gathering on
+          <a href="${HYLO_SEEDS_URL}" style="color: #2d6a4f;">Hylo</a>
           or
-          <a href="https://discord.gg/8aTzTxH3Qe" style="color: #5865F2;">Discord</a>
-          for ongoing conversation.
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: #6b5b95;">Holos</a>
+          — also on
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #25D366;">WhatsApp</a>
+          or
+          <a href="${DISCORD_INVITE_URL}" style="color: #5865F2;">Discord</a>.
         </p>
       </div>
       

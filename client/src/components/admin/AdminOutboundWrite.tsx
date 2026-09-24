@@ -29,9 +29,11 @@ import {
   type LetterLayout,
 } from "@shared/letterLayout";
 import {
+  OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE,
   OUTBOUND_WRITE_FILL_EVENT,
   clearOutboundWriteFill,
   consumeOutboundWriteFill,
+  outboundWriteContentReady,
   type OutboundWriteFill,
 } from "@shared/outboundWriteFill";
 
@@ -106,6 +108,11 @@ export function AdminOutboundWrite({
     ? "active subscribers"
     : `active ${newsletterSourceLabel(source)} subscribers`;
 
+  const canPreview = useMemo(
+    () => outboundWriteContentReady(subject, body),
+    [subject, body],
+  );
+
   const applyFill = (fill: OutboundWriteFill) => {
     if (!fill.subject?.trim() && !fill.body?.trim() && !fill.layout) return;
     if (fill.subject !== undefined) setSubject(fill.subject);
@@ -155,8 +162,8 @@ export function AdminOutboundWrite({
   };
 
   const handlePreview = async () => {
-    if (!subject.trim() || !body.trim()) {
-      toast.error("Write a subject and body first.");
+    if (!canPreview) {
+      toast.error(OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE);
       return;
     }
     try {
@@ -289,23 +296,31 @@ export function AdminOutboundWrite({
           {result ? (
             <p className="text-sm text-[#1a472a] font-medium">{result}</p>
           ) : !preview ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                disabled={sendPreview.isPending || saveDraft.isPending}
-                onClick={() => void handlePreview()}
-              >
-                {(sendPreview.isPending || saveDraft.isPending) ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+                  disabled={sendPreview.isPending || saveDraft.isPending || !canPreview}
+                  onClick={() => void handlePreview()}
+                  data-testid="outbound-write-preview-send"
+                >
+                  {(sendPreview.isPending || saveDraft.isPending) ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Preview send to {audienceCount}
+                </Button>
+                {(sendPreview.isError || saveDraft.isError) && (
+                  <p className="text-sm text-red-700">
+                    {sendPreview.error?.message || saveDraft.error?.message}
+                  </p>
                 )}
-                Preview send to {audienceCount}
-              </Button>
-              {(sendPreview.isError || saveDraft.isError) && (
-                <p className="text-sm text-red-700">
-                  {sendPreview.error?.message || saveDraft.error?.message}
+              </div>
+              {!canPreview && (
+                <p className="text-xs text-[#2d5a3d]" data-testid="outbound-write-preview-hint">
+                  Add a subject and body to preview.
                 </p>
               )}
             </div>
@@ -328,7 +343,7 @@ export function AdminOutboundWrite({
                 <Button
                   type="button"
                   className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
-                  disabled={confirmSend.isPending || scheduleSend.isPending}
+                  disabled={confirmSend.isPending || scheduleSend.isPending || !canPreview}
                   onClick={() => void handleConfirm()}
                 >
                   {confirmSend.isPending ? (
@@ -359,7 +374,7 @@ export function AdminOutboundWrite({
                   type="button"
                   variant="outline"
                   className="border-[#1a472a]/30 text-[#1a472a]"
-                  disabled={scheduleSend.isPending || confirmSend.isPending || !scheduleLocal}
+                  disabled={scheduleSend.isPending || confirmSend.isPending || !scheduleLocal || !canPreview}
                   onClick={() => void handleSchedule()}
                 >
                   {scheduleSend.isPending ? (

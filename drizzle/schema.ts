@@ -6067,3 +6067,31 @@ export const brainTelegramUpdates = mysqlTable("brain_telegram_updates", {
   updateId: bigint("update_id", { mode: "number" }).primaryKey(),
   receivedAt: timestamp("received_at").defaultNow().notNull(),
 });
+
+/**
+ * Interoperability Circle: the rolling time vote.
+ *
+ * The Circle is an ongoing weekly working group, so its time is never settled
+ * once. Each participant holds one vote for the weekly slot that works for
+ * them, changeable at any moment, and the slot in the lead is the slot the
+ * session runs in. People join and leave, the lead moves, the group follows it.
+ *
+ * One row per voter. voterKey is a random id the browser keeps, so someone
+ * without an account can still raise a hand; voting again overwrites the row
+ * rather than adding one.
+ */
+export const interopTimeVotes = mysqlTable("interopTimeVotes", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Comma list of the weekly slots this voter can make ("tue", "tue,thu"). */
+  slot: varchar("slot", { length: 24 }).notNull(),
+  /** Random per-browser id, or the signed-in user id. */
+  voterKey: varchar("voterKey", { length: 64 }).notNull(),
+  /** Optional, shown beside the slot so the group knows who is coming. */
+  displayName: varchar("displayName", { length: 80 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("interop_vote_voter_idx").on(table.voterKey),
+  index("interop_vote_slot_idx").on(table.slot),
+]));
+export type InteropTimeVote = typeof interopTimeVotes.$inferSelect;

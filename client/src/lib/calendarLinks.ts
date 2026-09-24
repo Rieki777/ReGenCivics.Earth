@@ -18,7 +18,9 @@
  *    have to come from one zone. Here they do.
  */
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
-import { JOIN_URL, isDefaultRoomUrl } from "@shared/sessionLinks";
+import { JOIN_URL, siteJoinUrl } from "@shared/sessionLinks";
+
+export { siteJoinUrl };
 
 const ORIGIN = "https://regencivics.earth";
 
@@ -54,11 +56,13 @@ function feed(path: string): CalendarFeed {
   };
 }
 
-/** The three things a reader can subscribe to. */
+/** The things a reader can subscribe to. */
 export const CALENDAR_FEEDS = {
   all: feed("/calendar/all.ics"),
   openAccess: feed("/calendar/open-access.ics"),
   season2: feed("/calendar/season2.ics"),
+  /** Follows the Circle's time vote, so it moves when the group moves. */
+  interopCircle: feed("/calendar/interop-circle.ics"),
 } as const;
 
 /**
@@ -73,18 +77,12 @@ export function eventFeed(eventId: number): CalendarFeed {
 }
 
 /**
- * The room link to show for a session. Mirrors roomUrl() in
- * server/lib/calendarFeed.ts so a page and an invite always agree.
- *
- * Any link into our studio, in any form a row has stored it, resolves to /join,
- * so changing the room means changing one constant. A row holding something
- * else is a genuine per-event room and passes through. See isDefaultRoomUrl in
- * shared/sessionLinks.ts for why this cannot be an exact string comparison.
+ * The room link to show for a session. Always the site /join hook — never a
+ * raw meeting-platform URL. Prefer siteJoinUrl(eventId) when the session id is
+ * known so GET /join can route to that event's stored room.
  */
-export function resolveRoomUrl(stored?: string | null): string {
-  const value = stored?.trim();
-  if (!value || isDefaultRoomUrl(value)) return JOIN_URL;
-  return value;
+export function resolveRoomUrl(_stored?: string | null): string {
+  return JOIN_URL;
 }
 
 // ── Times, in the reader's own zone ─────────────────────────────────────────

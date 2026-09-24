@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { OpsNotifyChannelBadges } from "@/components/admin/OpsNotifyChannelBadges";
 import {
   Bell,
   Loader2,
@@ -93,6 +94,7 @@ const notificationTypes: NotificationType[] = [
 
 export function NotificationPreferences() {
   const { data: preferences, isLoading, refetch } = trpc.admin.getNotificationPreferences.useQuery();
+  const { data: notifyStatus } = trpc.admin.opsNotifyStatus.useQuery(undefined, { staleTime: 120_000 });
   const updatePreferences = trpc.admin.updateNotificationPreferences.useMutation({
     onSuccess: () => {
       toast.success("Notification preferences updated");
@@ -181,12 +183,37 @@ export function NotificationPreferences() {
               Notification Preferences
             </CardTitle>
             <CardDescription>
-              Control which events trigger email notifications and where they are sent
+              Email routing for form submissions, plus honest Telegram / WhatsApp connection status
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        <div
+          className="mb-4 rounded-lg border border-[#1a472a]/12 bg-[#f8f5f0]/80 px-3 py-3 space-y-2"
+          data-testid="admin-ops-notify-settings-status"
+        >
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide">
+              Chat alert channels
+            </p>
+            <OpsNotifyChannelBadges status={notifyStatus} />
+          </div>
+          <p className="text-xs text-[#1a472a]/70 leading-relaxed">
+            Morning pulse and other ops alerts also go to Telegram and WhatsApp Cloud API
+            when those Railway vars are set. Email below is form-submission routing
+            (and <code className="font-mono text-[11px]">OWNER_EMAIL</code> for the
+            fail-soft pulse). Telegram needs{" "}
+            <code className="font-mono text-[11px]">TELEGRAM_BOT_TOKEN</code> +{" "}
+            <code className="font-mono text-[11px]">TELEGRAM_CHAT_ID</code>. WhatsApp
+            needs{" "}
+            <code className="font-mono text-[11px]">WHATSAPP_PHONE_NUMBER_ID</code>,{" "}
+            <code className="font-mono text-[11px]">WHATSAPP_ACCESS_TOKEN</code>, and{" "}
+            <code className="font-mono text-[11px]">WHATSAPP_TO_NUMBER</code>.
+            Status is enabled / not connected only — tokens never appear here.
+            Setup steps live on Overview → <strong>Connect chat alerts</strong>.
+          </p>
+        </div>
         <div className="space-y-3">
           {notificationTypes.map((type) => {
             const Icon = type.icon;
@@ -318,10 +345,11 @@ export function NotificationPreferences() {
             <Info className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
             <p className="text-xs text-[#1a472a]/75 leading-relaxed">
               <strong>How it works:</strong> Toggle switches control whether
-              notifications are sent for each event type. Click any row to expand
+              email notifications are sent for each event type. Click any row to expand
               email routing options. Custom email addresses override the default
-              owner notification. Submissions are always saved in the database
-              regardless of notification settings.
+              owner notification. Telegram and WhatsApp are Railway connections
+              (badges above), not per-event routing. Submissions are always saved
+              in the database regardless of notification settings.
             </p>
           </div>
         </div>

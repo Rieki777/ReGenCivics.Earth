@@ -65,7 +65,7 @@ export function AdminRecordingsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-[#1a472a]">Recordings</h2>
-          <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from Riverside.fm via webhook. Add YouTube URLs and send email summaries from here.</p>
+          <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from the recording platform via webhook. Add YouTube URLs and send email summaries from here.</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function AdminRecordingsTab() {
             <Radio className="w-12 h-12 mx-auto text-[#1a472a]/85 mb-4" />
             <p className="text-[#1a472a]/85">No recordings yet.</p>
             <p className="text-sm text-[#1a472a]/85 mt-2">
-              Once you set up the Riverside webhook at <code className="bg-muted px-1 rounded text-xs">https://regencivics.earth/api/webhooks/riverside</code>, recordings will appear here automatically after each session.
+              Once you set up the recording webhook at <code className="bg-muted px-1 rounded text-xs">https://regencivics.earth/api/webhooks/riverside</code>, recordings will appear here automatically after each session.
             </p>
           </CardContent>
         </Card>
@@ -130,7 +130,7 @@ export function AdminRecordingsTab() {
                   )}
                   {rec.riversideUrl && (
                     <a href={rec.riversideUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-purple-500 hover:underline">
-                      <ExternalLink className="w-3 h-3" /> Riverside
+                      <ExternalLink className="w-3 h-3" /> Recording
                     </a>
                   )}
                   {rec.forumPostId && (

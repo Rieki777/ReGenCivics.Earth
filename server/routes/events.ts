@@ -10,9 +10,12 @@ import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoReminderSends, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
 import { recordings, applications, users } from "../../drizzle/schema";
-import { resolveAutoReminderRecipients } from "../jobs/eventReminders";
+import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eventReminders";
+import { sendSignupReminderBlast } from "../lib/signupReminderBlast";
+import { reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
 import {
   ALLOWED_AUTO_REMINDER_OFFSETS,
+  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
   AUTO_REMINDER_AUDIENCE_MODES,
   CUSTOM_APPLICATION_STATUSES,
   NEWSLETTER_AUDIENCE_SOURCES,
@@ -34,6 +37,8 @@ import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
 import { syncCatalogEvents } from "../lib/syncCatalogEvents";
+import { leaveCircle, syncInteropCircle } from "../lib/interopCircle";
+import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 import {
   SEASON2_EPISODE_DATES,
@@ -104,6 +109,9 @@ async function ensureEventsSeed() {
       await database.insert(events).values(SEED_EVENTS as any);
     }
     await syncCatalogEvents();
+    // Weekly Interoperability Circle rows, from the live time vote. Throttled
+    // to one run a minute, so this costs nothing on most list calls.
+    await syncInteropCircle();
   } catch {
     // Non-fatal, seed runs once, fails silently if table not ready yet
   }
@@ -159,7 +167,8 @@ async function promoteFromWaitlist(eventId: number) {
   const dateStr = event.startTime.toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
-  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
+  const joinUrl = reminderJoinUrl({ eventId: event.id });
+  const joinLabel = reminderJoinLabel();
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
     <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
@@ -169,7 +178,7 @@ async function promoteFromWaitlist(eventId: number) {
     <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
       <h2 style="color:#1a472a;margin:0 0 10px 0;">A spot opened up</h2>
       <p style="color:#444;line-height:1.7;">A spot opened up for <strong>${event.title}</strong> on ${dateStr}. You're now confirmed. We'll send you a reminder before the event.</p>
-      ${joinUrl !== `${APP_BASE_URL}/schedule` ? `<a href="${joinUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:16px 0 0 0;border:2px solid #7dd87d;">Join Link</a>` : ""}
+      <a href="${joinUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:16px 0 0 0;border:2px solid #7dd87d;">${joinLabel}</a>
       <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a></p>
     </div>
   </div>`;
@@ -254,11 +263,14 @@ export const eventsRouter = router({
       await ensureEventsSeed();
       await sweepEventStatuses();
 
-      const all = await database
+      // Newest `limit` rows, returned oldest first. Ordering ascending before
+      // the limit kept the oldest rows and, once the weekly Circle rows piled
+      // up, would have cut upcoming sessions off /schedule.
+      const all = (await database
         .select()
         .from(events)
-        .orderBy(asc(events.startTime))
-        .limit(input?.limit ?? 50);
+        .orderBy(desc(events.startTime))
+        .limit(input?.limit ?? 50)).reverse();
 
       // Public projection never lists cancelled/canceled — even when
       // includeCompleted feeds /schedule Historical. Admin Events still uses
@@ -339,8 +351,8 @@ export const eventsRouter = router({
         hour: "numeric", minute: "2-digit",
       });
       const tz = event.timezone ?? "UTC";
-      const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
-      const joinLabel = "Join on Riverside";
+      const joinUrl = reminderJoinUrl({ eventId: event.id });
+      const joinLabel = reminderJoinLabel();
       const joinColor = "#7c3aed";
 
       const confirmSubject = signupType === "waitlist"
@@ -988,28 +1000,14 @@ export const eventsRouter = router({
           isNull(eventSignups.cancelledAt), // #18, skip unsubscribed
         ));
 
-      if (!signups.length) return { sent: 0, message: "No signups for this event" };
-
-      const dateStr = event.startTime.toLocaleDateString("en-US", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric"
-      });
-      const timeStr = event.startTime.toLocaleTimeString("en-US", {
-        hour: "numeric", minute: "2-digit", timeZoneName: "short"
-      });
-      const joinUrl = event.riversideRoomUrl
-        ?? event.zoomUrl
-        ?? "";
-      const joinLabel = "Join on Riverside";
-      const joinColor = "#7c3aed";
-      const scheduleUrl = `${APP_BASE_URL}/schedule`;
-
-      const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
-      const bodyText = input.customBody?.trim() || (event.description ?? "");
+      // The always-include list still hears about a session nobody signed up for.
+      if (!signups.length && ALWAYS_INCLUDE_REMINDER_RECIPIENTS.length === 0) {
+        return { sent: 0, message: "No signups for this event" };
+      }
 
       // #14. Pull most recent recording AI summary from same season for context
-      let prevSummaryBlock = "";
+      let prevSummaryPlain: string | null = null;
       if (event.season) {
-        // Find the most recently completed event in the same season
         const prevEvents = await database.select({ recordingId: events.recordingId })
           .from(events)
           .where(and(
@@ -1026,45 +1024,35 @@ export const eventsRouter = router({
             .where(eq(recordings.id, prevEvents[0].recordingId))
             .limit(1);
           if (rec?.aiSummary) {
-            prevSummaryBlock = `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 24px 0;">
-              <p style="color:#1a472a;font-weight:bold;margin:0 0 6px 0;font-size:13px;">Last session covered</p>
-              <p style="color:#2d5a3d;margin:0;font-size:14px;line-height:1.6;">${rec.aiSummary}</p>
-            </div>`;
+            prevSummaryPlain = rec.aiSummary;
           }
         }
       }
 
-      // #18. Send individually so each email gets a personalized unsubscribe link.
-      // Per-event signups are this table, not the community list. Community
-      // event blasts (custom events people opted into via newsletter topics)
-      // should call audienceForTopic("events") from server/lib/emailPrefs.ts.
-      let totalSent = 0;
-      for (const signup of signups) {
-        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
-        const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
-          </div>
-          <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:13px;margin:0 0 6px 0;">Starting in ~24 hours</p>
-            <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
-            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
-            ${prevSummaryBlock}
-            ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
-            <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
-            <a href="${scheduleUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
-          </div>
-          <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/>
-            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe from this event</a></p>
-          </div>
-        </div>`;
+      // Prefs footer + /join?e= via shared builder (same as cron signup blast).
+      // Prior-session AI summary is folded into body text (builder escapes HTML).
+      const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
+      const customOrDesc = input.customBody?.trim() || (event.description ?? "");
+      const bodyParts: string[] = [];
+      if (prevSummaryPlain) bodyParts.push(`Last session covered: ${prevSummaryPlain}`);
+      if (customOrDesc) bodyParts.push(customOrDesc);
+      const bodyText = bodyParts.length ? bodyParts.join("\n\n") : null;
 
-        await sendEmail({ to: [signup.email], subject, html, template: "event_reminder" })
-          .catch(err => console.error(`[events.sendReminders] email error for ${signup.email}:`, err));
-        totalSent++;
-      }
+      let totalSent = 0;
+      totalSent += await sendSignupReminderBlast(event, {
+        subject,
+        bodyText,
+        offsetMinutes: 24 * 60,
+        signups,
+      });
+
+      // Same subject and body, but their own always-include footer.
+      totalSent += await sendToAlwaysIncluded(event, {
+        subject,
+        bodyText,
+        offsetMinutes: 24 * 60,
+        exclude: signups.map((s) => s.email),
+      });
 
       await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
       return { sent: totalSent };
@@ -1329,6 +1317,16 @@ export const eventsRouter = router({
           eq(eventSignups.email, input.email),
         ));
 
+      // The Circle is one standing sign-up spread across weekly rows. Leaving
+      // from any week's email leaves every future week, so the sync does not
+      // carry this person onto the next week it adds.
+      const [ev] = await database
+        .select({ season: events.season })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (ev?.season === INTEROP_CIRCLE_SEASON) await leaveCircle(database, input.email);
+
       return { success: true };
     }),
 
@@ -1440,10 +1438,8 @@ export const eventsRouter = router({
       const timeStr = event.startTime.toLocaleTimeString("en-US", {
         hour: "numeric", minute: "2-digit", timeZoneName: "short",
       });
-      const joinUrl = event.riversideRoomUrl
-        ?? event.zoomUrl
-        ?? "";
-      const joinLabel = "Join on Riverside";
+      const joinUrl = reminderJoinUrl({ eventId: event.id });
+      const joinLabel = reminderJoinLabel();
       const joinColor = "#7c3aed";
 
       const topicLine = event.guestSpeakerTopic ? ` on ${event.guestSpeakerTopic}` : "";

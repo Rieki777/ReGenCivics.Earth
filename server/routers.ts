@@ -24,6 +24,7 @@ import { bioregionsRouter, userBioregionsRouter, bloomsRouter } from "./routes/g
 import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
 import { eventsRouter } from "./routes/events";
+import { interopSessionsRouter } from "./routes/interopSessions";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
@@ -174,6 +175,9 @@ export const appRouter = router({
 
   // Recordings (Riverside.fm)
   recordings: recordingsRouter,
+
+  // Interoperability Circle (weekly tools working group)
+  interopSessions: interopSessionsRouter,
 
   // Events + per-event reminders
   events: eventsRouter,

@@ -5,7 +5,15 @@
  */
 
 import { Link } from "wouter";
-import { ArrowLeft, Leaf, MessageCircle, Youtube, Users, ExternalLink, Sparkles, Heart } from "lucide-react";
+import { ArrowLeft, Leaf, MessageCircle, Youtube, Users, ExternalLink, Sparkles, Heart, Globe, Network } from "lucide-react";
+import {
+  WHATSAPP_COMMUNITY_URL,
+  TELEGRAM_CHANNEL_URL,
+  DISCORD_INVITE_URL,
+  YOUTUBE_CHANNEL_URL,
+  HYLO_SEEDS_URL,
+  HOLOS_REGEN_CIVICS_URL,
+} from "@shared/communityLinks";
 import { Button } from "@/components/ui/button";
 import { SEO, pageSEO } from "@/components/SEO";
 
@@ -80,10 +88,26 @@ function MyceliumBackground() {
 
 const socialLinks = [
   {
+    name: "Hylo",
+    description: "Preferred gather place — join the Hylo SEEDS group to coordinate with regenerators",
+    icon: Globe,
+    url: HYLO_SEEDS_URL,
+    color: "#2d6a4f",
+    recommended: true,
+  },
+  {
+    name: "Holos",
+    description: "Preferred gather place — join the Holos Regen Civics holon for community coordination",
+    icon: Network,
+    url: HOLOS_REGEN_CIVICS_URL,
+    color: "#6b5b95",
+    recommended: true,
+  },
+  {
     name: "WhatsApp Community",
-    description: "Join our active community chat for real-time updates and discussions",
+    description: "Active chat for real-time updates (also available; Hylo + Holos preferred for gathering)",
     icon: MessageCircle,
-    url: "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
+    url: WHATSAPP_COMMUNITY_URL,
     color: "#25d366",
     recommended: false,
   },
@@ -91,7 +115,7 @@ const socialLinks = [
     name: "Telegram Channel",
     description: "Cross-posted updates and SEEDS Community chatter on Telegram",
     icon: MessageCircle,
-    url: "https://t.me/SEEDS_Community",
+    url: TELEGRAM_CHANNEL_URL,
     color: "#0088cc",
     recommended: false,
   },
@@ -99,7 +123,7 @@ const socialLinks = [
     name: "Discord Server",
     description: "Connect with regenerators, ask questions, and find collaboration opportunities",
     icon: Users,
-    url: "https://discord.gg/8aTzTxH3Qe",
+    url: DISCORD_INVITE_URL,
     color: "#5865f2",
     recommended: false,
   },
@@ -107,7 +131,7 @@ const socialLinks = [
     name: "YouTube Channel",
     description: "Watch season recordings, project introductions, and educational content",
     icon: Youtube,
-    url: "https://www.youtube.com/@SEEDSRegenerativeEconomies",
+    url: YOUTUBE_CHANNEL_URL,
     color: "#ff0000",
     recommended: false,
   },
@@ -173,10 +197,10 @@ export default function Socials() {
               Welcome to the <span className="text-[#7dd87d]">ReGenerative Renaissance!</span>
             </h1>
             <p className="text-white/70 text-lg max-w-xl mx-auto">
-              You're now part of our growing community. Here's the easiest way to get involved today and follow along with our journey.
+              You're now part of our growing community. Prefer <span className="text-[#7dd87d] font-medium">Hylo</span> and <span className="text-[#7dd87d] font-medium">Holos</span> as your primary places to gather and coordinate — then follow along on YouTube and the other channels below.
             </p>
             <p className="text-white/70 text-sm max-w-xl mx-auto mt-4">
-              Most social media is overwhelmed with bots, scams, and fraud now. For this reason we encourage all conversations to happen on our own forums where we enforce strict standards for quality and fraud/bot control.
+              Most social media is overwhelmed with bots, scams, and fraud now. We encourage gathering on Hylo and Holos (and our own forums) where community standards for quality and fraud/bot control are stronger than on open chat apps.
             </p>
           </div>
 
