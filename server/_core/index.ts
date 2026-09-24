@@ -57,6 +57,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { LEARN_SLUGS } from "@shared/learnContent";
+import { redirectFor } from "@shared/redirects";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
@@ -191,6 +192,33 @@ async function startServer() {
       if (m) console.log(`[ai-crawler] ${m[1]} ${req.method} ${req.path}`);
     }
     next();
+  });
+
+  // Server-side 301s for routes App.tsx redirects in the browser.
+  //
+  // Fourteen routes were client-side redirects only: a `<Redirect to>` or a
+  // `window.location.replace` that runs after React mounts. Anything that does
+  // not execute JavaScript sees an empty shell and is never told where to go,
+  // which covers every AI crawler in the regex above plus Muse, Spark and
+  // Instinct, all of which read HTML before they run anything.
+  //
+  // Measured on production 2026-09-23: twelve of the 94 blank urls the phase -2
+  // baseline found were these. They were never missing content, only a status
+  // line. A 301 also carries link equity, which a JavaScript redirect does not.
+  //
+  // Mounted before the API routers and the SPA catch-all, and GET/HEAD only so
+  // a POST to one of these paths still reaches whatever handles it rather than
+  // being silently turned into a GET elsewhere.
+  app.use((req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return next();
+    const to = redirectFor(req.path);
+    if (!to) return next();
+    // Query strings survive the hop: /investor-form?ref=abc keeps its
+    // attribution token, which is load-bearing once the agent surface starts
+    // minting them.
+    const qs = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+    const [target, fragment] = to.split("#");
+    res.redirect(301, `${target}${qs}${fragment ? `#${fragment}` : ""}`);
   });
 
   // Referral telemetry for the foundation credit. Every custom game's credit
