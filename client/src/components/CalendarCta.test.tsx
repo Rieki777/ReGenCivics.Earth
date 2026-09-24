@@ -42,12 +42,13 @@ describe("SubscribeButtons", () => {
     expect(decodeURIComponent(href)).toContain(CALENDAR_FEEDS.openAccess.webcalUrl);
   });
 
-  it("points each of the three options at its own feed", () => {
+  it("points each of the options at its own feed", () => {
     expect(CALENDAR_FEEDS.all.path).toBe("/calendar/all.ics");
     expect(CALENDAR_FEEDS.openAccess.path).toBe("/calendar/open-access.ics");
     expect(CALENDAR_FEEDS.season2.path).toBe("/calendar/season2.ics");
+    expect(CALENDAR_FEEDS.interopCircle.path).toBe("/calendar/interop-circle.ics");
     const paths = new Set(Object.values(CALENDAR_FEEDS).map((f) => f.googleUrl));
-    expect(paths.size).toBe(3);
+    expect(paths.size).toBe(Object.keys(CALENDAR_FEEDS).length);
   });
 });
 

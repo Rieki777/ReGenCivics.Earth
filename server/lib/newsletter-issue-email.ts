@@ -21,6 +21,10 @@ import { logger } from "../_core/logger";
 import { emailDocumentFromMarkdown } from "./emailHtml";
 import { createEmailLog } from "../emailTracking";
 import { isLetterLayout, NEWSLETTER_POSTAL_ADDRESS, type LetterLayout } from "../../shared/letterLayout";
+import {
+  OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE,
+  outboundWriteContentReady,
+} from "../../shared/outboundWriteFill";
 import { managePreferencesUrl, previewManagePreferencesUrl, verifyPrefsToken } from "./emailPrefs";
 
 const log = logger("newsletter-issue-email");
@@ -145,7 +149,9 @@ export async function buildIssuePreview(params: {
   if (issue.status === "scheduled") {
     throw new Error("This letter is scheduled. Cancel it from Sent before editing.");
   }
-  if (!issue.subject.trim() || !issue.body?.trim()) throw new Error("Write a subject and body first.");
+  if (!outboundWriteContentReady(issue.subject, issue.body ?? "")) {
+    throw new Error(OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE);
+  }
 
   const audience = parseIssueAudience(issue.audience);
   const recipients = await snapshotRecipients(issue.id, audience);

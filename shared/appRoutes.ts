@@ -98,6 +98,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/heal-the-land",
   "/hymn-book",
   "/hymn-book/:slug",
+  "/interop-sessions",
   "/investmentform",
   "/investor",
   "/investor-form",

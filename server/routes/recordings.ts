@@ -6,9 +6,20 @@
 import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { recordings } from "../../drizzle/schema";
+import { recordings, events as eventsTable, roleHolders } from "../../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import {
+  RECORDING_CLOSEOUT_FILTERS,
+  RECORDING_CLOSEOUT_STATUSES,
+  closeoutFilterMatch,
+  countCloseoutFilters,
+  isRecordingCloseoutFilter,
+  resolveCloseoutRow,
+  type RecordingCloseoutFilter,
+  type RecordingCloseoutStatus,
+} from "../../shared/recordingCloseout";
+import { loadCloseoutMetaBag, patchCloseoutMeta } from "../lib/recordingCloseoutStore";
 
 export const recordingsRouter = router({
   // Public: list recordings (for a future /recordings page)
@@ -268,5 +279,157 @@ export const recordingsRouter = router({
         refreshDraft: input.refreshDraft,
       });
     }),
+
+  /**
+   * Admin: recording closeout queue (ownership + due dates).
+   * Extends Edited Cuts — sessions that still need cut / publish / link.
+   * Meta (assignee, dueDate, workflow status) lives in site_settings; Done is
+   * always derived from published editedYoutubeUrl.
+   */
+  adminCloseoutQueue: adminProcedure
+    .input(z.object({
+      filter: z.enum(RECORDING_CLOSEOUT_FILTERS).default("open"),
+      limit: z.number().int().min(1).max(200).default(100),
+    }).optional())
+    .query(async ({ input }) => {
+      const filter = (input?.filter && isRecordingCloseoutFilter(input.filter)
+        ? input.filter
+        : "open") as RecordingCloseoutFilter;
+      const limit = input?.limit ?? 100;
+      const database = await getDb();
+      if (!database) {
+        return {
+          rows: [] as Array<Record<string, unknown>>,
+          counts: countCloseoutFilters([]),
+          roleOptions: [] as Array<{ roleSlug: string; roleTitle: string; holderName: string | null }>,
+        };
+      }
+
+      const [recRows, eventRows, holderRows, bag] = await Promise.all([
+        database
+          .select({
+            id: recordings.id,
+            title: recordings.title,
+            sessionDate: recordings.sessionDate,
+            createdAt: recordings.createdAt,
+            editedYoutubeUrl: recordings.editedYoutubeUrl,
+            youtubeVideoId: recordings.youtubeVideoId,
+            youtubeUrl: recordings.youtubeUrl,
+            riversideUrl: recordings.riversideUrl,
+            recordingKind: recordings.recordingKind,
+          })
+          .from(recordings)
+          .orderBy(desc(recordings.sessionDate), desc(recordings.createdAt))
+          .limit(limit),
+        database
+          .select({
+            id: eventsTable.id,
+            title: eventsTable.title,
+            recordingId: eventsTable.recordingId,
+          })
+          .from(eventsTable),
+        database
+          .select({
+            roleSlug: roleHolders.roleSlug,
+            roleTitle: roleHolders.roleTitle,
+            isActive: roleHolders.isActive,
+            userId: roleHolders.userId,
+          })
+          .from(roleHolders),
+        loadCloseoutMetaBag(),
+      ]);
+
+      const eventByRecording = new Map<number, { id: number; title: string | null }>();
+      for (const ev of eventRows) {
+        if (ev.recordingId == null) continue;
+        if (!eventByRecording.has(ev.recordingId)) {
+          eventByRecording.set(ev.recordingId, { id: ev.id, title: ev.title ?? null });
+        }
+      }
+
+      const nowMs = Date.now();
+      const resolved = recRows.map((row) => {
+        const meta = bag[String(row.id)] ?? null;
+        const event = eventByRecording.get(row.id);
+        const r = resolveCloseoutRow(row, meta, {
+          eventId: event?.id ?? null,
+          nowMs,
+        });
+        return {
+          id: row.id,
+          title: row.title,
+          sessionDate: row.sessionDate,
+          createdAt: row.createdAt,
+          editedYoutubeUrl: row.editedYoutubeUrl,
+          youtubeVideoId: row.youtubeVideoId,
+          recordingKind: row.recordingKind,
+          eventId: event?.id ?? null,
+          eventTitle: event?.title ?? null,
+          status: r.status,
+          assignee: r.assignee,
+          roleSlug: r.roleSlug,
+          unassigned: r.unassigned,
+          dueDate: r.dueDate,
+          overdue: r.overdue,
+          editedHref: r.editedHref,
+          eventsHref: r.eventsHref,
+        };
+      });
+
+      const counts = countCloseoutFilters(resolved);
+      const rows = resolved.filter((r) => closeoutFilterMatch(r, filter));
+
+      const roleOptions = holderRows
+        .filter((h) => Number(h.isActive) === 1)
+        .map((h) => ({
+          roleSlug: h.roleSlug,
+          roleTitle: h.roleTitle,
+          holderName: null as string | null,
+        }))
+        .sort((a, b) => a.roleTitle.localeCompare(b.roleTitle));
+
+      return { rows, counts, roleOptions };
+    }),
+
+  /** Admin: set closeout assignee / due / workflow status (never emails). */
+  setCloseoutMeta: adminProcedure
+    .input(z.object({
+      recordingId: z.number().int().positive(),
+      status: z.enum(RECORDING_CLOSEOUT_STATUSES).nullable().optional(),
+      assignee: z.string().max(120).nullable().optional(),
+      roleSlug: z.string().max(64).nullable().optional(),
+      dueDate: z.string().max(10).nullable().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [rec] = await database
+        .select({ id: recordings.id })
+        .from(recordings)
+        .where(eq(recordings.id, input.recordingId))
+        .limit(1);
+      if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
+
+      if (input.dueDate != null && input.dueDate !== "") {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "dueDate must be YYYY-MM-DD" });
+        }
+      }
+
+      const patch: {
+        status?: RecordingCloseoutStatus | null;
+        assignee?: string | null;
+        roleSlug?: string | null;
+        dueDate?: string | null;
+      } = {};
+      if (input.status !== undefined) patch.status = input.status;
+      if (input.assignee !== undefined) patch.assignee = input.assignee;
+      if (input.roleSlug !== undefined) patch.roleSlug = input.roleSlug;
+      if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
+
+      const saved = await patchCloseoutMeta(input.recordingId, patch);
+      return { ok: true as const, meta: saved };
+    }),
+
 
 });

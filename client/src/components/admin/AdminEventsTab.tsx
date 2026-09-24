@@ -23,7 +23,10 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
+import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventReminderCronHealth";
+import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
+import { LiveSessionRunbook } from "@/components/admin/LiveSessionRunbook";
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
@@ -467,6 +470,10 @@ export function AdminEventsTab() {
                     </Button>
                   </div>
                 </div>
+
+                {!isPast && (temporalPhase === "live" || (ev as any).status === "live") && (
+                  <LiveSessionRunbook eventId={ev.id} eventTitle={ev.title} />
+                )}
 
                 {isPast && (
                   <AfterSessionChecklist
@@ -934,7 +941,11 @@ export function AdminEventsTab() {
         );
       })()}
 
-      {/* Setup reminder */}
+      {/* Live cron health + setup */}
+      <div className="mt-4 space-y-3">
+        <AdminEventReminderCronHealth />
+      </div>
+      <AdminInteropCircle />
       <Card className="bg-[#0a1f14] border-yellow-800/30 mt-4">
         <CardHeader className="pb-2">
           <CardTitle className="text-yellow-400 text-sm flex items-center gap-2"><Clock size={14} /> Auto-Reminder Cron Setup</CardTitle>

@@ -301,3 +301,13 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Topic keys** (toggles, default ON for new subscribers): `seasonal` (newsletters, Harvest, weekly digest), `open_access` (Open Access invitations and reminders), `season2` (Season 2 session reminders; S2-approved people can mute these), `events` (other / custom event reminders on the community list), `recordings` (session recording summaries, stored as `notifyRecordings`). Existing `notifyRecordings` values are kept. Senders resolve recipients with `audienceForTopic(topic)` in `server/lib/emailPrefs.ts`.
 
 **Manage email preferences**. The only footer CTA on community/marketing letters. It opens the signed prefs URL. Unsubscribe from all is a control on that page, not a second footer link. `/unsubscribe` remains the nuclear email-entry path.
+
+### Interoperability Circle (ADR-56)
+
+**Interoperability Circle** (short: **the Circle**). The weekly 90-minute working group for the people building the tools under the land projects. Page: `/interop-sessions`. Each week is an ordinary `events` row, `type: "special"`, `season: "Interop Circle"` (`INTEROP_CIRCLE_SEASON`). It is a separate track from Season Two; don't call it a Season Two session.
+
+**Slot**. One of the candidate weekly times the group votes on (`tue`, `wed`, `thu` in `shared/interopCircle.ts`). A person raises a hand for every slot they can make.
+
+**Leading slot** vs **scheduled slot**. The leading slot is whatever has the most hands right now. The scheduled slot is what the calendar, reminders and emails follow: the admin pin if set, otherwise the leading slot once it has held the lead for 24 hours. Sessions less than 72 hours out never move.
+
+**Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Signing up is optional: anyone can attend from the calendar feed. Members get reminders, the recaps an admin sends with the Events tab follow-up tool, and an invitation to create a profile. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.

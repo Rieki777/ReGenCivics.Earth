@@ -45,10 +45,11 @@ import {
   SITE_ORIGIN,
 } from "@shared/sessionLinks";
 import { openAccessDescription } from "@shared/openAccess";
+import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
 
 export const UID_DOMAIN = "regencivics.earth";
 
-export type FeedKind = "all" | "open-access" | "season2";
+export type FeedKind = "all" | "open-access" | "season2" | "interop-circle";
 
 /** A row shaped like the events table, loose enough to build from the catalog too. */
 export type FeedRow = {
@@ -230,6 +231,7 @@ export function toIcsEvent(row: FeedRow): IcsEvent {
 export function selectForFeed(rows: FeedRow[], kind: FeedKind): FeedRow[] {
   if (kind === "all") return rows;
   if (kind === "season2") return rows.filter((r) => episodeWeek(r) != null);
+  if (kind === "interop-circle") return rows.filter((r) => r.season === INTEROP_CIRCLE_SEASON);
   return rows.filter(isPublicSession);
 }
 
@@ -247,6 +249,11 @@ const FEED_META: Record<FeedKind, { name: string; description: string }> = {
   season2: {
     name: "ReGen Civics: Season 2",
     description: "The thirteen weekly episodes of the Season 2 incubator.",
+  },
+  "interop-circle": {
+    name: "ReGen Civics: Interoperability Circle",
+    description:
+      "The weekly tools working group. The time follows the group's vote at regencivics.earth/interop-sessions, and this calendar moves with it.",
   },
 };
 

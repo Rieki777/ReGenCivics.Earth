@@ -1,0 +1,374 @@
+/**
+ * Interoperability Circle tRPC Router
+ *
+ * The Circle is a standing weekly working group for the people building the
+ * tools under the land projects. Its meeting time is not fixed once: every
+ * participant raises a hand for each weekly slot they can make (one, several or
+ * all), and the slot with the most hands is the one the session runs in. As
+ * people join and leave, the lead moves and the group follows it.
+ *
+ * Public on purpose. Most of the people in this circle do not have an account
+ * on the site, so the browser holds a random voterKey and that key owns the
+ * vote. One row per key, updated in place.
+ *
+ * The `slot` column holds that voter's slots as a comma list ("tue,thu"). Rows
+ * written before multi-select hold a single key, which parses the same way.
+ *
+ * The vote decides the time; server/lib/interopCircle.ts turns it into real
+ * weekly `events` rows, so sign-ups, reminders, calendar feeds and the admin
+ * Events tab work the same as for every other session.
+ */
+
+import { adminProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { z } from "zod";
+import { getDb } from "../db";
+import { eventSignups, interopTimeVotes } from "../../drizzle/schema";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import {
+  INTEROP_PIN_SETTING,
+  INTEROP_SLOT_KEYS as INTEROP_SLOTS,
+  interopSlot,
+  parseSlots,
+  serializeSlots,
+} from "@shared/interopCircle";
+import {
+  addCircleSignups,
+  ensureVotesTable as ensureTable,
+  leaveCircle,
+  resolveCircleState,
+  sendCircleWelcome,
+  syncInteropCircle,
+  upcomingCircleRows,
+} from "../lib/interopCircle";
+import { setSiteSetting } from "../db";
+
+/** How many upcoming weeks the page and admin panel list. */
+const SCHEDULE_PREVIEW = 4;
+
+/** How many named hands the page shows per slot, and how many rows we read to find them. */
+const NAMES_PER_SLOT = 40;
+const NAME_SCAN_LIMIT = 300;
+
+/**
+ * Every mutation on this router is public and unauthenticated, so each one
+ * carries a per-IP ceiling. Two tiers:
+ *
+ * VOTE_LIMIT is generous, because moving your own hands a few times is normal
+ * and the bucket is shared by everyone behind one office or VPN address. It is
+ * there to make minting fresh voterKeys in a loop slow, not to police a person.
+ *
+ * CONTACT_LIMIT is tight, because join and leave act on an email address the
+ * caller merely typed. join sends that address a welcome email and forces a
+ * full circle sync, so without a ceiling it is both a way to mail a stranger
+ * repeatedly and a cheap way to make the server do expensive work on demand.
+ */
+const VOTE_LIMIT = { windowMs: 60_000, max: 20 };
+const CONTACT_LIMIT = { windowMs: 60_000, max: 5 };
+
+/**
+ * Display names are shown to everyone who opens the page, so they are trimmed,
+ * length-bounded, and stripped of the characters that let a name escape its
+ * own line: control characters, zero-width joiners and bidi overrides. React
+ * escapes the markup; this is about a name that renders as something other
+ * than what it says. Applied on the way out as well as in, because rows
+ * written before this existed still have to render safely.
+ */
+export function cleanDisplayName(raw: string | undefined | null): string | null {
+  if (typeof raw !== "string") return null;
+  const stripped = raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "")
+    .trim()
+    .slice(0, 80);
+  return stripped.length > 0 ? stripped : null;
+}
+
+/**
+ * Fold per-combination row counts into per-slot hand counts.
+ *
+ * The slot column holds a comma list, so the grouped read returns one row per
+ * distinct combination ("tue", "tue,thu", ...) rather than per slot. There are
+ * at most a handful of combinations however many people vote, which is what
+ * lets the count stay exact without reading the table.
+ */
+export function countsFromCombos(
+  combos: { slot: string; count: number }[],
+): { perSlot: Record<string, number>; total: number } {
+  const perSlot: Record<string, number> = {};
+  for (const key of INTEROP_SLOTS) perSlot[key] = 0;
+  let total = 0;
+  for (const row of combos) {
+    const n = Number(row.count);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const slots = parseSlots(row.slot);
+    if (!slots.length) continue;
+    // Counts people, not hands: someone who can make all three is one voter.
+    total += n;
+    for (const s of slots) perSlot[s] = (perSlot[s] ?? 0) + n;
+  }
+  return { perSlot, total };
+}
+
+export { INTEROP_SLOT_KEYS as INTEROP_SLOTS, parseSlots, serializeSlots } from "@shared/interopCircle";
+
+export const interopSessionsRouter = router({
+  /**
+   * Public: every slot's hand count plus the names people chose to show.
+   * The page polls this, so it stays cheap: two grouped reads, no joins.
+   */
+  tally: publicProcedure.query(async () => {
+    const database = await getDb();
+    const empty = INTEROP_SLOTS.map((slot) => ({ slot, count: 0, names: [] as string[] }));
+    if (!database) return { slots: empty, total: 0 };
+    await ensureTable(database);
+
+    // The counts come from a grouped aggregate so they stay exact however many
+    // people vote; only the names are a bounded sample. Reading every row to
+    // count them capped the tally at the read limit, silently, once the Circle
+    // outgrew it.
+    let combos: { slot: string; count: number }[] = [];
+    let named: { slot: string; displayName: string | null }[] = [];
+    try {
+      [combos, named] = await Promise.all([
+        database
+          .select({ slot: interopTimeVotes.slot, count: sql<number>`count(*)` })
+          .from(interopTimeVotes)
+          .groupBy(interopTimeVotes.slot),
+        database
+          .select({ slot: interopTimeVotes.slot, displayName: interopTimeVotes.displayName })
+          .from(interopTimeVotes)
+          .orderBy(desc(interopTimeVotes.updatedAt))
+          .limit(NAME_SCAN_LIMIT),
+      ]);
+    } catch (err) {
+      // The page keeps its shape on a database hiccup: zero hands, no error.
+      console.error("[interopSessions] tally failed:", err);
+      return { slots: empty, total: 0 };
+    }
+
+    const { perSlot, total } = countsFromCombos(combos);
+    const parsed = named.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
+    const slots = INTEROP_SLOTS.map((slot) => {
+      const names: string[] = [];
+      const seen = new Set<string>();
+      for (const row of parsed) {
+        if (!row.slots.includes(slot) || names.length >= NAMES_PER_SLOT) continue;
+        const name = cleanDisplayName(row.displayName);
+        // One line per person: a wall of the same name is the cheapest way to
+        // deface a public list.
+        if (!name || seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        names.push(name);
+      }
+      return { slot, count: perSlot[slot] ?? 0, names };
+    });
+
+    return { slots, total };
+  }),
+
+  /**
+   * Public: set every slot this voter can make. The same voterKey always owns
+   * the same row, so calling again replaces that person's hands instead of
+   * stuffing the count. An empty list withdraws the vote.
+   */
+  setSlots: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({
+      slots: z.array(z.enum(INTEROP_SLOTS)).max(INTEROP_SLOTS.length),
+      voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+      // Bounded well above the column so a long paste is trimmed by
+      // cleanDisplayName rather than rejected with nothing to show for it.
+      displayName: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return { ok: false as const };
+      await ensureTable(database);
+
+      const stored = serializeSlots(input.slots);
+      if (stored.length === 0) {
+        await database.delete(interopTimeVotes).where(eq(interopTimeVotes.voterKey, input.voterKey));
+        return { ok: true as const };
+      }
+
+      const name = cleanDisplayName(input.displayName);
+
+      await database
+        .insert(interopTimeVotes)
+        .values({ slot: stored, voterKey: input.voterKey, displayName: name })
+        .onDuplicateKeyUpdate({
+          set: { slot: stored, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
+        });
+
+      void syncInteropCircle();
+      return { ok: true as const };
+    }),
+
+  /**
+   * Public: single-slot vote, kept for pages loaded before multi-select
+   * shipped. Replaces the voter's hands with this one slot.
+   */
+  vote: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({
+      slot: z.enum(INTEROP_SLOTS),
+      voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+      // Bounded well above the column so a long paste is trimmed by
+      // cleanDisplayName rather than rejected with nothing to show for it.
+      displayName: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return { ok: false as const };
+      await ensureTable(database);
+
+      const name = cleanDisplayName(input.displayName);
+
+      await database
+        .insert(interopTimeVotes)
+        .values({ slot: input.slot, voterKey: input.voterKey, displayName: name })
+        .onDuplicateKeyUpdate({
+          set: { slot: input.slot, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
+        });
+
+      return { ok: true as const };
+    }),
+
+  /** Public: drop a vote entirely, for someone whose week stops working. */
+  withdraw: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({ voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/) }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return { ok: false as const };
+      await ensureTable(database);
+      await database.delete(interopTimeVotes).where(eq(interopTimeVotes.voterKey, input.voterKey));
+      return { ok: true as const };
+    }),
+  /**
+   * Public: the Circle as scheduled, which is what the calendar and reminders
+   * follow. It can trail the live vote by the settle window, and sessions
+   * inside the freeze window never move.
+   */
+  schedule: publicProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return { slot: null, pinned: false, sessions: [] as { id: number; startTime: Date; status: string }[], members: 0 };
+    await syncInteropCircle();
+    const now = new Date();
+    const state = await resolveCircleState(database, now);
+    const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+    const nextId = rows[0]?.id;
+    let members = 0;
+    if (nextId) {
+      const [row] = await database
+        .select({ n: sql<number>`count(*)` })
+        .from(eventSignups)
+        .where(and(eq(eventSignups.eventId, nextId), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)));
+      members = Number(row?.n ?? 0);
+    }
+    return {
+      slot: state.slot,
+      pinned: state.pinned != null,
+      sessions: rows.slice(0, SCHEDULE_PREVIEW).map((r) => ({ id: r.id, startTime: r.startTime, status: r.status })),
+      members,
+    };
+  }),
+
+  /**
+   * Public: join the Circle. Signs this email up for every upcoming week, and
+   * the sync carries them onto each new week as it is added. Joining again
+   * re-activates someone who left.
+   */
+  join: publicProcedure
+    .use(rateLimited(CONTACT_LIMIT))
+    .input(z.object({
+      email: z.string().trim().toLowerCase().email().max(320),
+      name: z.string().trim().max(120).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await syncInteropCircle({ force: true });
+      const now = new Date();
+      const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+      if (!rows.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No Circle sessions are scheduled yet." });
+
+      const ids = rows.map((r) => r.id);
+      const already = await database
+        .select({ id: eventSignups.id })
+        .from(eventSignups)
+        .where(and(inArray(eventSignups.eventId, ids), eq(eventSignups.email, input.email), isNull(eventSignups.cancelledAt)))
+        .limit(1);
+
+      const name = input.name && input.name.length > 0 ? input.name : null;
+      await addCircleSignups(database, ids, [{ email: input.email, name }]);
+
+      const state = await resolveCircleState(database, now);
+      if (!already.length) {
+        sendCircleWelcome({
+          email: input.email,
+          name,
+          nextId: rows[0].id,
+          nextStart: new Date(rows[0].startTime),
+          slotLabel: interopSlot(state.slot).label,
+        }).catch((err) => console.error("[interopSessions] welcome email failed:", err));
+      }
+      return { ok: true as const, alreadyMember: already.length > 0 };
+    }),
+
+  /** Public: leave the Circle (every future week). Same trust level as events.unsubscribe. */
+  leave: publicProcedure
+    .use(rateLimited(CONTACT_LIMIT))
+    .input(z.object({ email: z.string().trim().toLowerCase().email().max(320) }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await leaveCircle(database, input.email);
+      return { ok: true as const };
+    }),
+
+  /** Admin: the vote, the pin, the applied slot, and the upcoming weeks. */
+  adminState: adminProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = new Date();
+    const state = await resolveCircleState(database, now);
+    const rows = await upcomingCircleRows(database, now);
+    const ids = rows.map((r) => r.id);
+    const counts = ids.length
+      ? await database
+          .select({ eventId: eventSignups.eventId, n: sql<number>`count(*)` })
+          .from(eventSignups)
+          .where(and(inArray(eventSignups.eventId, ids), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)))
+          .groupBy(eventSignups.eventId)
+      : [];
+    const byId = new Map(counts.map((c) => [c.eventId, Number(c.n)]));
+    return {
+      ...state,
+      sessions: rows.map((r) => ({
+        id: r.id,
+        startTime: r.startTime,
+        status: r.status,
+        manualOverride: !!r.manualOverride,
+        signups: byId.get(r.id) ?? 0,
+      })),
+    };
+  }),
+
+  /** Admin: pin the Circle to a slot (overrides the vote), or clear the pin. Runs the sync now. */
+  adminPin: adminProcedure
+    .input(z.object({ slot: z.enum(INTEROP_SLOTS).nullable() }))
+    .mutation(async ({ input }) => {
+      await setSiteSetting(INTEROP_PIN_SETTING, input.slot ?? "");
+      const result = await syncInteropCircle({ force: true });
+      return { ok: true as const, result };
+    }),
+
+  /** Admin: run the sync now instead of waiting for the next sweep. */
+  adminSync: adminProcedure.mutation(async () => {
+    const result = await syncInteropCircle({ force: true });
+    return { ok: true as const, result };
+  }),
+});

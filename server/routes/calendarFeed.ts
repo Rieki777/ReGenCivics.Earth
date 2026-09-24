@@ -76,6 +76,11 @@ export function registerCalendarFeedRoutes(app: Express): void {
       filename: "regen-civics-open-sessions.ics",
     },
     { path: "/calendar/season2.ics", kind: "season2", filename: "regen-civics-season-2.ics" },
+    {
+      path: "/calendar/interop-circle.ics",
+      kind: "interop-circle",
+      filename: "regen-civics-interoperability-circle.ics",
+    },
     // The URL every existing subscriber is already polling. It has to keep
     // answering for as long as anyone holds it, which is forever.
     {

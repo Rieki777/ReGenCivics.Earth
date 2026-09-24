@@ -3,9 +3,11 @@ import {
   consumeOutboundWriteFill,
   isOutboundWriteComposeAction,
   isOutboundWriteSurface,
+  outboundWriteContentReady,
   parseOutboundWriteFill,
   queueOutboundWriteFill,
   serializeOutboundWriteFill,
+  OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE,
   OUTBOUND_WRITE_FILL_KEY,
 } from "@shared/outboundWriteFill";
 
@@ -82,5 +84,21 @@ describe("queueOutboundWriteFill / consumeOutboundWriteFill", () => {
     const fill = consumeOutboundWriteFill();
     expect(fill).toEqual({ subject: "Hello", body: "Body", layout: "plain" });
     expect(sessionStorage.getItem(OUTBOUND_WRITE_FILL_KEY)).toBeNull();
+  });
+});
+
+describe("outboundWriteContentReady", () => {
+  it("requires non-whitespace subject and body", () => {
+    expect(outboundWriteContentReady("Hi", "Body")).toBe(true);
+    expect(outboundWriteContentReady("  Hi  ", "  Body  ")).toBe(true);
+    expect(outboundWriteContentReady("", "Body")).toBe(false);
+    expect(outboundWriteContentReady("Hi", "")).toBe(false);
+    expect(outboundWriteContentReady("   ", "Body")).toBe(false);
+    expect(outboundWriteContentReady("Hi", "\n\t  ")).toBe(false);
+    expect(outboundWriteContentReady("", "")).toBe(false);
+  });
+
+  it("keeps a stable empty-content message for UI and server", () => {
+    expect(OUTBOUND_WRITE_EMPTY_CONTENT_MESSAGE).toMatch(/subject and body/i);
   });
 });

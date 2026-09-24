@@ -5,7 +5,15 @@
  */
 
 import { Link } from "wouter";
-import { ArrowLeft, Leaf, MessageCircle, Youtube, Users, ExternalLink, Sparkles, Heart } from "lucide-react";
+import { ArrowLeft, Leaf, MessageCircle, Youtube, Users, ExternalLink, Sparkles, Heart, Globe, Network } from "lucide-react";
+import {
+  WHATSAPP_COMMUNITY_URL,
+  TELEGRAM_CHANNEL_URL,
+  DISCORD_INVITE_URL,
+  YOUTUBE_CHANNEL_URL,
+  HYLO_SEEDS_URL,
+  HOLOS_REGEN_CIVICS_URL,
+} from "@shared/communityLinks";
 import { Button } from "@/components/ui/button";
 import { SEO, pageSEO } from "@/components/SEO";
 
@@ -83,7 +91,7 @@ const socialLinks = [
     name: "WhatsApp Community",
     description: "Join our active community chat for real-time updates and discussions",
     icon: MessageCircle,
-    url: "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
+    url: WHATSAPP_COMMUNITY_URL,
     color: "#25d366",
     recommended: false,
   },
@@ -91,7 +99,7 @@ const socialLinks = [
     name: "Telegram Channel",
     description: "Cross-posted updates and SEEDS Community chatter on Telegram",
     icon: MessageCircle,
-    url: "https://t.me/SEEDS_Community",
+    url: TELEGRAM_CHANNEL_URL,
     color: "#0088cc",
     recommended: false,
   },
@@ -99,7 +107,7 @@ const socialLinks = [
     name: "Discord Server",
     description: "Connect with regenerators, ask questions, and find collaboration opportunities",
     icon: Users,
-    url: "https://discord.gg/8aTzTxH3Qe",
+    url: DISCORD_INVITE_URL,
     color: "#5865f2",
     recommended: false,
   },
@@ -107,8 +115,24 @@ const socialLinks = [
     name: "YouTube Channel",
     description: "Watch season recordings, project introductions, and educational content",
     icon: Youtube,
-    url: "https://www.youtube.com/@SEEDSRegenerativeEconomies",
+    url: YOUTUBE_CHANNEL_URL,
     color: "#ff0000",
+    recommended: false,
+  },
+  {
+    name: "Hylo",
+    description: "Hylo SEEDS group — coordinate with regenerators on Hylo",
+    icon: Globe,
+    url: HYLO_SEEDS_URL,
+    color: "#2d6a4f",
+    recommended: false,
+  },
+  {
+    name: "Holos",
+    description: "Holos Regen Civics holon — gather in the Regen Civics holon",
+    icon: Network,
+    url: HOLOS_REGEN_CIVICS_URL,
+    color: "#6b5b95",
     recommended: false,
   },
 ];

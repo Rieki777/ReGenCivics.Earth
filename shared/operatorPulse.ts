@@ -1,7 +1,12 @@
 /**
  * Operator Pulse — daily "needs a human" stack for Admin Overview.
  * Pure helpers so server counts and client tests share one vocabulary.
+ *
+ * Morning ops arc (catalog order, omit zeros):
+ * reminder/cron issues → session closeout → live runbook → call tasks →
+ * investors → outbound failed / drafts → outreach → applications.
  */
+
 
 export type OperatorPulseSeverity = "high" | "medium" | "low";
 
@@ -101,6 +106,21 @@ export function isOutboundFailedOrStuck(
   return false;
 }
 
+/** Draft newsletter/outbound issues waiting for a human (Write surface). */
+export function isOutboundDraftWaiting(issue: { status?: string | null }): boolean {
+  return (issue.status || "").toLowerCase() === "draft";
+}
+
+/**
+ * Reminder cron counts as a morning issue only when unconfigured or stale.
+ * `not_tracked_yet` / `ok` stay on the Overview cron strip — do not duplicate.
+ */
+export function isReminderCronPulseIssue(
+  status: string | null | undefined,
+): boolean {
+  return status === "unconfigured" || status === "stale";
+}
+
 export type CallTaskLike = {
   sourceType?: string | null;
   workStatus?: string | null;
@@ -126,14 +146,25 @@ export function isOpenOrOverdueCallTask(
 }
 
 export type OperatorPulseCounts = {
+  /** 0 or 1 — reminder cron unconfigured / stale (compose with Overview strip). */
+  reminderCronIssues: number;
   pastEventsNoWatch: number;
   recordingsNeedCut: number;
+  /** Live sessions missing at least one runbook owner. */
+  liveRunbookNeedsOwners: number;
   investorsNeedsAction: number;
   applicationsWaitingReview: number;
   outboundFailedOrStuck: number;
+  outboundDraftsWaiting: number;
   callTasksOpenOrOverdue: number;
+  /** Harvest ripe ideas ready for outreach compose. */
+  outreachRipe: number;
 };
 
+/**
+ * Catalog order = morning ops arc. Severity is for row styling only;
+ * buildOperatorPulseItems preserves this order (zeros omitted).
+ */
 const CATALOG: Array<{
   id: OperatorPulseItem["id"];
   label: string;
@@ -142,25 +173,39 @@ const CATALOG: Array<{
   countKey: keyof OperatorPulseCounts;
 }> = [
   {
-    id: "outbound-failed",
-    label: "Failed or stuck Outbound sends",
+    id: "reminder-cron",
+    label: "Event reminder cron needs attention",
     severity: "high",
-    href: "/admin?tab=outbound&surface=history",
-    countKey: "outboundFailedOrStuck",
+    href: "/admin?tab=events",
+    countKey: "reminderCronIssues",
+  },
+  {
+    id: "past-events-no-watch",
+    label: "Session closeout — past events with no Watch path",
+    severity: "medium",
+    href: "/admin?tab=events&filter=past",
+    countKey: "pastEventsNoWatch",
+  },
+  {
+    id: "recordings-need-cut",
+    label: "Session closeout — recordings need cut",
+    severity: "medium",
+    href: "/admin?tab=edited-cuts&filter=needs_cut",
+    countKey: "recordingsNeedCut",
+  },
+  {
+    id: "live-runbook",
+    label: "Live session — assign runbook owners",
+    severity: "high",
+    href: "/admin?tab=events&filter=upcoming",
+    countKey: "liveRunbookNeedsOwners",
   },
   {
     id: "call-tasks",
-    label: "Open or overdue call tasks",
+    label: "Call tasks stuck or unassigned",
     severity: "high",
-    href: "/admin?tab=call-tasks",
+    href: "/admin?tab=call-tasks&filter=needs_people",
     countKey: "callTasksOpenOrOverdue",
-  },
-  {
-    id: "applications",
-    label: "Applications waiting review",
-    severity: "medium",
-    href: "/admin?tab=applications&view=reviews",
-    countKey: "applicationsWaitingReview",
   },
   {
     id: "investors",
@@ -170,22 +215,36 @@ const CATALOG: Array<{
     countKey: "investorsNeedsAction",
   },
   {
-    id: "recordings-need-cut",
-    label: "Recordings need cut",
-    severity: "medium",
-    href: "/admin?tab=edited-cuts",
-    countKey: "recordingsNeedCut",
+    id: "outbound-failed",
+    label: "Failed or stuck Outbound sends",
+    severity: "high",
+    href: "/admin?tab=outbound&surface=history",
+    countKey: "outboundFailedOrStuck",
   },
   {
-    id: "past-events-no-watch",
-    label: "Past events with no Watch path",
+    id: "outbound-drafts",
+    label: "Outbound drafts waiting",
+    severity: "medium",
+    href: "/admin?tab=outbound&surface=write",
+    countKey: "outboundDraftsWaiting",
+  },
+  {
+    id: "outreach",
+    label: "Outreach — Harvest ripe ideas",
     severity: "low",
-    href: "/admin?tab=events&filter=past",
-    countKey: "pastEventsNoWatch",
+    href: "/admin-create",
+    countKey: "outreachRipe",
+  },
+  {
+    id: "applications",
+    label: "Applications waiting review",
+    severity: "medium",
+    href: "/admin?tab=applications&view=reviews",
+    countKey: "applicationsWaitingReview",
   },
 ];
 
-/** Build pulse rows with count > 0, sorted by severity then catalog order. */
+/** Build pulse rows with count > 0, in morning ops-arc (catalog) order. */
 export function buildOperatorPulseItems(counts: OperatorPulseCounts): OperatorPulseItem[] {
   const items: OperatorPulseItem[] = [];
   for (const row of CATALOG) {
@@ -199,15 +258,26 @@ export function buildOperatorPulseItems(counts: OperatorPulseCounts): OperatorPu
       severity: row.severity,
     });
   }
-  return items.sort((a, b) => {
-    const d = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
-    if (d !== 0) return d;
-    return a.label.localeCompare(b.label);
-  });
+  return items;
 }
 
 export function emptyOperatorPulse(generatedAt = new Date().toISOString()): OperatorPulseResult {
   return { generatedAt, items: [], deferred: [] };
+}
+
+export function emptyOperatorPulseCounts(): OperatorPulseCounts {
+  return {
+    reminderCronIssues: 0,
+    pastEventsNoWatch: 0,
+    recordingsNeedCut: 0,
+    liveRunbookNeedsOwners: 0,
+    investorsNeedsAction: 0,
+    applicationsWaitingReview: 0,
+    outboundFailedOrStuck: 0,
+    outboundDraftsWaiting: 0,
+    callTasksOpenOrOverdue: 0,
+    outreachRipe: 0,
+  };
 }
 
 // ── Morning ping (phase 2 of Operator Pulse) ─────────────────────────────────
