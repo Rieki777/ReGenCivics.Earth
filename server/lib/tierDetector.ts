@@ -31,6 +31,7 @@ import {
   questCompletions,
   letterOfIntent,
   applications,
+  proposals,
   proposalVotes,
   regenTools,
   regenToolClicks,
@@ -69,6 +70,20 @@ interface CriterionResult {
   note?: string;
   /** Raw counts / IDs that informed the decision (debugging). */
   evidence?: Record<string, unknown>;
+}
+
+/**
+ * Proposal category that counts as a Fund vote for Investor Steward.
+ * Matches the "Fund Allocation" option in the proposals UI / schema enum.
+ * Game-variable, community, and other categories do not count.
+ */
+export const FUND_VOTE_PROPOSAL_CATEGORY = "fund_allocation" as const;
+
+/** True when a proposal category is a real Fund (allocation) vote target. */
+export function isFundVoteProposalCategory(
+  category: string | null | undefined,
+): boolean {
+  return category === FUND_VOTE_PROPOSAL_CATEGORY;
 }
 
 /**
@@ -378,23 +393,29 @@ async function checkInvestorSteward(userId: number): Promise<CriterionResult> {
     .where(eq(letterOfIntent.userId, userId));
   const investmentSent = rows.some((r: { status: string }) => r.status === "converted");
 
-  // Fund vote: TODO. We need to know which proposals are Fund-scoped
-  // (vs. game proposals) once that classification exists. For now,
-  // approximate as "any proposal vote" so the criterion is checkable.
-  // Replace this with a proper Fund-scoped filter when the schema gains
-  // a proposal.scope or proposal.tenant filter.
-  const voteRows = await db
+  // Fund vote: a signal vote on a proposal whose category is fund_allocation
+  // ("Fund Allocation" in the proposals UI). Votes on game_variable,
+  // community, partnership, etc. do not count. Existing Steward awards stay
+  // sticky via tier_events / alreadyFired — this filter only gates new earns.
+  const fundVoteRows = await db
     .select({ id: proposalVotes.id })
     .from(proposalVotes)
-    .where(eq(proposalVotes.userId, userId));
-  const fundVoteCast = voteRows.length > 0;
+    .innerJoin(proposals, eq(proposalVotes.proposalId, proposals.id))
+    .where(
+      and(
+        eq(proposalVotes.userId, userId),
+        eq(proposals.category, FUND_VOTE_PROPOSAL_CATEGORY),
+      ),
+    )
+    .limit(1);
+  const fundVoteCast = fundVoteRows.length > 0;
 
   const met = investmentSent && fundVoteCast;
 
   return {
     met,
     note: `Investment: ${investmentSent}, Fund vote: ${fundVoteCast}`,
-    evidence: { investmentSent, voteCount: voteRows.length },
+    evidence: { investmentSent, fundVoteCount: fundVoteRows.length },
   };
 }
 
