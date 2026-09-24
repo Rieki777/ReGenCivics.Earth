@@ -391,14 +391,15 @@ async function notifyMove(database: Db, movedIds: number[], slotLabel: string, n
 export async function sendCircleWelcome(opts: { email: string; name: string | null; nextId: number; nextStart: Date; slotLabel: string }) {
   const hello = opts.name ? `<p style="color:#444;line-height:1.7;">Hi ${escapeHtml(opts.name)},</p>` : "";
   const html = circleEmailShell(
-    "You are in the Circle",
+    "You are signed up for the Circle",
     `${hello}<p style="color:#444;line-height:1.7;">Right now the Circle meets ${opts.slotLabel}. Your first session is ${circleWhen(opts.nextStart)}.</p>
-     <p style="color:#444;line-height:1.7;">You will get a reminder the day before and an hour before each week. If the group's vote moves the time, we email you the new one.</p>
+     <p style="color:#444;line-height:1.7;">You will get a reminder the day before and an hour before each week, and a recap after each session. If the group's vote moves the time, we email you the new one.</p>
      <p style="color:#444;line-height:1.7;">Bring a link to your repo, a sentence or two on what your tool does and who it serves, and the bot or agent you would put to work.</p>
-     <p style="color:#444;line-height:1.7;"><a href="${APP_BASE_URL}/calendar/interop-circle.ics" style="color:#1a472a;">Subscribe to the Circle calendar</a> and it keeps itself up to date.</p>`,
+     <p style="color:#444;line-height:1.7;"><a href="${APP_BASE_URL}/calendar/interop-circle.ics" style="color:#1a472a;">Subscribe to the Circle calendar</a> and it keeps itself up to date.</p>
+     <p style="color:#444;line-height:1.7;">Want a profile too? <a href="${APP_BASE_URL}/interop-sessions#join" style="color:#1a472a;">Create one on ReGen Civics</a>. Profiles will soon run on the shared infrastructure the Circle is building.</p>`,
     `You signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${unsubscribeLink(opts.nextId, opts.email)}" style="color:#999;">Leave the Circle</a>`,
   );
-  await sendEmail({ to: [opts.email], subject: "You are in the Interoperability Circle", html, template: "interop_circle_welcome" });
+  await sendEmail({ to: [opts.email], subject: "You are signed up for the Interoperability Circle", html, template: "interop_circle_welcome" });
 }
 
 /** Leave: cancel this person on every future Circle row. */

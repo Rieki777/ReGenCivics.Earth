@@ -310,4 +310,4 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Leading slot** vs **scheduled slot**. The leading slot is whatever has the most hands right now. The scheduled slot is what the calendar, reminders and emails follow: the admin pin if set, otherwise the leading slot once it has held the lead for 24 hours. Sessions less than 72 hours out never move.
 
-**Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.
+**Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Signing up is optional: anyone can attend from the calendar feed. Members get reminders, the recaps an admin sends with the Events tab follow-up tool, and an invitation to create a profile. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.

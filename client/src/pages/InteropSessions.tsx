@@ -14,10 +14,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, Video, Wrench } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, UserRound, Video, Wrench } from 'lucide-react';
 import { INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlotKey } from '@shared/interopCircle';
 import { CALENDAR_FEEDS } from '@/lib/calendarLinks';
 import { SubscribeButtons } from '@/components/CalendarCta';
+import { AuthDialog } from '@/components/AuthDialog';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
 import { BackButton } from '@/components/BackButton';
@@ -73,6 +75,8 @@ export default function InteropSessions() {
   const [mySlots, setMySlots] = useState<SlotKey[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [authOpen, setAuthOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     setVoterKey(readVoterKey());
@@ -81,6 +85,11 @@ export default function InteropSessions() {
     setEmail(readStored(EMAIL_STORAGE));
     setName(readStored(NAME_STORAGE));
   }, []);
+
+  // Signed-in members get their account email prefilled, unless they typed one.
+  useEffect(() => {
+    if (user?.email) setEmail((current) => current || user.email!);
+  }, [user?.email]);
 
   const tally = trpc.interopSessions.tally.useQuery(undefined, {
     refetchInterval: 5000,
@@ -360,25 +369,39 @@ export default function InteropSessions() {
             </section>
           </AnimatedSection>
 
-          {/* Join */}
+          {/* Join: optional. Anyone can come; signing up adds reminders, recaps and a profile. */}
           <AnimatedSection>
             <section id="join" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <Mail className="w-5 h-5 text-[#7dd87d]" />
-                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Join the Circle</p>
+                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Optional</p>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Get the reminders and the room link</h2>
-              <p className="text-white/75 mb-5">
-                Sign up once and you are on every week. You get a reminder the day before and an hour before, with
-                the link to join. If the vote moves the time, we email you the new one.
-                {(schedule.data?.members ?? 0) === 1 && <> 1 person is in so far.</>}
-                {(schedule.data?.members ?? 0) > 1 && <> {schedule.data!.members} people are in so far.</>}
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Come as you are, or sign up for more</h2>
+              <p className="text-white/75 mb-4">
+                Anyone can come to the Circle, no sign-up needed. Add the calendar below and every invite carries
+                the room link. Signing up gets you three more things:
               </p>
+              <ul className="space-y-3 mb-6">
+                {[
+                  ['Email reminders', 'The day before and an hour before, with the room link. If the vote moves the time, you hear first.'],
+                  ['Recaps', 'After each session: what we built, what we agreed, and what comes next.'],
+                  ['A profile', 'Your place on ReGen Civics, which will soon run on the shared infrastructure this Circle is building.'],
+                ].map(([title, body]) => (
+                  <li key={title} className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-[#7dd87d] shrink-0 mt-0.5" />
+                    <p className="text-white/75">
+                      <span className="text-white font-semibold">{title}.</span> {body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              {(schedule.data?.members ?? 0) === 1 && <p className="text-white/50 text-sm mb-3">1 person has signed up so far.</p>}
+              {(schedule.data?.members ?? 0) > 1 && <p className="text-white/50 text-sm mb-3">{schedule.data!.members} people have signed up so far.</p>}
 
               {join.isSuccess ? (
-                <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-6">
+                <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-4">
                   <CheckCircle2 className="w-5 h-5" />
-                  {join.data?.alreadyMember ? 'You were already in. See you there.' : 'You are in. Check your email for the details.'}
+                  {join.data?.alreadyMember ? 'You were already signed up. See you there.' : 'You are signed up. Check your email for the details.'}
                 </p>
               ) : (
                 <form onSubmit={submitJoin} className="flex flex-col sm:flex-row gap-3 mb-2">
@@ -389,7 +412,7 @@ export default function InteropSessions() {
                     maxLength={320}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    aria-label="Email"
+                    aria-label="Email for Circle reminders and recaps"
                     className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
                   />
                   <button
@@ -397,19 +420,51 @@ export default function InteropSessions() {
                     disabled={join.isPending}
                     className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60"
                   >
-                    {join.isPending ? 'Joining...' : 'Join the Circle'}
+                    {join.isPending ? 'Signing up...' : 'Send me reminders and recaps'}
                   </button>
                 </form>
               )}
               {join.isError && (
                 <p className="text-red-300 text-sm mb-4">{join.error.message || 'That did not go through. Try again in a minute.'}</p>
               )}
-              <p className="text-white/40 text-xs mb-6">Your name comes from the field above. Every email has a link to leave.</p>
+              <p className="text-white/40 text-xs mb-5">
+                An email is all reminders need. Your name comes from the field above. Every email has a link to leave.
+              </p>
 
-              <p className="text-white/75 mb-3">Or put it on your calendar. This calendar follows the vote, so it moves when the Circle moves.</p>
+              <div className="flex flex-wrap items-center gap-3 mb-8">
+                {isAuthenticated ? (
+                  <a
+                    href="/profile"
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <UserRound className="w-4 h-4" />
+                    Your profile
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAuthOpen(true)}
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <UserRound className="w-4 h-4" />
+                    Create your profile
+                  </button>
+                )}
+                <span className="text-white/50 text-sm">Sign in with Google or email.</span>
+              </div>
+
+              <p className="text-white/75 mb-3">
+                Just want it on your calendar? This calendar follows the vote, so it moves when the Circle moves.
+              </p>
               <SubscribeButtons feed={CALENDAR_FEEDS.interopCircle} />
             </section>
           </AnimatedSection>
+          <AuthDialog
+            open={authOpen}
+            onOpenChange={setAuthOpen}
+            onLogin={() => setAuthOpen(false)}
+            title="Create your ReGen Civics profile"
+          />
 
           {/* Prep */}
           <AnimatedSection>
