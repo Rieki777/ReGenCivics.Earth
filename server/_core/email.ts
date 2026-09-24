@@ -111,6 +111,12 @@ function getEmailFooter(): string {
       <div style="text-align: center; margin-bottom: 20px;">
         <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
         <div style="margin: 15px 0;">
+          <a href="${HYLO_SEEDS_URL}" style="display: inline-block; margin: 0 8px; color: #2d6a4f; text-decoration: none; font-size: 14px; font-weight: bold;">
+            Hylo
+          </a>
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="display: inline-block; margin: 0 8px; color: #6b5b95; text-decoration: none; font-size: 14px; font-weight: bold;">
+            Holos
+          </a>
           <a href="${WHATSAPP_COMMUNITY_URL}" style="display: inline-block; margin: 0 8px; color: #25D366; text-decoration: none; font-size: 14px; font-weight: bold;">
             &#x1F4AC; WhatsApp
           </a>
@@ -119,12 +125,6 @@ function getEmailFooter(): string {
           </a>
           <a href="${YOUTUBE_CHANNEL_URL}" style="display: inline-block; margin: 0 8px; color: #FF0000; text-decoration: none; font-size: 14px; font-weight: bold;">
             &#x25B6; YouTube
-          </a>
-          <a href="${HYLO_SEEDS_URL}" style="display: inline-block; margin: 0 8px; color: #2d6a4f; text-decoration: none; font-size: 14px; font-weight: bold;">
-            Hylo
-          </a>
-          <a href="${HOLOS_REGEN_CIVICS_URL}" style="display: inline-block; margin: 0 8px; color: #6b5b95; text-decoration: none; font-size: 14px; font-weight: bold;">
-            Holos
           </a>
         </div>
       </div>
@@ -144,13 +144,14 @@ function getEmailFooter(): string {
           </a>
         </p>
         <p style="color: #4a7c59; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
-          Or join us on
-          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #25D366;">WhatsApp</a>,
-          <a href="${DISCORD_INVITE_URL}" style="color: #5865F2;">Discord</a>,
-          <a href="${HYLO_SEEDS_URL}" style="color: #2d6a4f;">Hylo</a>,
+          Prefer gathering on
+          <a href="${HYLO_SEEDS_URL}" style="color: #2d6a4f;">Hylo</a>
           or
           <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: #6b5b95;">Holos</a>
-          for ongoing conversation.
+          — also on
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #25D366;">WhatsApp</a>
+          or
+          <a href="${DISCORD_INVITE_URL}" style="color: #5865F2;">Discord</a>.
         </p>
       </div>
       
