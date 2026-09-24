@@ -417,8 +417,30 @@ non-negotiables both hold once the two kinds of text are named separately.
 |---|---|---|
 | 1 | Answer the six questions in section 7 | **Done 2026-09-23.** Three settled from the code, three answered by Rye, all recorded above |
 | 2 | `OPENROUTER_API_KEY` for the baseline's LLM half | **Done.** Rye authorised pulling it from Railway; run at 2026-09-23 |
-| 3 | The consumer-app control | **Done for ChatGPT**, run logged out, 0 of 4 mentions. Gemini and Muse need an account Claude Code will not create, and Rye has agreed to proceed without them |
+| 3 | The consumer-app control | **Done for ChatGPT**, run logged out, 0 of 4 mentions. Gemini and Muse need an account Claude Code will not create, and Rye agreed to drop them **as baseline measurements only**. Both remain target distribution surfaces; see the note below |
 | 4 | Read this report and the baseline findings | The spec's own hard stop before phase 0 |
+
+**Gemini Spark and Muse are not dropped as surfaces.** Skipping them in the
+baseline is a measurement decision: two independent stacks already agree that
+ReGen Civics is absent (0 of 16 through OpenRouter, 0 of 4 through ChatGPT), so
+a third and fourth would sharpen *where* we are absent rather than *whether*.
+
+The distribution case for both is unchanged, and they are among the cheapest
+surfaces we have:
+
+- **Gemini Spark** takes a custom MCP server url pasted into Connected Apps.
+  No submission, no review, no fee. It goes live the day the server exists.
+- **Muse** accepts an Existing MCP server as a connection type on its form, and
+  any Muse user can add an unreviewed custom connector from a url.
+- One MCP server covers ChatGPT, Codex, Claude, Gemini Spark, Grok, Grok Bot
+  and Muse. Dropping either would save no build work at all.
+
+**One real dependency this creates.** Phase 8's acceptance criterion is that
+the connector answers all four baseline questions correctly on Claude, Gemini
+Spark and Grok. Verifying the Gemini half needs a Google account that can add a
+custom app: a personal US account, 18+, English, Keep Activity on. Logged out
+does not work, as this run established. That account has to exist before phase
+8, and someone other than Claude Code has to create it.
 
 ### Claude Code, once Rye has read both
 
