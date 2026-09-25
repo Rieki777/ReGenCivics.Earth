@@ -712,7 +712,7 @@ export const gameRoles: GameRole[] = [
     characterImage: "/images/roles/resource-season-organizer-card.webp",
     sceneImage: "/images/roles/resource-season-organizer-scene.webp",
     purpose:
-      "Organize the Resource Season: receive the wheel at the December solstice, run the shared crowdpool launch with the cohort, keep the campaign calendar moving, help people find and claim what each project needs, and pass the wheel to the Build Season at the March equinox.",
+      "Organize the Resource Season: receive the wheel at the December solstice, run the shared crowdpool launch with the cohort and every community project that's ready, keep the campaign calendar moving, help people find and claim what each project needs, and pass the wheel to the Build Season at the March equinox.",
     circle: "Seasons Circle",
     powers: [
       "Set the Resource Season calendar",
@@ -726,7 +726,7 @@ export const gameRoles: GameRole[] = [
       "Input on how crowdpool campaigns are presented",
     ],
     responsibilities: [
-      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort",
+      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort and every community project that's ready",
       "Keep the campaign calendar: stories, live moments, matching pushes, investor conversations",
       "Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap",
       "Host the March equinox recap and pass off to the Build Season Organizer",
@@ -737,12 +737,12 @@ export const gameRoles: GameRole[] = [
     maxTokenAward: "1,170,000 $ReGen ($11,700)",
     hoursPerWeek: 15,
     deliverables: [
-      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort",
+      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort and every community project that's ready",
       "Keep the campaign calendar: stories, live moments, matching pushes, investor conversations",
       "Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap",
       "Host the March equinox recap and pass off to the Build Season Organizer",
     ],
-    seed: "The shared launch goes live at the solstice with every graduating project",
+    seed: "The shared launch goes live at the solstice with every graduating project and every community project that's ready",
     harvest: "Graduating projects reach their in-kind asks by close (target: most at 100% of the in-kind ask)",
     seasons: ["spring"],
     assignment: "Open",

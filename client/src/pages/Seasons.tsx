@@ -237,7 +237,7 @@ const JOURNEY: Stop[] = [
     color: SEASON_LOOK.spring.color,
     at: [2, "spring"],
     items: [
-      "The cohort launches one shared crowdpool",
+      "The cohort and every ready community project crowdpool together",
       "Roles filled, tools lent, time and materials pledged",
       `Letters of Intent build toward the Fund's founding event (target launch ${FUND.launchTarget})`,
     ],
@@ -326,8 +326,9 @@ export default function Seasons() {
             <p className="text-lg text-white/85 max-w-3xl mx-auto leading-relaxed safe-prose">
               Season 2 opens with the Design Season and our incubator. For 13 weeks, thirteen
               regenerative land projects design how their villages decide, share value, hold roles,
-              and stay legal and fair. On the last week they launch into one shared crowdpool, and
-              the Resource Season begins.
+              and stay legal and fair. On the last week they launch into one shared crowdpool, joined
+              by every community project that's ready, and the Resource Season begins. Anyone can
+              follow along live.
             </p>
           </AnimatedSection>
 
@@ -367,7 +368,8 @@ export default function Seasons() {
                     </h3>
                     <p className="text-white/80 safe-prose">
                       The cohort meets Saturdays at {SESSION_TIME}, and the sessions stream on the SEEDS
-                      channel for anyone who wants to follow along.
+                      channel for anyone who wants to follow along. If your project is ready by the
+                      last week, join the community crowdpooling round.
                       {status.next ? ` Next session: ${pacificDay.format(status.next)}.` : ""}
                     </p>
                   </>
@@ -378,8 +380,8 @@ export default function Seasons() {
                       Season 2's Design Season is complete
                     </h3>
                     <p className="text-white/80 safe-prose">
-                      The cohort designed their games and launched their crowdpool together. The
-                      Resource Season is here: see what they are calling in.
+                      The cohort designed their games, and the crowdpooling round is open to every
+                      project that's ready. The Resource Season is here: see what they are calling in.
                     </p>
                   </>
                 )}

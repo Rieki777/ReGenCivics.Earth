@@ -6,7 +6,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
-import { APPLICATIONS_SHORT, APPLICATIONS_STATUS } from "@shared/applicationWindow";
+import {
+  APPLICATIONS,
+  APPLICATIONS_SHORT,
+  APPLICATIONS_STATUS,
+  FOLLOW_ALONG_HREF,
+  FOLLOW_ALONG_LABEL,
+} from "@shared/applicationWindow";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { ReadableScrim } from "@/components/ReadableScrim";
@@ -214,12 +220,12 @@ export default function Land() {
               <span>{APPLICATIONS_SHORT}</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]/80">|</span>
-            <Link href="/apply">
+            <Link href={APPLICATIONS.followAlong ? FOLLOW_ALONG_HREF : "/apply"}>
               <Button
                 size="sm"
                 className="bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-3 py-1 h-auto"
               >
-                Apply Now
+                {APPLICATIONS.followAlong ? FOLLOW_ALONG_LABEL : "Apply Now"}
               </Button>
             </Link>
           </div>

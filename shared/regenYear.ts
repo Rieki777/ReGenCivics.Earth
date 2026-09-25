@@ -128,7 +128,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     gathering:
       "The Handoff Festival. The outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day. The north brings the harvest, the south brings the seeds.",
     play: [
-      { who: "Land projects", what: "Follow the incubator as this cohort designs their games.", href: "/season2", label: "Follow Season 2" },
+      { who: "Land projects", what: "Follow along live as the cohort designs their games, then crowdpool with them if you're ready.", href: "/schedule#follow-along", label: "Follow along live" },
       { who: "Builders", what: "Build the tools under the land projects with us, weekly.", href: "/interop-sessions", label: "Join the Interoperability Circle" },
       { who: "Players", what: "Pick up a quest and start earning your place in the Game.", href: "/game", label: "Play the Game" },
     ],
@@ -143,7 +143,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     summary:
       "The designs are done, so we open the doors. Each project launches its crowdpool and asks for everything it needs to come alive: hands, roles, tools, materials, and money. We talk with investors, welcome people into roles, and receive the energy and resources that flow in.",
     happens: [
-      "The cohort launches its crowdpools together",
+      "The cohort and every ready community project launch their crowdpools together",
       "People claim roles, lend tools, and pledge time and materials",
       "We talk with investors and gather Letters of Intent for the Fund",
       "Stories go out wide so the right people find each project",
@@ -154,10 +154,10 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     organizer: { title: "Resource Season Organizer", character: "The Rainmaker" },
     opensWith: "a recap and passoff, and the crowdpool launch, at the December solstice",
     gathering:
-      "Recap and passoff from Design to Resource. The cohort launches its crowdpool together and invites everyone in.",
+      "Recap and passoff from Design to Resource. The cohort and the community projects that are ready launch their crowdpools together and invite everyone in.",
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
-      { who: "Land projects", what: "Learn how a crowdpool works before yours goes live.", href: "/crowd-pooling", label: "How crowdpooling works" },
+      { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling", label: "How crowdpooling works" },
       { who: "Investors", what: "Tell us what you'd back with a non-binding Letter of Intent for the Fund.", href: "/loi", label: "Send a Letter of Intent" },
     ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },

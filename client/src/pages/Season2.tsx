@@ -64,6 +64,7 @@ import {
   Users,
   Rocket,
   Route,
+  Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -74,7 +75,15 @@ import { Season2Calendar } from "@/components/Season2Calendar";
 import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
-import { APPLY_ANYTIME_LINE, APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
+import {
+  APPLICATIONS,
+  APPLICATIONS_HELD,
+  APPLICATIONS_SHORT,
+  APPLY_BUTTON_LABEL,
+  CROWDPOOL_ROUND_LINE,
+  FOLLOW_ALONG_HREF,
+  FOLLOW_ALONG_LABEL,
+} from "@shared/applicationWindow";
 import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
 
 const display = { fontFamily: "var(--font-display)" } as const;
@@ -515,7 +524,7 @@ const SELECTION: {
 }[] = [
   {
     title: "Applications closed September 11th",
-    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. ${APPLY_ANYTIME_LINE}`,
+    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. ${APPLICATIONS_HELD}`,
   },
   {
     title: "Shortlisted projects make a pitch video",
@@ -531,8 +540,8 @@ const SELECTION: {
     body: "The thirteen selected projects are introduced in a recording that kicks off the season, used for the crowdpooling campaigns and to get word out about what's about to be built.",
   },
   {
-    title: "Graduating projects go live together",
-    body: "At the end of the season, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. From there the world decides which projects to pool into.",
+    title: "Everyone who's ready goes live together",
+    body: "At the end of the season, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. Community projects that followed the season and are ready join the same round, with room for far more than thirteen, and the more the better. From there the world decides which projects to pool into.",
     cta: { href: "/crowd-pooling", label: "See how crowdpooling works" },
   },
 ];
@@ -555,7 +564,7 @@ const ARC: { n: string; icon: React.ElementType; title: string; body: string }[]
     n: "03",
     icon: Rocket,
     title: "Graduated",
-    body: "After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and we want all thirteen.",
+    body: "After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and we want all thirteen. Community projects that are ready join them.",
   },
   {
     n: "04",
@@ -596,7 +605,7 @@ export default function Season2() {
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
         title="Season Two: Show Us Your Play in the Infinite Game"
-        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort into one shared crowdpooling campaign. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance."
+        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance."
         image="/og/season2.jpg"
       />
 
@@ -634,18 +643,35 @@ export default function Season2() {
             <p className="text-lg md:text-xl text-white/85 leading-relaxed max-w-2xl mx-auto">
               Season Two selects thirteen regenerative land projects across every
               stage, scale, and approach to regeneration. We build your models
-              together, then launch the whole cohort into one shared crowdpooling
-              campaign where the world decides what to pool into. Projects that
+              together, then launch the whole cohort, with every community project
+              that's ready, into one shared crowdpooling campaign where the world
+              decides what to pool into. Projects that
               graduate become the foundation of the index fund for the
               ReGenerative Renaissance.
             </p>
           </ReadableScrim>
 
           <div className="flex flex-wrap justify-center gap-4">
+            {APPLICATIONS.followAlong && (
+              <Link href={FOLLOW_ALONG_HREF}>
+                <Button
+                  size="lg"
+                  className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+                >
+                  <Radio className="mr-2 w-5 h-5" aria-hidden="true" />
+                  {FOLLOW_ALONG_LABEL}
+                </Button>
+              </Link>
+            )}
             <Link href="/apply">
               <Button
                 size="lg"
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+                variant={APPLICATIONS.followAlong ? "outline" : "default"}
+                className={
+                  APPLICATIONS.followAlong
+                    ? "rounded-xl px-8 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+                    : "bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+                }
               >
                 {APPLY_BUTTON_LABEL}
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -1943,7 +1969,14 @@ export default function Season2() {
               sent in their pitch videos by September 14th, and Season Two begins
               on the Equinox with a selection day held in public, where a season
               council of members from previous seasons' projects picks the 13
-              projects. {APPLY_ANYTIME_LINE}
+              projects. {APPLICATIONS_HELD}
+            </FaqItem>
+            <FaqItem q="Can my project crowdpool with the cohort if it isn't selected?">
+              Yes.{" "}
+              <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                Follow along live
+              </Link>{" "}
+              through the Design Season. {CROWDPOOL_ROUND_LINE}
             </FaqItem>
           </div>
         </div>
@@ -1995,9 +2028,9 @@ export default function Season2() {
           {/* What happens next */}
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
             {[
-              { icon: CheckCircle2, t: "Apply anytime", d: "A short application about your project and team. Season Two applications closed September 11th; we hold new ones for the next season and email you as it gets close." },
-              { icon: Clock, t: "Pitch by September 14th", d: "We let shortlisted projects know by September 5th, then you have until September 14th to submit a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
-              { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins. Graduating projects go live together in one shared crowdpooling campaign at the end." },
+              { icon: Radio, t: "Follow along live", d: "Every Season Two session streams live for anyone. Add the season to your calendar and tune in each week." },
+              { icon: Sprout, t: "Crowdpool with the cohort", d: "If your project is ready by the end of the Design Season, join the community crowdpooling round. There's room for far more than 13, and the more the better." },
+              { icon: CheckCircle2, t: "Apply for the next season", d: "A short application about your project and team. We hold it for the next season and email you as it gets close." },
             ].map((s) => {
               const Icon = s.icon;
               return (
@@ -2011,23 +2044,26 @@ export default function Season2() {
           </div>
 
           <p className="mt-8 text-sm text-[#d4a574]/80 font-medium tracking-wide">
-            Season Two applications are closed · Apply anytime for the next season
+            {APPLICATIONS_SHORT}
           </p>
 
           {/* Nominate + newsletter fallback */}
           <div className="mt-10 pt-8 border-t border-[#7dd87d]/15 space-y-4">
             <p className="text-white/75">
               <Sparkles className="inline w-4 h-4 text-[#7dd87d] mr-1 -mt-0.5" />
-              Know a project that should be in Season Two? Send them this page. The
-              strongest cohorts come from players nominating each other.
+              Send this page to a project that should crowdpool with us. The
+              strongest rounds come from players inviting each other.
             </p>
             <p className="text-white/70">
               <Heart className="inline w-4 h-4 text-[#7dd87d] mr-1 -mt-0.5" />
-              Not ready this season?{" "}
-              <Link href="/newsletter" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
-                Follow along and we'll keep you posted
+              <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                Follow along live
               </Link>{" "}
-              as the next cohort opens.
+              whether or not you're in the cohort, and{" "}
+              <Link href="/newsletter" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                get the newsletter
+              </Link>{" "}
+              to hear when the next cohort opens.
             </p>
           </div>
         </AnimatedSection>

@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { toast } from 'sonner';
-import { APPLICATIONS_STATUS, APPLY_BUTTON_LABEL } from '@shared/applicationWindow';
+import { APPLICATIONS, APPLICATIONS_STATUS, APPLY_BUTTON_LABEL, CROWDPOOL_ROUND_LINE } from '@shared/applicationWindow';
 import {
   Calendar,
   Clock,
@@ -389,8 +389,8 @@ export default function Schedule() {
           standalone RecordingsSection was removed so the page has one
           canonical place to find past sessions. */}
 
-      {/* Follow Along with YouTube */}
-      <section className="py-8 px-4">
+      {/* Follow Along with YouTube. FOLLOW_ALONG_HREF links here. */}
+      <section id="follow-along" className="py-8 px-4 scroll-mt-24">
         <div className="container mx-auto max-w-4xl">
           <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
             <div className="text-center">
@@ -400,6 +400,7 @@ export default function Schedule() {
               </p>
               <p className="text-white/70 mb-4 max-w-2xl mx-auto">
                 You can follow along with the journey even if your project isn't selected. Add the whole season to your calendar and tune in each week. Sometimes there are opportunities for the audience to ask questions and participate.
+                {APPLICATIONS.followAlong && ` ${CROWDPOOL_ROUND_LINE}`}
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a

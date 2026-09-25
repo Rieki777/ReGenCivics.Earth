@@ -764,7 +764,7 @@ See you in the game!`,
     slug: 'how-to-apply-for-season-2',
     title: 'How to Apply for Season 2: Complete Application Guide',
     excerpt: 'Step-by-step tutorial on submitting your land project application for the next ReGen Civics season. Learn what information you need and how to present your project effectively.',
-    content: `**Update, September 2026:** Season 2 applications closed on September 11. You can apply anytime for the next season. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season. The steps below still describe how to apply.
+    content: `**Update, September 2026:** Season 2 applications closed on September 11. Anyone can [follow the season live](/schedule#follow-along). If your project is ready, join the community crowdpooling round and run your campaign together with the cohort. There's room for far more than 13 projects, and the more the better. If you don't make it through this season, apply for the next one anytime. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season. The steps below still describe how to apply.
 
 Ready to apply? This guide walks you through every step of the application process.
 

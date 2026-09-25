@@ -102,7 +102,7 @@ export const howToStartAnEcovillage: LearnArticle = {
     {
       heading: "What we do",
       paragraphs: [
-        "ReGen Civics runs a 13-week incubator for regenerative land projects, then invests in the ones that graduate with strong fundamentals. Projects keep ownership throughout. Season 2 opens September 2026.",
+        "ReGen Civics runs a 13-week incubator for regenerative land projects, then invests in the ones that graduate with strong fundamentals. Projects keep ownership throughout. Season 2 began in September 2026, and anyone can follow it live.",
       ],
       figure: {
         value: "42 land projects, 8 bioregional hubs",

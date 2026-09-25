@@ -24,7 +24,16 @@
  * Module-level values are worked out when the module loads: fresh on every
  * page load in the browser, and at each server start (every deploy) on the
  * server.
+ *
+ * Rye, later the same day: closed is only half the story. Anyone can follow
+ * the season live, and any project that is ready can join the community
+ * crowdpooling round with the cohort, with room for far more than 13. So from
+ * the September equinox to the March equinox (the Design Season's live
+ * sessions, then the Resource Season's crowdpooling) the held copy leads with
+ * that, and says to apply for the next season if this one doesn't work out.
  */
+
+import { regenSeasonOn } from "./regenYear";
 
 export const INTAKE_WINDOW = {
   /** Review opens with the Rest Season, the June solstice. */
@@ -47,6 +56,12 @@ export type IntakeStatus = {
   openSeason: number;
   /** When this year's review closes, for the open-state copy. */
   closesOn: string;
+  /**
+   * True while applications are held and a Season is live: its Design Season
+   * sessions stream for anyone, then its Resource Season crowdpooling round is
+   * open to every project that's ready.
+   */
+  followAlong: boolean;
 };
 
 const MONTHS = [
@@ -66,15 +81,35 @@ export function intakeStatus(now: Date = new Date()): IntakeStatus {
   const thisYearsSeason = y - 2024;
   const closedSeason = t >= closes ? thisYearsSeason : thisYearsSeason - 1;
   const inWindow = t >= opens && t < closes;
+  const reviewing = INTAKE_WINDOW.override ?? inWindow;
+  const season = regenSeasonOn(now);
   return {
-    reviewing: INTAKE_WINDOW.override ?? inWindow,
+    reviewing,
     closedSeason,
     openSeason: closedSeason + 1,
     closesOn: `${MONTHS[INTAKE_WINDOW.closes.month - 1]} ${INTAKE_WINDOW.closes.day}`,
+    followAlong: !reviewing && (season === "winter" || season === "spring"),
   };
 }
 
-/** The promise while applications are held. */
+/** How many projects each Season's incubator cohort takes. */
+export const COHORT_SIZE = 13;
+
+/** Where to follow along: the season calendar and the livestream, on /schedule. */
+export const FOLLOW_ALONG_HREF = "/schedule#follow-along";
+export const FOLLOW_ALONG_LABEL = "Follow along live";
+
+/** The community crowdpooling round: any project that's ready, with the cohort. */
+export const CROWDPOOL_ROUND_LINE = `If your project is ready, join the community crowdpooling round and run your campaign together with the cohort. There's room for far more than ${COHORT_SIZE} projects, and the more the better.`;
+
+/** While a Season is live: follow it, and crowdpool with the cohort if you're ready. */
+export const FOLLOW_ALONG_LINE = `Anyone can follow along live as the season unfolds. ${CROWDPOOL_ROUND_LINE}`;
+
+/** What goes with it: the next season, and the no-email promise. */
+export const NEXT_SEASON_LINE =
+  "If you don't make it through this season, apply for the next one anytime. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season.";
+
+/** The promise while applications are held and no Season is live. */
 export const APPLY_ANYTIME_LINE =
   "You can apply anytime for the next season. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season.";
 
@@ -82,17 +117,26 @@ export const APPLY_ANYTIME_LINE =
 export function applicationCopy(s: IntakeStatus) {
   const closedLine = `Season ${s.closedSeason} applications are closed.`;
   const openLine = `Season ${s.openSeason} applications are open until ${s.closesOn}. We review them as they come in and email you as we go.`;
+  /** What we say while applications are held, after the headline. */
+  const held = s.followAlong ? `${FOLLOW_ALONG_LINE} ${NEXT_SEASON_LINE}` : APPLY_ANYTIME_LINE;
   return {
     closedLine,
     openLine,
+    held,
     /** The headline everywhere. */
-    headline: s.reviewing ? openLine : closedLine,
-    /** Headline plus the promise, for places with room for two sentences. */
-    status: s.reviewing ? openLine : `${closedLine} ${APPLY_ANYTIME_LINE}`,
+    headline: s.reviewing
+      ? openLine
+      : s.followAlong
+        ? `Season ${s.closedSeason} applications are closed, and you can follow along live.`
+        : closedLine,
+    /** Headline plus the rest, for places with room for a few sentences. */
+    status: s.reviewing ? openLine : `${closedLine} ${held}`,
     /** One clause with no end stop, for banners and meta descriptions. */
     short: s.reviewing
       ? `Season ${s.openSeason} applications are open until ${s.closesOn}`
-      : `Season ${s.closedSeason} applications are closed; apply anytime for the next season`,
+      : s.followAlong
+        ? `Season ${s.closedSeason} applications are closed; follow along live, and crowdpool with us if you're ready`
+        : `Season ${s.closedSeason} applications are closed; apply anytime for the next season`,
     /** The label for apply buttons. */
     buttonLabel: s.reviewing ? `Apply for Season ${s.openSeason}` : "Apply for the next season",
   };
@@ -105,7 +149,11 @@ const COPY = applicationCopy(NOW);
 export const APPLICATIONS = NOW;
 /** "Season 2 applications are closed." or, while reviewing, the open line. */
 export const APPLICATIONS_HEADLINE = COPY.headline;
-/** Headline plus promise. */
+/** Just "Season 2 applications are closed.", for places that say the rest themselves. */
+export const APPLICATIONS_CLOSED_LINE = COPY.closedLine;
+/** What follows the headline while applications are held. */
+export const APPLICATIONS_HELD = COPY.held;
+/** Headline plus the rest. */
 export const APPLICATIONS_STATUS = COPY.status;
 /** One clause, no end stop: banners and meta descriptions. */
 export const APPLICATIONS_SHORT = COPY.short;

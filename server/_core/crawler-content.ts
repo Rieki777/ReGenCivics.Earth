@@ -253,7 +253,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
             return `<li><strong>${escapeHtml(s.title)} (${escapeHtml(s.pattern.toLowerCase())}).</strong> ${escapeHtml(s.summary)}</li>`;
           }).join("\n          ")}
         </ul>
-        <p>Season 1 was the first incubator, in ${SEASON_ONE.year}: ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. A long stretch of building the tools followed. Season 2 opened at the September 2026 equinox with a public Selection Day, and its 13-week Design Season runs to the December solstice, when the cohort launches a shared crowdpool. ${escapeHtml(APPLICATIONS_STATUS)} <a href="/apply">Apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
+        <p>Season 1 was the first incubator, in ${SEASON_ONE.year}: ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. A long stretch of building the tools followed. Season 2 opened at the September 2026 equinox with a public Selection Day, and its 13-week Design Season runs to the December solstice, when the cohort and every community project that's ready launch a shared crowdpool. ${escapeHtml(APPLICATIONS_STATUS)} <a href="/apply">Apply here</a>. To see what a season looks like from the inside, read <a href="/blog/remembering-season-1">Remembering Season 1</a>.</p>
       </article>
     `,
   },

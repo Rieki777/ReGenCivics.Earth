@@ -7,7 +7,14 @@ import {
   regenSeasonOn,
   regenSeasonSpan,
 } from "./regenYear";
-import { APPLY_ANYTIME_LINE, applicationCopy, intakeStatus } from "./applicationWindow";
+import {
+  APPLY_ANYTIME_LINE,
+  CROWDPOOL_ROUND_LINE,
+  FOLLOW_ALONG_LINE,
+  NEXT_SEASON_LINE,
+  applicationCopy,
+  intakeStatus,
+} from "./applicationWindow";
 import { REGEN_LANDS, guessLandFromTimeZone } from "./regenYear";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -94,9 +101,20 @@ describe("the wheel", () => {
         .toLowerCase();
       for (const word of banned) expect(text).not.toContain(word);
     }
-    for (const iso of ["2026-09-24", "2027-07-15"]) {
+    for (const iso of ["2026-09-24", "2027-04-15", "2027-07-15"]) {
       const copy = applicationCopy(intakeStatus(at(iso)));
-      const status = [copy.status, copy.headline, copy.buttonLabel, APPLY_ANYTIME_LINE].join(" ").toLowerCase();
+      const status = [
+        copy.status,
+        copy.headline,
+        copy.short,
+        copy.buttonLabel,
+        APPLY_ANYTIME_LINE,
+        FOLLOW_ALONG_LINE,
+        NEXT_SEASON_LINE,
+        CROWDPOOL_ROUND_LINE,
+      ]
+        .join(" ")
+        .toLowerCase();
       for (const word of banned) expect(status).not.toContain(word);
     }
     for (const land of Object.values(REGEN_LANDS)) {
@@ -138,25 +156,34 @@ describe("the wheel", () => {
 });
 
 describe("the intake follows the wheel", () => {
-  it("holds applications quietly between intakes: Season 2 closed, apply anytime, no email until the next season is close", () => {
+  it("while Season 2 is live: closed, follow along live, crowdpool with the cohort if ready, or apply for the next one", () => {
+    // Rye, 2026-09-24: anyone can follow along, any ready project can join the
+    // community crowdpooling round, and there's room for far more than 13.
     const s = intakeStatus(at("2026-09-24"));
-    expect(s).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
+    expect(s).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3, followAlong: true });
     const copy = applicationCopy(s);
-    expect(copy.status).toMatch(/Season 2 applications are closed\./);
-    expect(copy.status).toMatch(/apply anytime for the next season/);
+    expect(copy.headline).toBe("Season 2 applications are closed, and you can follow along live.");
+    expect(copy.status).toMatch(/^Season 2 applications are closed\. Anyone can follow along live/);
+    expect(copy.status).toMatch(/join the community crowdpooling round and run your campaign together with the cohort/);
+    expect(copy.status).toMatch(/far more than 13 projects, and the more the better/);
+    expect(copy.status).toMatch(/If you don't make it through this season, apply for the next one anytime/);
     expect(copy.status).toMatch(/won't get emails about it until we get closer/);
     expect(copy.buttonLabel).toBe("Apply for the next season");
-    expect(copy.short).toBe("Season 2 applications are closed; apply anytime for the next season");
+    expect(copy.short).toBe("Season 2 applications are closed; follow along live, and crowdpool with us if you're ready");
   });
 
-  it("stays held through the Design, Resource and Build seasons", () => {
-    expect(intakeStatus(at("2027-01-15"))).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
-    expect(intakeStatus(at("2027-06-20"))).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
+  it("keeps the follow-along copy through the Resource Season's crowdpooling, then goes back to apply anytime", () => {
+    expect(intakeStatus(at("2027-01-15"))).toMatchObject({ reviewing: false, closedSeason: 2, followAlong: true });
+    const build = intakeStatus(at("2027-04-15"));
+    expect(build).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3, followAlong: false });
+    expect(applicationCopy(build).status).toBe(`Season 2 applications are closed. ${APPLY_ANYTIME_LINE}`);
+    expect(applicationCopy(build).short).toBe("Season 2 applications are closed; apply anytime for the next season");
+    expect(intakeStatus(at("2027-06-20"))).toMatchObject({ reviewing: false, closedSeason: 2, followAlong: false });
   });
 
   it("opens review for the next Season in the Rest Season, until about eleven days before Selection Day", () => {
     const s = intakeStatus(at("2027-06-21"));
-    expect(s).toMatchObject({ reviewing: true, closedSeason: 2, openSeason: 3 });
+    expect(s).toMatchObject({ reviewing: true, closedSeason: 2, openSeason: 3, followAlong: false });
     expect(applicationCopy(s).headline).toBe(
       "Season 3 applications are open until September 10. We review them as they come in and email you as we go.",
     );
@@ -166,8 +193,10 @@ describe("the intake follows the wheel", () => {
   });
 
   it("rolls over to the next Season by itself once review closes", () => {
-    expect(intakeStatus(at("2027-09-12"))).toMatchObject({ reviewing: false, closedSeason: 3, openSeason: 4 });
-    expect(applicationCopy(intakeStatus(at("2027-10-01"))).closedLine).toBe("Season 3 applications are closed.");
+    expect(intakeStatus(at("2027-09-12"))).toMatchObject({ reviewing: false, closedSeason: 3, openSeason: 4, followAlong: false });
+    const s3 = applicationCopy(intakeStatus(at("2027-10-01")));
+    expect(s3.closedLine).toBe("Season 3 applications are closed.");
+    expect(s3.headline).toBe("Season 3 applications are closed, and you can follow along live.");
   });
 });
 
