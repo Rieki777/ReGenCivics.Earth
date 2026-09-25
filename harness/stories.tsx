@@ -402,7 +402,7 @@ export const STORIES: Record<string, Story> = {
     setup: () => {
       // The roles table as /team reads it, after the 2026-09-24 season moves.
       mockData["roles.list"] = [
-        { title: "Season Facilitator", kind: "game", seasons: ["winter"] },
+        { title: "Season Facilitator", kind: "game", seasons: ["winter", "spring", "summer", "fall"] },
         { title: "Incubator Guide", kind: "game", seasons: ["winter", "spring"] },
         { title: "Game Designer", kind: "game", seasons: ["winter", "spring"] },
         { title: "Skills Builder", kind: "game", seasons: ["winter"] },

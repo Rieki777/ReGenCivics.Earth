@@ -712,8 +712,8 @@ export default function Team() {
               The Game side weaves the other half.{' '}
               <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Alliance Weaver</button>{' '}
               connects partner organizations into the ecosystem.{' '}
-              <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Season Facilitator</button>{' '}
-              walks with incubator projects through their quests. The{' '}
+              <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Design Season Organizer</button>{' '}
+              facilitates the incubator weeks with each new cohort. The{' '}
               <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Storyteller</button>{' '}
               holds the public narrative of what the fund and the Game are building together. Different waters, same river. Game roles are compensated in $ReGen. Fund roles are compensated in $RCivics.
             </p>
