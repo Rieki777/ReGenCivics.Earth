@@ -75,7 +75,9 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 
 - **Email HTML (2026-09-24).** The contribution-status emails interpolated contributor names, campaign titles and the steward's free-text note raw into HTML, so a note could carry a link or markup into someone's inbox. Every value now goes through `textForEmail` (`shared/htmlText.ts`: decode the basic entities once, then escape), which also stops sanitized values printing as `&amp;amp;`. The same applies to `notifyOwner` (`server/_core/notification.ts`) and the notification email and digest renderers. Steward notes (`ownerNotes`), campaign titles and project names are now stored through `sanitizeInput`. Pinned by `shared/htmlText.test.ts` and `server/campaign-security.test.ts` section 6.
 
-**Code**: `server/_core/security.ts:sanitizeInput`, `client/src/utils/sanitize.ts`, `shared/htmlText.ts`.
+- **Embed pages (2026-09-25).** `/embed/badge/quest/:id` and `/embed/badge/alliance` printed `?name=`, `?player=` and `?org=` from the link straight into server-rendered HTML, and `/embed/campaign/:id` printed the campaign title and location raw. A crafted regencivics.earth link could render any markup (confirmed live with `?org=<b>injected</b>`). The CSP nonce stopped injected scripts in current browsers, but a `<meta http-equiv="refresh">` to another site or a fake form still rendered. Every interpolated value in `server/routes/embed.ts` now goes through `escapeHtml`, and query values are trimmed and capped at 80 characters (`queryText`). Pinned by `server/embed.test.ts` over real HTTP with hostile values in every input; the missing escape was planted back and two cases failed.
+
+**Code**: `server/_core/security.ts:sanitizeInput`, `client/src/utils/sanitize.ts`, `shared/htmlText.ts`, `server/routes/embed.ts`.
 
 ---
 

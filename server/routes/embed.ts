@@ -8,8 +8,24 @@ import { getDb } from "../db";
 import { campaigns, applications, events } from "../../drizzle/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { isPublicCampaign } from "../lib/project-steward";
+import { escapeHtml } from "../../shared/htmlText";
 
 const BASE_URL = "https://regencivics.earth";
+
+/**
+ * Every value that reaches these pages from a query string, a route param or a
+ * campaign row is escaped before it goes into the HTML. The badge routes read
+ * ?name=, ?player= and ?org= from the link itself, so an unescaped value let
+ * anyone build a regencivics.earth link that rendered their own markup (a
+ * <meta refresh> to another site, a fake form). The CSP nonce stops injected
+ * scripts in current browsers; escaping stops the markup. Query values are
+ * also capped, since a badge line has no use for more.
+ */
+const MAX_QUERY_TEXT = 80;
+export function queryText(value: unknown, fallback: string): string {
+  const text = typeof value === "string" ? value.trim().slice(0, MAX_QUERY_TEXT) : "";
+  return escapeHtml(text || fallback);
+}
 
 function widgetShell(title: string, body: string, accentColor = "#7dd87d"): string {
   return `<!DOCTYPE html>
@@ -17,7 +33,7 @@ function widgetShell(title: string, body: string, accentColor = "#7dd87d"): stri
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title} - ReGen Civics</title>
+<title>${escapeHtml(title)} - ReGen Civics</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a472a;color:#fff;padding:16px;min-height:100vh;display:flex;flex-direction:column}
@@ -42,7 +58,7 @@ a:hover{text-decoration:underline}
 }
 
 function errorWidget(msg: string): string {
-  return widgetShell("Error", `<p style="color:rgba(255,255,255,0.5);font-size:14px">${msg}</p>`);
+  return widgetShell("Error", `<p style="color:rgba(255,255,255,0.5);font-size:14px">${escapeHtml(msg)}</p>`);
 }
 
 export function registerEmbedRoutes(app: Express) {
@@ -67,8 +83,8 @@ export function registerEmbedRoutes(app: Express) {
     const color = funded ? "#d4a574" : "#7dd87d";
 
     const body = `
-<div style="font-size:18px;font-weight:700;line-height:1.3">${title}</div>
-${campaign.location ? `<div style="font-size:13px;color:rgba(255,255,255,0.5)">${campaign.location}</div>` : ""}
+<div style="font-size:18px;font-weight:700;line-height:1.3">${escapeHtml(title)}</div>
+${campaign.location ? `<div style="font-size:13px;color:rgba(255,255,255,0.5)">${escapeHtml(campaign.location)}</div>` : ""}
 <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.6)">
 <span>$${raised.toLocaleString()} of $${goal.toLocaleString()}</span>
@@ -84,9 +100,9 @@ ${funded ? "View Project" : "Support This Project"}
 
   // Quest badge widget
   app.get("/embed/badge/quest/:questId", async (req: Request, res: Response) => {
-    const questId = req.params.questId;
-    const playerName = (req.query.player as string) || "A ReGen Player";
-    const questName = (req.query.name as string) || `Quest ${questId}`;
+    const questId = String(req.params.questId ?? "").slice(0, 16);
+    const playerName = queryText(req.query.player, "A ReGen Player");
+    const questName = queryText(req.query.name, `Quest ${questId}`);
 
     const body = `
 <div style="text-align:center">
@@ -104,7 +120,7 @@ Start Your Own Quest
 
   // Alliance partner badge widget
   app.get("/embed/badge/alliance", async (req: Request, res: Response) => {
-    const orgName = (req.query.org as string) || "Alliance Partner";
+    const orgName = queryText(req.query.org, "Alliance Partner");
 
     const body = `
 <div style="text-align:center">
