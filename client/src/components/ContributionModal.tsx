@@ -23,6 +23,8 @@ import {
 } from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
+import { useReturnFocus } from "@/hooks/useReturnFocus";
+import { getReferralData } from "@/components/SharePrompt";
 import {
   Leaf,
   Wrench,
@@ -506,8 +508,13 @@ export function ContributionModal({
       value = Math.round(n);
     }
 
+    // useReferralCapture records ?ref= on landing and then takes it out of
+    // the address, so by the time someone sends an offer it is gone from
+    // the URL. captureReferral (App.tsx) kept it in sessionStorage; read it
+    // from there when the URL no longer has it. Every old /campaign/:id?ref=
+    // share link lands this way through the redirect.
     const refParam = typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('ref')
+      ? (new URLSearchParams(window.location.search).get('ref') || getReferralData()?.ref || null)
       : null;
 
     const mode: 'give' | 'lend' | undefined = thingNeed
@@ -592,6 +599,8 @@ export function ContributionModal({
   };
 
   const tokenLine = isExample ? TOKEN_PRACTICE_LINE : TOKEN_LINE(project);
+  // Opened from a need's button through state, so focus goes back there by hand.
+  const returnFocus = useReturnFocus(isOpen);
 
   return (
     <>
@@ -600,7 +609,7 @@ export function ContributionModal({
           and 90vh from md up. Re-adding max-h-[90vh] put a static vh cap back over
           the dynamic one, so with the iOS URL bar showing, the sheet was taller
           than the visible area and its header sat off the top of the screen. */}
-      <DialogContent className="max-w-lg bg-white text-[#1a472a] apply-form-dark light-form-island">
+      <DialogContent className="max-w-lg bg-white text-[#1a472a] apply-form-dark light-form-island" onCloseAutoFocus={returnFocus}>
         <DialogHeader>
           {/* pr-12 keeps a wrapped title clear of the 44px close button. Without
               it a long need title wrapped under the X, so tapping what looked like
@@ -1095,7 +1104,8 @@ export function ContributionModal({
               <Button
                 onClick={handleSubmit}
                 disabled={submitMutation.isPending}
-                className="flex-1 min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]"
+                // White on the deep green: dark text on #4a7c59 measured 4.04:1.
+                className="flex-1 min-h-11 bg-[#1a472a] hover:bg-[#14331f] text-white"
               >
                 {submitMutation.isPending ? (
                   <>

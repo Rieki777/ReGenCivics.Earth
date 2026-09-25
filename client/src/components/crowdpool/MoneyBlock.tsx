@@ -98,15 +98,26 @@ export function MoneyBlock({
     (r): r is MoneyRoute & { partner: ShownPartner } => isShownPartner(r.partner) && (r.status === "verified" || r.status === "example"),
   );
 
+  // Example routes were never checked by anyone, so only a list of verified
+  // routes says the team checked each one.
+  const allVerified = shown.length > 0 && shown.every((r) => r.status === "verified");
+
   let body;
   if (money.asksNone) {
     body = <p className="text-sm text-[#1a472a]/85">{MONEY_BLOCK.asksNone}</p>;
+  } else if (routes === undefined) {
+    // Still loading: never say "no money route yet" on a page that has one.
+    body = (
+      <p className="text-sm text-[#1a472a]/70 min-h-24" aria-busy="true">
+        {MONEY_BLOCK.loading}
+      </p>
+    );
   } else if (shown.length === 0) {
     body = <p className="text-sm text-[#1a472a]/85">{MONEY_BLOCK.noRoute}</p>;
   } else {
     body = (
       <>
-        <p className="text-sm text-[#1a472a]/85 mb-4">{MONEY_BLOCK.introWithRoutes}</p>
+        <p className="text-sm text-[#1a472a]/85 mb-4">{allVerified ? MONEY_BLOCK.introWithRoutes : MONEY_BLOCK.introExample}</p>
         <div className={`grid grid-cols-1 gap-4 ${shown.length > 1 ? "md:grid-cols-2" : ""}`}>
           {shown.map((r) => <RouteCard key={r.id} route={r} currency={currency} />)}
         </div>

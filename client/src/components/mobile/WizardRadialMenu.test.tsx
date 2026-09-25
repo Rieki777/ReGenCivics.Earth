@@ -5,7 +5,7 @@
  * the global HarvestCaptureModal listens for.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { WizardRadialMenu } from "./WizardRadialMenu";
 
 const mockUser = vi.fn();
@@ -69,5 +69,40 @@ describe("WizardRadialMenu — Add note item", () => {
     mockUser.mockReturnValue({ id: "u3", role: "superadmin" });
     render(<WizardRadialMenu />);
     expect(screen.getByText("Add note")).toBeDefined();
+  });
+});
+
+describe("WizardRadialMenu while a dialog is open", () => {
+  beforeEach(() => mockUser.mockReturnValue({ id: "u2", role: "member" }));
+  afterEach(() => {
+    document.body.removeAttribute("data-scroll-locked");
+    vi.clearAllMocks();
+  });
+
+  it("hides the shortcuts dock, so it never covers the sheet's send button", async () => {
+    const { getByTestId } = render(<WizardRadialMenu />);
+    const dock = getByTestId("shortcuts-dock");
+    expect(dock.classList.contains("hidden")).toBe(false);
+    // What Radix does to <body> while a modal dialog is open.
+    await act(async () => { document.body.setAttribute("data-scroll-locked", "1"); });
+    await waitFor(() => expect(dock.classList.contains("hidden")).toBe(true));
+    await act(async () => { document.body.removeAttribute("data-scroll-locked"); });
+    await waitFor(() => expect(dock.classList.contains("hidden")).toBe(false));
+  });
+
+  it("hides it for a real open dialog too", async () => {
+    const { Dialog, DialogContent, DialogTitle, DialogDescription } = await import("@/components/ui/dialog");
+    const { getByTestId } = render(
+      <>
+        <WizardRadialMenu />
+        <Dialog open>
+          <DialogContent>
+            <DialogTitle>Offer Wood chipper</DialogTitle>
+            <DialogDescription>Your offer goes to the stewards.</DialogDescription>
+          </DialogContent>
+        </Dialog>
+      </>,
+    );
+    await waitFor(() => expect(getByTestId("shortcuts-dock").classList.contains("hidden")).toBe(true));
   });
 });

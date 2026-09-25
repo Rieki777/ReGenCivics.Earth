@@ -36,6 +36,7 @@ import { MoreCampaigns } from "@/components/project/MoreCampaigns";
 import { PastCampaigns } from "@/components/project/PastCampaigns";
 import { makeCurrencyFormatter } from "@/lib/needDisplay";
 import { campaignViewInput } from "@/lib/campaignTracking";
+import { keepAnchorInPlace } from "@/lib/keepAnchorInPlace";
 import { StewardTools, type ProjectFront } from "@/components/project/StewardTools";
 
 const CANCEL_UPDATE_TITLE = "This campaign has been cancelled";
@@ -69,17 +70,23 @@ function useScrollToHash(ready: boolean) {
   const goRef = useRef<() => void>(() => {});
   useEffect(() => {
     let timer: number | undefined;
+    // Sections above an anchor (the money routes, More campaigns) load
+    // after it and push it down; keepAnchorInPlace follows it until the
+    // layout settles or the reader starts to scroll.
+    let release: (() => void) | undefined;
     const go = () => {
       const hash = window.location.hash;
       if (!hash || hash.length < 2 || done.current === hash) return;
       const id = decodeURIComponent(hash.slice(1));
       let tries = 0;
       if (timer) window.clearTimeout(timer);
+      release?.();
       const attempt = () => {
         const el = readyRef.current ? document.getElementById(id) : null;
         if (el) {
           done.current = hash;
           el.scrollIntoView({ behavior: "smooth", block: "start" });
+          release = keepAnchorInPlace(el);
           return;
         }
         if (tries++ < 20) timer = window.setTimeout(attempt, 150);
@@ -105,6 +112,7 @@ function useScrollToHash(ready: boolean) {
       window.removeEventListener("pushState", onNav);
       window.removeEventListener("replaceState", onReplace);
       if (timer) window.clearTimeout(timer);
+      release?.();
     };
   }, []);
   // The data a pending anchor waits for has landed.

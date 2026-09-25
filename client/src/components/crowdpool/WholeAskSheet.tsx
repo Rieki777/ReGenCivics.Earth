@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { CAPITAL_COLORS, CAPITAL_LABELS, CAPITAL_TYPES, type CapitalType } from "@shared/crowdpoolingTaxonomy";
 import type { CampaignProgress } from "@shared/campaignProgress";
 import { MONEY_BLOCK, PARTNER_NAMES, WHOLE_ASK_SHEET } from "@shared/crowdpoolCopy";
+import { useReturnFocus } from "@/hooks/useReturnFocus";
 
 export function WholeAskSheet({
   open,
@@ -38,10 +39,12 @@ export function WholeAskSheet({
   const wholeAsk = rows.reduce((sum, r) => sum + r.asked, 0);
   const wholeConfirmed = rows.reduce((sum, r) => sum + r.confirmed, 0);
   const moneyRoutesOrAsk = progress.money.ask > 0 || progress.money.hasRoutes;
+  // Opened from the in-kind line through state, so focus goes back there by hand.
+  const returnFocus = useReturnFocus(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-white text-[#1a472a] light-form-island">
+      <DialogContent className="max-w-lg bg-white text-[#1a472a] light-form-island" onCloseAutoFocus={returnFocus}>
         <DialogHeader>
           <DialogTitle className="text-[#1a472a] text-left leading-tight pr-12 sm:pr-0">{WHOLE_ASK_SHEET.title}</DialogTitle>
           <DialogDescription className="text-[#1a472a]/85 text-left">

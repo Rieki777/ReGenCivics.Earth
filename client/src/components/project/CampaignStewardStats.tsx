@@ -52,7 +52,8 @@ export function CampaignStewardStats({
         How it's going
       </h2>
       <TwoLineBar progress={progress} formatCurrency={formatCurrency} variant="compact" />
-      {note.line && (
+      {/* The bar already says "This project asks for no money". */}
+      {note.line && !progress.money.asksNone && (
         <p className={`mt-2 text-sm ${note.outside ? "text-[#1a472a] font-medium" : "text-[#1a472a]/80"}`}>{note.line}</p>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">

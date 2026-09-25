@@ -114,6 +114,11 @@ export const MONEY_BLOCK = {
   title: "Putting money in",
   introWithRoutes:
     "Most of what this project needs is listed above. If you'd like to put money in, these are the routes it holds. The ReGen Civics team checked each one.",
+  /** An example campaign's routes were never checked, so the intro says what they are. */
+  introExample:
+    "These are example routes. On a real campaign, the ReGen Civics team checks each one before it shows here.",
+  /** While the routes load, so the block never says "no money route" on a page that has one. */
+  loading: "Loading the ways to put money in.",
   asksNone: "This project asks for no money. Its needs above are where you can help.",
   noRoute: "This project has no money route yet. Its needs above are open to you.",
   maearth: {
@@ -296,6 +301,8 @@ export const MONEY_STEP = {
   notANeed:
     "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
   summaryInKind: "In-kind ask",
+  /** Shown once on the project page the wizard sends a new campaign's steward to. */
+  created: "Campaign created. The ReGen Civics team reviews it before it goes live.",
 } as const;
 
 /** The money route quiz (EligibilityQuiz), in the wizard and the steward's Money routes card. */

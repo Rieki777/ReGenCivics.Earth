@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { WholeAskSheet } from "./WholeAskSheet";
 import { TwoLineBar } from "./TwoLineBar";
 import { computeCampaignProgress, type ProgressItem, type ProgressRow } from "@shared/campaignProgress";
@@ -77,5 +77,29 @@ describe("WholeAskSheet", () => {
     expect(onSeeMoney).toHaveBeenCalled();
     // A form with no needs has nothing to move to.
     expect(within(row("spiritual")).queryByRole("button")).toBeNull();
+  });
+});
+
+describe("keyboard focus around the sheet", () => {
+  it("goes back to the in-kind line when the sheet closes with Escape", async () => {
+    render(<Harness />);
+    const opener = screen.getByRole("button", { name: /See the whole ask by form of capital/ });
+    opener.focus();
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole("dialog");
+    expect(document.activeElement).not.toBe(opener);
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  it("goes back to the in-kind line when the sheet closes with its Close button", async () => {
+    render(<Harness />);
+    const opener = screen.getByRole("button", { name: /See the whole ask by form of capital/ });
+    opener.focus();
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getAllByRole("button", { name: /close/i })[0]);
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });

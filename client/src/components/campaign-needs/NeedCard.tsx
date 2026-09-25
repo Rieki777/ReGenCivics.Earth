@@ -18,6 +18,7 @@ import { KIND_LABELS, descriptionForItem, kindForItem, titleForItem } from "@/li
 import { fullTimeLabel, isHoursNeed, roleFillState } from "@shared/roleCapacity";
 import { needStatus, offeredLine, type NeedProgress } from "@shared/campaignProgress";
 import { formatShortDay, isThingKind, needVerb, roleTimeLine, thingWindowLine, toDay } from "@shared/crowdpoolNeedAction";
+import { inkOnWhite } from "@shared/colorContrast";
 
 /**
  * Reads a shift value into a Date without flipping between UTC and local. A
@@ -170,6 +171,10 @@ export function NeedCard({
   const windowLine = thing ? thingWindowLine(item) : null;
   const offered = thing ? offeredLine(np) : null;
   const deadline = item.needDeadline && !toDay(item.neededUntil) ? item.needDeadline : null;
+  // The capital colour as the card paints text and the verb button: darkened
+  // just enough for 4.5:1 or better. Several capital colours measured 3.1 to
+  // 4.3:1 with white text on them (WCAG 1.4.3).
+  const ink = inkOnWhite(accent);
 
   return (
     <Card
@@ -191,7 +196,7 @@ export function NeedCard({
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span
                 className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${accent}1a`, color: accent }}
+                style={{ backgroundColor: `${accent}1a`, color: ink }}
               >
                 {KIND_LABELS[kind] || kind}
               </span>
@@ -251,14 +256,14 @@ export function NeedCard({
           </div>
         )}
         <div className="flex items-center justify-between gap-3 pt-1">
-          <div className="text-lg font-bold" style={{ color: accent }}>
+          <div className="text-lg font-bold" style={{ color: ink }}>
             {thing ? formatCurrency(item.estimatedValue || 0) : null}
           </div>
           {claimsHidden || np.filled || !verb ? null : (
             <Button
               size="sm"
               className="text-white min-h-11"
-              style={{ backgroundColor: accent }}
+              style={{ backgroundColor: ink }}
               disabled={!campaignActive}
               aria-label={`${verb}: ${title}`}
               onClick={() => onClaim(toContributionNeed(item, capital, progress))}

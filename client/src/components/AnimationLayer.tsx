@@ -13,6 +13,7 @@
  */
 
 import { useEffect } from "react";
+import { useModalOpen } from "@/hooks/useModalOpen";
 import {
   useSeasonalTheme,
   useInkReveal,
@@ -24,7 +25,9 @@ import {
 
 function ScrollProgressRing() {
   const progress = useScrollProgress();
-  const hidden = progress < 0.02 || progress > 0.995;
+  // Hidden while a dialog is open: at z-60 it sat over the dialog.
+  const modalOpen = useModalOpen();
+  const hidden = modalOpen || progress < 0.02 || progress > 0.995;
   return (
     <div
       aria-hidden="true"

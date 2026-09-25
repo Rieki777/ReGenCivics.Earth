@@ -91,6 +91,33 @@ describe('ContributionModal', () => {
       expect(mockMutate.mock.calls[0][0]).toMatchObject({ contributionType: 'resource', estimatedValue: 0 });
       expect(mockMutate.mock.calls[0][0].offerMode).toBeUndefined();
     });
+
+    it('the send button is white on the deep green, well past 4.5:1', () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      const send = screen.getByRole('button', { name: 'Send my offer' });
+      expect(send.className).toContain('bg-[#1a472a]');
+      expect(send.className).toContain('text-white');
+      expect(send.className).not.toContain('bg-[#4a7c59]');
+    });
+
+    it('carries the ref a share link landed with, after the address dropped it', async () => {
+      // captureReferral stored it on landing; useReferralCapture then took
+      // ?ref= out of the URL, as it does for every old /campaign/:id?ref= link.
+      window.sessionStorage.setItem('regen-referral', JSON.stringify({ ref: 'revuxref1', landingUrl: '/campaign/1597' }));
+      window.history.replaceState({}, '', '/project/c1597-harmony-valley-ecovillage?campaign=1597#need-2677');
+      try {
+        const user = userEvent.setup();
+        render(<ContributionModal {...defaultProps} />);
+        await user.click(screen.getByRole('button', { name: /Materials or supplies/ }));
+        fillContact();
+        fireEvent.change(screen.getByLabelText('Title *'), { target: { value: 'Compost' } });
+        await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+        expect(mockMutate.mock.calls[0][0]).toMatchObject({ referredBy: 'revuxref1' });
+      } finally {
+        window.sessionStorage.removeItem('regen-referral');
+        window.history.replaceState({}, '', '/');
+      }
+    });
   });
 
   describe('sheet copy by verb', () => {

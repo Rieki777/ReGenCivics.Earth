@@ -2759,6 +2759,10 @@ html[data-contrast="high"] *:focus-visible {
 .apply-form-dark,
 .light-form-island {
   color: #1a472a;
+  /* The site root is color-scheme: dark, so native radios, checkboxes and
+     date pickers drew as dark filled discs and invisible calendar icons on
+     these white cards: an unchosen radio looked chosen. */
+  color-scheme: light;
 }
 .apply-form-dark label,
 .apply-form-dark h2,

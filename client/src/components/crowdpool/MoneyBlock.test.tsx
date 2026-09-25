@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { MoneyBlock, type MoneyRoute } from "./MoneyBlock";
-import { HOLDER_LINE, LOAN_INTEREST_LINE } from "@shared/crowdpoolCopy";
+import { HOLDER_LINE, LOAN_INTEREST_LINE, MONEY_BLOCK } from "@shared/crowdpoolCopy";
 
 const maearth: MoneyRoute = {
   id: 1, partner: "maearth", label: "Give through Ma Earth", url: "https://maearth.com/p/hill-farm",
@@ -69,5 +69,31 @@ describe("MoneyBlock", () => {
   it("carries no fund copy", () => {
     const { container } = render(<MoneyBlock routes={[maearth, steward]} money={asks} currency="USD" />);
     expect(container.textContent).not.toMatch(/\$RCivics|fund minimum|CHF 250|reserve|allocat|seat|donat|pledge|claim/i);
+  });
+});
+
+describe("MoneyBlock intro and loading", () => {
+  it("says the team checked each route only when every route shown was verified", () => {
+    render(<MoneyBlock routes={[maearth, steward]} money={asks} currency="USD" />);
+    expect(screen.getByText(MONEY_BLOCK.introWithRoutes)).toBeInTheDocument();
+  });
+
+  it("on example routes says what they are, and never that anyone checked them", () => {
+    const { container } = render(
+      <MoneyBlock routes={[{ ...maearth, status: "example" }, { ...steward, status: "example" }]} money={asks} currency="USD" />,
+    );
+    expect(screen.getByText(MONEY_BLOCK.introExample)).toBeInTheDocument();
+    expect(container.textContent).not.toContain("The ReGen Civics team checked each one.");
+  });
+
+  it("while the routes load, it waits and never says there is no route", () => {
+    const { container } = render(<MoneyBlock routes={undefined} money={asks} currency="USD" />);
+    expect(screen.getByText(MONEY_BLOCK.loading)).toHaveAttribute("aria-busy", "true");
+    expect(container.textContent).not.toContain(MONEY_BLOCK.noRoute);
+  });
+
+  it("with the routes loaded and none shown, it says there is no route", () => {
+    render(<MoneyBlock routes={[]} money={asks} currency="USD" />);
+    expect(screen.getByText(MONEY_BLOCK.noRoute)).toBeInTheDocument();
   });
 });

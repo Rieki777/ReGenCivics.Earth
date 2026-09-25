@@ -36,6 +36,7 @@ import { useAudio } from "@/contexts/AudioContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePageTools } from "@/hooks/usePageTools";
 import { NavIcon } from "@/components/SmartBottomNav";
+import { useModalOpen } from "@/hooks/useModalOpen";
 
 type Action = {
   key: string;
@@ -58,6 +59,7 @@ function haptic(ms = 8) {
 
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
+  const modalOpen = useModalOpen();
   const [location] = useLocation();
   const tint = useSeasonTint();
   const { isPlaying, togglePlay } = useAudio();
@@ -248,8 +250,11 @@ export function WizardRadialMenu() {
           stopPropagation still fires for bubbled child clicks, which is all
           it was ever for (keeping the document close handler from eating
           the trigger tap). */}
+      {/* Hidden while a dialog is open: at z-[60] it sat over the offer
+          sheet's send button (useModalOpen). */}
       <div
-        className="fixed right-4 z-[60] md:hidden flex flex-col items-end pointer-events-none"
+        data-testid="shortcuts-dock"
+        className={`fixed right-4 z-[60] md:hidden flex flex-col items-end pointer-events-none ${modalOpen ? "hidden" : ""}`}
         style={{
           bottom: "calc(env(safe-area-inset-bottom, 0px) + 3.5rem)",
         }}

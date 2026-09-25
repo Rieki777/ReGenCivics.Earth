@@ -117,6 +117,7 @@ import { moneySharePct, moneyShareNote, suggestedMoneyAsk } from '@shared/campai
 import { roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
 import { MONEY_STEP, NEED_FORM } from '@shared/crowdpoolCopy';
 import { CASH_SHARE } from '@shared/crowdpoolModel';
+import { rememberCreatedCampaign } from '@/lib/createdNotice';
 // The server's own route check (pure, no server dependencies), run here so a
 // mistyped link is caught before the campaign is sent. The server runs it again.
 import { validateRouteUrl, type RoutePartner } from '../../../server/lib/partner-links';
@@ -494,6 +495,14 @@ const formatCurrency = (amount: number, symbol: string) => {
   return `${symbol}${amount.toLocaleString()}`;
 };
 
+/**
+ * The whole amount, never shortened: for a figure a button puts into a field.
+ * "Use $6.3K" filled in 6,250, so the label and the value disagreed; the
+ * short form stays in the summary tiles only.
+ */
+export const formatFullCurrency = (amount: number, symbol: string) =>
+  `${symbol}${Math.round(amount).toLocaleString("en-US")}`;
+
 // Using imported estimateLandPrice from regionalCostData
 
 export default function CreateCampaign() {
@@ -582,8 +591,10 @@ export default function CreateCampaign() {
   // tRPC mutation for creating campaign
   const createCampaignMutation = trpc.campaigns.create.useMutation({
     onSuccess: (data) => {
-      toast.success('Campaign created successfully!');
       // The project page, focused on the new campaign, at the steward tools.
+      // It is a full page load, so the confirmation travels with it and
+      // StewardTools shows it there (a toast here would be lost).
+      rememberCreatedCampaign(data.id);
       window.location.href = `${data.path}#steward-tools`;
     },
     onError: (error) => {
@@ -952,7 +963,7 @@ export default function CreateCampaign() {
                   value={applicantSearch}
                   onChange={(e) => setApplicantSearch(e.target.value)}
                   placeholder="Search by project name, contact, or location..."
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
               </div>
 
@@ -1133,7 +1144,7 @@ export default function CreateCampaign() {
         </div>
 
         {/* Campaign Info */}
-        <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30">
+        <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30 [color-scheme:light]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h2 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               Campaign Details
@@ -1288,7 +1299,7 @@ export default function CreateCampaign() {
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder="e.g., Terra Nova Regenerative Farm"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -1299,7 +1310,7 @@ export default function CreateCampaign() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={currencyOpen}
-                    className="w-full justify-between bg-white border-[#7dd87d]/30 text-left font-normal"
+                    className="w-full justify-between bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-left font-normal"
                   >
                     {(() => {
                       const c = currencies.find(c => c.code === currency);
@@ -1341,7 +1352,7 @@ export default function CreateCampaign() {
                 value={campaignDescription}
                 onChange={(e) => setCampaignDescription(e.target.value)}
                 placeholder="Describe your project vision and goals..."
-                className="bg-white border-[#7dd87d]/30 min-h-[100px]"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[100px]"
               />
             </div>
             <div className="md:col-span-2">
@@ -1352,7 +1363,7 @@ export default function CreateCampaign() {
                 value={daoLink}
                 onChange={(e) => setDaoLink(e.target.value)}
                 placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
               <p className="text-xs text-[#1a472a]/80 mt-1">
                 This is where contributors will submit their proposals. Required for listing your project.
@@ -1374,13 +1385,13 @@ export default function CreateCampaign() {
                         value={projectLocation}
                         onChange={(e) => setProjectLocation(e.target.value)}
                         placeholder="e.g., Costa Rica, Guanacaste Province"
-                        className="bg-white border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#1a472a] mb-1">Land Status</label>
                       <Select value={landStatus} onValueChange={setLandStatus}>
-                        <SelectTrigger className="bg-white border-[#7dd87d]/30">
+                        <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1398,7 +1409,7 @@ export default function CreateCampaign() {
                         value={projectSizeHectares || ''}
                         onChange={(e) => setProjectSizeHectares(parseFloat(e.target.value) || null)}
                         placeholder="e.g., 150"
-                        className="bg-white border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                       />
                     </div>
                     <div>
@@ -1408,7 +1419,7 @@ export default function CreateCampaign() {
                         value={teamSize || ''}
                         onChange={(e) => setTeamSize(parseInt(e.target.value) || null)}
                         placeholder="e.g., 12"
-                        className="bg-white border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                       />
                     </div>
                   </div>
@@ -1418,7 +1429,7 @@ export default function CreateCampaign() {
                       value={projectVision}
                       onChange={(e) => setProjectVision(e.target.value)}
                       placeholder="Describe your project's long-term vision..."
-                      className="bg-white border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1427,7 +1438,7 @@ export default function CreateCampaign() {
                       value={teamDescription}
                       onChange={(e) => setTeamDescription(e.target.value)}
                       placeholder="Describe your team's background and expertise..."
-                      className="bg-white border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1436,7 +1447,7 @@ export default function CreateCampaign() {
                       value={regenerativePractices}
                       onChange={(e) => setRegenerativePractices(e.target.value)}
                       placeholder="What regenerative practices will you implement?"
-                      className="bg-white border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1445,7 +1456,7 @@ export default function CreateCampaign() {
                       value={governanceApproach}
                       onChange={(e) => setGovernanceApproach(e.target.value)}
                       placeholder="How will decisions be made in your community?"
-                      className="bg-white border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1454,7 +1465,7 @@ export default function CreateCampaign() {
                       value={communityEngagement}
                       onChange={(e) => setCommunityEngagement(e.target.value)}
                       placeholder="How do you engage with the broader community?"
-                      className="bg-white border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -1464,7 +1475,7 @@ export default function CreateCampaign() {
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                         placeholder="https://yourproject.com"
-                        className="bg-white border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                       />
                     </div>
                     <div>
@@ -1473,7 +1484,7 @@ export default function CreateCampaign() {
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
                         placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                        className="bg-white border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                       />
                       <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
                     </div>
@@ -1507,7 +1518,7 @@ export default function CreateCampaign() {
         </div>
         
         {/* Step Content */}
-        <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30 min-h-[500px]">
+        <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30 min-h-[500px] [color-scheme:light]">
           {/* Per-step teaching tip, drawn from the shared coach */}
           {STEP_TIP_KEYS[currentStep] && (
             <TeachingTip text={STEP_TIPS[STEP_TIP_KEYS[currentStep] as string]} className="mb-5" />
@@ -1829,7 +1840,7 @@ function LandSection({
                   value={formData.hectares || ''}
                   onChange={(e) => setFormData({ ...formData, hectares: parseFloat(e.target.value) || 0 })}
                   placeholder="e.g., 50"
-                  className="bg-white border-[#7dd87d]/30 w-32"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 w-32"
                 />
                 <span className="text-sm text-[#1a472a]/80">
                   = {((formData.hectares || 0) * 2.471).toFixed(1)} acres
@@ -1895,7 +1906,7 @@ function LandSection({
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe your ideal land in detail..."
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             
@@ -1910,7 +1921,7 @@ function LandSection({
                   value={formData.videoUrl || ''}
                   onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
               </div>
               <p className="text-xs text-[#1a472a]/75 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
@@ -1959,7 +1970,7 @@ function LandSection({
                         onClick={() => setFormData({ ...formData, customValue: landBand.mid })}
                         className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                       >
-                        Use {formatCurrency(landBand.mid, currencySymbol)}
+                        Use {formatFullCurrency(landBand.mid, currencySymbol)}
                       </Button>
                     )}
                   </div>
@@ -1972,7 +1983,7 @@ function LandSection({
                   value={formData.customValue || ''}
                   onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
                   placeholder={`Leave empty to use ${formatCurrency(estimatedValue, currencySymbol)}`}
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
               </div>
             </div>
@@ -2160,7 +2171,7 @@ function EquipmentSection({
                       type="number"
                       value={item.customValue ?? item.estimatedValue}
                       onChange={(e) => updateValue(item.id, parseFloat(e.target.value) || 0)}
-                      className="w-20 h-8 text-sm bg-white border-[#7dd87d]/30 text-right"
+                      className="w-20 h-8 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-right"
                     />
                   </div>
                 </div>
@@ -2240,7 +2251,7 @@ function EquipmentSection({
                 value={formData.category || ''}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="e.g., Agriculture"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2249,7 +2260,7 @@ function EquipmentSection({
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Custom Tractor"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2259,7 +2270,7 @@ function EquipmentSection({
                 value={(formData.customValue ?? formData.estimatedValue) || ''}
                 onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
                 placeholder="Enter value"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
               <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
             </div>
@@ -2270,7 +2281,7 @@ function EquipmentSection({
                 value={formData.quantity || 1}
                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                 min={1}
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div className="md:col-span-2">
@@ -2459,7 +2470,7 @@ function RolesSection({
                       aria-label="Hours a week this role needs"
                       value={role.hoursPerWeek}
                       onChange={(e) => updateRole(role.id, 'hoursPerWeek', wholeRoleHours(e.target.value))}
-                      className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
                     />
                     <span className="text-[#1a472a]/80" title={fullTimeLabel(role.hoursPerWeek)}>h/wk</span>
                   </div>
@@ -2469,7 +2480,7 @@ function RolesSection({
                       type="number"
                       value={role.weeksNeeded}
                       onChange={(e) => updateRole(role.id, 'weeksNeeded', parseFloat(e.target.value) || 0)}
-                      className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
                     />
                     <span className="text-[#1a472a]/80">wks</span>
                   </div>
@@ -2480,7 +2491,7 @@ function RolesSection({
                       type="number"
                       value={role.hourlyRate}
                       onChange={(e) => updateRole(role.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
-                      className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
                     />
                     <span className="text-[#1a472a]/80">/h</span>
                   </div>
@@ -2567,7 +2578,7 @@ function RolesSection({
                 value={formData.title || ''}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Sustainability Coordinator"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2576,7 +2587,7 @@ function RolesSection({
                 value={formData.category || ''}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="e.g., Operations"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2594,7 +2605,7 @@ function RolesSection({
                   const raw = e.target.value;
                   setFormData({ ...formData, hoursPerWeek: raw === '' ? 0 : wholeRoleHours(raw) });
                 }}
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
               <p className="text-xs text-[#1a472a]/80 mt-1">
                 40 hours a week is about one full-time person. 120 is about three. Several people can share a role.
@@ -2606,7 +2617,7 @@ function RolesSection({
                 type="number"
                 value={formData.weeksNeeded || ''}
                 onChange={(e) => setFormData({ ...formData, weeksNeeded: parseInt(e.target.value) || 0 })}
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2615,7 +2626,7 @@ function RolesSection({
                 type="number"
                 value={formData.hourlyRate || ''}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0 })}
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2655,7 +2666,7 @@ function RolesSection({
                         onClick={() => setFormData({ ...formData, customValue: roleBand.mid })}
                         className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                       >
-                        Use {formatCurrency(roleBand.mid, currencySymbol)}
+                        Use {formatFullCurrency(roleBand.mid, currencySymbol)}
                       </Button>
                     )}
                   </div>
@@ -2668,7 +2679,7 @@ function RolesSection({
                   value={formData.customValue || ''}
                   onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
                   placeholder={`Leave empty to use ${formatCurrency(calculatedValue, currencySymbol)}`}
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
                 <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
               </div>
@@ -2680,7 +2691,7 @@ function RolesSection({
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe the role responsibilities..."
-              className="bg-white border-[#7dd87d]/30"
+              className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
             />
           </div>
           <div className="mt-4">
@@ -2932,7 +2943,7 @@ function OtherNeedsSection({
                 value={formData.title || ''}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Building Permits"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2941,7 +2952,7 @@ function OtherNeedsSection({
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe what this covers..."
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             <div>
@@ -2951,7 +2962,7 @@ function OtherNeedsSection({
                 value={formData.estimatedValue || ''}
                 onChange={(e) => setFormData({ ...formData, estimatedValue: parseFloat(e.target.value) || 0 })}
                 placeholder="0"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
             </div>
             {categoryForKey(formData.category || 'other')?.kind === 'knowledge' ? (
@@ -2990,7 +3001,7 @@ function OtherNeedsSection({
                       onClick={() => setFormData({ ...formData, estimatedValue: otherBand.mid })}
                       className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                     >
-                      Use {formatCurrency(otherBand.mid, currencySymbol)}
+                      Use {formatFullCurrency(otherBand.mid, currencySymbol)}
                     </Button>
                   )}
                 </div>
@@ -3058,7 +3069,7 @@ export function ThingTermsFields({
           type="date"
           value={terms.neededFrom ?? ''}
           onChange={(e) => onChange({ neededFrom: e.target.value || undefined })}
-          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
         />
       </div>
       <div>
@@ -3071,7 +3082,7 @@ export function ThingTermsFields({
           onChange={(e) => onChange({ neededUntil: e.target.value || undefined })}
           aria-invalid={endsEarly}
           aria-describedby={endsEarly ? `${idBase}-until-error` : undefined}
-          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
         />
       </div>
       {endsEarly && (
@@ -3141,7 +3152,7 @@ function RoleTermsFields({
           value={role.startsOn ?? ''}
           onChange={(e) => onChange({ startsOn: e.target.value || undefined })}
           aria-describedby={`${idBase}-start-help`}
-          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm sm:max-w-xs"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm sm:max-w-xs"
         />
         <p id={`${idBase}-start-help`} className="text-xs text-[#1a472a]/80 mt-1">{NEED_FORM.startsOnHelper}</p>
       </div>
@@ -3230,7 +3241,9 @@ export function FinancialTargetSection({
     document.getElementById(`route-${partner}`)?.focus();
 
   return (
-    <div>
+    // The light color scheme draws the native radios (nothing chosen yet)
+    // as empty rings on this white card; the site root is dark.
+    <div className="[color-scheme:light]">
       <div className="mb-6">
         <h2 id="money-step-heading" className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
           <Target className="w-6 h-6 text-[#4a7c59]" aria-hidden="true" />
@@ -3322,7 +3335,7 @@ export function FinancialTargetSection({
                   value={financialTarget || ''}
                   onChange={(e) => setFinancialTarget(Math.max(0, parseFloat(e.target.value) || 0))}
                   aria-describedby="money-share-note"
-                  className="w-full bg-white border-[#7dd87d]/30 text-xl font-bold pl-12 h-14"
+                  className="w-full bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-xl font-bold pl-12 h-14"
                 />
               </div>
               <p
@@ -3337,7 +3350,7 @@ export function FinancialTargetSection({
             {suggested > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm text-[#1a472a]/85">
-                  {MONEY_STEP.suggestion(String(band.defaultPct), formatCurrency(suggested, currencySymbol))}
+                  {MONEY_STEP.suggestion(String(band.defaultPct), formatFullCurrency(suggested, currencySymbol))}
                 </p>
                 <Button
                   type="button"
@@ -3346,7 +3359,7 @@ export function FinancialTargetSection({
                   onClick={() => setFinancialTarget(suggested)}
                   className="min-h-11 border-[#4a7c59] text-[#1a472a]"
                 >
-                  {MONEY_STEP.useAmount(formatCurrency(suggested, currencySymbol))}
+                  {MONEY_STEP.useAmount(formatFullCurrency(suggested, currencySymbol))}
                 </Button>
               </div>
             )}
@@ -3402,7 +3415,7 @@ export function FinancialTargetSection({
                 placeholder={placeholder}
                 aria-invalid={!!routeErrors[partner]}
                 aria-describedby={`routes-helper${routeErrors[partner] ? ` route-${partner}-error` : ''}`}
-                className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+                className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
               />
               {routeErrors[partner] && (
                 <p id={`route-${partner}-error`} role="alert" className="mt-1 text-sm text-red-700">{routeErrors[partner]}</p>
@@ -3434,7 +3447,7 @@ export function FinancialTargetSection({
                 const val = Math.min(365, Math.max(1, parseInt(e.target.value) || 90));
                 setDurationDays(val);
               }}
-              className="w-24 bg-white border-[#7dd87d]/30 text-center text-lg font-bold"
+              className="w-24 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center text-lg font-bold"
             />
             <span className="text-[#1a472a]/75">days</span>
           </div>

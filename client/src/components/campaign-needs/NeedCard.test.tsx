@@ -176,3 +176,32 @@ describe("needFillRatio", () => {
     expect(needFillRatio({ kind: "role", capacityUnit: "count", quantityWanted: 2, quantityClaimed: 2 })).toBe(1);
   });
 });
+
+describe("NeedCard colours read on a phone", () => {
+  const rgb = (hex: string) => {
+    const h = hex.replace("#", "");
+    return `rgb(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)})`;
+  };
+
+  it("paints the verb button in the capital's colour darkened to 4.5:1 or better under white text", async () => {
+    const { CAPITAL_COLORS } = await import("@shared/crowdpoolingTaxonomy");
+    const { contrastRatio, inkOnWhite } = await import("@shared/colorContrast");
+    // Social measured 3.09:1 with white text on its own colour.
+    renderCard(role({ capitalType: "social" }), { capital: "social", accent: CAPITAL_COLORS.social, progress: np({ unit: "hours_per_week", wanted: 40, open: 30 }) });
+    const button = screen.getByRole("button", { name: "Apply: Farm Manager" });
+    const ink = inkOnWhite(CAPITAL_COLORS.social);
+    expect(button.style.backgroundColor).toBe(rgb(ink));
+    expect(button.className).toContain("text-white");
+    expect(contrastRatio("#ffffff", ink)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("prints a thing's value in that same readable colour", async () => {
+    const { CAPITAL_COLORS } = await import("@shared/crowdpoolingTaxonomy");
+    const { inkOnWhite } = await import("@shared/colorContrast");
+    renderCard(
+      { id: 8, kind: "item", capitalType: "living", equipmentName: "Seed drill", title: "Seed drill", quantityWanted: 1, quantityClaimed: 0, quantityDelivered: 0, estimatedValue: 900 },
+      { capital: "living", accent: CAPITAL_COLORS.living, progress: np() },
+    );
+    expect((screen.getByText("$900") as HTMLElement).style.color).toBe(rgb(inkOnWhite(CAPITAL_COLORS.living)));
+  });
+});

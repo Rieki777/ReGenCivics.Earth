@@ -15,7 +15,7 @@
  * the campaign while it is a draft, in review, or sent back, so the review
  * team sees them (build spec 2026-09-25, section 12).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
@@ -37,6 +37,8 @@ import { CancelCampaignDialog } from "./CancelCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
+import { MONEY_STEP } from "@shared/crowdpoolCopy";
+import { takeCreatedCampaign } from "@/lib/createdNotice";
 
 /** Statuses whose stewards keep ticking the Ready to crowdpool list. Wizard campaigns start in review. */
 const READINESS_STATUSES = ["draft", "pending_review", "rejected"];
@@ -84,6 +86,11 @@ export function StewardTools({
   );
   const { data: followers } = trpc.campaigns.followerCounts.useQuery({ campaignId }, { retry: false });
   const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+
+  // The wizard's "campaign created" confirmation, carried across its page load.
+  useEffect(() => {
+    if (takeCreatedCampaign(campaignId)) toast.success(MONEY_STEP.created);
+  }, [campaignId]);
 
   const queue = useMemo(
     () => contributions ? buildStewardQueue({ contributions, items: front.items, campaignStatus: status }) : null,

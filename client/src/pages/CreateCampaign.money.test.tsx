@@ -89,8 +89,8 @@ describe("the Money step", () => {
     render(<MoneyStep />);
     fireEvent.click(screen.getByRole("radio", { name: "This project asks for money" }));
     const amount = screen.getByLabelText("How much money, in USD?");
-    expect(screen.getByText("20 percent of your whole ask would be $20.0K.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Use $20.0K" }));
+    expect(screen.getByText("20 percent of your whole ask would be $20,000.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use $20,000" }));
     expect(amount).toHaveValue(20000);
     expect(screen.getByText("Money is 20% of the whole ask.")).toBeInTheDocument();
     expect(screen.queryByText(/Most campaigns ask/)).toBeNull();
@@ -275,5 +275,50 @@ describe("CreateCampaign sends the money choice", () => {
     fireEvent.click(screen.getByRole("radio", { name: "This project asks for money" }));
     fireEvent.change(screen.getByLabelText("How much money, in USD?"), { target: { value: "5000" } });
     expect(screen.getByTestId("tracker-money")).toHaveTextContent(/^Money: \$5\.0K \(\d+% of the whole ask\)$/);
+  });
+});
+
+describe("the Money step reads on a phone", () => {
+  // The site root is dark (html.dark, color-scheme: dark), so a field has to
+  // carry its own light colours or the shadcn dark tokens win over bg-white.
+  const LIGHT_FIELD = ["bg-white", "dark:bg-white", "text-[#14331f]"];
+
+  it("the money ask and both route fields show typed text dark on white", () => {
+    render(<MoneyStep />);
+    fireEvent.click(screen.getByRole("radio", { name: "This project asks for money" }));
+    for (const id of ["money-amount", "route-maearth", "route-gosteward"]) {
+      const el = document.getElementById(id)!;
+      expect(el, id).toBeTruthy();
+      for (const cls of LIGHT_FIELD) expect(el.classList.contains(cls), `${id} ${cls}`).toBe(true);
+    }
+  });
+
+  it("draws native radios in the light scheme, so an unchosen one reads as empty", () => {
+    const { container } = render(<MoneyStep />);
+    const radio = screen.getByRole("radio", { name: "This project asks for money" });
+    let scheme: HTMLElement | null = radio;
+    while (scheme && !scheme.classList.contains("[color-scheme:light]")) scheme = scheme.parentElement;
+    expect(scheme).not.toBeNull();
+    expect(container.contains(scheme)).toBe(true);
+  });
+
+  it("the suggestion and its button show the whole amount the button fills in", () => {
+    // 20 percent of a 25,000 in-kind ask: 6,250, never "$6.3K".
+    render(<MoneyStep inKind={25000} />);
+    fireEvent.click(screen.getByRole("radio", { name: "This project asks for money" }));
+    expect(screen.getByText("20 percent of your whole ask would be $6,250.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use $6,250" }));
+    expect(screen.getByLabelText("How much money, in USD?")).toHaveValue(6250);
+  });
+});
+
+describe("form islands take the light color scheme", () => {
+  it("index.css gives .light-form-island and .apply-form-dark color-scheme: light", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const css = fs.readFileSync(path.resolve(__dirname, "../index.css"), "utf8");
+    const rule = css.match(/\.apply-form-dark,\s*\.light-form-island\s*\{([^}]*)\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![1]).toMatch(/color-scheme:\s*light;/);
   });
 });
