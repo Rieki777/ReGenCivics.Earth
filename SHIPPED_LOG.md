@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (crowdpool, campaign tools follow-up): Sign-in returns to the page; email choices without a profile; a notice when a filled role reopens
+
+- **The email sign-in link opens the page you started from.** "Make my account" on a project's thank-you step now lands on `#your-contributions` with the offer already linked. The destination is stored next to the token (`email_tokens.returnTo`, migration 0254), and the emailed URL carries only the token. `normalizeReturnTo` resolves the value like a browser, refuses `/api` and `/storage` in any case and after dot segments, strips `token`, `preview` and `code`, and falls back to `/profile`. The request route refuses non-JSON (415) and cross-site (403) posts. Token rows are purged a day after expiry.
+- **Accounts with no player profile can save their email choices** (`users.notificationPrefs`, migration 0255), read through one rule, `getStoredNotificationPrefs`, by email, digest, push and governance. Nothing creates a player profile as a side effect. Choices carry over when a profile is made later.
+- **A filled hours role that opens again tells the people still waiting** (`role_reopened`, migration 0256): after a release, lowered hours, or more hours needed. People a steward declined are not invited back unless `ROLE_REOPENED_REACHES_DECLINED` is turned on. Steward dialogs say who hears. Concurrent hour changes send once.
+- **Adversarial review:** 11 findings, all fixed with tests, including a session-swap chain through an `/api` returnTo. Every new guard was planted back once and caught.
+- Source: this session (known-gaps workflow).
+
+Carryover: a per-email rate limit on the sign-in link (OWASP A07 to-do); the profile page's three toggles still read the profile column directly.
+
 ## 2026-09-24 (seasons, round 5): Ready to crowdpool; "(Facilitator)" on every seasonal facilitation role
 
 - **Ready to crowdpool** (Rye): a concise, complete checklist every project meets before its campaign is approved for the crowdpooling round, drawn from what Season 2 offers and the Governance Canvas planned for Village-OS. Eight items: a legal structure; secure access to the land; a way to send and receive value, so contributors know what they get; a clear game for everyone; the game's governance; the game's economy and financial plan; care and conflict; a campaign ready to run. Each names what to show, the Season 2 weeks that work on it, and the canvas blocks it draws on. It checks that each is in place and clear and never scores it, the canvas's own rule. `shared/crowdpoolReadiness.ts`, with tests that pin Rye's three items and the /season2 graduation list.
