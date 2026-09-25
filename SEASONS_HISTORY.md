@@ -34,7 +34,7 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Roles:** 14 (4 partially filled, 10 open)
 - **Art style:** Solarpunk / elven / regenerative future
 - **Key changes:** First season. Established the roles, compensation bands, Seed/Harvest model. Assembly Steward (role 14) added mid-season when the Assembly shipped 2026-07-03.
-- **Total base budget:** 7,800,000 $ReGen ($78,000) per season across all 14 roles
+- **Total base budget:** 8,100,000 $ReGen ($81,000) per season across all 14 roles; 7,700,000 for the original 13. Corrected 2026-09-24: the per-role bases in the season file add up to these, and the earlier 7,800,000 carried an arithmetic slip
 - **Full details:** [`seasons/season-1-the-first-build.md`](seasons/season-1-the-first-build.md)
 
 ### Season 2: The First Turn
@@ -42,7 +42,7 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Shape:** Design Season (winter), Resource Season (spring), Build Season (summer), Rest Season (fall), with a recap and passoff at each solstice and equinox (`shared/regenYear.ts`, ADR-57, ADR-58, ADR-59)
 - **Roles:** 18 Game roles. The Season 1 roles re-mapped to the flow, the Assembly Steward added to /team, and four Season Organizers at Band 7: The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest)
 - **Key changes:** the incubator is the Design Season; Season Facilitator and Incubator Guide moved one season earlier with it; each season now has its own organizer, handing off at every solstice and equinox
-- **Total base budget:** 11,400,000 $ReGen ($114,000); max 14,820,000 with all bonuses
+- **Total base budget:** 11,700,000 $ReGen ($117,000); max 15,210,000 with all bonuses
 - **Full details:** [`seasons/season-2-the-first-turn.md`](seasons/season-2-the-first-turn.md)
 
 ---

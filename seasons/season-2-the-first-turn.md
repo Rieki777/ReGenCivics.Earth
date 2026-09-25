@@ -10,8 +10,8 @@ Status: **confirmed by Rye, 2026-09-24.** The four Season Organizers, their name
 | **Cohort** | 13 land projects, chosen on Selection Day |
 | **What's new** | One organizing role per season, handing off to the next at every turn; the Assembly Steward on /team |
 | **Art style** | Carries forward from Season 1: solarpunk, elven, hand-painted, bioluminescent accents, fruiting plants and comfortable wildlife. Each organizer is painted in their season's village |
-| **Total base budget** | 11,400,000 $ReGen ($114,000): Season 1's 14 roles (7,800,000) plus the four organizers (3,600,000) |
-| **Max budget (all bonuses)** | 14,820,000 $ReGen ($148,200) |
+| **Total base budget** | 11,700,000 $ReGen ($117,000) across 18 Game roles: the 14 carried from Season 1 (8,100,000) plus the four organizers (3,600,000) |
+| **Max budget (all bonuses)** | 15,210,000 $ReGen ($152,100) |
 
 ---
 

@@ -9,8 +9,8 @@
 | **Context** | First season of formalized roles. The site was being built, the game system designed, the incubator shaped. Most roles were open or partially filled. This was the foundation pour. |
 | **Art style** | Solarpunk / elven / regenerative future. Hand-painted illustrated style. Bioluminescent accents, living architecture, crystal and mycelium. Every scene full of fruiting plants and comfortable wildlife. |
 | **Color palette** | Deep forest greens, warm golds, bioluminescent teals/cyans, sunrise amber, living wood browns, soft white light |
-| **Total base budget** | 7,400,000 $ReGen ($74,000) across all 13 roles |
-| **Max budget (all bonuses)** | 9,620,000 $ReGen ($96,200) if every role hits both Seed and Harvest |
+| **Total base budget** | 7,700,000 $ReGen ($77,000) across the original 13 roles; 8,100,000 with the Assembly Steward. Corrected 2026-09-24: the per-role bases below add up to these, and the first figure here (7,400,000) was an arithmetic slip |
+| **Max budget (all bonuses)** | 10,010,000 $ReGen ($100,100) if every role hits both Seed and Harvest; 10,530,000 with the Assembly Steward |
 
 ---
 
@@ -659,8 +659,8 @@
 | **Total roles** | 13 |
 | **Roles filled** | 4 (partially) |
 | **Roles open** | 9 |
-| **Total base budget** | 7,400,000 $ReGen ($74,000) |
-| **Total max budget** | 9,620,000 $ReGen ($96,200) |
+| **Total base budget** | 7,700,000 $ReGen ($77,000); 8,100,000 with the Assembly Steward, added mid-season |
+| **Total max budget** | 10,010,000 $ReGen ($100,100); 10,530,000 with the Assembly Steward |
 | **Circles represented** | 8 (Incubation, Alliance, Projects, Community, Anchor, Finance, Communications, Tech) |
 | **Art style** | Solarpunk / regenerative future |
 | **Image count** | 26 (13 card portraits + 13 full scenes) |
