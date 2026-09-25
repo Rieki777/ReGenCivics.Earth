@@ -97,3 +97,26 @@ describe("repoLabel", () => {
     expect(repoLabel("not a url")).toBe("not a url");
   });
 });
+
+describe("what the register accepts from a raised hand", () => {
+  it("takes the hub page or docs people actually have, not only a git host", () => {
+    // The ask is "somewhere the Circle can open", so a docs site or a notion
+    // page is as valid as a repo.
+    expect(cleanRepoUrl("https://docs.mytool.dev")).toBe("https://docs.mytool.dev");
+    expect(cleanRepoUrl("mytool.dev/stack")).toBe("https://mytool.dev/stack");
+    expect(cleanRepoUrl("https://www.notion.so/team/our-stack")).toBe("https://www.notion.so/team/our-stack");
+  });
+
+  it("still refuses a link that would run code when the Circle clicks it", () => {
+    // The register renders these as real links, so this is the whole point.
+    expect(cleanRepoUrl("javascript:fetch('/steal')")).toBeNull();
+    expect(cleanRepoUrl("data:text/html,<script>1</script>")).toBeNull();
+  });
+
+  it("refuses an address only the author can open", () => {
+    // Not a security rule, a usefulness one: interoperability needs the other
+    // agents to be able to read it.
+    expect(cleanRepoUrl("localhost")).toBeNull();
+    expect(cleanRepoUrl("myrepo")).toBeNull();
+  });
+});

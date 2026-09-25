@@ -6103,8 +6103,14 @@ export type InteropTimeVote = typeof interopTimeVotes.$inferSelect;
  */
 export const interopTools = mysqlTable("interopTools", {
   id: int("id").autoincrement().primaryKey(),
-  /** Owns the row. Joining again updates in place. */
-  email: varchar("email", { length: 320 }).notNull(),
+  /**
+   * Owns the row once somebody signs up. Null for a hand raised anonymously,
+   * which is the common case: the register is offered at the vote, before any
+   * email exists.
+   */
+  email: varchar("email", { length: 320 }),
+  /** Owns the row before an email does: the browser's vote key. */
+  voterKey: varchar("voterKey", { length: 64 }),
   name: varchar("name", { length: 120 }),
   /** Where the tool lives. Optional: someone without a repo is still in the circle. */
   repoUrl: varchar("repoUrl", { length: 500 }),
@@ -6114,6 +6120,7 @@ export const interopTools = mysqlTable("interopTools", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
   uniqueIndex("interop_tools_email_idx").on(table.email),
+  uniqueIndex("interop_tools_voter_idx").on(table.voterKey),
   index("interop_tools_updated_idx").on(table.updatedAt),
 ]));
 export type InteropTool = typeof interopTools.$inferSelect;
