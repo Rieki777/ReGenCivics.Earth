@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (seasons, round 5): Ready to crowdpool; "(Facilitator)" on every seasonal facilitation role
+
+- **Ready to crowdpool** (Rye): a concise, complete checklist every project meets before its campaign is approved for the crowdpooling round, drawn from what Season 2 offers and the Governance Canvas planned for Village-OS. Eight items: a legal structure; secure access to the land; a way to send and receive value, so contributors know what they get; a clear game for everyone; the game's governance; the game's economy and financial plan; care and conflict; a campaign ready to run. Each names what to show, the Season 2 weeks that work on it, and the canvas blocks it draws on. It checks that each is in place and clear and never scores it, the canvas's own rule. `shared/crowdpoolReadiness.ts`, with tests that pin Rye's three items and the /season2 graduation list.
+- **Where it shows:** `/crowd-pooling#ready` for everyone, beside "Send for review" on a project page, and in the campaign review dialog before the notes. Ticks are the reader's own and stay in their browser. "What ready means" links from the applications notice, /season2's graduation and crowdpool FAQs, /schedule, the post-apply page, the applicant email, and the season model's Resource move.
+- **"(Facilitator)" beside the seasonal facilitation roles** (Rye): The Lantern-Keeper (Facilitator), The Rainmaker (Facilitator), The Barn-Raiser (Facilitator), The Hearth-Keeper (Facilitator), and The Gardener (Facilitator), on /team's cards and pop-ups, the bands list, the scorecard, the rhythm chips and the wheel (`characterLabel`).
+- **Season 2 facilitation is full** (Rye): the Lantern-Keeper and the Season Facilitator read "Filled", with no co-facilitators sought; the Resource, Build and Rest organizers stay open. Seed and production roles table.
+- Source: this session, fifth round. Harness story `crowdpool-readiness`.
+
+Carryover: the ticks are per browser; recording a steward's ticks on the campaign, or requiring them before "Send for review", belongs with the crowdpooling lane that owns review (told 2026-09-24).
+
 ## 2026-09-24 (seasons, round 4): Follow along live, crowdpool with the cohort; the Lantern-Keeper runs the incubator weeks
 
 - **Closed, and still open to everyone** (Rye): anyone can follow the season live, any project that's ready can join the **community crowdpooling round** with the cohort (room for far more than 13, the more the better), and anyone who doesn't make it through this season applies for the next one. `shared/applicationWindow.ts` carries it (`FOLLOW_ALONG_LINE`, `CROWDPOOL_ROUND_LINE`, `NEXT_SEASON_LINE`) while `followAlong` is true: applications held and the Design or Resource Season running. In the Build Season it goes back to "apply anytime" by itself.
@@ -21,7 +31,7 @@ Add new entries to the top. Format per entry:
 - **The Lantern-Keeper facilitates the 13 weekly incubator sessions** (Rye: "do Lantern Keeper"). The Season Facilitator holds the whole wheel from the Seasons Circle across all four seasons: every recap and passoff, a check-in with each organizer, the season record. It stays Band 5, now about 4 hours a week year-round. The Rainmaker's crowdpool launch includes every ready community project. The three production role rows were updated field by field (dry run first); the Facilitator's "Filled, seeking 1-2 co-facilitators" assignment was left as it is.
 - Source: this session, fourth round.
 
-Carryover: the Season Facilitator's assignment text still seeks co-facilitators, which may belong on the Lantern-Keeper now; how a community project shows it's "ready" for the round is not written down yet.
+Carryover: (both closed in round 5) the co-facilitator ask is gone, and "ready" is the readiness checklist.
 
 ## 2026-09-24 (seasons, round 3): Four Season Organizers at the top band; one wheel, many lands; the intake turns with the wheel
 
