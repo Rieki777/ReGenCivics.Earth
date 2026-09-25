@@ -28,6 +28,18 @@ For every new procedure:
 - [ ] Lists are mailed only from admin Outbound (`server/lib/outboundAudience.ts`), each letter with that person's own stop link, never the newsletter prefs link.
 - [ ] Pinned by `server/outbound-audience.test.ts`.
 
+### Money routes (worked example, 2026-09-25)
+
+A money route is a URL a project steward types that the server later fetches (the nightly hydration job reads the partner's page for its raised figure). That makes it a user-supplied URL in a server fetch, section 6 below, plus an authorization split. The pattern (`server/lib/partner-links.ts`, `campaigns.addPartnerLink` / `removePartnerLink` / `getPartnerLinksForSteward` / `reviewPartnerLink`, `hydrateCampaignPartnerLinks` in `server/routes/batchJobs.ts`):
+
+- [ ] **Allowlisted hosts, checked on the way in.** `validateRouteUrl(partner, url)`: parse with `new URL`, `https:` only, no username or password, default port, hostname exactly on that partner's list, a path past the front page, at most 512 characters. No suffix or substring matching, so `maearth.com.evil.test` and `evilmaearth.com` fail. The refusal names the partner and its first host so the steward knows what to paste.
+- [ ] **Two roles.** A project steward adds and removes (`assertCampaignSteward` only); a ReGen Civics admin verifies (`adminProcedure`). A new row is `pending` and appears nowhere public until verified. The admin also sets the currency of the partner page's numbers.
+- [ ] **Public reads use an explicit column list** and filter to `verified` (plus `example` on example campaigns). Review fields (`proofUrl`, `reviewNote`, `addedBy`, `verifiedBy`) stay in the steward and admin read.
+- [ ] **The fetcher trusts nothing it stored.** It loads verified rows only, re-runs `validateRouteUrl` before each fetch, uses `redirect: 'manual'`, and follows one 3xx only when `isAllowedHop` keeps it on the same partner's hosts. A refused URL, an off-host or second redirect, a non-200 or a timeout all count as failed and leave the cached numbers alone.
+- [ ] **Logs carry the row id, never the URL.**
+- [ ] **Ship the fetch hardening with the write path.** A procedure that lets people store URLs must not reach production before the fetcher that reads them is fenced (OWASP A10).
+- [ ] Pinned by `server/partner-links.test.ts` (allowlist, look-alikes, IP literals, hops), `server/partner-hydration.test.ts` (verified-only loader, manual redirects, one hop) and `server/money-routes.test.ts` (roles, visibility, example campaigns, the loan route rail).
+
 ## 2. Webhooks
 
 For any new inbound webhook:

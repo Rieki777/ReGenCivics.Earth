@@ -1484,6 +1484,25 @@ export type CampaignPartnerLink = typeof campaignPartnerLinks.$inferSelect;
 export type InsertCampaignPartnerLink = typeof campaignPartnerLinks.$inferInsert;
 
 /**
+ * Ready to crowdpool ticks (0258). A row means a project steward ticked that
+ * item for that campaign; an untick deletes the row. itemKey is the permanent
+ * key from shared/crowdpoolReadiness.ts (current, or on
+ * RETIRED_READINESS_KEYS). Written by campaigns.setReadinessTick, read by
+ * campaigns.getReadiness and the review dialog.
+ */
+export const campaignReadinessTicks = mysqlTable("campaign_readiness_ticks", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  itemKey: varchar("itemKey", { length: 40 }).notNull(),
+  tickedBy: int("tickedBy").notNull(),
+  tickedAt: timestamp("tickedAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("campaign_readiness_ticks_uq").on(t.campaignId, t.itemKey),
+]));
+export type CampaignReadinessTick = typeof campaignReadinessTicks.$inferSelect;
+export type InsertCampaignReadinessTick = typeof campaignReadinessTicks.$inferInsert;
+
+/**
  * Campaign Followers (0205). Email-only followers from the GetNotified form,
  * no account required. Account holders follow via user_follows with
  * targetType 'campaign'. unsubscribeToken goes into every email.

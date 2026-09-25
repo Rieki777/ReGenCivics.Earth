@@ -12,6 +12,7 @@ import { sql, and, eq, isNull, isNotNull, lte, gt } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { extractPartnerFunding, type PartnerFunding, type PartnerKey } from "../lib/partner-funding-parse";
+import { isAllowedHop, validateRouteUrl } from "../lib/partner-links";
 import { shipGiveawayEntries } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { emailVerifyGiveawayEntry } from "../lib/ship-emails";
@@ -581,8 +582,8 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
 // cached raised / contributor / percent numbers that the campaign detail page
 // shows read-only, "as of {lastFetchedAt}". This job refreshes those numbers.
 //
-// For every link on an active or funded campaign it fetches the funder's public
-// page and reads the numbers with server/lib/partner-funding-parse. Defensive by
+// For every verified link on an active or funded campaign it fetches the funder's
+// public page and reads the numbers with server/lib/partner-funding-parse. Defensive by
 // design: each fetch has a 10s timeout, at most `concurrency` run at once, and a
 // fetch error, a non-200, or a page it cannot parse leaves that row's cached
 // values AND lastFetchedAt exactly as they were. It never zeroes a number it
@@ -591,12 +592,30 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
 //
 // The db access and the fetch are injectable so the orchestration is unit
 // tested without a live database or network (server/partner-hydration.test.ts).
+//
+// SSRF hardening (build spec 2026-09-25, section 7.3; OWASP A10). Project
+// stewards now add these URLs themselves (campaigns.addPartnerLink), so:
+//   - only rows a ReGen Civics admin verified are fetched. Example rows keep
+//     their seeded numbers and are never fetched;
+//   - each URL is checked again with validateRouteUrl (https, the partner's
+//     exact hosts) before the fetch;
+//   - redirects are manual. A 3xx is followed once, and only when its
+//     Location stays on the same partner's allowlist (isAllowedHop);
+//     anything else counts as failed;
+//   - the currency of the numbers is set by the admin at verification and
+//     never by this job;
+//   - log lines carry the link id, never the URL.
 
 /** Minimal shape of the response the job needs; matches global fetch(). */
 export type FetchLike = (
   url: string,
   init?: any,
-) => Promise<{ ok: boolean; status?: number; text: () => Promise<string> }>;
+) => Promise<{
+  ok: boolean;
+  status?: number;
+  text: () => Promise<string>;
+  headers?: { get(name: string): string | null };
+}>;
 
 interface PartnerLinkRow {
   id: number;
@@ -619,15 +638,22 @@ export interface HydratePartnerOptions {
 const PARTNER_FETCH_UA =
   "Mozilla/5.0 (compatible; RegenCivicsBot/1.0; +https://regencivics.earth)";
 
-async function defaultLoadLinks(db: any): Promise<PartnerLinkRow[]> {
-  const [rows] = await db.execute(sql`
+/**
+ * The query the job loads its links with, exported so a test can pin that
+ * it selects verified rows only. Never pending, rejected or example rows.
+ */
+export const VERIFIED_PARTNER_LINKS_SQL = sql`
     SELECT pl.id, pl.partner, pl.url
     FROM campaign_partner_links pl
     JOIN campaigns c ON c.id = pl.campaignId
     WHERE c.status IN ('active', 'funded')
+      AND pl.status = 'verified'
       AND pl.partner IN ('maearth', 'gosteward')
       AND pl.url IS NOT NULL AND pl.url <> ''
-  `);
+  `;
+
+export async function loadVerifiedPartnerLinks(db: any): Promise<PartnerLinkRow[]> {
+  const [rows] = await db.execute(VERIFIED_PARTNER_LINKS_SQL);
   return ((rows as any[]) ?? []).map((r) => ({
     id: Number(r.id),
     partner: String(r.partner),
@@ -649,19 +675,37 @@ async function defaultWriteUpdate(db: any, id: number, funding: PartnerFunding):
   `);
 }
 
+/**
+ * Fetch one verified route's page. The URL is re-checked against the
+ * partner's allowlist first; redirects are manual and followed once, only
+ * when the Location stays on the same allowlist. Returns null for anything
+ * the job should count as failed (a refused URL, a non-200, an off-host or
+ * second redirect). Throws on network error or timeout (also failed).
+ */
 async function fetchPartnerHtml(
   url: string,
+  partner: PartnerKey,
   fetchImpl: FetchLike,
   timeoutMs: number,
 ): Promise<string | null> {
+  const checked = validateRouteUrl(partner, url);
+  if (!checked.ok) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const init = {
+    signal: controller.signal,
+    redirect: "manual",
+    headers: { "user-agent": PARTNER_FETCH_UA, accept: "text/html,application/xhtml+xml" },
+  };
+  const isRedirect = (status: number | undefined) => typeof status === "number" && status >= 300 && status < 400;
   try {
-    const res = await fetchImpl(url, {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: { "user-agent": PARTNER_FETCH_UA, accept: "text/html,application/xhtml+xml" },
-    });
+    let res = await fetchImpl(checked.url, init);
+    if (isRedirect(res.status)) {
+      const location = res.headers?.get("location") ?? null;
+      if (!location || !isAllowedHop(partner, new URL(checked.url), location)) return null;
+      res = await fetchImpl(new URL(location, checked.url).href, init);
+      if (isRedirect(res.status)) return null; // one hop only
+    }
     if (!res.ok) return null;
     return await res.text();
   } finally {
@@ -676,7 +720,7 @@ export async function hydrateCampaignPartnerLinks(
   const fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike | undefined);
   const concurrency = Math.max(1, opts.concurrency ?? 5);
   const timeoutMs = opts.timeoutMs ?? 10_000;
-  const loadLinks = opts.loadLinks ?? defaultLoadLinks;
+  const loadLinks = opts.loadLinks ?? loadVerifiedPartnerLinks;
   const writeUpdate = opts.writeUpdate ?? defaultWriteUpdate;
 
   if (!fetchImpl) return { checked: 0, updated: 0, stale: 0, failed: 0 };
@@ -685,21 +729,22 @@ export async function hydrateCampaignPartnerLinks(
   let checked = 0;
   let updated = 0;
   let stale = 0; // fetched fine, nothing parseable -> left untouched
-  let failed = 0; // fetch error / non-200 / write error -> left untouched
+  let failed = 0; // refused URL / fetch error / non-200 / bad redirect / write error -> left untouched
 
   for (let i = 0; i < links.length; i += concurrency) {
     const batch = links.slice(i, i + concurrency);
     checked += batch.length;
     const outcomes = await Promise.all(
       batch.map(async (link): Promise<"updated" | "stale" | "failed"> => {
+        if (link.partner !== "maearth" && link.partner !== "gosteward") return "failed";
+        const partner: PartnerKey = link.partner;
         let html: string | null;
         try {
-          html = await fetchPartnerHtml(link.url, fetchImpl, timeoutMs);
+          html = await fetchPartnerHtml(link.url, partner, fetchImpl, timeoutMs);
         } catch {
           return "failed"; // network, abort, or timeout: leave cache + lastFetchedAt
         }
-        if (html == null) return "failed"; // non-200
-        const partner: PartnerKey = link.partner === "gosteward" ? "gosteward" : "maearth";
+        if (html == null) return "failed"; // refused URL, non-200, or a redirect it may not follow
         const funding = extractPartnerFunding(html, partner);
         if (!funding) return "stale"; // parsed nothing: degrade to last good cache
         try {

@@ -4,7 +4,7 @@
  *
  * Morning ops arc (catalog order, omit zeros):
  * reminder/cron issues → session closeout → live runbook → call tasks →
- * investors → outbound failed / drafts → outreach → applications.
+ * investors → outbound failed / drafts → outreach → applications → money routes.
  */
 
 
@@ -159,6 +159,12 @@ export type OperatorPulseCounts = {
   callTasksOpenOrOverdue: number;
   /** Harvest ripe ideas ready for outreach compose. */
   outreachRipe: number;
+  /**
+   * Money routes a project steward added that wait for a ReGen Civics admin
+   * to check (campaign_partner_links status pending, on real campaigns in
+   * draft, pending_review or active). Build spec 2026-09-25, section 7.4.
+   */
+  moneyRoutesToCheck: number;
 };
 
 /**
@@ -242,6 +248,13 @@ const CATALOG: Array<{
     href: "/admin?tab=applications&view=reviews",
     countKey: "applicationsWaitingReview",
   },
+  {
+    id: "money-routes",
+    label: "Money routes to check",
+    severity: "medium",
+    href: "/admin?tab=crowdpooling",
+    countKey: "moneyRoutesToCheck",
+  },
 ];
 
 /** Build pulse rows with count > 0, in morning ops-arc (catalog) order. */
@@ -277,6 +290,7 @@ export function emptyOperatorPulseCounts(): OperatorPulseCounts {
     outboundDraftsWaiting: 0,
     callTasksOpenOrOverdue: 0,
     outreachRipe: 0,
+    moneyRoutesToCheck: 0,
   };
 }
 

@@ -148,6 +148,24 @@ describe("buildOperatorPulseItems", () => {
     expect(buildOperatorPulseItems(emptyOperatorPulseCounts())).toEqual([]);
   });
 
+  it("puts money routes to check right after applications, linked to the crowdpooling tab", () => {
+    expect(emptyOperatorPulseCounts().moneyRoutesToCheck).toBe(0);
+    const items = buildOperatorPulseItems({
+      ...emptyOperatorPulseCounts(),
+      moneyRoutesToCheck: 2,
+      applicationsWaitingReview: 1,
+      outreachRipe: 3,
+    });
+    expect(items.map((i) => i.id)).toEqual(["outreach", "applications", "money-routes"]);
+    expect(items[2]).toEqual({
+      id: "money-routes",
+      label: "Money routes to check",
+      count: 2,
+      href: "/admin?tab=crowdpooling",
+      severity: "medium",
+    });
+  });
+
   it("deep-links call tasks to Stuck + Unassigned morning filter", () => {
     const items = buildOperatorPulseItems({
       ...emptyOperatorPulseCounts(),

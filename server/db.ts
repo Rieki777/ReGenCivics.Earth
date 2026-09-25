@@ -917,11 +917,49 @@ export async function createCampaign(userId: number, data: {
     resourceUnit?: string;
     resourceDescription?: string;
     estimatedValue: number;
+    // (0257) When the need is wanted, 'YYYY-MM-DD', and how a thing may come.
+    neededFrom?: string;
+    neededUntil?: string;
+    acceptsGift?: boolean;
+    acceptsLoan?: boolean;
+    workMode?: 'on_site' | 'remote' | 'either';
   }>;
+  /**
+   * Money routes the project holds (Ma Earth, Steward), already checked by
+   * validateRouteUrl (server/lib/partner-links.ts). Inserted as 'pending'
+   * after the campaign row: nothing shows publicly until an admin verifies.
+   */
+  moneyRoutes?: Array<{ partner: 'maearth' | 'gosteward'; url: string; label: string }>;
 }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
+  // Need rules (build spec 2026-09-25, section 6.1), checked before any
+  // insert so a bad need never leaves a half-written campaign:
+  //   - money is never a need: the money ask is financialTarget, and money
+  //     routes are added in the Money step;
+  //   - a need window cannot end before it starts;
+  //   - a thing takes a gift, a loan, or both, never neither;
+  //   - kind 'loan' from any caller (the design companion can suggest it)
+  //     is stored as kind 'item' that takes loans only. New needs never get
+  //     kind 'loan' (hub contract 4).
+  for (const item of data.items) {
+    const kind = item.kind ?? (item.category === 'role' ? 'role' : 'item');
+    if (kind === 'crypto' || kind === 'financial_link') {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
+      });
+    }
+    if (item.neededFrom && item.neededUntil && item.neededUntil < item.neededFrom) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: "A need can't end before it starts." });
+    }
+    const modes = needModesForCreate(item);
+    if (modes.thing && !modes.gift && !modes.loan) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: "Choose whether you'd take each thing as a gift, on loan, or both." });
+    }
+  }
+
 
   // A role need is measured in hours a week (capacityUnit 'hours_per_week',
   // migration 0249): the hours ARE its capacity, so quantityWanted mirrors
@@ -1008,13 +1046,21 @@ export async function createCampaign(userId: number, data: {
   
   // Create campaign items
   for (const item of data.items) {
-    const kind = resolvedKind(item);
+    const modes = needModesForCreate(item);
+    // A lendable thing is kind 'item' with acceptsLoan 1; 'loan' is legacy.
+    const kind = modes.thing ? 'item' : resolvedKind(item);
     const isRole = isHoursItem(item);
     await db.insert(campaignItems).values({
       campaignId,
       category: item.category,
       // Needs registry taxonomy: wizard sends kind + capitalType; legacy callers get sane defaults.
       kind,
+      neededFrom: item.neededFrom ?? null,
+      neededUntil: item.neededUntil ?? null,
+      // Roles, shifts and knowledge ignore the modes: they keep the defaults.
+      acceptsGift: modes.thing ? (modes.gift ? 1 : 0) : 1,
+      acceptsLoan: modes.thing ? (modes.loan ? 1 : 0) : 0,
+      workMode: item.workMode ?? null,
       capitalType: item.capitalType ?? (item.category === 'land' ? 'living' : item.category === 'role' ? 'experiential' : 'material'),
       capacityUnit: isRole ? 'hours_per_week' : 'count',
       quantityWanted: isRole
@@ -1039,8 +1085,39 @@ export async function createCampaign(userId: number, data: {
       estimatedValue: item.estimatedValue,
     });
   }
-  
+
+  // Money routes, pending until a ReGen Civics admin verifies each one.
+  if (data.moneyRoutes && data.moneyRoutes.length > 0) {
+    await db.insert(campaignPartnerLinks).values(
+      data.moneyRoutes.map((r) => ({
+        campaignId,
+        partner: r.partner,
+        label: r.label,
+        url: r.url,
+        status: 'pending' as const,
+        addedBy: userId,
+      })),
+    );
+  }
+
   return campaignId;
+}
+
+/**
+ * How a new need may come, for db.createCampaign. `thing` is true for kind
+ * 'item' and the legacy 'loan' (land is stored as item). A legacy 'loan'
+ * takes loans only whatever the caller sent; otherwise a gift is on unless
+ * the caller turned it off, and a loan is off unless turned on.
+ */
+function needModesForCreate(item: { kind?: string; category: string; acceptsGift?: boolean; acceptsLoan?: boolean }): {
+  thing: boolean;
+  gift: boolean;
+  loan: boolean;
+} {
+  const kind = item.kind ?? (item.category === 'role' ? 'role' : 'item');
+  if (kind === 'loan') return { thing: true, gift: false, loan: true };
+  if (kind !== 'item') return { thing: false, gift: true, loan: false };
+  return { thing: true, gift: item.acceptsGift ?? true, loan: item.acceptsLoan ?? false };
 }
 
 
@@ -1664,6 +1741,59 @@ export async function recomputeCampaignValueTotals(campaignId: number, tx?: any)
         c.resourcesValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id AND ci.category = 'resource')
     WHERE c.id = ${campaignId}
   `);
+}
+
+// ============================================
+// Ready to crowdpool ticks (0258, build spec 2026-09-25 section 12)
+// ============================================
+
+import { campaignReadinessTicks } from "../drizzle/schema";
+
+/** A campaign's stored readiness ticks, oldest first. */
+export async function getReadinessTicks(
+  campaignId: number,
+): Promise<Array<{ itemKey: string; tickedBy: number; tickedAt: Date }>> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select({
+      itemKey: campaignReadinessTicks.itemKey,
+      tickedBy: campaignReadinessTicks.tickedBy,
+      tickedAt: campaignReadinessTicks.tickedAt,
+    })
+    .from(campaignReadinessTicks)
+    .where(eq(campaignReadinessTicks.campaignId, campaignId))
+    .orderBy(asc(campaignReadinessTicks.tickedAt), asc(campaignReadinessTicks.id));
+}
+
+/**
+ * Tick (insert) or untick (delete) one item for a campaign. A repeat tick
+ * keeps the first tick's steward and time; a repeat untick changes nothing.
+ * The caller checks the steward and the key (campaigns.setReadinessTick).
+ */
+export async function setReadinessTick(
+  campaignId: number,
+  itemKey: string,
+  userId: number,
+  ticked: boolean,
+): Promise<{ changed: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (ticked) {
+    // INSERT IGNORE on the (campaignId, itemKey) unique key: 1 row when this
+    // call ticked it, 0 when it was already ticked. (ON DUPLICATE KEY UPDATE
+    // reports 1 for a no-op under mysql2's found-rows flag.) The key and ids
+    // are checked by the caller, so nothing else can be ignored here.
+    const result = await db
+      .insert(campaignReadinessTicks)
+      .ignore()
+      .values({ campaignId, itemKey, tickedBy: userId });
+    return { changed: asMutationResult(result).affectedRows === 1 };
+  }
+  const result = await db
+    .delete(campaignReadinessTicks)
+    .where(and(eq(campaignReadinessTicks.campaignId, campaignId), eq(campaignReadinessTicks.itemKey, itemKey)));
+  return { changed: asMutationResult(result).affectedRows > 0 };
 }
 
 /** How many people follow a campaign: with an account, and by email only. */

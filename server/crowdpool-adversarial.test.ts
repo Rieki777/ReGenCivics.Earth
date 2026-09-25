@@ -122,6 +122,10 @@ async function activeCampaign(opts: {
   return { campaignId: campaign.id, itemId: items[0].id as number };
 }
 
+/**
+ * Submit an offer. `value` is kept only when no need is attached: on a need
+ * the server stores the need's per-slot value times `qty` (2026-09-25).
+ */
 async function pledge(campaignId: number, itemId: number | undefined, value: number, name: string, qty = 1) {
   return realOffer(appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
     campaignId,
@@ -169,23 +173,26 @@ describe('the pooled total', () => {
    * progress ring (docs/modules/crowdpool.md), so the village sees it too.
    */
   it.skipIf(skipIfNoDb)('does not shrink when a delivered pledge is confirmed', async () => {
-    const { campaignId, itemId } = await activeCampaign({ title: 'Total shrink', quantityWanted: 5 });
+    // Since 2026-09-25 an offer on a need carries the need's own value
+    // (per-slot value times slots), never the client's: 50,000 over five
+    // slots is 10,000 a slot.
+    const { campaignId, itemId } = await activeCampaign({ title: 'Total shrink', quantityWanted: 5, itemValue: 50000 });
     const caller = steward();
 
-    const a = await pledge(campaignId, itemId, 10000, 'Ada');
+    const a = await pledge(campaignId, itemId, 1, 'Ada');
     await caller.campaigns.updateContributionStatus({ contributionId: a.id, status: 'accepted' });
     expect((await campaignRow(campaignId)).pledgedTotal).toBe(10000);
 
     // Ada delivers. Nothing was lost; the project HAS the value.
     await caller.campaigns.updateContributionStatus({ contributionId: a.id, status: 'fulfilled' });
 
-    // Bo pledges 5k, which triggers the recompute.
-    const b = await pledge(campaignId, itemId, 5000, 'Bo');
+    // Bo takes another slot, which triggers the recompute.
+    const b = await pledge(campaignId, itemId, 1, 'Bo');
     await caller.campaigns.updateContributionStatus({ contributionId: b.id, status: 'accepted' });
 
-    // The honest number is 15000. The code stores 5000: Ada's delivered value
-    // has left the total entirely.
-    expect((await campaignRow(campaignId)).pledgedTotal).toBe(15000);
+    // The honest number is 20000. The old code stored 10000: Ada's delivered
+    // value left the total entirely.
+    expect((await campaignRow(campaignId)).pledgedTotal).toBe(20000);
   });
 
   /**
@@ -205,17 +212,23 @@ describe('the pooled total', () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Double count', quantityWanted: 3 });
     const caller = steward();
 
-    const c = await realOffer(appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
-      campaignId,
-      campaignItemId: itemId,
-      contributionType: 'financial',
-      title: 'A crypto pledge',
-      estimatedValue: 10000,
-      financialAmount: 10000,
-      quantityPledged: 1,
-      contributorName: 'Crypto',
-      contributorEmail: 'crypto@example.com',
-    }));
+    // A legacy on-platform crypto row, inserted directly: submitContribution
+    // refuses money while crowdpool.rails.accept_money is off, and this test
+    // is about the totals, not the route.
+    const c = {
+      id: await dbHelpers.createContribution({
+        campaignId,
+        campaignItemId: itemId,
+        contributionType: 'financial',
+        title: 'A crypto pledge',
+        estimatedValue: 10000,
+        financialAmount: 10000,
+        quantityPledged: 1,
+        contributorName: 'Crypto',
+        contributorEmail: 'crypto@example.com',
+        status: 'pending',
+      }),
+    };
     await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
 
     const row = await campaignRow(campaignId);
@@ -241,7 +254,8 @@ describe('the pooled total', () => {
     const gone = ['pending', 'rejected', 'withdrawn', 'expired'];
 
     for (const status of [...standing, ...gone]) {
-      const { campaignId, itemId } = await activeCampaign({ title: `Status ${status}`, quantityWanted: 3 });
+      // 12,000 over three slots: each slot is worth 4,000 (the need's value).
+      const { campaignId, itemId } = await activeCampaign({ title: `Status ${status}`, quantityWanted: 3, itemValue: 12000 });
       const c = await pledge(campaignId, itemId, 4000, `St${status}`);
 
       // Set the status directly: several of these are terminal and cannot be
@@ -481,11 +495,13 @@ describe('money units', () => {
    * migration 0237 they are DECIMAL(18,2) and the amount is kept exactly, so the
    * test now asserts the honest behaviour rather than documenting the old one.
    */
+  // The contributor's own number is kept only on a freeform offer (no need
+  // attached): an offer on a need carries the need's value since 2026-09-25.
   it.skipIf(skipIfNoDb)('stores a fractional pledge exactly as the contributor entered it', async () => {
-    const { campaignId, itemId } = await activeCampaign({ title: 'Fractional', quantityWanted: 3 });
+    const { campaignId } = await activeCampaign({ title: 'Fractional', quantityWanted: 3 });
     const caller = steward();
 
-    const submitted = await pledge(campaignId, itemId, 1000.75, 'Frac');
+    const submitted = await pledge(campaignId, undefined, 1000.75, 'Frac');
     await caller.campaigns.updateContributionStatus({ contributionId: submitted.id, status: 'accepted' });
 
     expect((await campaignRow(campaignId)).pledgedTotal).toBeCloseTo(1000.75, 2);
@@ -495,9 +511,9 @@ describe('money units', () => {
     // Two decimals is the contract. A third has to round somewhere, and the
     // point of the fix is that rounding is never silent about the amount a
     // contributor was shown, so assert what actually happens rather than assume.
-    const { campaignId, itemId } = await activeCampaign({ title: 'Third decimal', quantityWanted: 3 });
+    const { campaignId } = await activeCampaign({ title: 'Third decimal', quantityWanted: 3 });
     const caller = steward();
-    const c = await pledge(campaignId, itemId, 10.005, 'Third');
+    const c = await pledge(campaignId, undefined, 10.005, 'Third');
     await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
 
     const stored = (await campaignRow(campaignId)).pledgedTotal;

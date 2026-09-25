@@ -116,6 +116,25 @@ export const CROWDPOOL_READINESS: ReadinessItem[] = [
   },
 ];
 
+/**
+ * Keys that were once on the list and have been replaced. A campaign may
+ * still hold a stored tick for one (campaign_readiness_ticks, migration
+ * 0258), so a retired key stays readable and can be unticked, but never
+ * newly ticked. Empty today. When an item is replaced, add its old key here
+ * in the same change that adds the new item.
+ */
+export const RETIRED_READINESS_KEYS: string[] = [];
+
+/** A current key: one a steward can tick today. */
+export function isCurrentReadinessKey(key: string): boolean {
+  return CROWDPOOL_READINESS.some((item) => item.key === key);
+}
+
+/** A key a stored tick may carry: current or retired. */
+export function isReadinessKey(key: string): boolean {
+  return isCurrentReadinessKey(key) || RETIRED_READINESS_KEYS.includes(key);
+}
+
 /** "Week 13", "Weeks 10 and 11", "Weeks 3 to 5", "Weeks 5, 8, 9 and 12". */
 export function weeksLabel(weeks: number[]): string {
   const w = [...weeks].sort((a, b) => a - b);

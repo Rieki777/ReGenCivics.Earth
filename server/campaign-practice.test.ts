@@ -168,6 +168,43 @@ describe("submitContribution on an example campaign", () => {
       .rejects.toMatchObject({ code: "BAD_REQUEST", message: "Campaign is not accepting contributions" });
   });
 
+  it.skipIf(skipIfNoDb)("checks give or lend like a real campaign, then practises a loan without writing", async () => {
+    // A thing the example takes as a gift or on loan (build spec 2026-09-25, 6.3).
+    const applicationId = await createApprovedApplication(STEWARD);
+    const { id: campaignId } = await stewardCaller(STEWARD).campaigns.create({
+      title: "Test Practice Give or lend",
+      description: "Practice fixture",
+      projectName: "Test Practice Give or lend",
+      currency: "USD",
+      financialTarget: 0,
+      applicationId,
+      items: [{ category: "equipment", equipmentName: "Trailer", estimatedValue: 3000, acceptsGift: true, acceptsLoan: true }],
+    });
+    createdCampaignIds.push(campaignId);
+    await adminCaller().campaigns.updateStatus({ id: campaignId, status: "active" });
+    const database = await dbHelpers.getDb();
+    await database!.update(campaigns).set({ isDemo: 1 }).where(eq(campaigns.id, campaignId));
+    const [trailer] = await dbHelpers.getCampaignItems(campaignId);
+    const before = await snapshot(campaignId);
+    clearSpies();
+
+    const lendOffer = (extra: Record<string, unknown>) =>
+      anonCaller().campaigns.submitContribution({ ...slotOffer(campaignId, trailer.id), contributionType: "equipment", ...extra });
+    await expect(lendOffer({})).rejects.toMatchObject({ code: "BAD_REQUEST", message: "Choose give or lend for this need." });
+    await expect(lendOffer({ offerMode: "lend" })).rejects.toMatchObject({ message: "Add the date it needs to come back." });
+    await expect(lendOffer({ contributionType: "financial", financialAmount: 10 }))
+      .rejects.toMatchObject({ message: expect.stringContaining("Money doesn't move through this site yet.") });
+
+    const until = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+    expect(await lendOffer({ offerMode: "lend", lendUntil: until, lendTerms: "Return it clean" }))
+      .toEqual({ id: null, success: true, practice: true });
+    expect(await lendOffer({ offerMode: "give" })).toEqual({ id: null, success: true, practice: true });
+
+    expect(await snapshot(campaignId)).toBe(before);
+    expect(vi.mocked(notifyProposalReceived)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendEmail)).not.toHaveBeenCalled();
+  });
+
   it.skipIf(skipIfNoDb)("a real campaign still takes the offer and says it is not practice", async () => {
     const { campaignId, slotId } = await liveCampaign("Real one", false);
     clearSpies();

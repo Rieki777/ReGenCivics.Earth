@@ -6,7 +6,7 @@ import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { executableActionCatalog } from "./adminActions";
 import { eq, sql, count, like, gte, and, inArray, ne } from "drizzle-orm";
-import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties, harvestIdeas, eventAutoReminders, eventAutoReminderSends } from "../../drizzle/schema";
+import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, campaignPartnerLinks, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers, newsletterIssues, bounties, harvestIdeas, eventAutoReminders, eventAutoReminderSends } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
 import {
   buildOperatorPulseItems,
@@ -141,6 +141,29 @@ export async function computeEcosystemSnapshot() {
   };
 }
 
+
+/**
+ * Money routes a project steward added that wait for an admin to check
+ * (build spec 2026-09-25, section 7.4): pending rows on real campaigns in
+ * draft, pending_review or active. Example campaigns carry 'example' routes,
+ * never pending ones worth a human. Fail-soft to 0.
+ */
+export async function countMoneyRoutesToCheck(drizzleDb: NonNullable<Awaited<ReturnType<typeof getDb>>>): Promise<number> {
+  try {
+    const [routeRow] = await drizzleDb
+      .select({ n: count() })
+      .from(campaignPartnerLinks)
+      .innerJoin(campaignsTable, eq(campaignsTable.id, campaignPartnerLinks.campaignId))
+      .where(and(
+        eq(campaignPartnerLinks.status, "pending"),
+        eq(campaignsTable.isDemo, 0),
+        inArray(campaignsTable.status, ["draft", "pending_review", "active"]),
+      ));
+    return Number(routeRow?.n ?? 0);
+  } catch {
+    return 0; // before migration 0257 reaches this database
+  }
+}
 
 /**
  * Operator Pulse: one read for the Overview "Needs you today" stack.
@@ -284,6 +307,8 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
     ),
   ).length;
 
+  const moneyRoutesToCheck = await countMoneyRoutesToCheck(drizzleDb);
+
   // All six product rows are queryable with current schema.
   const outboundDraftsWaiting = outboundRows.filter((r) => isOutboundDraftWaiting(r)).length;   const outreachRipe = 0;    const deferred: OperatorPulseResult["deferred"] = [];
 
@@ -296,6 +321,7 @@ export async function computeOperatorPulse(nowMs: number = Date.now()): Promise<
       applicationsWaitingReview,
       outboundFailedOrStuck,
       callTasksOpenOrOverdue,       outboundDraftsWaiting,       outreachRipe,
+      moneyRoutesToCheck,
     }),
     deferred,
   };

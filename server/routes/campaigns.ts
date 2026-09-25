@@ -30,6 +30,7 @@ import {
   canSeeCampaign,
   canStewardCampaign,
   canViewCampaign,
+  isPublicCampaign,
 } from "../lib/project-steward";
 import { canTransition, type CampaignStatus } from "../../shared/campaignStatus";
 import {
@@ -45,6 +46,31 @@ import {
 import { projectPathForCampaignFocus } from "../../shared/projectKey";
 import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, summarizeProgress } from "../../shared/campaignProgress";
 import { CASH_SHARE } from "../../shared/crowdpoolModel";
+import { GIVE_LEND } from "../../shared/crowdpoolCopy";
+import {
+  isMoneyKind,
+  isThingKind,
+  kindForItem,
+  modesFor,
+  toDay,
+  todayUtc,
+  type NeedLike,
+} from "../../shared/crowdpoolNeedAction";
+import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolReadiness";
+import {
+  OPEN_NEEDS_CACHE_KEY,
+  OPEN_NEEDS_CACHE_SECONDS,
+  buildOpenNeeds,
+  type OpenNeedsResult,
+} from "../../shared/openNeeds";
+import {
+  ROUTE_PARTNERS,
+  ROUTE_PARTNER_LABELS,
+  isRoutePartner,
+  validateProofUrl,
+  validateRouteUrl,
+} from "../lib/partner-links";
+import { campaignPartnerLinks as campaignPartnerLinksTable } from "../../drizzle/schema";
 import { regenSeasonSpan } from "../../shared/regenYear";
 import {
   notifyCampaignApproved,
@@ -231,6 +257,145 @@ async function claimExpiryDaysForKind(kind: string): Promise<number> {
   if (kind === 'shift') return getGameVariableOr('crowdpool.claim_expiry_days_shift', 7);
   if (kind === 'loan') return getGameVariableOr('crowdpool.claim_expiry_days_loan', 14);
   return getGameVariableOr('crowdpool.claim_expiry_days_item', 14);
+}
+
+// ── Give or lend, money, dates (build spec 2026-09-25, section 6.3) ────────
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** 'YYYY-MM-DD' that names a real calendar day (no 2026-02-30). */
+function isCalendarDay(s: string): boolean {
+  if (!DAY_RE.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
+
+/** A date input: 'YYYY-MM-DD', a real day. Dates stay strings end to end. */
+const zDay = z.string().regex(DAY_RE).refine(isCalendarDay, { message: 'Use a real date.' });
+
+/** The same day n years on, as a string bound for comparison. */
+function plusYears(day: string, n: number): string {
+  return `${Number(day.slice(0, 4)) + n}${day.slice(4)}`;
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** No money moves through this site while crowdpool.rails.accept_money is off. */
+export const MONEY_RAIL_REFUSAL =
+  "Money doesn't move through this site yet. The project page shows the ways this project takes money.";
+
+/** A loan can run this many years from today, at most. */
+const MAX_LOAN_YEARS = 5;
+
+/** Freeform offer types that are things, and so may be given or lent. */
+const FREEFORM_THING_TYPES = ['land', 'equipment', 'resource'];
+
+export type GiveOrLend = {
+  offerMode: 'give' | 'lend' | null;
+  availableFrom: string | null;
+  lendUntil: string | null;
+  lendTerms: string | null;
+};
+
+/**
+ * How an offer comes: given or lent, with a lend's dates and terms. Throws
+ * BAD_REQUEST with the words a contributor sees.
+ *
+ *   - A thing need (kind item, or legacy loan) takes only the modes it
+ *     accepts (modesFor). When it takes both, the contributor must choose;
+ *     when it takes one, that one applies.
+ *   - A lend needs an until date, on or after today and after its own start,
+ *     on or after the need's own start date, and within five years.
+ *   - A gift drops the dates and terms. Roles, shifts and knowledge drop the
+ *     mode and every loan field.
+ *   - A freeform offer (no need) may carry a mode when it is a thing, with
+ *     the same date checks.
+ */
+export function checkGiveOrLend(args: {
+  need: NeedLike | null;
+  contributionType: string;
+  offerMode?: 'give' | 'lend';
+  availableFrom?: string;
+  lendUntil?: string;
+  lendTerms?: string;
+  today: string;
+}): GiveOrLend {
+  const none: GiveOrLend = { offerMode: null, availableFrom: null, lendUntil: null, lendTerms: null };
+  const refuse = (message: string) => new TRPCError({ code: 'BAD_REQUEST', message });
+  let mode: 'give' | 'lend' | null;
+  if (args.need) {
+    if (!isThingKind(kindForItem(args.need))) return none;
+    const modes = modesFor(args.need);
+    if (args.offerMode === undefined) {
+      if (modes.gift && modes.loan) throw refuse('Choose give or lend for this need.');
+      mode = modes.gift ? 'give' : 'lend';
+    } else if (args.offerMode === 'give' && !modes.gift) {
+      throw refuse('This need takes loans only.');
+    } else if (args.offerMode === 'lend' && !modes.loan) {
+      throw refuse('This need takes gifts only.');
+    } else {
+      mode = args.offerMode;
+    }
+  } else {
+    if (!FREEFORM_THING_TYPES.includes(args.contributionType)) return none;
+    mode = args.offerMode ?? null;
+  }
+  if (mode !== 'lend') return { ...none, offerMode: mode };
+
+  const until = args.lendUntil ?? null;
+  if (!until) throw refuse(GIVE_LEND.missingUntil);
+  const from = args.availableFrom ?? null;
+  if (until < args.today || (from && until < from)) throw refuse(GIVE_LEND.untilBeforeFrom);
+  const neededFrom = args.need ? toDay(args.need.neededFrom ?? null) : null;
+  if (neededFrom && until < neededFrom) throw refuse(GIVE_LEND.untilBeforeNeed);
+  if (until > plusYears(args.today, MAX_LOAN_YEARS)) {
+    throw refuse('A loan can run for up to five years from today. Pick an earlier date.');
+  }
+  const trimmed = args.lendTerms?.trim() ?? '';
+  // Stored through sanitizeInput; entity-encoding can lengthen it, so cap again.
+  const lendTerms = trimmed ? sanitizeInput(trimmed).slice(0, 300) : null;
+  return { offerMode: 'lend', availableFrom: from, lendUntil: until, lendTerms: lendTerms || null };
+}
+
+/** Statuses a steward has taken an offer on: the ones a loan can be marked returned from. */
+const TAKEN_ON_STATUSES = ['accepted', 'fulfilled', 'thanked'] as const;
+
+/** A campaign that is over takes no new routes and keeps its ticks. */
+const CLOSED_CAMPAIGN_STATUSES = ['cancelled', 'completed', 'funded'];
+
+async function loadPartnerLink(linkId: number) {
+  const database = await requireDb();
+  const rows = await database
+    .select()
+    .from(campaignPartnerLinksTable)
+    .where(eq(campaignPartnerLinksTable.id, linkId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** The campaign behind a steward-only call, or FORBIDDEN (never NOT_FOUND: ids are enumerable). */
+async function stewardCampaign(user: TrpcContext["user"] | undefined, campaignId: number, message: string): Promise<Campaign> {
+  const campaign = await db.getCampaignById(campaignId);
+  if (!campaign) throw new TRPCError({ code: 'FORBIDDEN', message });
+  await assertCampaignSteward(user, campaign, message);
+  return campaign;
+}
+
+/** Best-effort note to the site owner that a money route waits to be checked. Never throws. */
+async function tellOwnerRouteToCheck(campaign: Pick<Campaign, 'title' | 'projectName'>): Promise<void> {
+  try {
+    const { notifyOwner } = await import("../_core/notification");
+    await notifyOwner({
+      title: `Money route to check: ${campaign.title}`,
+      content: `${campaign.projectName || campaign.title} added a money route. Check it in Admin, Crowdpooling, before it shows on the project page.`,
+    });
+  } catch (err) {
+    console.warn('[money-routes] owner notice failed (non-fatal):', err);
+  }
 }
 
 /**
@@ -770,6 +935,180 @@ export const campaignsRouter = router({
     };
   }),
 
+  // The Needs tab (/campaigns?tab=needs): every open need across live public
+  // campaigns, least covered first, examples in their own list, plus the
+  // money routes people can use (build spec 2026-09-25, section 9.1). Public
+  // and cached 60 seconds. Counts and statuses only: no names, no contact
+  // data, no dates from anyone's loan (server/open-needs.test.ts pins the
+  // row shape). Built by shared/openNeeds.ts from the same progress inputs
+  // as every other reading.
+  listOpenNeeds: publicProcedure.query(async (): Promise<OpenNeedsResult> => {
+    const cached = await cacheGet<OpenNeedsResult>(OPEN_NEEDS_CACHE_KEY);
+    if (cached) return cached;
+    const live = (await db.listCampaigns('active')).filter((c) => isPublicCampaign(c));
+    const ids = live.map((c) => c.id);
+    const inputs = await db.getCampaignProgressInputs(ids);
+    const database = await getDb();
+    const routes = database && ids.length > 0
+      ? await database
+          .select({
+            campaignId: campaignPartnerLinksTable.campaignId,
+            partner: campaignPartnerLinksTable.partner,
+            label: campaignPartnerLinksTable.label,
+            status: campaignPartnerLinksTable.status,
+          })
+          .from(campaignPartnerLinksTable)
+          .where(and(
+            inArray(campaignPartnerLinksTable.campaignId, ids),
+            inArray(campaignPartnerLinksTable.status, ['verified', 'example']),
+          ))
+          .orderBy(campaignPartnerLinksTable.id)
+      : [];
+    const result = buildOpenNeeds({ campaigns: live, inputs, routes });
+    await cacheSet(OPEN_NEEDS_CACHE_KEY, result, OPEN_NEEDS_CACHE_SECONDS);
+    return result;
+  }),
+
+  // ---- Money routes (build spec 2026-09-25, section 7.2) ----
+  // A project steward adds a route (Ma Earth for gifts, Steward for loans)
+  // on the partner's own site; a ReGen Civics admin verifies it; only
+  // verified routes, and example routes on example campaigns, show publicly
+  // (getPartnerLinks). The nightly job fetches verified routes only, with
+  // the host allowlist and no off-host redirects (OWASP A10). Money through
+  // a route never passes through ReGen Civics.
+
+  addPartnerLink: protectedProcedure
+    .input(z.object({
+      campaignId: z.number().int().positive(),
+      partner: z.enum(ROUTE_PARTNERS),
+      url: z.string().max(512),
+      proofUrl: z.string().max(512).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "campaign_money_route");
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can add its money routes.");
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Example campaigns keep their example routes.' });
+      }
+      if (CLOSED_CAMPAIGN_STATUSES.includes(campaign.status)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This campaign is closed, so it takes no new routes.' });
+      }
+      const checked = validateRouteUrl(input.partner, input.url);
+      if (!checked.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: checked.message });
+      let proofUrl: string | null = null;
+      if (input.proofUrl && input.proofUrl.trim()) {
+        const proof = validateProofUrl(input.proofUrl);
+        if (!proof.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: proof.message });
+        proofUrl = proof.url;
+      }
+      const database = await requireDb();
+      // Count and insert under the campaign row's lock, so two adds at once
+      // cannot both pass the limit of two per partner.
+      const id = await database.transaction(async (tx) => {
+        await tx.execute(sql`SELECT id FROM campaigns WHERE id = ${campaign.id} FOR UPDATE`);
+        const [rows]: any = await tx.execute(sql`
+          SELECT COUNT(*) AS n FROM campaign_partner_links
+          WHERE campaignId = ${campaign.id} AND partner = ${input.partner} AND status IN ('pending', 'verified')
+        `);
+        if (Number(rows?.[0]?.n ?? 0) >= 2) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'A campaign can have up to two routes of each kind.' });
+        }
+        const result: any = await tx.insert(campaignPartnerLinksTable).values({
+          campaignId: campaign.id,
+          partner: input.partner,
+          label: ROUTE_PARTNER_LABELS[input.partner],
+          url: checked.url,
+          proofUrl,
+          status: 'pending',
+          addedBy: ctx.user.id,
+        });
+        return Number(result?.[0]?.insertId ?? result?.insertId);
+      });
+      await tellOwnerRouteToCheck(campaign);
+      return { id, success: true };
+    }),
+
+  // A steward removes one of their project's routes, whatever its status.
+  // Example routes are the example campaign's own: only admins remove those.
+  removePartnerLink: protectedProcedure
+    .input(z.object({ linkId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const link = await loadPartnerLink(input.linkId);
+      if (!link) return { success: true, changed: false };
+      await stewardCampaign(ctx.user, link.campaignId, "Only this project's stewards can remove its money routes.");
+      if (link.status === 'example' && !isAdminUser(ctx.user)) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Example routes stay on example campaigns.' });
+      }
+      const database = await requireDb();
+      const result = await database.delete(campaignPartnerLinksTable).where(eq(campaignPartnerLinksTable.id, link.id));
+      if (link.status === 'verified' || link.status === 'example') await cacheDel(OPEN_NEEDS_CACHE_KEY);
+      return { success: true, changed: affectedRows(result) > 0 };
+    }),
+
+  // Every route on a campaign with every column (status, proof link, review
+  // note), for the steward's Money routes card and the admin review. Stewards
+  // only; admins pass through project-steward.ts.
+  getPartnerLinksForSteward: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its money routes.");
+      const database = await requireDb();
+      return await database
+        .select()
+        .from(campaignPartnerLinksTable)
+        .where(eq(campaignPartnerLinksTable.campaignId, campaign.id))
+        .orderBy(campaignPartnerLinksTable.id);
+    }),
+
+  // An admin checks a route: verified shows it on the project page and lets
+  // the nightly job read its numbers; rejected hides it with a note the
+  // project sees. The admin sets the currency of the partner page's numbers
+  // here (never the job). A Steward (loan) route cannot be verified while
+  // crowdpool.rails.loan_routes is off (question Q1).
+  reviewPartnerLink: adminProcedure
+    .input(z.object({
+      linkId: z.number().int().positive(),
+      decision: z.enum(['verified', 'rejected']),
+      currency: z.string().trim().min(3).max(8).regex(/^[A-Za-z]{3,8}$/).optional(),
+      note: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const link = await loadPartnerLink(input.linkId);
+      if (!link) throw new TRPCError({ code: 'NOT_FOUND', message: 'That route is gone.' });
+      if (link.status === 'example') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "Example routes aren't reviewed. They stay on example campaigns and never link out." });
+      }
+      const campaign = await db.getCampaignById(link.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'That route is gone.' });
+      const database = await requireDb();
+      if (input.decision === 'verified') {
+        if (link.partner === 'gosteward' && (await getGameVariableOr('crowdpool.rails.loan_routes', 0)) !== 1) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: "Loan routes can't be verified until the loan route switch is on." });
+        }
+        // The nightly job fetches verified routes, so the URL must still sit
+        // on the partner's own hosts.
+        if (!isRoutePartner(link.partner) || !validateRouteUrl(link.partner, link.url).ok) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: "This link isn't on the partner's own site, so it can't be verified." });
+        }
+        await database.update(campaignPartnerLinksTable)
+          .set({
+            status: 'verified',
+            verifiedBy: ctx.user.id,
+            verifiedAt: new Date(),
+            cachedCurrency: (input.currency ?? campaign.currency ?? 'USD').toUpperCase(),
+            reviewNote: null,
+          })
+          .where(eq(campaignPartnerLinksTable.id, link.id));
+      } else {
+        const note = input.note && input.note.trim() ? sanitizeInput(input.note.trim()).slice(0, 1000) : null;
+        await database.update(campaignPartnerLinksTable)
+          .set({ status: 'rejected', reviewNote: note, verifiedBy: null, verifiedAt: null })
+          .where(eq(campaignPartnerLinksTable.id, link.id));
+      }
+      await cacheDel(OPEN_NEEDS_CACHE_KEY);
+      return { success: true, status: input.decision };
+    }),
+
   // Server-side geocode for the gallery map. Same-origin so it clears the CSP
   // the browser enforces on a direct Nominatim call. Cached and spaced to
   // respect the OSM usage policy. Returns location -> {lat,lng} | null.
@@ -887,7 +1226,22 @@ export const campaignsRouter = router({
         resourceDescription: z.string().optional(),
         // Common
         estimatedValue: z.number().min(0),
+        // When the need is wanted, and how a thing may come (section 6.1).
+        // db.createCampaign checks the rules; kind 'loan' is stored as an
+        // item that takes loans only, and money kinds are refused.
+        neededFrom: zDay.optional(),
+        neededUntil: zDay.optional(),
+        acceptsGift: z.boolean().optional(),
+        acceptsLoan: z.boolean().optional(),
+        workMode: z.enum(['on_site', 'remote', 'either']).optional(),
       })),
+      // Money routes the project holds (section 7.2). Each is checked against
+      // the partner's hosts and stored pending: an admin verifies it before
+      // it shows anywhere.
+      moneyRoutes: z.array(z.object({
+        partner: z.enum(ROUTE_PARTNERS),
+        url: z.string().max(512),
+      })).max(2).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Security (2026-09-24): create used to accept any caller and any
@@ -902,7 +1256,15 @@ export const campaignsRouter = router({
         const approved = !!app && (app.status === 'approved' || app.status === 'active');
         if (!ownsIt || !approved) throw new TRPCError({ code: 'FORBIDDEN', message: refusal });
       }
-      const campaignId = await db.createCampaign(ctx.user.id, input);
+      // Every route is checked before anything is written, so a bad link
+      // never leaves a half-made campaign.
+      const moneyRoutes = (input.moneyRoutes ?? []).map((r) => {
+        const checked = validateRouteUrl(r.partner, r.url);
+        if (!checked.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: checked.message });
+        return { partner: r.partner, url: checked.url, label: ROUTE_PARTNER_LABELS[r.partner] };
+      });
+      const { moneyRoutes: _routes, ...campaignInput } = input;
+      const campaignId = await db.createCampaign(ctx.user.id, { ...campaignInput, moneyRoutes });
       // Fire-and-forget image generation, don't block mutation response
       generateImage({
         contentType: "campaign",
@@ -911,7 +1273,16 @@ export const campaignsRouter = router({
       }).then(({ url }) =>
         getDb().then(d => d?.update(campaignsTable).set({ generatedImageUrl: url }).where(eq(campaignsTable.id, campaignId)))
       ).catch(err => console.error(`Image gen failed for campaign ${campaignId}:`, err));
-      return { id: campaignId, success: true };
+      const created = await db.getCampaignById(campaignId);
+      if (moneyRoutes.length > 0) {
+        await tellOwnerRouteToCheck({ title: created?.title ?? input.title, projectName: created?.projectName ?? input.projectName });
+      }
+      // The project page, focused on the new campaign: where the wizard sends
+      // its steward next.
+      const path = projectPathForCampaignFocus(
+        created ?? { id: campaignId, applicationId: input.applicationId ?? null, projectName: input.projectName, title: input.title },
+      );
+      return { id: campaignId, path, success: true };
     }),
 
   // Get contributions for a campaign — public view strips PII.
@@ -983,7 +1354,7 @@ export const campaignsRouter = router({
       title: z.string().min(1).max(255),
       description: z.string().optional(),
       // Claims against a specific need
-      quantityPledged: z.number().int().min(1).default(1),
+      quantityPledged: z.number().int().min(1).max(100_000).default(1),
       isAnonymous: z.boolean().optional(),
       referredBy: z.string().max(16).optional(),
       // Land-specific
@@ -999,19 +1370,26 @@ export const campaignsRouter = router({
       // Whole hours a week, 1 to 168. Required when the need is an hours
       // need (a role measured in hours a week); optional elsewhere.
       hoursPerWeek: z.number().int().min(1).max(MAX_OFFER_HOURS).optional(),
-      durationMonths: z.number().optional(),
+      durationMonths: z.number().int().min(1).max(120).optional(),
       skills: z.array(z.string()).optional(),
       // Resource-specific
       resourceName: z.string().optional(),
       resourceQuantity: z.number().optional(),
       resourceUnit: z.string().optional(),
-      // Financial-specific
-      financialAmount: z.number().optional(),
+      // Financial-specific. Refused while crowdpool.rails.accept_money is off.
+      financialAmount: z.number().min(0).max(10_000_000).optional(),
       financialCurrency: z.string().optional(),
       paymentMethod: z.string().optional(),
-      // Common
-      estimatedValue: z.number().min(0),
+      // Common. On an offer against a need the server sets the value from
+      // the need (below) and this number is ignored; a freeform offer keeps it.
+      estimatedValue: z.number().min(0).max(10_000_000),
       contributorNotes: z.string().optional(),
+      // Give or lend (build spec 2026-09-25, section 6.3). Dates are
+      // 'YYYY-MM-DD' strings end to end.
+      offerMode: z.enum(['give', 'lend']).optional(),
+      availableFrom: zDay.optional(),
+      lendUntil: zDay.optional(),
+      lendTerms: z.string().max(300).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "campaign_contribution");
@@ -1027,6 +1405,12 @@ export const campaignsRouter = router({
       // then the practice return further down skips every write.
       const practice = !!campaign.isDemo;
 
+      // 1. Nothing takes money (rails ruling 2026-09-05): a financial offer is
+      //    refused at the route while crowdpool.rails.accept_money is off.
+      if (input.contributionType === 'financial' && (await getGameVariableOr('crowdpool.rails.accept_money', 0)) !== 1) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: MONEY_RAIL_REFUSAL });
+      }
+
       // Claim against a specific need: guard the slot count and stamp the
       // claim expiry window from the crowdpool.claim_expiry_days_* variables.
       let claimExpiresAt: Date | null = null;
@@ -1034,12 +1418,14 @@ export const campaignsRouter = router({
       let quantityPledged = input.quantityPledged;
       let hoursPerWeek = input.hoursPerWeek;
       let estimatedValue = input.estimatedValue;
+      let hoursNeed = false;
       if (input.campaignItemId) {
         item = await db.getCampaignItemById(input.campaignItemId);
         if (!item || item.campaignId !== input.campaignId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'That need does not belong to this campaign' });
         }
-        if (isHoursNeed(item)) {
+        hoursNeed = isHoursNeed(item);
+        if (hoursNeed) {
           // A role measured in hours a week. People offer the hours they
           // can give; a steward accepts each at a number of hours. Offers
           // are never refused for partial capacity, only when every hour the
@@ -1060,8 +1446,41 @@ export const campaignsRouter = router({
           if (item.quantityClaimed + input.quantityPledged > item.quantityWanted) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'This need is already fully claimed' });
           }
+        }
+      }
+
+      // 2 to 4. Give or lend: the modes the need accepts, a lend's dates and
+      //    terms. Roles, shifts and knowledge drop every loan field.
+      const giveOrLend = checkGiveOrLend({
+        need: item,
+        contributionType: input.contributionType,
+        offerMode: input.offerMode,
+        availableFrom: input.availableFrom,
+        lendUntil: input.lendUntil,
+        lendTerms: input.lendTerms,
+        today: todayUtc(),
+      });
+
+      if (item && !hoursNeed) {
+        // 5. The value comes from the need, never the client: the need's
+        //    per-slot value times the slots offered. Loans count at the
+        //    listed value until plan decision 5 is ruled. Money needs keep
+        //    the row's own amount (their value is the whole money ask).
+        if (!isMoneyKind(kindForItem(item))) {
+          const wanted = Number(item.quantityWanted) || 0;
+          const needValue = Math.max(0, Number(item.estimatedValue) || 0);
+          const perSlot = wanted > 1 ? round2(needValue / wanted) : needValue;
+          estimatedValue = round2(perSlot * quantityPledged);
+        }
+        // 6. Claim expiry. A lend counts from when the thing is available, so
+        //    an accepted loan that starts later is not swept before it begins.
+        if (giveOrLend.offerMode === 'lend') {
+          const expiryDays = await claimExpiryDaysForKind('loan');
+          const startsAt = giveOrLend.availableFrom ? Date.parse(`${giveOrLend.availableFrom}T00:00:00.000Z`) : 0;
+          claimExpiresAt = new Date(Math.max(Date.now(), startsAt) + expiryDays * DAY_MS);
+        } else {
           const expiryDays = await claimExpiryDaysForKind(item.kind);
-          claimExpiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+          claimExpiresAt = new Date(Date.now() + expiryDays * DAY_MS);
         }
       }
 
@@ -1110,6 +1529,11 @@ export const campaignsRouter = router({
         isAnonymous: input.isAnonymous ? 1 : 0,
         referredBy: input.referredBy,
         status: 'pending',
+        // 7. Give or lend, checked above; lendTerms went through sanitizeInput.
+        offerMode: giveOrLend.offerMode,
+        availableFrom: giveOrLend.availableFrom,
+        lendUntil: giveOrLend.lendUntil,
+        lendTerms: giveOrLend.lendTerms,
       }, tx);
       });
 
@@ -1607,6 +2031,46 @@ export const campaignsRouter = router({
       return { success: true };
     }),
 
+  // A steward records that a lent thing went back to its owner (build spec
+  // 2026-09-25, section 6.4). A stamp only: no status change, no counter
+  // change, no notice. Accepted, delivered and thanked loans qualify
+  // (question Q6). A repeat answers changed: false.
+  markLoanReturned: protectedProcedure
+    .input(z.object({ contributionId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const contribution = await db.getContributionById(input.contributionId);
+      if (!contribution) throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
+      const campaign = await db.getCampaignById(contribution.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can mark a loan returned.");
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Example campaigns keep their example records.' });
+      }
+      if (contribution.offerMode !== 'lend') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a loan can be marked returned.' });
+      }
+      if (contribution.returnedAt) return { success: true, changed: false };
+      if (!(TAKEN_ON_STATUSES as readonly string[]).includes(contribution.status)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a loan the stewards took on can be marked returned.' });
+      }
+      const database = await requireDb();
+      const result = await database.update(campaignContributionsTable)
+        .set({ returnedAt: new Date() })
+        .where(and(
+          eq(campaignContributionsTable.id, contribution.id),
+          eq(campaignContributionsTable.offerMode, 'lend'),
+          inArray(campaignContributionsTable.status, [...TAKEN_ON_STATUSES]),
+          isNull(campaignContributionsTable.returnedAt),
+        ));
+      if (affectedRows(result) === 0) {
+        // Someone else stamped it first (a repeat), or the row moved.
+        const again = await db.getContributionById(contribution.id);
+        if (again?.returnedAt) return { success: true, changed: false };
+        throw raced();
+      }
+      return { success: true, changed: true };
+    }),
+
   // Formalize a delivered contribution as a Hypha contribution proposal on the
   // project's DHO. Delivery is the moment that counts, so only fulfilled or
   // thanked contributions formalize. Project tokens are issued on-chain by the
@@ -1893,6 +2357,41 @@ export const campaignsRouter = router({
         console.warn('[Campaign] review notice to the site owner failed (non-fatal):', err);
       }
       return { success: true };
+    }),
+
+  // ---- Ready to crowdpool ticks (build spec 2026-09-25, section 12) ----
+  // A project steward's record of which Ready to crowdpool items the project
+  // meets, stored on the campaign so the review team sees it. Keys are the
+  // permanent keys in shared/crowdpoolReadiness.ts. Stewards and admins only.
+
+  getReadiness: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its ticks.");
+      return await db.getReadinessTicks(campaign.id);
+    }),
+
+  setReadinessTick: protectedProcedure
+    .input(z.object({
+      campaignId: z.number().int().positive(),
+      key: z.string().max(40),
+      ticked: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can tick its items.");
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "Example campaigns don't keep ticks." });
+      }
+      if (CLOSED_CAMPAIGN_STATUSES.includes(campaign.status)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This campaign is closed, so its ticks stay as they are.' });
+      }
+      // A retired key can still be unticked, never newly ticked.
+      const known = input.ticked ? isCurrentReadinessKey(input.key) : isReadinessKey(input.key);
+      if (!known) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "That isn't one of the Ready to crowdpool items." });
+      }
+      const { changed } = await db.setReadinessTick(campaign.id, input.key, ctx.user.id, input.ticked);
+      return { success: true, changed };
     }),
 
   // ---- Followers, updates, and the Pool Ledger ----

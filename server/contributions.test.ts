@@ -131,21 +131,22 @@ describe('Campaign Contribution System', () => {
         status: 'active',
       });
       
-      // Create a contribution using submitContribution
+      // Create a contribution using submitContribution. A freeform offer of
+      // a thing: money offers are refused while crowdpool.rails.accept_money
+      // is off (server/give-lend.test.ts), so this no longer posts money.
       const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
-        contributionType: 'financial',
-        title: 'My Financial Contribution',
-        description: 'Contributing to the seed funding',
+        contributionType: 'resource',
+        title: 'Seed for the first planting',
+        description: 'Contributing to the seed stock',
         estimatedValue: 1000,
         contributorName: 'John Doe',
         contributorEmail: 'john@example.com',
         contributorPhone: '555-1234',
         contributorNotes: 'Happy to support this project!',
-        financialAmount: 1000,
-        financialCurrency: 'USD',
+        resourceName: 'Seed',
       }));
-      
+
       expect(contribution.id).toBeDefined();
       expect(contribution.success).toBe(true);
     });
@@ -331,8 +332,10 @@ describe('Campaign Contribution System', () => {
         status: 'active',
       });
       
-      // Create multiple contributions
-      await realOffer(caller.campaigns.submitContribution({
+      // Create multiple contributions. Legacy on-platform money rows are
+      // inserted directly: submitContribution refuses money while
+      // crowdpool.rails.accept_money is off, and this test reads rows back.
+      await dbHelpers.createContribution({
         campaignId: campaign.id,
         contributionType: 'financial',
         title: 'Contribution 1',
@@ -341,9 +344,10 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Contributor 1',
         contributorEmail: 'c1@example.com',
         financialAmount: 1000,
-      }));
-      
-      await realOffer(caller.campaigns.submitContribution({
+        status: 'pending',
+      });
+
+      await dbHelpers.createContribution({
         campaignId: campaign.id,
         contributionType: 'financial',
         title: 'Contribution 2',
@@ -352,7 +356,8 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Contributor 2',
         contributorEmail: 'c2@example.com',
         financialAmount: 2000,
-      }));
+        status: 'pending',
+      });
       
       // Get all contributions
       const contributions = await caller.campaigns.getContributions({

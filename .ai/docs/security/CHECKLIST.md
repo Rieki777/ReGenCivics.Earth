@@ -50,6 +50,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] Public `campaigns.getContributions` is an allowlist (`PUBLIC_CONTRIBUTION_FIELDS`) and shows visitors only standing offers; no `ownerNotes` or `userId`. (2026-09-24: DONE)
 - [x] Nobody can follow (account or email) a campaign they cannot see; unpublished campaigns never notify followers. (2026-09-24: DONE)
 - [x] Sign-in emails have their own hourly send budget, separate from notice and list mail. (2026-09-24: DONE, `server/campaign-notification-prefs.test.ts`)
+- [x] Money routes: stewards add, only admins verify, only verified (and example-on-example) rows reach the public; readiness ticks and Returned are steward-only; `submitContribution` sets an offer's value from the need and refuses money while `crowdpool.rails.accept_money` is off. (2026-09-25: DONE, `server/money-routes.test.ts`, `server/give-lend.test.ts`, `server/readiness-ticks.test.ts`)
 - [ ] Production audit before the deploy: land_project org claims with status approved whose application's `stewardUserId` is NULL or a different user. Reject any that were never meant to be granted. (2026-09-24: OPEN, main session)
 
 ## CSP + security headers
@@ -85,6 +86,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] Link-preview fetcher (`open-graph-scraper`) honors user-supplied URL. Theoretical SSRF risk. (2026-04-25: open, mitigation in OWASP-TOP10 A10)
 - [ ] URL block-list for private/loopback addresses on link-preview. (2026-04-25: open)
 - [x] YouTube transcript fetcher hardcoded to `youtube.com`. (2026-04-25: ok per `server/lib/videoSummary.ts`)
+- [x] Money route hydration fetches steward-supplied URLs only after admin verification, on an exact per-partner host allowlist, with manual redirects and one on-host hop. (2026-09-25: DONE, `server/lib/partner-links.ts`, `server/partner-hydration.test.ts`; OWASP-TOP10 A10)
 
 ## AI / LLM
 
