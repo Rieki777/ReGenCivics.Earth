@@ -99,10 +99,48 @@ describe("the in-kind half", () => {
     expect(p.open).toEqual({ count: 4, roles: 1, things: 1, shifts: 1, sessions: 1 });
   });
 
-  it("caps a need's confirmed value at the need's own value", () => {
+  it("caps an open need's confirmed value at its value times the share confirmed", () => {
+    // 5 of 10 places on a 2,000 need count at most 1,000, whatever the rows say.
     const p = compute({ rows: [row(3, "accepted", 5, 7500, { count: 5 })] });
-    expect(p.byNeed[3]).toMatchObject({ confirmed: 5, open: 5, filled: false, confirmedValue: 2000 });
-    expect(p.inKind.confirmed).toBe(2000);
+    expect(p.byNeed[3]).toMatchObject({ confirmed: 5, open: 5, filled: false, confirmedValue: 1000 });
+    expect(p.inKind.confirmed).toBe(1000);
+  });
+
+  it("a legacy row that states a need's full value cannot bring the half to 100% while the need is open", () => {
+    // Before the server copied the need's value, a contributor's own figure
+    // was stored: 1 of 3 places, stated at the whole 300.
+    const three = { ...SHIFT, quantityWanted: 3, estimatedValue: 300 };
+    const p = compute({ items: [three], rows: [row(3, "accepted", 1, 300)] });
+    expect(p.byNeed[3]).toMatchObject({ filled: false, confirmedValue: 100 });
+    expect(p.inKind).toMatchObject({ ask: 300, confirmed: 100, needsMet: 0, landed: false });
+    expect(p.inKind.pct).toBeLessThan(100);
+    expect(progressLines(p, fmt).inKind).toBe("In-kind: 0 of 1 needs met ($100 of $300 confirmed)");
+  });
+
+  it("a need listed at no value keeps the half open, and the bar stops short of full", () => {
+    // The half lands when every in-kind need is filled. A need at 0 adds
+    // nothing to the ask, so confirmed value can equal the ask while it is
+    // open; the bar then never reads 100 and nothing says the half landed.
+    const tractor = { ...TRACTOR, estimatedValue: 1000 };
+    const cook = { ...ROLE, capacityUnit: "count", quantityWanted: 1, estimatedValue: 0 };
+    const p = compute({
+      campaign: { financialTarget: 0 },
+      items: [tractor, cook],
+      rows: [row(2, "accepted", 1, 1000, { contributionType: "equipment" })],
+    });
+    expect(p.inKind).toMatchObject({ ask: 1000, confirmed: 1000, needsMet: 1, needsTotal: 2, landed: false });
+    expect(p.inKind.pct).toBeLessThan(100);
+    expect(progressBars(p, fmt).inKind.now).toBe(99);
+    expect(p.state).toBe("open");
+    expect(progressLines(p, fmt).halves).toBeNull();
+    // Once the role is filled the half lands and the bar is full.
+    const filled = compute({
+      campaign: { financialTarget: 0 },
+      items: [tractor, cook],
+      rows: [row(2, "accepted", 1, 1000, { contributionType: "equipment" }), row(1, "accepted", 1, 0, { contributionType: "role" })],
+    });
+    expect(filled.inKind).toMatchObject({ landed: true, pct: 100 });
+    expect(filled.state).toBe("both_landed");
   });
 
   it("counts a filled need in full even when its rows round short", () => {
@@ -511,5 +549,40 @@ describe("every line stays inside the words", () => {
       expect(t).not.toMatch(/\bfunded\b|\bpledg|\bdonat|\bclaim/i);
       expect(t).not.toMatch(/undefined|NaN|null/);
     }
+  });
+});
+
+describe("a campaign that lists no in-kind needs", () => {
+  it("never promises or counts an in-kind half it cannot have", () => {
+    const open = compute({ items: [], campaign: { financialTarget: 1000 }, routes: [route("maearth", 400)] });
+    expect(open.state).toBe("open");
+    const openLines = progressLines(open, fmt);
+    expect(openLines.inKind).toBe("This project lists no in-kind needs yet.");
+    expect(openLines.halves).toBeNull();
+    expect(openLines.completion).toBe("Complete means the money half lands by 30 November 2026.");
+
+    const landed = compute({ items: [], campaign: { financialTarget: 1000 }, routes: [route("maearth", 1500)] });
+    expect(landed.state).toBe("both_landed");
+    const lines = progressLines(landed, fmt);
+    expect(lines.halves).toBe("Money half landed.");
+    expect(lines.completion).toBe("Complete means the money half lands by 30 November 2026.");
+    for (const text of Object.values(lines)) expect(String(text ?? "")).not.toMatch(/0 needs|in-kind half/i);
+  });
+
+  it("reads almost complete on the money side alone", () => {
+    const p = compute({ items: [], campaign: { financialTarget: 1000 }, routes: [route("maearth", 900)] });
+    expect(p.almostComplete).toBe(true);
+    expect(progressLines(p, fmt).stateTag).toBe("Almost complete");
+  });
+
+  it("on an example, the completion rule names the money half only", () => {
+    const p = compute({ items: [], campaign: { financialTarget: 1000, isDemo: 1 } });
+    expect(progressLines(p, fmt).completion).toBe("On a real campaign, complete means the money half lands by its close date.");
+  });
+
+  it("with nothing asked at all, no half line shows", () => {
+    const p = compute({ items: [], campaign: { financialTarget: 0 } });
+    expect(p.state).toBe("both_landed");
+    expect(progressLines(p, fmt).halves).toBeNull();
   });
 });

@@ -9,9 +9,17 @@
 -- Why each backfill runs:
 --   * Legacy kind 'loan' needs take loans only, so they get acceptsGift 0,
 --     acceptsLoan 1, and their custody window (loanWindowStart/End) copied
---     into the new need window (neededFrom/Until). Only new columns change.
+--     into the new need window (neededFrom/Until).
 --   * Contributions on those needs are lends, so they get offerMode 'lend'
---     and the need's window as their dates. Only new columns change.
+--     and the need's window as their dates.
+--   Both tables carry updatedAt ON UPDATE CURRENT_TIMESTAMP, so both
+--   UPDATEs set `updatedAt = updatedAt` to keep it: only new columns change.
+--   The windows are TIMESTAMPs, and DATE() reads a TIMESTAMP in the session
+--   time zone, so on a session west of UTC a window starting early on the
+--   9th became the 8th. Each date is taken in UTC (CONVERT_TZ from the
+--   session zone to +00:00), the day the rest of the app shows. COALESCE
+--   keeps the plain DATE() if the session zone is a named zone and the
+--   server has no time zone tables (CONVERT_TZ then returns NULL).
 --   * Every existing campaign_partner_links row belongs to an example
 --     campaign (only seed scripts ever wrote them), so on example campaigns
 --     they become status 'example' (shown, never linked out) with the
@@ -35,7 +43,9 @@ ALTER TABLE `campaign_items`
 -- Legacy kind 'loan' needs take loans only; their custody window becomes the need window.
 UPDATE `campaign_items`
   SET `acceptsGift` = 0, `acceptsLoan` = 1,
-      `neededFrom` = DATE(`loanWindowStart`), `neededUntil` = DATE(`loanWindowEnd`)
+      `neededFrom` = COALESCE(DATE(CONVERT_TZ(`loanWindowStart`, @@session.time_zone, '+00:00')), DATE(`loanWindowStart`)),
+      `neededUntil` = COALESCE(DATE(CONVERT_TZ(`loanWindowEnd`, @@session.time_zone, '+00:00')), DATE(`loanWindowEnd`)),
+      `updatedAt` = `updatedAt`
   WHERE `kind` = 'loan' AND `acceptsLoan` = 0;
 
 ALTER TABLE `campaign_contributions`
@@ -49,8 +59,9 @@ ALTER TABLE `campaign_contributions`
 UPDATE `campaign_contributions` cc
   JOIN `campaign_items` ci ON ci.id = cc.campaignItemId
   SET cc.offerMode = 'lend',
-      cc.availableFrom = DATE(ci.loanWindowStart),
-      cc.lendUntil = DATE(ci.loanWindowEnd)
+      cc.availableFrom = COALESCE(DATE(CONVERT_TZ(ci.loanWindowStart, @@session.time_zone, '+00:00')), DATE(ci.loanWindowStart)),
+      cc.lendUntil = COALESCE(DATE(CONVERT_TZ(ci.loanWindowEnd, @@session.time_zone, '+00:00')), DATE(ci.loanWindowEnd)),
+      cc.updatedAt = cc.updatedAt
   WHERE ci.kind = 'loan' AND cc.offerMode IS NULL;
 
 -- Money routes: added by a project steward, verified by a ReGen Civics admin.

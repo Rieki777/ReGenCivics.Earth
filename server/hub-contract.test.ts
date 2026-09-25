@@ -42,6 +42,15 @@ describe("hub contract version", () => {
     expect(doc).toMatch(/New needs never use kind `loan`/);
   });
 
+  it("records every meaning version 4 changed, the offer value included", () => {
+    const row = doc.split("\n").find((l) => l.startsWith("| 4 |")) ?? "";
+    // An offer on a need now carries the need's own value, set by the server
+    // (server/give-lend.test.ts pins it); villages read it through getActivity.
+    expect(row).toMatch(/per-slot value times the slots as `estimatedValue`/);
+    expect(row).toMatch(/freeform offer keeps the contributor's own figure/);
+    expect(row).toMatch(/`gosteward`\) rows show only while ReGen Civics has loan routes switched on/);
+  });
+
   it("serves the constant, with or without an input object", async () => {
     const caller = metaRouter.createCaller({} as never);
     expect(await caller.contract()).toEqual(HUB_CONTRACT);

@@ -270,7 +270,19 @@ export function offeredLine(np: Pick<NeedProgress, "gives" | "lends">, today: st
 
 // ── The reading ──────────────────────────────────────────────────────────────
 
-function stateFor(status: string, inKindLanded: boolean, moneyLanded: boolean, asksNone: boolean): ProgressState {
+/**
+ * `noInKindNeeds`: a campaign that lists no in-kind needs has nothing to land
+ * on that side, the way a campaign that asks for no money has nothing to land
+ * on the other. It never reads "In-kind half landed", and once its money
+ * lands it is done.
+ */
+function stateFor(
+  status: string,
+  inKindLanded: boolean,
+  moneyLanded: boolean,
+  asksNone: boolean,
+  noInKindNeeds = false,
+): ProgressState {
   switch (status) {
     case "cancelled":
       return "cancelled";
@@ -278,7 +290,7 @@ function stateFor(status: string, inKindLanded: boolean, moneyLanded: boolean, a
     case "funded": // legacy status; the word is always complete
       return "complete";
     case "active":
-      if (inKindLanded && (asksNone || moneyLanded)) return "both_landed";
+      if ((inKindLanded || noInKindNeeds) && (asksNone || moneyLanded)) return "both_landed";
       if (inKindLanded) return "in_kind_landed";
       if (moneyLanded) return "money_landed";
       return "open";
@@ -379,8 +391,17 @@ export function computeCampaignProgress(input: {
         }).filled
       : confirmed >= Math.max(wanted, 1);
 
-    const confirmedValue = filled ? value : Math.min(Math.max(standingValue, 0), value);
-    const deliveredValue = Math.min(Math.max(deliveredRowValue, 0), value);
+    // Counted at the need's own value and never past it (section 2,
+    // "Confirmed (value)"): an unfilled need counts at most its value times
+    // the share of it that is confirmed, so a row that carries more than its
+    // share (rows from before the server copied the need's value) cannot
+    // bring the in-kind half to 100% while the need is still open. A filled
+    // need counts its full value, so rounding never keeps a half from landing.
+    const slots = Math.max(wanted, 1);
+    const confirmedShare = Math.min(confirmed, slots) / slots;
+    const deliveredShare = Math.min(delivered, slots) / slots;
+    const confirmedValue = filled ? value : Math.min(Math.max(standingValue, 0), value * confirmedShare);
+    const deliveredValue = Math.min(Math.max(deliveredRowValue, 0), value * deliveredShare);
     const lends = (lendsByNeed.get(item.id) ?? [])
       .map((l) => ({ quantity: whole(l.quantity), from: toDay(l.availableFrom), until: toDay(l.lendUntil) }))
       .sort((a, b) => (a.from ?? "").localeCompare(b.from ?? "") || (a.until ?? "").localeCompare(b.until ?? ""));
@@ -454,7 +475,14 @@ export function computeCampaignProgress(input: {
     ask: cents(inKindAsk),
     confirmed: cents(inKindConfirmed),
     delivered: cents(inKindDelivered),
-    pct: pctOf(inKindConfirmed, inKindAsk),
+    // 100 means landed. The half lands when every in-kind need is filled.
+    // With the per-need cap above, confirmed value reaches the ask only when
+    // every need with a value is filled, so this agrees with the 2026-09-24
+    // ruling ("confirmed value reaches 100% of the in-kind ask") except for a
+    // need listed at no value: it adds nothing to the ask, so while it is
+    // open the confirmed value can equal the ask. This build takes the
+    // stricter reading there and the bar stops short of full; Rye rules.
+    pct: inKindLanded ? pctOf(inKindConfirmed, inKindAsk) : Math.min(pctOf(inKindConfirmed, inKindAsk), 99.9),
     needsTotal,
     needsMet,
     landed: inKindLanded,
@@ -473,8 +501,8 @@ export function computeCampaignProgress(input: {
     notAdded,
   };
 
-  const state = stateFor(campaign.status, inKindLanded, moneyLanded, asksNone);
-  const almostComplete = state === "open" && inKind.pct >= 85 && (asksNone || money.pct >= 85);
+  const state = stateFor(campaign.status, inKindLanded, moneyLanded, asksNone, needsTotal === 0);
+  const almostComplete = state === "open" && (needsTotal === 0 || inKind.pct >= 85) && (asksNone || money.pct >= 85);
   const endsAt = campaignEndsAt(campaign);
 
   // ── The nine forms of capital ──
@@ -588,27 +616,33 @@ export function progressLines(p: AnyProgress, fmt: (n: number) => string): Progr
     if (money.lent > 0) moneyLine += ` (${fmt(money.lent)} of it lent)`;
   }
 
+  // A campaign that lists no in-kind needs has only its money half, so no
+  // line promises or counts an in-kind half it cannot have.
+  const noInKind = inKind.needsTotal === 0;
   let halves: string | null = null;
   if (p.state === "money_landed") {
     halves = `Money half landed. The in-kind half still has ${plural(p.open.count, "need", "needs")} open.`;
   } else if (p.state === "in_kind_landed") {
     halves = `In-kind half landed. The money half still needs ${fmt(Math.max(money.ask - money.raised, 0))}.`;
   } else if (p.state === "both_landed") {
-    halves = money.asksNone ? "Every need is confirmed." : "Both halves have landed.";
+    if (noInKind) halves = money.asksNone ? null : "Money half landed.";
+    else halves = money.asksNone ? "Every need is confirmed." : "Both halves have landed.";
   }
 
   let completion: string | null;
   if (p.isExample) {
-    completion = "On a real campaign, complete means the money half and the in-kind half both land by its close date.";
+    completion = noInKind && !money.asksNone
+      ? "On a real campaign, complete means the money half lands by its close date."
+      : "On a real campaign, complete means the money half and the in-kind half both land by its close date.";
   } else if (p.state === "cancelled") {
     completion = null;
   } else if (p.state === "complete") {
     completion = "This campaign is complete.";
   } else {
     const by = date ? `by ${date}` : "by the close date";
-    completion = money.asksNone
-      ? `Complete means every need is confirmed ${by}.`
-      : `Complete means the money half and the in-kind half both land ${by}.`;
+    if (money.asksNone) completion = `Complete means every need is confirmed ${by}.`;
+    else if (noInKind) completion = `Complete means the money half lands ${by}.`;
+    else completion = `Complete means the money half and the in-kind half both land ${by}.`;
   }
 
   const live = p.state !== "draft" && p.state !== "complete" && p.state !== "cancelled";

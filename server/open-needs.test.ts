@@ -21,6 +21,7 @@ import {
   realOffer,
   stewardCaller,
 } from "./test-fixtures/crowdpool";
+import { buildOpenNeeds } from "../shared/openNeeds";
 
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
@@ -200,9 +201,23 @@ describe("campaigns.listOpenNeeds", () => {
     for (const secret of [SECRET_NAME, SECRET_EMAIL, "555-0100", "2031-04-05", "2031-06-07", "Test secret terms", "maearth.com/projects"]) {
       expect(blob).not.toContain(secret);
     }
-    // The truck now has an offer, so it reads as waiting.
-    const truck = [...out.needs].find((n) => n.needId === fx.open);
-    if (truck) expect(truck).toMatchObject({ noOffersYet: false, status: { key: "waiting" } });
+    // The truck now has an offer, so it reads as waiting. On a busy database
+    // it can drop below the 300 needs with no offers at all, so the status is
+    // read from the same builder over this campaign's own rows, always.
+    const [realCampaign] = (await dbHelpers.listCampaigns("active")).filter((c) => c.id === fx.real);
+    expect(realCampaign).toBeDefined();
+    const own = buildOpenNeeds({
+      campaigns: [realCampaign],
+      inputs: await dbHelpers.getCampaignProgressInputs([fx.real]),
+      routes: [],
+    });
+    const truck = own.needs.find((n) => n.needId === fx.open);
+    expect(truck).toBeDefined();
+    expect(truck).toMatchObject({ noOffersYet: false, status: { key: "waiting", text: "Offered, waiting on the stewards" } });
+    expect(Object.keys(truck!).sort()).toEqual(ROW_KEYS);
+    // Wherever the list shows it, it shows the same.
+    const listed = out.needs.find((n) => n.needId === fx.open);
+    if (listed) expect(listed).toEqual(truck);
   });
 
   it.skipIf(skipIfNoDb)("shows verified routes on real campaigns and example routes on example campaigns", async () => {
