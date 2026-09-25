@@ -22,10 +22,10 @@ const SEASON_EMOJI: Record<RegenSeasonKey, string> = {
  * roles themselves live on /team.
  */
 const SEASON_ROLES: Record<RegenSeasonKey, string[]> = {
-  winter: ["The Lantern-Keeper", "Game designers", "Builders"],
-  spring: ["The Rainmaker", "Storytellers", "Investors"],
-  summer: ["The Barn-Raiser", "Hosts", "Work crews"],
-  fall: ["The Hearth-Keeper", "Harvesters", "Healers"],
+  winter: ["The Lantern-Keeper (Facilitator)", "Game designers", "Builders"],
+  spring: ["The Rainmaker (Facilitator)", "Storytellers", "Investors"],
+  summer: ["The Barn-Raiser (Facilitator)", "Hosts", "Work crews"],
+  fall: ["The Hearth-Keeper (Facilitator)", "Harvesters", "Healers"],
 };
 
 /**

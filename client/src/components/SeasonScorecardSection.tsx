@@ -3,6 +3,7 @@
  * Shows at the bottom of the Team page before the final CTA.
  */
 import { gameRoles, seasons } from "@/data/gameRoles";
+import { characterLabel } from "@shared/regenYear";
 
 export function SeasonScorecardSection() {
   const currentSeason = seasons.find((s) => s.current);
@@ -36,7 +37,7 @@ export function SeasonScorecardSection() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">{role.emoji}</span>
                   <div>
-                    <span className="text-white font-semibold text-sm">{role.characterName}</span>
+                    <span className="text-white font-semibold text-sm">{characterLabel(role.title, role.characterName)}</span>
                     <span className="text-white/65 text-xs ml-2">{role.title}</span>
                   </div>
                 </div>

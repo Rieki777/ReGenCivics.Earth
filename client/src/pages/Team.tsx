@@ -146,7 +146,7 @@ const openRoles = [
     circle: "Incubation Circle",
     accountability: "Facilitate weekly sessions, track project progress, ensure resources flow to projects",
     domain: "Season incubation process and project support protocols",
-    assignment: "Filled - Seeking 1-2 co-facilitators"
+    assignment: "Filled"
   },
   {
     title: "Investment Relations Lead",

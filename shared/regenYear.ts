@@ -219,6 +219,23 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
 };
 
 /**
+ * The seasonal facilitation roles: the four Season Organizers and the Season
+ * Facilitator who holds the whole wheel. Rye, 2026-09-24: always show
+ * "(Facilitator)" beside their character names, so it's plain what they are.
+ */
+export const FACILITATOR_TAG = "(Facilitator)";
+
+export const SEASONAL_FACILITATION_TITLES: readonly string[] = [
+  ...REGEN_SEASON_ORDER.map((k) => REGEN_SEASONS[k].organizer.title),
+  "Season Facilitator",
+];
+
+/** A role's character name as the site shows it: "The Lantern-Keeper (Facilitator)". */
+export function characterLabel(title: string, characterName: string): string {
+  return SEASONAL_FACILITATION_TITLES.includes(title) ? `${characterName} ${FACILITATOR_TAG}` : characterName;
+}
+
+/**
  * Where each season begins, as a month and day (UTC). The dates are the
  * solstices and equinoxes rounded to the day they usually fall on; the
  * gatherings themselves flex a few days to fit the community.

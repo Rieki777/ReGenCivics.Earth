@@ -4,6 +4,7 @@ import {
   REGEN_SEASON_ORDER,
   nextRegenSeason,
   previousRegenSeason,
+  characterLabel,
   regenSeasonOn,
   regenSeasonSpan,
 } from "./regenYear";
@@ -234,5 +235,15 @@ describe("one wheel, many lands", () => {
       "The Barn-Raiser",
       "The Hearth-Keeper",
     ]);
+  });
+
+  it("always shows (Facilitator) beside the seasonal facilitation roles, and only those", () => {
+    // Rye, 2026-09-24: so it's plain what the character names are.
+    for (const k of REGEN_SEASON_ORDER) {
+      const { title, character } = REGEN_SEASONS[k].organizer;
+      expect(characterLabel(title, character)).toBe(`${character} (Facilitator)`);
+    }
+    expect(characterLabel("Season Facilitator", "The Gardener")).toBe("The Gardener (Facilitator)");
+    expect(characterLabel("Grand Builder", "The Tinkerer")).toBe("The Tinkerer");
   });
 });

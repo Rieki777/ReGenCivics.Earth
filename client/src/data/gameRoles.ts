@@ -99,7 +99,7 @@ export const gameRoles: GameRole[] = [
     // Holds the whole wheel. The weekly incubator sessions moved to the Design
     // Season Organizer, the Lantern-Keeper (Rye, 2026-09-24).
     seasons: ["winter", "spring", "summer", "fall"],
-    assignment: "Filled, seeking 1-2 co-facilitators",
+    assignment: "Filled",
     color: spring.base,
   },
   {
@@ -701,7 +701,8 @@ export const gameRoles: GameRole[] = [
     seed: "Every incubator session is held on time, with its recording and notes published",
     harvest: "The cohort reaches week 13 with complete Game Guides (target: at least 9 of 13 graduate)",
     seasons: ["winter"],
-    assignment: "Open",
+    // Full for Season 2, with no co-facilitators needed (Rye, 2026-09-24).
+    assignment: "Filled",
     color: "#8fd8e8",
   },
   {

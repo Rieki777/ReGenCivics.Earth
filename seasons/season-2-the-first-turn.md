@@ -21,7 +21,9 @@ Rye, 2026-09-24: roles match the flow of the year, with a unique role for organi
 
 **Anyone can follow along, and the crowdpool is open to more than the cohort** (Rye, 2026-09-24). Every session streams live. Projects that don't make it into the cohort, and anyone else, can follow the season, and any project that's ready joins the **community crowdpooling round** with the cohort in the Resource Season. There's room for far more than 13, and the more the better. Projects that aren't ready apply for the next season.
 
-**The Lantern-Keeper facilitates the incubator weeks** (Rye, 2026-09-24). The **Season Facilitator** (The Gardener, "keeps the seasons turning") holds the whole wheel: sits in on every recap and passoff, checks in with each organizer through their season, and keeps the season record. It moves into the Seasons Circle, active in all four seasons at about 4 hours a week, and stays at Band 5.
+**The Lantern-Keeper facilitates the incubator weeks** (Rye, 2026-09-24). The **Season Facilitator** (The Gardener, "keeps the seasons turning") holds the whole wheel: sits in on every recap and passoff, checks in with each organizer through their season, and keeps the season record. It moves into the Seasons Circle, active in all four seasons at about 4 hours a week, and stays at Band 5. Its assignment reads "Filled"; Season 2 needs no co-facilitators (Rye, 2026-09-24). The Resource, Build and Rest organizers stay open.
+
+On the site, every seasonal facilitation role shows "(Facilitator)" beside its character name: The Lantern-Keeper (Facilitator), The Rainmaker (Facilitator), The Barn-Raiser (Facilitator), The Hearth-Keeper (Facilitator), and The Gardener (Facilitator).
 
 ---
 
@@ -37,10 +39,10 @@ Art: generated 2026-09-24 with the `regen-seasonal-roles` template (card + scene
 
 | Field | Value |
 |---|---|
-| **Character name** | The Lantern-Keeper |
+| **Character name** | The Lantern-Keeper (Facilitator) |
 | **Tagline** | Keeps the light on through the design months |
 | **Active season** | Design (winter), September equinox to December solstice |
-| **Assignment** | Open |
+| **Assignment** | Filled for Season 2, no co-facilitators needed (Rye, 2026-09-24) |
 | **Card / scene** | `/images/roles/design-season-organizer-card.webp`, `-scene.webp` |
 
 **Deliverables:**

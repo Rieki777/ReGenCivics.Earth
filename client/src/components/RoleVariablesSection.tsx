@@ -4,6 +4,7 @@
  */
 import { useState } from "react";
 import { gameRoles } from "@/data/gameRoles";
+import { characterLabel } from "@shared/regenYear";
 
 const bands = [
   { band: 7, base: "900,000", usd: "$9,000", max: "$11,700", roles: "Grand Builder, and the four Season Organizers (Design, Resource, Build, Rest)" },
@@ -110,7 +111,7 @@ export function RoleVariablesSection() {
                 <div key={role.title} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-3 border-b border-white/5 last:border-0">
                   <div className="flex items-center gap-2 md:w-48 flex-shrink-0">
                     <span>{role.emoji}</span>
-                    <span className="text-white font-semibold text-sm">{role.characterName}</span>
+                    <span className="text-white font-semibold text-sm">{characterLabel(role.title, role.characterName)}</span>
                   </div>
                   <div className="flex-1 grid md:grid-cols-2 gap-2">
                     <div className="flex items-start gap-2 text-xs">

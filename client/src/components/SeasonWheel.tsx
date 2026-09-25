@@ -22,6 +22,7 @@ import {
   regenSeasonSpan,
   REGEN_LANDS,
   REGEN_LAND_ORDER,
+  characterLabel,
   guessLandFromTimeZone,
   type LandKey,
   type RegenSeasonKey,
@@ -719,7 +720,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
               <p className="text-sm text-white/80 mb-6 safe-prose">
                 Organized by{" "}
                 <Link href="/team" className="font-semibold underline-offset-4 hover:underline" style={{ color: look.color }}>
-                  {season.organizer.character}
+                  {characterLabel(season.organizer.title, season.organizer.character)}
                 </Link>
                 , the {season.organizer.title}.
               </p>

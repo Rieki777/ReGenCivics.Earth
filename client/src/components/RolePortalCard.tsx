@@ -14,6 +14,7 @@ import {
 import type { GameRole } from "@/data/gameRoles";
 import { seasons } from "@/data/gameRoles";
 import { SmartImage } from "@/components/SmartImage";
+import { characterLabel } from "@shared/regenYear";
 
 export type { GameRole };
 
@@ -168,7 +169,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
             className="text-white font-bold text-base leading-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {role.characterName}
+            {characterLabel(role.title, role.characterName)}
           </h3>
           <p className="text-[#7dd87d] text-[10px] font-bold uppercase tracking-wider mb-1">
             {role.title}
@@ -227,7 +228,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                       className="text-2xl font-bold text-white"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      {role.characterName}
+                      {characterLabel(role.title, role.characterName)}
                     </span>
                     <span className="text-white/65 text-lg ml-2">{role.title}</span>
                   </div>
