@@ -107,8 +107,8 @@ export const MONEY_CHANNELS = {
  * The remainder goes to the community treasury. Fund channel only.
  */
 export const ROUTING = {
-  /** game_variables: crowdpool.routing_share_pct */
-  defaultSharePct: 90,
+  /** game_variables: crowdpool.routing_share_pct. Default 80, ruled 2026-09-24 (was 90). */
+  defaultSharePct: 80,
   minSharePct: 50,
   maxSharePct: 90,
   /** What the contributor does NOT direct. Derived, never stored separately. */

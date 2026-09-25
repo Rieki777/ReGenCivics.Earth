@@ -62,7 +62,7 @@ Full human explanation: `docs/CROWDPOOL_MODEL.md`. Machine-readable:
 3. A member contributing **CHF 250,000** receives **250,000 $RCivics** and **one seat**
    in the fund, recorded as RCVoice. Every seat has one vote whatever was contributed,
    so contributing makes you a member rather than a passive investor.
-4. They **route** 90% of it (configurable 50 to 90) across the projects they choose.
+4. They **route** 80% of it by default (configurable 50 to 90, ruled 2026-09-24) across the projects they choose.
    Routing is non-binding signalling, movable until a campaign closes, never
    transferable or sellable.
 5. The remaining 10% goes to a **community treasury**, which is **held**, not spent.
@@ -124,6 +124,22 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | 2026-09-24 | **The in-kind half has landed when confirmed value reaches 100% of the in-kind ask** by close; delivery is tracked afterwards. Narrows locked decision 4 of 2026-07-17 for the close test only. Who confirms is open. |
 | 2026-09-24 | The pledge simulator keeps "Fill a need" with a real Apply, Offer or Sign up button; "Offer time" goes. |
 | 2026-09-24 | The open questions these answers raise (89 for Rye, 15 for counsel) are listed with options and recommendations in `legal-research/Crowdpool_questions_2026-09-24.md`, kept out of git beside the legal research. |
+| 2026-09-24 | **Rye accepted the recommendations on those questions, with these exceptions**, recorded in the rows below. Still open after this round: M6 (whether several commitments add up to a project's minimum) and T2a (a new token per campaign, or one per project), plus eight follow-ups raised the same day. |
+| 2026-09-24 | **Two minimums.** A minimum to invest money in the fund, and a total capital minimum each project sets, which can be met with a mix of money and other capital. (S1) |
+| 2026-09-24 | **A crowdpooling seat lasts as long as the commitment**, and its tokens are earned as the commitment is delivered: 100k at 10k a week earns week by week, and leaving early means leaving with less. (S7) |
+| 2026-09-24 | **Investors can invest in the fund directly** and let the fund stewards direct the money to land projects. (S8) |
+| 2026-09-24 | **Networks and knowledge count toward a minimum**, shown with a warning that there is no clear way yet to account for them and it varies project to project. (M22) |
+| 2026-09-24 | **Tokens for committed work are paid on the project's own schedule**, typically weekly or monthly, as the work is delivered. (M10) |
+| 2026-09-24 | **All seats start together at the start of the next season, the build season**, once the campaign runner has set that date and closed the campaign as complete. (M11) |
+| 2026-09-24 | **Campaign stewards admit members.** (M12) Counsel is asked whether the cooperative's statutes can give admission to people who are not one of its organs. |
+| 2026-09-24 | **Money a member routes to a project counts toward that project's money ask and toward the member's contribution to it.** Exposure to every project, with the routed amount counting where it was routed. (M19) |
+| 2026-09-24 | **Routing share 50 to 90%, default 80%.** Replaces the 90% default of 2026-09-05. `drizzle/0253_routing_default_80.sql`. (R1a) |
+| 2026-09-24 | **Campaign tokens are recorded on the site and claimed through the existing Hypha bridge.** (T2b) |
+| 2026-09-24 | **Tokens are contribution accounting.** The network tracks what was pooled; each project designs its token beyond that. Pages say plainly that the platform's tokens track the pooling of contributions and make no claim about their value or purpose. (T13) |
+| 2026-09-24 | **$RCivics also tracks equity swaps with alliance partners and land projects, and bounties and roles.** In crowdpooling itself, only money earns $RCivics; in-kind earns the project's token. (T11) |
+| 2026-09-24 | **Contributions are confirmed by each project's own core team.** ReGen Civics facilitates and makes open-source tools; it decides nothing for a project. (C1) |
+| 2026-09-24 | **A campaign token is normally the same token as the project's main token in village-os**, because it plays the same role of tracking contributions. In village-os that is the `equity` token, which lives on Hypha on Base. To be confirmed with Rye and the village-os economics session before anything is built on it. (B7) |
+| 2026-09-24 | **Built the same day:** the public project page with its campaign tools (`/project/:key`), role capacity in hours per week (hub contract version 3), campaign notices through the notification spine, cancelling with notices to everyone involved, campaign lists as admin Outbound audiences, practice receipts on example campaigns, and the security holes in campaign create and publish closed. The role conversion migration (`drizzle/after-deploy/0251`) waits until village-os shows hours on its role meters. |
 
 ---
 
