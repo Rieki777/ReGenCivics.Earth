@@ -24,6 +24,11 @@
  */
 
 export type ReadinessItem = {
+  /**
+   * Permanent. Campaigns record a steward's ticks by key (the crowdpooling
+   * lane, 2026-09-24), so renaming one orphans every stored tick. Change the
+   * words freely; to replace an item, add a new key and retire the old one.
+   */
   key: string;
   title: string;
   /** What it means, in a sentence or two. */
