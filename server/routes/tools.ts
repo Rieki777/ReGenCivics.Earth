@@ -4,6 +4,7 @@
  */
 import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
+import { interopStageOf } from "@shared/interopStage";
 import { getDb } from "../db";
 import { sql, eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -76,8 +77,9 @@ export const toolsRouter = router({
 
       if (input?.categorySlug) {
         const [tools] = await db.execute<any>(sql`
-          SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+          SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors, MAX(isheet.stage) as interopStage
           FROM regen_tools t
+          LEFT JOIN interopSheets isheet ON isheet.toolId = t.id
           JOIN regen_tool_category_map m ON m.toolId = t.id
           JOIN regen_tool_categories c ON c.id = m.categoryId
           WHERE t.status = 'approved' ${whereExtra}
@@ -90,8 +92,9 @@ export const toolsRouter = router({
       }
 
       const [tools] = await db.execute<any>(sql`
-        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors, MAX(isheet.stage) as interopStage
         FROM regen_tools t
+        LEFT JOIN interopSheets isheet ON isheet.toolId = t.id
         LEFT JOIN regen_tool_category_map m ON m.toolId = t.id
         LEFT JOIN regen_tool_categories c ON c.id = m.categoryId
         WHERE t.status = 'approved' ${whereExtra}
@@ -111,8 +114,9 @@ export const toolsRouter = router({
       const db = await getDb();
       if (!db) return null;
       const [rows] = await db.execute(sql`
-        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors
+        SELECT ${PUBLIC_TOOL_COLUMNS}, GROUP_CONCAT(c.name) as categoryNames, GROUP_CONCAT(c.slug) as categorySlugs, GROUP_CONCAT(c.color) as categoryColors, MAX(isheet.stage) as interopStage
         FROM regen_tools t
+        LEFT JOIN interopSheets isheet ON isheet.toolId = t.id
         LEFT JOIN regen_tool_category_map m ON m.toolId = t.id
         LEFT JOIN regen_tool_categories c ON c.id = m.categoryId
         WHERE t.slug = ${input.slug} AND t.status = 'approved'
@@ -318,6 +322,10 @@ export const toolsRouter = router({
 function parseToolRow(row: any) {
   return {
     ...row,
+    // Which class this tool is in on the journey into the shared system.
+    // Derived from its sheet (or the absence of one) through the shared
+    // helper, so /tools and /interop-sessions cannot show different badges.
+    interopStage: interopStageOf(row.interopStage),
     regions: typeof row.regions === "string" ? JSON.parse(row.regions) : row.regions,
     problemStatements: typeof row.problemStatements === "string" ? JSON.parse(row.problemStatements) : row.problemStatements,
     integrations: typeof row.integrations === "string" ? JSON.parse(row.integrations) : row.integrations,

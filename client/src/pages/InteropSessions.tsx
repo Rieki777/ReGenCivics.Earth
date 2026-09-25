@@ -27,6 +27,7 @@ import { BackButton } from '@/components/BackButton';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
 import { seasonTwoPhase } from '@shared/seasonTwoPhase';
+import { InteropSheets } from '@/components/interop/InteropSheets';
 
 type SlotKey = InteropSlotKey;
 /** Fallback only. The offered set comes from the server so admin can change it. */
@@ -556,6 +557,13 @@ export default function InteropSessions() {
                 )}
               </div>
             </section>
+          </AnimatedSection>
+
+          {/* The interoperability register: sheets in, overlap out. */}
+          <AnimatedSection>
+            <div className="mb-8">
+              <InteropSheets voterKey={voterKey} />
+            </div>
           </AnimatedSection>
 
           {/* The register the sign-up builds: what the movement is actually running. */}
