@@ -7,7 +7,7 @@
 import { adminProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getDb } from "../db";
+import { getDb, loanRoutesOpen } from "../db";
 import { sql, and, eq, isNull, isNotNull, lte, gt } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
@@ -449,6 +449,11 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
 
   // Pass 1: expire overdue claims and release their slots.
   //
+  // A loan the stewards marked Returned (returnedAt) is done: it went back to
+  // its owner, so it is never swept as a place that passed its window, and
+  // pass 2a sends it no reminder (markLoanReturned is offered on accepted
+  // loans, before Mark delivered; question Q6).
+  //
   // Hours needs (a role measured in hours a week, capacityUnit
   // 'hours_per_week') never expire: an accepted person holds their hours
   // until a steward releases them. Their claimExpiresAt is NULL already;
@@ -462,6 +467,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     JOIN campaigns c ON c.id = cc.campaignId
     LEFT JOIN campaign_items ci ON ci.id = cc.campaignItemId
     WHERE cc.status = 'accepted'
+      AND cc.returnedAt IS NULL
       AND cc.claimExpiresAt IS NOT NULL
       AND cc.claimExpiresAt < NOW()
       AND (ci.id IS NULL OR NOT (ci.kind = 'role' AND ci.capacityUnit = 'hours_per_week'))
@@ -471,7 +477,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     // Status guard in the WHERE keeps a concurrent sweep from double-releasing.
     const [result] = await db.execute(sql`
       UPDATE campaign_contributions SET status = 'expired', updatedAt = NOW()
-      WHERE id = ${claim.id} AND status = 'accepted'
+      WHERE id = ${claim.id} AND status = 'accepted' AND returnedAt IS NULL
     `);
     if (((result as any)?.affectedRows ?? 0) === 0) continue;
 
@@ -540,6 +546,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     JOIN campaigns c ON c.id = cc.campaignId
     WHERE cc.status = 'accepted'
       AND cc.userId IS NOT NULL
+      AND cc.returnedAt IS NULL
       AND cc.claimExpiresAt IS NOT NULL
       AND cc.claimExpiresAt > NOW()
       AND cc.claimExpiresAt < DATE_ADD(NOW(), INTERVAL ${reminderDays} DAY)
@@ -665,13 +672,25 @@ export const VERIFIED_PARTNER_LINKS_SQL = sql`
       AND pl.url IS NOT NULL AND pl.url <> ''
   `;
 
-export async function loadVerifiedPartnerLinks(db: any): Promise<PartnerLinkRow[]> {
+/**
+ * Load the verified routes to refresh. Steward (loan) routes are left out
+ * while crowdpool.rails.loan_routes is off, the same rule every public read
+ * follows (server/db.ts loanRoutesOpen): a route that stops showing stops
+ * being fetched. `loanRoutesOpen` is injectable for tests.
+ */
+export async function loadVerifiedPartnerLinks(
+  db: any,
+  opts: { loanRoutesOpen?: boolean } = {},
+): Promise<PartnerLinkRow[]> {
   const [rows] = await db.execute(VERIFIED_PARTNER_LINKS_SQL);
-  return ((rows as any[]) ?? []).map((r) => ({
-    id: Number(r.id),
-    partner: String(r.partner),
-    url: String(r.url),
-  }));
+  const loanOpen = opts.loanRoutesOpen ?? (await loanRoutesOpen());
+  return ((rows as any[]) ?? [])
+    .map((r) => ({
+      id: Number(r.id),
+      partner: String(r.partner),
+      url: String(r.url),
+    }))
+    .filter((r) => loanOpen || r.partner !== "gosteward");
 }
 
 async function defaultWriteUpdate(db: any, id: number, funding: PartnerFunding): Promise<void> {

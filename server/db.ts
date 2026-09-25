@@ -1425,6 +1425,38 @@ export async function updateCampaignPledgedTotals(campaignId: number): Promise<v
 
 import { campaignPartnerLinks } from "../drizzle/schema";
 import type { ProgressItem, ProgressLend, ProgressRoute, ProgressRow } from "@shared/campaignProgress";
+import { routePageKey } from "./lib/partner-links";
+
+/**
+ * Whether a verified Steward (loan) route may show to the public. The
+ * crowdpool.rails.loan_routes switch gates verification (reviewPartnerLink)
+ * and every public read of routes, so turning it off again, for example after
+ * a counsel ruling, hides loan routes that were verified while it was on:
+ * from getPartnerLinks, the Needs tab, the money line and the nightly fetch.
+ * Stewards and admins still see them (getPartnerLinksForSteward). Example
+ * routes on example campaigns show either way. Off when the variable is
+ * missing or unreadable.
+ */
+export async function loanRoutesOpen(): Promise<boolean> {
+  try {
+    const { getGameVariable } = await import("./game");
+    return (await getGameVariable("crowdpool.rails.loan_routes")) === 1;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The public filter on campaign_partner_links: verified rows, without Steward
+ * routes while the loan route switch is off, plus example rows when asked.
+ */
+export function publicRouteWhere(opts: { loanRoutesOpen: boolean; withExamples: boolean }) {
+  const pl = campaignPartnerLinks;
+  const verified = opts.loanRoutesOpen
+    ? eq(pl.status, "verified")
+    : and(eq(pl.status, "verified"), ne(pl.partner, "gosteward"));
+  return opts.withExamples ? or(verified, eq(pl.status, "example")) : verified;
+}
 
 export type CampaignProgressInputs = {
   items: ProgressItem[];
@@ -1460,6 +1492,7 @@ export async function getCampaignProgressInputs(
 
   const offered = ["pending", "accepted", "fulfilled", "thanked"] as const;
   const cc = campaignContributions;
+  const loanOpen = await loanRoutesOpen();
 
   const [items, rows, lends, routes] = await Promise.all([
     opts.withItems === false
@@ -1535,12 +1568,14 @@ export async function getCampaignProgressInputs(
         cachedRaised: campaignPartnerLinks.cachedRaised,
         cachedCurrency: campaignPartnerLinks.cachedCurrency,
         lastFetchedAt: campaignPartnerLinks.lastFetchedAt,
+        url: campaignPartnerLinks.url,
       })
       .from(campaignPartnerLinks)
       .where(and(
         inArray(campaignPartnerLinks.campaignId, ids),
-        inArray(campaignPartnerLinks.status, ["verified", "example"]),
-      )),
+        publicRouteWhere({ loanRoutesOpen: loanOpen, withExamples: true }),
+      ))
+      .orderBy(asc(campaignPartnerLinks.id)),
   ]);
 
   for (const item of items) {
@@ -1566,8 +1601,18 @@ export async function getCampaignProgressInputs(
       lendUntil: l.lendUntil,
     });
   }
+  // One partner page counts once. The nightly job writes a page's one total
+  // into every verified row that points at it, so a page added twice (before
+  // addPartnerLink refused duplicates) would count its money twice.
+  const seenPages = new Set<string>();
   for (const r of routes) {
     if (r.status !== "verified" && r.status !== "example") continue;
+    const page = routePageKey(r.url ?? "");
+    if (page) {
+      const key = `${r.campaignId}|${r.partner}|${page}`;
+      if (seenPages.has(key)) continue;
+      seenPages.add(key);
+    }
     out.get(r.campaignId)?.routes.push({
       partner: r.partner,
       status: r.status,

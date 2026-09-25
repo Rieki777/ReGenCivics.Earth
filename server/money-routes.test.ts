@@ -312,3 +312,129 @@ describe("what the nightly job and the admin pulse read", () => {
     expect(await countMoneyRoutesToCheck(database)).toBe(before + 1);
   });
 });
+
+describe("the loan route switch hides loan routes everywhere the public reads", () => {
+  it.skipIf(skipIfNoDb)("a Steward route verified while the switch was on disappears when it goes off", async () => {
+    const campaignId = await campaign("Rail off again");
+    const { id } = await stewardCaller(STEWARD).campaigns.addPartnerLink({ campaignId, partner: "gosteward", url: STEWARD_URL });
+    rails.set("crowdpool.rails.loan_routes", 1);
+    await adminCaller().campaigns.reviewPartnerLink({ linkId: id, decision: "verified", currency: "USD" });
+    const database = (await dbHelpers.getDb())!;
+    // What the nightly job would have written.
+    await database.update(campaignPartnerLinks).set({ cachedRaised: 4000 }).where(eq(campaignPartnerLinks.id, id));
+
+    const readAll = async () => ({
+      links: (await anonCaller().campaigns.getPartnerLinks({ campaignId })).map((r) => r.id),
+      money: (await anonCaller().campaigns.getById({ id: campaignId }))!.progress.money,
+      loaded: (await loadVerifiedPartnerLinks(database)).map((l) => l.id),
+      steward: (await stewardCaller(STEWARD).campaigns.getPartnerLinksForSteward({ campaignId })).map((r) => [r.id, r.status]),
+    });
+
+    const on = await readAll();
+    expect(on.links).toEqual([id]);
+    expect(on.money).toMatchObject({ lent: 4000, raised: 4000, hasRoutes: true });
+    expect(on.loaded).toContain(id);
+
+    // Counsel rules against it: the switch goes off again.
+    rails.set("crowdpool.rails.loan_routes", 0);
+    const off = await readAll();
+    expect(off.links).toEqual([]);
+    expect(off.money).toMatchObject({ lent: 0, raised: 0, hasRoutes: false });
+    expect(off.loaded).not.toContain(id);
+    // The project's stewards (and admins) still see it, verified.
+    expect(off.steward).toEqual([[id, "verified"]]);
+  });
+
+  it.skipIf(skipIfNoDb)("example Steward routes still show on example campaigns with the switch off", async () => {
+    const campaignId = await campaign("Rail example", { isDemo: true });
+    const database = (await dbHelpers.getDb())!;
+    await database.insert(campaignPartnerLinks).values({
+      campaignId, partner: "gosteward", label: "Lend through Steward", url: "https://gosteward.com/projects/example",
+      status: "example", cachedRaised: 3000, cachedCurrency: "USD",
+    });
+    expect((await anonCaller().campaigns.getPartnerLinks({ campaignId })).map((r) => [r.partner, r.status]))
+      .toEqual([["gosteward", "example"]]);
+    expect((await anonCaller().campaigns.getById({ id: campaignId }))!.progress.money).toMatchObject({ lent: 3000 });
+  });
+});
+
+describe("one partner page counts once", () => {
+  it.skipIf(skipIfNoDb)("refuses the same page added twice, however it is spelled", async () => {
+    const campaignId = await campaign("Duplicate add");
+    const s = stewardCaller(STEWARD);
+    await s.campaigns.addPartnerLink({ campaignId, partner: "maearth", url: MA_EARTH });
+    for (const again of [MA_EARTH, `${MA_EARTH}/`, MA_EARTH.replace("https://", "https://www."), `${MA_EARTH}#give`]) {
+      await expect(s.campaigns.addPartnerLink({ campaignId, partner: "maearth", url: again }))
+        .rejects.toMatchObject({ code: "BAD_REQUEST", message: "That page is already one of this campaign's routes." });
+    }
+    expect(await s.campaigns.getPartnerLinksForSteward({ campaignId })).toHaveLength(1);
+    // Once it is removed, the page can be added again.
+  });
+
+  it.skipIf(skipIfNoDb)("campaigns.create refuses the same page twice in one go", async () => {
+    const applicationId = await createApprovedApplication(STEWARD);
+    const title = `Test Routes Dup Create ${Date.now()}`;
+    await expect(stewardCaller(STEWARD).campaigns.create({
+      title, description: "x", projectName: title, currency: "USD", financialTarget: 1000, applicationId,
+      items: [{ category: "resource", resourceName: "Seed", resourceDescription: "Seed", estimatedValue: 1000 }],
+      moneyRoutes: [{ partner: "maearth", url: MA_EARTH }, { partner: "maearth", url: `${MA_EARTH}/` }],
+    })).rejects.toMatchObject({ code: "BAD_REQUEST", message: "That page is already one of this campaign's routes." });
+    const database = await dbHelpers.getDb();
+    expect(await database!.select({ id: campaigns.id }).from(campaigns).where(eq(campaigns.title, title))).toHaveLength(0);
+  });
+
+  it.skipIf(skipIfNoDb)("verifying a turned-down route cannot pass two per partner", async () => {
+    const campaignId = await campaign("Review limit");
+    const s = stewardCaller(STEWARD);
+    const a = (await s.campaigns.addPartnerLink({ campaignId, partner: "maearth", url: `${MA_EARTH}-a` })).id;
+    await s.campaigns.addPartnerLink({ campaignId, partner: "maearth", url: `${MA_EARTH}-b` });
+    await adminCaller().campaigns.reviewPartnerLink({ linkId: a, decision: "rejected", note: "Wrong page" });
+    await s.campaigns.addPartnerLink({ campaignId, partner: "maearth", url: `${MA_EARTH}-c` });
+    await expect(adminCaller().campaigns.reviewPartnerLink({ linkId: a, decision: "verified" }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST", message: "A campaign can have up to two routes of each kind." });
+    expect((await linkRow(a))!.status).toBe("rejected");
+  });
+
+  it.skipIf(skipIfNoDb)("a page already verified twice (from before this check) counts and shows once", async () => {
+    const campaignId = await campaign("Legacy duplicate");
+    const database = (await dbHelpers.getDb())!;
+    const insert = async (url: string, status: "verified" | "pending") => {
+      const r: any = await database.insert(campaignPartnerLinks).values({
+        campaignId, partner: "maearth", label: "Give through Ma Earth", url, status,
+        cachedRaised: status === "verified" ? 1000 : null, cachedCurrency: "USD",
+      });
+      return Number(r?.[0]?.insertId ?? r?.insertId);
+    };
+    await insert(MA_EARTH, "verified");
+    await insert(`${MA_EARTH}/`, "verified");
+    const pendingCopy = await insert(MA_EARTH.replace("https://", "https://www."), "pending");
+
+    const money = (await anonCaller().campaigns.getById({ id: campaignId }))!.progress.money;
+    expect(money).toMatchObject({ ask: 5000, raised: 1000, given: 1000, landed: false });
+    expect(await anonCaller().campaigns.getPartnerLinks({ campaignId })).toHaveLength(1);
+    // A third copy cannot be verified next to them.
+    await expect(adminCaller().campaigns.reviewPartnerLink({ linkId: pendingCopy, decision: "verified" }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect((await linkRow(pendingCopy))!.status).toBe("pending");
+  });
+});
+
+describe("verifying a second copy of a page", () => {
+  it.skipIf(skipIfNoDb)("is refused while the first copy is verified", async () => {
+    const campaignId = await campaign("Review duplicate");
+    const database = (await dbHelpers.getDb())!;
+    const insert = async (url: string, status: "verified" | "pending") => {
+      const r: any = await database.insert(campaignPartnerLinks).values({
+        campaignId, partner: "maearth", label: "Give through Ma Earth", url, status, cachedCurrency: "USD",
+      });
+      return Number(r?.[0]?.insertId ?? r?.insertId);
+    };
+    await insert(MA_EARTH, "verified");
+    const copy = await insert(`${MA_EARTH}/`, "pending");
+    await expect(adminCaller().campaigns.reviewPartnerLink({ linkId: copy, decision: "verified" }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST", message: "That page is already a verified route on this campaign." });
+    // Turning it down still works.
+    await adminCaller().campaigns.reviewPartnerLink({ linkId: copy, decision: "rejected", note: "Same page twice" });
+    expect((await linkRow(copy))!.status).toBe("rejected");
+  });
+});

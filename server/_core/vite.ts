@@ -72,6 +72,37 @@ export function injectMetaTags(
     .replace(/(<link rel="canonical" href=")[^"]*(")/, attr(canonical));
 }
 
+/**
+ * Put crawler content into the served shell: JSON-LD before </head>, the
+ * prose block in front of <div id="root">.
+ *
+ * Both are function replacements, never replacement strings. The prose carries
+ * text people wrote (a campaign description, a need title, a forum post), and
+ * escapeHtml leaves "$" alone, so in a replacement string "$'" pasted the rest
+ * of the shell inside the off-screen crawler div. That closed the div early and
+ * left the steward's text sitting visibly in <body>, outside the app, on every
+ * visit. "$`" copied the whole <head> into the body and "$&" added a second
+ * #root. Pinned by server/vite-meta.test.ts.
+ *
+ * JSON-LD carries the same kind of text. JSON.stringify leaves "<" alone, so a
+ * "</script>" in it would close the element early; "<" becomes its JSON escape,
+ * which parses to the same string.
+ */
+export function injectCrawlerContent(
+  html: string,
+  content: { bodyHtml: string; jsonld?: object | null },
+): string {
+  let out = html;
+  if (content.jsonld) {
+    const ld = JSON.stringify(content.jsonld).replace(/</g, "\\u003c");
+    out = out.replace(
+      /<\/head>/i,
+      () => `<script type="application/ld+json">${ld}</script></head>`,
+    );
+  }
+  return out.replace(/<div id="root">/i, () => `${content.bodyHtml}<div id="root">`);
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -481,24 +512,7 @@ export function serveStatic(app: Express) {
 
     // Inject crawler content: JSON-LD into <head>, prose before <div id="root">
     // (same placement as the blog prerender output).
-    let withContent = injected;
-    if (crawlerContent) {
-      if (crawlerContent.jsonld) {
-        // JSON-LD carries text people wrote (a project's name, place and
-        // description). JSON.stringify leaves "<" alone, so a "</script>"
-        // in that text would close this element early; "<" becomes its
-        // JSON escape, which parses to the same string.
-        const ld = JSON.stringify(crawlerContent.jsonld).replace(/</g, "\\u003c");
-        withContent = withContent.replace(
-          /<\/head>/i,
-          () => `<script type="application/ld+json">${ld}</script></head>`,
-        );
-      }
-      withContent = withContent.replace(
-        /<div id="root">/i,
-        `${crawlerContent.bodyHtml}<div id="root">`,
-      );
-    }
+    const withContent = crawlerContent ? injectCrawlerContent(injected, crawlerContent) : injected;
 
     // Per-request CSP nonce substitution. Same applyNonce helper used
     // by the dedicated /offline.html and / handlers above.

@@ -11,7 +11,7 @@
  * These tests use the real shell tags from client/index.html.
  */
 import { describe, it, expect } from "vitest";
-import { injectMetaTags } from "./_core/vite";
+import { injectCrawlerContent, injectMetaTags } from "./_core/vite";
 
 const SHELL = `<!doctype html>
 <html lang="en">
@@ -151,5 +151,51 @@ describe("injectMetaTags, hostile input", () => {
     expect(html).toContain("<title>Contribute to $1 Farm | ReGen Civics</title>");
     expect(html).toContain('<meta property="og:title" content="Contribute to $1 Farm | ReGen Civics" />');
     expect(count(html, "<meta")).toBe(count(SHELL, "<meta"));
+  });
+});
+
+describe("injectCrawlerContent, dollar patterns in people's text", () => {
+  // The prose block carries a campaign description, need titles and forum
+  // posts. escapeHtml leaves "$" alone, so a replacement string read "$'" as
+  // "the rest of the shell", "$`" as "everything before" and "$&" as the
+  // matched <div id="root">.
+  const SHELL_WITH_SCRIPT = SHELL.replace(
+    "<body><div id=\"root\"></div></body>",
+    '<body><div id="root"></div><script nonce="{{NONCE}}">window.x=1</script></body>',
+  );
+  const wrap = (inner: string) =>
+    `<noscript>${inner}</noscript><div id="__crawler_content__" aria-hidden="true">${inner}</div>`;
+
+  it.each([["$'"], ["$`"], ["$&"], ["$$"], ["$1"]])(
+    "prints %s as text and keeps one root and one head",
+    (pattern) => {
+      const body = wrap(`<article><p>We need ${pattern} more for the orchard.</p></article>`);
+      const html = injectCrawlerContent(SHELL_WITH_SCRIPT, {
+        bodyHtml: body,
+        jsonld: { name: `Farm ${pattern}` },
+      });
+      expect(count(html, '<div id="root">')).toBe(1);
+      expect(count(html, "<head>")).toBe(1);
+      expect(count(html, "<title>")).toBe(1);
+      expect(count(html, "<script nonce=")).toBe(1);
+      // The body arrives exactly as built, right before the root.
+      expect(html).toContain(`${body}<div id="root">`);
+      // Nothing of the shell lands inside the crawler div.
+      const crawler = html.slice(html.indexOf('<div id="__crawler_content__"'), html.indexOf('<div id="root">'));
+      expect(crawler).not.toContain("</body>");
+      expect(crawler).not.toContain("<head>");
+      // The JSON-LD keeps the pattern as text too.
+      expect(html).toContain(`<script type="application/ld+json">{"name":"Farm ${pattern}"}</script></head>`);
+    },
+  );
+
+  it("escapes < in JSON-LD so a </script> cannot close the element", () => {
+    const html = injectCrawlerContent(SHELL, {
+      bodyHtml: "<p>x</p>",
+      jsonld: { name: "</script><script>alert(1)</script>" },
+    });
+    expect(html).not.toContain("</script><script>alert(1)");
+    const esc = String.fromCharCode(92) + "u003c";
+    expect(html).toContain(`${esc}/script>${esc}script>alert(1)${esc}/script>`);
   });
 });

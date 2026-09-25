@@ -51,6 +51,9 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] Nobody can follow (account or email) a campaign they cannot see; unpublished campaigns never notify followers. (2026-09-24: DONE)
 - [x] Sign-in emails have their own hourly send budget, separate from notice and list mail. (2026-09-24: DONE, `server/campaign-notification-prefs.test.ts`)
 - [x] Money routes: stewards add, only admins verify, only verified (and example-on-example) rows reach the public; readiness ticks and Returned are steward-only; `submitContribution` sets an offer's value from the need and refuses money while `crowdpool.rails.accept_money` is off. (2026-09-25: DONE, `server/money-routes.test.ts`, `server/give-lend.test.ts`, `server/readiness-ticks.test.ts`)
+- [x] The loan route switch (`crowdpool.rails.loan_routes`) keeps Steward routes out of verification, every public read and the nightly fetch while it is off; one partner page counts and shows once. (2026-09-25: DONE, `server/money-routes.test.ts`; OWASP-TOP10 A01)
+- [x] Crawler prose goes into the served shell through function replacements only, so `$'`, `` $` `` and `$&` in people's text print as text. (2026-09-25: DONE, `server/vite-meta.test.ts`; OWASP-TOP10 A03)
+- [x] `/api/og` keys cards by a parsed whole-number id and caps its in-memory cache. (2026-09-25: DONE, `server/og-campaign.test.ts`; OWASP-TOP10 A04)
 - [ ] Production audit before the deploy: land_project org claims with status approved whose application's `stewardUserId` is NULL or a different user. Reject any that were never meant to be granted. (2026-09-24: OPEN, main session)
 
 ## CSP + security headers

@@ -131,3 +131,58 @@ describe("expireCrowdpoolClaims reminders", () => {
     }
   }, 60_000);
 });
+
+describe("a loan marked Returned", () => {
+  it.skipIf(skipIfNoDb)("is never swept as a place that passed its window, and gets no reminder", async () => {
+    const database = (await dbHelpers.getDb())!;
+    const applicationId = await createApprovedApplication(STEWARD, { name: `Test Fixture Returned Farm ${Date.now()}` });
+    const created = await stewardCaller(STEWARD).campaigns.create({
+      applicationId,
+      title: "Test Returned Loan Campaign",
+      description: "A loan that went back before it was marked delivered",
+      projectName: "Test Returned Farm",
+      currency: "USD",
+      financialTarget: 0,
+      items: [{ category: "equipment", kind: "item", equipmentName: "Excavator", equipmentQuantity: 3, estimatedValue: 900, acceptsGift: false, acceptsLoan: true }],
+    });
+    createdCampaignIds.push(created.id);
+    await adminCaller().campaigns.updateStatus({ id: created.id, status: "active" });
+    const [need] = await database.select().from(campaignItems).where(eq(campaignItems.campaignId, created.id));
+    const lend = (over: Record<string, unknown>) => dbHelpers.createContribution({
+      campaignId: created.id,
+      campaignItemId: need.id,
+      userId: CONTRIBUTOR,
+      contributorName: "Returned Tester",
+      contributorEmail: "returned-tester@example.com",
+      contributionType: "equipment",
+      title: "Excavator",
+      status: "accepted",
+      quantityPledged: 1,
+      offerMode: "lend",
+      availableFrom: "2026-10-01",
+      lendUntil: "2026-12-15",
+      ...over,
+    } as any);
+    const day = 24 * 60 * 60 * 1000;
+    // Returned, and its window passed long ago.
+    const returnedOverdue = await lend({ claimExpiresAt: new Date(Date.now() - 5 * day), returnedAt: new Date(Date.now() - 6 * day) });
+    // Returned, and its window closes tomorrow.
+    const returnedSoon = await lend({ claimExpiresAt: new Date(Date.now() + day), returnedAt: new Date() });
+    // Not returned, window passed: the control, which the sweep does close.
+    const overdue = await lend({ claimExpiresAt: new Date(Date.now() - 5 * day) });
+    await database.update(campaignItems).set({ quantityClaimed: 3 }).where(eq(campaignItems.id, need.id));
+
+    await expireCrowdpoolClaims(database);
+
+    const status = async (id: number) =>
+      (await database.select({ s: campaignContributions.status }).from(campaignContributions).where(eq(campaignContributions.id, id)))[0]?.s;
+    expect(await status(returnedOverdue)).toBe("accepted");
+    expect(await status(returnedSoon)).toBe("accepted");
+    expect(await status(overdue)).toBe("expired");
+    // Only the control released its place.
+    const [after] = await database.select({ q: campaignItems.quantityClaimed }).from(campaignItems).where(eq(campaignItems.id, need.id));
+    expect(after.q).toBe(2);
+    expect(inserted.some((n) => n.dedupeKey === `claimrem:${returnedSoon}:expiry`)).toBe(false);
+    expect(inserted.some((n) => n.dedupeKey === `claimrem:${returnedOverdue}:expiry`)).toBe(false);
+  }, 60_000);
+});

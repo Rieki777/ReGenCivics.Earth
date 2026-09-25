@@ -64,9 +64,11 @@ import {
   type OpenNeedsResult,
 } from "../../shared/openNeeds";
 import {
+  DUPLICATE_ROUTE_MESSAGE,
   ROUTE_PARTNERS,
   ROUTE_PARTNER_LABELS,
   isRoutePartner,
+  routePageKey,
   validateProofUrl,
   validateRouteUrl,
 } from "../lib/partner-links";
@@ -892,8 +894,10 @@ export const campaignsRouter = router({
       const db2 = await getDb();
       if (!db2) return [];
       const { campaignPartnerLinks } = await import("../../drizzle/schema");
-      const shown: Array<'verified' | 'example'> = campaign.isDemo ? ['verified', 'example'] : ['verified'];
-      return await db2
+      // Verified rows (Steward ones only while the loan route switch is on),
+      // plus example rows on example campaigns.
+      const where = db.publicRouteWhere({ loanRoutesOpen: await db.loanRoutesOpen(), withExamples: !!campaign.isDemo });
+      const rows = await db2
         .select({
           id: campaignPartnerLinks.id,
           campaignId: campaignPartnerLinks.campaignId,
@@ -908,11 +912,18 @@ export const campaignsRouter = router({
           status: campaignPartnerLinks.status,
         })
         .from(campaignPartnerLinks)
-        .where(and(
-          eq(campaignPartnerLinks.campaignId, input.campaignId),
-          inArray(campaignPartnerLinks.status, shown),
-        ))
+        .where(and(eq(campaignPartnerLinks.campaignId, input.campaignId), where))
         .orderBy(campaignPartnerLinks.id);
+      // One partner page shows once, the same way the money line counts it.
+      const seen = new Set<string>();
+      return rows.filter((r) => {
+        const page = routePageKey(r.url ?? '');
+        if (!page) return true;
+        const key = `${r.partner}|${page}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }),
 
   // The crowdpool settings a page needs to word itself: the soft money-share
@@ -960,7 +971,7 @@ export const campaignsRouter = router({
           .from(campaignPartnerLinksTable)
           .where(and(
             inArray(campaignPartnerLinksTable.campaignId, ids),
-            inArray(campaignPartnerLinksTable.status, ['verified', 'example']),
+            db.publicRouteWhere({ loanRoutesOpen: await db.loanRoutesOpen(), withExamples: true }),
           ))
           .orderBy(campaignPartnerLinksTable.id)
       : [];
@@ -1012,6 +1023,16 @@ export const campaignsRouter = router({
         `);
         if (Number(rows?.[0]?.n ?? 0) >= 2) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'A campaign can have up to two routes of each kind.' });
+        }
+        // The same page twice would count its money twice once both were
+        // verified, so a page already pending or verified here is refused.
+        const [existing]: any = await tx.execute(sql`
+          SELECT url FROM campaign_partner_links
+          WHERE campaignId = ${campaign.id} AND status IN ('pending', 'verified')
+        `);
+        const page = routePageKey(checked.url);
+        if (((existing ?? []) as Array<{ url: string }>).some((r) => routePageKey(String(r.url ?? '')) === page)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: DUPLICATE_ROUTE_MESSAGE });
         }
         const result: any = await tx.insert(campaignPartnerLinksTable).values({
           campaignId: campaign.id,
@@ -1089,6 +1110,23 @@ export const campaignsRouter = router({
         // on the partner's own hosts.
         if (!isRoutePartner(link.partner) || !validateRouteUrl(link.partner, link.url).ok) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: "This link isn't on the partner's own site, so it can't be verified." });
+        }
+        // Verifying a route the team turned down earlier must not pass the
+        // limit of two per partner, and must not verify a second copy of a
+        // page this campaign already shows (it would count twice).
+        const others = (await database
+          .select({ id: campaignPartnerLinksTable.id, partner: campaignPartnerLinksTable.partner, url: campaignPartnerLinksTable.url, status: campaignPartnerLinksTable.status })
+          .from(campaignPartnerLinksTable)
+          .where(and(
+            eq(campaignPartnerLinksTable.campaignId, link.campaignId),
+            inArray(campaignPartnerLinksTable.status, ['pending', 'verified']),
+          ))).filter((r) => r.id !== link.id);
+        if (others.filter((r) => r.partner === link.partner).length >= 2) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'A campaign can have up to two routes of each kind.' });
+        }
+        const page = routePageKey(link.url);
+        if (others.some((r) => r.status === 'verified' && routePageKey(r.url ?? '') === page)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'That page is already a verified route on this campaign.' });
         }
         await database.update(campaignPartnerLinksTable)
           .set({
@@ -1263,6 +1301,9 @@ export const campaignsRouter = router({
         if (!checked.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: checked.message });
         return { partner: r.partner, url: checked.url, label: ROUTE_PARTNER_LABELS[r.partner] };
       });
+      if (new Set(moneyRoutes.map((r) => routePageKey(r.url))).size < moneyRoutes.length) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: DUPLICATE_ROUTE_MESSAGE });
+      }
       const { moneyRoutes: _routes, ...campaignInput } = input;
       const campaignId = await db.createCampaign(ctx.user.id, { ...campaignInput, moneyRoutes });
       // Fire-and-forget image generation, don't block mutation response

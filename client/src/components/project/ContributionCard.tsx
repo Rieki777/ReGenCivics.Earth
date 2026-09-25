@@ -75,9 +75,15 @@ function ContributionIcon({ type }: { type: string }) {
   }
 }
 
-/** The delivery window on an accepted count need. Hours needs never expire. */
-function claimCountdown(c: OwnerContribution): { text: string; overdue: boolean } | null {
-  if (c.status !== "accepted" || !c.claimExpiresAt) return null;
+/**
+ * The delivery window on an accepted count need. Hours needs never expire,
+ * and a loan marked Returned has nothing left to deliver: the nightly sweep
+ * leaves it alone (server/routes/batchJobs.ts expireCrowdpoolClaims).
+ */
+export function claimCountdown(
+  c: Pick<OwnerContribution, "status" | "claimExpiresAt" | "returnedAt">,
+): { text: string; overdue: boolean } | null {
+  if (c.status !== "accepted" || !c.claimExpiresAt || c.returnedAt) return null;
   const msLeft = new Date(c.claimExpiresAt).getTime() - Date.now();
   if (msLeft <= 0) {
     return { text: "The delivery window passed. The nightly sweep will free this place.", overdue: true };

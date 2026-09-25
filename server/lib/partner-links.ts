@@ -84,6 +84,30 @@ export function validateRouteUrl(
   return { ok: true, url };
 }
 
+/** Shown when a steward adds a page that is already one of the campaign's routes. */
+export const DUPLICATE_ROUTE_MESSAGE = "That page is already one of this campaign's routes.";
+
+/**
+ * The page a route URL points at, for spotting one page added twice (a retry
+ * after a network error is enough). Host without "www.", path without
+ * trailing slashes, both in lower case, plus the query string; the fragment
+ * never names a different page. The nightly job writes a page's one total
+ * into every verified row that points at it, so two rows with the same key
+ * would count that money twice. Null for a string that is not a URL.
+ */
+export function routePageKey(url: string): string | null {
+  if (typeof url !== "string" || !url.trim()) return null;
+  let u: URL;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  const host = u.hostname.toLowerCase().replace(/^www\./, "");
+  const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+  return `${host}${path}${u.search}`;
+}
+
 /**
  * Check the optional proof link (a page showing the route is the project's
  * own). Any host, https only, no credentials, at most 512 characters. It is

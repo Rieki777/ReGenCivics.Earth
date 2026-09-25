@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  routePageKey,
   PARTNER_HOSTS,
   ROUTE_PARTNERS,
   isAllowedHop,
@@ -124,5 +125,31 @@ describe("isAllowedHop", () => {
     ]) {
       expect({ loc, allowed: isAllowedHop("maearth", from, loc) }).toEqual({ loc, allowed: false });
     }
+  });
+});
+
+describe("routePageKey", () => {
+  it("reads one page the same way however it is spelled", () => {
+    const key = routePageKey("https://maearth.com/projects/farm");
+    expect(key).toBe("maearth.com/projects/farm");
+    for (const same of [
+      "https://www.maearth.com/projects/farm",
+      "https://maearth.com/projects/farm/",
+      "https://MAEARTH.com/Projects/Farm",
+      "https://maearth.com/projects/farm#give",
+      "  https://maearth.com/projects/farm  ",
+    ]) {
+      expect(routePageKey(same)).toBe(key);
+    }
+  });
+
+  it("keeps different pages apart", () => {
+    expect(routePageKey("https://maearth.com/projects/farm-2")).not.toBe(routePageKey("https://maearth.com/projects/farm"));
+    expect(routePageKey("https://maearth.com/projects?id=2")).not.toBe(routePageKey("https://maearth.com/projects?id=3"));
+  });
+
+  it("returns null for text that is not a URL", () => {
+    expect(routePageKey("")).toBeNull();
+    expect(routePageKey("not a url")).toBeNull();
   });
 });

@@ -23,9 +23,59 @@ import path from "path";
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-// Cache generated images in memory (type-id -> { png, generatedAt })
+// Cache generated images in memory (type-id -> { png, generatedAt }).
+// /api/og is public, so the key space is the caller's to choose: the key is
+// built from a parsed id (ogCacheKey) and the map is capped (rememberOgCard).
 const ogCache = new Map<string, { png: Buffer; generatedAt: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+/** At most this many cards stay in memory; the oldest goes first. */
+export const OG_CACHE_MAX = 500;
+
+/** Card types keyed by a numeric id. */
+const OG_ID_TYPES = new Set(["forum", "gratitude", "campaign", "quest"]);
+/** Card types that ignore their id: one card each. */
+const OG_FIXED_TYPES = new Set(["player", "blog"]);
+
+/**
+ * The cache key for one card, or null when the request cannot name one.
+ *
+ * Number() read many spellings of one id (01597, 1597.0, 0x63D, 1597e0, a
+ * leading space) and the key used the raw string, so every spelling was a
+ * fresh render (about 270 ms of CPU) and a new entry that was never freed.
+ * An id now has to be a plain positive whole number, and the key uses the
+ * number. A project card keys by its parsed project id, never the slug.
+ */
+export function ogCacheKey(type: string, id: string | undefined, key: string | undefined): string | null {
+  if (type === "project") {
+    const parsed = typeof key === "string" ? parseProjectKey(key) : null;
+    return parsed ? `project-${parsed.kind}-${parsed.id}` : null;
+  }
+  if (typeof id !== "string" || !id) return null;
+  if (OG_ID_TYPES.has(type)) {
+    if (!/^[1-9]\d{0,9}$/.test(id)) return null;
+    const n = Number(id);
+    return Number.isSafeInteger(n) ? `${type}-${n}` : null;
+  }
+  if (OG_FIXED_TYPES.has(type)) return type;
+  if (type === "core") return `core-${Object.prototype.hasOwnProperty.call(CORE_OG, id) ? id : "_default"}`;
+  return null;
+}
+
+/** Store one card, dropping the oldest once the map passes OG_CACHE_MAX. */
+export function rememberOgCard(cacheKey: string, png: Buffer, now = Date.now()): void {
+  ogCache.delete(cacheKey);
+  ogCache.set(cacheKey, { png, generatedAt: now });
+  while (ogCache.size > OG_CACHE_MAX) {
+    const oldest = ogCache.keys().next().value;
+    if (oldest === undefined) break;
+    ogCache.delete(oldest);
+  }
+}
+
+/** For tests: how many cards the cache holds, and whether it holds one. */
+export function ogCacheState(cacheKey?: string): { size: number; has: boolean } {
+  return { size: ogCache.size, has: cacheKey ? ogCache.has(cacheKey) : false };
+}
 
 // Load font once
 let fontData: ArrayBuffer | null = null;
@@ -313,9 +363,14 @@ export function registerOgRoutes(app: Express) {
     // A project card is keyed by the project page key (/project/:key); every
     // other card by id. The cache keys a project by its parsed id, never the
     // slug, so any number of made-up slugs share one entry.
-    const parsedKey = type === "project" && typeof key === "string" ? parseProjectKey(key) : null;
-    if (!type || (type === "project" ? !parsedKey : !id)) {
+    if (!type || (type === "project" ? !key : !id)) {
       return res.status(400).json({ error: type === "project" ? "type and key required" : "type and id required" });
+    }
+    const cacheKey = ogCacheKey(type, id, key);
+    if (!cacheKey) {
+      if (type === "project") return res.status(400).json({ error: "type and key required" });
+      if (OG_ID_TYPES.has(type)) return res.status(400).json({ error: "id must be a whole number" });
+      return res.status(400).json({ error: `Unknown type: ${type}` });
     }
 
     // Cache policy: gratitude cards change as new gratitude arrives, so they
@@ -325,7 +380,6 @@ export function registerOgRoutes(app: Express) {
     const themesParam = typeof req.query.themes === "string" ? req.query.themes : "";
     const ttl = type === "gratitude" ? 10 * 60 * 1000 : CACHE_TTL;
     const cacheable = !(type === "gratitude" && themesParam);
-    const cacheKey = parsedKey ? `project-${parsedKey.kind}-${parsedKey.id}` : `${type}-${id}`;
     const cached = cacheable ? ogCache.get(cacheKey) : undefined;
     if (cached && Date.now() - cached.generatedAt < ttl) {
       res.set({ "Content-Type": "image/png", "Cache-Control": `public, max-age=${Math.floor(ttl / 1000)}` });
@@ -456,7 +510,7 @@ export function registerOgRoutes(app: Express) {
       }
 
       const png = await renderOgImage(element);
-      if (cacheable) ogCache.set(cacheKey, { png, generatedAt: Date.now() });
+      if (cacheable) rememberOgCard(cacheKey, png);
 
       res.set({ "Content-Type": "image/png", "Cache-Control": `public, max-age=${Math.floor(ttl / 1000)}, s-maxage=3600` });
       res.send(png);

@@ -13,7 +13,7 @@ vi.mock("@/lib/trpc", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import { ContributionCard, canMarkReturned, loanLine, type OwnerContribution } from "./ContributionCard";
+import { ContributionCard, canMarkReturned, claimCountdown, loanLine, type OwnerContribution } from "./ContributionCard";
 import { AcceptDialog } from "./AcceptDialog";
 
 const base = {
@@ -112,5 +112,21 @@ describe("the returned dialog", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Mark returned" }));
     expect(returnedMutate).toHaveBeenCalledWith({ contributionId: 31 }, expect.any(Object));
+  });
+});
+
+describe("the delivery countdown on a returned loan", () => {
+  const soon = () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+
+  it("shows while the loan is out", () => {
+    renderCard(row({ claimExpiresAt: soon() }));
+    expect(screen.getByText(/left to deliver$/)).toBeInTheDocument();
+  });
+
+  it("goes once the loan is marked Returned, since nothing is left to deliver", () => {
+    renderCard(row({ claimExpiresAt: soon(), returnedAt: "2026-09-25T10:00:00Z" }));
+    expect(screen.queryByText(/left to deliver/)).toBeNull();
+    expect(screen.queryByText(/delivery window passed/)).toBeNull();
+    expect(claimCountdown({ status: "accepted", claimExpiresAt: soon(), returnedAt: "2026-09-25T10:00:00Z" } as any)).toBeNull();
   });
 });
