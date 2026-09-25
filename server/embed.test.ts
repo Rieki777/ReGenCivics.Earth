@@ -15,12 +15,23 @@ const HOSTILE_TITLE = `<img src=x onerror="alert(1)">Hill Farm`;
 const HOSTILE_PLACE = `</div><meta http-equiv="refresh" content="0;url=https://evil.example">`;
 
 vi.mock("./db", () => ({
+  // The widget reads the same progress inputs as every other surface.
+  getCampaignProgressInputs: async (ids: number[]) =>
+    new Map(ids.map((id) => [id, {
+      items: [
+        { id: 1, kind: "item", estimatedValue: 600, quantityWanted: 1, equipmentName: "Tractor" },
+        { id: 2, kind: "role", capacityUnit: "count", estimatedValue: 400, quantityWanted: 1, roleTitle: "Cook" },
+      ],
+      rows: [{ campaignItemId: 1, status: "accepted", contributionType: "equipment", offerMode: "give", quantity: 1, value: 600, financialValue: 600, count: 1 }],
+      lends: [],
+      routes: [],
+    }])),
   getDb: async () => ({
     select: () => ({
       from: () => ({
         where: () => ({
           limit: async () => [
-            { id: 7, status: "active", title: HOSTILE_TITLE, location: HOSTILE_PLACE, financialTarget: 1000, pledgedTotal: 10 },
+            { id: 7, applicationId: null, projectName: null, status: "active", isDemo: 0, currency: "USD", startedAt: new Date("2026-09-01"), durationDays: 90, title: HOSTILE_TITLE, location: HOSTILE_PLACE, financialTarget: 1000, pledgedTotal: 10 },
           ],
         }),
       }),
@@ -84,6 +95,19 @@ describe("embed pages escape every value they print", () => {
     expectNoInjectedMarkup(html);
     expect(html).toContain("<title>&lt;img src=x onerror=&quot;alert(1)&quot;&gt;Hill Farm - ReGen Civics</title>");
     expect(html).toContain("&lt;/div&gt;&lt;meta http-equiv=&quot;refresh&quot;");
+  });
+
+  it("campaign widget: the two-line reading, one link to the project page, none of the old words", async () => {
+    const html = await page("/embed/campaign/7");
+    const inKind = html.indexOf("In-kind: 1 of 2 needs met");
+    const money = html.indexOf("Money: $0 of $1,000");
+    expect(inKind).toBeGreaterThan(-1);
+    expect(money).toBeGreaterThan(inKind);
+    expect(html).toContain('aria-valuetext="In-kind: 1 of 2 needs met"');
+    expect(html).toContain(`href="https://regencivics.earth/project/c7-`);
+    expect(html).toContain("?campaign=7");
+    expect(html).toContain("See what's needed");
+    expect(html).not.toMatch(/funded|Support This Project/i);
   });
 
   it("defaults still read plainly", async () => {

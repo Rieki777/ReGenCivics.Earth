@@ -138,4 +138,18 @@ describe("injectMetaTags, hostile input", () => {
     expect(count(html, "<title>")).toBe(1);
     expect(html).toContain("&quot;&gt;&lt;&lt;&gt;&gt;&amp;&amp;");
   });
+
+  it("prints a dollar sign as a dollar sign, never as a back-reference", () => {
+    // Project pages put campaign text here. In a replacement string "$2"
+    // was the attribute's closing quote and "$1" a whole <meta ...> opener.
+    const html = injectMetaTags(SHELL, {
+      ...OK,
+      title: "Contribute to $1 Farm | ReGen Civics",
+      description: "We need $20,000 for a well. $& and $' too.",
+    });
+    expect(html).toContain(`<meta name="description" content="We need $20,000 for a well. $&amp; and $' too." />`);
+    expect(html).toContain("<title>Contribute to $1 Farm | ReGen Civics</title>");
+    expect(html).toContain('<meta property="og:title" content="Contribute to $1 Farm | ReGen Civics" />');
+    expect(count(html, "<meta")).toBe(count(SHELL, "<meta"));
+  });
 });

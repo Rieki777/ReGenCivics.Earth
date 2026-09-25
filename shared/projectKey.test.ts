@@ -6,6 +6,8 @@ import {
   projectPathForCampaign,
   slugifyProjectName,
   canonicalRedirectTarget,
+  campaignRedirectTarget,
+  projectPathForCampaignFocus,
 } from "./projectKey";
 
 describe("slugifyProjectName", () => {
@@ -79,5 +81,34 @@ describe("canonicalRedirectTarget", () => {
     expect(canonicalRedirectTarget({ location: "/project/c1600-rewild", canonicalPath: "/project/c1597-harmony", isPlaceholderData: true }))
       .toBeNull();
     expect(canonicalRedirectTarget({ location: "/project/c1600-rewild", canonicalPath: null, isPlaceholderData: false })).toBeNull();
+  });
+});
+
+describe("campaignRedirectTarget", () => {
+  const sole = { id: 12, applicationId: null, projectName: "Hill Farm", title: "Plant 400 trees" };
+  const linked = { id: 12, applicationId: 42, projectName: "Harmony Valley", title: "Season 2" };
+
+  it("lands on the project page focused on the campaign", () => {
+    expect(campaignRedirectTarget(sole, "", "")).toBe("/project/c12-hill-farm?campaign=12");
+    expect(campaignRedirectTarget(linked, "", "")).toBe("/project/42-harmony-valley?campaign=12");
+    // The same string every notice and the Needs tab already build.
+    expect(campaignRedirectTarget(linked, "", "")).toBe(projectPathForCampaignFocus(linked));
+  });
+
+  it("keeps ?ref= and utm parameters, with or without the leading ?", () => {
+    expect(campaignRedirectTarget(sole, "?ref=abc", "")).toBe("/project/c12-hill-farm?campaign=12&ref=abc");
+    expect(campaignRedirectTarget(sole, "ref=abc&utm_source=mail&utm_campaign=s2", ""))
+      .toBe("/project/c12-hill-farm?campaign=12&ref=abc&utm_source=mail&utm_campaign=s2");
+  });
+
+  it("drops a stale campaign parameter so the id in the path wins", () => {
+    expect(campaignRedirectTarget(sole, "?campaign=99&ref=abc", "")).toBe("/project/c12-hill-farm?campaign=12&ref=abc");
+    expect(campaignRedirectTarget(sole, "?campaign=99", "")).toBe("/project/c12-hill-farm?campaign=12");
+  });
+
+  it("keeps the #anchor after the query", () => {
+    expect(campaignRedirectTarget(sole, "?ref=abc", "#need-5")).toBe("/project/c12-hill-farm?campaign=12&ref=abc#need-5");
+    expect(campaignRedirectTarget(sole, "", "need-5")).toBe("/project/c12-hill-farm?campaign=12#need-5");
+    expect(campaignRedirectTarget(sole, "", "#")).toBe("/project/c12-hill-farm?campaign=12");
   });
 });

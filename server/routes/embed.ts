@@ -4,11 +4,14 @@
  * No React, no heavy JS. Just styled HTML with live data.
  */
 import type { Express, Request, Response } from "express";
-import { getDb } from "../db";
+import { getCampaignProgressInputs, getDb } from "../db";
 import { campaigns, applications, events } from "../../drizzle/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { isPublicCampaign } from "../lib/project-steward";
-import { escapeHtml } from "../../shared/htmlText";
+import { decodeBasicEntities, escapeHtml } from "../../shared/htmlText";
+import { computeCampaignProgress, progressBars, progressLines } from "../../shared/campaignProgress";
+import { campaignRedirectTarget } from "../../shared/projectKey";
+import { serverCurrencyFormatter } from "../lib/currency-format";
 
 const BASE_URL = "https://regencivics.earth";
 
@@ -63,7 +66,11 @@ function errorWidget(msg: string): string {
 
 export function registerEmbedRoutes(app: Express) {
 
-  // Campaign progress widget
+  // Campaign widget: the two-line reading (build spec 2026-09-25, section
+  // 8.8), from the same helper as every other surface. In-kind first, then
+  // money, each with a thin bar; one link to the project page. Stored
+  // campaign text is entity-encoded once, so it is decoded before it is
+  // escaped (no "&amp;amp;"), and a raw value can never become markup.
   app.get("/embed/campaign/:id", async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.send(errorWidget("Invalid campaign ID"));
@@ -75,24 +82,24 @@ export function registerEmbedRoutes(app: Express) {
     // Embeds are public: an unpublished campaign reads as not found.
     if (!campaign || !isPublicCampaign(campaign)) return res.send(errorWidget("Campaign not found"));
 
-    const title = campaign.title || "Regenerative Land Project";
-    const goal = Number(campaign.financialTarget) || 100000;
-    const raised = Number(campaign.pledgedTotal) || 0;
-    const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
-    const funded = pct >= 100;
-    const color = funded ? "#d4a574" : "#7dd87d";
+    const title = decodeBasicEntities(campaign.title || "Regenerative land project");
+    const location = campaign.location ? decodeBasicEntities(campaign.location) : "";
+    const input = (await getCampaignProgressInputs([campaign.id])).get(campaign.id) ?? { items: [], rows: [], lends: [], routes: [] };
+    const progress = computeCampaignProgress({ campaign, ...input });
+    const bars = progressBars(progress, serverCurrencyFormatter(campaign.currency), "compact");
+    const href = `${BASE_URL}${campaignRedirectTarget(campaign, "", "")}`;
+    const color = "#7dd87d";
+
+    const bar = (b: { label: string; now: number; text: string }, fill: string) => `
+<div style="font-size:13px;color:rgba(255,255,255,0.8)">${escapeHtml(b.text)}</div>
+<div class="bar-bg" role="progressbar" aria-label="${escapeHtml(b.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.max(0, Math.min(100, b.now))}" aria-valuetext="${escapeHtml(b.text)}"><div class="bar-fill" style="width:${Math.max(0, Math.min(100, b.now))}%;background:${fill}"></div></div>`;
 
     const body = `
 <div style="font-size:18px;font-weight:700;line-height:1.3">${escapeHtml(title)}</div>
-${campaign.location ? `<div style="font-size:13px;color:rgba(255,255,255,0.5)">${escapeHtml(campaign.location)}</div>` : ""}
-<div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
-<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.6)">
-<span>$${raised.toLocaleString()} of $${goal.toLocaleString()}</span>
-<span class="badge" style="background:${color}20;color:${color}">${funded ? "Funded!" : pct + "% funded"}</span>
-</div>
-<a href="${BASE_URL}/crowd-pooling-projects" target="_blank" style="display:inline-block;padding:8px 20px;background:${color};color:#1a472a;border-radius:8px;font-weight:700;font-size:14px;text-align:center;text-decoration:none">
-${funded ? "View Project" : "Support This Project"}
-</a>`;
+${location ? `<div style="font-size:13px;color:rgba(255,255,255,0.5)">${escapeHtml(location)}</div>` : ""}
+${bar(bars.inKind, color)}
+${bars.money ? bar(bars.money, "#d4a574") : `<div style="font-size:13px;color:rgba(255,255,255,0.8)">${escapeHtml(progressLines(progress, serverCurrencyFormatter(campaign.currency)).moneyShort)}</div>`}
+<a href="${escapeHtml(href)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 20px;background:${color};color:#1a472a;border-radius:8px;font-weight:700;font-size:14px;text-align:center;text-decoration:none">See what's needed</a>`;
 
     res.set({ "Content-Type": "text/html", "Cache-Control": "public, max-age=3600" });
     res.send(widgetShell(title, body, color));

@@ -26,12 +26,14 @@ export function useReferralCapture() {
       landingUrl: window.location.pathname,
     });
 
-    // Clean ref params from URL without reload
+    // Clean ref params from URL without reload. The #anchor stays: an old
+    // /campaign/:id?ref=x#need-12 link lands on the project page and still
+    // has to scroll to the need.
     params.delete("ref");
     params.delete("src");
     params.delete("ctx");
     const clean = params.toString();
-    const newUrl = window.location.pathname + (clean ? `?${clean}` : "");
+    const newUrl = window.location.pathname + (clean ? `?${clean}` : "") + window.location.hash;
     window.history.replaceState({}, "", newUrl);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 }

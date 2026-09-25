@@ -1,8 +1,9 @@
 /**
- * The top of a project page: cover, name, place, the Example badge for demo
- * projects, Follow and Share. Follow acts on the project's front campaign;
- * signed out, it offers the email follow (campaigns.subscribeByEmail) with a
- * nudge to make an account.
+ * The top of a project page: cover, name, place, one line about the project,
+ * the Example badge for demo projects, Follow and Share. Follow acts on the
+ * project's front campaign; signed out, it offers the email follow
+ * (campaigns.subscribeByEmail) with a nudge to make an account. Share sends
+ * the project page focused on its front campaign.
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -20,7 +21,8 @@ export function ProjectHeader({
   location,
   country,
   isDemo,
-  canonicalPath,
+  sharePath,
+  tagline,
   coverUrl,
   followCampaignId,
   initiallyFollowing,
@@ -30,7 +32,10 @@ export function ProjectHeader({
   location: string | null;
   country: string | null;
   isDemo: boolean;
-  canonicalPath: string;
+  /** {canonicalPath}?campaign={front.id}, or the canonical path with no campaign. */
+  sharePath: string;
+  /** The front campaign description's first sentence. */
+  tagline?: string | null;
   coverUrl: string | null;
   followCampaignId: number | null;
   initiallyFollowing: boolean;
@@ -74,7 +79,7 @@ export function ProjectHeader({
   return (
     <header className="bg-white/95 backdrop-blur rounded-3xl light-form-island overflow-hidden shadow-xl">
       {coverUrl ? (
-        <BlurImage src={cdnImg(coverUrl, 1200)} alt={name} className="w-full h-44 sm:h-56 md:h-72" loading="eager" />
+        <BlurImage src={cdnImg(coverUrl, 1200)} alt={name} className="w-full h-36 sm:h-56 md:h-72" loading="eager" />
       ) : (
         <div className="w-full h-28 sm:h-36 bg-gradient-to-br from-[#4a7c59] via-[#6b8f5e] to-[#a0845c]" aria-hidden="true" />
       )}
@@ -93,23 +98,27 @@ export function ProjectHeader({
             <span className="break-words min-w-0">{place}</span>
           </p>
         )}
+        {tagline && (
+          <p className="text-[#1a472a]/85 mt-2 line-clamp-2 break-words">{tagline}</p>
+        )}
         <div className="flex flex-wrap gap-2 mt-4">
           {followCampaignId && (
             <Button
               variant="outline"
               size="sm"
+              className={`min-h-11 ${following
+                ? "bg-[#4a7c59] text-white border-[#4a7c59] hover:bg-[#1a472a]"
+                : "border-[#4a7c59] text-[#1a472a] hover:bg-[#4a7c59] hover:text-white"}`}
               onClick={toggleFollow}
               aria-expanded={!isAuthenticated ? showEmailFollow : undefined}
-              className={following
-                ? "bg-[#4a7c59] text-white border-[#4a7c59] hover:bg-[#1a472a]"
-                : "border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59] hover:text-white"}
             >
               {following ? <BellRing className="w-4 h-4 mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
               {following ? "Following" : "Follow"}
             </Button>
           )}
           <ShareButtons
-            url={canonicalPath}
+            className="min-h-11"
+            url={sharePath}
             title={name}
             description={shareText}
             hashtags={["ReGenCivics", "Regenerative", "CrowdPooling"]}

@@ -1,70 +1,54 @@
 import { useMemo, useState } from "react";
 import {
   analyzeCoverage,
-  valuationForRole,
   valuationBandForValue,
   type CoachNeedInput,
 } from "@shared/crowdpoolCoach";
-import {
-  CAPITAL_TYPES,
-  CAPITAL_LABELS,
-  CAPITAL_COLORS,
-  type CapitalType,
-} from "@shared/crowdpoolingTaxonomy";
+import { CAPITAL_LABELS, CAPITAL_COLORS } from "@shared/crowdpoolingTaxonomy";
+import { capitalForItem, isMoneyKind, kindForItem, needTitle, needVerb } from "@shared/crowdpoolNeedAction";
+import { PAGE } from "@shared/crowdpoolCopy";
 import { CapitalBalanceMeter } from "@/components/crowdpool/CapitalBalanceMeter";
-import { Slider } from "@/components/ui/slider";
-import { Sparkles, Clock, ListChecks } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
- * Pledge simulator (Phase 4). A pure client widget: the visitor picks one of the
- * campaign's needs or offers some hours, and sees live which of the nine capitals
- * it fills, how it moves that capital on the balance meter, and a fair-market
- * value. Nothing is sent. All numbers come straight from shared/crowdpoolCoach so
- * they match the design coach exactly.
+ * Try filling a need (build spec 2026-09-25, section 8.5; ruling 2026-09-24:
+ * "keeps Fill a need with a real Apply, Offer or Sign up button; Offer time
+ * goes"). A pure client widget: the visitor picks one of the campaign's needs
+ * and sees which of the nine capitals it fills and how it moves that capital
+ * on the balance meter. Nothing is sent until they press the need's own verb,
+ * which opens the same offer sheet as the need card. Money kinds are left
+ * out: money is never a need. All numbers come from shared/crowdpoolCoach so
+ * they match the design coach.
+ *
+ * The project page shows it inside a closed disclosure after the needs,
+ * whose summary carries the heading, so this renders no heading of its own.
  */
 
-function capitalForItem(item: any): CapitalType {
-  if (item?.capitalType) return item.capitalType;
-  switch (item?.category) {
-    case "land":
-      return "living";
-    case "role":
-      return "experiential";
-    default:
-      return "material";
-  }
-}
-function kindForItem(item: any): string {
-  if (item?.kind) return item.kind;
-  return item?.category === "role" ? "role" : "item";
-}
-function titleForItem(item: any): string {
-  return (
-    item?.roleTitle ||
-    item?.equipmentName ||
-    item?.resourceName ||
-    (item?.landDescription ? String(item.landDescription).split("\n")[0].slice(0, 60) : "") ||
-    "This need"
-  );
-}
-
 const STRENGTH_WORD: Record<string, string> = { none: "empty", thin: "thin", solid: "solid" };
-const WEEKS = 12;
 
 /**
- * Currency symbols for the currencies a campaign can be denominated in. The
- * simulator used to hardcode a dollar sign, so a campaign in francs, euros or
- * pounds showed a person their pledge in dollars: measured live on the EUR
- * campaign "Terra Nova Regenerative Farm", where "$3,500" sat among euro figures
- * on the same page.
+ * Currency symbols for the currencies a campaign can be denominated in, so a
+ * campaign in francs, euros or pounds never shows a person a dollar sign.
  */
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$", EUR: "€", GBP: "£", CHF: "CHF ", JPY: "¥",
   CAD: "C$", AUD: "A$", NZD: "NZ$", PHP: "₱", INR: "₹",
 };
 
-export function PledgeSimulator({ items, region, currency }: { items: any[]; region?: string | null; currency?: string }) {
-  const needs = (items ?? []).filter((it) => kindForItem(it) !== "financial_link");
+export function PledgeSimulator({
+  items,
+  currency,
+  onPick,
+  canPick,
+}: {
+  items: any[];
+  currency?: string;
+  /** Opens the offer sheet for the chosen need. Left out, no button shows. */
+  onPick?: (item: any) => void;
+  /** Whether the chosen need can take an offer now (open, campaign live). */
+  canPick?: (item: any) => boolean;
+}) {
+  const needs = useMemo(() => (items ?? []).filter((it) => !isMoneyKind(kindForItem(it))), [items]);
 
   const baseNeeds: CoachNeedInput[] = useMemo(
     () =>
@@ -73,14 +57,10 @@ export function PledgeSimulator({ items, region, currency }: { items: any[]; reg
         kind: kindForItem(it),
         estimatedValue: Number(it.estimatedValue) || 0,
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items],
+    [needs],
   );
 
-  const [mode, setMode] = useState<"need" | "time">(needs.length > 0 ? "need" : "time");
   const [needIdx, setNeedIdx] = useState(0);
-  const [capital, setCapital] = useState<CapitalType>("experiential");
-  const [hours, setHours] = useState(5);
 
   // The campaign's own currency, not a dollar sign. An unknown code renders as
   // the code itself ("SEK 1,200") rather than silently claiming to be dollars.
@@ -89,149 +69,79 @@ export function PledgeSimulator({ items, region, currency }: { items: any[]; reg
     : "";
   const fmt = (n: number) => `${symbol}${Math.round(n).toLocaleString()}`;
 
-  const sim = useMemo(() => {
-    if (mode === "need" && needs[needIdx]) {
-      const it = needs[needIdx];
-      const cap = capitalForItem(it);
-      const value = Number(it.estimatedValue) || 0;
-      return { capital: cap, kind: kindForItem(it), value, band: valuationBandForValue(value, 0.25, symbol || "$") };
-    }
-    const band = valuationForRole({ capital, hoursPerWeek: hours, weeks: WEEKS, region });
-    return { capital, kind: "role", value: band.mid, band };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, needIdx, capital, hours, region, needs.length, symbol]);
-
-  const simNeed: CoachNeedInput = { capitalType: sim.capital, kind: sim.kind, estimatedValue: sim.value };
+  const chosen = needs[Math.min(needIdx, Math.max(needs.length - 1, 0))];
   const base = useMemo(() => analyzeCoverage(baseNeeds), [baseNeeds]);
-  const withSim = useMemo(() => analyzeCoverage([...baseNeeds, simNeed]), [baseNeeds, simNeed]);
+  if (!chosen) return null;
 
-  const beforeEntry = base.entries.find((e) => e.capital === sim.capital);
-  const afterEntry = withSim.entries.find((e) => e.capital === sim.capital);
-  const capColor = CAPITAL_COLORS[sim.capital];
-  const capLabel = CAPITAL_LABELS[sim.capital].label;
+  const cap = capitalForItem(chosen);
+  const value = Number(chosen.estimatedValue) || 0;
+  const band = valuationBandForValue(value, 0.25, symbol || "$");
+  const simNeed: CoachNeedInput = { capitalType: cap, kind: kindForItem(chosen), estimatedValue: value };
+  const withSim = analyzeCoverage([...baseNeeds, simNeed]);
 
+  const beforeEntry = base.entries.find((e) => e.capital === cap);
+  const afterEntry = withSim.entries.find((e) => e.capital === cap);
+  const capColor = CAPITAL_COLORS[cap];
+  const capLabel = CAPITAL_LABELS[cap].label;
   const movement =
     beforeEntry && afterEntry && beforeEntry.strength !== afterEntry.strength
       ? `moves ${capLabel} from ${STRENGTH_WORD[beforeEntry.strength]} to ${STRENGTH_WORD[afterEntry.strength]}`
       : `keeps ${capLabel} ${STRENGTH_WORD[afterEntry?.strength ?? "none"]}`;
   const opensNewForm = withSim.coveredCount > base.coveredCount;
-
+  const verb = needVerb(kindForItem(chosen));
+  const title = needTitle(chosen);
+  const pickable = !!onPick && !!verb && (canPick ? canPick(chosen) : true);
 
   return (
-    <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
-      <h2
-        className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2"
-        style={{ fontFamily: "var(--font-display)" }}
-      >
-        <Sparkles className="w-5 h-5 text-[#4a7c59]" />
-        See what your pledge unlocks
-      </h2>
-      <p className="text-sm text-[#1a472a]/75 mb-5">
-        Try it out. Pick a need or offer some hours, and watch which capital it fills and what it is worth. Nothing is sent.
-      </p>
+    <div>
+      <p className="text-sm text-[#1a472a]/80 mb-4">{PAGE.tryFillingIntro}</p>
 
-      {/* Mode toggle */}
-      <div className="inline-flex rounded-full bg-[#f0f7f0] p-1 mb-5">
-        {needs.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setMode("need")}
-            className={`px-4 py-2 rounded-full text-sm font-medium pointer-coarse:min-h-11 flex items-center gap-1.5 transition-colors ${
-              mode === "need" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/75"
-            }`}
-          >
-            <ListChecks className="w-4 h-4" /> Fill a need
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setMode("time")}
-          className={`px-4 py-2 rounded-full text-sm font-medium pointer-coarse:min-h-11 flex items-center gap-1.5 transition-colors ${
-            mode === "time" ? "bg-[#4a7c59] text-white" : "text-[#1a472a]/75"
-          }`}
+      <div className="mb-5">
+        <label htmlFor="try-need" className="block text-xs font-medium text-[#1a472a]/80 mb-2">Which need would you fill?</label>
+        <select
+          id="try-need"
+          value={needIdx}
+          onChange={(e) => setNeedIdx(Number(e.target.value))}
+          className="w-full rounded-xl border border-[#1a472a]/15 bg-white px-3 py-3 text-base md:text-sm text-[#1a472a] pointer-coarse:min-h-11"
         >
-          <Clock className="w-4 h-4" /> Offer time
-        </button>
+          {needs.map((it, i) => (
+            <option key={it.id ?? i} value={i}>
+              {needTitle(it)}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Controls */}
-      {mode === "need" && needs.length > 0 ? (
-        <div className="mb-5">
-          <label className="block text-xs font-medium text-[#1a472a]/75 mb-2">Which need would you fill?</label>
-          <select
-            value={needIdx}
-            onChange={(e) => setNeedIdx(Number(e.target.value))}
-            className="w-full rounded-xl border border-[#1a472a]/15 bg-white px-3 py-3 text-base md:text-sm text-[#1a472a] pointer-coarse:min-h-11"
-          >
-            {needs.map((it, i) => (
-              <option key={i} value={i}>
-                {titleForItem(it)}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : (
-        <div className="mb-5 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-[#1a472a]/75 mb-2">What kind of capital?</label>
-            <div className="flex flex-wrap gap-2">
-              {CAPITAL_TYPES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCapital(c)}
-                  className={`px-3 py-2 rounded-full text-xs font-medium border pointer-coarse:min-h-11 transition-colors ${
-                    capital === c ? "text-white" : "text-[#1a472a]/80 bg-white"
-                  }`}
-                  style={
-                    capital === c
-                      ? { backgroundColor: CAPITAL_COLORS[c], borderColor: CAPITAL_COLORS[c] }
-                      : { borderColor: `${CAPITAL_COLORS[c]}80` }
-                  }
-                >
-                  {CAPITAL_LABELS[c].label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-baseline justify-between mb-2">
-              <label className="text-xs font-medium text-[#1a472a]/75">Hours a week, over {WEEKS} weeks</label>
-              <span className="text-sm font-bold text-[#1a472a]">{hours} hrs/wk</span>
-            </div>
-            <Slider
-              value={[hours]}
-              onValueChange={([v]) => setHours(v)}
-              min={1}
-              max={40}
-              step={1}
-              aria-label="Hours per week"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Result */}
       <div className="rounded-2xl border border-[#1a472a]/10 p-4 mb-5" style={{ background: `${capColor}12` }}>
         <div className="flex items-center gap-2 mb-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: capColor }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: capColor }} aria-hidden="true" />
           <span className="text-sm font-semibold text-[#1a472a]">This fills {capLabel} capital</span>
         </div>
         <p className="text-2xl font-bold text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
-          {fmt(sim.band.mid)}
+          {fmt(band.mid)}
           <span className="text-sm font-normal text-[#1a472a]/75">
             {" "}
-            fair value ({fmt(sim.band.low)} to {fmt(sim.band.high)})
+            fair value ({fmt(band.low)} to {fmt(band.high)})
           </span>
         </p>
-        <p className="text-xs text-[#1a472a]/75 mt-1">{sim.band.note}</p>
+        <p className="text-xs text-[#1a472a]/75 mt-1">{band.note}</p>
         <p className="text-sm text-[#1a472a] mt-3">
           It {movement}
           {opensNewForm ? " and covers a form the pool did not have yet." : "."}
         </p>
+        {pickable && (
+          <Button
+            type="button"
+            className="mt-3 min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+            aria-label={`${verb}: ${title}`}
+            onClick={() => onPick!(chosen)}
+          >
+            {verb}
+          </Button>
+        )}
       </div>
 
-      {/* Live meter with the simulated pledge added */}
+      {/* Live meter with the chosen need added */}
       <CapitalBalanceMeter needs={[...baseNeeds, simNeed]} />
     </div>
   );

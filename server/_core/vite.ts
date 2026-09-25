@@ -18,9 +18,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * Rewrites the shell's head tags for one request.
  *
  * `title` and `description` are NOT always ours. For /community/post/:id and
- * /campaign/:id they come from crawler-content.ts, which builds them from the
- * forum post title and the campaign title, both of which are text any signed-in
- * member can write. Until 2026-08-03 the title went into the <title> element
+ * /project/:key they come from crawler-content.ts, which builds them from the
+ * forum post title and the project and campaign text, all of which are text a
+ * signed-in member can write. Until 2026-08-03 the title went into the <title> element
  * with no escaping at all (the attributes got quote-escaping only), so a post
  * titled
  *
@@ -50,20 +50,26 @@ export function injectMetaTags(
   // Non-global replaces on purpose: the shell carries exactly one of each tag
   // and a second one would be a shell bug, not something to paper over here.
   // server/vite-meta.test.ts asserts the counts stay at one.
+  //
+  // Function replacements, never a replacement string: in a string, "$2" or
+  // "$&" inside the value is read as a back-reference. A project description
+  // saying "we need $20,000" put the attribute's closing quote in the middle
+  // of og:description and cut it off (escaping does not touch "$").
+  const attr = (value: string) => (_m: string, open: string, close: string) => `${open}${value}${close}`;
   return shell
-    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
-    .replace(/(<meta name="description" content=")[^"]*(")/, `$1${desc}$2`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${title}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/, attr(desc))
     // Open Graph
-    .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${title}$2`)
-    .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${desc}$2`)
-    .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${canonical}$2`)
-    .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${ogImage}$2`)
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, attr(title))
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, attr(desc))
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, attr(canonical))
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, attr(ogImage))
     // Twitter Card
-    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${title}$2`)
-    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${desc}$2`)
-    .replace(/(<meta name="twitter:url" content=")[^"]*(")/, `$1${canonical}$2`)
-    .replace(/(<meta name="twitter:image" content=")[^"]*(")/, `$1${ogImage}$2`)
-    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${canonical}$2`);
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, attr(title))
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, attr(desc))
+    .replace(/(<meta name="twitter:url" content=")[^"]*(")/, attr(canonical))
+    .replace(/(<meta name="twitter:image" content=")[^"]*(")/, attr(ogImage))
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, attr(canonical));
 }
 
 export async function setupVite(app: Express, server: Server) {
@@ -420,9 +426,11 @@ export function serveStatic(app: Express) {
     if (forumMatch) {
       ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
     }
-    const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
-    if (campaignMatch) {
-      ogImage = `${BASE_URL}/api/og?type=campaign&id=${campaignMatch[1]}`;
+    // /project/:key is the campaign page. /campaign/:id answers a 301 there
+    // when public (server/lib/campaign-redirect.ts), so it has no card here.
+    const projectMatch = reqPath.match(/^\/project\/([a-z0-9-]+)$/);
+    if (projectMatch) {
+      ogImage = `${BASE_URL}/api/og?type=project&key=${encodeURIComponent(projectMatch[1])}`;
     }
 
     // Crawler-visible content: real HTML body + JSON-LD for key routes and
@@ -458,10 +466,16 @@ export function serveStatic(app: Express) {
     if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
     if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
 
+    // A project page answers any slug for its id; the crawler content names
+    // the real path, so an old slug never nominates itself as canonical.
+    const pageCanonical = projectMatch && !isNotFound && crawlerContent?.canonicalPath
+      ? `${BASE_URL}${crawlerContent.canonicalPath}`
+      : canonical;
+
     const injected = injectMetaTags(indexHtmlCache, {
       title: meta.title,
       description: meta.description,
-      canonical,
+      canonical: pageCanonical,
       ogImage,
     });
 
@@ -470,9 +484,14 @@ export function serveStatic(app: Express) {
     let withContent = injected;
     if (crawlerContent) {
       if (crawlerContent.jsonld) {
+        // JSON-LD carries text people wrote (a project's name, place and
+        // description). JSON.stringify leaves "<" alone, so a "</script>"
+        // in that text would close this element early; "<" becomes its
+        // JSON escape, which parses to the same string.
+        const ld = JSON.stringify(crawlerContent.jsonld).replace(/</g, "\\u003c");
         withContent = withContent.replace(
           /<\/head>/i,
-          `<script type="application/ld+json">${JSON.stringify(crawlerContent.jsonld)}</script></head>`,
+          () => `<script type="application/ld+json">${ld}</script></head>`,
         );
       }
       withContent = withContent.replace(

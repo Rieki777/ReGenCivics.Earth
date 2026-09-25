@@ -99,7 +99,7 @@ export default function Navigation() {
   const is4PathsActive = location === '/fund' || location === '/land' || location === '/ally' || location === '/play';
   
   // Check if current location is in Play the Game section
-  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
+  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location.startsWith('/project/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
   
   // Check if current location is in Seasons + Schedule section
   const isSeasonsActive = location === '/seasons' || location === '/schedule';

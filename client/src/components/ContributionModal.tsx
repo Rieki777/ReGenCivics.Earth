@@ -9,8 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { CRYPTO_PAYMENT_CONTEXT, type CapitalType, type NeedKind } from "@shared/crowdpoolingTaxonomy";
+import type { CapitalType, NeedKind } from "@shared/crowdpoolingTaxonomy";
 import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@shared/roleCapacity";
+import { isThingKind, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
+import {
+  GIVE_LEND,
+  LOAN_RISK_LINE,
+  OFFER_TYPES,
+  RECEIPT,
+  TOKEN_HELD_LINE,
+  TOKEN_LINE,
+  TOKEN_PRACTICE_LINE,
+} from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
 import {
@@ -18,17 +28,16 @@ import {
   Wrench,
   UserCheck,
   Package,
-  Coins,
   BookOpen,
   Loader2,
   CheckCircle2,
   CalendarPlus,
-  Truck,
-  Gift,
+  Share2,
+  Bell,
   UserPlus
 } from "lucide-react";
 
-/** A campaign need passed in when the contributor clicks Claim on a slot card. */
+/** A campaign need passed in when the contributor picks Apply, Offer or Sign up on a need. */
 export interface ContributionNeed {
   id: number;
   kind: NeedKind | string;
@@ -49,6 +58,13 @@ export interface ContributionNeed {
   shiftEndsAt?: string | Date | null;
   loanWindowStart?: string | Date | null;
   loanWindowEnd?: string | Date | null;
+  /** Which ways a thing may come (shared/crowdpoolNeedAction.ts modesFor). */
+  acceptsGift?: number | boolean | null;
+  acceptsLoan?: number | boolean | null;
+  /** When the project needs it, 'YYYY-MM-DD'. */
+  neededFrom?: string | null;
+  neededUntil?: string | null;
+  workMode?: string | null;
 }
 
 interface ContributionModalProps {
@@ -70,6 +86,18 @@ interface ContributionModalProps {
    * The email sign-in link and Google both land there.
    */
   afterSignUpAnchor?: string;
+  /** The project's name, for the token line and "Follow {project}". Falls back to the campaign title. */
+  projectName?: string;
+  /** The campaign's completion rule (progressLines(...).completion), shown on the receipt. */
+  completionLine?: string | null;
+  /** The need's own link on the project page, for "Share this need". */
+  sharePath?: string;
+  /** An example campaign: the token line is the practice line. */
+  isExample?: boolean;
+  /** Whether the signed-in viewer already follows this campaign. */
+  isFollowing?: boolean;
+  /** Called after "Follow {project}" on the receipt succeeds. */
+  onFollowed?: () => void;
 }
 
 /** This page with its hash swapped for `anchor`, as a same-site path. */
@@ -78,16 +106,16 @@ function pathWithAnchor(anchor: string): string | undefined {
   return `${window.location.pathname}${window.location.search}#${anchor}`;
 }
 
-type ContributionType = 'land' | 'equipment' | 'role' | 'resource' | 'financial' | 'knowledge';
+type ContributionType = 'land' | 'equipment' | 'role' | 'resource' | 'knowledge';
 
+/** The freeform type picker (spec 10.4). Money is never offered here: it goes through the project's routes. */
 const contributionTypes = [
-  { value: 'land', label: 'Land', icon: Leaf, color: 'text-green-600' },
-  { value: 'equipment', label: 'Equipment', icon: Wrench, color: 'text-orange-600' },
-  { value: 'role', label: 'Role/Skills', icon: UserCheck, color: 'text-blue-600' },
-  { value: 'resource', label: 'Resources', icon: Package, color: 'text-purple-600' },
-  { value: 'knowledge', label: 'Knowledge Session', icon: BookOpen, color: 'text-indigo-600' },
-  { value: 'financial', label: 'Crypto', icon: Coins, color: 'text-emerald-600' },
-];
+  { value: 'land', label: OFFER_TYPES.land, icon: Leaf, color: 'text-green-700' },
+  { value: 'equipment', label: OFFER_TYPES.equipment, icon: Wrench, color: 'text-orange-700' },
+  { value: 'role', label: OFFER_TYPES.role, icon: UserCheck, color: 'text-blue-700' },
+  { value: 'resource', label: OFFER_TYPES.resource, icon: Package, color: 'text-purple-700' },
+  { value: 'knowledge', label: OFFER_TYPES.knowledge, icon: BookOpen, color: 'text-indigo-700' },
+] as const;
 
 const KIND_LABELS: Record<string, string> = {
   item: 'Item',
@@ -95,8 +123,6 @@ const KIND_LABELS: Record<string, string> = {
   shift: 'Shift',
   loan: 'Loan',
   knowledge: 'Knowledge',
-  crypto: 'Crypto',
-  financial_link: 'Partner',
 };
 
 /** Maps a need kind to the contribution type the server records. */
@@ -106,10 +132,9 @@ const TYPE_FOR_KIND: Record<string, ContributionType> = {
   shift: 'role',
   loan: 'equipment',
   knowledge: 'knowledge',
-  crypto: 'financial',
 };
 
-/** Per-slot value of a need, so quantity claims scale proportionally. */
+/** Per-slot value of a need, so quantity offers scale proportionally. */
 function perUnitValue(need: ContributionNeed): number {
   if (need.quantityWanted > 1 && need.estimatedValue > 0) {
     return Math.round(need.estimatedValue / need.quantityWanted);
@@ -137,10 +162,28 @@ function fillForNeed(need: ContributionNeed) {
   });
 }
 
-/** The server's price for an offer of `hours` on an hours need. */
+/**
+ * The server's value for an offer of `hours` on an hours need. The server
+ * sets every need-attached value itself; this is only what the sheet sends
+ * along, and it is never shown (no price in front of a person's time).
+ */
 export function offerValue(need: ContributionNeed, hours: number): number {
   const needed = need.quantityWanted || 0;
   return scaleRoleValue(need.estimatedValue || 0, needed, Math.min(hours, needed));
+}
+
+/**
+ * The lend fields checked the way the server checks them (campaigns.ts
+ * checkGiveOrLend), so a person sees the problem on the field. Null when fine.
+ */
+export function lendDateError(a: { until: string; from: string; neededFrom?: string | null; today?: string }): string | null {
+  const until = a.until.trim();
+  if (!until) return GIVE_LEND.missingUntil;
+  const from = a.from.trim();
+  if (until < (a.today ?? todayUtc()) || (from && until < from)) return GIVE_LEND.untilBeforeFrom;
+  const neededFrom = toDay(a.neededFrom ?? null);
+  if (neededFrom && until < neededFrom) return GIVE_LEND.untilBeforeNeed;
+  return null;
 }
 
 function toIcsDate(d: string | Date): string {
@@ -156,6 +199,12 @@ export function ContributionModal({
   onSuccess,
   need,
   afterSignUpAnchor,
+  projectName,
+  completionLine,
+  sharePath,
+  isExample = false,
+  isFollowing = false,
+  onFollowed,
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
@@ -175,11 +224,25 @@ export function ContributionModal({
     onSuccess: () => setWaitlistJoined(true),
     onError: () => { toast.error('Could not save your email. Try again in a moment.'); },
   });
+  const [followed, setFollowed] = useState(false);
+  const follow = trpc.campaigns.follow.useMutation({
+    onSuccess: () => { setFollowed(true); onFollowed?.(); },
+    onError: () => { toast.error("Couldn't follow this project. Try again."); },
+  });
+
+  const project = projectName?.trim() || campaignTitle;
+  const verb: NeedVerb | 'Freeform' = need ? (needVerb(String(need.kind)) ?? 'Offer') : 'Freeform';
+  const copy = sheetCopy(verb, need?.title ?? '', campaignTitle);
 
   // A role measured in hours a week. Legacy roles still on 'count' take the
   // slot path below, exactly as before.
   const hoursNeed = !!need && isHoursNeed({ kind: String(need.kind), capacityUnit: need.capacityUnit ?? null });
   const fill = need ? fillForNeed(need) : null;
+  // A thing need: the project says whether it takes it as a gift, on loan, or both.
+  const thingNeed = !!need && isThingKind(String(need.kind));
+  const modes = need && thingNeed ? modesFor(need) : { gift: true, loan: false };
+  const bothModes = thingNeed && modes.gift && modes.loan;
+  const loanOnly = thingNeed && modes.loan && !modes.gift;
 
   // Form state
   const [contributorName, setContributorName] = useState('');
@@ -193,6 +256,13 @@ export function ContributionModal({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [quantityPledged, setQuantityPledged] = useState('1');
 
+  // Give or lend (spec 6.2). Nothing is chosen for the person.
+  const [offerMode, setOfferMode] = useState<'give' | 'lend' | null>(null);
+  const [lendFrom, setLendFrom] = useState('');
+  const [lendUntil, setLendUntil] = useState('');
+  const [lendTerms, setLendTerms] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ mode?: string; until?: string }>({});
+
   // Type-specific fields
   const [landHectares, setLandHectares] = useState('');
   const [landRegion, setLandRegion] = useState('');
@@ -205,12 +275,12 @@ export function ContributionModal({
   const [resourceName, setResourceName] = useState('');
   const [resourceQuantity, setResourceQuantity] = useState('1');
   const [resourceUnit, setResourceUnit] = useState('');
-  const [financialAmount, setFinancialAmount] = useState('');
   const [sessionLength, setSessionLength] = useState('');
 
   const remainingSlots = need
     ? Math.max(1, (need.quantityWanted || 1) - (need.quantityClaimed || 0))
     : 1;
+  const lending = thingNeed && (loanOnly || offerMode === 'lend');
 
   // Preload from the need: skip the type picker and prefill the form.
   useEffect(() => {
@@ -222,9 +292,6 @@ export function ContributionModal({
       setQuantityPledged('1');
       const unit = perUnitValue(need);
       setEstimatedValue(unit > 0 ? String(unit) : '');
-      if (mapped === 'financial') {
-        setFinancialAmount(unit > 0 ? String(unit) : '');
-      }
       if (mapped === 'resource') {
         setResourceName(need.title);
       }
@@ -242,6 +309,12 @@ export function ContributionModal({
       if (mapped === 'equipment') {
         setEquipmentName(need.title);
       }
+      // Loan dates start from when the project needs the thing.
+      setOfferMode(null);
+      setLendFrom(toDay(need.neededFrom ?? null) ?? '');
+      setLendUntil(toDay(need.neededUntil ?? null) ?? '');
+      setLendTerms('');
+      setFieldErrors({});
     }
   }, [isOpen, need]);
 
@@ -279,7 +352,7 @@ export function ContributionModal({
       onSuccess?.({ practice: isPractice });
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to submit contribution');
+      toast.error(error.message || "Couldn't send that. Try again.");
     }
   });
 
@@ -296,6 +369,11 @@ export function ContributionModal({
     setContributorNotes('');
     setIsAnonymous(false);
     setQuantityPledged('1');
+    setOfferMode(null);
+    setLendFrom('');
+    setLendUntil('');
+    setLendTerms('');
+    setFieldErrors({});
     setLandHectares('');
     setLandRegion('');
     setEquipmentName('');
@@ -307,14 +385,13 @@ export function ContributionModal({
     setResourceName('');
     setResourceQuantity('1');
     setResourceUnit('');
-    setFinancialAmount('');
     setSessionLength('');
   };
 
   /** True once the person has typed anything worth losing. */
   const isDirty = step === 'details' && Boolean(
     contributorName || contributorEmail || contributorPhone || contributorBio ||
-    description || contributorNotes || estimatedValue
+    description || contributorNotes || lendTerms || (!need && estimatedValue)
   );
 
   const handleClose = () => {
@@ -323,6 +400,7 @@ export function ContributionModal({
     setPractice(false);
     setWaitlistEmail('');
     setWaitlistJoined(false);
+    setFollowed(false);
     onClose();
   };
 
@@ -345,7 +423,7 @@ export function ContributionModal({
     handleClose();
   };
 
-  // Quantity changes rescale the prefilled value proportionally.
+  // Quantity changes rescale the value the sheet sends along (the server sets its own).
   const handleQuantityChange = (raw: string) => {
     // Allow the field to be empty WHILE TYPING. Clamping on every keystroke meant
     // deleting the last digit instantly refilled "1", so getting from 1 to 12 on a
@@ -359,17 +437,11 @@ export function ContributionModal({
     setQuantityPledged(String(qty));
     if (need) {
       const unit = perUnitValue(need);
-      if (unit > 0) {
-        setEstimatedValue(String(unit * qty));
-        if (contributionType === 'financial') {
-          setFinancialAmount(String(unit * qty));
-        }
-      }
+      if (unit > 0) setEstimatedValue(String(unit * qty));
     }
   };
 
-  // Hours offered on an hours need: never capped by the open hours. The
-  // value preview follows the server's own pricing.
+  // Hours offered on an hours need: never capped by the open hours.
   const handleOfferHoursChange = (raw: string) => {
     setHoursPerWeek(raw);
     if (!need) return;
@@ -386,6 +458,16 @@ export function ContributionModal({
       return;
     }
 
+    // Give or lend, on the field (spec 6.2).
+    const errors: { mode?: string; until?: string } = {};
+    if (bothModes && !offerMode) errors.mode = GIVE_LEND.chooseError;
+    if (lending) {
+      const e = lendDateError({ until: lendUntil, from: lendFrom, neededFrom: need?.neededFrom });
+      if (e) errors.until = e;
+    }
+    setFieldErrors(errors);
+    if (errors.mode || errors.until) return;
+
     let offerHours: number | undefined;
     if (hoursNeed || (contributionType === 'role' && hoursPerWeek.trim() !== '')) {
       const h = parseOfferHours(hoursPerWeek);
@@ -396,19 +478,41 @@ export function ContributionModal({
       offerHours = h;
     }
 
-    // The server prices an offer on an hours need itself, so the value sent
-    // here is only a preview (a role with no value set still takes offers).
-    const value = hoursNeed && need && offerHours !== undefined
-      ? Math.round(offerValue(need, offerHours))
-      : (parseInt(estimatedValue) || 0);
-    if (!hoursNeed && value <= 0) {
-      toast.error('Please enter a valid estimated value');
-      return;
+    let months: number | undefined;
+    if (durationMonths.trim() !== '') {
+      const m = Number(durationMonths.trim());
+      if (!Number.isInteger(m) || m < 1 || m > 120) {
+        toast.error('Months need to be a whole number from 1 to 120.');
+        return;
+      }
+      months = m;
+    }
+
+    // On an offer against a need the server sets the value from the need;
+    // this number only rides along. A freeform offer keeps the person's own
+    // rough value, which may be left blank (0).
+    let value: number;
+    if (need) {
+      value = hoursNeed && offerHours !== undefined
+        ? Math.round(offerValue(need, offerHours))
+        : Math.max(0, Math.round(Number(estimatedValue) || 0));
+    } else {
+      const raw = estimatedValue.trim();
+      const n = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(n) || n < 0) {
+        toast.error('Enter a number for what it is worth, or leave it blank.');
+        return;
+      }
+      value = Math.round(n);
     }
 
     const refParam = typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('ref')
       : null;
+
+    const mode: 'give' | 'lend' | undefined = thingNeed
+      ? (loanOnly ? 'lend' : bothModes ? (offerMode ?? undefined) : undefined)
+      : undefined;
 
     submitMutation.mutate({
       campaignId,
@@ -437,16 +541,19 @@ export function ContributionModal({
       hoursPerWeek: contributionType === 'knowledge'
         ? (parseOfferHours(sessionLength) ?? undefined)
         : offerHours,
-      durationMonths: durationMonths ? parseInt(durationMonths) : undefined,
+      durationMonths: months,
       resourceName: resourceName.trim() || undefined,
       resourceQuantity: resourceQuantity ? parseInt(resourceQuantity) : undefined,
       resourceUnit: resourceUnit.trim() || undefined,
-      financialAmount: financialAmount ? parseInt(financialAmount) : undefined,
-      paymentMethod: contributionType === 'financial' ? 'crypto' : undefined,
+      // Give or lend. A gift carries no dates; the server drops them anyway.
+      offerMode: mode,
+      availableFrom: mode === 'lend' && lendFrom.trim() ? lendFrom.trim() : undefined,
+      lendUntil: mode === 'lend' ? lendUntil.trim() : undefined,
+      lendTerms: mode === 'lend' && lendTerms.trim() ? lendTerms.trim().slice(0, 300) : undefined,
     });
   };
 
-  // Client-side .ics download for shift claims.
+  // Client-side .ics download for shift sign-ups.
   const handleDownloadIcs = () => {
     if (!need?.shiftStartsAt || !need?.shiftEndsAt) return;
     const lines = [
@@ -473,6 +580,19 @@ export function ContributionModal({
     URL.revokeObjectURL(url);
   };
 
+  const handleShare = async () => {
+    if (!sharePath || typeof window === 'undefined') return;
+    const url = `${window.location.origin}${sharePath}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied');
+    } catch {
+      toast.error("Couldn't copy the link.");
+    }
+  };
+
+  const tokenLine = isExample ? TOKEN_PRACTICE_LINE : TOKEN_LINE(project);
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -486,18 +606,12 @@ export function ContributionModal({
               it a long need title wrapped under the X, so tapping what looked like
               the heading closed the modal and discarded the form. */}
           <DialogTitle className="text-[#1a472a] text-left leading-tight pr-12 sm:pr-0">
-            {step === 'success' ? (practice ? 'Practice run complete' : hoursNeed ? 'Offer sent' : 'Contribution Submitted!') :
-              hoursNeed && need ? `Offer your time: ${need.title}` :
-              need ? `Claim: ${need.title}` : 'Contribute to Campaign'}
+            {step === 'success' ? (practice ? 'Practice run complete' : copy.success) : copy.title}
           </DialogTitle>
           <DialogDescription className="text-[#1a472a]/85">
-            {step === 'type' && 'Select what type of contribution you want to make'}
-            {step === 'details' && (hoursNeed
-              ? `Offering hours to a role on ${campaignTitle}`
-              : need
-              ? `Claiming ${need.kind === 'item' ? 'an' : 'a'} ${(KIND_LABELS[need.kind] || 'need').toLowerCase()} need on ${campaignTitle}`
-              : `Contributing to: ${campaignTitle}`)}
-            {step === 'success' && (practice ? `A practice run on ${campaignTitle}` : 'Thank you for your contribution!')}
+            {step === 'type' && OFFER_TYPES.description}
+            {step === 'details' && copy.description}
+            {step === 'success' && (practice ? `A practice run on ${campaignTitle}` : copy.description)}
           </DialogDescription>
         </DialogHeader>
 
@@ -509,8 +623,9 @@ export function ContributionModal({
               return (
                 <button
                   key={type.value}
+                  type="button"
                   onClick={() => {
-                    setContributionType(type.value as ContributionType);
+                    setContributionType(type.value);
                     setStep('details');
                   }}
                   className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all hover:border-[#7dd87d] hover:bg-[#f0f7f0] ${
@@ -520,7 +635,7 @@ export function ContributionModal({
                   <div className={`w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center ${type.color}`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <span className="font-medium text-[#1a472a]">{type.label}</span>
+                  <span className="font-medium text-[#1a472a] text-left">{type.label}</span>
                 </button>
               );
             })}
@@ -542,14 +657,14 @@ export function ContributionModal({
               </p>
             )}
 
-            {/* Need summary when claiming a slot */}
+            {/* The need being answered */}
             {need && (
               <div className="bg-[#f0f7f0] rounded-xl p-3 flex items-center justify-between gap-3">
-                <div>
-                  <span className="text-xs font-bold text-[#4a7c59] uppercase tracking-wide">
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-[#1a472a] uppercase tracking-wide">
                     {KIND_LABELS[need.kind] || 'Need'}
                   </span>
-                  <p className="text-sm font-medium text-[#1a472a]">{need.title}</p>
+                  <p className="text-sm font-medium text-[#1a472a] break-words">{need.title}</p>
                 </div>
                 <span className="text-xs text-[#1a472a]/80 text-right">
                   {hoursNeed && fill
@@ -626,9 +741,89 @@ export function ContributionModal({
               </div>
             </div>
 
-            {/* Contribution Details */}
+            {/* What they are offering */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1a472a]">Contribution Details</h3>
+              <h3 className="font-semibold text-[#1a472a]">Your offer</h3>
+
+              {/* Give or lend: the first control on a thing that takes both. Nothing is chosen for the person. */}
+              {bothModes && (
+                <fieldset
+                  className="space-y-2"
+                  aria-describedby={fieldErrors.mode ? 'offer-mode-error' : undefined}
+                  aria-invalid={fieldErrors.mode ? true : undefined}
+                >
+                  <legend className="text-sm font-medium text-[#1a472a] mb-2">{GIVE_LEND.legend}</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['give', 'lend'] as const).map((m) => (
+                      <label
+                        key={m}
+                        className={`flex items-center gap-2 min-h-11 rounded-xl border-2 px-3 cursor-pointer ${
+                          offerMode === m ? 'border-[#4a7c59] bg-[#f0f7f0]' : 'border-gray-200'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="offer-mode"
+                          value={m}
+                          checked={offerMode === m}
+                          onChange={() => { setOfferMode(m); setFieldErrors((f) => ({ ...f, mode: undefined })); }}
+                          className="h-4 w-4 accent-[#4a7c59]"
+                        />
+                        <span className="text-sm font-medium">{m === 'give' ? GIVE_LEND.give : GIVE_LEND.lend}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {fieldErrors.mode && (
+                    <p id="offer-mode-error" role="alert" className="text-sm font-medium text-red-700">{fieldErrors.mode}</p>
+                  )}
+                </fieldset>
+              )}
+              {loanOnly && (
+                <p className="text-sm text-[#1a472a]/85 bg-[#f0f7f0] rounded-xl p-3">{GIVE_LEND.loanOnly}</p>
+              )}
+              {lending && (
+                <div className="space-y-3 rounded-xl border border-[#4a7c59]/25 p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="lendFrom">{GIVE_LEND.availableFrom}</Label>
+                      <Input
+                        id="lendFrom"
+                        type="date"
+                        value={lendFrom}
+                        onChange={(e) => setLendFrom(e.target.value)}
+                        className="text-base md:text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lendUntil">{GIVE_LEND.until} *</Label>
+                      <Input
+                        id="lendUntil"
+                        type="date"
+                        required
+                        value={lendUntil}
+                        onChange={(e) => { setLendUntil(e.target.value); setFieldErrors((f) => ({ ...f, until: undefined })); }}
+                        aria-invalid={fieldErrors.until ? true : undefined}
+                        aria-describedby={fieldErrors.until ? 'lend-until-error' : undefined}
+                        className="text-base md:text-sm"
+                      />
+                    </div>
+                  </div>
+                  {fieldErrors.until && (
+                    <p id="lend-until-error" role="alert" className="text-sm font-medium text-red-700">{fieldErrors.until}</p>
+                  )}
+                  <p className="text-xs text-[#1a472a]/85">{LOAN_RISK_LINE}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="lendTerms">{GIVE_LEND.terms}</Label>
+                    <Input
+                      id="lendTerms"
+                      maxLength={300}
+                      value={lendTerms}
+                      onChange={(e) => setLendTerms(e.target.value)}
+                      className="text-base md:text-sm"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="title">{contributionType === 'knowledge' ? 'Topic *' : 'Title *'}</Label>
@@ -641,8 +836,7 @@ export function ContributionModal({
                     contributionType === 'equipment' ? 'e.g., Solar Panel System' :
                     contributionType === 'role' ? 'e.g., Full-stack Developer' :
                     contributionType === 'resource' ? 'e.g., Organic Seeds' :
-                    contributionType === 'knowledge' ? 'e.g., Permaculture Design Session' :
-                    'e.g., USDC Pledge'
+                    'e.g., Permaculture Design Session'
                   }
                 />
               </div>
@@ -716,7 +910,7 @@ export function ContributionModal({
                   <div className="space-y-2 col-span-2">
                     <Label htmlFor="condition">Condition</Label>
                     <Select value={equipmentCondition} onValueChange={setEquipmentCondition}>
-                      <SelectTrigger>
+                      <SelectTrigger id="condition">
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
                       <SelectContent>
@@ -780,6 +974,10 @@ export function ContributionModal({
                     <Input
                       id="duration"
                       type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={120}
+                      step={1}
                       value={durationMonths}
                       onChange={(e) => setDurationMonths(e.target.value)}
                       placeholder="e.g., 6"
@@ -837,25 +1035,6 @@ export function ContributionModal({
                 </div>
               )}
 
-              {contributionType === 'financial' && (
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Crypto Amount ({currency} value)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    value={financialAmount}
-                    onChange={(e) => {
-                      setFinancialAmount(e.target.value);
-                      setEstimatedValue(e.target.value);
-                    }}
-                    placeholder="e.g., 10000"
-                  />
-                  <p className="text-xs text-[#1a472a]/85">
-                    {CRYPTO_PAYMENT_CONTEXT.helperText} National currency goes through recommended funders: Ma Earth for donations, GoSteward for loans.
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="description">Description (optional)</Label>
                 <Textarea
@@ -865,39 +1044,27 @@ export function ContributionModal({
                   placeholder={
                     contributionType === 'knowledge'
                       ? 'What will the session cover, and who is it for?'
-                      : 'Provide more details about your contribution...'
+                      : 'Tell the stewards a little more about what you would bring...'
                   }
                   rows={3}
                 />
               </div>
 
-              {hoursNeed && (
-                <div className="rounded-xl bg-[#f0f7f0] p-3">
-                  <p className="text-sm text-[#1a472a]">
-                    Value of your offer:{' '}
-                    <span className="font-semibold">
-                      {new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(estimatedValue) || 0)}
-                    </span>
-                  </p>
-                  <p className="text-xs text-[#1a472a]/85 mt-1">
-                    Your share of this role's value, by the hours you offer.
-                  </p>
-                </div>
-              )}
-
-              {contributionType !== 'financial' && !hoursNeed && (
+              {/* A freeform offer's rough value. An offer on a need carries the need's own value (set by the server). */}
+              {!need && (
                 <div className="space-y-2">
-                  <Label htmlFor="value">Estimated Value ({currency}) *</Label>
+                  <Label htmlFor="value">{GIVE_LEND.freeformValueLabel}</Label>
                   <Input
                     id="value"
                     type="number"
+                    inputMode="decimal"
+                    min={0}
                     value={estimatedValue}
                     onChange={(e) => setEstimatedValue(e.target.value)}
-                    placeholder="e.g., 5000"
+                    placeholder={`e.g., 500 (${currency})`}
+                    aria-describedby="value-help"
                   />
-                  <p className="text-xs text-[#1a472a]/85">
-                    {need ? 'Prefilled from the need. Adjust if your figure is better.' : 'Estimate the monetary value of your contribution'}
-                  </p>
+                  <p id="value-help" className="text-xs text-[#1a472a]/85">{GIVE_LEND.freeformValueHelper}</p>
                 </div>
               )}
 
@@ -913,27 +1080,30 @@ export function ContributionModal({
               </div>
             </div>
 
+            {/* The token line, once, above the send button (R33). Copy only: this build issues no tokens. */}
+            <p className="text-xs text-[#1a472a]/85 pt-2">{tokenLine}</p>
+
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
                 onClick={() => need ? handleClose() : setStep('type')}
-                className="flex-1"
+                className="flex-1 min-h-11"
               >
                 {need ? 'Cancel' : 'Back'}
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={submitMutation.isPending}
-                className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a]"
+                className="flex-1 min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]"
               >
                 {submitMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
+                    Sending...
                   </>
                 ) : (
-                  hoursNeed ? 'Send my offer' : need ? 'Submit Claim' : 'Submit Contribution'
+                  copy.submit
                 )}
               </Button>
             </div>
@@ -946,13 +1116,16 @@ export function ContributionModal({
             thank-you to wait for. Rye, 2026-09-24 (decision B12c). */}
         {step === 'success' && practice && (
           <div className="py-8 text-center" data-testid="practice-receipt">
-            <div className="w-16 h-16 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-[#4a7c59]" />
+            <div role="status">
+              <div className="w-16 h-16 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1a472a] mb-2">Practice run complete</h3>
             </div>
-            <h3 className="text-xl font-bold text-[#1a472a] mb-2">Practice run complete</h3>
-            <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-5">
+            <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-3">
               This was an example campaign, so nothing reached a real project. The first real campaigns open soon.
             </p>
+            <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-5">{TOKEN_PRACTICE_LINE}</p>
             <div className="text-left max-w-sm mx-auto mb-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
               {waitlistJoined ? (
                 <p className="flex items-start gap-2 text-sm text-[#1a472a]">
@@ -990,7 +1163,7 @@ export function ContributionModal({
               )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button asChild variant="outline" className="border-[#4a7c59] text-[#4a7c59]">
+              <Button asChild variant="outline" className="border-[#4a7c59] text-[#1a472a]">
                 <Link href="/campaigns" onClick={handleClose}>Browse campaigns</Link>
               </Button>
               <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
@@ -1000,67 +1173,71 @@ export function ContributionModal({
           </div>
         )}
 
-        {/* Step 3: Success */}
+        {/* Step 3: the receipt (spec 10.4). It is the confirmation: no toast repeats it. */}
         {step === 'success' && !practice && (
-          <div className="py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+          <div className="py-6" data-testid="receipt">
+            <div role="status" className="text-center">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-green-700" aria-hidden="true" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1a472a] mb-3">{copy.success}</h3>
             </div>
-            <h3 className="text-xl font-bold text-[#1a472a] mb-2">
-              {hoursNeed ? 'Offer sent' : need ? 'Claim Submitted!' : 'Contribution Submitted!'}
-            </h3>
-            {!isAuthenticated && sentEmail && (
-              <div className="text-left max-w-sm mx-auto mb-5 space-y-3">
-                <p className="text-sm text-[#1a472a]/85">
-                  Your offer is with the stewards. We'll email <strong className="break-all">{sentEmail}</strong> when they answer.
-                </p>
-                <div className="rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
-                  <p className="text-sm text-[#1a472a]">
-                    Make a free account with <strong className="break-all">{sentEmail}</strong> and you'll see every answer, delivery and thank-you in your notifications. This offer and any you made before with this email link to your account when you sign in, and show on each project's page.
-                  </p>
-                  <Button
-                    onClick={() => setAuthOpen(true)}
-                    className="mt-3 w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white"
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Make my account
-                  </Button>
-                </div>
-              </div>
-            )}
-            <div className="text-left max-w-sm mx-auto space-y-3 mb-6">
-              <div className="flex items-start gap-3">
-                <UserCheck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-[#1a472a]/85">The steward reviews your pledge and confirms the details with you.</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <Truck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-[#1a472a]/85">Delivery is when it counts. Progress and recognition land when your contribution arrives.</p>
-              </div>
-              {/* Thanks reach account holders in their notifications only; the
-                  signed-out card above says so. */}
-              {isAuthenticated && (
-                <div className="flex items-start gap-3">
-                  <Gift className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-[#1a472a]/85">You'll get a thank-you from the project once it's in.</p>
-                </div>
-              )}
+            <div className="text-left max-w-sm mx-auto space-y-3 mb-5 text-sm text-[#1a472a]/85">
+              <p>{isAuthenticated ? RECEIPT.answerSignedIn : RECEIPT.answerSignedOut(sentEmail)}</p>
+              <p>{TOKEN_LINE(project)}</p>
+              {!isAuthenticated && <p>{TOKEN_HELD_LINE}</p>}
+              {completionLine && <p>{completionLine}</p>}
+              <p>{RECEIPT.countsOnceAccepted}</p>
             </div>
             {need?.kind === 'shift' && need.shiftStartsAt && need.shiftEndsAt && (
-              <Button
-                variant="outline"
-                onClick={handleDownloadIcs}
-                className="mb-4 border-[#4a7c59] text-[#4a7c59]"
-              >
-                <CalendarPlus className="w-4 h-4 mr-2" />
-                Add shift to calendar (.ics)
-              </Button>
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadIcs}
+                  className="mb-4 min-h-11 border-[#4a7c59] text-[#1a472a]"
+                >
+                  <CalendarPlus className="w-4 h-4 mr-2" />
+                  Add shift to calendar (.ics)
+                </Button>
+              </div>
             )}
-            <div>
-              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
-                Close
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center max-w-sm mx-auto">
+              {sharePath && (
+                <Button variant="outline" onClick={handleShare} className="min-h-11 border-[#4a7c59] text-[#1a472a]">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  {RECEIPT.shareNeed}
+                </Button>
+              )}
+              {isAuthenticated && !isFollowing && !followed && (
+                <Button
+                  variant="outline"
+                  onClick={() => follow.mutate({ campaignId })}
+                  disabled={follow.isPending}
+                  className="min-h-11 border-[#4a7c59] text-[#1a472a]"
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  {RECEIPT.follow(project)}
+                </Button>
+              )}
+              <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]">
+                {RECEIPT.close}
               </Button>
             </div>
+            {!isAuthenticated && sentEmail && (
+              <div className="text-left max-w-sm mx-auto mt-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4 space-y-2">
+                <p className="text-sm text-[#1a472a]">
+                  Make a free account with <strong className="break-all">{sentEmail}</strong> and you'll see every answer, delivery and thank-you in your notifications. This offer and any you made before with this email link to your account when you sign in, and show on each project's page.
+                </p>
+                <p className="text-sm text-[#1a472a]">{TOKEN_HELD_LINE}</p>
+                <Button
+                  onClick={() => setAuthOpen(true)}
+                  className="mt-1 w-full min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Make my account
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

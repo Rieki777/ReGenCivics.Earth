@@ -58,6 +58,8 @@ import { serveStatic, setupVite } from "./vite";
 import { LEARN_SLUGS } from "@shared/learnContent";
 import { redirectFor } from "@shared/redirects";
 import { projectPathForApplication } from "@shared/projectKey";
+import { campaignRedirectMiddleware } from "../lib/campaign-redirect";
+import { publicProjectPaths } from "../lib/project-page";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
@@ -220,6 +222,13 @@ async function startServer() {
     const [target, fragment] = to.split("#");
     res.redirect(301, `${target}${qs}${fragment ? `#${fragment}` : ""}`);
   });
+
+  // /campaign/:id is the project page now (/project/:key?campaign=:id). A
+  // public campaign answers a 301 there, keeping ?ref= and utm tags; an
+  // unpublished one falls through to the SPA, which redirects for its
+  // stewards without ever putting its name in a Location header. Dynamic,
+  // so it is not in shared/redirects.ts (server/lib/campaign-redirect.ts).
+  app.use(campaignRedirectMiddleware((id) => db.getCampaignById(id)));
 
   // Referral telemetry for the foundation credit. Every custom game's credit
   // link carries ?ref=<gameId> (shared/foundationCredit.ts creditHref), so this
@@ -505,12 +514,14 @@ async function startServer() {
     ];
 
     // Dynamic DB entries (best-effort, sitemap still serves if DB is down)
-    let campaignIds: number[] = [];
+    // One entry per project with a live public campaign. /campaign/:id
+    // answers a 301 to the project page now, and a sitemap must not list
+    // urls that redirect (server/lib/project-page.ts publicProjectPaths).
+    let projectPaths: string[] = [];
     let forumPostIds: number[] = [];
     try {
-      const campaigns = await db.listCampaigns('active');
-      campaignIds = campaigns.map((c: { id: number }) => c.id);
-    } catch { /* DB unavailable, skip dynamic campaigns */ }
+      projectPaths = await publicProjectPaths();
+    } catch { /* DB unavailable, skip dynamic project pages */ }
     try {
       const posts = await db.listForumPosts(undefined, 2000, 0);
       forumPostIds = posts.map((p: { id: number }) => p.id);
@@ -530,7 +541,7 @@ async function startServer() {
       // aimed at the query space the visibility panel showed us missing from.
       // Each URL serves full prose + FAQPage JSON-LD via crawler-content.ts.
       ...LEARN_SLUGS.map(slug => urlTag(`/learn/${slug}`, 'monthly', '0.8')),
-      ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
+      ...projectPaths.map(p => urlTag(p, 'weekly', '0.7')),
       // Community posts included by decision (2026-07-15): real conversations
       // by practitioners are what answer engines cite. Each post URL serves
       // full thread HTML + DiscussionForumPosting JSON-LD via the crawler

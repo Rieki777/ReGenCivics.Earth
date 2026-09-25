@@ -15,8 +15,12 @@
  *   2. Learn hub articles: rendered from shared/learnContent, the same
  *      module the React page reads, so the crawler HTML and the human page
  *      cannot drift apart.
- *   3. Forum posts and campaigns: rendered from the DB at request time with
- *      a small TTL cache, including DiscussionForumPosting / Project JSON-LD.
+ *   3. Forum posts and project pages: rendered from the DB at request time
+ *      with a small TTL cache, including DiscussionForumPosting / Project
+ *      JSON-LD. A project page reads through resolveProjectPage
+ *      (server/lib/project-page.ts), the same read as projects.getPublic.
+ *      /campaign/:id is not here: a public campaign answers a 301 to its
+ *      project page (server/lib/campaign-redirect.ts).
  */
 import * as db from "../db";
 import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
@@ -25,6 +29,10 @@ import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/rege
 import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
+import { serverCurrencyFormatter } from "../lib/currency-format";
+import { decodeBasicEntities } from "../../shared/htmlText";
+import { progressLines } from "../../shared/campaignProgress";
+import { kindForItem, needTitle, needVerb } from "../../shared/crowdpoolNeedAction";
 import {
   LEARN_ARTICLES,
   getLearnArticle,
@@ -58,6 +66,12 @@ export type CrawlerContent = {
   description?: string;
   bodyHtml: string;
   jsonld?: object;
+  /**
+   * The page's canonical path when it differs from the request path. A
+   * project page answers any slug for its id, so an old slug names the
+   * current one as canonical (server/_core/vite.ts).
+   */
+  canonicalPath?: string;
 };
 
 // Wrap content the same way the blog prerender does: visible to no-JS
@@ -624,79 +638,101 @@ export async function getForumPostContent(id: number): Promise<CrawlerContent | 
   return value;
 }
 
-// ── Campaigns: DB-driven, cached ─────────────────────────────────────────────
-const CAMPAIGN_CACHE_TTL_MS = 10 * 60 * 1000;
-const CAMPAIGN_CACHE_MAX = 200;
-const campaignCache = new Map<number, { at: number; value: CrawlerContent | null }>();
+// ── Project pages: DB-driven, cached ────────────────────────────────────────
+// /project/:key is the campaign page (build spec 2026-09-25, section 8.8).
+// Keyed by the requested key; any slug for one id resolves to the same page,
+// and canonicalPath names the real one.
+const PROJECT_CACHE_TTL_MS = 10 * 60 * 1000;
+const PROJECT_CACHE_MAX = 200;
+const projectCache = new Map<string, { at: number; value: CrawlerContent | null }>();
 
-export async function getCampaignContent(id: number): Promise<CrawlerContent | null> {
-  const cached = campaignCache.get(id);
-  if (cached && Date.now() - cached.at < CAMPAIGN_CACHE_TTL_MS) return cached.value;
+/** Stored campaign text is entity-encoded once (sanitizeInput): decode, then escape. */
+function plain(s: string | null | undefined): string {
+  return decodeBasicEntities(String(s ?? "")).trim();
+}
+
+export async function getProjectContent(key: string): Promise<CrawlerContent | null> {
+  const cached = projectCache.get(key);
+  if (cached && Date.now() - cached.at < PROJECT_CACHE_TTL_MS) return cached.value;
 
   let value: CrawlerContent | null = null;
   try {
-    const campaign = await db.getCampaignById(id);
-    // Only surface live campaigns to crawlers. Drafts, funded, and closed
-    // campaigns stay out of the injected content and the index.
-    if (campaign && campaign.status === "active") {
-      const items = await db.getCampaignItems(id);
-      const url = `${SITE}/campaign/${id}`;
+    // Loaded on demand: the page read pulls in the campaigns router, which
+    // the static and Learn routes never need.
+    const { resolvePublicProjectPage } = await import("../lib/project-page");
+    const page = await resolvePublicProjectPage(key);
+    if (page) {
+      const name = plain(page.project.name) || "Land project";
+      const place = [plain(page.project.location), plain(page.project.country)].filter(Boolean).join(", ");
+      const url = `${SITE}${page.canonicalPath}`;
+      const front = page.front;
 
-      // One short label per need, from whichever field the item carries.
-      const needLabels = items
-        .map((it) =>
-          (it.roleTitle || it.equipmentName || it.resourceName || it.landDescription || "").trim(),
-        )
-        .filter(Boolean)
-        .slice(0, 12);
-      const needsHtml = needLabels.length
-        ? `<h2>What this project needs</h2>\n<ul>${needLabels
-            .map((n) => `<li>${escapeHtml(n)}</li>`)
-            .join("")}</ul>`
-        : "";
+      let campaignHtml = "";
+      let openLine: string | null = null;
+      let descText = "";
+      if (front) {
+        const lines = progressLines(front.progress, serverCurrencyFormatter(front.currency));
+        openLine = lines.open;
+        descText = plain(front.description).replace(/\s+/g, " ");
+        const open = front.items
+          .filter((it) => {
+            const np = front.progress.byNeed[it.id];
+            return np && !np.filled && needVerb(kindForItem(it)) !== null;
+          })
+          .slice(0, 12)
+          .map((it) => {
+            const np = front.progress.byNeed[it.id];
+            return `<li>${escapeHtml(`${needVerb(kindForItem(it))}: ${plain(needTitle(it))} (${np.status.text})`)}</li>`;
+          });
+        campaignHtml = `
+          <h2>${escapeHtml(plain(front.title))}</h2>
+          ${textToHtml(plain(front.description))}
+          <p>${escapeHtml(lines.inKind)}</p>
+          <p>${escapeHtml(lines.money)}</p>
+          ${lines.open ? `<p>${escapeHtml(lines.open)}</p>` : ""}
+          ${open.length ? `<h2>What this project needs</h2><ul>${open.join("")}</ul>` : ""}
+        `;
+      }
 
-      const where = campaign.location ? ` in ${escapeHtml(campaign.location)}` : "";
       const inner = `
         <article>
-          <h1>${escapeHtml(campaign.title)}</h1>
-          <p>${escapeHtml(campaign.projectName)}${where}, crowd pooling on ReGen Civics.</p>
-          ${textToHtml(campaign.description)}
-          ${needsHtml}
+          <h1>${escapeHtml(name)}</h1>
+          ${place ? `<p>${escapeHtml(place)}</p>` : ""}
+          ${campaignHtml}
         </article>
       `;
 
-      const descText = campaign.description.replace(/\s+/g, " ").trim();
       const jsonld = {
         "@context": "https://schema.org",
         "@type": "Project",
-        name: campaign.title,
-        description: descText.slice(0, 2000),
+        name,
+        ...(descText ? { description: descText.slice(0, 2000) } : {}),
         url,
         mainEntityOfPage: { "@type": "WebPage", "@id": url },
-        ...(campaign.location
-          ? { location: { "@type": "Place", name: campaign.location } }
-          : {}),
+        ...(place ? { location: { "@type": "Place", name: place } } : {}),
         publisher: { "@type": "Organization", name: "ReGen Civics", url: SITE },
       };
 
+      const description = [openLine, descText].filter(Boolean).join(" ").slice(0, 160);
       value = {
-        title: `${campaign.title} | ReGen Civics Crowd Pooling`,
-        description: descText.slice(0, 160),
+        title: `Contribute to ${name} | ReGen Civics`,
+        ...(description ? { description } : {}),
         bodyHtml: wrapForInjection(inner),
         jsonld,
+        canonicalPath: page.canonicalPath,
       };
     }
   } catch (err) {
-    console.warn(`[crawler-content] campaign ${id} render failed:`, (err as Error)?.message);
+    console.warn(`[crawler-content] project page render failed:`, (err as Error)?.message);
     value = null;
   }
 
   // Simple bounded cache: evict oldest entry when full.
-  if (campaignCache.size >= CAMPAIGN_CACHE_MAX) {
-    const oldest = campaignCache.keys().next().value;
-    if (oldest !== undefined) campaignCache.delete(oldest);
+  if (projectCache.size >= PROJECT_CACHE_MAX) {
+    const oldest = projectCache.keys().next().value;
+    if (oldest !== undefined) projectCache.delete(oldest);
   }
-  campaignCache.set(id, { at: Date.now(), value });
+  projectCache.set(key, { at: Date.now(), value });
   return value;
 }
 
@@ -915,8 +951,8 @@ export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerCon
   if (reqPath === "/learn") return getLearnIndexContent();
   const learnMatch = reqPath.match(/^\/learn\/([a-z0-9-]+)$/);
   if (learnMatch) return getLearnContent(learnMatch[1]);
-  const campaignMatch = reqPath.match(/^\/campaign\/(\d+)$/);
-  if (campaignMatch) return getCampaignContent(Number(campaignMatch[1]));
+  const projectMatch = reqPath.match(/^\/project\/([a-z0-9-]+)$/);
+  if (projectMatch) return getProjectContent(projectMatch[1]);
   const forumMatch = reqPath.match(/^\/community\/post\/(\d+)$/);
   if (forumMatch) return getForumPostContent(Number(forumMatch[1]));
   if (reqPath === "/network") return getNetworkPageContent();

@@ -1,5 +1,12 @@
 /**
- * /project/:key: the public page for one land project (shared/projectKey.ts).
+ * /project/:key: the public page for one land project (shared/projectKey.ts),
+ * and the campaign page: /campaign/:id lands here as ?campaign=:id.
+ *
+ * Phone order at 375px (build spec 2026-09-25, section 8.1): the example
+ * banner, the title card, the steward bar, the cancel notice, the campaign
+ * card with the two-line bar, What can you bring?, the needs, putting money
+ * in, what has happened, About this land (collapsed), more campaigns, and the
+ * steward tools. The page adds no fixed or sticky element.
  *
  * Visitors see the project's name and place and the campaign fields a
  * campaign already publishes. The project's stewards also see the campaign
@@ -12,18 +19,23 @@ import { Link, useLocation, useParams, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ExternalLink, Leaf, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { SEO } from "@/components/SEO";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { canonicalRedirectTarget } from "@shared/projectKey";
+import { progressLines } from "@shared/campaignProgress";
+import { EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
 import { buildStewardQueue } from "@shared/stewardQueue";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectCampaignFront } from "@/components/project/ProjectCampaignFront";
 import { CancelledCampaignNotice } from "@/components/project/CancelledCampaignNotice";
-import { YourContributions } from "@/components/project/YourContributions";
-import { CampaignUpdatesList } from "@/components/project/CampaignUpdatesList";
+import { WhatHasHappened } from "@/components/project/WhatHasHappened";
+import { AboutThisLand } from "@/components/project/AboutThisLand";
+import { MoreCampaigns } from "@/components/project/MoreCampaigns";
 import { PastCampaigns } from "@/components/project/PastCampaigns";
+import { makeCurrencyFormatter } from "@/lib/needDisplay";
+import { campaignViewInput } from "@/lib/campaignTracking";
 import { StewardTools, type ProjectFront } from "@/components/project/StewardTools";
 
 const CANCEL_UPDATE_TITLE = "This campaign has been cancelled";
@@ -101,63 +113,11 @@ function useScrollToHash(ready: boolean) {
   }, [ready]);
 }
 
-function AboutThisLand({ front }: { front: ProjectFront }) {
-  const [open, setOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
-  const rows: Array<[string, string | null | undefined]> = [
-    ["Vision", front.vision],
-    ["Regenerative practices", front.regenerativePractices],
-    ["Governance", front.governanceModel],
-    ["Community", front.communityEngagement],
-    ["Team", front.teamDescription],
-    ["Land", [front.landSize, front.landStatus].filter(Boolean).join(", ") || null],
-    ["Current phase", front.currentPhase],
-  ];
-  const visible = rows.filter(([, v]) => v && String(v).trim());
-  const links = [
-    front.websiteUrl ? { href: front.websiteUrl, label: "Website" } : null,
-    front.videoUrl ? { href: front.videoUrl, label: "Video" } : null,
-  ].filter(Boolean) as Array<{ href: string; label: string }>;
-  if (visible.length === 0 && links.length === 0) return null;
-
-  return (
-    <section id="about" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 mb-6 shadow-xl scroll-mt-24">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls="about-body"
-        className="w-full flex items-center justify-between gap-2 text-left"
-      >
-        <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: "var(--font-display)" }}>
-          <Leaf className="w-5 h-5 text-[#4a7c59]" />
-          About this land
-        </h2>
-        <ChevronDown className={`w-5 h-5 text-[#4a7c59] transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div id="about-body" className="mt-4 space-y-4">
-          {visible.map(([label, value]) => (
-            <div key={label}>
-              <h3 className="text-xs font-bold text-[#4a7c59] uppercase tracking-wide mb-1">{label}</h3>
-              <p className="text-sm text-[#1a472a]/85 leading-relaxed whitespace-pre-line break-words">{decodeBasicEntities(String(value))}</p>
-            </div>
-          ))}
-          {links.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="border-[#4a7c59] text-[#4a7c59]">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    {l.label}
-                  </Button>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
+/** The first sentence of a description, for the title card's one line. */
+function firstSentence(text: string): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  const m = /^(.+?[.!?])(\s|$)/.exec(flat);
+  return (m ? m[1] : flat).trim();
 }
 
 function NotFound() {
@@ -235,6 +195,17 @@ export default function ProjectPage() {
 
   useScrollToHash(!!data && !isPlaceholderData);
 
+  // A visit, for /campaign/:id/analytics: once per front campaign per page
+  // load, never for the previous campaign's placeholder data.
+  const trackView = trpc.campaigns.trackView.useMutation();
+  const tracked = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!front || isPlaceholderData || tracked.current.has(front.id)) return;
+    tracked.current.add(front.id);
+    trackView.mutate(campaignViewInput(front.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [front?.id, isPlaceholderData]);
+
   if (isLoading && !data) return <TaoSpinner fullPage size={72} />;
   if (error || !data) return <NotFound />;
 
@@ -247,24 +218,34 @@ export default function ProjectPage() {
   const campaignIds = data.campaigns.map((c) => c.id);
   const campaignTitles = Object.fromEntries(data.campaigns.map((c) => [c.id, c.title]));
   const coverUrl = front?.coverImage?.url ?? front?.generatedImageUrl ?? front?.projectImageUrl ?? null;
-  const shareText = front?.description ? decodeBasicEntities(front.description).slice(0, 200) : `${name} on ReGen Civics`;
+  const description = front?.description ? decodeBasicEntities(front.description) : "";
+  const shareText = description ? description.slice(0, 200) : `${name} on ReGen Civics`;
+  const openLine = front ? progressLines(front.progress, makeCurrencyFormatter(front.currency)).open : null;
+  const seoDescription = ([openLine, description].filter(Boolean).join(" ") || `${name} on ReGen Civics`).slice(0, 160);
+  const sharePath = front ? `${data.canonicalPath}?campaign=${front.id}` : data.canonicalPath;
 
   return (
     <>
       <SEO
-        title={`${name} | ReGen Civics`}
-        description={shareText}
+        title={`Contribute to ${name} | ReGen Civics`}
+        description={seoDescription}
         url={data.canonicalPath}
         type="website"
       />
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] pt-24 pb-12 overflow-x-hidden">
         <div className="mx-auto w-full max-w-6xl px-4 space-y-6">
+          {!!front?.isDemo && (
+            <p className="rounded-3xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm font-medium text-amber-950 shadow-xl">
+              {EXAMPLE_BANNER}
+            </p>
+          )}
           <ProjectHeader
             name={name}
             location={data.project.location ? decodeBasicEntities(data.project.location) : null}
             country={data.project.country}
             isDemo={data.project.isDemo}
-            canonicalPath={data.canonicalPath}
+            sharePath={sharePath}
+            tagline={description ? firstSentence(description) : null}
             coverUrl={coverUrl}
             followCampaignId={front && front.status !== "cancelled" ? front.id : null}
             initiallyFollowing={!!front?.isFollowing}
@@ -325,7 +306,14 @@ export default function ProjectPage() {
             // Keyed by campaign: moving to another project or campaign (back
             // button, a suggestion link) starts a fresh sheet, so an open
             // sheet or practice receipt never carries over onto the next one.
-            <ProjectCampaignFront key={front.id} front={front} onContributed={refreshAll} needsAnchor={!isSteward} />
+            <ProjectCampaignFront
+              key={front.id}
+              front={front}
+              onContributed={refreshAll}
+              needsAnchor={!isSteward}
+              projectName={name}
+              canonicalPath={data.canonicalPath}
+            />
           ) : (
             <section className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl">
               <p className="text-[#1a472a]/85">This project has no campaign running right now.</p>
@@ -351,15 +339,28 @@ export default function ProjectPage() {
             </section>
           )}
 
-          {isAuthenticated && (
-            <YourContributions campaignIds={campaignIds} campaignTitles={campaignTitles} items={front?.items ?? []} />
+          {front && (
+            <WhatHasHappened
+              campaign={{
+                id: front.id,
+                status: front.status,
+                isDemo: front.isDemo,
+                startedAt: front.startedAt,
+                completedAt: front.completedAt,
+                updatedAt: front.updatedAt,
+              }}
+              progress={front.progress}
+              updates={updates}
+              yourContributions={isAuthenticated ? { campaignIds, campaignTitles, items: front.items } : undefined}
+            />
           )}
 
-          {front && <CampaignUpdatesList id="updates" updates={updates} />}
-
-          <PastCampaigns campaigns={others} />
-
           {front && <AboutThisLand front={front} />}
+
+          <div id="more-campaigns" className="scroll-mt-24">
+            <PastCampaigns campaigns={others} projectName={name} />
+            <MoreCampaigns excludeIds={campaignIds} applicationId={data.project.applicationId} />
+          </div>
 
           {isSteward && front && (
             <StewardTools

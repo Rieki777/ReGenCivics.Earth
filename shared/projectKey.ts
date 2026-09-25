@@ -84,3 +84,27 @@ export function canonicalRedirectTarget(args: {
 export function projectPathForCampaignFocus(c: Parameters<typeof projectPathForCampaign>[0]): string {
   return `${projectPathForCampaign(c)}?campaign=${c.id}`;
 }
+
+/**
+ * Where an old /campaign/:id link lands: the project page focused on that
+ * campaign, carrying every other query parameter the link had (a ?ref=
+ * attribution token, utm_ tags) and the #anchor (a #need-12 link). A stale
+ * `campaign` parameter in `search` is dropped, so the id in the path wins.
+ * Used by the server 301 (server/lib/campaign-redirect.ts), the client
+ * redirect (client/src/pages/CampaignRedirect.tsx) and every link that used
+ * to point at /campaign/:id.
+ *
+ * `search` may start with "?" or not; `hash` may start with "#" or be empty.
+ */
+export function campaignRedirectTarget(
+  c: Parameters<typeof projectPathForCampaign>[0],
+  search: string,
+  hash: string,
+): string {
+  const params = new URLSearchParams(String(search ?? "").replace(/^\?/, ""));
+  params.delete("campaign");
+  const rest = params.toString();
+  const h = String(hash ?? "");
+  const fragment = h && h !== "#" ? (h.startsWith("#") ? h : `#${h}`) : "";
+  return `${projectPathForCampaignFocus(c)}${rest ? `&${rest}` : ""}${fragment}`;
+}

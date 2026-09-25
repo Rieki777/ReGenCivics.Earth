@@ -152,7 +152,9 @@ const GovTenant = lazy(() => import("./pages/GovTenant"));
 const StorytellerStories = lazy(() => import("./pages/StorytellerStories"));
 const GovBackField = lazy(() => import("./pages/GovBackField"));
 const CreateCampaign = lazy(() => import("./pages/CreateCampaign"));
-const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
+// /campaign/:id is the project page now: public campaigns 301 on the server
+// (server/lib/campaign-redirect.ts); this moves the rest in the browser.
+const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect"));
 const CampaignManage = lazy(() => import("./pages/CampaignManage"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const ProjectPage = lazy(() => import("./pages/ProjectPage"));
@@ -368,7 +370,7 @@ function Router() {
       <Route path={"/gov/:slug"}><EB><GovTenant /></EB></Route>
       <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
       <Route path={"/campaigns"}><EB><CrowdPoolingProjects /></EB></Route>
-      <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>
+      <Route path={"/campaign/:id"}><EB><CampaignRedirect /></EB></Route>
       <Route path={"/campaign/:id/manage"}><EB><CampaignManage /></EB></Route>
       <Route path={"/campaign/:id/analytics"}><EB><CampaignAnalytics /></EB></Route>
       <Route path={"/project/:key"}><EB><ProjectPage /></EB></Route>
