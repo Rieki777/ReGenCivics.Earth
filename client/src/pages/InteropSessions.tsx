@@ -133,6 +133,9 @@ export default function InteropSessions() {
   const join = trpc.interopSessions.join.useMutation({
     onSuccess: () => { void schedule.refetch(); void directory.refetch(); },
   });
+  const setTool = trpc.interopSessions.setTool.useMutation({
+    onSuccess: () => { void directory.refetch(); },
+  });
   const leave = trpc.interopSessions.leave.useMutation({
     onSuccess: () => { setLeftCircle(true); void schedule.refetch(); },
   });
@@ -161,6 +164,9 @@ export default function InteropSessions() {
       name: name.trim() || undefined,
       repoUrl: repoUrl.trim() || undefined,
       agent: agent.trim() || undefined,
+      // Claims the register row their raised hand already made, instead of
+      // making a second one under the same person.
+      voterKey: voterKey || undefined,
     });
   }
 
@@ -194,6 +200,24 @@ export default function InteropSessions() {
   // Raising a hand and being reachable are different things: the vote is
   // anonymous, so without this a slot can win with nobody we can write to.
   const votedButNotJoined = mySlots.length > 0 && !join.isSuccess;
+  // The register is offered at the vote, which is the moment somebody is
+  // actually thinking about their tool. Waiting for the sign-up form further
+  // down meant only people who gave an email ever got asked.
+  const showToolPrompt = mySlots.length > 0 && !setTool.isSuccess;
+
+  function submitTool(e: React.FormEvent) {
+    e.preventDefault();
+    if (!voterKey) return;
+    writeStored(REPO_STORAGE, repoUrl);
+    writeStored(AGENT_STORAGE, agent);
+    writeStored(NAME_STORAGE, name);
+    setTool.mutate({
+      voterKey,
+      repoUrl: repoUrl.trim() || undefined,
+      agent: agent.trim() || undefined,
+      displayName: name.trim() || undefined,
+    });
+  }
 
   function focusEmail() {
     emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -437,11 +461,88 @@ export default function InteropSessions() {
                   </ul>
                 )}
 
+                {showToolPrompt && (
+                  <div className="mt-5 pt-5 border-t border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Wrench className="w-4 h-4 text-[#7dd87d]" />
+                      <h3 className="text-white font-semibold">Now add what you are bringing</h3>
+                    </div>
+                    <p className="text-white/75 text-sm mb-1">
+                      Your hand is up. The other half of this is your tool: the repo, hub page or docs for
+                      whatever you are building.
+                    </p>
+                    <p className="text-white/60 text-sm mb-4">
+                      Make it something the rest of the Circle can actually open. Interoperability is not a
+                      thing we can agree to in a meeting: our agents have to be able to read each other's
+                      code, schemas and docs to build anything shared on top. A link nobody else can reach
+                      is a tool that cannot join the foundation.
+                    </p>
+                    {setTool.isSuccess ? null : (
+                      <form onSubmit={submitTool} className="space-y-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            value={name}
+                            maxLength={80}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Your name"
+                            aria-label="Your name, shown beside your tool"
+                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          />
+                          <input
+                            type="text"
+                            value={agent}
+                            maxLength={120}
+                            onChange={(e) => setAgent(e.target.value)}
+                            placeholder="Your agent (optional)"
+                            aria-label="The agent you build with, optional"
+                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          />
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            value={repoUrl}
+                            maxLength={500}
+                            onChange={(e) => setRepoUrl(e.target.value)}
+                            placeholder="Repo or hub page, e.g. github.com/you/your-tool"
+                            aria-label="A link to your tool that the Circle can open"
+                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={setTool.isPending || (!repoUrl.trim() && !agent.trim() && !name.trim())}
+                            className="inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60 min-h-[44px]"
+                          >
+                            {setTool.isPending ? 'Adding...' : 'Add to the register'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                    {setTool.isError && (
+                      <p className="text-red-300 text-sm mt-2">{setTool.error.message}</p>
+                    )}
+                    <p className="text-white/40 text-xs mt-3">
+                      Public, and it is the list the first session starts from. No email needed for this.
+                    </p>
+                  </div>
+                )}
+
+                {setTool.isSuccess && (
+                  <div className="mt-5 pt-5 border-t border-white/10">
+                    <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-2">
+                      <CheckCircle2 className="w-5 h-5" />
+                      You are on the register.
+                    </p>
+                    <p className="text-white/60 text-sm">Your hand is counted and your tool is listed below.</p>
+                  </div>
+                )}
+
                 {votedButNotJoined && (
                   <div className="mt-5 pt-5 border-t border-white/10">
                     <p className="text-white/75 text-sm mb-3">
-                      Your hand is counted, and it is anonymous. If you want the room link and a reminder before
-                      the session, leave an email too.
+                      Your hand is anonymous. If you want the room link and a reminder before the session,
+                      leave an email too.
                     </p>
                     <button
                       type="button"

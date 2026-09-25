@@ -67,6 +67,9 @@ async function offeredSlots() {
   return parseOfferedSlots(await getSiteSetting(INTEROP_SLOTS_SETTING));
 }
 
+/** A voterKey as the client generates it. Opaque to the server, so bound, not parsed. */
+const voterKeySchema = z.string().regex(/^[A-Za-z0-9_-]{8,64}$/);
+
 /** How many named hands the page shows per slot, and how many rows we read to find them. */
 const NAMES_PER_SLOT = 40;
 const NAME_SCAN_LIMIT = 300;
@@ -244,7 +247,7 @@ export const interopSessionsRouter = router({
     .use(rateLimited(VOTE_LIMIT))
     .input(z.object({
       slots: z.array(z.enum(INTEROP_SLOTS)).max(INTEROP_SLOTS.length),
-      voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+      voterKey: voterKeySchema,
       // Bounded well above the column so a long paste is trimmed by
       // cleanDisplayName rather than rejected with nothing to show for it.
       displayName: z.string().max(200).optional(),
@@ -277,6 +280,55 @@ export const interopSessionsRouter = router({
     }),
 
   /**
+   * Public: put a tool in the register against this browser's vote.
+   *
+   * The register used to be reachable only through the sign-up form, which
+   * needs an email. But raising a hand is anonymous and comes first, and that
+   * is the moment somebody is actually thinking about their tool. This writes
+   * the same row the sign-up writes, keyed by voterKey instead, so the two
+   * meet later: join finds this row and attaches the email to it.
+   */
+  setTool: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({
+      voterKey: voterKeySchema,
+      repoUrl: z.string().max(500).optional(),
+      agent: z.string().max(200).optional(),
+      displayName: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return { ok: false as const };
+
+      const repoUrl = cleanRepoUrl(input.repoUrl);
+      const agent = cleanAgent(input.agent);
+      const name = cleanDisplayName(input.displayName);
+      // A repo that does not survive cleaning is the one thing worth saying no
+      // to, because the person typed something and would otherwise see it
+      // silently vanish.
+      if (input.repoUrl && input.repoUrl.trim() && !repoUrl) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "That does not look like a repo link. Use an http or https address.",
+        });
+      }
+      if (!repoUrl && !agent && !name) return { ok: true as const };
+
+      await database
+        .insert(interopTools)
+        .values({ voterKey: input.voterKey, name, repoUrl, agent })
+        .onDuplicateKeyUpdate({
+          set: {
+            ...(name ? { name } : {}),
+            ...(repoUrl ? { repoUrl } : {}),
+            ...(agent ? { agent } : {}),
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          },
+        });
+      return { ok: true as const };
+    }),
+
+  /**
    * Public: single-slot vote, kept for pages loaded before multi-select
    * shipped. Replaces the voter's hands with this one slot.
    */
@@ -284,7 +336,7 @@ export const interopSessionsRouter = router({
     .use(rateLimited(VOTE_LIMIT))
     .input(z.object({
       slot: z.enum(INTEROP_SLOTS),
-      voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+      voterKey: voterKeySchema,
       // Bounded well above the column so a long paste is trimmed by
       // cleanDisplayName rather than rejected with nothing to show for it.
       displayName: z.string().max(200).optional(),
@@ -309,7 +361,7 @@ export const interopSessionsRouter = router({
   /** Public: drop a vote entirely, for someone whose week stops working. */
   withdraw: publicProcedure
     .use(rateLimited(VOTE_LIMIT))
-    .input(z.object({ voterKey: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/) }))
+    .input(z.object({ voterKey: voterKeySchema }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) return { ok: false as const };
@@ -360,6 +412,8 @@ export const interopSessionsRouter = router({
       // part of the circle, and the sign-up stays one field for anyone in a hurry.
       repoUrl: z.string().max(500).optional(),
       agent: z.string().max(200).optional(),
+      /** Lets a sign-up claim the row their raised hand already created. */
+      voterKey: voterKeySchema.optional(),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -388,23 +442,46 @@ export const interopSessionsRouter = router({
       const name = input.name && input.name.length > 0 ? input.name : null;
       await addCircleSignups(database, ids, [{ email: input.email, name }]);
 
-      // The directory is keyed by email and updated in place, so someone who
-      // signs up again with a repo fills in what they left blank the first time.
-      // A blank field never erases what is already there.
+      // The register has two owners: the browser's voterKey, set when someone
+      // raised a hand, and the email, set here. Reconciled rather than upserted
+      // so one person does not end up as two rows: prefer an existing email
+      // row, then the row their vote already made, and only insert when there
+      // is neither. A blank field never erases what is already there.
       const repoUrl = cleanRepoUrl(input.repoUrl);
       const agent = cleanAgent(input.agent);
-      if (repoUrl || agent || name) {
+      const patch = {
+        ...(name ? { name } : {}),
+        ...(repoUrl ? { repoUrl } : {}),
+        ...(agent ? { agent } : {}),
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      };
+
+      const [byEmail] = await database
+        .select({ id: interopTools.id })
+        .from(interopTools)
+        .where(eq(interopTools.email, input.email))
+        .limit(1);
+
+      const [byVoter] = input.voterKey
+        ? await database
+            .select({ id: interopTools.id, email: interopTools.email })
+            .from(interopTools)
+            .where(eq(interopTools.voterKey, input.voterKey))
+            .limit(1)
+        : [];
+
+      if (byEmail) {
+        await database.update(interopTools).set(patch).where(eq(interopTools.id, byEmail.id));
+      } else if (byVoter) {
+        // Their vote made the row; this is the moment it gains an address.
+        await database
+          .update(interopTools)
+          .set({ ...patch, email: input.email })
+          .where(eq(interopTools.id, byVoter.id));
+      } else if (repoUrl || agent || name) {
         await database
           .insert(interopTools)
-          .values({ email: input.email, name, repoUrl, agent })
-          .onDuplicateKeyUpdate({
-            set: {
-              ...(name ? { name } : {}),
-              ...(repoUrl ? { repoUrl } : {}),
-              ...(agent ? { agent } : {}),
-              updatedAt: sql`CURRENT_TIMESTAMP`,
-            },
-          });
+          .values({ email: input.email, voterKey: input.voterKey ?? null, name, repoUrl, agent });
       }
 
       const state = await resolveCircleState(database, now);
