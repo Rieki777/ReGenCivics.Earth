@@ -1,6 +1,8 @@
 /**
  * The steward's action dialog for one offer: accept (at hours, on an hours
- * need), decline, mark delivered, send thanks, release, or change hours.
+ * need), decline, mark delivered, send thanks, release, change hours, or
+ * mark a loan returned (a stamp only: campaigns.markLoanReturned changes no
+ * status, no counter and sends no notice).
  *
  * On an hours need the hours field is checked live with the same rule the
  * server enforces (shared/roleCapacity.ts checkAcceptHours). The server has
@@ -20,6 +22,7 @@ import { decodeBasicEntities } from "@shared/htmlText";
 import { MAX_ROLE_HOURS, checkAcceptHours, isHoursNeed, roleFillState } from "@shared/roleCapacity";
 import { hoursDialogNumbers, stewardActionDescription } from "@shared/stewardQueue";
 import { titleForItem } from "@/lib/needDisplay";
+import { LOAN_ROW } from "@shared/crowdpoolCopy";
 import type { CampaignNeed, ContributionAction, OwnerContribution } from "./ContributionCard";
 
 const TITLES: Record<ContributionAction, string> = {
@@ -29,6 +32,7 @@ const TITLES: Record<ContributionAction, string> = {
   thanks: "Send thanks",
   release: "Release this place",
   hours: "Change hours",
+  returned: LOAN_ROW.dialogTitle,
 };
 
 const BUTTONS: Record<ContributionAction, string> = {
@@ -38,6 +42,7 @@ const BUTTONS: Record<ContributionAction, string> = {
   thanks: "Send thanks",
   release: "Release",
   hours: "Save hours",
+  returned: LOAN_ROW.dialogButton,
 };
 
 const DONE: Record<ContributionAction, string> = {
@@ -47,6 +52,7 @@ const DONE: Record<ContributionAction, string> = {
   thanks: "Thanks sent.",
   release: "Released. The place is open again.",
   hours: "Hours saved.",
+  returned: LOAN_ROW.done,
 };
 
 const BUTTON_CLASSES: Record<ContributionAction, string> = {
@@ -56,6 +62,7 @@ const BUTTON_CLASSES: Record<ContributionAction, string> = {
   thanks: "bg-purple-600 hover:bg-purple-700",
   release: "bg-gray-700 hover:bg-gray-800",
   hours: "bg-[#4a7c59] hover:bg-[#1a472a]",
+  returned: "bg-[#1a472a] hover:bg-[#2d5a3d]",
 };
 
 /** Parse a whole-hours field. Anything that is not a whole number reads NaN. */
@@ -114,7 +121,8 @@ export function AcceptDialog({
 
   const statusMutation = trpc.campaigns.updateContributionStatus.useMutation();
   const hoursMutation = trpc.campaigns.setAcceptedHours.useMutation();
-  const pending = statusMutation.isPending || hoursMutation.isPending;
+  const returnedMutation = trpc.campaigns.markLoanReturned.useMutation();
+  const pending = statusMutation.isPending || hoursMutation.isPending || returnedMutation.isPending;
 
   const handleError = (err: { message?: string }) => {
     const msg = err?.message || "That didn't go through. Try again.";
@@ -142,6 +150,10 @@ export function AcceptDialog({
       hoursMutation.mutate({ contributionId: contribution.id, hours }, { onSuccess: handleSuccess, onError: handleError });
       return;
     }
+    if (action === "returned") {
+      returnedMutation.mutate({ contributionId: contribution.id }, { onSuccess: handleSuccess, onError: handleError });
+      return;
+    }
     const status = ({ accept: "accepted", reject: "rejected", deliver: "fulfilled", thanks: "thanked", release: "released" } as const)[action];
     statusMutation.mutate(
       {
@@ -166,6 +178,7 @@ export function AcceptDialog({
         hasAccount: !!contribution?.userId,
         name,
         roleTitle,
+        title: contribution ? decodeBasicEntities(contribution.title) : null,
         heldHours: contribution?.quantityPledged ?? null,
         // A filled role that opens up tells the people still waiting on it.
         roleFilled: !!need && hoursNeed && roleFillState(need).filled,
@@ -174,7 +187,7 @@ export function AcceptDialog({
 
   const noteLabel = action === "thanks"
     ? "Thank-you note (required)"
-    : action === "hours" ? null : `A note to ${name} (optional)`;
+    : action === "hours" || action === "returned" ? null : `A note to ${name} (optional)`;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>

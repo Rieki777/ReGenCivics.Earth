@@ -217,3 +217,143 @@ export const NEEDS_TAB = {
   nothingAtAll: "No campaigns are open yet. Real needs open when Season 2 starts crowdpooling.",
   addUp: "Add up what you can bring",
 } as const;
+
+// ── Creator, steward and admin surfaces (section 14.1, lane 4) ──────────────
+// These show to a project's stewards and the ReGen Civics review team, never
+// to contributors. The money-share note itself is built from numbers in
+// shared/campaignProgress.ts (moneyShareNote) and never blocks anything.
+
+/** The campaign wizard's Money step. */
+export const MONEY_STEP = {
+  stepLabel: "Money",
+  heading: "Money this project needs",
+  intro:
+    "Most of what a land project needs isn't money. Campaigns usually ask for 10 to 30 percent of their whole ask in money, and some ask for none.",
+  asksMoney: "This project asks for money",
+  asksNone: "This project asks for no money",
+  chooseOne: "Choose one to continue.",
+  howMuch: (currency: string) => `How much money, in ${currency}?`,
+  addAmount: "Add how much money this project asks for.",
+  suggestion: (pct: string, amount: string) => `${pct} percent of your whole ask would be ${amount}.`,
+  useAmount: (amount: string) => `Use ${amount}`,
+  sliderLabel: "Money as a share of the whole ask",
+  inKindAsk: (amount: string) => `In-kind ask: ${amount}`,
+  moneyLine: (amount: string, pct: string) => `Money: ${amount} (${pct}% of the whole ask)`,
+  whereHeading: "Where can people put money in?",
+  maEarthField: "Your project's page on Ma Earth",
+  stewardField: "Your project's page on Steward",
+  routesHelper:
+    "The ReGen Civics team checks each link before it shows on your campaign. The money goes straight to your project and never passes through ReGen Civics.",
+  notANeed:
+    "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
+  summaryInKind: "In-kind ask",
+} as const;
+
+/** The money route quiz (EligibilityQuiz), in the wizard and the steward's Money routes card. */
+export const ROUTE_QUIZ = {
+  title: "Which money route fits this project?",
+  intro: "Three quick questions. The answer picks a route below. You can add both.",
+  sizeUnder: (symbol: string) => `Under ${symbol}100,000`,
+  sizeOver: (symbol: string) => `${symbol}100,000 or more`,
+  resultFooter: "Add that route below.",
+  startOver: "Start over",
+} as const;
+
+/** When a need is wanted, how a thing may come, and where work happens (section 14.1). */
+export const NEED_FORM = {
+  whenAndHow: "When and how",
+  whenAndWhere: "When and where",
+  neededFrom: "Needed from (optional)",
+  neededUntil: "Needed until (optional)",
+  howTake: "How would you take it?",
+  asGift: "As a gift",
+  onLoan: "On loan",
+  chooseMode: "Choose at least one: as a gift or on loan.",
+  endsBeforeStart: "A need can't end before it starts.",
+  startsOn: "Starts on (optional)",
+  startsOnHelper: "With a start date, the role card shows when it ends and the hours in all.",
+  whereDone: "Where is this done?",
+  onTheLand: "On the land",
+  remote: "Remote",
+  either: "Either",
+} as const;
+
+/** The steward's Money routes card (client/src/components/project/MoneyRoutesCard.tsx). */
+export const MONEY_ROUTES_CARD = {
+  title: "Money routes",
+  intro:
+    "The routes people use to put money into this project. The ReGen Civics team checks each one before it shows on your page.",
+  none: "No routes yet.",
+  status: {
+    pending: "Waiting for the ReGen Civics team to check it.",
+    verified: "Checked. It shows on your page.",
+    rejected: (note: string) => (note ? `Not shown. ${note}` : "Not shown."),
+    example: "Example route. It never links out.",
+  },
+  remove: "Remove",
+  removed: "Route removed.",
+  partnerLabel: "Kind of route",
+  partnerOptions: { maearth: "Ma Earth (gifts)", gosteward: "Steward (loans)" },
+  urlLabel: "Link to your project's page",
+  proofLabel: "A link that shows this page is yours (optional)",
+  proofHelper: "For example, your project's own website linking to it.",
+  send: "Send for checking",
+  sent: "Sent. The ReGen Civics team will check it.",
+  loanRoutesWait:
+    "Steward routes wait until loans can show to every visitor. You can add yours now and it stays waiting.",
+  notSure: "Not sure which fits?",
+  exampleCampaign: "Example campaigns keep their example routes.",
+  closedCampaign: "This campaign is closed, so it takes no new routes.",
+} as const;
+
+/** The review team's check of a campaign's money routes (AdminCampaignApproval). */
+export const ROUTE_REVIEW = {
+  heading: "Money routes to check",
+  intro: "Open each link and check it is this project's own page. Only verified routes show on the project page.",
+  none: "This campaign has no money routes.",
+  proof: "Link the project gave to show the page is theirs",
+  added: (date: string) => `Added ${date}`,
+  currencyLabel: "Currency of the numbers on that page",
+  noteLabel: "Why (the project sees this)",
+  verify: "Verify",
+  dontShow: "Don't show",
+  verifiedDone: "Verified. It shows on the project page.",
+  rejectedDone: "Hidden. The project sees your note.",
+  status: {
+    pending: "Waiting for a check.",
+    verified: "Verified. It shows on the project page.",
+    rejected: "Not shown.",
+    example: "Example route. It never links out.",
+  },
+  loanRailOff: "Loan routes can't be verified until the loan route switch is on.",
+} as const;
+
+/** Ready to crowdpool ticks stored on a campaign (section 12). */
+export const READINESS_STORED = {
+  hint: "Your ticks are saved on this campaign. The review team sees them.",
+  saveFailed: "Couldn't save that tick. Try again.",
+  projectTicked: (date: string) => `The project ticked this on ${date}.`,
+  projectTickedNoDate: "The project ticked this.",
+  notTicked: "Not ticked by the project.",
+} as const;
+
+/** Give or lend on a steward's offer card, and the Returned stamp (section 6.4). */
+export const LOAN_ROW = {
+  gift: "Gift",
+  loan: (from: string, until: string) => (from ? `Loan: ${from} to ${until}` : `Loan: until ${until}`),
+  condition: (terms: string) => `Condition: ${terms}`,
+  returnedButton: "Returned",
+  returnedOn: (date: string) => `Returned ${date}`,
+  dialogTitle: "Mark returned",
+  dialogButton: "Mark returned",
+  done: "Marked returned.",
+} as const;
+
+/** The money half as a steward or the review team reads it. */
+export const STEWARD_MONEY = {
+  inKindAsked: "In-kind asked",
+  moneyAsked: "Money asked",
+  landValue: "Land value",
+  duration: "Duration",
+  days: (n: string) => `${n} days`,
+} as const;

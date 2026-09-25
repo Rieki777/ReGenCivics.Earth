@@ -5,6 +5,11 @@
  *
  * The buttons only open dialogs. Every action goes through a campaigns.*
  * procedure that checks the steward on the server (server/lib/project-steward.ts).
+ *
+ * Give or lend (build spec 2026-09-25, section 6): a lent thing shows its
+ * dates and the one condition note, a gift says Gift. A loan the stewards
+ * took on gets a Returned button (campaigns.markLoanReturned), a stamp that
+ * changes no status and no counter.
  */
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
@@ -24,6 +29,7 @@ import {
   Package,
   PackageCheck,
   Phone,
+  RotateCcw,
   Timer,
   Undo2,
   User,
@@ -33,13 +39,30 @@ import {
 } from "lucide-react";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { isHoursNeed } from "@shared/roleCapacity";
+import { formatShortDay, toDay } from "@shared/crowdpoolNeedAction";
+import { LOAN_ROW } from "@shared/crowdpoolCopy";
 import { STEWARD_STATUS_CLASSES, STEWARD_STATUS_LABELS } from "@/lib/needDisplay";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type OwnerContribution = RouterOutputs["campaigns"]["getContributionsForOwner"][number];
 export type CampaignNeed = RouterOutputs["campaigns"]["getItems"][number];
 
-export type ContributionAction = "accept" | "reject" | "deliver" | "thanks" | "release" | "hours";
+export type ContributionAction = "accept" | "reject" | "deliver" | "thanks" | "release" | "hours" | "returned";
+
+const TAKEN_ON = ["accepted", "fulfilled", "thanked"];
+
+/** A lend the stewards took on and have not yet marked returned. */
+export function canMarkReturned(c: Pick<OwnerContribution, "offerMode" | "status" | "returnedAt">): boolean {
+  return c.offerMode === "lend" && TAKEN_ON.includes(c.status) && !c.returnedAt;
+}
+
+/** "Loan: 1 Apr to 30 Jun", or "Loan: until 30 Jun" with no start date. */
+export function loanLine(c: Pick<OwnerContribution, "availableFrom" | "lendUntil">): string | null {
+  const until = toDay(c.lendUntil);
+  if (!until) return null;
+  const from = toDay(c.availableFrom);
+  return LOAN_ROW.loan(from ? formatShortDay(from) : "", formatShortDay(until));
+}
 
 function ContributionIcon({ type }: { type: string }) {
   switch (type) {
@@ -151,6 +174,22 @@ export function ContributionCard({
           )}
         </div>
 
+        {c.offerMode === "lend" && (
+          <div className="rounded-lg bg-[#f0f7f0] p-3 text-sm text-[#1a472a] space-y-1 min-w-0">
+            {loanLine(c) && <p className="font-medium">{loanLine(c)}</p>}
+            {c.lendTerms && <p className="break-words">{LOAN_ROW.condition(text(c.lendTerms))}</p>}
+            {c.returnedAt && (
+              <p className="flex items-center gap-1.5 font-semibold text-[#1a472a]">
+                <RotateCcw className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                {LOAN_ROW.returnedOn(formatShortDay(toDay(c.returnedAt)))}
+              </p>
+            )}
+          </div>
+        )}
+        {c.offerMode === "give" && (
+          <p className="text-sm font-medium text-[#1a472a]">{LOAN_ROW.gift}</p>
+        )}
+
         {c.description && <p className="text-sm text-gray-600 break-words">{text(c.description)}</p>}
 
         {c.contributorNotes && (
@@ -233,6 +272,21 @@ export function ContributionCard({
             <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => onAction("thanks", c)}>
               <Gift className="w-4 h-4 mr-2" />
               Send thanks
+            </Button>
+          </div>
+        )}
+
+        {canMarkReturned(c) && (
+          <div className="pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full min-h-11 border-[#1a472a]/40 text-[#1a472a] hover:bg-[#f0f7f0]"
+              onClick={() => onAction("returned", c)}
+              aria-label={LOAN_ROW.dialogButton}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
+              {LOAN_ROW.returnedButton}
             </Button>
           </div>
         )}

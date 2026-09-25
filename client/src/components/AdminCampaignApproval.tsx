@@ -1,6 +1,14 @@
 /**
  * Admin Campaign Approval Component
- * Shows campaign submissions with full detail view, approve/reject workflow
+ * Shows campaign submissions with full detail view, approve/reject workflow.
+ *
+ * The review dialog reads the campaign's one progress reading
+ * (campaign.progress, shared/campaignProgress.ts) as the compact two-line
+ * bar, with the soft money-share note under the money ask (guidance only,
+ * ruling 2026-09-24). It also carries the money routes the project added
+ * (campaigns.getPartnerLinksForSteward), which only an admin verifies
+ * (campaigns.reviewPartnerLink), and the Ready to crowdpool ticks the project
+ * stored on the campaign (campaigns.getReadiness) beside the reviewer's own.
  */
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
@@ -17,8 +25,189 @@ import {
   FileText, Loader2, AlertTriangle, Sparkles, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CampaignProgressTracker } from './CampaignProgressTracker';
 import { CrowdpoolReadiness } from './CrowdpoolReadiness';
+import { TwoLineBar } from './crowdpool/TwoLineBar';
+import { formatCloseDate, moneyShareNote } from '@shared/campaignProgress';
+import { kindForItem, needTitle, roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
+import { CASH_SHARE } from '@shared/crowdpoolModel';
+import { ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY } from '@shared/crowdpoolCopy';
+
+/** A currency formatter that survives codes Intl does not know (SEEDS, USDC). */
+function currencyFormatter(currency: string | null | undefined): (n: number) => string {
+  const code = currency || 'USD';
+  try {
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: code, maximumFractionDigits: 0 });
+    return (n: number) => fmt.format(n || 0);
+  } catch {
+    return (n: number) => `${Math.round(n || 0).toLocaleString('en-US')} ${code}`;
+  }
+}
+
+function dayOf(v: Date | string | null | undefined): string | null {
+  if (!v) return null;
+  const d = v instanceof Date ? v : new Date(v);
+  return isNaN(d.getTime()) ? null : formatCloseDate(d);
+}
+
+const REVIEW_CURRENCIES = ['USD', 'EUR', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD'];
+
+type ReviewRoute = {
+  id: number;
+  partner: string;
+  label: string | null;
+  url: string;
+  proofUrl: string | null;
+  status: string;
+  reviewNote: string | null;
+  cachedCurrency: string | null;
+  createdAt: Date | string;
+};
+
+function RouteReviewRow({
+  route,
+  campaignCurrency,
+  loanRoutesOpen,
+  pending,
+  onReview,
+}: {
+  route: ReviewRoute;
+  campaignCurrency: string;
+  loanRoutesOpen: boolean;
+  pending: boolean;
+  onReview: (decision: 'verified' | 'rejected', currency: string, note: string) => void;
+}) {
+  const [currency, setCurrency] = useState((route.cachedCurrency || campaignCurrency || 'USD').toUpperCase());
+  const [note, setNote] = useState(route.reviewNote ?? '');
+  const reviewable = route.status === 'pending' || route.status === 'rejected';
+  const loanBlocked = route.partner === 'gosteward' && !loanRoutesOpen;
+  const label = route.partner === 'maearth' || route.partner === 'gosteward' ? ROUTE_LABELS[route.partner] : (route.label ?? route.partner);
+  const added = dayOf(route.createdAt);
+  const currencies = Array.from(new Set([currency, campaignCurrency.toUpperCase(), ...REVIEW_CURRENCIES]));
+  const statusText = (ROUTE_REVIEW.status as Record<string, string>)[route.status] ?? ROUTE_REVIEW.status.pending;
+
+  return (
+    <li className="rounded-lg bg-[#f8f5f0] p-3 space-y-2 min-w-0" data-testid={`route-review-${route.id}`}>
+      <p className="text-sm font-semibold text-[#1a472a]">{label}</p>
+      {route.status !== 'example' && (
+        <a href={route.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-[#4a7c59] underline break-all min-h-11">
+          <ExternalLink className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+          {route.url}
+        </a>
+      )}
+      {route.proofUrl && (
+        <p className="text-xs text-[#1a472a]/80">
+          {ROUTE_REVIEW.proof}:{' '}
+          <a href={route.proofUrl} target="_blank" rel="noopener noreferrer" className="text-[#4a7c59] underline break-all">
+            {route.proofUrl}
+          </a>
+        </p>
+      )}
+      <p className="text-xs text-[#1a472a]/80">
+        {added ? `${ROUTE_REVIEW.added(added)}. ` : ''}{statusText}
+        {route.status === 'rejected' && route.reviewNote ? ` ${route.reviewNote}` : ''}
+      </p>
+      {reviewable && (
+        <div className="space-y-2 pt-1">
+          <div>
+            <label htmlFor={`route-currency-${route.id}`} className="block text-xs font-medium text-[#1a472a] mb-1">
+              {ROUTE_REVIEW.currencyLabel}
+            </label>
+            <select
+              id={`route-currency-${route.id}`}
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full min-h-11 rounded-md border border-[#1a472a]/20 bg-white px-3 text-base md:text-sm text-[#1a472a]"
+            >
+              {currencies.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor={`route-note-${route.id}`} className="block text-xs font-medium text-[#1a472a] mb-1">
+              {ROUTE_REVIEW.noteLabel}
+            </label>
+            <Textarea
+              id={`route-note-${route.id}`}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={1000}
+              rows={2}
+              className="border-[#1a472a]/20 text-base md:text-sm"
+            />
+          </div>
+          {loanBlocked && <p className="text-xs font-medium text-[#1a472a]">{ROUTE_REVIEW.loanRailOff}</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending || loanBlocked}
+              onClick={() => onReview('verified', currency, note)}
+              className="min-h-11 bg-green-700 hover:bg-green-800 text-white"
+            >
+              {ROUTE_REVIEW.verify}
+            </Button>
+            {route.status === 'pending' && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={pending}
+                onClick={() => onReview('rejected', currency, note)}
+                className="min-h-11 border-red-300 text-red-700 hover:bg-red-50"
+              >
+                {ROUTE_REVIEW.dontShow}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function MoneyRoutesToCheck({ campaignId, campaignCurrency }: { campaignId: number; campaignCurrency: string }) {
+  const utils = trpc.useUtils();
+  const { data: routes, isLoading } = trpc.campaigns.getPartnerLinksForSteward.useQuery({ campaignId }, { retry: false });
+  const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const review = trpc.campaigns.reviewPartnerLink.useMutation({
+    onSuccess: (res) => {
+      toast.success(res.status === 'verified' ? ROUTE_REVIEW.verifiedDone : ROUTE_REVIEW.rejectedDone);
+      utils.campaigns.getPartnerLinksForSteward.invalidate({ campaignId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  return (
+    <div className="border-t border-[#1a472a]/10 pt-4">
+      <h4 className="text-sm font-bold text-[#1a472a] mb-1">{ROUTE_REVIEW.heading}</h4>
+      <p className="text-xs text-[#1a472a]/80 mb-3">{ROUTE_REVIEW.intro}</p>
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 animate-spin text-[#4a7c59]" />
+      ) : !routes || routes.length === 0 ? (
+        <p className="text-sm text-[#1a472a]/80">{ROUTE_REVIEW.none}</p>
+      ) : (
+        <ul className="space-y-2">
+          {routes.map((r) => (
+            <RouteReviewRow
+              key={r.id}
+              route={r}
+              campaignCurrency={campaignCurrency}
+              loanRoutesOpen={settings?.loanRoutesOpen ?? false}
+              pending={review.isPending}
+              onReview={(decision, currency, note) =>
+                review.mutate({
+                  linkId: r.id,
+                  decision,
+                  ...(decision === 'verified' ? { currency } : {}),
+                  ...(decision === 'rejected' && note.trim() ? { note: note.trim() } : {}),
+                })
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 // 'funded' stays readable for old rows only. Nothing here sets it: an admin
 // marks a campaign complete (status 'completed').
@@ -50,6 +239,8 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
   onStatusChange: () => void;
 }) {
   const { data: campaign, isLoading } = trpc.campaigns.getById.useQuery({ id: campaignId });
+  const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const { data: projectTicks } = trpc.campaigns.getReadiness.useQuery({ campaignId }, { retry: false });
   const [reviewNotes, setReviewNotes] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
@@ -94,7 +285,14 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
     return <div className="text-center py-8 text-[#1a472a]/80">Campaign not found</div>;
   }
 
-  const currencySymbol = campaign.currency === 'USD' ? '$' : campaign.currency === 'EUR' ? '€' : campaign.currency === 'GBP' ? '£' : campaign.currency;
+  const formatMoney = currencyFormatter(campaign.currency);
+  const progress = campaign.progress;
+  const shareNote = moneyShareNote({
+    inKindAsk: progress.inKind.ask,
+    moneyAsk: progress.money.ask,
+    asksNone: progress.money.asksNone,
+    band: settings?.moneyShare ?? CASH_SHARE,
+  });
 
   return (
     <div className="space-y-6 max-h-[80vh] overflow-y-auto">
@@ -115,36 +313,31 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
         <StatusBadge status={campaign.status} />
       </div>
 
-      {/* Progress Tracker */}
-      <CampaignProgressTracker
-        totalValue={campaign.totalValue}
-        pledgedTotal={campaign.pledgedTotal}
-        financialTarget={campaign.financialTarget}
-        pledgedFinancial={campaign.pledgedFinancial}
-        contributorsCount={campaign.contributorsCount || 0}
-        durationDays={(campaign as any).durationDays || 90}
-        startedAt={(campaign as any).startedAt || (campaign as any).publishedAt || campaign.createdAt}
-        status={campaign.status}
-        currency={campaign.currency || 'USD'}
-      />
+      {/* The two-line bar: the same reading the project page shows */}
+      <div className="rounded-lg bg-white border border-[#1a472a]/10 p-3">
+        <TwoLineBar progress={progress} formatCurrency={formatMoney} variant="compact" />
+      </div>
 
-      {/* Financial Summary */}
+      {/* The ask, in-kind and money, with the soft money-share note */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/80">Total Value</p>
-          <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.totalValue.toLocaleString()}</p>
+          <p className="text-xs text-[#1a472a]/80">{STEWARD_MONEY.inKindAsked}</p>
+          <p className="text-lg font-bold text-[#1a472a]">{formatMoney(progress.inKind.ask)}</p>
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/80">Financial Target</p>
-          <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.financialTarget.toLocaleString()}</p>
+          <p className="text-xs text-[#1a472a]/80">{STEWARD_MONEY.moneyAsked}</p>
+          <p className="text-lg font-bold text-[#1a472a]">{formatMoney(progress.money.ask)}</p>
+          {shareNote.line && (
+            <p className={`text-xs mt-1 ${shareNote.outside ? 'text-[#1a472a] font-medium' : 'text-[#1a472a]/80'}`}>{shareNote.line}</p>
+          )}
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/80">Land Value</p>
-          <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.landValue.toLocaleString()}</p>
+          <p className="text-xs text-[#1a472a]/80">{STEWARD_MONEY.landValue}</p>
+          <p className="text-lg font-bold text-[#1a472a]">{formatMoney(campaign.landValue)}</p>
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/80">Duration</p>
-          <p className="text-lg font-bold text-[#1a472a]">{(campaign as any).durationDays || 90} days</p>
+          <p className="text-xs text-[#1a472a]/80">{STEWARD_MONEY.duration}</p>
+          <p className="text-lg font-bold text-[#1a472a]">{STEWARD_MONEY.days(String(campaign.durationDays || 90))}</p>
         </div>
       </div>
 
@@ -182,19 +375,23 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
         <TabsContent value="items" className="mt-4">
           {campaign.items && campaign.items.length > 0 ? (
             <div className="space-y-2">
-              {campaign.items.map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between bg-[#f8f5f0] rounded-lg p-3">
-                  <div>
-                    <p className="text-sm font-medium text-[#1a472a]">{item.title}</p>
-                    <p className="text-xs text-[#1a472a]/80">{item.category} | {item.type}</p>
-                    {item.description && <p className="text-xs text-[#1a472a]/80 mt-1">{item.description}</p>}
+              {campaign.items.map((item) => {
+                // What the need asks and when, as the project page words it.
+                const detail = thingWindowLine(item) ?? roleTimeLine(item);
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-3 bg-[#f8f5f0] rounded-lg p-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#1a472a] break-words">{needTitle(item)}</p>
+                      <p className="text-xs text-[#1a472a]/80">{kindForItem(item)} | {item.capitalType}</p>
+                      {detail && <p className="text-xs text-[#1a472a]/80 mt-1">{detail}</p>}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold text-[#1a472a]">{formatMoney(item.estimatedValue)}</p>
+                      <p className="text-xs text-[#1a472a]/80">Qty: {item.quantityWanted}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#1a472a]">{currencySymbol}{item.estimatedValue.toLocaleString()}</p>
-                    <p className="text-xs text-[#1a472a]/80">Qty: {item.quantity}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-[#1a472a]/80 text-center py-4">No items added yet</p>
@@ -260,8 +457,10 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
         <p className="text-xs text-[#1a472a]/80 mb-3">
           Check each against what the project shows. Anything missing goes in the review notes.
         </p>
-        <CrowdpoolReadiness framed={false} audience="review" storageKey={`review-${campaign.id}`} />
+        <CrowdpoolReadiness framed={false} audience="review" storageKey={`review-${campaign.id}`} projectTicks={projectTicks} />
       </div>
+
+      <MoneyRoutesToCheck campaignId={campaign.id} campaignCurrency={campaign.currency || 'USD'} />
 
       {/* Admin Review Notes */}
       <div className="border-t border-[#1a472a]/10 pt-4">

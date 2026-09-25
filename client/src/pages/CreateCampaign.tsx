@@ -1,10 +1,22 @@
 /**
  * Crowd Pooling Campaign Creator
- * Password protected (111) comprehensive campaign creation tool
- * Allows projects to list everything they need: land, equipment, roles, and more
+ * Lets a project's stewards list everything the project needs: land,
+ * equipment, roles, other needs, and the money it asks for.
+ *
+ * Money (build spec 2026-09-25, sections 11 and 14.1): the Money step asks
+ * for an explicit choice between an amount and "This project asks for no
+ * money". There is no silent default any more (the old 20% fallback is gone);
+ * no money sends 0. The money-share note ("Money is 42% of your whole ask",
+ * and the 10 to 30 percent line outside the usual band) is guidance and never
+ * blocks. Money routes (Ma Earth, Steward) the project already holds go in
+ * the same step and wait for a ReGen Civics admin to check them.
+ *
+ * Needs carry when they are wanted and, for things, whether the project would
+ * take them as a gift, on loan, or both (campaigns.create neededFrom,
+ * neededUntil, acceptsGift, acceptsLoan, workMode).
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import SEO, { pageSEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,8 +112,26 @@ import { cdnImg } from "@/lib/utils";
 import { CapitalBalanceMeter } from '@/components/crowdpool/CapitalBalanceMeter';
 import { TeachingTip } from '@/components/crowdpool/TeachingTip';
 import { DesignCompanion, type CompanionSuggestion } from '@/components/crowdpool/DesignCompanion';
+import { EligibilityQuiz, partnerForRecommendation } from '@/components/crowdpool/EligibilityQuiz';
+import { moneySharePct, moneyShareNote, suggestedMoneyAsk } from '@shared/campaignProgress';
+import { roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
+import { MONEY_STEP, NEED_FORM } from '@shared/crowdpoolCopy';
+import { CASH_SHARE } from '@shared/crowdpoolModel';
+// The server's own route check (pure, no server dependencies), run here so a
+// mistyped link is caught before the campaign is sent. The server runs it again.
+import { validateRouteUrl, type RoutePartner } from '../../../server/lib/partner-links';
 
 // Types
+type WorkMode = 'on_site' | 'remote' | 'either';
+
+/** When a thing is needed and how it may come. Dates are 'YYYY-MM-DD'. */
+interface ThingTerms {
+  neededFrom?: string;
+  neededUntil?: string;
+  acceptsGift?: boolean;
+  acceptsLoan?: boolean;
+}
+
 interface LandRequirement {
   id: string;
   hectares: number;
@@ -113,7 +143,7 @@ interface LandRequirement {
   customValue: number | null;
 }
 
-interface EquipmentItem {
+interface EquipmentItem extends ThingTerms {
   id: string;
   category: string;
   name: string;
@@ -135,9 +165,12 @@ interface RoleRequirement {
   hourlyRate: number;
   estimatedValue: number;
   customValue: number | null;
+  /** 'YYYY-MM-DD'. With it the role card shows when it ends and the hours in all. */
+  startsOn?: string;
+  workMode?: WorkMode;
 }
 
-interface OtherNeed {
+interface OtherNeed extends ThingTerms {
   id: string;
   category: string;
   /** Capital + need kind carried from the taxonomy category. */
@@ -147,6 +180,8 @@ interface OtherNeed {
   description: string;
   estimatedValue: number;
   customValue: number | null;
+  /** Knowledge sessions: where they happen. */
+  workMode?: WorkMode;
 }
 
 // Constants
@@ -270,19 +305,25 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
 };
 
 // The Other Needs picker: every taxonomy category except land (its own step)
-// and crypto (the Financial Target step tracks money).
+// and crypto (money is never a need: the Money step holds the money ask).
 const WIZARD_NEED_CATEGORIES = CONTRIBUTION_CATEGORIES.filter(
-  (c) => c.key !== 'land' && c.key !== 'crypto'
+  (c) => c.key !== 'land' && c.key !== 'crypto' && c.kind !== 'crypto' && c.kind !== 'financial_link'
 );
 
-// Which teaching tip belongs at the top of each wizard step (Photos has none).
+// Other Needs categories a project would usually take on loan as well as a
+// gift: equipment and vehicles. Every other thing starts as a gift only.
+const LOANABLE_NEED_CATEGORIES = ['vehicles', 'farming', 'tools'];
+
+// Which teaching tip belongs at the top of each wizard step. Photos has none,
+// and the Money step carries its own intro (the coach's old financial tip
+// described crypto tracked here, which this step no longer does).
 const STEP_TIP_KEYS: (string | null)[] = [
   'land',       // 0 Land
   'equipment',  // 1 Equipment
   'roles',      // 2 Roles
   'otherNeeds', // 3 Other Needs
   null,         // 4 Photos
-  'financial',  // 5 Financial Target
+  null,         // 5 Money
 ];
 
 const isCapitalType = (value: unknown): value is CapitalType =>
@@ -416,6 +457,37 @@ function wholeRoleHours(raw: string | number): number {
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
+/** 'YYYY-MM-DD' plus n days, in UTC so no timezone shifts the date. */
+export function addDaysToDay(day: string, days: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** A role's start and end, from its start date and weeks. */
+function roleWindow(role: RoleRequirement): { neededFrom?: string; neededUntil?: string } {
+  if (!role.startsOn) return {};
+  const weeks = Math.max(1, Math.round(role.weeksNeeded || 0));
+  return { neededFrom: role.startsOn, neededUntil: addDaysToDay(role.startsOn, weeks * 7) };
+}
+
+/** The summary a thing row shows: "Needed 1 Mar to 30 Jun. Give or lend." */
+function thingSummary(t: ThingTerms, defaultLoan: boolean): string | null {
+  return thingWindowLine({
+    kind: 'item',
+    neededFrom: t.neededFrom || null,
+    neededUntil: t.neededUntil || null,
+    acceptsGift: t.acceptsGift ?? true,
+    acceptsLoan: t.acceptsLoan ?? defaultLoan,
+  });
+}
+
+function workModeLabel(mode: WorkMode): string {
+  return mode === 'remote' ? NEED_FORM.remote : mode === 'either' ? NEED_FORM.either : NEED_FORM.onTheLand;
+}
+
+/** The money choice the Money step requires before sending. */
+export type MoneyChoice = 'money' | 'none';
+
 const formatCurrency = (amount: number, symbol: string) => {
   if (amount >= 1000000) return `${symbol}${(amount / 1000000).toFixed(1)}M`;
   if (amount >= 1000) return `${symbol}${(amount / 1000).toFixed(1)}K`;
@@ -471,7 +543,7 @@ export default function CreateCampaign() {
   
   // Step tracking
   const [currentStep, setCurrentStep] = useState(0);
-  const steps = ['Land', 'Equipment', 'Roles', 'Other Needs', 'Photos', 'Financial Target'];
+  const steps = ['Land', 'Equipment', 'Roles', 'Other Needs', 'Photos', MONEY_STEP.stepLabel];
   
   // Land requirements
   const [landRequirements, setLandRequirements] = useState<LandRequirement[]>([]);
@@ -493,18 +565,26 @@ export default function CreateCampaign() {
   const [showOtherForm, setShowOtherForm] = useState(false);
   const [editingOther, setEditingOther] = useState<OtherNeed | null>(null);
   
-  // Financial target
+  // Money: an explicit choice, then an amount when the project asks for money.
+  const [moneyChoice, setMoneyChoice] = useState<MoneyChoice | null>(null);
   const [financialTarget, setFinancialTarget] = useState(0);
-  const [financialNotes, setFinancialNotes] = useState('');
+  const [moneyError, setMoneyError] = useState<string | null>(null);
+  const [maEarthUrl, setMaEarthUrl] = useState('');
+  const [stewardUrl, setStewardUrl] = useState('');
+  const [routeErrors, setRouteErrors] = useState<Partial<Record<RoutePartner, string>>>({});
+  const moneyChoiceRef = useRef<HTMLDivElement>(null);
   const [durationDays, setDurationDays] = useState(90);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  // The soft money-share band (guidance only; nothing blocks on it).
+  const { data: crowdpoolSettings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const moneyBand = crowdpoolSettings?.moneyShare ?? CASH_SHARE;
+
   // tRPC mutation for creating campaign
   const createCampaignMutation = trpc.campaigns.create.useMutation({
     onSuccess: (data) => {
       toast.success('Campaign created successfully!');
-      // Redirect to campaign detail page
-      window.location.href = `/campaign/${data.id}`;
+      // The project page, focused on the new campaign, at the steward tools.
+      window.location.href = `${data.path}#steward-tools`;
     },
     onError: (error) => {
       toast.error(`Failed to create campaign: ${error.message}`);
@@ -533,8 +613,9 @@ export default function CreateCampaign() {
     [otherNeeds]
   );
   
+  // The in-kind ask: everything listed in the need steps. Money is separate.
   const grandTotal = landTotal + equipmentTotal + rolesTotal + otherTotal;
-  const recommendedFinancial = Math.round(grandTotal * 0.2);
+  const moneyAsk = moneyChoice === 'money' ? financialTarget : 0;
 
   // The live needs array the capital coach reads: every item mapped to its
   // capital, kind, title, and current value. Powers the balance meter and the
@@ -602,18 +683,26 @@ export default function CreateCampaign() {
       ]);
     } else {
       const capital = isCapitalType(s.capitalType) ? s.capitalType : 'material';
-      const kind = isNeedKind(s.kind) ? s.kind : 'item';
+      const suggested = isNeedKind(s.kind) ? s.kind : 'item';
+      // Money is never a need; the Money step holds the money ask.
+      if (suggested === 'crypto' || suggested === 'financial_link') {
+        toast.info(MONEY_STEP.notANeed);
+        return;
+      }
+      // A thing to borrow is an item that takes loans (never kind 'loan' for new needs).
+      const lend = suggested === 'loan';
       setOtherNeeds((prev) => [
         ...prev,
         {
           id: generateId(),
           category: otherNeedCategoryForCapital(capital),
           capitalType: capital,
-          kind,
+          kind: lend ? 'item' : suggested,
           title: s.title,
           description: s.rationale || '',
           estimatedValue: Math.max(0, Math.round(s.estimatedValue || 0)),
           customValue: null,
+          ...(lend ? { acceptsGift: false, acceptsLoan: true } : {}),
         },
       ]);
     }
@@ -636,7 +725,50 @@ export default function CreateCampaign() {
       toast.error('Please add at least one need to your campaign');
       return;
     }
-    
+
+    // Money needs an explicit choice. Nothing is filled in for the project.
+    const showMoneyError = (message: string) => {
+      setMoneyError(message);
+      setCurrentStep(5);
+      // The Create button only shows on the Money step, so the choice is on screen to scroll to.
+      moneyChoiceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    if (moneyChoice === null) {
+      showMoneyError(MONEY_STEP.chooseOne);
+      return;
+    }
+    if (moneyChoice === 'money' && !(financialTarget > 0)) {
+      showMoneyError(MONEY_STEP.addAmount);
+      return;
+    }
+    setMoneyError(null);
+
+    // Money routes, checked the way the server checks them.
+    const moneyRoutes: Array<{ partner: RoutePartner; url: string }> = [];
+    if (moneyChoice === 'money') {
+      const errors: Partial<Record<RoutePartner, string>> = {};
+      for (const [partner, raw] of [['maearth', maEarthUrl], ['gosteward', stewardUrl]] as const) {
+        if (!raw.trim()) continue;
+        const checked = validateRouteUrl(partner, raw);
+        if (checked.ok) moneyRoutes.push({ partner, url: checked.url });
+        else errors[partner] = checked.message;
+      }
+      setRouteErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        setCurrentStep(5);
+        const first = errors.maearth ? 'route-maearth' : 'route-gosteward';
+        document.getElementById(first)?.focus();
+        return;
+      }
+    }
+
+    // A need window can't end before it starts (the server says the same).
+    const endsEarly = [...equipment, ...otherNeeds].some((t) => t.neededFrom && t.neededUntil && t.neededUntil < t.neededFrom);
+    if (endsEarly) {
+      toast.error(NEED_FORM.endsBeforeStart);
+      return;
+    }
+
     setIsSubmitting(true);
     
     // Prepare campaign items. Every item carries kind + capitalType from the
@@ -654,7 +786,7 @@ export default function CreateCampaign() {
         landDescription: land.description,
         estimatedValue: land.customValue ?? land.estimatedValue,
       })),
-      // Equipment items
+      // Equipment items: when they are needed, and gift, loan or both
       ...equipment.map(eq => ({
         category: 'equipment' as const,
         kind: 'item' as const,
@@ -663,6 +795,10 @@ export default function CreateCampaign() {
         equipmentQuantity: eq.quantity,
         equipmentCategory: eq.category,
         estimatedValue: (eq.customValue ?? eq.estimatedValue) * eq.quantity,
+        neededFrom: eq.neededFrom || undefined,
+        neededUntil: eq.neededUntil || undefined,
+        acceptsGift: eq.acceptsGift ?? true,
+        acceptsLoan: eq.acceptsLoan ?? false,
       })),
       // Role items: capital comes from the template, custom roles default to experiential
       ...roles.map(role => ({
@@ -675,19 +811,33 @@ export default function CreateCampaign() {
         durationMonths: Math.round((role.weeksNeeded || 0) / 4.33), // Convert weeks to months
         roleDescription: role.description,
         estimatedValue: role.customValue ?? role.estimatedValue,
+        // A start date gives the role card its end date and hours in all.
+        ...roleWindow(role),
+        workMode: role.workMode ?? ('on_site' as const),
       })),
       // Other needs: kind + capital carried from the taxonomy category
       ...otherNeeds.map(need => {
         const cat = categoryForKey(need.category);
+        const kind = need.kind ?? cat?.kind ?? ('item' as const);
         return {
           category: 'resource' as const,
-          kind: need.kind ?? cat?.kind ?? ('item' as const),
+          kind,
           capitalType: need.capitalType ?? cat?.capital ?? ('material' as const),
           resourceName: need.title,
           resourceQuantity: 1,
           resourceUnit: need.category,
           resourceDescription: need.description,
           estimatedValue: need.customValue ?? need.estimatedValue,
+          // Things: when, and gift, loan or both. Knowledge: where it happens.
+          ...(kind === 'item'
+            ? {
+                neededFrom: need.neededFrom || undefined,
+                neededUntil: need.neededUntil || undefined,
+                acceptsGift: need.acceptsGift ?? true,
+                acceptsLoan: need.acceptsLoan ?? LOANABLE_NEED_CATEGORIES.includes(need.category),
+              }
+            : {}),
+          ...(kind === 'knowledge' ? { workMode: need.workMode ?? ('either' as const) } : {}),
         };
       }),
     ];
@@ -698,7 +848,8 @@ export default function CreateCampaign() {
       description: campaignDescription,
       projectName: campaignName,
       location: projectLocation || landRequirements[0]?.regions?.[0] || undefined,
-      financialTarget: financialTarget || recommendedFinancial,
+      // No money sends 0. There is no default share filled in for the project.
+      financialTarget: moneyAsk,
       currency,
       applicationId: selectedApplication?.id,
       vision: projectVision || undefined,
@@ -714,6 +865,7 @@ export default function CreateCampaign() {
       daoLink: daoLink || undefined,
       durationDays,
       items,
+      ...(moneyRoutes.length > 0 ? { moneyRoutes } : {}),
     });
   };
   
@@ -946,10 +1098,16 @@ export default function CreateCampaign() {
         <div className="sticky top-20 z-40 bg-white/95 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-[#7dd87d]/30 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-[#4a7c59]" />
-                <span className="text-sm text-[#1a472a]/80">Total Value:</span>
-                <span className="text-xl font-bold text-[#1a472a]">{formatCurrency(grandTotal, currencySymbol)}</span>
+              <div className="flex flex-col gap-1">
+                <p className="flex items-center gap-2 text-base font-bold text-[#1a472a]">
+                  <TrendingUp className="w-5 h-5 text-[#4a7c59] shrink-0" aria-hidden="true" />
+                  {MONEY_STEP.inKindAsk(formatCurrency(grandTotal, currencySymbol))}
+                </p>
+                {moneyChoice && (
+                  <p className="text-sm text-[#1a472a]/85 pl-7" data-testid="tracker-money">
+                    {MONEY_STEP.moneyLine(formatCurrency(moneyAsk, currencySymbol), String(moneySharePct(grandTotal, moneyAsk)))}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
@@ -1021,11 +1179,13 @@ export default function CreateCampaign() {
                               customValue: null
                             }]);
                             
-                            // Load equipment
+                            // Load equipment: equipment templates take a gift or a loan
                             setEquipment(template.equipment.map(eq => ({
                               ...eq,
                               id: generateId(),
-                              customValue: null
+                              customValue: null,
+                              acceptsGift: true,
+                              acceptsLoan: true,
                             })));
                             
                             // Load roles
@@ -1431,22 +1591,30 @@ export default function CreateCampaign() {
             </div>
           )}
           
-          {/* Step 6: Financial Target */}
+          {/* Step 6: Money */}
           {currentStep === 5 && (
             <FinancialTargetSection
-              grandTotal={grandTotal}
-              recommendedFinancial={recommendedFinancial}
-              financialTarget={financialTarget}
-              setFinancialTarget={setFinancialTarget}
-              financialNotes={financialNotes}
-              setFinancialNotes={setFinancialNotes}
-              durationDays={durationDays}
-              setDurationDays={setDurationDays}
-              currencySymbol={currencySymbol}
+              inKindTotal={grandTotal}
               landTotal={landTotal}
               equipmentTotal={equipmentTotal}
               rolesTotal={rolesTotal}
               otherTotal={otherTotal}
+              currency={currency}
+              currencySymbol={currencySymbol}
+              moneyChoice={moneyChoice}
+              onMoneyChoice={(choice) => { setMoneyChoice(choice); setMoneyError(null); }}
+              financialTarget={financialTarget}
+              setFinancialTarget={(n) => { setFinancialTarget(n); setMoneyError(null); }}
+              moneyError={moneyError}
+              choiceRef={moneyChoiceRef}
+              band={moneyBand}
+              maEarthUrl={maEarthUrl}
+              setMaEarthUrl={(v) => { setMaEarthUrl(v); setRouteErrors((e) => ({ ...e, maearth: undefined })); }}
+              stewardUrl={stewardUrl}
+              setStewardUrl={(v) => { setStewardUrl(v); setRouteErrors((e) => ({ ...e, gosteward: undefined })); }}
+              routeErrors={routeErrors}
+              durationDays={durationDays}
+              setDurationDays={setDurationDays}
             />
           )}
         </div>
@@ -1856,14 +2024,19 @@ function EquipmentSection({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [formData, setFormData] = useState<Partial<EquipmentItem>>({
+  const emptyForm: Partial<EquipmentItem> = {
     category: '',
     name: '',
     quantity: 1,
     description: '',
     estimatedValue: 0,
-  });
-  
+    acceptsGift: true,
+    acceptsLoan: false,
+  };
+  const [formData, setFormData] = useState<Partial<EquipmentItem>>(emptyForm);
+
+  // Equipment and vehicle templates start as "gift or loan": a tool lent for
+  // a season is worth as much to the project as one given.
   const handleAddFromTemplate = (category: string, item: { name: string; estimatedValue: number }) => {
     const newEquipment: EquipmentItem = {
       id: generateId(),
@@ -1873,6 +2046,8 @@ function EquipmentSection({
       description: '',
       estimatedValue: item.estimatedValue,
       customValue: null,
+      acceptsGift: true,
+      acceptsLoan: true,
     };
     setEquipment([...equipment, newEquipment]);
     toast.success(`${item.name} added`);
@@ -1887,11 +2062,19 @@ function EquipmentSection({
       description: formData.description || '',
       estimatedValue: formData.estimatedValue || 0,
       customValue: null,
+      neededFrom: formData.neededFrom,
+      neededUntil: formData.neededUntil,
+      acceptsGift: formData.acceptsGift ?? true,
+      acceptsLoan: formData.acceptsLoan ?? false,
     };
     setEquipment([...equipment, newEquipment]);
-    setFormData({ category: '', name: '', quantity: 1, description: '', estimatedValue: 0 });
+    setFormData(emptyForm);
     setShowForm(false);
     toast.success('Equipment added');
+  };
+
+  const updateTerms = (id: string, patch: ThingTerms) => {
+    setEquipment(equipment.map(e => e.id === id ? { ...e, ...patch } : e));
   };
   
   const handleRemove = (id: string) => {
@@ -1985,6 +2168,22 @@ function EquipmentSection({
                   = {formatCurrency((item.customValue ?? item.estimatedValue) * item.quantity, currencySymbol)}
                 </span>
               </div>
+              {thingSummary(item, false) && (
+                <p className="text-xs text-[#1a472a]/85 mt-2">{thingSummary(item, false)}</p>
+              )}
+              <details className="mt-1">
+                <summary className="cursor-pointer min-h-11 flex items-center text-sm font-medium text-[#4a7c59]">
+                  {NEED_FORM.whenAndHow}
+                </summary>
+                <div className="mt-2 pb-1">
+                  <ThingTermsFields
+                    idBase={`equipment-${item.id}`}
+                    terms={item}
+                    defaultLoan={false}
+                    onChange={(patch) => updateTerms(item.id, patch)}
+                  />
+                </div>
+              </details>
             </div>
           ))}
         </div>
@@ -2074,6 +2273,14 @@ function EquipmentSection({
                 className="bg-white border-[#7dd87d]/30"
               />
             </div>
+            <div className="md:col-span-2">
+              <ThingTermsFields
+                idBase="equipment-new"
+                terms={formData}
+                defaultLoan={false}
+                onChange={(patch) => setFormData({ ...formData, ...patch })}
+              />
+            </div>
           </div>
           <div className="flex gap-2 mt-4">            <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1 rounded-xl border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59]/10">
               Cancel
@@ -2126,6 +2333,7 @@ function RolesSection({
     hoursPerWeek: 20,
     weeksNeeded: 52,
     hourlyRate: 30,
+    workMode: 'on_site',
   });
   
   const calculatedValue = (formData.hoursPerWeek || 0) * (formData.weeksNeeded || 0) * (formData.hourlyRate || 0);
@@ -2159,9 +2367,11 @@ function RolesSection({
       hourlyRate: formData.hourlyRate || 30,
       estimatedValue: calculatedValue,
       customValue: null,
+      startsOn: formData.startsOn,
+      workMode: formData.workMode ?? 'on_site',
     };
     setRoles([...roles, newRole]);
-    setFormData({ title: '', category: '', description: '', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 30 });
+    setFormData({ title: '', category: '', description: '', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 30, workMode: 'on_site' });
     setRoleBand(null);
     setShowForm(false);
     toast.success('Role added');
@@ -2170,6 +2380,10 @@ function RolesSection({
   const handleRemove = (id: string) => {
     setRoles(roles.filter(r => r.id !== id));
     toast.success('Role removed');
+  };
+
+  const updateRoleTerms = (id: string, patch: Partial<RoleRequirement>) => {
+    setRoles(roles.map(r => r.id === id ? { ...r, ...patch } : r));
   };
   
   const updateRole = (id: string, field: keyof RoleRequirement, value: number) => {
@@ -2275,6 +2489,15 @@ function RolesSection({
                     {formatCurrency(role.customValue ?? role.estimatedValue, currencySymbol)}
                   </span>
                 </div>
+                <p className="text-xs text-[#1a472a]/85">{roleSummary(role)}</p>
+                <details>
+                  <summary className="cursor-pointer min-h-11 flex items-center text-sm font-medium text-[#4a7c59]">
+                    {NEED_FORM.whenAndWhere}
+                  </summary>
+                  <div className="mt-2 pb-1">
+                    <RoleTermsFields idBase={`role-${role.id}`} role={role} onChange={(patch) => updateRoleTerms(role.id, patch)} />
+                  </div>
+                </details>
               </div>
             </div>
           ))}
@@ -2460,6 +2683,9 @@ function RolesSection({
               className="bg-white border-[#7dd87d]/30"
             />
           </div>
+          <div className="mt-4">
+            <RoleTermsFields idBase="role-new" role={formData} onChange={(patch) => setFormData({ ...formData, ...patch })} />
+          </div>
           <div className="flex gap-2 mt-4">
             <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1 rounded-xl border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59]/10">
               Cancel
@@ -2513,7 +2739,16 @@ function OtherNeedsSection({
 
   const openFormWithCategory = (categoryKey: string) => {
     const cat = categoryForKey(categoryKey);
-    setFormData({ ...formData, category: categoryKey, title: cat?.label || '' });
+    setFormData({
+      ...formData,
+      category: categoryKey,
+      title: cat?.label || '',
+      neededFrom: undefined,
+      neededUntil: undefined,
+      acceptsGift: true,
+      acceptsLoan: LOANABLE_NEED_CATEGORIES.includes(categoryKey),
+      workMode: cat?.kind === 'knowledge' ? 'either' : undefined,
+    });
     setShowForm(true);
     // Scroll to form after a tick so it's rendered
     setTimeout(() => {
@@ -2523,15 +2758,25 @@ function OtherNeedsSection({
 
   const handleAdd = () => {
     const cat = categoryForKey(formData.category || 'other');
+    const kind = cat?.kind ?? 'item';
     const newNeed: OtherNeed = {
       id: generateId(),
       category: formData.category || 'other',
       capitalType: cat?.capital ?? 'material',
-      kind: cat?.kind ?? 'item',
+      kind,
       title: formData.title || '',
       description: formData.description || '',
       estimatedValue: formData.estimatedValue || 0,
       customValue: null,
+      ...(kind === 'item'
+        ? {
+            neededFrom: formData.neededFrom,
+            neededUntil: formData.neededUntil,
+            acceptsGift: formData.acceptsGift ?? true,
+            acceptsLoan: formData.acceptsLoan ?? LOANABLE_NEED_CATEGORIES.includes(formData.category || 'other'),
+          }
+        : {}),
+      ...(kind === 'knowledge' ? { workMode: formData.workMode ?? 'either' } : {}),
     };
     setNeeds([...needs, newNeed]);
     setFormData({ category: 'other', title: '', description: '', estimatedValue: 0 });
@@ -2547,6 +2792,10 @@ function OtherNeedsSection({
   const handleRemove = (id: string) => {
     setNeeds(needs.filter(n => n.id !== id));
     toast.success('Item removed');
+  };
+
+  const updateNeed = (id: string, patch: Partial<OtherNeed>) => {
+    setNeeds(needs.map(n => n.id === id ? { ...n, ...patch } : n));
   };
   
   return (
@@ -2574,35 +2823,66 @@ function OtherNeedsSection({
             const catInfo = categoryForKey(need.category);
             const Icon = (catInfo?.icon && CATEGORY_ICONS[catInfo.icon]) || HelpCircle;
             const capital = need.capitalType ?? catInfo?.capital;
+            const needKind = need.kind ?? catInfo?.kind ?? 'item';
+            const defaultLoan = LOANABLE_NEED_CATEGORIES.includes(need.category);
+            const summary = needKind === 'item'
+              ? thingSummary(need, defaultLoan)
+              : needKind === 'knowledge' ? workModeLabel(need.workMode ?? 'either') : null;
             return (
-              <div key={need.id} className="bg-[#f0f7f0] rounded-xl p-3 border border-[#7dd87d]/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-[#4a7c59]" />
-                  <div>
-                    <span className="font-medium text-[#1a472a]">{need.title}</span>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-[#1a472a]/80">{catInfo?.label || need.category}</p>
-                      {capital && (
-                        <span className="text-xs bg-white px-2 py-0.5 rounded-full text-[#4a7c59]">
-                          {CAPITAL_LABELS[capital].label}
-                        </span>
-                      )}
+              <div key={need.id} className="bg-[#f0f7f0] rounded-xl p-3 border border-[#7dd87d]/30">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon className="w-5 h-5 text-[#4a7c59]" />
+                    <div>
+                      <span className="font-medium text-[#1a472a]">{need.title}</span>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-[#1a472a]/80">{catInfo?.label || need.category}</p>
+                        {capital && (
+                          <span className="text-xs bg-white px-2 py-0.5 rounded-full text-[#4a7c59]">
+                            {CAPITAL_LABELS[capital].label}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#1a472a]">
+                      {formatCurrency(need.customValue ?? need.estimatedValue, currencySymbol)}
+                    </span>
+                    <Button
+                      onClick={() => handleRemove(need.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#1a472a]">
-                    {formatCurrency(need.customValue ?? need.estimatedValue, currencySymbol)}
-                  </span>
-                  <Button
-                    onClick={() => handleRemove(need.id)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {summary && <p className="text-xs text-[#1a472a]/85 mt-2">{summary}</p>}
+                {(needKind === 'item' || needKind === 'knowledge') && (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer min-h-11 flex items-center text-sm font-medium text-[#4a7c59]">
+                      {needKind === 'item' ? NEED_FORM.whenAndHow : NEED_FORM.whereDone}
+                    </summary>
+                    <div className="mt-2 pb-1">
+                      {needKind === 'item' ? (
+                        <ThingTermsFields
+                          idBase={`need-${need.id}`}
+                          terms={need}
+                          defaultLoan={defaultLoan}
+                          onChange={(patch) => updateNeed(need.id, patch)}
+                        />
+                      ) : (
+                        <WorkModeField
+                          idBase={`need-${need.id}`}
+                          value={need.workMode ?? 'either'}
+                          onChange={(m) => updateNeed(need.id, { workMode: m })}
+                        />
+                      )}
+                    </div>
+                  </details>
+                )}
               </div>
             );
           })}
@@ -2674,6 +2954,20 @@ function OtherNeedsSection({
                 className="bg-white border-[#7dd87d]/30"
               />
             </div>
+            {categoryForKey(formData.category || 'other')?.kind === 'knowledge' ? (
+              <WorkModeField
+                idBase="need-new"
+                value={formData.workMode ?? 'either'}
+                onChange={(m) => setFormData({ ...formData, workMode: m })}
+              />
+            ) : (categoryForKey(formData.category || 'other')?.kind ?? 'item') === 'item' ? (
+              <ThingTermsFields
+                idBase="need-new"
+                terms={formData}
+                defaultLoan={LOANABLE_NEED_CATEGORIES.includes(formData.category || 'other')}
+                onChange={(patch) => setFormData({ ...formData, ...patch })}
+              />
+            ) : null}
             {/* Fair-value helper: a plus-or-minus band around the figure entered */}
             <div>
               <Button
@@ -2721,156 +3015,404 @@ function OtherNeedsSection({
   );
 }
 
-// Financial Target Section Component
-function FinancialTargetSection({ 
-  grandTotal,
-  recommendedFinancial,
-  financialTarget,
-  setFinancialTarget,
-  financialNotes,
-  setFinancialNotes,
-  durationDays,
-  setDurationDays,
-  currencySymbol,
+// ── Need terms: when a need is wanted, how a thing may come, where work happens
+
+const toggleClass = (on: boolean) =>
+  `min-h-11 px-4 rounded-xl border text-sm font-medium transition-colors ${
+    on ? 'bg-[#4a7c59] text-white border-[#4a7c59]' : 'bg-white text-[#1a472a] border-[#1a472a]/20 hover:border-[#4a7c59]/60'
+  }`;
+
+/** Dates and give-or-lend toggles for a thing need. At least one mode stays on. */
+export function ThingTermsFields({
+  idBase,
+  terms,
+  defaultLoan,
+  onChange,
+}: {
+  idBase: string;
+  terms: ThingTerms;
+  /** Whether loans are on when the need has not said. */
+  defaultLoan: boolean;
+  onChange: (patch: ThingTerms) => void;
+}) {
+  const gift = terms.acceptsGift ?? true;
+  const loan = terms.acceptsLoan ?? defaultLoan;
+  const [modeError, setModeError] = useState(false);
+  const endsEarly = !!terms.neededFrom && !!terms.neededUntil && terms.neededUntil < terms.neededFrom;
+  const toggle = (which: 'gift' | 'loan') => {
+    const nextGift = which === 'gift' ? !gift : gift;
+    const nextLoan = which === 'loan' ? !loan : loan;
+    if (!nextGift && !nextLoan) {
+      setModeError(true);
+      return;
+    }
+    setModeError(false);
+    onChange({ acceptsGift: nextGift, acceptsLoan: nextLoan });
+  };
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label htmlFor={`${idBase}-from`} className="block text-sm font-medium text-[#1a472a] mb-1">{NEED_FORM.neededFrom}</label>
+        <Input
+          id={`${idBase}-from`}
+          type="date"
+          value={terms.neededFrom ?? ''}
+          onChange={(e) => onChange({ neededFrom: e.target.value || undefined })}
+          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+        />
+      </div>
+      <div>
+        <label htmlFor={`${idBase}-until`} className="block text-sm font-medium text-[#1a472a] mb-1">{NEED_FORM.neededUntil}</label>
+        <Input
+          id={`${idBase}-until`}
+          type="date"
+          min={terms.neededFrom || undefined}
+          value={terms.neededUntil ?? ''}
+          onChange={(e) => onChange({ neededUntil: e.target.value || undefined })}
+          aria-invalid={endsEarly}
+          aria-describedby={endsEarly ? `${idBase}-until-error` : undefined}
+          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+        />
+      </div>
+      {endsEarly && (
+        <p id={`${idBase}-until-error`} role="alert" className="sm:col-span-2 text-sm text-red-700">{NEED_FORM.endsBeforeStart}</p>
+      )}
+      <div role="group" aria-labelledby={`${idBase}-modes`} className="sm:col-span-2">
+        <p id={`${idBase}-modes`} className="text-sm font-medium text-[#1a472a] mb-1">{NEED_FORM.howTake}</p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" aria-pressed={gift} onClick={() => toggle('gift')} className={toggleClass(gift)}>
+            {NEED_FORM.asGift}
+          </button>
+          <button type="button" aria-pressed={loan} onClick={() => toggle('loan')} className={toggleClass(loan)}>
+            {NEED_FORM.onLoan}
+          </button>
+        </div>
+        {modeError && <p role="alert" className="mt-1 text-sm text-red-700">{NEED_FORM.chooseMode}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** On the land, remote, or either. */
+function WorkModeField({ idBase, value, onChange }: { idBase: string; value: WorkMode; onChange: (m: WorkMode) => void }) {
+  const modes: WorkMode[] = ['on_site', 'remote', 'either'];
+  return (
+    <fieldset>
+      <legend className="text-sm font-medium text-[#1a472a] mb-1">{NEED_FORM.whereDone}</legend>
+      <div className="flex flex-wrap gap-2">
+        {modes.map((m) => (
+          <label
+            key={m}
+            className={`inline-flex items-center cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#1a472a] ${toggleClass(value === m)}`}
+          >
+            <input
+              type="radio"
+              name={`${idBase}-where`}
+              value={m}
+              checked={value === m}
+              onChange={() => onChange(m)}
+              className="sr-only"
+            />
+            {workModeLabel(m)}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/** A role's start date and where it is done. The end date follows from its weeks. */
+function RoleTermsFields({
+  idBase,
+  role,
+  onChange,
+}: {
+  idBase: string;
+  role: Pick<RoleRequirement, 'startsOn' | 'workMode'>;
+  onChange: (patch: Partial<RoleRequirement>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label htmlFor={`${idBase}-start`} className="block text-sm font-medium text-[#1a472a] mb-1">{NEED_FORM.startsOn}</label>
+        <Input
+          id={`${idBase}-start`}
+          type="date"
+          value={role.startsOn ?? ''}
+          onChange={(e) => onChange({ startsOn: e.target.value || undefined })}
+          aria-describedby={`${idBase}-start-help`}
+          className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm sm:max-w-xs"
+        />
+        <p id={`${idBase}-start-help`} className="text-xs text-[#1a472a]/80 mt-1">{NEED_FORM.startsOnHelper}</p>
+      </div>
+      <WorkModeField idBase={idBase} value={role.workMode ?? 'on_site'} onChange={(m) => onChange({ workMode: m })} />
+    </div>
+  );
+}
+
+/** The line a role row shows: its time line once it has a start date, and where it is done. */
+function roleSummary(role: RoleRequirement): string {
+  const line = role.startsOn
+    ? roleTimeLine({
+        kind: 'role',
+        capacityUnit: 'hours_per_week',
+        quantityWanted: role.hoursPerWeek,
+        ...roleWindow(role),
+      })
+    : null;
+  return [line, workModeLabel(role.workMode ?? 'on_site')].filter(Boolean).join(' · ');
+}
+
+// ── The Money step (build spec 2026-09-25, sections 11 and 14.1) ─────────────
+
+/**
+ * Money this project needs. A choice is required, nothing is selected at
+ * first, and no money sends 0. The money-share note is guidance for the
+ * project's stewards only and never blocks sending. Exported for tests.
+ */
+export function FinancialTargetSection({
+  inKindTotal,
   landTotal,
   equipmentTotal,
   rolesTotal,
   otherTotal,
+  currency,
+  currencySymbol,
+  moneyChoice,
+  onMoneyChoice,
+  financialTarget,
+  setFinancialTarget,
+  moneyError,
+  choiceRef,
+  band,
+  maEarthUrl,
+  setMaEarthUrl,
+  stewardUrl,
+  setStewardUrl,
+  routeErrors,
+  durationDays,
+  setDurationDays,
 }: {
-  grandTotal: number;
-  recommendedFinancial: number;
-  financialTarget: number;
-  setFinancialTarget: (value: number) => void;
-  financialNotes: string;
-  setFinancialNotes: (value: string) => void;
-  durationDays: number;
-  setDurationDays: (value: number) => void;
-  currencySymbol: string;
+  inKindTotal: number;
   landTotal: number;
   equipmentTotal: number;
   rolesTotal: number;
   otherTotal: number;
+  currency: string;
+  currencySymbol: string;
+  moneyChoice: MoneyChoice | null;
+  onMoneyChoice: (choice: MoneyChoice) => void;
+  financialTarget: number;
+  setFinancialTarget: (value: number) => void;
+  moneyError: string | null;
+  choiceRef?: React.RefObject<HTMLDivElement | null>;
+  band: { softMinPct: number; softMaxPct: number; defaultPct: number };
+  maEarthUrl: string;
+  setMaEarthUrl: (value: string) => void;
+  stewardUrl: string;
+  setStewardUrl: (value: string) => void;
+  routeErrors: Partial<Record<RoutePartner, string>>;
+  durationDays: number;
+  setDurationDays: (value: number) => void;
 }) {
-  const financialPercentage = grandTotal > 0 ? (financialTarget / grandTotal) * 100 : 0;
-  
+  const asksMoney = moneyChoice === 'money';
+  const share = moneySharePct(inKindTotal, asksMoney ? financialTarget : 0);
+  const note = asksMoney && financialTarget > 0
+    ? moneyShareNote({ inKindAsk: inKindTotal, moneyAsk: financialTarget, asksNone: false, band })
+    : { line: null, outside: false };
+  const suggested = suggestedMoneyAsk(inKindTotal, band.defaultPct);
+  const sliderPct = Math.min(50, share);
+  const setFromSlider = (s: number) => {
+    if (s <= 0) return setFinancialTarget(0);
+    setFinancialTarget(Math.round((inKindTotal * s) / (100 - s)));
+  };
+  const focusRoute = (partner: RoutePartner) =>
+    document.getElementById(`route-${partner}`)?.focus();
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-            <Target className="w-6 h-6 text-[#4a7c59]" />
-            Financial Target
-          </h2>
-          <p className="text-sm text-[#1a472a]/80 mt-1">
-            How much crypto does your project need to raise?
-          </p>
-        </div>
+      <div className="mb-6">
+        <h2 id="money-step-heading" className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <Target className="w-6 h-6 text-[#4a7c59]" aria-hidden="true" />
+          {MONEY_STEP.heading}
+        </h2>
+        <p className="text-sm text-[#1a472a]/85 mt-1">{MONEY_STEP.intro}</p>
       </div>
-      
-      {/* Summary */}
+
+      {/* Summary of the in-kind ask */}
       <div className="bg-gradient-to-br from-[#4a7c59] to-[#1a472a] rounded-2xl p-6 text-white mb-6">
         <h3 className="text-lg font-medium mb-4 opacity-90">Campaign Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <p className="text-xs opacity-70">Land</p>
+            <p className="text-xs opacity-80">Land</p>
             <p className="text-xl font-bold">{formatCurrency(landTotal, currencySymbol)}</p>
           </div>
           <div>
-            <p className="text-xs opacity-70">Equipment</p>
+            <p className="text-xs opacity-80">Equipment</p>
             <p className="text-xl font-bold">{formatCurrency(equipmentTotal, currencySymbol)}</p>
           </div>
           <div>
-            <p className="text-xs opacity-70">Roles</p>
+            <p className="text-xs opacity-80">Roles</p>
             <p className="text-xl font-bold">{formatCurrency(rolesTotal, currencySymbol)}</p>
           </div>
           <div>
-            <p className="text-xs opacity-70">Other</p>
+            <p className="text-xs opacity-80">Other</p>
             <p className="text-xl font-bold">{formatCurrency(otherTotal, currencySymbol)}</p>
           </div>
         </div>
         <div className="border-t border-white/20 pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-lg">Total Campaign Value</span>
-            <span className="text-3xl font-bold">{formatCurrency(grandTotal, currencySymbol)}</span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-lg">{MONEY_STEP.summaryInKind}</span>
+            <span className="text-3xl font-bold">{formatCurrency(inKindTotal, currencySymbol)}</span>
           </div>
         </div>
       </div>
-      
-      {/* Financial Target Input */}
-      <div className="bg-[#fff8e1] rounded-2xl p-6 border border-[#d4a017]/30 mb-6">
-        <div className="flex items-start gap-3 mb-4">
-          <Info className="w-5 h-5 text-[#d4a017] flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-[#1a472a]">Why set a crypto target?</h3>
-            <p className="text-sm text-[#1a472a]/75 mt-1">
-              Crowd pooling covers land, equipment, and skills directly, and some things still need money:
-              permits, insurance, emergency funds, and operating costs. Your crypto target is tracked right
-              here on your campaign, pledged and delivered wallet to wallet. National currency runs through
-              our partners instead: donations run through Ma Earth, loans run through GoSteward. Link yours
-              after your campaign is live. We recommend at least 20% of your total campaign value in
-              financial contributions.
-            </p>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-xl p-4 border border-[#d4a017]/20">
-          <label className="block text-sm font-medium text-[#1a472a] mb-2">
-            Crypto Target (USDC, ETH on Base) in {currencySymbol} value
-          </label>
-          
-          {/* Full-width input with currency symbol */}
-          <div className="relative mb-4">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-[#1a472a]/80">
-              {currencySymbol}
-            </span>
-            <Input
-              type="number"
-              value={financialTarget || ''}
-              onChange={(e) => setFinancialTarget(parseFloat(e.target.value) || 0)}
-              placeholder={recommendedFinancial.toString()}
-              className="w-full bg-white border-[#7dd87d]/30 text-2xl font-bold pl-10 h-14"
-            />
-          </div>
-          
-          {/* Percentage info */}
-          <div className="flex items-center justify-between mb-4 text-sm">
-            <span className="text-[#1a472a]/80">
-              {financialPercentage.toFixed(1)}% of total needs
-            </span>
-            <span className="text-[#4a7c59] font-medium">
-              Recommended: {formatCurrency(recommendedFinancial, currencySymbol)} (20%)
-            </span>
-          </div>
-          
-          {/* Percentage slider */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-[#1a472a]/80">
-              <span>5%</span>
-              <span>Adjust % of total needs</span>
-              <span>50%</span>
-            </div>
-            <input
-              type="range"
-              min="5"
-              max="50"
-              step="1"
-              value={Math.min(50, Math.max(5, financialPercentage))}
-              onChange={(e) => setFinancialTarget(Math.round(grandTotal * (parseInt(e.target.value) / 100)))}
-              className="w-full h-3 bg-gradient-to-r from-[#f0f7f0] via-[#7dd87d] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
-              style={{
-                WebkitAppearance: 'none',
-                background: `linear-gradient(to right, #f0f7f0 0%, #7dd87d ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 100%)`
-              }}
-            />
-            <div className="flex justify-between text-xs">
-              <span className="text-[#1a472a]/80">Conservative</span>
-              <span className="text-[#4a7c59] font-medium">{financialPercentage.toFixed(0)}%</span>
-              <span className="text-[#1a472a]/80">Flexible</span>
-            </div>
-          </div>
+      {/* The money choice: required, nothing selected at first */}
+      <div
+        ref={choiceRef}
+        role="radiogroup"
+        aria-labelledby="money-step-heading"
+        aria-describedby={moneyError ? 'money-choice-error' : undefined}
+        aria-invalid={!!moneyError}
+        className={`rounded-2xl p-4 sm:p-6 mb-6 border scroll-mt-24 ${moneyError ? 'border-red-400 bg-red-50/40' : 'border-[#7dd87d]/30 bg-white'}`}
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([
+            ['money', MONEY_STEP.asksMoney],
+            ['none', MONEY_STEP.asksNone],
+          ] as const).map(([value, label]) => (
+            <label
+              key={value}
+              className={`flex items-center gap-3 min-h-11 rounded-xl border px-4 py-3 cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#1a472a] ${
+                moneyChoice === value ? 'border-[#4a7c59] bg-[#f0f7f0]' : 'border-[#1a472a]/20 bg-white'
+              }`}
+            >
+              <input
+                type="radio"
+                name="money-choice"
+                value={value}
+                checked={moneyChoice === value}
+                onChange={() => onMoneyChoice(value)}
+                className="h-5 w-5 shrink-0 accent-[#4a7c59]"
+              />
+              <span className="text-sm font-semibold text-[#1a472a]">{label}</span>
+            </label>
+          ))}
         </div>
+        {moneyError && (
+          <p id="money-choice-error" role="alert" className="mt-2 text-sm font-medium text-red-700">{moneyError}</p>
+        )}
+
+        {asksMoney && (
+          <div className="mt-5 space-y-4">
+            <div>
+              <label htmlFor="money-amount" className="block text-sm font-medium text-[#1a472a] mb-2">
+                {MONEY_STEP.howMuch(currency)}
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-[#1a472a]/80" aria-hidden="true">
+                  {currencySymbol}
+                </span>
+                <Input
+                  id="money-amount"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={financialTarget || ''}
+                  onChange={(e) => setFinancialTarget(Math.max(0, parseFloat(e.target.value) || 0))}
+                  aria-describedby="money-share-note"
+                  className="w-full bg-white border-[#7dd87d]/30 text-xl font-bold pl-12 h-14"
+                />
+              </div>
+              <p
+                id="money-share-note"
+                className={`mt-2 text-sm ${note.outside ? 'text-[#1a472a] font-medium' : 'text-[#1a472a]/80'}`}
+                aria-live="polite"
+              >
+                {note.line}
+              </p>
+            </div>
+
+            {suggested > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm text-[#1a472a]/85">
+                  {MONEY_STEP.suggestion(String(band.defaultPct), formatCurrency(suggested, currencySymbol))}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setFinancialTarget(suggested)}
+                  className="min-h-11 border-[#4a7c59] text-[#1a472a]"
+                >
+                  {MONEY_STEP.useAmount(formatCurrency(suggested, currencySymbol))}
+                </Button>
+              </div>
+            )}
+
+            {inKindTotal > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-[#1a472a]/80">
+                  <span>0%</span>
+                  <span id="money-slider-label">{MONEY_STEP.sliderLabel}</span>
+                  <span>50%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={50}
+                  step={1}
+                  value={sliderPct}
+                  onChange={(e) => setFromSlider(parseInt(e.target.value, 10) || 0)}
+                  aria-labelledby="money-slider-label"
+                  aria-valuetext={`${sliderPct}%`}
+                  className="w-full h-11 cursor-pointer accent-[#4a7c59]"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      
+
+      {/* Where people can put money in: routes the project already holds */}
+      {asksMoney && (
+        <div className="bg-[#f8f5f0] rounded-2xl p-4 sm:p-6 border border-[#7dd87d]/30 mb-6 space-y-5">
+          <h3 className="font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>{MONEY_STEP.whereHeading}</h3>
+          <EligibilityQuiz
+            embedded
+            idPrefix="wizard-route-quiz"
+            currencySymbol={currencySymbol}
+            onResult={(rec) => focusRoute(partnerForRecommendation(rec))}
+          />
+          {([
+            ['maearth', MONEY_STEP.maEarthField, maEarthUrl, setMaEarthUrl, 'https://maearth.com/...'],
+            ['gosteward', MONEY_STEP.stewardField, stewardUrl, setStewardUrl, 'https://gosteward.com/...'],
+          ] as const).map(([partner, label, value, setValue, placeholder]) => (
+            <div key={partner}>
+              <label htmlFor={`route-${partner}`} className="block text-sm font-medium text-[#1a472a] mb-1">{label}</label>
+              <Input
+                id={`route-${partner}`}
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                maxLength={512}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={placeholder}
+                aria-invalid={!!routeErrors[partner]}
+                aria-describedby={`routes-helper${routeErrors[partner] ? ` route-${partner}-error` : ''}`}
+                className="min-h-11 bg-white border-[#7dd87d]/30 text-base md:text-sm"
+              />
+              {routeErrors[partner] && (
+                <p id={`route-${partner}-error`} role="alert" className="mt-1 text-sm text-red-700">{routeErrors[partner]}</p>
+              )}
+            </div>
+          ))}
+          <p id="routes-helper" className="text-sm text-[#1a472a]/80">{MONEY_STEP.routesHelper}</p>
+        </div>
+      )}
+
       {/* Campaign Duration */}
       <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30 mb-6">
         <h3 className="font-medium text-[#1a472a] mb-2 flex items-center gap-2">
@@ -2880,7 +3422,7 @@ function FinancialTargetSection({
         <p className="text-sm text-[#1a472a]/80 mb-4">
           How long should your campaign run? Choose between 1 and 365 days.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-3 flex-1">
             <Input
@@ -2896,7 +3438,7 @@ function FinancialTargetSection({
             />
             <span className="text-[#1a472a]/75">days</span>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {[30, 60, 90, 120, 180, 365].map((d) => (
               <button
@@ -2913,7 +3455,7 @@ function FinancialTargetSection({
             ))}
           </div>
         </div>
-        
+
         <div className="mt-3">
           <input
             type="range"
@@ -2932,19 +3474,6 @@ function FinancialTargetSection({
             <span>1 year</span>
           </div>
         </div>
-      </div>
-      
-      {/* Notes */}
-      <div className="bg-white rounded-2xl p-6 border border-[#7dd87d]/30">
-        <label className="block text-sm font-medium text-[#1a472a] mb-2">
-          Additional Notes (optional)
-        </label>
-        <Textarea
-          value={financialNotes}
-          onChange={(e) => setFinancialNotes(e.target.value)}
-          placeholder="Any additional context about your financial needs..."
-          className="bg-white border-[#7dd87d]/30 min-h-[100px]"
-        />
       </div>
     </div>
   );

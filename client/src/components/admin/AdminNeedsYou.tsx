@@ -22,6 +22,7 @@ import {
   TrendingUp,
   AlertTriangle,
   FileText,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { AdminHrefExtras } from "@/lib/adminNav";
@@ -50,6 +51,7 @@ const ICONS: Record<string, LucideIcon> = {
   "outbound-drafts": FileText,
   outreach: Sprout,
   applications: Building2,
+  "money-routes": Wallet,
 };
 
 function severityStyles(severity: OperatorPulseSeverity): string {

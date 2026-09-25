@@ -131,6 +131,12 @@ describe("contributorStatusLabel", () => {
     expect(contributorStatusLabel("rejected")).toBe("Closed");
     expect(contributorStatusLabel("expired")).toBe("Closed");
   });
+  it("reads Returned once a loan is back with its owner, whatever the status", () => {
+    expect(contributorStatusLabel("accepted", null, "2026-09-20T10:00:00Z")).toBe("Returned");
+    expect(contributorStatusLabel("fulfilled", null, new Date("2026-09-20T10:00:00Z"))).toBe("Returned");
+    expect(contributorStatusLabel("thanked", 0, null)).toBe("Thanked");
+    expect(contributorStatusLabel("accepted", 10, undefined)).toBe("Accepted for 10 hours a week");
+  });
 });
 
 describe("hoursDialogNumbers", () => {
@@ -172,6 +178,23 @@ describe("stewardActionDescription", () => {
     // Count-based needs send no reopened notice.
     expect(stewardActionDescription({ action: "release", hoursNeed: false, hasAccount: true, name: "Kai", roleFilled: true }))
       .not.toContain("waiting");
+  });
+  it("says what a returned loan records, and that nothing else changes", () => {
+    expect(stewardActionDescription({ action: "returned", hoursNeed: false, hasAccount: true, name: "Kai", title: "Wood chipper" }))
+      .toBe("This records that Wood chipper is back with Kai. Nothing else changes.");
+    expect(stewardActionDescription({ action: "returned", hoursNeed: false, hasAccount: false, name: "Kai" }))
+      .toBe("This records that it is back with Kai. Nothing else changes.");
+  });
+  it("words delivery as a record: confirmed value already decided what counts", () => {
+    expect(stewardActionDescription({ action: "deliver", hoursNeed: true, hasAccount: false, name: "Rosa" }))
+      .toBe("This marks that Rosa has served the hours they committed to.");
+    expect(stewardActionDescription({ action: "deliver", hoursNeed: false, hasAccount: false, name: "Rosa" }))
+      .toBe("Confirm this contribution arrived.");
+    expect(stewardActionDescription({ action: "deliver", hoursNeed: false, hasAccount: true, name: "Rosa" }))
+      .toBe("Confirm this contribution arrived. It grows on their Living Tree too.");
+    for (const hoursNeed of [true, false]) {
+      expect(stewardActionDescription({ action: "deliver", hoursNeed, hasAccount: true, name: "Rosa" })).not.toMatch(/counts/);
+    }
   });
   it("keeps the release and thanks branches", () => {
     expect(stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: false, name: "Kai", heldHours: 30 }))

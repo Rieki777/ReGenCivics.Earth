@@ -137,9 +137,16 @@ export function groupOffersByNeed<C extends QueueContribution, I extends QueueIt
 
 /**
  * A contributor's view of where their offer stands, in plain words.
- * An accepted place on an hours need reads with its hours.
+ * An accepted place on an hours need reads with its hours. A loan the
+ * stewards marked returned reads Returned, whatever its status: the stamp
+ * (campaign_contributions.returnedAt) changes no status.
  */
-export function contributorStatusLabel(status: string, acceptedHours?: number | null): string {
+export function contributorStatusLabel(
+  status: string,
+  acceptedHours?: number | null,
+  returnedAt?: Date | string | null,
+): string {
+  if (returnedAt) return "Returned";
   switch (status) {
     case "pending": return "Waiting on the stewards";
     case "accepted":
@@ -193,11 +200,13 @@ export const REOPEN_NOTICE_IF_OPENED =
 export const REOPEN_NOTICE_ON_RAISE = "People still waiting on this role hear that it has opened up.";
 
 export function stewardActionDescription(args: {
-  action: "accept" | "reject" | "deliver" | "thanks" | "release" | "hours";
+  action: "accept" | "reject" | "deliver" | "thanks" | "release" | "hours" | "returned";
   hoursNeed: boolean;
   hasAccount: boolean;
   name: string;
   roleTitle?: string | null;
+  /** What was offered, for the returned line: "This records that {title} is back with {name}." */
+  title?: string | null;
   heldHours?: number | null;
   /** The role is filled right now, so a release or lower hours opens it. */
   roleFilled?: boolean;
@@ -212,9 +221,11 @@ export function stewardActionDescription(args: {
     case "reject":
       return "They hear from you in their notifications or by email.";
     case "deliver":
+      // Confirmed value decides completion (ruling 2026-09-24): an offer
+      // counts once the stewards accept it. Delivery records that it arrived.
       return (hoursNeed
-        ? `This marks that ${name} has served the hours they committed to. It then counts toward the campaign.`
-        : "Confirm this contribution arrived. This is the moment it counts.")
+        ? `This marks that ${name} has served the hours they committed to.`
+        : "Confirm this contribution arrived.")
         + (hasAccount ? " It grows on their Living Tree too." : "");
     case "thanks":
       return hasAccount
@@ -230,5 +241,8 @@ export function stewardActionDescription(args: {
       return (hasAccount
         ? `Set how many hours a week ${name} holds on ${role}. They hear about it in their notifications.`
         : `Set how many hours a week ${name} holds on ${role}. ${tellThem}`) + others;
+    case "returned":
+      // A stamp only (campaigns.markLoanReturned): no status, counter or notice changes.
+      return `This records that ${args.title || "it"} is back with ${name}. Nothing else changes.`;
   }
 }

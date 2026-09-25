@@ -5,9 +5,15 @@
  * (server/lib/project-steward.ts), so a signed-in stranger who forced this
  * open would get FORBIDDEN on every button.
  *
- * Anchors: #steward-tools, #review, #claims, #needs, #updates-composer,
- * #followers. The steward digest and the old /campaign/:id/manage links land
- * on these.
+ * Anchors: #steward-tools, #review, #claims, #money-routes, #needs,
+ * #updates-composer, #followers, #campaign-status. The steward digest and the
+ * old /campaign/:id/manage links land on these.
+ *
+ * "How it's going" reads the campaign's one progress reading (front.progress,
+ * shared/campaignProgress.ts), the same figures visitors see, plus the soft
+ * money-share note (guidance only). Ready to crowdpool ticks are stored on
+ * the campaign while it is a draft, in review, or sent back, so the review
+ * team sees them (build spec 2026-09-25, section 12).
  */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +35,21 @@ import { CampaignUpdatesComposer } from "./CampaignUpdatesComposer";
 import { CampaignStewardStats } from "./CampaignStewardStats";
 import { CancelCampaignDialog } from "./CancelCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
+import { MoneyRoutesCard } from "./MoneyRoutesCard";
+import { CASH_SHARE } from "@shared/crowdpoolModel";
+
+/** Statuses whose stewards keep ticking the Ready to crowdpool list. Wizard campaigns start in review. */
+const READINESS_STATUSES = ["draft", "pending_review", "rejected"];
+
+/** The currency's symbol for the money route quiz ("$", "EUR"), from Intl. */
+function currencySymbolFor(currency: string | null | undefined): string {
+  try {
+    const parts = new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).formatToParts(0);
+    return parts.find((p) => p.type === "currency")?.value ?? "$";
+  } catch {
+    return currency || "$";
+  }
+}
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type ProjectFront = NonNullable<RouterOutputs["projects"]["getPublic"]["front"]>;
@@ -62,6 +83,7 @@ export function StewardTools({
     { retry: false },
   );
   const { data: followers } = trpc.campaigns.followerCounts.useQuery({ campaignId }, { retry: false });
+  const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
 
   const queue = useMemo(
     () => contributions ? buildStewardQueue({ contributions, items: front.items, campaignStatus: status }) : null,
@@ -96,7 +118,14 @@ export function StewardTools({
     onError: (err) => toast.error(err.message || "Couldn't send it for review. Try again."),
   });
 
-  const totalValue = front.items.reduce((sum, item) => sum + (item.estimatedValue || 0), 0);
+  // Stored on the campaign (campaigns.setReadinessTick) so the review team sees them.
+  const readiness = READINESS_STATUSES.includes(status) ? (
+    <>
+      <p className="text-sm font-semibold text-[#1a472a] mb-2">The review checks these eight before approving:</p>
+      <CrowdpoolReadiness framed={false} campaignId={campaignId} id={`ready-campaign-${campaignId}`} />
+    </>
+  ) : null;
+
   const canCancel = canTransition(status, "cancelled", "steward") || (isAdmin && canTransition(status, "cancelled", "admin"));
 
   return (
@@ -117,8 +146,8 @@ export function StewardTools({
         />
         <CampaignStewardStats
           campaignId={campaignId}
-          totalValue={totalValue}
-          pledgedTotal={front.pledgedTotal || 0}
+          progress={front.progress}
+          band={settings?.moneyShare ?? CASH_SHARE}
           contributorsCount={front.contributorsCount ?? 0}
           counts={counts}
           formatCurrency={formatCurrency}
@@ -131,6 +160,14 @@ export function StewardTools({
         formatCurrency={formatCurrency}
         focus={focus}
         onChanged={onChanged}
+      />
+
+      <MoneyRoutesCard
+        campaignId={campaignId}
+        isExample={!!front.isDemo}
+        closed={closed}
+        isAdmin={isAdmin}
+        currencySymbol={currencySymbolFor(front.currency)}
       />
 
       <NeedsGlance items={front.items} canEditHours={!closed} onChanged={refreshAll} />
@@ -181,8 +218,7 @@ export function StewardTools({
             <p className="text-sm text-[#1a472a]/80 mb-3">
               This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.
             </p>
-            <p className="text-sm font-semibold text-[#1a472a] mb-2">The review checks these eight before approving:</p>
-            <CrowdpoolReadiness framed={false} storageKey={`campaign-${campaignId}`} className="mb-4" />
+            <div className="mb-4">{readiness}</div>
             <Button
               onClick={() => submitForReview.mutate({ id: campaignId })}
               disabled={submitForReview.isPending}
@@ -199,6 +235,7 @@ export function StewardTools({
         {status === "rejected" && (
           <p className="text-sm text-[#1a472a]/80 mt-2 mb-6">The review team sent this campaign back. Check your notifications for their notes.</p>
         )}
+        {(status === "pending_review" || status === "rejected") && <div className="mb-6">{readiness}</div>}
         {status === "active" && (
           <p className="text-sm text-[#1a472a]/80 mt-2 mb-6">Live and open for offers.</p>
         )}
