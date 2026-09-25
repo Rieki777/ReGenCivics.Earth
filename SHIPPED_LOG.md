@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (seasons, round 3): Four Season Organizers at the top band; one wheel, many lands; the intake turns with the wheel
+
+- **Four Season Organizers, Band 7** (Rye: "they're the core role to make it all happen"): The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest), each with card and scene art. They are on /team, and each one leads the "Roles in this season" row on /seasons for their season. Each receives the wheel at the turn that opens their season and passes it on at the next. Season 2's base budget is now 11,400,000 $ReGen (ADR-59).
+- **The Assembly Steward reaches /team.** Role 14 in the Season 1 record had never been added to the roles table. It is there now as The Convener, Band 2, with new art.
+- **One wheel, many lands.** A thin outer ring on the wheel shows the visitor's own land (Northern, Southern, Near the equator), guessed from the browser time zone and switchable. A new /seasons section says which seasons are shared (Design and Resource, online, one clock) and which are local (Build and Rest, timed to each climate), with wet and dry seasons for land near the equator, the year-round festival route, seeds and harvest at the Handoff Festival, and the moon as the one clock every land shares. Session times show in each visitor's local time; rotating times are planned for Season 3.
+- **The intake turns with the wheel.** `shared/applicationWindow.ts` is now a date window: applications for the next Season are reviewed from the June solstice to September 10, and held quietly the rest of the year. It rolls over by itself each year; `override` forces it open or held when the loose timeline shifts. The applicant email works it out per request. The /land banner, the /apply meta description and structured data read it too, and the static files (index.html, llms.txt, llms-full.txt) now say things that stay true: Season 2 closed September 11, and when review runs each year.
+- Source: this session, third round. Harness story `seasons-page` carries the organizers.
+
+Carryover: a "your application is now being reviewed" email to held applicants when the window opens (not built); organizer role holders to be found; the Season Facilitator keeps the incubator weeks for now, and Rye can move them to the Design Season Organizer.
+
 ## 2026-09-24 (seasons, round 2): Design, Resource, Build, Rest; one applications status; the site-wide audit
 
 - **Season names lead with what they are for** (Rye's ruling): the Design, Resource, Build, and Rest Seasons, loosely following winter, spring, summer, and fall, with the wheel-of-the-year imagery kept. `shared/regenYear.ts` carries `title` and `pattern`; the wheel, /seasons, /team's rhythm cards, the Glossary, the AI video tutor and the crawler prose all read it (ADR-58).

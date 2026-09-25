@@ -66,7 +66,13 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 **Handoff Festival**. The September equinox recap and passoff, the biggest of the four: the outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day.
 
-**Season Organizer**. One organizing role per season (Design, Resource, Build, Rest), drafted 2026-09-24 in `seasons/season-2-the-first-turn.md` and pending Rye's confirmation of names and bands.
+**Season Organizer**. One organizing role per season, Band 7, confirmed 2026-09-24 (`seasons/season-2-the-first-turn.md`): **The Lantern-Keeper** (Design Season Organizer), **The Rainmaker** (Resource), **The Barn-Raiser** (Build), **The Hearth-Keeper** (Rest). Each receives the wheel at the turn that opens their season and passes it on at the next.
+
+**Shared and local seasons**. Design and Resource are mostly online, so the whole network does them together on one clock (shared). Build and Rest happen on the land, so each project times them to its own climate (local): southern land builds roughly September to March, land near the equator builds in its dry season and rests through the heaviest rains. `REGEN_SEASONS[k].scope` in `shared/regenYear.ts`.
+
+**Your land ring**. The thin outer ring on the /seasons wheel showing the visitor's land's own seasons for Northern, Southern or Near-the-equator land (`REGEN_LANDS`). Guessed from the browser time zone, never from IP; the visitor can switch it.
+
+**Intake window**. When land project applications are reviewed: the Rest Season, from the June solstice to about September 10, for the Season that opens at the next September equinox. Outside it, applications are held quietly and applicants get no email until the window opens. Rolls over each year by itself (`shared/applicationWindow.ts`, `INTAKE_WINDOW`, with an `override`).
 
 **Season** (numbered: "Season 2"). A cohort's year. Each numbered Season starts in winter with a new cohort of land projects and follows it once around the wheel. Season 1 was the first incubator (2022: 43 applications, 16 presented, 13 selected) plus the long build that followed, through the September 2026 equinox; its contributor roles are recorded as "The First Build" in `SEASONS_HISTORY.md`. Season 2 opened at the September 2026 equinox (Selection Day 2026-09-26); its applications closed September 11, and new applications are held for the next season (`shared/applicationWindow.ts`). "Design Season", "Resource Season" and the rest name one quarter of the year.
 

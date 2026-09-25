@@ -37,11 +37,12 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Total base budget:** 7,800,000 $ReGen ($78,000) per season across all 14 roles
 - **Full details:** [`seasons/season-1-the-first-build.md`](seasons/season-1-the-first-build.md)
 
-### Season 2: The First Turn (draft)
+### Season 2: The First Turn
 - **Dates:** Loose. From the September 2026 equinox (Selection Day 2026-09-26) around the wheel to the next Handoff Festival, about September 2027
-- **Shape:** Design Season (winter), Resource Season (spring), Build Season (summer), Rest Season (fall), with a recap and passoff at each solstice and equinox (`shared/regenYear.ts`, ADR-57, ADR-58)
-- **Roles:** the Season 1 roles, re-mapped to the flow, plus four Season Organizers (one per season), drafted and awaiting Rye's confirmation of names and bands
-- **Key changes:** the incubator is the Design Season; Season Facilitator and Incubator Guide moved one season earlier with it
+- **Shape:** Design Season (winter), Resource Season (spring), Build Season (summer), Rest Season (fall), with a recap and passoff at each solstice and equinox (`shared/regenYear.ts`, ADR-57, ADR-58, ADR-59)
+- **Roles:** 18 Game roles. The Season 1 roles re-mapped to the flow, the Assembly Steward added to /team, and four Season Organizers at Band 7: The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest)
+- **Key changes:** the incubator is the Design Season; Season Facilitator and Incubator Guide moved one season earlier with it; each season now has its own organizer, handing off at every solstice and equinox
+- **Total base budget:** 11,400,000 $ReGen ($114,000); max 14,820,000 with all bonuses
 - **Full details:** [`seasons/season-2-the-first-turn.md`](seasons/season-2-the-first-turn.md)
 
 ---
