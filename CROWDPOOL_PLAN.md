@@ -176,6 +176,10 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | A claim can no longer sweep a restricted balance to Base | `3c0a579` |
 | The model, human and machine readable | `750512d`, `3ae3d67` |
 | Own legal due diligence, US and Swiss | not committed, see `legal-research/` |
+| Public project pages with steward tools, role capacity in hours, campaign notices on the spine, cancelling (contract 3) | `198213bc` |
+| Sign-in returns to the page, email choices without a profile, a notice when a filled role reopens | `85594f1f` |
+| Embed pages escape every value they print | `3c2e817f` |
+| One progress reading in-kind first, the nine-capital sheet, give or lend, money routes admins verify, the money rail enforced, one phone-first project page, the Needs tab, stored readiness ticks, the words guard (contract 4) | `d69d40ca` to `999fbbaf` |
 
 ---
 
