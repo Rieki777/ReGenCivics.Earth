@@ -38,15 +38,26 @@ export function descriptionForItem(item: any): string | null {
   return null;
 }
 
-/** Whole-currency formatter for a campaign's currency. */
+/**
+ * Whole-currency formatter for a campaign's currency. The wizard offers
+ * codes Intl does not know (SEEDS, USDC, USDT), and Intl throws a RangeError
+ * on them, which took down every page that listed such a campaign. Those
+ * read as a plain amount with the code after it: "1,200 USDC".
+ */
 export function makeCurrencyFormatter(currency: string | null | undefined): (amount: number) => string {
-  const fmt = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  return (amount: number) => fmt.format(amount || 0);
+  const code = (currency || "USD").trim() || "USD";
+  try {
+    const fmt = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+    return (amount: number) => fmt.format(amount || 0);
+  } catch {
+    const plain = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+    return (amount: number) => `${plain.format(amount || 0)} ${code}`;
+  }
 }
 
 /** A campaign status in plain words, for pills on the project page. */

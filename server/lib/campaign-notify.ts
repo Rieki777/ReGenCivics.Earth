@@ -494,13 +494,13 @@ export function buildClaimExpired(args: {
   const { campaign, contribution } = args;
   const out: NotificationInput[] = [];
   const contributorId = recipientsOf([contribution.userId])[0];
-  const claimTitle = plain(contribution.title);
+  const needTitle = plain(contribution.title);
   if (contributorId) {
     out.push({
       userId: contributorId,
       type: "claim_expired",
-      title: "Your claim expired",
-      body: `Your claim "${claimTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can claim it again any time.`,
+      title: "Your place closed",
+      body: `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can offer again any time.`,
       link: projectLink(campaign, "your-contributions"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -511,8 +511,8 @@ export function buildClaimExpired(args: {
     out.push({
       userId: uid,
       type: "claim_expired",
-      title: "A claim expired",
-      body: `The claim "${claimTitle}" on ${campaignTitleOf(campaign)} expired, so its slots are open again.`,
+      title: "A place closed",
+      body: `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it is open again.`,
       link: projectLink(campaign, "review"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -806,6 +806,7 @@ export async function notifyClaimExpired(
   args: { campaign: NotifyCampaign; contribution: NotifyContribution },
   deps: NotifyDeps = {},
 ): Promise<number> {
+  // banned-terms-allow: a log label naming the claim_expired event, never shown to anyone
   return run("claim expired", async () =>
     deliver(buildClaimExpired({ ...args, stewardIds: await safeStewards(args.campaign) }), deps));
 }

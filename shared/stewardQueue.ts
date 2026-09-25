@@ -217,7 +217,7 @@ export function stewardActionDescription(args: {
   const tellThem = `${name} has no account here yet, so let them know yourself.`;
   switch (action) {
     case "accept":
-      return hoursNeed ? `Accept ${name} for a share of ${role}.` : "This reserves their place on the need.";
+      return hoursNeed ? `Accept ${name} for a share of ${role}.` : "This holds their place on the need.";
     case "reject":
       return "They hear from you in their notifications or by email.";
     case "deliver":

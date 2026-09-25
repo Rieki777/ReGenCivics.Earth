@@ -216,6 +216,55 @@ export const NEEDS_TAB = {
   onlyExamples: "These are example campaigns. Real needs open when Season 2 starts crowdpooling.",
   nothingAtAll: "No campaigns are open yet. Real needs open when Season 2 starts crowdpooling.",
   addUp: "Add up what you can bring",
+  // Added by lane 5 where the spec was silent.
+  /** Live real campaigns exist, and every one of their needs is filled. */
+  allFilled: "Every need on the live campaigns is filled right now.",
+  loading: "Gathering every open need...",
+  placeRemote: "Remote",
+  placeEither: "On the land or remote",
+  exampleRoute: "Example route",
+  exampleTag: "Example",
+  routeRow: (project: string, label: string) => `${project}: ${label}`,
+  verbLabel: (verb: string, title: string) => `${verb}: ${title}`,
+} as const;
+
+// ── The campaign gallery (/campaigns, lane 5) ───────────────────────────────
+
+export const GALLERY = {
+  tabs: {
+    active: (n: number) => `Active (${n})`,
+    needs: (n: number) => `Needs (${n})`,
+    upcoming: "Upcoming: Season Applications Open",
+    complete: (n: number) => `Complete (${n})`,
+  },
+  stillOpen: "Still open",
+  seeProject: "See the project",
+  contributors: (n: number) => (Number(n) === 1 ? "1 contributor" : `${n} contributors`),
+  share: "Share",
+  shareTitle: (name: string) => `Share ${name}`,
+  shareLabel: (name: string) => `Share ${name}`,
+  shareOnX: "Share on X",
+  shareOnWhatsApp: "Share on WhatsApp",
+  copyLink: "Copy link",
+  linkCopied: "Link copied",
+  sortLabel: "Sort campaigns",
+  sort: {
+    needsHand: "Needs a hand",
+    newest: "Newest",
+    closingSoonest: "Closing soonest",
+    closestToComplete: "Closest to complete",
+  },
+  examplesHeading: "Example campaigns",
+  examplesCaption: "These show how a campaign works. Nothing sent on them reaches a real project.",
+  impactHeading: "Combined impact across live campaigns",
+  impact: { campaigns: "live campaigns", needsMet: "needs met", places: "places" },
+  noCampaigns: "No campaigns yet.",
+  firstSeason: "The first season opens late 2026 / early 2027.",
+  noMatch: "No campaigns match your filters.",
+  noneComplete: "No campaign is complete yet.",
+  clearFilters: "Clear filters",
+  howItWorks: "How crowd pooling works",
+  watchVideo: "Watch: What is crowd pooling?",
 } as const;
 
 // ── Creator, steward and admin surfaces (section 14.1, lane 4) ──────────────

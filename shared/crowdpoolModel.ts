@@ -394,7 +394,12 @@ export const GOVERNANCE = {
   rcvoiceDeployedOnBase: false,
 } as const;
 
-/** Words we do not use, and what we say instead. Enforced by a repo guard. */
+/**
+ * Words we do not use, and what we say instead. Enforced on the campaign
+ * surfaces by scripts/check-banned-terms.mjs (gate 1f and CI), which reads
+ * these keys from this object, so the list lives here and only here. The
+ * guard scans an explicit file list, not the whole repo.
+ */
 export const BANNED_TERMS: Record<string, string> = {
   // "Earmarking" is the exact term of art in Rev. Rul. 63-252 for what destroys
   // deductibility when funds route to foreign organisations, and this cohort is

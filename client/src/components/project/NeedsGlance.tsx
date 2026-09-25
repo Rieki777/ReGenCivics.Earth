@@ -120,9 +120,9 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
             const hours = isHoursNeed(item);
             const fill = roleFillState(item);
             const wanted = item.quantityWanted || 1;
-            const claimed = item.quantityClaimed || 0;
+            const taken = item.quantityClaimed || 0;
             const delivered = item.quantityDelivered || 0;
-            const claimedPct = Math.min((claimed / wanted) * 100, 100);
+            const takenPct = Math.min((taken / wanted) * 100, 100);
             const deliveredPct = Math.min((delivered / wanted) * 100, 100);
             return (
               <div key={item.id} className="bg-[#f0f7f0] rounded-xl p-3 border border-[#7dd87d]/30 min-w-0">
@@ -139,7 +139,7 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
                 </div>
                 <p className="font-medium text-[#1a472a] text-sm mb-2 break-words">{decodeBasicEntities(titleForItem(item))}</p>
                 <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden mb-1">
-                  <div className="absolute inset-y-0 left-0 bg-[#7dd87d]/50 rounded-full" style={{ width: `${claimedPct}%` }} />
+                  <div className="absolute inset-y-0 left-0 bg-[#7dd87d]/50 rounded-full" style={{ width: `${takenPct}%` }} />
                   <div className="absolute inset-y-0 left-0 bg-[#4a7c59] rounded-full" style={{ width: `${deliveredPct}%` }} />
                 </div>
                 {hours ? (
@@ -149,7 +149,7 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
                 ) : (
                   <p className="text-xs text-[#1a472a]/80">
                     {delivered} of {wanted} delivered
-                    {claimed > delivered ? `, ${claimed - delivered} more claimed` : ""}
+                    {taken > delivered ? `, ${taken - delivered} more accepted` : ""}
                   </p>
                 )}
                 {hours && canEditHours && (

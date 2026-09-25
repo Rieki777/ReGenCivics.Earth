@@ -3,11 +3,13 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { trpc } from "@/lib/trpc";
-import type { GalleryCampaign } from "@/pages/CrowdPoolingProjects";
+import type { GalleryCampaign } from "@/components/crowdpool/GalleryCard";
+import { GALLERY } from "@shared/crowdpoolCopy";
 
 /**
  * Projects map (Phase 6). Plots active and funded campaigns as pins on a world
- * map, each linking to its campaign page. The campaigns table stores no
+ * map, each opening its project page focused on the campaign (the path the
+ * gallery card links to; /campaign/:id only redirects there now). The campaigns table stores no
  * coordinates, so locations are geocoded server-side (campaigns.geocodeLocations)
  * rather than in the browser, where the site CSP blocks a direct Nominatim call.
  * The basemap is Esri World Imagery, the same tiles the ship maps use, because
@@ -20,6 +22,7 @@ const ESRI_LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Refere
 
 interface Pin {
   id: number;
+  path: string;
   name: string;
   location: string;
   isDemo: boolean;
@@ -58,10 +61,11 @@ export function CampaignMap({
   onSelect,
 }: {
   campaigns: GalleryCampaign[];
-  onSelect: (id: number) => void;
+  /** Opens the project page: receives the card's path. */
+  onSelect: (path: string) => void;
 }) {
   const located = useMemo(
-    () => campaigns.filter((c) => c.location && c.location !== "Location TBD"),
+    () => campaigns.filter((c): c is GalleryCampaign & { location: string } => !!c.location && c.location !== "Location TBD"),
     [campaigns],
   );
   const locations = useMemo(
@@ -79,7 +83,7 @@ export function CampaignMap({
     return located
       .map((c) => {
         const g = geo[c.location];
-        return g ? { id: c.id, name: c.name, location: c.location, isDemo: c.isDemo, lat: g.lat, lng: g.lng } : null;
+        return g ? { id: c.id, path: c.path, name: c.name, location: c.location, isDemo: c.isDemo, lat: g.lat, lng: g.lng } : null;
       })
       .filter((p): p is Pin => p !== null);
   }, [geo, located]);
@@ -108,7 +112,7 @@ export function CampaignMap({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onSelect(p.id)}
+                  onClick={() => onSelect(p.path)}
                   style={{
                     background: "#4a7c59",
                     color: "#fff",
@@ -118,11 +122,11 @@ export function CampaignMap({
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
-                    minHeight: 40,
+                    minHeight: 44,
                     width: "100%",
                   }}
                 >
-                  View campaign
+                  {GALLERY.seeProject}
                 </button>
               </div>
             </Popup>

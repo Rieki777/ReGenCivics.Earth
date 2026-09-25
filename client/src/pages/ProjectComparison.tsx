@@ -5,12 +5,20 @@
  * from the database via campaigns.list. Demo campaigns (isDemo = 1) appear
  * with an Example badge, same as the gallery.
  *
- * Spec: CROWDPOOLING_PLATFORM_SPEC.md Part D.
+ * How far each campaign has come is the two-line reading every surface uses
+ * (shared/campaignProgress.ts, the progress summary on each list row):
+ * in-kind first, then money. No pooled percentage, no pledged total.
+ *
+ * Spec: CROWDPOOLING_PLATFORM_SPEC.md Part D; build spec 2026-09-25 (lane 5).
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, Plus, X, MapPin, Users, DollarSign, Calendar, Target, Scale } from 'lucide-react';
+import { progressLines, type CampaignProgressSummary } from '@shared/campaignProgress';
+import { campaignRedirectTarget } from '@shared/projectKey';
+import { decodeBasicEntities } from '@shared/htmlText';
+import { makeCurrencyFormatter } from '@/lib/needDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,22 +28,15 @@ import { BackButton } from "@/components/BackButton";
 
 const MAX_COMPARE = 4;
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$", EUR: "€", GBP: "£", PHP: "₱", JPY: "¥", INR: "₹"
-};
-
 interface CompareCampaign {
   id: number;
   name: string;
   location: string;
   description: string;
-  targetAmount: number;
-  currentAmount: number;
-  financialPledged: number;
-  financialTarget: number;
   currency: string;
-  contributorsCount?: number;
-  deadline: string | null; // ISO
+  /** The project page focused on this campaign. */
+  path: string;
+  progress: CampaignProgressSummary;
   focusAreas: string[];
   landSize: string;
   landStatus: string;
@@ -55,15 +56,12 @@ interface CompareCampaign {
 const LISTED_STATUSES = ["active", "funded", "completed"] as const;
 
 function money(amount: number, currency: string): string {
-  const symbol = CURRENCY_SYMBOLS[currency] || `${currency} `;
-  return `${symbol}${amount.toLocaleString()}`;
+  return makeCurrencyFormatter(currency)(amount);
 }
 
-function deadlineLabel(iso: string | null): string {
-  if (!iso) return "Ongoing";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "Ongoing";
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+/** The two-line reading, in words, for one campaign. */
+function linesFor(p: CompareCampaign) {
+  return progressLines(p.progress, makeCurrencyFormatter(p.currency));
 }
 
 export default function ProjectComparison() {
@@ -74,29 +72,16 @@ export default function ProjectComparison() {
 
   const campaigns = useMemo<CompareCampaign[]>(() => {
     return (campaignRows ?? [])
-      .filter(c => (LISTED_STATUSES as readonly string[]).includes(c.status))
+      .filter(c => (LISTED_STATUSES as readonly string[]).includes(c.status) && !!c.progress)
       .map((c) => {
-        // contributorsCount is part of the campaigns.list contract but may not
-        // be exposed yet; the row renders "-" until it is.
-        const extras = c as { contributorsCount?: number };
-        const base = c.startedAt ?? c.publishedAt ?? c.createdAt;
-        const start = base ? new Date(base) : null;
-        const deadline = start && !isNaN(start.getTime())
-          ? new Date(start.getTime() + (c.durationDays || 90) * 24 * 60 * 60 * 1000).toISOString()
-          : null;
         return {
           id: c.id,
-          name: c.title || c.projectName,
-          location: c.location || "Location TBD",
+          name: decodeBasicEntities(c.title || c.projectName || ""),
+          location: c.location ? decodeBasicEntities(c.location) : "Location TBD",
           description: c.description || "",
-          targetAmount: (c.totalValue ?? 0) + (c.financialTarget ?? 0),
-          // pledgedFinancial is a breakdown of pledgedTotal, not a second pot.
-          currentAmount: c.pledgedTotal ?? 0,
-          financialPledged: c.pledgedFinancial ?? 0,
-          financialTarget: c.financialTarget ?? 0,
           currency: c.currency || "USD",
-          contributorsCount: typeof extras.contributorsCount === "number" ? extras.contributorsCount : undefined,
-          deadline,
+          path: campaignRedirectTarget(c, "", ""),
+          progress: c.progress,
           focusAreas: c.currentPhase ? [c.currentPhase] : [],
           landSize: c.landSize || "",
           landStatus: c.landStatus || "",
@@ -139,11 +124,6 @@ export default function ProjectComparison() {
   const projects = selectedProjects
     .map(id => campaigns.find(p => p.id === id))
     .filter((p): p is CompareCampaign => Boolean(p));
-
-  const getProgressPercent = (current: number, target: number) => {
-    if (target <= 0) return 0;
-    return Math.min(100, Math.round((current / target) * 100));
-  };
 
   const ComparisonRow = ({ label, values, icon: Icon, type = 'text' }: {
     label: string;
@@ -323,7 +303,7 @@ export default function ProjectComparison() {
                               </p>
                             </div>
                             <Badge variant="secondary" className="bg-[#f0f7f0] text-[#1a472a]">
-                              {getProgressPercent(project.currentAmount, project.targetAmount)}% funded
+                              {linesFor(project).stateTag}
                             </Badge>
                           </div>
                           {project.focusAreas.length > 0 && (
@@ -371,44 +351,36 @@ export default function ProjectComparison() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Funding Section */}
+                      {/* How far each campaign has come: in-kind first, then money */}
                       <tr className="bg-[#7dd87d]/20">
                         <td colSpan={MAX_COMPARE + 1} className="py-2 px-4 font-bold text-[#1a472a] text-sm">
-                          Funding Progress
+                          How far it has come
                         </td>
                       </tr>
                       <ComparisonRow
-                        label="Pool Target"
-                        values={projects.map(p => money(p.targetAmount, p.currency))}
+                        label="In-kind"
+                        values={projects.map(p => linesFor(p).inKindShort)}
                         icon={Target}
                       />
                       <ComparisonRow
-                        label="Pledged So Far"
-                        values={projects.map(p => money(p.currentAmount, p.currency))}
+                        label="Money"
+                        values={projects.map(p => linesFor(p).moneyShort)}
                         icon={DollarSign}
                       />
                       <ComparisonRow
-                        label="Progress"
-                        values={projects.map(p => getProgressPercent(p.currentAmount, p.targetAmount))}
-                        type="percent"
+                        label="Still open"
+                        values={projects.map(p => linesFor(p).open)}
                       />
                       <ComparisonRow
-                        label="Financial Target"
-                        values={projects.map(p => money(p.financialTarget, p.currency))}
+                        label="Status"
+                        values={projects.map(p => linesFor(p).stateTag)}
                       />
                       <ComparisonRow
-                        label="Financial Pledged"
-                        values={projects.map(p => money(p.financialPledged, p.currency))}
-                      />
-                      <ComparisonRow
-                        label="Contributors"
-                        values={projects.map(p => p.contributorsCount)}
-                        icon={Users}
-                        type="number"
-                      />
-                      <ComparisonRow
-                        label="Deadline"
-                        values={projects.map(p => deadlineLabel(p.deadline))}
+                        label="Closes"
+                        values={projects.map(p => {
+                          const l = linesFor(p);
+                          return l.closes ? l.closes.replace(/^Closes /, "") : null;
+                        })}
                         icon={Calendar}
                       />
 
@@ -462,6 +434,14 @@ export default function ProjectComparison() {
                         </td>
                       </tr>
                       <ComparisonRow
+                        label="In-kind asked"
+                        values={projects.map(p => money(p.progress.inKind.ask, p.currency))}
+                      />
+                      <ComparisonRow
+                        label="Money asked"
+                        values={projects.map(p => (p.progress.money.asksNone ? linesFor(p).moneyShort : money(p.progress.money.ask, p.currency)))}
+                      />
+                      <ComparisonRow
                         label="Land"
                         values={projects.map(p => p.landValue > 0 ? money(p.landValue, p.currency) : undefined)}
                       />
@@ -502,7 +482,7 @@ export default function ProjectComparison() {
             {projects.length > 0 && (
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 {projects[0] && (
-                  <Link href={`/campaign/${projects[0].id}`}>
+                  <Link href={projects[0].path}>
                     <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
                       View {projects[0].name}
                     </Button>

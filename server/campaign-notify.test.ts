@@ -291,8 +291,20 @@ describe("sweep and chain notices", () => {
       [1, "cp:claimexp:300:u1"],
       [2, "cp:claimexp:300:u2"],
     ]);
-    expect(rows[0]).toMatchObject({ type: "claim_expired", title: "Your claim expired", link: `${P}#your-contributions` });
-    expect(rows[1]).toMatchObject({ title: "A claim expired", link: `${P}#review` });
+    // The enum value and the dedupe keys stay; the words say place, never claim.
+    expect(rows[0]).toMatchObject({
+      type: "claim_expired",
+      title: "Your place closed",
+      body: 'Your place for "Soil testing" on Plant 400 trees passed its delivery window, so the need is open again. You can offer again any time.',
+      link: `${P}#your-contributions`,
+    });
+    expect(rows[1]).toMatchObject({
+      type: "claim_expired",
+      title: "A place closed",
+      body: 'The place for "Soil testing" on Plant 400 trees passed its delivery window, so it is open again.',
+      link: `${P}#review`,
+    });
+    for (const r of rows) expect(`${r.title} ${r.body}`).not.toMatch(/\bclaim/i);
   });
   it("chain confirmed", () => {
     const rows = buildChainConfirmed({ campaign, contribution, stewardIds: [1, 20], txLink: "https://basescan.org/tx/0xabc" });

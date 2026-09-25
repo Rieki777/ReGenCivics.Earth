@@ -235,9 +235,9 @@ export const pageSEO = {
   crowdPoolingProjects: {
     title: 'Land Project Campaigns | ReGen Civics Crowd Pooling',
     description: 'Browse active crowd pooling campaigns from regenerative land projects. Find projects aligned with your values and contribute directly.',
-    keywords: 'land project campaigns, crowd pooling projects, regenerative investment campaigns, ecovillage funding',
+    keywords: 'land project campaigns, crowd pooling, regenerative land projects, ecovillage needs',
     image: 'https://regencivics.earth/og/crowd-pooling.jpg',
-    url: '/crowd-pooling-projects'
+    url: '/campaigns'
   },
   riskDisclosure: {
     title: 'Risk Disclosure | ReGen Civics',

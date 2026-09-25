@@ -17,6 +17,7 @@ import { shipGiveawayEntries } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { emailVerifyGiveawayEntry } from "../lib/ship-emails";
 import { GIVEAWAY_BONUS, REFERRAL_CREDIT_CAP, normalizeBonus } from "@shared/shipGiveaway";
+import { projectPathForCampaignFocus } from "@shared/projectKey";
 
 // ─── Step 1: Advance Lunar Cycles ──────────────────────────────────────────
 
@@ -520,10 +521,21 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     }
   }
 
-  // Pass 2a: claims approaching their expiry window.
+  // Where a reminder takes the contributor: the project page focused on the
+  // campaign (/campaign/:id only redirects there now).
+  const reminderLink = (claim: any) => projectPathForCampaignFocus({
+    id: Number(claim.campaignId),
+    applicationId: claim.applicationId != null ? Number(claim.applicationId) : null,
+    projectName: claim.projectName ?? null,
+    title: String(claim.campaignTitle ?? ''),
+  });
+
+  // Pass 2a: claims approaching their expiry window. The words say delivery
+  // window and place; claim belongs to the token bridge.
   const reminderDays = await getGameVariableOr('crowdpool.reminder_days_before_expiry', 2);
   const [expiringRows] = await db.execute(sql`
-    SELECT cc.id, cc.campaignId, cc.userId, cc.title, c.title AS campaignTitle
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, c.title AS campaignTitle,
+           c.projectName AS projectName, c.applicationId AS applicationId
     FROM campaign_contributions cc
     JOIN campaigns c ON c.id = cc.campaignId
     WHERE cc.status = 'accepted'
@@ -536,9 +548,9 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     const wrote = await insertNotification({
       userId: claim.userId,
       type: 'system',
-      title: 'Your claim window is closing',
-      body: `"${claim.title}" on ${claim.campaignTitle} needs to be delivered soon, or the claim will expire and the need opens back up.`,
-      link: `/campaign/${claim.campaignId}`,
+      title: 'Your delivery window is closing',
+      body: `"${claim.title}" on ${claim.campaignTitle} needs to be delivered soon, or the place closes and the need opens again.`,
+      link: reminderLink(claim),
       dedupeKey: `claimrem:${claim.id}:expiry`,
     });
     if (wrote) reminders++;
@@ -546,7 +558,8 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
 
   // Pass 2b: shifts starting within 7 days and within 1 day.
   const [shiftRows] = await db.execute(sql`
-    SELECT cc.id, cc.campaignId, cc.userId, cc.title, ci.shiftStartsAt, c.title AS campaignTitle
+    SELECT cc.id, cc.campaignId, cc.userId, cc.title, ci.shiftStartsAt, c.title AS campaignTitle,
+           c.projectName AS projectName, c.applicationId AS applicationId
     FROM campaign_contributions cc
     JOIN campaign_items ci ON ci.id = cc.campaignItemId
     JOIN campaigns c ON c.id = cc.campaignId
@@ -566,7 +579,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
       type: 'system',
       title: withinOneDay ? 'Your shift is tomorrow' : 'Your shift is coming up',
       body: `"${claim.title}" at ${claim.campaignTitle} starts ${startsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`,
-      link: `/campaign/${claim.campaignId}`,
+      link: reminderLink(claim),
       dedupeKey: `claimrem:${claim.id}:${bucket}`,
     });
     if (wrote) reminders++;

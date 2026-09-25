@@ -119,6 +119,15 @@ run("gate 1d: fund claims", process.execPath, ["scripts/check-fund-claims.mjs"])
 // decide is printed and counted rather than dropped.
 run("gate 1e: advertised endpoints", process.execPath, ["scripts/check-advertised-endpoints.mjs"]);
 
+// Gate 1f: the campaign surfaces use our words. Added 2026-09-25 with the
+// two-line bar build. Contribution (never pledge or donation), complete
+// (never funded), route (never earmark); claim belongs to the token bridge;
+// no em-dashes; and no fund copy on a campaign page an EEA retail visitor
+// sees. Scoped to an explicit file list, since CORE's real donation pages use
+// these words correctly. Suppress a reviewed line with
+// `banned-terms-allow: <reason>` on it or the line above.
+run("gate 1f: banned terms on campaign surfaces", process.execPath, ["scripts/check-banned-terms.mjs"]);
+
 // Gate 3: types clean. (Gate 2 is the per-className grep — it needs the name of
 // the class you added, so it stays a manual step; see CLAUDE.md.)
 // Address tsc's entry script through node rather than the .bin shim, so this
@@ -183,7 +192,7 @@ if (!existsSync(TSC)) {
 run("gate 3: typecheck", process.execPath, [TSC, "--noEmit"]);
 
 process.stdout.write(
-  "\n✓ Gates 1, 1b, 1c, 1d and 3 pass.\n" +
+  "\n✓ Gates 1, 1b, 1c, 1d, 1e, 1f and 3 pass.\n" +
     "  Gate 2 is manual — for each className or @keyframes you added:\n" +
     "    rg -g '*.css' '<the-name>' client/src/\n",
 );

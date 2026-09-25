@@ -56,6 +56,14 @@ jobs:
       - name: Fund claims guard
         run: node scripts/check-fund-claims.mjs
 
+      # The campaign surfaces use our words: contribution (never pledge or
+      # donation), complete (never funded), route (never earmark), no claim
+      # outside the token bridge, no em-dashes, and no fund copy on a campaign
+      # page. An explicit file list, so CORE's real donation pages stay
+      # untouched. Same script as gate 1f in scripts/gate.mjs.
+      - name: Banned terms guard (campaign surfaces)
+        run: node scripts/check-banned-terms.mjs
+
       # Non-blocking CVE check. Reports findings but does not fail the
       # build, since transitive deps occasionally land moderate CVEs we
       # don't control. Treat as a watchdog signal, follow up out-of-band.
