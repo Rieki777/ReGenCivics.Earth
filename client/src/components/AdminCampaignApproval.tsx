@@ -145,18 +145,17 @@ function RouteReviewRow({
             >
               {ROUTE_REVIEW.verify}
             </Button>
-            {route.status === 'pending' && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-                onClick={() => onReview('rejected', currency, note)}
-                className="min-h-11 border-red-300 text-red-700 hover:bg-red-50"
-              >
-                {ROUTE_REVIEW.dontShow}
-              </Button>
-            )}
+            {/* On a hidden route this saves a new note for the project. */}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => onReview('rejected', currency, note)}
+              className="min-h-11 border-red-300 text-red-700 hover:bg-red-50"
+            >
+              {ROUTE_REVIEW.dontShow}
+            </Button>
           </div>
         </div>
       )}

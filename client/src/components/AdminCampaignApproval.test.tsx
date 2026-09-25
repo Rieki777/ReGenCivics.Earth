@@ -211,6 +211,22 @@ describe("AdminCampaignApproval", () => {
     expect(within(row).getByRole("button", { name: "Verify" })).toBeEnabled();
   });
 
+  it("a hidden route can be verified later, or hidden again with a new note", async () => {
+    routes = [{
+      id: 12, partner: "maearth", label: null, url: "https://maearth.com/p/hill-farm", proofUrl: null,
+      status: "rejected", reviewNote: "Wrong farm.", cachedCurrency: null, createdAt: "2026-09-21T09:00:00Z",
+    }];
+    await openReview();
+    const row = screen.getByTestId("route-review-12");
+    expect(within(row).getByText(/Not shown\. Wrong farm\./)).toBeInTheDocument();
+    expect(within(row).getByLabelText("Why (the project sees this)")).toHaveValue("Wrong farm.");
+    fireEvent.change(within(row).getByLabelText("Why (the project sees this)"), { target: { value: "Still the wrong farm." } });
+    fireEvent.click(within(row).getByRole("button", { name: "Don't show" }));
+    expect(reviewMutate).toHaveBeenLastCalledWith({ linkId: 12, decision: "rejected", note: "Still the wrong farm." });
+    fireEvent.click(within(row).getByRole("button", { name: "Verify" }));
+    expect(reviewMutate).toHaveBeenLastCalledWith({ linkId: 12, decision: "verified", currency: "USD" });
+  });
+
   it("an example route shows no link and no review buttons", async () => {
     routes = [{
       id: 10, partner: "maearth", label: null, url: "https://maearth.com/example", proofUrl: null,
