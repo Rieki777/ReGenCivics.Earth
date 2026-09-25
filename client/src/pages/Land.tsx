@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
-import { APPLICATIONS_STATUS } from "@shared/applicationWindow";
+import { APPLICATIONS_SHORT, APPLICATIONS_STATUS } from "@shared/applicationWindow";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { ReadableScrim } from "@/components/ReadableScrim";
@@ -211,7 +211,7 @@ export default function Land() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
             <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Season 2 applications are closed · Apply anytime for the next season</span>
+              <span>{APPLICATIONS_SHORT}</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]/80">|</span>
             <Link href="/apply">

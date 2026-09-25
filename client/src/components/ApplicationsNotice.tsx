@@ -1,14 +1,14 @@
 /**
  * ApplicationsNotice: says where land project applications stand, the same way
- * on every page. The words and the switch live in shared/applicationWindow.ts;
- * when review for the next Season starts (APPLICATIONS.reviewing), this renders
- * nothing and the pages go back to their ordinary apply buttons.
+ * on every page. The words and the intake window live in
+ * shared/applicationWindow.ts. Between intakes it says applications are held;
+ * during review (the Rest Season) it says they are open and until when.
  */
 import { Link } from "wouter";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import {
   APPLICATIONS,
-  APPLICATIONS_CLOSED_LINE,
+  APPLICATIONS_HEADLINE,
   APPLY_ANYTIME_LINE,
   APPLY_BUTTON_LABEL,
 } from "@shared/applicationWindow";
@@ -22,7 +22,6 @@ type Props = {
 };
 
 export function ApplicationsNotice({ tone = "dark", showLink = true, className = "" }: Props) {
-  if (APPLICATIONS.reviewing) return null;
   const dark = tone === "dark";
   return (
     <div
@@ -36,10 +35,12 @@ export function ApplicationsNotice({ tone = "dark", showLink = true, className =
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className={`font-bold mb-1 ${dark ? "text-white" : "text-[#1a472a]"}`}>{APPLICATIONS_CLOSED_LINE}</p>
-        <p className={`text-sm md:text-base leading-relaxed safe-prose ${dark ? "text-white/80" : "text-[#1a472a]/85"}`}>
-          {APPLY_ANYTIME_LINE}
-        </p>
+        <p className={`font-bold mb-1 ${dark ? "text-white" : "text-[#1a472a]"}`}>{APPLICATIONS_HEADLINE}</p>
+        {!APPLICATIONS.reviewing && (
+          <p className={`text-sm md:text-base leading-relaxed safe-prose ${dark ? "text-white/80" : "text-[#1a472a]/85"}`}>
+            {APPLY_ANYTIME_LINE}
+          </p>
+        )}
         {showLink && (
           <Link
             href="/apply"

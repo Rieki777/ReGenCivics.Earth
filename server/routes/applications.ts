@@ -11,7 +11,7 @@ import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
-import { APPLICATIONS, APPLICATIONS_CLOSED_LINE } from "../../shared/applicationWindow";
+import { applicationCopy, intakeStatus } from "../../shared/applicationWindow";
 import {
   APPLICATION_EMAIL_STATUSES,
   mapApplicationEmailRecipients,
@@ -223,7 +223,10 @@ export const applicationsRouter = router({
           content: `A new land project application has been submitted for the next season's incubator.\n\n**Project:** ${application.projectName}\n**Type:** ${application.projectType}\n**Location:** ${application.location}\n\nReview it in the admin dashboard.`,
         });
 
-        // Send transactional confirmation email to the applicant
+        // Send transactional confirmation email to the applicant. The intake
+        // is worked out per request, so the copy turns with the wheel without
+        // waiting for a deploy.
+        const intake = intakeStatus();
         const applicantUser = await db.getUserById(ctx.user.id);
         if (applicantUser?.email) {
           const applicantName = applicantUser.name || "Applicant";
@@ -235,11 +238,11 @@ export const applicationsRouter = router({
               <p>Hi ${applicantName},</p>
               <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${application.projectName}</strong> and our team will review it carefully.</p>
               <h3>What happens next?</h3>
-              ${APPLICATIONS.reviewing ? `<ol>
+              ${intake.reviewing ? `<ol>
                 <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the ReGenerative Renaissance mission.</li>
                 <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>
                 <li><strong>Season Decision:</strong> Final decisions are communicated before the season kickoff.</li>
-              </ol>` : `<p>${APPLICATIONS_CLOSED_LINE} We'll hold your application for the next season. You won't get emails about it until we get closer to the start of the next season. Then we'll review it and let you know.</p>`}
+              </ol>` : `<p>${applicationCopy(intake).closedLine} We'll hold your application for the next season. You won't get emails about it until we get closer to the start of the next season. Then we'll review it and let you know.</p>`}
               <h3>Your Application Summary</h3>
               <ul>
                 <li><strong>Project:</strong> ${application.projectName}</li>

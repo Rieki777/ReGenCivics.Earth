@@ -4,7 +4,7 @@ import { CheckCircle2, Home, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
-import { APPLICATIONS, APPLICATIONS_CLOSED_LINE } from "@shared/applicationWindow";
+import { APPLICATIONS, APPLICATIONS_HEADLINE } from "@shared/applicationWindow";
 
 export default function ApplySuccess() {
   return (
@@ -43,7 +43,7 @@ export default function ApplySuccess() {
                 <>
                   <li className="flex items-start gap-2">
                     <span className="text-[#7dd87d] mt-1">✓</span>
-                    <span>{APPLICATIONS_CLOSED_LINE} We'll hold your application for the next season.</span>
+                    <span>{APPLICATIONS_HEADLINE} We'll hold your application for the next season.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#7dd87d] mt-1">✓</span>

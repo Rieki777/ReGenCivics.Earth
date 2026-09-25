@@ -7,7 +7,8 @@ import {
   regenSeasonOn,
   regenSeasonSpan,
 } from "./regenYear";
-import { APPLICATIONS, APPLICATIONS_STATUS, APPLY_BUTTON_LABEL } from "./applicationWindow";
+import { APPLY_ANYTIME_LINE, applicationCopy, intakeStatus } from "./applicationWindow";
+import { REGEN_LANDS, guessLandFromTimeZone } from "./regenYear";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
 
@@ -93,8 +94,14 @@ describe("the wheel", () => {
         .toLowerCase();
       for (const word of banned) expect(text).not.toContain(word);
     }
-    const status = [APPLICATIONS_STATUS, APPLY_BUTTON_LABEL].join(" ").toLowerCase();
-    for (const word of banned) expect(status).not.toContain(word);
+    for (const iso of ["2026-09-24", "2027-07-15"]) {
+      const copy = applicationCopy(intakeStatus(at(iso)));
+      const status = [copy.status, copy.headline, copy.buttonLabel, APPLY_ANYTIME_LINE].join(" ").toLowerCase();
+      for (const word of banned) expect(status).not.toContain(word);
+    }
+    for (const land of Object.values(REGEN_LANDS)) {
+      for (const word of banned) expect(land.guidance.toLowerCase()).not.toContain(word);
+    }
   });
 
   it("names each season for what it is for, and keeps the wheel-of-the-year pattern", () => {
@@ -130,11 +137,73 @@ describe("the wheel", () => {
   });
 });
 
-describe("applications between intakes", () => {
-  it("says Season 2 is closed and anyone can apply anytime, with no email until the next season is close", () => {
-    expect(APPLICATIONS.reviewing).toBe(false);
-    expect(APPLICATIONS_STATUS).toMatch(/Season 2 applications are closed\./);
-    expect(APPLICATIONS_STATUS).toMatch(/apply anytime for the next season/);
-    expect(APPLICATIONS_STATUS).toMatch(/won't get emails about it until we get closer/);
+describe("the intake follows the wheel", () => {
+  it("holds applications quietly between intakes: Season 2 closed, apply anytime, no email until the next season is close", () => {
+    const s = intakeStatus(at("2026-09-24"));
+    expect(s).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
+    const copy = applicationCopy(s);
+    expect(copy.status).toMatch(/Season 2 applications are closed\./);
+    expect(copy.status).toMatch(/apply anytime for the next season/);
+    expect(copy.status).toMatch(/won't get emails about it until we get closer/);
+    expect(copy.buttonLabel).toBe("Apply for the next season");
+    expect(copy.short).toBe("Season 2 applications are closed; apply anytime for the next season");
+  });
+
+  it("stays held through the Design, Resource and Build seasons", () => {
+    expect(intakeStatus(at("2027-01-15"))).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
+    expect(intakeStatus(at("2027-06-20"))).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3 });
+  });
+
+  it("opens review for the next Season in the Rest Season, until about eleven days before Selection Day", () => {
+    const s = intakeStatus(at("2027-06-21"));
+    expect(s).toMatchObject({ reviewing: true, closedSeason: 2, openSeason: 3 });
+    expect(applicationCopy(s).headline).toBe(
+      "Season 3 applications are open until September 10. We review them as they come in and email you as we go.",
+    );
+    expect(applicationCopy(s).buttonLabel).toBe("Apply for Season 3");
+    expect(applicationCopy(s).short).toBe("Season 3 applications are open until September 10");
+    expect(intakeStatus(at("2027-09-10")).reviewing).toBe(true);
+  });
+
+  it("rolls over to the next Season by itself once review closes", () => {
+    expect(intakeStatus(at("2027-09-12"))).toMatchObject({ reviewing: false, closedSeason: 3, openSeason: 4 });
+    expect(applicationCopy(intakeStatus(at("2027-10-01"))).closedLine).toBe("Season 3 applications are closed.");
+  });
+});
+
+describe("one wheel, many lands", () => {
+  it("guesses a visitor's land from the time zone, defaulting to northern", () => {
+    expect(guessLandFromTimeZone("Australia/Sydney")).toBe("southern");
+    expect(guessLandFromTimeZone("America/Santiago")).toBe("southern");
+    expect(guessLandFromTimeZone("America/Argentina/Buenos_Aires")).toBe("southern");
+    expect(guessLandFromTimeZone("Africa/Johannesburg")).toBe("southern");
+    expect(guessLandFromTimeZone("America/Costa_Rica")).toBe("equatorial");
+    expect(guessLandFromTimeZone("America/Guayaquil")).toBe("equatorial");
+    expect(guessLandFromTimeZone("Africa/Nairobi")).toBe("equatorial");
+    expect(guessLandFromTimeZone("America/Los_Angeles")).toBe("northern");
+    expect(guessLandFromTimeZone("Europe/Lisbon")).toBe("northern");
+    expect(guessLandFromTimeZone(undefined)).toBe("northern");
+  });
+
+  it("runs the northern calendar one season behind the Game, and the southern one opposite it", () => {
+    expect(REGEN_LANDS.northern.natural).toEqual({ winter: "autumn", spring: "winter", summer: "spring", fall: "summer" });
+    expect(REGEN_LANDS.southern.natural).toEqual({ winter: "spring", spring: "summer", summer: "autumn", fall: "winter" });
+    expect(REGEN_LANDS.equatorial.natural).toBeNull();
+  });
+
+  it("shares the online seasons and times the land seasons locally", () => {
+    expect(REGEN_SEASONS.winter.scope).toBe("shared");
+    expect(REGEN_SEASONS.spring.scope).toBe("shared");
+    expect(REGEN_SEASONS.summer.scope).toBe("local");
+    expect(REGEN_SEASONS.fall.scope).toBe("local");
+  });
+
+  it("gives every season its own organizer", () => {
+    expect(REGEN_SEASON_ORDER.map((k) => REGEN_SEASONS[k].organizer.character)).toEqual([
+      "The Lantern-Keeper",
+      "The Rainmaker",
+      "The Barn-Raiser",
+      "The Hearth-Keeper",
+    ]);
   });
 });

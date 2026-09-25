@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from 'react';
+import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
 
 const BASE_URL = 'https://regencivics.earth';
 
@@ -88,7 +89,7 @@ const siteNavigationSchema = {
     {
       "@type": "SiteNavigationElement",
       "name": "Apply",
-      "description": "Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications are closed; apply anytime for the next season.",
+      "description": `Apply to bring your regenerative land project into the ReGen Civics ecosystem. ${APPLICATIONS_SHORT}.`,
       "url": `${BASE_URL}/apply`
     },
     {

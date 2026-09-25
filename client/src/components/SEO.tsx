@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import { useLocation } from 'wouter';
 import { schemas } from "@/components/JsonLD";
 import { FUND } from "@shared/fund";
+import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
 
 interface SEOProps {
   title: string;
@@ -191,7 +192,7 @@ export const pageSEO = {
   },
   apply: {
     title: 'Apply: Land Project Application | ReGen Civics',
-    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications are closed; apply anytime for the next season.',
+    description: `Apply to bring your regenerative land project into the ReGen Civics ecosystem. ${APPLICATIONS_SHORT}.`,
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
     image: '/og/seasons.jpg',
     url: '/apply'
