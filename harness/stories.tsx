@@ -413,6 +413,11 @@ export const STORIES: Record<string, Story> = {
         { title: "Quest Steward", kind: "game", seasons: ["winter", "spring", "summer"] },
         { title: "Treasury Steward", kind: "game", seasons: ["winter", "spring", "summer", "fall"] },
         { title: "Forum Gardener", kind: "game", seasons: ["winter", "spring", "summer", "fall"] },
+        { title: "Design Season Organizer", kind: "game", seasons: ["winter"] },
+        { title: "Resource Season Organizer", kind: "game", seasons: ["spring"] },
+        { title: "Build Season Organizer", kind: "game", seasons: ["summer"] },
+        { title: "Rest Season Organizer", kind: "game", seasons: ["fall"] },
+        { title: "Assembly Steward", kind: "game", seasons: ["winter", "spring", "summer"] },
         { title: "Fund Steward", kind: "fund", seasons: ["winter", "spring", "summer", "fall"] },
       ];
     },

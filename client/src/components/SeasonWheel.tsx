@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ChevronLeft, ChevronRight, Compass, MapPin, Pause, Play, Wind } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Compass, Globe, MapPin, Pause, Play, Wind } from "lucide-react";
 import {
   REGEN_SEASONS,
   REGEN_SEASON_ORDER,
@@ -20,6 +20,10 @@ import {
   nextRegenSeason,
   previousRegenSeason,
   regenSeasonSpan,
+  REGEN_LANDS,
+  REGEN_LAND_ORDER,
+  guessLandFromTimeZone,
+  type LandKey,
   type RegenSeasonKey,
 } from "@shared/regenYear";
 import { SEASON_THEMES } from "@/lib/seasons";
@@ -30,6 +34,16 @@ import { trpc } from "@/lib/trpc";
 // ─── Look ───────────────────────────────────────────────────────────────────
 
 const LOOK = SEASON_LOOK;
+
+/** The land ring's colors: a land's own season, painted like the wheel's. */
+const NATURAL_COLOR: Record<"winter" | "spring" | "summer" | "autumn", string> = {
+  winter: SEASON_LOOK.winter.color,
+  spring: SEASON_LOOK.spring.color,
+  summer: SEASON_LOOK.summer.color,
+  autumn: SEASON_LOOK.fall.color,
+};
+
+const LAND_STORAGE_KEY = "regen_year_land";
 
 // ─── Geometry ───────────────────────────────────────────────────────────────
 
@@ -183,6 +197,31 @@ export function SeasonWheel({ now }: { now?: Date }) {
   // follow once the browser is idle, so the crossfade has them ready.
   const [painted, setPainted] = useState<Set<RegenSeasonKey>>(() => new Set([current]));
   const tabRefs = useRef<Partial<Record<RegenSeasonKey, HTMLButtonElement | null>>>({});
+
+  // Where the visitor's land is: a first guess from the browser's time zone,
+  // then whatever they pick, remembered in this browser only.
+  const [land, setLand] = useState<LandKey>(() => {
+    try {
+      const saved = window.localStorage.getItem(LAND_STORAGE_KEY);
+      if (saved === "northern" || saved === "southern" || saved === "equatorial") return saved;
+    } catch {
+      /* storage blocked: fall through to the guess */
+    }
+    try {
+      return guessLandFromTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    } catch {
+      return "northern";
+    }
+  });
+  const chooseLand = (key: LandKey) => {
+    setLand(key);
+    try {
+      window.localStorage.setItem(LAND_STORAGE_KEY, key);
+    } catch {
+      /* storage blocked: the choice lasts for this visit */
+    }
+  };
+  const landNatural = REGEN_LANDS[land].natural;
 
   useEffect(() => {
     const t = window.setTimeout(() => setPainted(new Set(REGEN_SEASON_ORDER)), 1200);
@@ -354,7 +393,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
                       <path
                         key={key}
                         id={`rw-tp-${key}`}
-                        d={bottom ? arcPath(R_OUT + 24, a + 26, a - 26, false) : arcPath(R_OUT + 12, a - 26, a + 26, true)}
+                        d={bottom ? arcPath(R_OUT + 29, a + 26, a - 26, false) : arcPath(R_OUT + 17, a - 26, a + 26, true)}
                       />
                     );
                   })}
@@ -448,6 +487,30 @@ export function SeasonWheel({ now }: { now?: Date }) {
                   fill={LOOK[current].color}
                   opacity="0.9"
                 />
+
+                {/* Your land's own seasons: one thin ring outside the wheel */}
+                {landNatural ? (
+                  REGEN_SEASON_ORDER.map((key) => (
+                    <path
+                      key={`land-${key}`}
+                      d={sectorPath(R_OUT + 9, R_OUT + 12, START_DEG[key] + GAP_DEG, START_DEG[key] + 90 - GAP_DEG)}
+                      fill={NATURAL_COLOR[landNatural[key]]}
+                      opacity="0.85"
+                      style={{ transition: "fill 600ms ease" }}
+                    />
+                  ))
+                ) : (
+                  <circle
+                    cx={C}
+                    cy={C}
+                    r={R_OUT + 10.5}
+                    fill="none"
+                    stroke="rgba(240,235,227,0.5)"
+                    strokeWidth="3"
+                    strokeDasharray="2 7"
+                    strokeLinecap="round"
+                  />
+                )}
 
                 {/* Turning points: the gatherings where one season hands to the next */}
                 {REGEN_SEASON_ORDER.map((key) => {
@@ -563,10 +626,43 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
                 {playing ? "Stop" : "Turn the wheel"}
               </button>
-              <p className="max-w-sm text-xs text-white/70 leading-relaxed">
-                A loose connection to the wheel of the year. The Game's seasons follow the
-                work, and your own land keeps its own seasons.
-              </p>
+              <div className="mt-2 w-full max-w-md">
+                <p
+                  id="regen-year-land-label"
+                  className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/75"
+                >
+                  Where's your land?
+                </p>
+                <div
+                  role="group"
+                  aria-labelledby="regen-year-land-label"
+                  className="flex flex-wrap justify-center gap-2"
+                >
+                  {REGEN_LAND_ORDER.map((key) => {
+                    const on = key === land;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => chooseLand(key)}
+                        className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+                          on
+                            ? "border-white/70 bg-white text-[#0d2818]"
+                            : "border-white/25 bg-white/5 text-white/85 hover:bg-white/10"
+                        }`}
+                      >
+                        {on && <Globe className="h-4 w-4" aria-hidden="true" />}
+                        {REGEN_LANDS[key].label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-white/75 leading-relaxed safe-prose">
+                  <span className="font-semibold text-white/90">The thin outer ring is your land's own seasons.</span>{" "}
+                  {REGEN_LANDS[land].guidance}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -620,6 +716,14 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 </div>
               )}
 
+              <p className="text-sm text-white/80 mb-6 safe-prose">
+                Organized by{" "}
+                <Link href="/team" className="font-semibold underline-offset-4 hover:underline" style={{ color: look.color }}>
+                  {season.organizer.character}
+                </Link>
+                , the {season.organizer.title}.
+              </p>
+
               <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-3">What happens</h3>
               <ul className="space-y-2.5 mb-6">
                 {season.happens.map((item) => (
@@ -641,7 +745,11 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-white/85">
                   <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                  {season.place}
+                  {season.scope === "shared" ? "Online, shared by everyone" : "On the land, timed to your land"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-white/85">
+                  <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+                  {landNatural ? `On your land: ${landNatural[selected]}` : "On your land: dry or wet, by place"}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-white/85">
                   Opens with {season.opensWith}
@@ -752,16 +860,19 @@ function roleSeasons(raw: unknown): string[] {
 
 /**
  * The Game roles active in a season, read live from the roles table (the same
- * source as /team). Roles that belong to fewer seasons come first, so the
- * season's own roles lead and the year-round ones follow.
+ * source as /team). The season's organizer leads, then roles that belong to
+ * fewer seasons, so the season's own roles come before the year-round ones.
  */
 function SeasonRoles({ season, color, title }: { season: RegenSeasonKey; color: string; title: string }) {
   const rolesQuery = trpc.roles.list.useQuery(undefined, { staleTime: 60_000 });
+  const organizer = REGEN_SEASONS[season].organizer.title;
   const inSeason = (rolesQuery.data ?? [])
     .filter((r) => r.kind === "game")
     .map((r) => ({ title: r.title, seasons: roleSeasons(r.seasons) }))
     .filter((r) => r.seasons.includes(season))
-    .sort((a, b) => a.seasons.length - b.seasons.length)
+    .sort((a, b) =>
+      a.title === organizer ? -1 : b.title === organizer ? 1 : a.seasons.length - b.seasons.length,
+    )
     .slice(0, 6);
 
   return (

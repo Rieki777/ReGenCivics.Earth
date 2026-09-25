@@ -4,7 +4,7 @@
  */
 
 import { spring, amber, forest } from "@/lib/design-tokens";
-import { getCurrentSeason } from "@/lib/seasons";
+import { getCurrentSeason, SEASON_THEMES } from "@/lib/seasons";
 
 export interface GameRole {
   title: string;
@@ -650,6 +650,234 @@ export const gameRoles: GameRole[] = [
         "Read CLAUDE.md, CONTRIBUTING.md, and the skills in .claude/skills/. I want to build a new Claude skill for ReGen Civics. Show me the existing skills, the skill-creator skill documentation, and help me design a new skill that fills a gap. Follow the project's writing rules and conventions.",
     },
   },
+  /* ═══════════════════════════════════════════════════════════════
+     SEASON ORGANIZERS (Season 2, Rye 2026-09-24)
+     One organizer per season of the ReGen Civics Year. Each receives
+     the wheel at the turn that opens their season and passes it on at
+     the next recap and passoff. Top band: they make the year happen.
+     ═══════════════════════════════════════════════════════════════ */
+  {
+    title: "Design Season Organizer",
+    characterName: "The Lantern-Keeper",
+    tagline: "Keeps the light on through the design months",
+    emoji: "🏮",
+    characterImage: "/images/roles/design-season-organizer-card.webp",
+    sceneImage: "/images/roles/design-season-organizer-scene.webp",
+    purpose:
+      "Organize the Design Season: receive the wheel at the Handoff Festival, keep the 13 incubator weeks running on time, gather the season's design work into the public record, and pass the wheel to the Resource Season at the December solstice.",
+    circle: "Seasons Circle",
+    powers: [
+      "Set the Design Season calendar",
+      "Invite guest designers to sessions",
+      "Ask the Tech Circle for tool time on cohort needs",
+      "Call the December solstice recap and passoff",
+    ],
+    rights: [
+      "Access to the cohort workspace and recordings",
+      "A seat at both passoffs that bracket the season",
+      "Input on next year's Design Season curriculum",
+    ],
+    responsibilities: [
+      "Receive the wheel at the Handoff Festival and run Selection Day logistics with the Season Facilitator",
+      "Keep the 13 incubator weeks on track: calendar, room, recordings, reminders, notes",
+      "Gather each week's design work (Game Guides, governance drafts, token models) into the public record",
+      "Host the December solstice recap and pass off to the Resource Season Organizer",
+    ],
+    domains: "Design Season calendar, incubator logistics, the December recap and passoff",
+    band: 7,
+    tokenAward: "900,000 $ReGen ($9,000)",
+    maxTokenAward: "1,170,000 $ReGen ($11,700)",
+    hoursPerWeek: 15,
+    deliverables: [
+      "Receive the wheel at the Handoff Festival and run Selection Day logistics with the Season Facilitator",
+      "Keep the 13 incubator weeks on track: calendar, room, recordings, reminders, notes",
+      "Gather each week's design work (Game Guides, governance drafts, token models) into the public record",
+      "Host the December solstice recap and pass off to the Resource Season Organizer",
+    ],
+    seed: "Every incubator week runs on time with its recording and notes published",
+    harvest: "The cohort reaches week 13 with complete Game Guides (target: at least 9 of 13 graduate)",
+    seasons: ["winter"],
+    assignment: "Open",
+    color: "#8fd8e8",
+  },
+  {
+    title: "Resource Season Organizer",
+    characterName: "The Rainmaker",
+    tagline: "Calls the resources in",
+    emoji: "🌧️",
+    characterImage: "/images/roles/resource-season-organizer-card.webp",
+    sceneImage: "/images/roles/resource-season-organizer-scene.webp",
+    purpose:
+      "Organize the Resource Season: receive the wheel at the December solstice, run the shared crowdpool launch with the cohort, keep the campaign calendar moving, help people find and claim what each project needs, and pass the wheel to the Build Season at the March equinox.",
+    circle: "Seasons Circle",
+    powers: [
+      "Set the Resource Season calendar",
+      "Feature campaigns across the site and letters",
+      "Coordinate the Storyteller and Outreach Writer on the push",
+      "Call the March equinox recap and passoff",
+    ],
+    rights: [
+      "Access to campaign dashboards and the needs registry",
+      "A seat at both passoffs that bracket the season",
+      "Input on how crowdpool campaigns are presented",
+    ],
+    responsibilities: [
+      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort",
+      "Keep the campaign calendar: stories, live moments, matching pushes, investor conversations",
+      "Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap",
+      "Host the March equinox recap and pass off to the Build Season Organizer",
+    ],
+    domains: "Resource Season calendar, the shared crowdpool, the March recap and passoff",
+    band: 7,
+    tokenAward: "900,000 $ReGen ($9,000)",
+    maxTokenAward: "1,170,000 $ReGen ($11,700)",
+    hoursPerWeek: 15,
+    deliverables: [
+      "Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort",
+      "Keep the campaign calendar: stories, live moments, matching pushes, investor conversations",
+      "Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap",
+      "Host the March equinox recap and pass off to the Build Season Organizer",
+    ],
+    seed: "The shared launch goes live at the solstice with every graduating project",
+    harvest: "Graduating projects reach their in-kind asks by close (target: most at 100% of the in-kind ask)",
+    seasons: ["spring"],
+    assignment: "Open",
+    color: SEASON_THEMES.spring.accent,
+  },
+  {
+    title: "Build Season Organizer",
+    characterName: "The Barn-Raiser",
+    tagline: "Gathers the hands and raises the village",
+    emoji: "🔨",
+    characterImage: "/images/roles/build-season-organizer-card.webp",
+    sceneImage: "/images/roles/build-season-organizer-scene.webp",
+    purpose:
+      "Organize the Build Season: receive the wheel at the March equinox, publish the season's work parties and festivals across the network, match volunteers, travelers and the ReGen Ship to the land projects that need hands, and pass the wheel to the Rest Season at the June solstice. Southern and equatorial projects build on their own land's timing, so this role keeps the year-round festival route in view.",
+    circle: "Seasons Circle",
+    powers: [
+      "Set the Build Season calendar",
+      "Route volunteers and the ship's voyages",
+      "Approve work party and festival listings",
+      "Call the June solstice recap and passoff",
+    ],
+    rights: [
+      "Access to project needs and volunteer sign-ups",
+      "A seat at both passoffs that bracket the season",
+      "Input on the hosting and safety guides",
+    ],
+    responsibilities: [
+      "Receive the wheel at the March equinox and publish the season's work parties and festivals across the network",
+      "Match volunteers, travelers and the ReGen Ship to land projects that need hands",
+      "Keep the year-round festival route current: northern festivals March to June, southern ones September to February",
+      "Host the June solstice recap and pass off to the Rest Season Organizer",
+    ],
+    domains: "Build Season calendar, work parties and festivals, the year-round festival route, the June recap and passoff",
+    band: 7,
+    tokenAward: "900,000 $ReGen ($9,000)",
+    maxTokenAward: "1,170,000 $ReGen ($11,700)",
+    hoursPerWeek: 15,
+    deliverables: [
+      "Receive the wheel at the March equinox and publish the season's work parties and festivals across the network",
+      "Match volunteers, travelers and the ReGen Ship to land projects that need hands",
+      "Keep the year-round festival route current: northern festivals March to June, southern ones September to February",
+      "Host the June solstice recap and pass off to the Rest Season Organizer",
+    ],
+    seed: "Every cohort project hosts at least one work party or festival",
+    harvest: "Hours and materials delivered on the land, counted through crowdpool claims",
+    seasons: ["summer"],
+    assignment: "Open",
+    color: SEASON_THEMES.summer.accent,
+  },
+  {
+    title: "Rest Season Organizer",
+    characterName: "The Hearth-Keeper",
+    tagline: "Tends the fire while we rest",
+    emoji: "🔥",
+    characterImage: "/images/roles/rest-season-organizer-card.webp",
+    sceneImage: "/images/roles/rest-season-organizer-scene.webp",
+    purpose:
+      "Organize the Rest Season: receive the wheel at the June solstice, publish the harvest gatherings, protect the rest, gather the season's stories and lessons into the scorecard, and host the Handoff Festival at the September equinox, where the north brings the harvest and the south brings the seeds.",
+    circle: "Seasons Circle",
+    powers: [
+      "Set the Rest Season calendar",
+      "Hold back non-essential asks and letters during the season",
+      "Convene the Season Festival and its scorecard",
+      "Host the Handoff Festival with the incoming Design Season Organizer",
+    ],
+    rights: [
+      "Access to the season's records and scorecard",
+      "A seat at both passoffs that bracket the season",
+      "Input on how the Handoff Festival is held",
+    ],
+    responsibilities: [
+      "Receive the wheel at the June solstice and publish the harvest gatherings across the network",
+      "Protect the rest: pause non-essential asks and letters, keep a gentle rhythm",
+      "Gather the season's stories and lessons into the Season Festival scorecard",
+      "Organize the Handoff Festival at the September equinox with the incoming Design Season Organizer",
+    ],
+    domains: "Rest Season calendar, harvest gatherings, the Season Festival, the Handoff Festival",
+    band: 7,
+    tokenAward: "900,000 $ReGen ($9,000)",
+    maxTokenAward: "1,170,000 $ReGen ($11,700)",
+    hoursPerWeek: 15,
+    deliverables: [
+      "Receive the wheel at the June solstice and publish the harvest gatherings across the network",
+      "Protect the rest: pause non-essential asks and letters, keep a gentle rhythm",
+      "Gather the season's stories and lessons into the Season Festival scorecard",
+      "Organize the Handoff Festival at the September equinox with the incoming Design Season Organizer",
+    ],
+    seed: "The Handoff Festival happens, with the outgoing cohort's harvest shared",
+    harvest: "Role holders report the season let them rest (Season Festival survey, target: 4+/5)",
+    seasons: ["fall"],
+    assignment: "Open",
+    color: SEASON_THEMES.fall.accent,
+  },
+  // Role 14 in the Season 1 record, added there when the Assembly shipped
+  // (2026-07-03) but never added here or to the roles table until 2026-09-24.
+  {
+    title: "Assembly Steward",
+    characterName: "The Convener",
+    tagline: "Tends the pipeline where the game evolves",
+    emoji: "🗳️",
+    characterImage: "/images/roles/assembly-steward-card.webp",
+    sceneImage: "/images/roles/assembly-steward-scene.webp",
+    purpose:
+      "Tend the Assembly, the pipeline where the Game evolves: help raisers shape clear proposals, keep them moving through signals and votes, and make sure every ratified decision leaves a complete Record.",
+    circle: "Community Circle",
+    powers: [
+      "Revive resting proposals and flag stale ones for the community",
+      "Coach raisers on aim lines, lanes, and the consent bar",
+      "Request impact updates from proposal owners after execution",
+    ],
+    rights: [
+      "A standing voice in governance-variable tuning conversations",
+      "Input on Assembly copy and empty-state teaching text",
+    ],
+    responsibilities: [
+      "Nudge resting proposals back to life or help them close with dignity",
+      "Help first-time raisers write a clear aim line and pick the right lane",
+      "Close Record loops: confirm outcomes, chase impact updates, keep the provenance trail whole",
+      "Watch the last-call strip and make sure objections get a fair hearing",
+      "After a proposer launches their vote on Hypha, check that the Hypha proposal link is pasted back into the Assembly so the outcome applies itself when the vote closes",
+    ],
+    domains: "The Assembly (/assembly), proposal lifecycle, Record integrity, governance onboarding",
+    band: 2,
+    tokenAward: "400,000 $ReGen ($4,000)",
+    maxTokenAward: "520,000 $ReGen ($5,200)",
+    hoursPerWeek: 5,
+    deliverables: [
+      "Nudge resting proposals back to life or help them close with dignity",
+      "Help first-time raisers write a clear aim line and pick the right lane",
+      "Close Record loops: confirm outcomes, chase impact updates, keep the provenance trail whole",
+      "Watch the last-call strip and make sure objections get a fair hearing",
+      "After a proposer launches their vote on Hypha, check that the Hypha proposal link is pasted back into the Assembly so the outcome applies itself when the vote closes",
+    ],
+    seed: "Proposals shepherded through the pipeline (target: every forming proposal has a synthesis and a signal count above the readiness floor)",
+    harvest: "Ratified decisions with complete Record trails and impact updates",
+    seasons: ["winter", "spring", "summer"],
+    assignment: "Open",
+    color: forest.sage,
+  },
 
   /* ═══════════════════════════════════════════════════════════════
      FUND ROLES. ReGen Civics Fund ($RCivics)
@@ -1025,6 +1253,8 @@ export const seasons: Season[] = [
       "Quest Steward",
       "Season Facilitator",
       "Incubator Guide",
+      "Design Season Organizer",
+      "Assembly Steward",
     ],
     color: spring.base,
     current: getCurrentSeason() === "winter",
@@ -1043,6 +1273,8 @@ export const seasons: Season[] = [
       "Outreach Writer",
       "Forum Gardener",
       "Storyteller",
+      "Resource Season Organizer",
+      "Assembly Steward",
     ],
     color: spring.base,
     current: getCurrentSeason() === "spring",
@@ -1054,7 +1286,7 @@ export const seasons: Season[] = [
     theme: "Build",
     description:
       "We go on the ground. Planting, building, village festivals, in-person gatherings, land project visits, community celebrations. The digital work meets the physical world. This is where the theory becomes soil under your feet.",
-    activeRoles: ["Alliance Weaver", "Storyteller"],
+    activeRoles: ["Alliance Weaver", "Storyteller", "Build Season Organizer", "Assembly Steward"],
     color: amber.tan,
     current: getCurrentSeason() === "summer",
   },
@@ -1065,7 +1297,7 @@ export const seasons: Season[] = [
     theme: "Rest",
     description:
       "We step out of our Infinite Game roles and focus on family, in-person village life, personal projects. The community rests. The treasury and forum roles keep a gentle rhythm, but the pace slows intentionally. We compost what we learned.",
-    activeRoles: ["Treasury Steward", "Forum Gardener"],
+    activeRoles: ["Treasury Steward", "Forum Gardener", "Rest Season Organizer"],
     color: amber.tan,
     current: getCurrentSeason() === "fall",
   },

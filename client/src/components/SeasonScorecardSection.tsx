@@ -16,10 +16,11 @@ export function SeasonScorecardSection() {
             <span className="text-[#d4a574] font-medium text-sm uppercase tracking-wide">Season Scorecard</span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
-            Season 1: <span className="text-[#7dd87d]">The First Build</span>
+            Season 2: <span className="text-[#7dd87d]">The First Turn</span>
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto">
-            Winter 2025-2026. Building the tools, writing the code, designing the game. Here's where each role stands.
+            Our first full turn of the wheel, opening with the Design Season in September 2026. Thirteen land projects
+            design their games while we build the tools. Here's where each role stands.
           </p>
         </div>
 

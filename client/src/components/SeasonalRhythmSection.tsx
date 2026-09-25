@@ -17,12 +17,15 @@ const SEASON_EMOJI: Record<RegenSeasonKey, string> = {
   fall: "🍂",
 };
 
-/** Who tends each season most. Chips only; the roles themselves live on /team. */
+/**
+ * Who tends each season most, led by its Season Organizer. Chips only; the
+ * roles themselves live on /team.
+ */
 const SEASON_ROLES: Record<RegenSeasonKey, string[]> = {
-  winter: ["Game designers", "Builders", "Incubator guides"],
-  spring: ["Storytellers", "Weavers", "Investors"],
-  summer: ["Hosts", "Land partners", "Work crews"],
-  fall: ["Harvesters", "Healers", "Villagers"],
+  winter: ["The Lantern-Keeper", "Game designers", "Builders"],
+  spring: ["The Rainmaker", "Storytellers", "Investors"],
+  summer: ["The Barn-Raiser", "Hosts", "Work crews"],
+  fall: ["The Hearth-Keeper", "Harvesters", "Healers"],
 };
 
 /**
@@ -165,8 +168,9 @@ export default function SeasonalRhythmSection() {
               Micro: The Lunar Cycle
             </h3>
             <p style={{ margin: 0, lineHeight: 1.6, color: "#e8e4de" }}>
-              New moon to new moon, roughly 29.5 days. The heartbeat within each
-              season. Gratitude, reflection, and energy follow the moon.
+              New moon to new moon, roughly 29.5 days, and the same everywhere on
+              Earth: the one clock every land shares. Gratitude, reflection, and
+              energy follow the moon.
             </p>
           </div>
         </div>

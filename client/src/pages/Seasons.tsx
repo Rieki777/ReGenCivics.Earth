@@ -31,7 +31,9 @@ import {
   Moon,
   Radio,
   Sparkles,
+  Sprout,
   Star,
+  Sun,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ import {
   SEASON2_EPISODE_DATES,
   SESSION_DURATION_HOURS,
   SESSION_START_HOUR_PT,
+  SESSION_TIME_ZONE,
   sessionEndUtc,
   sessionStartUtc,
 } from "@shared/sessionClock";
@@ -107,6 +110,52 @@ function season2Status(now: Date): Season2Status {
   });
   const next = WEEKS[week]?.start ?? null;
   return { phase: "during", week, title: WEEKS[week - 1].title, next };
+}
+
+const localWhen = (() => {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * Every live session starts at 11am Pacific for now, the middle of the night
+ * across Asia-Pacific (Rye, 2026-09-24: rotate times so every region gets good
+ * hours). Until they rotate, tell each visitor when the next one lands for them.
+ */
+function SessionTimesNote({ now }: { now: Date }) {
+  const next = WEEKS.find((w) => w.start && w.start > now)?.start ?? null;
+  let zone = "";
+  try {
+    zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    /* unknown zone: skip the local line */
+  }
+  const local = next && localWhen && zone && zone !== SESSION_TIME_ZONE ? localWhen.format(next) : null;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-5">
+      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+        <Clock className="w-6 h-6 text-[#f0ebe3]" aria-hidden="true" />
+      </div>
+      <div>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-1" style={display}>
+          Session times for every region
+        </h3>
+        <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
+          Every live session starts at {SESSION_TIME} for now, which is the middle of the night across
+          Asia-Pacific. We're working toward rotating session times so every region gets good hours.
+          {local ? ` Where you are, the next one lands on ${local}.` : ""}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ─── The journey, placed on the wheel ───────────────────────────────────────
@@ -667,22 +716,104 @@ export default function Seasons() {
               );
             })}
           </ol>
+        </div>
+      </section>
 
-          <AnimatedSection animation="slide-up">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-5">
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                <Moon className="w-6 h-6 text-[#f0ebe3]" aria-hidden="true" />
-              </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-bold text-white mb-1" style={display}>
-                  The moon keeps time inside each season
+      {/* ── 4b. One wheel, many lands ── */}
+      <section className="py-20 px-4 bg-gradient-to-b from-[#10301f] to-[#0e2a24]">
+        <div className="container mx-auto max-w-5xl">
+          <AnimatedSection animation="fade-in" className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-5" style={display}>
+              One wheel, <span style={{ color: WINTER.color }}>many lands</span>
+            </h2>
+            <p className="text-lg text-white/80 max-w-3xl mx-auto safe-prose">
+              Our land projects live in every climate on Earth, so the wheel stays a loose pattern. The
+              network keeps one rhythm, and every land keeps its own.
+            </p>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-2 gap-5 mb-5">
+            {[
+              {
+                eyebrow: "Shared by everyone",
+                title: "Design and Resource",
+                body: "Mostly online, so the whole network moves together on one clock: one incubator, one crowdpool launch, wherever you are.",
+                color: WINTER.color,
+              },
+              {
+                eyebrow: "Timed to your land",
+                title: "Build and Rest",
+                body: "On the land, so each project times them to its own climate. A project in Chile might build from October to March. Near the equator, build in the dry season and rest through the heaviest rains.",
+                color: SEASON_LOOK.summer.color,
+              },
+            ].map((card) => (
+              <AnimatedSection key={card.title} animation="slide-up">
+                <div
+                  className="h-full rounded-2xl border bg-white/[0.05] p-6 md:p-8"
+                  style={{ borderColor: `${card.color}55` }}
+                >
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] mb-2" style={{ color: card.color }}>
+                    {card.eyebrow}
+                  </p>
+                  <h3 className="text-2xl font-bold text-white mb-3" style={display}>
+                    {card.title}
+                  </h3>
+                  <p className="text-white/80 leading-relaxed safe-prose">{card.body}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5 mb-5">
+            <AnimatedSection animation="slide-up" className="h-full">
+              <div className="h-full rounded-2xl border border-white/10 bg-white/[0.04] p-6 flex flex-col">
+                <Sun className="w-7 h-7 mb-3" style={{ color: SEASON_LOOK.summer.color }} aria-hidden="true" />
+                <h3 className="text-lg font-bold text-white mb-2" style={display}>
+                  A festival route that follows the sun
                 </h3>
-                <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
-                  Gratitude rounds follow the lunar cycle, and the Open Access Sessions meet with the new
-                  moon. The seasons set the big arc of the year; the moon sets its heartbeat.
+                <p className="text-white/75 text-sm leading-relaxed safe-prose">
+                  Northern build festivals run roughly March to June and southern ones September to February, so
+                  a traveler, or the ReGen Ship, can follow them around the world all year.
+                </p>
+                <Link
+                  href="/ship"
+                  className="mt-auto pt-4 inline-flex min-h-11 items-center gap-1.5 font-semibold underline-offset-4 hover:underline"
+                  style={{ color: SEASON_LOOK.summer.color }}
+                >
+                  Meet the ReGen Ship
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </AnimatedSection>
+            <AnimatedSection animation="slide-up" delay={80} className="h-full">
+              <div className="h-full rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+                <Sprout className="w-7 h-7 mb-3" style={{ color: SEASON_LOOK.spring.color }} aria-hidden="true" />
+                <h3 className="text-lg font-bold text-white mb-2" style={display}>
+                  Seeds and harvest at the Handoff
+                </h3>
+                <p className="text-white/75 text-sm leading-relaxed safe-prose">
+                  At the September equinox the north is harvesting while the south is planting. So at the
+                  Handoff Festival, the north brings the harvest and the south brings the seeds.
                 </p>
               </div>
-            </div>
+            </AnimatedSection>
+            <AnimatedSection animation="slide-up" delay={160} className="h-full">
+              <div className="h-full rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+                <Moon className="w-7 h-7 mb-3 text-[#f0ebe3]" aria-hidden="true" />
+                <h3 className="text-lg font-bold text-white mb-2" style={display}>
+                  The moon keeps one clock for everyone
+                </h3>
+                <p className="text-white/75 text-sm leading-relaxed safe-prose">
+                  The moon is the same everywhere on Earth. Gratitude rounds follow the lunar cycle, and the Open
+                  Access Sessions meet with the new moon. The seasons set the arc of the year; the moon sets its
+                  heartbeat.
+                </p>
+              </div>
+            </AnimatedSection>
+          </div>
+
+          <AnimatedSection animation="slide-up">
+            <SessionTimesNote now={now} />
           </AnimatedSection>
         </div>
       </section>

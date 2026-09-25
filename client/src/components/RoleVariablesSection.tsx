@@ -6,12 +6,12 @@ import { useState } from "react";
 import { gameRoles } from "@/data/gameRoles";
 
 const bands = [
-  { band: 7, base: "900,000", usd: "$9,000", max: "$11,700", roles: "Grand Builder" },
+  { band: 7, base: "900,000", usd: "$9,000", max: "$11,700", roles: "Grand Builder, and the four Season Organizers (Design, Resource, Build, Rest)" },
   { band: 6, base: "800,000", usd: "$8,000", max: "$10,400", roles: "Game Designer, Security Reviewer" },
   { band: 5, base: "700,000", usd: "$7,000", max: "$9,100", roles: "Skills Builder, Season Facilitator" },
   { band: 4, base: "600,000", usd: "$6,000", max: "$7,800", roles: "Alliance Weaver, Treasury Steward" },
   { band: 3, base: "500,000", usd: "$5,000", max: "$6,500", roles: "Storyteller, Incubator Guide, Tool Curator" },
-  { band: 2, base: "400,000", usd: "$4,000", max: "$5,200", roles: "Quest Steward, Outreach Writer" },
+  { band: 2, base: "400,000", usd: "$4,000", max: "$5,200", roles: "Quest Steward, Outreach Writer, Assembly Steward" },
   { band: 1, base: "300,000", usd: "$3,000", max: "$3,900", roles: "Forum Gardener" },
 ];
 

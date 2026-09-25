@@ -87,6 +87,14 @@ export type RegenSeason = {
   flow: "Inward" | "Outward";
   /** Where the work mostly happens. */
   place: "Mostly online" | "On the land";
+  /**
+   * Shared seasons happen online, so the whole network does them together on
+   * one clock. Local seasons happen on the land, so each project times them to
+   * its own climate (Rye, 2026-09-24).
+   */
+  scope: "shared" | "local";
+  /** The Season Organizer who holds this season. */
+  organizer: { title: string; character: string };
   /** The gathering that opens it, written to follow "Opens with". */
   opensWith: string;
   /** What that gathering is for, in one line. */
@@ -114,9 +122,11 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Inward",
     place: "Mostly online",
+    scope: "shared",
+    organizer: { title: "Design Season Organizer", character: "The Lantern-Keeper" },
     opensWith: "the Handoff Festival and Selection Day at the September equinox",
     gathering:
-      "The Handoff Festival. The outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day.",
+      "The Handoff Festival. The outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day. The north brings the harvest, the south brings the seeds.",
     play: [
       { who: "Land projects", what: "Follow the incubator as this cohort designs their games.", href: "/season2", label: "Follow Season 2" },
       { who: "Builders", what: "Build the tools under the land projects with us, weekly.", href: "/interop-sessions", label: "Join the Interoperability Circle" },
@@ -140,6 +150,8 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Outward",
     place: "Mostly online",
+    scope: "shared",
+    organizer: { title: "Resource Season Organizer", character: "The Rainmaker" },
     opensWith: "a recap and passoff, and the crowdpool launch, at the December solstice",
     gathering:
       "Recap and passoff from Design to Resource. The cohort launches its crowdpool together and invites everyone in.",
@@ -166,12 +178,14 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Outward",
     place: "On the land",
+    scope: "local",
+    organizer: { title: "Build Season Organizer", character: "The Barn-Raiser" },
     opensWith: "a recap and passoff at the March equinox",
     gathering: "Recap and passoff from Resource to Build. We head out to the land together to plant and raise.",
     play: [
       { who: "Everyone", what: "Find a land project near you and show up for a work day.", href: "/map", label: "Open the map" },
       { who: "Players", what: "Come to work parties, land visits, and festivals.", href: "/schedule", label: "See what's coming up" },
-      { who: "Travelers", what: "Visit the network's land projects aboard the ReGen Ship.", href: "/ship", label: "Meet the ReGen Ship" },
+      { who: "Travelers", what: "Follow the festivals around the world, north March to June and south September to February, aboard the ReGen Ship.", href: "/ship", label: "Meet the ReGen Ship" },
     ],
     cta: { label: "Explore the land projects", href: "/map" },
   },
@@ -191,6 +205,8 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     ],
     flow: "Inward",
     place: "On the land",
+    scope: "local",
+    organizer: { title: "Rest Season Organizer", character: "The Hearth-Keeper" },
     opensWith: "a recap and passoff at the June solstice",
     gathering: "Recap and passoff from Build to Rest. The harvest begins, and then we rest.",
     play: [
@@ -303,4 +319,144 @@ export function regenSeasonOn(now: Date = new Date()): RegenSeasonKey {
 function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.min(1, Math.max(0, n));
+}
+
+
+// ─── One wheel, many lands ──────────────────────────────────────────────────
+
+export type LandKey = "northern" | "southern" | "equatorial";
+
+export type RegenLand = {
+  key: LandKey;
+  label: string;
+  /** How the Game's seasons sit on this land, in one or two sentences. */
+  guidance: string;
+  /**
+   * The land's own season during each season of the Game, or null near the
+   * equator, where wet and dry seasons fall differently from place to place.
+   */
+  natural: Record<RegenSeasonKey, "winter" | "spring" | "summer" | "autumn"> | null;
+};
+
+/**
+ * The wheel is the network's rhythm; the land keeps its own (Rye, 2026-09-24).
+ * Design and Resource are shared by everyone at once. Build and Rest are timed
+ * to each project's own climate.
+ */
+export const REGEN_LANDS: Record<LandKey, RegenLand> = {
+  northern: {
+    key: "northern",
+    label: "Northern",
+    guidance:
+      "The Game runs one season ahead of your calendar: we design through your autumn, resource through your winter, build in your spring, and rest in your summer.",
+    natural: { winter: "autumn", spring: "winter", summer: "spring", fall: "summer" },
+  },
+  southern: {
+    key: "southern",
+    label: "Southern",
+    guidance:
+      "Design and Resource are online and shared, so you do them with everyone. Time Build and Rest to your own land: build through your spring and summer, roughly September to March, and rest in your winter.",
+    natural: { winter: "spring", spring: "summer", summer: "autumn", fall: "winter" },
+  },
+  equatorial: {
+    key: "equatorial",
+    label: "Near the equator",
+    guidance:
+      "Design and Resource are shared with everyone. On the land, build in your dry season and rest through the heaviest rains, whenever those fall where you are.",
+    natural: null,
+  },
+};
+
+export const REGEN_LAND_ORDER: readonly LandKey[] = ["northern", "southern", "equatorial"] as const;
+
+/** IANA zones well south of the equator, by prefix or exact name. */
+const SOUTHERN_ZONES = [
+  "Australia/",
+  "Pacific/Auckland",
+  "Pacific/Chatham",
+  "Pacific/Norfolk",
+  "Pacific/Noumea",
+  "Pacific/Fiji",
+  "Pacific/Tongatapu",
+  "America/Santiago",
+  "America/Punta_Arenas",
+  "America/Argentina/",
+  "America/Buenos_Aires",
+  "America/Montevideo",
+  "America/Asuncion",
+  "America/Sao_Paulo",
+  "America/Campo_Grande",
+  "America/Cuiaba",
+  "America/La_Paz",
+  "Africa/Johannesburg",
+  "Africa/Maputo",
+  "Africa/Harare",
+  "Africa/Lusaka",
+  "Africa/Windhoek",
+  "Africa/Gaborone",
+  "Africa/Maseru",
+  "Africa/Mbabane",
+  "Indian/Antananarivo",
+  "Indian/Mauritius",
+  "Indian/Reunion",
+];
+
+/** IANA zones in the wet-and-dry tropics, within roughly 15 degrees of the equator. */
+const EQUATORIAL_ZONES = [
+  "America/Bogota",
+  "America/Guayaquil",
+  "Pacific/Galapagos",
+  "America/Lima",
+  "America/Caracas",
+  "America/Panama",
+  "America/Costa_Rica",
+  "America/Managua",
+  "America/Tegucigalpa",
+  "America/El_Salvador",
+  "America/Guatemala",
+  "America/Belize",
+  "America/Manaus",
+  "America/Belem",
+  "America/Fortaleza",
+  "America/Recife",
+  "America/Bahia",
+  "America/Paramaribo",
+  "America/Cayenne",
+  "America/Guyana",
+  "Africa/Nairobi",
+  "Africa/Kampala",
+  "Africa/Kigali",
+  "Africa/Dar_es_Salaam",
+  "Africa/Addis_Ababa",
+  "Africa/Lagos",
+  "Africa/Accra",
+  "Africa/Abidjan",
+  "Africa/Kinshasa",
+  "Africa/Lubumbashi",
+  "Africa/Douala",
+  "Africa/Libreville",
+  "Asia/Singapore",
+  "Asia/Jakarta",
+  "Asia/Makassar",
+  "Asia/Jayapura",
+  "Asia/Kuala_Lumpur",
+  "Asia/Manila",
+  "Asia/Bangkok",
+  "Asia/Ho_Chi_Minh",
+  "Asia/Phnom_Penh",
+  "Asia/Colombo",
+  "Indian/Maldives",
+  "Pacific/Port_Moresby",
+];
+
+/**
+ * A first guess at where a visitor's land is, from the browser's time zone.
+ * No network call and nothing leaves the device; the visitor can change it.
+ */
+export function guessLandFromTimeZone(timeZone: string | undefined): LandKey {
+  if (!timeZone) return "northern";
+  const hit = (list: string[]) => list.some((z) => (z.endsWith("/") ? timeZone.startsWith(z) : timeZone === z));
+  if (hit(SOUTHERN_ZONES)) return "southern";
+  if (hit(EQUATORIAL_ZONES)) return "equatorial";
+  return "northern";
 }
