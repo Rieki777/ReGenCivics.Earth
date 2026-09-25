@@ -12,6 +12,7 @@ import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
 import { applicationCopy, FOLLOW_ALONG_HREF, FOLLOW_ALONG_LINE, intakeStatus } from "../../shared/applicationWindow";
+import { READINESS_HREF } from "../../shared/crowdpoolReadiness";
 import { isAdminRole } from "@shared/adminRole";
 import {
   APPLICATION_EMAIL_STATUSES,
@@ -242,7 +243,7 @@ export const applicationsRouter = router({
                 <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the ReGenerative Renaissance mission.</li>
                 <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>
                 <li><strong>Season Decision:</strong> Final decisions are communicated before the season kickoff.</li>
-              </ol>` : `<p>${applicationCopy(intake).closedLine} We'll hold your application for the next season. You won't get emails about it until we get closer to the start of the next season. Then we'll review it and let you know.</p>${intake.followAlong ? `<p>${FOLLOW_ALONG_LINE} <a href="${toAbsoluteUrl(FOLLOW_ALONG_HREF)}">Follow along live</a>.</p>` : ""}`}
+              </ol>` : `<p>${applicationCopy(intake).closedLine} We'll hold your application for the next season. You won't get emails about it until we get closer to the start of the next season. Then we'll review it and let you know.</p>${intake.followAlong ? `<p>${FOLLOW_ALONG_LINE} <a href="${toAbsoluteUrl(FOLLOW_ALONG_HREF)}">Follow along live</a>, and <a href="${toAbsoluteUrl(READINESS_HREF)}">see what ready means</a>.</p>` : ""}`}
               <h3>Your Application Summary</h3>
               <ul>
                 <li><strong>Project:</strong> ${application.projectName}</li>

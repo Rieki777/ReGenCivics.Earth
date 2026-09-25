@@ -157,7 +157,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
       "Recap and passoff from Design to Resource. The cohort and the community projects that are ready launch their crowdpools together and invite everyone in.",
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
-      { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling", label: "How crowdpooling works" },
+      { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling#ready", label: "What ready means" },
       { who: "Investors", what: "Tell us what you'd back with a non-binding Letter of Intent for the Fund.", href: "/loi", label: "Send a Letter of Intent" },
     ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },

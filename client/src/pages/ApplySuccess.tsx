@@ -10,6 +10,7 @@ import {
   CROWDPOOL_ROUND_LINE,
   FOLLOW_ALONG_HREF,
 } from "@shared/applicationWindow";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 
 export default function ApplySuccess() {
   return (
@@ -62,7 +63,11 @@ export default function ApplySuccess() {
                         <Link href={FOLLOW_ALONG_HREF} className="font-semibold text-[#1a472a] underline underline-offset-2">
                           follow along live
                         </Link>
-                        . {CROWDPOOL_ROUND_LINE}
+                        . {CROWDPOOL_ROUND_LINE}{" "}
+                        <Link href={READINESS_HREF} className="font-semibold text-[#1a472a] underline underline-offset-2">
+                          What ready means
+                        </Link>
+                        .
                       </span>
                     </li>
                   )}

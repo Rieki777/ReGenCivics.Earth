@@ -18,6 +18,7 @@ import {
   FOLLOW_ALONG_LABEL,
   NEXT_SEASON_LINE,
 } from "@shared/applicationWindow";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 
 type Props = {
   /** "dark" for the forest pages, "light" for parchment ones like /apply. */
@@ -58,10 +59,16 @@ export function ApplicationsNotice({ tone = "dark", showLink = true, className =
         {(APPLICATIONS.followAlong || showLink) && (
           <div className="mt-2 flex flex-wrap gap-x-6">
             {APPLICATIONS.followAlong && (
-              <Link href={FOLLOW_ALONG_HREF} className={link}>
-                {FOLLOW_ALONG_LABEL}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <>
+                <Link href={FOLLOW_ALONG_HREF} className={link}>
+                  {FOLLOW_ALONG_LABEL}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+                <Link href={READINESS_HREF} className={link}>
+                  What ready means
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </>
             )}
             {showLink && (
               <Link href="/apply" className={link}>

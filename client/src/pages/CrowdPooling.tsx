@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import CrowdPoolingTool from "@/components/CrowdPoolingTool";
+import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { pageCopy } from "@/data/pageCopy";
@@ -210,6 +211,10 @@ export default function CrowdPooling() {
               {pageCopy.crowdPooling.submit.footer}
             </p>
           </div>
+
+          {/* Ready to crowdpool: what a project shows before its campaign is approved.
+              READINESS_HREF links here. */}
+          <CrowdpoolReadiness id="ready" storageKey="page" className="mt-10" />
 
           {/* Philosophy Video Section */}
           <div className="mt-8 bg-white rounded-2xl p-6 border border-[#7dd87d]/30 shadow-sm">

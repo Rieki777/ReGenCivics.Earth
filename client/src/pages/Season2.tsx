@@ -85,6 +85,7 @@ import {
   FOLLOW_ALONG_LABEL,
 } from "@shared/applicationWindow";
 import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -1940,8 +1941,11 @@ export default function Season2() {
               A project graduates when it finishes the season with everything it
               needs: governance, legal structure, economic model, financial plan,
               and a crowdpooling campaign ready to run. The shared launch needs at
-              least nine projects to graduate, and we want all thirteen.
-              Graduating projects move into alliance member status. Not every
+              least nine projects to graduate, and we want all thirteen.{" "}
+              <Link href={READINESS_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                The readiness checklist
+              </Link>{" "}
+              spells out each piece. Graduating projects move into alliance member status. Not every
               project gets there in thirteen weeks, and that is a normal outcome.
               Every team that plays the season leaves with more maturity and
               clarity than it came in with, and projects that need more time keep
@@ -1976,7 +1980,11 @@ export default function Season2() {
               <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
                 Follow along live
               </Link>{" "}
-              through the Design Season. {CROWDPOOL_ROUND_LINE}
+              through the Design Season. {CROWDPOOL_ROUND_LINE}{" "}
+              <Link href={READINESS_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                See what ready means
+              </Link>
+              .
             </FaqItem>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { toast } from 'sonner';
 import { APPLICATIONS, APPLICATIONS_STATUS, APPLY_BUTTON_LABEL, CROWDPOOL_ROUND_LINE } from '@shared/applicationWindow';
+import { READINESS_HREF } from '@shared/crowdpoolReadiness';
 import {
   Calendar,
   Clock,
@@ -400,7 +401,15 @@ export default function Schedule() {
               </p>
               <p className="text-white/70 mb-4 max-w-2xl mx-auto">
                 You can follow along with the journey even if your project isn't selected. Add the whole season to your calendar and tune in each week. Sometimes there are opportunities for the audience to ask questions and participate.
-                {APPLICATIONS.followAlong && ` ${CROWDPOOL_ROUND_LINE}`}
+                {APPLICATIONS.followAlong && (
+                  <>
+                    {` ${CROWDPOOL_ROUND_LINE} `}
+                    <Link href={READINESS_HREF} className="text-[#7dd87d] font-semibold underline underline-offset-2 hover:text-[#9de89d]">
+                      What ready means
+                    </Link>
+                    .
+                  </>
+                )}
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a

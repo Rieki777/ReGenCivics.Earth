@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CampaignProgressTracker } from './CampaignProgressTracker';
+import { CrowdpoolReadiness } from './CrowdpoolReadiness';
 
 // 'funded' stays readable for old rows only. Nothing here sets it: an admin
 // marks a campaign complete (status 'completed').
@@ -252,6 +253,15 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Ready to crowdpool: what the review checks before approving */}
+      <div className="border-t border-[#1a472a]/10 pt-4">
+        <h4 className="text-sm font-bold text-[#1a472a] mb-1">Ready to crowdpool</h4>
+        <p className="text-xs text-[#1a472a]/80 mb-3">
+          Check each against what the project shows. Anything missing goes in the review notes.
+        </p>
+        <CrowdpoolReadiness framed={false} audience="review" storageKey={`review-${campaign.id}`} />
+      </div>
 
       {/* Admin Review Notes */}
       <div className="border-t border-[#1a472a]/10 pt-4">

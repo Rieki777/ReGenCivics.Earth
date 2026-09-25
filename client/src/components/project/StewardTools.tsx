@@ -28,6 +28,7 @@ import { NeedsGlance } from "./NeedsGlance";
 import { CampaignUpdatesComposer } from "./CampaignUpdatesComposer";
 import { CampaignStewardStats } from "./CampaignStewardStats";
 import { CancelCampaignDialog } from "./CancelCampaignDialog";
+import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type ProjectFront = NonNullable<RouterOutputs["projects"]["getPublic"]["front"]>;
@@ -180,6 +181,8 @@ export function StewardTools({
             <p className="text-sm text-[#1a472a]/80 mb-3">
               This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.
             </p>
+            <p className="text-sm font-semibold text-[#1a472a] mb-2">The review checks these eight before approving:</p>
+            <CrowdpoolReadiness framed={false} storageKey={`campaign-${campaignId}`} className="mb-4" />
             <Button
               onClick={() => submitForReview.mutate({ id: campaignId })}
               disabled={submitForReview.isPending}

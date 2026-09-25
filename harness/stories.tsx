@@ -18,6 +18,7 @@ import { DictationButton } from "@/components/admin/dictation";
 import Seasons from "@/pages/Seasons";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
+import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 
 export type Story = {
   title: string;
@@ -434,6 +435,21 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="-m-6">
         <SeasonalRhythmSection />
+      </div>
+    ),
+  },
+
+  /**
+   * The crowdpool readiness checklist as /crowd-pooling#ready shows it, on the
+   * page's parchment. Ticks persist per storageKey in this browser only.
+   */
+  "crowdpool-readiness": {
+    title: "/crowd-pooling#ready: Ready to crowdpool",
+    render: () => (
+      <div className="-m-6 bg-[#f8f5f0] p-6">
+        <div className="max-w-3xl mx-auto">
+          <CrowdpoolReadiness id="ready" storageKey="harness" />
+        </div>
       </div>
     ),
   },
