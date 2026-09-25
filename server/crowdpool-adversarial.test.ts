@@ -22,11 +22,13 @@
  * asserting the buggy number would quietly bless the bug forever.
  */
 
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { realOffer } from "./test-fixtures/crowdpool";
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { appRouter } from './routers';
 import * as dbHelpers from './db';
 import type { TrpcContext } from './_core/context';
+import { adminCaller, cleanupFixtureApplications, createApprovedApplication } from './test-fixtures/crowdpool';
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -41,7 +43,9 @@ vi.mock('./_core/email', () => ({
     contributionAccepted: vi.fn().mockReturnValue({ subject: 'T', html: '<p>T</p>' }),
     contributionRejected: vi.fn().mockReturnValue({ subject: 'T', html: '<p>T</p>' }),
     contributionFulfilled: vi.fn().mockReturnValue({ subject: 'T', html: '<p>T</p>' }),
+    campaignCancelled: vi.fn().mockReturnValue({ subject: 'T', html: '<p>T</p>' }),
   },
+  contributionEmailLinks: vi.fn().mockReturnValue({ projectUrl: 'https://regencivics.test/project/x', signUpUrl: 'https://regencivics.test/sign-in', browseUrl: 'https://regencivics.test/campaigns' }),
   testEmailConnection: vi.fn().mockResolvedValue(true),
 }));
 
@@ -95,6 +99,7 @@ async function activeCampaign(opts: {
 }) {
   const caller = steward();
   const campaign = await caller.campaigns.create({
+    applicationId: await createApprovedApplication(STEWARD_ID),
     title: opts.title,
     description: `Adversarial fixture: ${opts.title}`,
     projectName: `Adv ${opts.title}`,
@@ -112,13 +117,13 @@ async function activeCampaign(opts: {
       },
     ],
   });
-  await caller.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+  await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
   const items = await caller.campaigns.getItems({ campaignId: campaign.id });
   return { campaignId: campaign.id, itemId: items[0].id as number };
 }
 
 async function pledge(campaignId: number, itemId: number | undefined, value: number, name: string, qty = 1) {
-  return appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
+  return realOffer(appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
     campaignId,
     ...(itemId ? { campaignItemId: itemId } : {}),
     contributionType: 'resource',
@@ -128,7 +133,7 @@ async function pledge(campaignId: number, itemId: number | undefined, value: num
     contributorName: name,
     contributorEmail: `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@example.com`,
     resourceName: 'Adversarial need',
-  });
+  }));
 }
 
 async function itemRow(itemId: number) {
@@ -200,7 +205,7 @@ describe('the pooled total', () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Double count', quantityWanted: 3 });
     const caller = steward();
 
-    const c = await appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
+    const c = await realOffer(appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
       campaignId,
       campaignItemId: itemId,
       contributionType: 'financial',
@@ -210,7 +215,7 @@ describe('the pooled total', () => {
       quantityPledged: 1,
       contributorName: 'Crypto',
       contributorEmail: 'crypto@example.com',
-    });
+    }));
     await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
 
     const row = await campaignRow(campaignId);
@@ -390,8 +395,10 @@ describe('concurrency', () => {
     console.log(
       `[adversarial] concurrent accept: quantityClaimed per trial = ${JSON.stringify(observed)}; ` +
       `correct is 1 every time; double-reserved ${doubled} of ${observed.length}`);
-    // Never lose a slot. True whether or not the race fires, so this cannot flake.
-    expect(observed.every((n) => n >= 1)).toBe(true);
+    // FIXED 2026-09-24: accept is now a conditional UPDATE (WHERE status IN
+    // ('pending','rejected')), so the second of two simultaneous accepts
+    // changes nothing and answers CONFLICT. The counter lands on 1 every time.
+    expect(observed).toEqual([1, 1, 1, 1, 1]);
   });
 
   /**
@@ -427,7 +434,9 @@ describe('concurrency', () => {
     console.log(
       `[adversarial] concurrent fulfil: quantityDelivered per trial = ${JSON.stringify(observed)}; ` +
       `correct is 1 every time; double-delivered ${doubled} of ${observed.length}`);
-    expect(observed.every((n) => n >= 1)).toBe(true);
+    // FIXED 2026-09-24: delivery is a conditional UPDATE (WHERE status =
+    // 'accepted'), and the payoff runs only for the call that moved the row.
+    expect(observed).toEqual([1, 1, 1, 1, 1]);
   });
 
   /**
@@ -552,7 +561,7 @@ describe('degenerate campaigns', () => {
     const { campaignId, itemId } = await activeCampaign({ title: 'Monopolist', quantityWanted: 6 });
     const caller = steward();
     for (let i = 0; i < 4; i++) {
-      const c = await appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
+      const c = await realOffer(appRouter.createCaller(ctxFor(STEWARD_ID, nextIp())).campaigns.submitContribution({
         campaignId,
         campaignItemId: itemId,
         contributionType: 'resource',
@@ -562,7 +571,7 @@ describe('degenerate campaigns', () => {
         contributorName: 'Monopolist',
         contributorEmail: 'monopolist@example.com',
         resourceName: 'Adversarial need',
-      });
+      }));
       await caller.campaigns.updateContributionStatus({ contributionId: c.id, status: 'accepted' });
     }
     const detail = await caller.campaigns.getById({ id: campaignId });
@@ -622,4 +631,8 @@ describe('failure messages reaching a contributor', () => {
     expect(blob).not.toMatch(/private@example\.com/);
     expect(blob).not.toMatch(/contributorPhone/);
   });
+});
+
+afterAll(async () => {
+  if (!skipIfNoDb) await cleanupFixtureApplications();
 });

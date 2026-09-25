@@ -1173,9 +1173,12 @@ export const campaigns = mysqlTable("campaigns", {
   isDemo: tinyint("isDemo").default(0).notNull(),
   forumPostId: int("forumPostId"), // Campaign discussion thread
   seasonId: int("seasonId"), // Which season this campaign belongs to
-});
+}, (t) => ([
+  // Project pages look campaigns up by application (0248).
+  index("campaigns_applicationId_idx").on(t.applicationId),
+]));
 
-export type Campaign = typeof campaigns.$inferSelect;
+export type Campaign =typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 
 /**
@@ -1252,6 +1255,12 @@ export const campaignItems = mysqlTable("campaign_items", {
   quantityWanted: int("quantityWanted").default(1).notNull(),
   quantityClaimed: int("quantityClaimed").default(0).notNull(),
   quantityDelivered: int("quantityDelivered").default(0).notNull(),
+  // What the three counters above count (0249). 'count' is people or things
+  // (every need before 0249). 'hours_per_week' is used only by role needs:
+  // hours a week needed, accepted and delivered. Branch on isHoursNeed()
+  // from shared/roleCapacity.ts, never on kind alone: a legacy role still on
+  // 'count' keeps the count path until 0251 converts it.
+  capacityUnit: mysqlEnum("capacityUnit", ["count", "hours_per_week"]).default("count").notNull(),
   needDeadline: timestamp("needDeadline"),
   // Shift needs: the dated work-party window
   shiftStartsAt: timestamp("shiftStartsAt"),
@@ -1342,7 +1351,9 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
     "withdrawn",    // Withdrawn by contributor
     "fulfilled",    // Contribution has been delivered/completed
     "expired",      // Claim window passed, quantity released (nightly sweep)
-    "thanked"       // Steward attached an impact note/photo after fulfillment
+    "thanked",      // Steward attached an impact note/photo after fulfillment
+    "released",     // (0248) A steward freed an accepted place; it goes back to the need
+    "cancelled"     // (0248) Campaign cancelled while this was pending or accepted
   ]).default("pending").notNull(),
 
   // Communication
@@ -1360,6 +1371,9 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 16 }), // Set by formalizeOnHypha
   hyphaConfirmedAt: timestamp("hyphaConfirmedAt"), // Stamped by cascadeCrowdpoolPassed when the DHO proposal passes on chain
   playerContributionId: int("playerContributionId"), // Living Tree row created on fulfilled
+  // (0248) Stamped when a cancellation notice reached this contributor. The
+  // daily batch retries non-account emails while it is NULL.
+  cancelNoticedAt: timestamp("cancelNoticedAt"),
 
   // Metadata
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
@@ -1367,7 +1381,12 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   fulfilledAt: timestamp("fulfilledAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ([
+  // (0252) Accept, hours changes and cancel lock only one need's or one
+  // campaign's rows, never the whole table.
+  index("campaign_contributions_item_status_idx").on(t.campaignItemId, t.status),
+  index("campaign_contributions_campaign_status_idx").on(t.campaignId, t.status),
+]));
 
 export type CampaignContribution = typeof campaignContributions.$inferSelect;
 export type InsertCampaignContribution = typeof campaignContributions.$inferInsert;
@@ -1430,9 +1449,29 @@ export const campaignFollowers = mysqlTable("campaign_followers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ([
   unique("campaign_followers_campaign_email_uq").on(t.campaignId, t.email),
+  index("campaign_followers_token_idx").on(t.unsubscribeToken),
 ]));
 export type CampaignFollower = typeof campaignFollowers.$inferSelect;
 export type InsertCampaignFollower = typeof campaignFollowers.$inferInsert;
+
+/**
+ * Crowdpool waitlist (0250). "Tell me when crowdpooling opens" signups, one
+ * row per email per Game season. Mailed only by admin Outbound, never
+ * automatically; every letter carries the row's token unsubscribe link.
+ */
+export const crowdpoolWaitlist = mysqlTable("crowdpool_waitlist", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonNumber: int("seasonNumber").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  unsubscribeToken: varchar("unsubscribeToken", { length: 32 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("crowdpool_waitlist_season_email_uq").on(t.seasonNumber, t.email),
+  index("crowdpool_waitlist_token_idx").on(t.unsubscribeToken),
+]));
+export type CrowdpoolWaitlistEntry = typeof crowdpoolWaitlist.$inferSelect;
+export type InsertCrowdpoolWaitlistEntry = typeof crowdpoolWaitlist.$inferInsert;
 
 /**
  * Campaign Images table
@@ -3069,6 +3108,16 @@ export const notifications = mysqlTable("notifications", {
     "claim_complete",
     "claim_failed",
     "campaign_update",
+    // Campaign notices on the spine (0248)
+    "contribution_delivered",
+    "contribution_thanked",
+    "contribution_released",
+    "role_filled",
+    "campaign_approved",
+    "campaign_declined",
+    "campaign_cancelled",
+    "campaign_completed",
+    "claim_expired",
   ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),

@@ -17,6 +17,17 @@ For every new procedure:
 - [ ] If it touches tokens, does it use `db.creditPrivateTokens` (writes) and `playerProfiles.getMyTokens` (reads)? Never write public balances.
 - [ ] If it touches another user's resource, does it verify ownership / admin status?
 
+### Public email-list procedures (worked example, 2026-09-24)
+
+`campaigns.joinWaitlist`, `campaigns.subscribeByEmail` and `campaigns.unsubscribeEmailFollow` take input from anyone, signed in or not. The pattern every public list procedure follows:
+
+- [ ] `checkRateLimit(ctx, <action>)` per IP before any database work (`campaign_follow_email` for sign-ups, `campaign_list_unsubscribe` for the stop link).
+- [ ] No enumeration: the answer is the same `{ ok: true }` whether the email was already on the list, the token matched a row, or the token matched nothing. A duplicate sign-up is a silent upsert on a unique key.
+- [ ] The server decides anything that scopes the row (the waitlist's `seasonNumber` comes from `regenSeasonSpan()` on the server, never from the client).
+- [ ] Tokens are `nanoid(32)`, validated as exactly 32 characters, and never logged, echoed, or put in an error message. A token only ever removes rows; it never reads one back to the caller.
+- [ ] Lists are mailed only from admin Outbound (`server/lib/outboundAudience.ts`), each letter with that person's own stop link, never the newsletter prefs link.
+- [ ] Pinned by `server/outbound-audience.test.ts`.
+
 ## 2. Webhooks
 
 For any new inbound webhook:

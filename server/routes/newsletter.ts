@@ -601,7 +601,7 @@ export const emailRouter = router({
       template: z.string(),
     }))
     .mutation(async ({ input }) => {
-      const { sendEmail, emailTemplates } = await import("../_core/email");
+      const { sendEmail, emailTemplates, sampleContributionEmailArgs } = await import("../_core/email");
 
       // Get template content based on template ID
       let emailContent: { subject: string; html: string };
@@ -641,13 +641,13 @@ export const emailRouter = router({
           };
           break;
         case "contributionAccepted":
-          emailContent = emailTemplates.contributionAccepted(testName, "Sample Contribution", "Sample Campaign");
+          emailContent = emailTemplates.contributionAccepted(sampleContributionEmailArgs(testName, "Sample Contribution", "Sample Campaign"));
           break;
         case "contributionRejected":
-          emailContent = emailTemplates.contributionRejected(testName, "Sample Contribution", "Sample Campaign");
+          emailContent = emailTemplates.contributionRejected(sampleContributionEmailArgs(testName, "Sample Contribution", "Sample Campaign"));
           break;
         case "contributionFulfilled":
-          emailContent = emailTemplates.contributionFulfilled(testName, "Sample Contribution", "Sample Campaign");
+          emailContent = emailTemplates.contributionFulfilled(sampleContributionEmailArgs(testName, "Sample Contribution", "Sample Campaign"));
           break;
         default:
           emailContent = emailTemplates.newsletterWelcome(testName);
@@ -672,7 +672,7 @@ export const emailRouter = router({
       template: z.string(),
     }))
     .query(async ({ input }) => {
-      const { emailTemplates } = await import("../_core/email");
+      const { emailTemplates, sampleContributionEmailArgs } = await import("../_core/email");
 
       // Generate preview with sample data
       const testName = "Jane Smith";
@@ -713,13 +713,13 @@ export const emailRouter = router({
           };
           break;
         case "contributionAccepted":
-          emailContent = emailTemplates.contributionAccepted(testName, "Organic Seed Library", "Green Valley Community Garden");
+          emailContent = emailTemplates.contributionAccepted(sampleContributionEmailArgs(testName, "Organic Seed Library", "Green Valley Community Garden"));
           break;
         case "contributionRejected":
-          emailContent = emailTemplates.contributionRejected(testName, "Organic Seed Library", "Green Valley Community Garden");
+          emailContent = emailTemplates.contributionRejected(sampleContributionEmailArgs(testName, "Organic Seed Library", "Green Valley Community Garden"));
           break;
         case "contributionFulfilled":
-          emailContent = emailTemplates.contributionFulfilled(testName, "Organic Seed Library", "Green Valley Community Garden");
+          emailContent = emailTemplates.contributionFulfilled(sampleContributionEmailArgs(testName, "Organic Seed Library", "Green Valley Community Garden"));
           break;
         default:
           emailContent = emailTemplates.newsletterWelcome(testName);

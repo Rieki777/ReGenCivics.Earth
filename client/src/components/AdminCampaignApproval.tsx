@@ -19,15 +19,17 @@ import {
 import { toast } from 'sonner';
 import { CampaignProgressTracker } from './CampaignProgressTracker';
 
-type CampaignStatus = 'pending_review' | 'active' | 'rejected' | 'draft' | 'funded' | 'completed' | 'cancelled';
+// 'funded' stays readable for old rows only. Nothing here sets it: an admin
+// marks a campaign complete (status 'completed').
+type CampaignStatus = 'pending_review' | 'active' | 'rejected' | 'draft' | 'completed' | 'cancelled';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending_review: { label: 'Pending Review', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: <Clock className="w-3 h-3" /> },
   active: { label: 'Active', color: 'bg-green-100 text-green-800 border-green-200', icon: <CheckCircle2 className="w-3 h-3" /> },
   rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800 border-red-200', icon: <XCircle className="w-3 h-3" /> },
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: <FileText className="w-3 h-3" /> },
-  funded: { label: 'Funded', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: <DollarSign className="w-3 h-3" /> },
-  completed: { label: 'Completed', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
+  funded: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
+  completed: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: <XCircle className="w-3 h-3" /> },
 };
 
@@ -59,9 +61,24 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
   });
 
   const handleStatusChange = async (newStatus: CampaignStatus) => {
+    const title = campaign?.title ?? 'this campaign';
+    if (newStatus === 'completed' && !window.confirm(`Mark ${title} complete? Its stewards and contributors with an account hear about it. This can't be undone.`)) return;
+    if (newStatus === 'cancelled' && !window.confirm(`Cancel ${title}? Every offer that is waiting or accepted closes, and everyone involved is told. This can't be undone.`)) return;
     setActionLoading(newStatus);
-    await updateStatusMutation.mutateAsync({ id: campaignId, status: newStatus });
-    setActionLoading(null);
+    try {
+      // Review notes travel with an approval or a decline: they are saved on
+      // the campaign and shown to its stewards in their notice.
+      const notes = reviewNotes.trim();
+      await updateStatusMutation.mutateAsync({
+        id: campaignId,
+        status: newStatus,
+        ...((newStatus === 'active' || newStatus === 'rejected') && notes ? { reviewNotes: notes } : {}),
+      });
+    } catch {
+      // onError already showed the server's message.
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (isLoading) {
@@ -238,13 +255,17 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
 
       {/* Admin Review Notes */}
       <div className="border-t border-[#1a472a]/10 pt-4">
-        <h4 className="text-sm font-bold text-[#1a472a] mb-2">Admin Review Notes</h4>
+        <h4 className="text-sm font-bold text-[#1a472a] mb-1">Review notes</h4>
+        <p className="text-xs text-[#1a472a]/80 mb-2">
+          Sent to the project's stewards with an approval or a decline.
+        </p>
         <Textarea
           value={reviewNotes}
           onChange={(e) => setReviewNotes(e.target.value)}
-          placeholder="Add notes about this campaign submission..."
+          placeholder="What the stewards should know, or what to change before this goes live"
           className="mb-3 border-[#1a472a]/20"
           rows={3}
+          maxLength={2000}
         />
       </div>
 
@@ -272,14 +293,25 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           </>
         )}
         {campaign.status === 'active' && (
-          <Button
-            onClick={() => handleStatusChange('cancelled')}
-            disabled={actionLoading !== null}
-            variant="outline"
-            className="border-red-300 text-red-600 hover:bg-red-50"
-          >
-            Cancel Campaign
-          </Button>
+          <>
+            <Button
+              onClick={() => handleStatusChange('completed')}
+              disabled={actionLoading !== null}
+              className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+            >
+              {actionLoading === 'completed' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              Mark complete
+            </Button>
+            <Button
+              onClick={() => handleStatusChange('cancelled')}
+              disabled={actionLoading !== null}
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50"
+            >
+              {actionLoading === 'cancelled' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Cancel Campaign
+            </Button>
+          </>
         )}
         {campaign.status === 'rejected' && (
           <Button

@@ -17,12 +17,16 @@
  * meaning always does. The history lives in docs/CROWDPOOL_HUB_CONTRACT.md
  * section 10, and a test fails if the number here is not in that table.
  *
+ * Version 3 (2026-09-24): on a role need marked `capacityUnit =
+ * 'hours_per_week'`, quantityWanted / quantityClaimed / quantityDelivered
+ * count hours a week, not people (shared/roleCapacity.ts).
+ *
  * A map rather than one number, so a later surface (the feedback relay, say)
  * can version itself without bumping crowdpool. Served by `meta.contract`.
  * A hub that predates this file is, by definition, version 1 of everything.
  */
 export const HUB_CONTRACT = {
-  crowdpool: 2,
+  crowdpool: 3,
 } as const;
 
 export type HubContract = { [K in keyof typeof HUB_CONTRACT]: number };

@@ -30,6 +30,21 @@ npx tsx scripts/run-migration.ts drizzle/0153_thing.sql  # apply one file
    truth for the drizzle-orm runtime; it does NOT drive migrations).
 4. Run it, then `--status` to confirm.
 
+### Held data migrations: `drizzle/after-deploy/`
+
+A data migration that old code cannot read (it changes what numbers MEAN)
+must run only after the deploy that carries the new code reports SUCCESS.
+Those files live in `drizzle/after-deploy/`. `--all` and `--status` scan only
+`drizzle/*.sql`, so the standard pre-push `--all` never applies them. Run one
+by path once the deploy is green:
+
+```bash
+npx tsx scripts/run-migration.ts drizzle/after-deploy/0251_role_hours_convert.sql
+```
+
+Their numbers stay taken: `scripts/check-migration-numbers.mjs` reads that
+folder too. Once applied, a held file can stay where it is.
+
 ## drizzle-kit is NOT the migration system
 
 `drizzle.config.ts` + `drizzle/meta/_journal.json` are legacy. The drizzle-kit

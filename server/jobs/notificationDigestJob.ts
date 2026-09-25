@@ -13,12 +13,18 @@ import { getDb, isUserBanned, getPlayerProfileByUserId } from "../db";
 import { notifications, users } from "../../drizzle/schema";
 import {
   resolvePrefs,
-  cadenceFor,
+  digestWants,
   renderDigestEmail,
+  CAMPAIGN_NOTIFICATION_TYPES,
   type DigestItem,
 } from "../lib/notification-email";
 
-const DIGESTABLE_TYPES = ["mention", "forum_reply", "guide_reply", "gratitude"] as const;
+// Campaign notices join the digest for people who chose a daily cadence,
+// and campaign_update always lands here (cadenceFor downgrades it).
+const DIGESTABLE_TYPES = [
+  "mention", "forum_reply", "guide_reply", "gratitude",
+  ...CAMPAIGN_NOTIFICATION_TYPES,
+] as const;
 const LOOKBACK_DAYS = 3;
 
 export async function runNotificationDigestJob(): Promise<void> {
@@ -71,7 +77,8 @@ export async function runNotificationDigestJob(): Promise<void> {
       const profile = await getPlayerProfileByUserId(userId);
       if (profile?.emailDigestFrequency === "never") continue;
       const prefs = resolvePrefs(profile?.notificationPrefs);
-      const wanted = userRows.filter((r) => cadenceFor(r.type, prefs) === "daily");
+      // Daily-cadence rows, plus immediate ones whose email never went out.
+      const wanted = userRows.filter((r) => digestWants(r.type, r.createdAt, prefs));
       if (wanted.length === 0) continue;
       if (await isUserBanned(userId)) continue;
 
@@ -100,7 +107,7 @@ export async function runNotificationDigestJob(): Promise<void> {
         });
       } catch { /* log row is best-effort */ }
 
-      await sendEmail({
+      const { id: sentId } = await sendEmail({
         to: userRows[0].email!,
         subject,
         html,
@@ -108,6 +115,8 @@ export async function runNotificationDigestJob(): Promise<void> {
         recipientName: userRows[0].name ?? undefined,
         emailLogId,
       });
+      // Held by the hourly cap or EMAIL_HOLD: leave the rows for the next run.
+      if (!sentId) continue;
 
       await db
         .update(notifications)

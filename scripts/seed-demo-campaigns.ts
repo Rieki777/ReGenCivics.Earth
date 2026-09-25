@@ -19,6 +19,13 @@
  * contribution rows (claimed = accepted + fulfilled + thanked, delivered =
  * fulfilled + thanked), never hand-set, so progress bars always agree with
  * the ledger. All contributor names and emails are fictional (@example.com).
+ *
+ * Roles are hours needs (2026-09-24, capacityUnit 'hours_per_week'): a role's
+ * quantityWanted IS its hours a week, and a role contribution's
+ * quantityPledged is the hours a week it holds, so claimed and delivered
+ * count hours. A re-seed writes hours directly, so it never undoes
+ * migration 0251. The Permaculture Design Lead shows a partial fill: 40
+ * hours a week needed, 10 accepted, 20 more offered and waiting.
  */
 import "dotenv/config";
 import mysql from "mysql2/promise";
@@ -48,7 +55,7 @@ type DemoNeed = {
   shiftHours?: number;         // Shifts: length in hours
   loanStartDays?: number;      // Loans: custody window start, days from now
   loanEndDays?: number;        // Loans: custody window end, days from now
-  hoursPerWeek?: number;       // Roles
+  hoursPerWeek?: number;       // Roles: the hours a week the role needs (its capacity)
   durationMonths?: number;     // Roles
 };
 
@@ -60,6 +67,8 @@ type DemoContribution = {
   title: string;
   description?: string;
   quantity: number;
+  /** Role contributions: hours a week offered and held. Defaults to the role's full hours. */
+  hoursPerWeek?: number;
   estimatedValue: number;
   status: ContributionStatus;
   isAnonymous?: boolean;
@@ -123,6 +132,11 @@ const daysFromNow = (n: number) => new Date(Date.now() + n * DAY_MS);
 const daysAgo = (n: number) => new Date(Date.now() - n * DAY_MS);
 
 // ── Legacy column mapping (category stays for back-compat reads) ─────────────
+
+/** A role's hours a week: its hours per slot times its slots (40 when unset). */
+function roleHoursOf(need: DemoNeed): number {
+  return Math.max(1, (need.hoursPerWeek && need.hoursPerWeek > 0 ? need.hoursPerWeek : 40) * Math.max(need.quantityWanted, 1));
+}
 
 function legacyCategory(kind: NeedKind): "equipment" | "role" | "resource" {
   if (kind === "role" || kind === "shift" || kind === "knowledge") return "role";
@@ -225,8 +239,8 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
       {
         key: "permaculture-lead", kind: "role", capitalType: "intellectual",
         name: "Permaculture Design Lead",
-        description: "Lead the design and implementation of food forests and regenerative agriculture systems, and train community members.",
-        quantityWanted: 1, estimatedValue: 18200, hoursPerWeek: 20, durationMonths: 6,
+        description: "Lead the design and implementation of food forests and regenerative agriculture systems, and train community members. Several people can share it.",
+        quantityWanted: 1, estimatedValue: 36400, hoursPerWeek: 40, durationMonths: 6,
       },
       // Shifts
       {
@@ -302,6 +316,18 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         type: "role", title: "Yoga and breathwork, three mornings a week",
         description: "500hr certified, ten years teaching, moving to Guanacaste in the fall.",
         quantity: 1, estimatedValue: 7200, status: "accepted", submittedDaysAgo: 12,
+      },
+      {
+        needKey: "permaculture-lead", name: "Maren Oakhollow", email: "maren.oakhollow@example.com",
+        type: "role", title: "Food forest design, 10 hours a week",
+        description: "PDC teacher, eight food forests planted in the dry tropics.",
+        quantity: 1, hoursPerWeek: 10, estimatedValue: 0, status: "accepted", submittedDaysAgo: 10,
+      },
+      {
+        needKey: "permaculture-lead", name: "Tomas Riverbend", email: "tomas.riverbend@example.com",
+        type: "role", title: "Design and training help, 20 hours a week",
+        description: "Market gardener and trainer, can start next month.",
+        quantity: 1, hoursPerWeek: 20, estimatedValue: 0, status: "pending", submittedDaysAgo: 2,
       },
       {
         needKey: "dance-coordinator", name: "Luz Caminante", email: "luz.caminante@example.com",
@@ -1049,22 +1075,28 @@ async function main() {
 
     // ── Insert needs ───────────────────────────────────────────────────────
     const needIdByKey = new Map<string, number>();
+    const needByKey = new Map<string, DemoNeed>();
     for (const need of demo.needs) {
       const category = legacyCategory(need.kind);
       const isRoleLike = need.kind === "role" || need.kind === "shift" || need.kind === "knowledge";
+      // A role is an hours need: its capacity is the hours a week it needs.
+      const isHours = need.kind === "role";
+      const roleHours = isHours ? roleHoursOf(need) : null;
+      needByKey.set(need.key, need);
       const [result] = await conn.execute<mysql.ResultSetHeader>(
         `INSERT INTO campaign_items
-           (campaignId, category, kind, capitalType,
+           (campaignId, category, kind, capitalType, capacityUnit,
             quantityWanted, quantityClaimed, quantityDelivered,
             needDeadline, shiftStartsAt, shiftEndsAt, loanWindowStart, loanWindowEnd,
             groupClaimable, priorityPinned, estimatedValue,
             roleTitle, roleDescription, hoursPerWeek, durationMonths,
             equipmentName, equipmentQuantity,
             resourceName, resourceQuantity, resourceUnit, resourceDescription)
-         VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           campaignId, category, need.kind, need.capitalType,
-          need.quantityWanted,
+          isHours ? "hours_per_week" : "count",
+          isHours ? roleHours : need.quantityWanted,
           need.needDeadlineDays != null ? daysFromNow(need.needDeadlineDays) : null,
           need.shiftStartDays != null ? daysFromNow(need.shiftStartDays) : null,
           need.shiftStartDays != null && need.shiftHours != null
@@ -1077,7 +1109,7 @@ async function main() {
           need.estimatedValue,
           isRoleLike ? need.name : null,
           isRoleLike ? need.description : null,
-          need.hoursPerWeek ?? null,
+          isHours ? roleHours : need.hoursPerWeek ?? null,
           need.durationMonths ?? null,
           need.kind === "loan" ? need.name : null,
           need.kind === "loan" ? need.quantityWanted : null,
@@ -1096,20 +1128,29 @@ async function main() {
       const submittedAt = daysAgo(c.submittedDaysAgo);
       const reviewed = c.status !== "pending";
       const delivered = c.status === "fulfilled" || c.status === "thanked";
+      // On a role (hours need) the contribution holds hours a week, priced
+      // as its share of the role's value, and never expires.
+      const need = c.needKey ? needByKey.get(c.needKey) : undefined;
+      const onHoursNeed = need?.kind === "role";
+      const hours = onHoursNeed ? Math.min(c.hoursPerWeek ?? roleHoursOf(need!), roleHoursOf(need!)) : null;
+      const quantity = onHoursNeed ? hours! : c.quantity;
+      const value = onHoursNeed
+        ? Math.round((need!.estimatedValue * hours!) / roleHoursOf(need!) * 100) / 100
+        : c.estimatedValue;
       await conn.execute(
         `INSERT INTO campaign_contributions
            (campaignId, campaignItemId, contributorName, contributorEmail,
-            contributionType, title, description, quantityPledged,
+            contributionType, title, description, quantityPledged, hoursPerWeek,
             estimatedValue, status, isAnonymous, claimExpiresAt,
             submittedAt, reviewedAt, fulfilledAt, acknowledgedAt, acknowledgedNote)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           campaignId,
           c.needKey ? needIdByKey.get(c.needKey) ?? null : null,
           c.name, c.email, c.type, c.title, c.description ?? null,
-          c.quantity, c.estimatedValue, c.status,
+          quantity, hours, value, c.status,
           c.isAnonymous ? 1 : 0,
-          c.status === "accepted" ? daysFromNow(10) : c.status === "expired" ? daysAgo(5) : null,
+          onHoursNeed ? null : c.status === "accepted" ? daysFromNow(10) : c.status === "expired" ? daysAgo(5) : null,
           submittedAt,
           reviewed ? new Date(submittedAt.getTime() + 2 * DAY_MS) : null,
           delivered ? new Date(submittedAt.getTime() + 7 * DAY_MS) : null,

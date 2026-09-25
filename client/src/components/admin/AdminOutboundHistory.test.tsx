@@ -99,7 +99,24 @@ describe("AdminOutboundHistory", () => {
       body: "Hello from the field.",
       layout: "announcement",
       source: "all",
+      list: null,
     });
+  });
+
+  it("Duplicate keeps a list audience and never widens it to all subscribers", async () => {
+    const saved = detail.audience;
+    (detail as { audience: unknown }).audience = { sources: [], activeOnly: true, list: { kind: "campaign", campaignId: 12 } };
+    try {
+      const onDuplicate = vi.fn();
+      render(<AdminOutboundHistory onDuplicate={onDuplicate} onWrite={vi.fn()} />);
+      await userEvent.click(screen.getByRole("button", { name: /Spring letter/ }));
+      await userEvent.click(screen.getByRole("button", { name: "Duplicate into Write" }));
+      expect(onDuplicate).toHaveBeenCalledWith(expect.objectContaining({
+        list: { kind: "campaign", campaignId: 12 },
+      }));
+    } finally {
+      (detail as { audience: unknown }).audience = saved;
+    }
   });
 
   it("exports a recipient CSV from the list row", async () => {

@@ -11,6 +11,7 @@ import { getDb } from "../db";
 import { desc, eq } from "drizzle-orm";
 import { forumPosts, recordings, gratitudeLog, forumCategories } from "../../drizzle/schema";
 import { landProjectTeamAttribution } from "../lib/team-user";
+import { isPublicCampaign } from "../lib/project-steward";
 import { extractThemes, validThemeKeys, labelForThemeKey } from "../../shared/gratitude-themes";
 import fs from "fs";
 import path from "path";
@@ -344,7 +345,8 @@ export function registerOgRoutes(app: Express) {
         }
         case "campaign": {
           const c = await db.getCampaignById(Number(id));
-          if (!c) break;
+          // Share cards are public: an unpublished campaign gets the default card.
+          if (!c || !isPublicCampaign(c)) break;
           const backers = await db.getCampaignContributorsCount(Number(id));
           element = campaignTemplate({
             title: c.title,

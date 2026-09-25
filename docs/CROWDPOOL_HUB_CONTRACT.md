@@ -46,14 +46,33 @@ not change without a message to the village-os session first.
 
 **Stable fields.** On a need: `id`, `name`, `kind`, `category`, `capitalType`,
 `description`, `estimatedValue`, `quantityWanted`, `quantityClaimed`,
-`quantityDelivered`, `needDeadline`, `priorityPinned`, `groupClaimable`. On a
+`quantityDelivered`, `capacityUnit`, `needDeadline`, `priorityPinned`,
+`groupClaimable`. `capacityUnit` (since version 3) is `count` or
+`hours_per_week` and says what the three quantity fields count; treat a missing
+value as `count`. On a
 campaign: the `items` / `images` / `coverImage` / `contributorsCount` embedding, plus
 `startedAt` and `durationDays`, from which the village derives `endsAt` because the
 hub stores no end column.
 
-**The nine capital types and the wanted/claimed/delivered meter are hub-owned and are
-not changing.** Both are load-bearing here too: `player_contributions.capitalType`
+**The nine capital types are hub-owned and are not changing. The wanted/claimed/delivered
+meter keeps its shape; since version 3, on hours needs it counts hours a week
+(section 10).** Both are load-bearing here too: `player_contributions.capitalType`
 feeds the Living Tree.
+
+**Children of unpublished campaigns read empty.** Since 2026-09-24, `getItems`,
+`getPartnerLinks` and `getActivity` (and `listUpdates`, `getImages`,
+`getContributions`) return `[]` for a campaign in `draft`, `pending_review` or
+`rejected`, unless the caller stewards it. `getById` already returned `null` for
+those. Published campaigns (`active`, `funded`, `completed`, `cancelled`) are
+unchanged, so no village-visible meaning moved and this is not a bump.
+
+**A campaign cancelled before it ever went live stays unpublished.** Also since
+2026-09-24: `cancelled` counts as published only when the campaign has a
+`startedAt` or `publishedAt` (going live stamps both). Cancelled from `draft` or
+`pending_review`, it reads like a draft: `getById` returns `null`, `list` leaves it
+out and its children read empty for anyone but its stewards and admins. Villages
+never saw such a campaign, so nothing they read changes and this is not a bump.
+The rule is `isPublicCampaign` in `server/lib/project-steward.ts`.
 
 **Internal, and free to change without notice:** anything behind a `protectedProcedure`,
 anything PII-bearing (`getContributionsForOwner`), and the `crowdPoolingProjects` and
@@ -104,9 +123,14 @@ accepted reported $5,000. Since `b835c28e` the total sums the standing statuses,
 and it is recomputed on first fulfilment and once per campaign when claims expire.
 That change is why the contract version is 2 (section 10).
 
-**Over-delivery makes a need vanish from the village shelf.** The hub's fulfil path
-is not idempotent (gap analysis 3.4), so `quantityDelivered` can pass
-`quantityWanted`. Measured on the village page at wanted 1, claimed 1, delivered 2:
+**Over-delivery makes a need vanish from the village shelf. Partly fixed,
+2026-09-24.** The hub's fulfil path used to be not idempotent (gap analysis 3.4).
+Since contract version 3 every status write is conditional on the status it read,
+so a repeated or concurrent fulfil counts once. On hours needs (section 10) accepts
+are capped and counters are recomputed from rows, so delivered never passes wanted
+there. On count needs accepts are still uncapped, so two accepted claims on a
+one-slot need can both be delivered and `quantityDelivered` can still pass
+`quantityWanted` that way. Measured on the village page at wanted 1, claimed 1, delivered 2:
 their open-needs filter takes delivered below wanted, their met-needs filter takes
 delivered at or above it, so the need fails the first, passes the second, and leaves
 the shelf as one silent tick in a completed count. A villager sees one card fewer and
@@ -127,9 +151,17 @@ For the village document, in the hub's own terms.
 
 `campaigns.submitContribution` is a `publicProcedure` on purpose: a person with no
 account can pledge against a need. It writes a `campaign_contributions` row at status
-`pending`.
+`pending` and returns `{ id, success: true, practice: false }`.
+
+On an example campaign (`isDemo`) it is a practice run (2026-09-24, decision B12c):
+every input is checked the same way, then it returns
+`{ id: null, success: true, practice: true }` and writes nothing. No row, no counter,
+no notification, no email. The added `practice` field is additive.
 
 - **accepted** reserves `quantityClaimed`. It is a promise. It counts for nothing.
+  On an hours need, accepted reserves the accepted hours, the hub refuses an accept
+  past `quantityWanted`, and counters are recomputed from rows, so claimed and
+  delivered never pass wanted there.
 - **fulfilled** is the payoff, on delivery: `quantityDelivered` moves, a score event
   fires, a `verified` `player_contributions` row is written carrying the need's
   `capitalType`, and the contribution becomes eligible for Hypha formalisation.
@@ -217,7 +249,7 @@ these two repositories.
 ## 10. The contract version
 
 `meta.contract` returns one integer per public surface a village reads, for example
-`{ "crowdpool": 2 }`. It is `publicProcedure`, no auth, no database, and it accepts
+`{ "crowdpool": 3 }`. It is `publicProcedure`, no auth, no database, and it accepts
 `{}` or no input. The numbers live in `shared/hubContract.ts`; the meanings live here,
 and `server/hub-contract.test.ts` fails if the two drift.
 
@@ -236,6 +268,7 @@ it: a hub that predates the field is by definition an older contract.
 |---|---|---|
 | 1 | `pledgedTotal` sums accepted pledges only, so it is a floor. | the beginning |
 | 2 | `pledgedTotal` sums the standing statuses: accepted, fulfilled and thanked. | `b835c28e`, 2026-09-05 |
+| 3 | On a need whose `kind` is `role` and whose new `capacityUnit` field is `hours_per_week`, `quantityWanted`, `quantityClaimed` and `quantityDelivered` count hours a week (needed, accepted, delivered), not people. Every other need, and any role need still marked `count`, counts units as before. On hours needs the hub refuses an accept past `quantityWanted` and recomputes the counters from contribution rows, so claimed and delivered never pass wanted there. Existing role needs are converted by a data migration after the deploy (`drizzle/after-deploy/0251`); where people already stood on a role past its hours, the conversion raises `quantityWanted` to what stands, so the guarantee holds for converted roles too. A role contribution offered or accepted since version 3 carries its share of the role's value by hours as `estimatedValue`; a contribution converted from slots keeps the value it had. | <commit>, 2026-09-24 |
 
 Ruled by Rye on 2026-09-14, relayed by the village-os economics session: "add a
 version number, not that the history matters right now as nobody is running it, but

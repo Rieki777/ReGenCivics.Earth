@@ -193,7 +193,9 @@ export default function PlayDetail() {
 
   const launchCampaignMutation = trpc.plays.launchCampaign.useMutation({
     onSuccess: (data) => {
-      setLocation(`/campaign/${data.campaignId}/manage`);
+      // The campaign key is enough: the project page fills in the slug, and
+      // moves to the application key if the campaign has one.
+      setLocation(`/project/c${data.campaignId}?campaign=${data.campaignId}#steward-tools`);
     },
   });
 

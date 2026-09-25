@@ -36,6 +36,17 @@ export async function teardown() {
     await conn.execute('DELETE FROM email_logs WHERE recipientEmail LIKE "%@example%"');
     
     await conn.execute('DELETE FROM user_notifications WHERE userId = 999999 OR userId = 999998');
+
+    // Spine rows for the test users. insertNotification skips under VITEST,
+    // so this only catches a test that ever bypasses that guard. The ids are
+    // the fixed fake users of contributions.test.ts, crowdpool-adversarial,
+    // campaign-security and the crowdpool fixture (server/test-fixtures).
+    await conn.execute('DELETE FROM notifications WHERE userId IN (999999, 999998, 999777, 987001, 987900) OR (userId BETWEEN 986000 AND 986999)');
+
+    // Org claims and applications made by server/test-fixtures/crowdpool.ts
+    // (named "Test Fixture Land ..."), in case a run died before its afterAll.
+    await conn.execute('DELETE FROM org_claims WHERE orgName LIKE "Test Fixture Land%"');
+    await conn.execute('DELETE FROM applications WHERE projectName LIKE "Test Fixture Land%"');
     
     // Clean up orphaned contribution notifications (from test campaigns that were deleted)
     await conn.execute(`

@@ -67,6 +67,7 @@ import { guideRouter } from "./routes/guide";
 import { quickNotesRouter } from "./routes/quick-notes";
 import { harvestRouter } from "./routes/harvest";
 import { outboundRouter } from "./routes/outbound";
+import { projectsRouter } from "./routes/projects";
 import { brainRouter } from "./routes/brain";
 import { callIntelligenceRouter } from "./routes/callIntelligence";
 import { videoTutorRouter } from "./routes/videoTutor";
@@ -114,6 +115,8 @@ export const appRouter = router({
   crowdPoolingProjects: crowdPoolingProjectsRouter,
   crowdPoolingProposals: crowdPoolingProposalsRouter,
   savedContributions: savedContributionsRouter,
+  // The public project page (/project/:key) and its steward tools.
+  projects: projectsRouter,
 
   // Forum / Moderation
   forum: forumRouter,

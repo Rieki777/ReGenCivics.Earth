@@ -1,10 +1,14 @@
 /**
  * Weekly steward digest (CROWDPOOLING_PLATFORM_SPEC.md Part C, cron job 4).
  *
- * Once a week, every active campaign's steward gets one short, warm email:
- * needs still open, claims to deliver in the next few days, new followers, and
- * contributions waiting on their review. Each section links to the campaign's
- * manage page. A campaign with nothing to report sends nothing.
+ * Once a week, every steward of every active campaign gets one short, warm
+ * email: needs still open, claims to deliver in the next few days, new
+ * followers, and contributions waiting on their review. "Steward" is the
+ * whole set from server/lib/project-steward.ts (creator, applicant,
+ * stewardUserId, approved land_project claim holders). Each section links to
+ * the project page's steward tools (/project/:key#review, #claims, #needs,
+ * #followers). Demo campaigns send nothing. A campaign with nothing to report
+ * sends nothing.
  *
  * It piggybacks the existing weekly slot (server/jobs/digestJob.ts runDigestJob),
  * which already carries a 7-day interval guard and a 2-hour duplicate guard, so
@@ -18,11 +22,16 @@
 
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { sql } from "drizzle-orm";
+import { projectPathForCampaign, projectPathForCampaignFocus } from "../../shared/projectKey";
+import { isHoursNeed } from "../../shared/roleCapacity";
+import { getCampaignStewardIds } from "../lib/project-steward";
 
 export interface StewardDigestNeed {
   title: string;
   wanted: number;
   claimed: number;
+  /** 'hours_per_week' on an hours need: wanted and claimed are hours a week. */
+  unit?: "count" | "hours_per_week";
 }
 export interface StewardDigestClaim {
   title: string;
@@ -36,6 +45,8 @@ export interface StewardDigestPending {
 export interface StewardDigestData {
   campaignId: number;
   campaignTitle: string;
+  /** The project page path (/project/:key). Falls back to the campaign key. */
+  projectPath?: string;
   stewardName: string | null;
   unfilledNeeds: StewardDigestNeed[];
   expiringClaims: StewardDigestClaim[];
@@ -45,6 +56,9 @@ export interface StewardDigestData {
 export interface StewardCampaignRow {
   id: number;
   title: string;
+  applicationId?: number | null;
+  projectName?: string | null;
+  /** The steward this row emails (one row per campaign and steward). */
   userId: number;
   email: string;
   name: string | null;
@@ -86,9 +100,11 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
     data.pendingReviews.length > 0;
   if (!hasContent) return null;
 
-  const base = `${APP_BASE_URL}/campaign/${data.campaignId}/manage`;
+  const path = data.projectPath
+    ?? projectPathForCampaign({ id: data.campaignId, applicationId: null, title: data.campaignTitle });
+  const base = `${APP_BASE_URL}${path}`;
   const utm = "utm_source=email&utm_medium=steward-digest&utm_campaign=weekly";
-  const manage = (anchor: string) => `${base}?${utm}#${anchor}`;
+  const manage = (anchor: string) => `${base}${base.includes("?") ? "&" : "?"}${utm}#${anchor}`;
 
   const li = (text: string) =>
     `<p style="margin: 4px 0; font-size: 14px; color: #2d3748; line-height: 1.5;">${text}</p>`;
@@ -127,7 +143,9 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
   if (data.unfilledNeeds.length > 0) {
     const { shown, more } = capList(data.unfilledNeeds, 8);
     const rows =
-      shown.map((n) => li(`${esc(n.title)}: ${n.claimed} of ${n.wanted} filled.`)).join("") + andMore(more);
+      shown.map((n) => li(n.unit === "hours_per_week"
+        ? `${esc(n.title)}: ${n.claimed} of ${n.wanted} hours a week filled.`
+        : `${esc(n.title)}: ${n.claimed} of ${n.wanted} filled.`)).join("") + andMore(more);
     sections.push(section("Needs still open", manage("needs"), rows));
   }
 
@@ -155,14 +173,14 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
         <p style="font-size: 15px; color: #2d3748; line-height: 1.6; margin: 0 0 4px;">Hi ${greetingName}, here is where your pool stands this week.</p>
         ${sections.join("")}
         <div style="text-align: center; margin-top: 32px;">
-          <a href="${base}?${utm}"
+          <a href="${manage("steward-tools")}"
              style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
-            Manage your campaign
+            Open your project page
           </a>
         </div>
       </div>
       <div style="padding: 22px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
-        <p style="margin: 0 0 6px;">You get this because you steward a live campaign on ReGen Civics.</p>
+        <p style="margin: 0 0 6px;">You get this because you steward a land project with a live campaign on ReGen Civics.</p>
         <p style="margin: 0;"><a href="${APP_BASE_URL}/profile?${utm}" style="color: #1a472a;">Update email preferences</a></p>
       </div>
     </div>`;
@@ -188,31 +206,53 @@ function whenLabel(due: any): string {
   return `due ${d.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`;
 }
 
-async function defaultLoadCampaigns(db: any): Promise<StewardCampaignRow[]> {
-  const [rows] = await db.execute(sql`
-    SELECT c.id, c.title, c.userId, u.email, u.name,
-           COALESCE(pp.emailDigestFrequency, 'monthly') AS digestFrequency
+/**
+ * One row per steward of every active, non-demo campaign. Stewards come from
+ * getCampaignStewardIds (server/lib/project-steward.ts); admins are not
+ * stewards unless they are one of those people.
+ */
+async function defaultLoadCampaigns(db: any, onlyCampaignId?: number): Promise<StewardCampaignRow[]> {
+  const [campaignRows] = await db.execute(sql`
+    SELECT c.id, c.title, c.userId, c.applicationId, c.projectName
     FROM campaigns c
-    JOIN users u ON u.id = c.userId
-    LEFT JOIN player_profiles pp ON pp.userId = c.userId
-    WHERE c.status = 'active'
-      AND u.email IS NOT NULL AND u.email <> ''
+    WHERE c.status = 'active' AND COALESCE(c.isDemo, 0) = 0
+      ${onlyCampaignId != null ? sql`AND c.id = ${onlyCampaignId}` : sql``}
   `);
-  return ((rows as any[]) ?? []).map((r) => ({
-    id: Number(r.id),
-    title: String(r.title ?? "Your campaign"),
-    userId: Number(r.userId),
-    email: String(r.email),
-    name: r.name != null ? String(r.name) : null,
-    digestFrequency: String(r.digestFrequency ?? "monthly"),
-  }));
+  const out: StewardCampaignRow[] = [];
+  for (const c of ((campaignRows as any[]) ?? [])) {
+    const stewardIds = await getCampaignStewardIds({
+      userId: Number(c.userId),
+      applicationId: c.applicationId != null ? Number(c.applicationId) : null,
+    });
+    if (stewardIds.length === 0) continue;
+    const [userRows] = await db.execute(sql`
+      SELECT u.id, u.email, u.name, COALESCE(pp.emailDigestFrequency, 'monthly') AS digestFrequency
+      FROM users u
+      LEFT JOIN player_profiles pp ON pp.userId = u.id
+      WHERE u.id IN (${sql.join(stewardIds.map((id) => sql`${id}`), sql`, `)})
+        AND u.email IS NOT NULL AND u.email <> ''
+    `);
+    for (const u of ((userRows as any[]) ?? [])) {
+      out.push({
+        id: Number(c.id),
+        title: String(c.title ?? "Your campaign"),
+        applicationId: c.applicationId != null ? Number(c.applicationId) : null,
+        projectName: c.projectName != null ? String(c.projectName) : null,
+        userId: Number(u.id),
+        email: String(u.email),
+        name: u.name != null ? String(u.name) : null,
+        digestFrequency: String(u.digestFrequency ?? "monthly"),
+      });
+    }
+  }
+  return out;
 }
 
 async function defaultLoadDigestData(db: any, campaign: StewardCampaignRow): Promise<StewardDigestData> {
   const cid = campaign.id;
 
   const [needRows] = await db.execute(sql`
-    SELECT id, category, kind, roleTitle, equipmentName, resourceName, landDescription,
+    SELECT id, category, kind, capacityUnit, roleTitle, equipmentName, resourceName, landDescription,
            quantityWanted, quantityClaimed
     FROM campaign_items
     WHERE campaignId = ${cid}
@@ -252,11 +292,18 @@ async function defaultLoadDigestData(db: any, campaign: StewardCampaignRow): Pro
   return {
     campaignId: cid,
     campaignTitle: campaign.title,
+    projectPath: projectPathForCampaignFocus({
+      id: cid,
+      applicationId: campaign.applicationId ?? null,
+      projectName: campaign.projectName ?? null,
+      title: campaign.title,
+    }),
     stewardName: campaign.name,
     unfilledNeeds: ((needRows as any[]) ?? []).map((r) => ({
       title: needTitle(r),
       wanted: Number(r.quantityWanted ?? 1),
       claimed: Number(r.quantityClaimed ?? 0),
+      unit: isHoursNeed({ kind: String(r.kind ?? ""), capacityUnit: r.capacityUnit ?? null }) ? "hours_per_week" as const : "count" as const,
     })),
     expiringClaims: ((expRows as any[]) ?? []).map((r) => ({
       title: String(r.title ?? "a claim"),
@@ -274,7 +321,7 @@ async function defaultLoadDigestData(db: any, campaign: StewardCampaignRow): Pro
 export interface StewardDigestOptions {
   dryRun?: boolean;
   onlyCampaignId?: number;
-  loadCampaigns?: (db: any) => Promise<StewardCampaignRow[]>;
+  loadCampaigns?: (db: any, onlyCampaignId?: number) => Promise<StewardCampaignRow[]>;
   loadDigestData?: (db: any, campaign: StewardCampaignRow) => Promise<StewardDigestData>;
   sendEmailImpl?: (p: { to: string; subject: string; html: string }) => Promise<any>;
 }
@@ -294,7 +341,7 @@ export async function sendStewardWeeklyDigest(
   const loadDigestData = opts.loadDigestData ?? defaultLoadDigestData;
   const sendEmailImpl = opts.sendEmailImpl ?? ((p) => sendEmail(p));
 
-  let campaigns = await loadCampaigns(db);
+  let campaigns = await loadCampaigns(db, opts.onlyCampaignId);
   if (opts.onlyCampaignId != null) campaigns = campaigns.filter((c) => c.id === opts.onlyCampaignId);
 
   let composed = 0;
@@ -303,12 +350,19 @@ export async function sendStewardWeeklyDigest(
   let skippedFrequency = 0;
   const digests: Array<{ campaignId: number; subject: string; html: string }> = [];
 
+  // Several stewards can share one campaign: load its data once.
+  const dataCache = new Map<number, StewardDigestData>();
   for (const campaign of campaigns) {
     if (campaign.digestFrequency === "never") {
       skippedFrequency++;
       continue;
     }
-    const data = await loadDigestData(db, campaign);
+    let data = dataCache.get(campaign.id);
+    if (!data) {
+      data = await loadDigestData(db, campaign);
+      dataCache.set(campaign.id, data);
+    }
+    data = { ...data, stewardName: campaign.name };
     const email = composeStewardDigest(data);
     if (!email) {
       skippedQuiet++;

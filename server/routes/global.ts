@@ -4,9 +4,10 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql, like, or } from "drizzle-orm";
+import { and, eq, sql, like, or } from "drizzle-orm";
 import { forumPosts, campaigns as campaignsTable } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
+import { publicCampaignSql } from "../lib/project-steward";
 import { ENV } from "../_core/env";
 import { nanoid } from "nanoid";
 import { storagePut, storageStream, storageStreamRange } from "../storage";
@@ -33,9 +34,14 @@ export const globalSearchRouter = router({
           .limit(5),
         dbConn.select({ id: campaignsTable.id, title: campaignsTable.title })
           .from(campaignsTable)
-          .where(or(
-            like(campaignsTable.title, term),
-            like(campaignsTable.description, term),
+          // Public campaigns only (server/lib/project-steward.ts). Before
+          // 2026-09-24 this matched drafts and the review queue too.
+          .where(and(
+            publicCampaignSql,
+            or(
+              like(campaignsTable.title, term),
+              like(campaignsTable.description, term),
+            ),
           ))
           .limit(5),
       ]);

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Upload, FileText, Check, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { MAX_ROLE_HOURS } from '@shared/roleCapacity';
 
 interface CSVImportDialogProps {
   type: 'equipment' | 'roles';
@@ -94,14 +95,16 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
           customValue: null
         });
       } else {
-        const hoursPerWeek = parseFloat(row.hoursperweek);
+        const rawHours = parseFloat(row.hoursperweek);
         const weeksNeeded = parseInt(row.weeksneeded);
         const hourlyRate = parseFloat(row.hourlyrate);
         
-        if (isNaN(hoursPerWeek) || hoursPerWeek <= 0) {
+        if (isNaN(rawHours) || rawHours <= 0) {
           newErrors.push(`Row ${i}: Invalid hours per week`);
           continue;
         }
+        // Roles count whole hours a week: round, at least 1, at most MAX_ROLE_HOURS.
+        const hoursPerWeek = Math.min(MAX_ROLE_HOURS, Math.max(1, Math.round(rawHours)));
         if (isNaN(weeksNeeded) || weeksNeeded <= 0) {
           newErrors.push(`Row ${i}: Invalid weeks needed`);
           continue;

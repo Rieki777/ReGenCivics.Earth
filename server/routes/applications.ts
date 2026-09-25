@@ -12,6 +12,7 @@ import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
 import { applicationCopy, FOLLOW_ALONG_HREF, FOLLOW_ALONG_LINE, intakeStatus } from "../../shared/applicationWindow";
+import { isAdminRole } from "@shared/adminRole";
 import {
   APPLICATION_EMAIL_STATUSES,
   mapApplicationEmailRecipients,
@@ -148,12 +149,11 @@ export const applicationsRouter = router({
       additionalNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Verify user is an approved steward for this application (orgId is the application ID as string)
-      const claims = await db.getOrgClaimsByUser(ctx.user.id);
-      const approvedClaim = claims.find(
-        (c) => c.orgId === String(input.applicationId) && c.status === 'approved'
-      );
-      if (!approvedClaim && ctx.user.role !== 'admin') {
+      // Applicant, stewardUserId, an approved land_project claim holder, or an
+      // admin (server/lib/project-steward.ts). This used to accept an approved
+      // claim of ANY orgType whose orgId matched, and no superadmin.
+      const { canStewardApplication } = await import("../lib/project-steward");
+      if (!(await canStewardApplication(ctx.user, input.applicationId))) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You are not the approved steward for this listing" });
       }
       await db.updateApplication(input.applicationId, {
@@ -634,47 +634,45 @@ export const applicationsRouter = router({
 });
 
 export const applicantsForCampaignRouter = router({
+  // The applications a campaign can be started for. Security (2026-09-24):
+  // this returned every submitted, approved and active application, with
+  // internal fields, to any signed-in user. A non-admin now gets only the
+  // applications they applied for or steward, and only once approved; the
+  // create procedure enforces the same rule. Admins still see the queue.
   list: protectedProcedure
     .input(z.object({ search: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const allApps = await db.getApplicationsByStatus('submitted');
-      const approvedApps = await db.getApplicationsByStatus('approved');
-      const activeApps = await db.getApplicationsByStatus('active');
-      const combined = [...allApps, ...approvedApps, ...activeApps];
+      const admin = isAdminRole(ctx.user.role);
+      const statuses = admin ? ['submitted', 'approved', 'active'] : ['approved', 'active'];
+      const combined = (await Promise.all(statuses.map((st) => db.getApplicationsByStatus(st)))).flat();
+      const mine = admin
+        ? combined
+        : combined.filter((app) => app.userId === ctx.user.id || app.stewardUserId === ctx.user.id);
 
-      let filtered = combined;
+      let filtered = mine;
       if (input.search && input.search.trim()) {
         const q = input.search.toLowerCase();
-        filtered = combined.filter((app: any) =>
+        filtered = mine.filter((app) =>
           app.projectName?.toLowerCase().includes(q) ||
-          app.contactName?.toLowerCase().includes(q) ||
           app.location?.toLowerCase().includes(q)
         );
       }
 
-      return filtered.map((app: any) => ({
+      // Fields the campaign form pre-fills, mapped from real columns. The
+      // old map read a dozen names the applications table never had
+      // (contactName, governanceModel, currentPhase...), so they were always
+      // blank and governance never carried over.
+      return filtered.map((app) => ({
         id: app.id,
         projectName: app.projectName || '',
-        contactName: app.contactName || '',
         location: app.location || '',
         country: app.country || '',
         projectType: app.projectType || '',
         vision: app.vision || '',
         landStatus: app.landStatus || '',
-        projectSizeHectares: app.projectSizeHectares || '',
-        currentPhase: app.currentPhase || '',
-        timeline: app.timeline || '',
-        legalStructure: app.legalStructure || '',
-        governanceModel: app.governanceModel || '',
-        membershipModel: app.membershipModel || '',
-        housingPlans: app.housingPlans || '',
-        foodSystems: app.foodSystems || '',
-        waterSystems: app.waterSystems || '',
-        energySystems: app.energySystems || '',
-        educationPrograms: app.educationPrograms || '',
+        projectSizeHectares: app.projectSizeHectares ?? '',
+        governanceModel: app.governanceApproach || '',
         communityEngagement: app.communityEngagement || '',
-        impactMetrics: app.impactMetrics || '',
-        challenges: app.challenges || '',
         teamSize: app.teamSize || 0,
         teamDescription: app.teamDescription || '',
         regenerativePractices: app.regenerativePractices || '',
@@ -831,21 +829,30 @@ export const orgClaimsRouter = router({
       adminNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Every check runs BEFORE the claim is marked approved. An approved
+      // land_project claim makes its holder a full project steward
+      // (server/lib/project-steward.ts: contributor contact details, accept,
+      // decline, cancel), so a refused approval must leave the claim pending.
+      const pending = await db.getOrgClaimById(input.id);
+      if (!pending) throw new TRPCError({ code: "NOT_FOUND", message: "Claim not found" });
+      let landAppId: number | null = null;
+      if (pending.orgType === 'land_project') {
+        const appId = parseInt(pending.orgId, 10);
+        if (!isNaN(appId)) {
+          const existing = await db.getApplicationById(appId);
+          if (existing?.stewardUserId && existing.stewardUserId !== pending.userId) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "This project already has a steward assigned. Remove the current steward before approving a new claim.",
+            });
+          }
+          if (existing) landAppId = appId;
+        }
+      }
       const claim = await db.updateOrgClaimStatus(input.id, 'approved', input.adminNotes);
       if (claim) {
-        // Check if the project already has a steward before overwriting
-        if (claim.orgType === 'land_project') {
-          const appId = parseInt(claim.orgId, 10);
-          if (!isNaN(appId)) {
-            const existing = await db.getApplicationById(appId);
-            if (existing?.stewardUserId && existing.stewardUserId !== claim.userId) {
-              throw new TRPCError({
-                code: "CONFLICT",
-                message: "This project already has a steward assigned. Remove the current steward before approving a new claim.",
-              });
-            }
-            await db.updateApplication(appId, { stewardUserId: claim.userId });
-          }
+        if (landAppId !== null) {
+          await db.updateApplication(landAppId, { stewardUserId: claim.userId });
         }
         // Route all pending join requests for this org to the new steward
         await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
@@ -882,6 +889,20 @@ export const orgClaimsRouter = router({
       });
       const claim = await db.updateOrgClaimStatus(id, 'approved');
       if (claim) {
+        // Same as approve: a land project's claim holder becomes its
+        // stewardUserId. Unlike approve, an existing different steward is
+        // kept (no CONFLICT): the approved claim already makes this person a
+        // project steward (server/lib/project-steward.ts), and an admin
+        // assigning a second steward should not silently replace the first.
+        if (claim.orgType === 'land_project') {
+          const appId = parseInt(claim.orgId, 10);
+          if (!isNaN(appId)) {
+            const existing = await db.getApplicationById(appId);
+            if (existing && (!existing.stewardUserId || existing.stewardUserId === claim.userId)) {
+              await db.updateApplication(appId, { stewardUserId: claim.userId });
+            }
+          }
+        }
         await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
         await db.ensureEntityForumThread(claim.orgType, claim.orgName, ctx.user.id);
       }

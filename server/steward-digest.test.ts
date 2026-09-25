@@ -7,7 +7,16 @@
  * "never" frequency opt-out.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// The DB-backed block at the end creates campaigns; keep it quiet and offline.
+vi.mock("./_core/notification", () => ({
+  notifyOwner: vi.fn().mockResolvedValue(true),
+  notifyIfEnabled: vi.fn().mockResolvedValue(true),
+}));
+vi.mock("./_core/imageGeneration", () => ({
+  generateImage: vi.fn().mockRejectedValue(new Error("image generation off in tests")),
+}));
 import {
   composeStewardDigest,
   sendStewardWeeklyDigest,
@@ -18,6 +27,7 @@ import {
 const fullData = (over: Partial<StewardDigestData> = {}): StewardDigestData => ({
   campaignId: 79,
   campaignTitle: "Harmony Valley Ecovillage",
+  projectPath: "/project/42-harmony-valley-ecovillage",
   stewardName: "Rye Cordon",
   unfilledNeeds: [
     { title: "Land Steward", wanted: 1, claimed: 0 },
@@ -49,9 +59,24 @@ describe("composeStewardDigest", () => {
     expect(html).toContain("due July 20");
     expect(html).toContain("3 people started following");
     expect(html).toContain("Sam");
-    // Every section links to the campaign manage page.
-    expect(html).toContain("/campaign/79/manage");
+    // Every section links to the project page's steward tools, by anchor.
+    expect(html).not.toContain("/campaign/79/manage");
+    for (const anchor of ["review", "claims", "needs", "followers", "steward-tools"]) {
+      expect(html).toContain(`/project/42-harmony-valley-ecovillage?utm_source=email&utm_medium=steward-digest&utm_campaign=weekly#${anchor}`);
+    }
     expect(html).toContain("Rye"); // greeting first name
+  });
+
+  it("falls back to the campaign key when no project path is given", () => {
+    const { html } = composeStewardDigest(fullData({ projectPath: undefined }))!;
+    expect(html).toContain("/project/c79-harmony-valley-ecovillage?");
+  });
+
+  it("reads an hours need in hours a week", () => {
+    const { html } = composeStewardDigest(fullData({
+      unfilledNeeds: [{ title: "Soil scientist", wanted: 40, claimed: 10, unit: "hours_per_week" }],
+    }))!;
+    expect(html).toContain("Soil scientist: 10 of 40 hours a week filled.");
   });
 
   it("keeps the copy free of em-dashes", () => {
@@ -119,4 +144,80 @@ describe("sendStewardWeeklyDigest", () => {
     expect(sentTo).toEqual(["steward79@example.com"]);
     expect(r).toMatchObject({ campaigns: 3, composed: 1, sent: 1, skippedQuiet: 1, skippedFrequency: 1 });
   });
+
+  it("emails every steward of a campaign, loading its data once", async () => {
+    const rows: StewardCampaignRow[] = [
+      { id: 79, title: "Harmony Valley Ecovillage", userId: 1, email: "creator@example.com", name: "Rye Cordon", digestFrequency: "weekly" },
+      { id: 79, title: "Harmony Valley Ecovillage", userId: 4, email: "applicant@example.com", name: "Ada Lane", digestFrequency: "weekly" },
+    ];
+    let loads = 0;
+    const sent: Array<{ to: string; html: string }> = [];
+    const r = await sendStewardWeeklyDigest(null, {
+      loadCampaigns: async () => rows,
+      loadDigestData: async () => { loads++; return fullData(); },
+      sendEmailImpl: async (p) => { sent.push({ to: p.to, html: p.html }); return { id: "x" }; },
+    });
+    expect(loads).toBe(1);
+    expect(sent.map((s) => s.to)).toEqual(["creator@example.com", "applicant@example.com"]);
+    expect(sent[1].html).toContain("Hi Ada");
+    expect(r.sent).toBe(2);
+  });
+});
+
+// ─── DB-backed: who the default loader emails (scratch database only) ────────
+
+describe("the default loader", () => {
+  const skipIfNoDb = !process.env.DATABASE_URL;
+
+  it.skipIf(skipIfNoDb)("emails every steward of a live campaign and skips demo campaigns", async () => {
+    const { getDb } = await import("./db");
+    const { users, campaigns, campaignItems } = await import("../drizzle/schema");
+    const { inArray } = await import("drizzle-orm");
+    const fx = await import("./test-fixtures/crowdpool");
+    const database = await getDb();
+    const stamp = Date.now();
+    const openIds = [`digest-owner-${stamp}`, `digest-co-${stamp}`];
+    const made: number[] = [];
+    for (const [i, openId] of openIds.entries()) {
+      const r: any = await database!.insert(users).values({ openId, email: `digest${i}.${stamp}@example.com`, name: i ? "Co Steward" : "Owner Steward", loginMethod: "email", role: "user" });
+      made.push(Number(r?.[0]?.insertId));
+    }
+    const [owner, co] = made;
+    const campaignIds: number[] = [];
+    try {
+      const applicationId = await fx.createApprovedApplication(owner, { stewardUserId: co });
+      const make = async (title: string) => {
+        const { id } = await fx.stewardCaller(owner).campaigns.create({
+          title, description: "Digest fixture", projectName: title, currency: "USD", financialTarget: 100, applicationId,
+          items: [{ category: "role", kind: "role", roleTitle: "Organiser", hoursPerWeek: 40, estimatedValue: 100 }],
+        });
+        campaignIds.push(id);
+        await fx.adminCaller().campaigns.updateStatus({ id, status: "active" });
+        return id;
+      };
+      const live = await make("Test Digest Live");
+      const demo = await make("Test Digest Demo");
+      await database!.update(campaigns).set({ isDemo: 1 }).where(inArray(campaigns.id, [demo]));
+
+      const out = await sendStewardWeeklyDigest(database, { dryRun: true, onlyCampaignId: live });
+      expect(out.digests).toHaveLength(2);
+      expect(out.digests[0].html).toContain(`/project/${applicationId}-test-digest-live?`);
+      // Focused on the campaign, so a project with several campaigns opens on this one.
+      expect(out.digests[0].html).toContain(`/project/${applicationId}-test-digest-live?campaign=${live}&utm_source=email`);
+      expect(out.digests[0].html).toContain("Organiser: 0 of 40 hours a week filled.");
+      const html = out.digests.map((d) => d.html).join("\n");
+      expect(html).toContain("Hi Owner");
+      expect(html).toContain("Hi Co");
+
+      const none = await sendStewardWeeklyDigest(database, { dryRun: true, onlyCampaignId: demo });
+      expect(none.campaigns).toBe(0);
+    } finally {
+      if (campaignIds.length) {
+        await database!.delete(campaignItems).where(inArray(campaignItems.campaignId, campaignIds));
+        await database!.delete(campaigns).where(inArray(campaigns.id, campaignIds));
+      }
+      await database!.delete(users).where(inArray(users.openId, openIds));
+      await fx.cleanupFixtureApplications();
+    }
+  }, 30_000);
 });

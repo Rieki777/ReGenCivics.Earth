@@ -3,13 +3,15 @@
  * Tests for campaign contributions functionality
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { eq, sql } from 'drizzle-orm';
+import { realOffer } from "./test-fixtures/crowdpool";
+import { describe, it, expect, vi, afterAll } from 'vitest';
+import { and, eq, sql } from 'drizzle-orm';
 import { appRouter } from './routers';
 import * as dbHelpers from './db';
 import { campaignContributions, playerContributions } from '../drizzle/schema';
 import { expireCrowdpoolClaims } from './routes/batchJobs';
 import type { TrpcContext } from './_core/context';
+import { adminCaller, cleanupFixtureApplications, createApprovedApplication } from './test-fixtures/crowdpool';
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -30,7 +32,9 @@ vi.mock('./_core/email', () => ({
     contributionAccepted: vi.fn().mockReturnValue({ subject: 'Test', html: '<p>Test</p>' }),
     contributionRejected: vi.fn().mockReturnValue({ subject: 'Test', html: '<p>Test</p>' }),
     contributionFulfilled: vi.fn().mockReturnValue({ subject: 'Test', html: '<p>Test</p>' }),
+    campaignCancelled: vi.fn().mockReturnValue({ subject: 'Test', html: '<p>Test</p>' }),
   },
+  contributionEmailLinks: vi.fn().mockReturnValue({ projectUrl: 'https://regencivics.test/project/x', signUpUrl: 'https://regencivics.test/sign-in', browseUrl: 'https://regencivics.test/campaigns' }),
   testEmailConnection: vi.fn().mockResolvedValue(true),
 }));
 
@@ -103,6 +107,7 @@ describe('Campaign Contribution System', () => {
       
       // First create a campaign with correct schema
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Test Campaign for Contributions',
         description: 'A test campaign to test contributions',
         projectName: 'Test Project',
@@ -121,13 +126,13 @@ describe('Campaign Contribution System', () => {
       expect(campaign.id).toBeDefined();
       
       // Activate the campaign first (campaigns start as draft)
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
       
       // Create a contribution using submitContribution
-      const contribution = await caller.campaigns.submitContribution({
+      const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'financial',
         title: 'My Financial Contribution',
@@ -139,7 +144,7 @@ describe('Campaign Contribution System', () => {
         contributorNotes: 'Happy to support this project!',
         financialAmount: 1000,
         financialCurrency: 'USD',
-      });
+      }));
       
       expect(contribution.id).toBeDefined();
       expect(contribution.success).toBe(true);
@@ -151,6 +156,7 @@ describe('Campaign Contribution System', () => {
       
       // Create a campaign first
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Email Validation Test Campaign',
         description: 'Testing email validation',
         projectName: 'Test Project',
@@ -168,7 +174,7 @@ describe('Campaign Contribution System', () => {
       });
       
       // Activate the campaign
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
@@ -195,6 +201,7 @@ describe('Campaign Contribution System', () => {
       
       // Create campaign
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Accept Test Campaign',
         description: 'Testing acceptance',
         projectName: 'Test Project',
@@ -211,13 +218,13 @@ describe('Campaign Contribution System', () => {
       });
       
       // Activate the campaign
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
       
       // Create contribution
-      const contribution = await caller.campaigns.submitContribution({
+      const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'equipment',
         title: 'Tractor Contribution',
@@ -228,7 +235,7 @@ describe('Campaign Contribution System', () => {
         equipmentName: 'Tractor',
         equipmentQuantity: 1,
         equipmentCondition: 'Good',
-      });
+      }));
       
       // Accept the contribution
       const updated = await caller.campaigns.updateContributionStatus({
@@ -246,6 +253,7 @@ describe('Campaign Contribution System', () => {
       
       // Create campaign
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Reject Test Campaign',
         description: 'Testing rejection',
         projectName: 'Test Project',
@@ -264,13 +272,13 @@ describe('Campaign Contribution System', () => {
       });
       
       // Activate the campaign
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
       
       // Create contribution
-      const contribution = await caller.campaigns.submitContribution({
+      const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'role',
         title: 'Volunteer Offer',
@@ -281,7 +289,7 @@ describe('Campaign Contribution System', () => {
         roleTitle: 'Volunteer',
         hoursPerWeek: 10,
         durationMonths: 3,
-      });
+      }));
       
       // Reject the contribution
       const updated = await caller.campaigns.updateContributionStatus({
@@ -301,6 +309,7 @@ describe('Campaign Contribution System', () => {
       
       // Create campaign
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Query Test Campaign',
         description: 'Testing queries',
         projectName: 'Test Project',
@@ -317,13 +326,13 @@ describe('Campaign Contribution System', () => {
       });
       
       // Activate the campaign
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
       
       // Create multiple contributions
-      await caller.campaigns.submitContribution({
+      await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'financial',
         title: 'Contribution 1',
@@ -332,9 +341,9 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Contributor 1',
         contributorEmail: 'c1@example.com',
         financialAmount: 1000,
-      });
+      }));
       
-      await caller.campaigns.submitContribution({
+      await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'financial',
         title: 'Contribution 2',
@@ -343,7 +352,7 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Contributor 2',
         contributorEmail: 'c2@example.com',
         financialAmount: 2000,
-      });
+      }));
       
       // Get all contributions
       const contributions = await caller.campaigns.getContributions({
@@ -359,6 +368,7 @@ describe('Campaign Contribution System', () => {
       
       // Create campaign
       const campaign = await caller.campaigns.create({
+        applicationId: await createApprovedApplication(999999),
         title: 'Filter Test Campaign',
         description: 'Testing filters',
         projectName: 'Test Project',
@@ -375,13 +385,13 @@ describe('Campaign Contribution System', () => {
       });
       
       // Activate the campaign
-      await caller.campaigns.updateStatus({
+      await adminCaller().campaigns.updateStatus({
         id: campaign.id,
         status: 'active',
       });
       
       // Create and accept one contribution
-      const contribution1 = await caller.campaigns.submitContribution({
+      const contribution1 = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'resource',
         title: 'Accepted Contribution',
@@ -392,7 +402,7 @@ describe('Campaign Contribution System', () => {
         resourceName: 'Seeds',
         resourceQuantity: 100,
         resourceUnit: 'kg',
-      });
+      }));
       
       await caller.campaigns.updateContributionStatus({
         contributionId: contribution1.id,
@@ -400,7 +410,7 @@ describe('Campaign Contribution System', () => {
       });
       
       // Create a pending contribution
-      await caller.campaigns.submitContribution({
+      await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'resource',
         title: 'Pending Contribution',
@@ -411,7 +421,7 @@ describe('Campaign Contribution System', () => {
         resourceName: 'Tools',
         resourceQuantity: 10,
         resourceUnit: 'pieces',
-      });
+      }));
       
       // Filter by accepted status
       const acceptedContributions = await caller.campaigns.getContributions({
@@ -429,6 +439,8 @@ describe('Campaign Contribution System', () => {
       const caller = appRouter.createCaller(ctx);
 
       const campaign = await caller.campaigns.create({
+
+        applicationId: await createApprovedApplication(999999),
         title: 'Claim Guard Test Campaign',
         description: 'Testing claims against needs',
         projectName: 'Test Project',
@@ -444,7 +456,7 @@ describe('Campaign Contribution System', () => {
           },
         ],
       });
-      await caller.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+      await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
 
       const items = await caller.campaigns.getItems({ campaignId: campaign.id });
       const need = items[0];
@@ -453,7 +465,7 @@ describe('Campaign Contribution System', () => {
       expect(need.quantityClaimed).toBe(0);
 
       // Claim the single slot
-      const claim = await caller.campaigns.submitContribution({
+      const claim = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         campaignItemId: need.id,
         contributionType: 'resource',
@@ -462,7 +474,7 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Claim Tester',
         contributorEmail: 'claim-tester@example.com',
         quantityPledged: 1,
-      });
+      }));
       await caller.campaigns.updateContributionStatus({
         contributionId: claim.id,
         status: 'accepted',
@@ -496,6 +508,8 @@ describe('Campaign Contribution System', () => {
       expect(db).toBeTruthy();
 
       const campaign = await caller.campaigns.create({
+
+        applicationId: await createApprovedApplication(999999),
         title: 'Expiry Sweep Test Campaign',
         description: 'Testing the nightly claim expiry sweep',
         projectName: 'Test Project',
@@ -510,11 +524,11 @@ describe('Campaign Contribution System', () => {
           },
         ],
       });
-      await caller.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+      await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
       const items = await caller.campaigns.getItems({ campaignId: campaign.id });
       const need = items[0];
 
-      const claim = await caller.campaigns.submitContribution({
+      const claim = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         campaignItemId: need.id,
         contributionType: 'equipment',
@@ -523,7 +537,7 @@ describe('Campaign Contribution System', () => {
         contributorName: 'Expiry Tester',
         contributorEmail: 'expiry-tester@example.com',
         quantityPledged: 1,
-      });
+      }));
       await caller.campaigns.updateContributionStatus({
         contributionId: claim.id,
         status: 'accepted',
@@ -532,9 +546,11 @@ describe('Campaign Contribution System', () => {
       const reserved = await caller.campaigns.getItems({ campaignId: campaign.id });
       expect(reserved[0].quantityClaimed).toBe(1);
 
-      // Backdate the claim window, then run the sweep directly
+      // Backdate the claim window, then run the sweep directly. A full day
+      // back, so the comparison with the database's NOW() holds even when
+      // the test database runs in a time zone other than UTC.
       await db!.update(campaignContributions)
-        .set({ claimExpiresAt: new Date(Date.now() - 60 * 1000) })
+        .set({ claimExpiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000) })
         .where(eq(campaignContributions.id, claim.id));
 
       const result = await expireCrowdpoolClaims(db);
@@ -557,6 +573,8 @@ describe('Campaign Contribution System', () => {
       await ensureCrowdpoolScoreVariable();
 
       const campaign = await caller.campaigns.create({
+
+        applicationId: await createApprovedApplication(999999),
         title: 'Payoff Test Campaign',
         description: 'Testing the fulfilled payoff',
         projectName: 'Payoff Test Project',
@@ -571,10 +589,10 @@ describe('Campaign Contribution System', () => {
           },
         ],
       });
-      await caller.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+      await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
 
       const uniqueTitle = `Payoff shovels ${Date.now()}`;
-      const contribution = await caller.campaigns.submitContribution({
+      const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'equipment',
         title: uniqueTitle,
@@ -583,7 +601,7 @@ describe('Campaign Contribution System', () => {
         contributorEmail: 'test@example.com',
         equipmentName: 'Shovels',
         equipmentQuantity: 3,
-      });
+      }));
 
       await caller.campaigns.updateContributionStatus({
         contributionId: contribution.id,
@@ -626,6 +644,8 @@ describe('Campaign Contribution System', () => {
       const caller = appRouter.createCaller(ctx);
 
       const campaign = await caller.campaigns.create({
+
+        applicationId: await createApprovedApplication(999999),
         title: 'Thanks Test Campaign',
         description: 'Testing the thanked stage',
         projectName: 'Test Project',
@@ -641,9 +661,9 @@ describe('Campaign Contribution System', () => {
           },
         ],
       });
-      await caller.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+      await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
 
-      const contribution = await caller.campaigns.submitContribution({
+      const contribution = await realOffer(caller.campaigns.submitContribution({
         campaignId: campaign.id,
         contributionType: 'resource',
         title: 'Seed packets',
@@ -653,7 +673,7 @@ describe('Campaign Contribution System', () => {
         resourceName: 'Seeds',
         resourceQuantity: 50,
         resourceUnit: 'packets',
-      });
+      }));
       await caller.campaigns.updateContributionStatus({
         contributionId: contribution.id,
         status: 'accepted',
@@ -712,6 +732,7 @@ describe('Campaign Contribution System', () => {
         const stewardCtx = createAuthContext('10.7.7.1');
         const steward = appRouter.createCaller(stewardCtx);
         const campaign = await steward.campaigns.create({
+          applicationId: await createApprovedApplication(999999),
           title: 'Anon Linking Campaign',
           description: 'Testing claimMyContributions',
           projectName: 'Linking Project',
@@ -726,7 +747,7 @@ describe('Campaign Contribution System', () => {
             },
           ],
         });
-        await steward.campaigns.updateStatus({ id: campaign.id, status: 'active' });
+        await adminCaller().campaigns.updateStatus({ id: campaign.id, status: 'active' });
         const fresh = await steward.campaigns.getById({ id: campaign.id });
         expect(fresh).toBeTruthy();
         const need = fresh!.items[0];
@@ -734,7 +755,7 @@ describe('Campaign Contribution System', () => {
         // Someone pledges anonymously (no account) under the claimer's email.
         const anonCtx = { ...createAuthContext('10.7.7.2'), user: null } as unknown as TrpcContext;
         const anon = appRouter.createCaller(anonCtx);
-        const contribution = await anon.campaigns.submitContribution({
+        const contribution = await realOffer(anon.campaigns.submitContribution({
           campaignId: campaign.id,
           campaignItemId: need.id,
           contributionType: 'resource',
@@ -745,7 +766,7 @@ describe('Campaign Contribution System', () => {
           resourceName: 'Seedlings',
           resourceQuantity: 20,
           resourceUnit: 'trays',
-        });
+        }));
 
         // Guarantee the anonymous precondition regardless of submit internals.
         const database = await dbHelpers.getDb();
@@ -811,4 +832,16 @@ describe('Campaign Contribution System', () => {
       },
     );
   });
+});
+
+afterAll(async () => {
+  if (skipIfNoDb) return;
+  await cleanupFixtureApplications();
+  // The linking test back-creates a Living Tree row for its claimer; remove
+  // it so a rerun on the same database starts clean.
+  const db = await dbHelpers.getDb();
+  await db!.delete(playerContributions).where(and(
+    eq(playerContributions.userId, 999777),
+    eq(playerContributions.title, 'Anon seedlings'),
+  ));
 });

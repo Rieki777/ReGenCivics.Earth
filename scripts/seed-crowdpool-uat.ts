@@ -153,28 +153,35 @@ async function up() {
   async function need(campaignId: number, o: {
     category: string; kind: string; capital: string; name: string; desc: string;
     value: number; wanted: number;
+    /** Roles are hours needs: wanted IS the hours a week the role needs. */
+    capacityUnit?: "count" | "hours_per_week"; hoursPerWeek?: number | null;
   }) {
     const [r]: any = await conn.query(
       `INSERT INTO campaign_items
-        (campaignId, category, kind, capitalType, resourceName, resourceDescription,
+        (campaignId, category, kind, capitalType, capacityUnit, resourceName, resourceDescription,
+         roleTitle, hoursPerWeek,
          estimatedValue, pledgedValue, quantityWanted, quantityClaimed, quantityDelivered,
          groupClaimable, priorityPinned)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, 0, 0, 0)`,
-      [campaignId, o.category, o.kind, o.capital, o.name, o.desc, o.value, o.wanted],
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, 0, 0, 0)`,
+      [campaignId, o.category, o.kind, o.capital, o.capacityUnit ?? "count", o.name, o.desc,
+       o.kind === "role" ? o.name : null, o.hoursPerWeek ?? null, o.value, o.wanted],
     );
     return r.insertId as number;
   }
 
   async function claim(campaignId: number, itemId: number, o: {
     name: string; email: string; value: number; status: string; type?: string; userId?: number | null;
+    /** Offers on an hours need: the hours a week offered (and held once accepted). */
+    hoursPerWeek?: number;
   }) {
     const [r]: any = await conn.query(
       `INSERT INTO campaign_contributions
         (campaignId, campaignItemId, userId, contributorName, contributorEmail, contributionType,
-         title, description, estimatedValue, status, quantityPledged, isAnonymous, submittedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, NOW())`,
+         title, description, estimatedValue, status, quantityPledged, hoursPerWeek, isAnonymous, submittedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())`,
       [campaignId, itemId, o.userId ?? null, o.name, o.email, o.type ?? "resource",
-       `${o.name}'s pledge`, `${MARKER} seeded claim`, o.value, o.status],
+       `${o.name}'s pledge`, `${MARKER} seeded claim`, o.value, o.status,
+       o.hoursPerWeek ?? 1, o.hoursPerWeek ?? null],
     );
     return r.insertId as number;
   }
@@ -190,13 +197,14 @@ async function up() {
   const a1 = await need(a, { category: "resource", kind: "item", capital: "material",
     name: "Timber for the barn", desc: "Rough sawn, any length", value: 1250.75, wanted: 4 });
   const a2 = await need(a, { category: "role", kind: "role", capital: "social",
-    name: "Community organiser", desc: "Two days a week through the season", value: 8000, wanted: 1 });
+    name: "Community organiser", desc: "40 hours a week through the season, shared by several people", value: 8000,
+    wanted: 40, hoursPerWeek: 40, capacityUnit: "hours_per_week" });
   await need(a, { category: "equipment", kind: "loan", capital: "material",
     name: "Tractor, on loan", desc: "Three weeks in spring", value: 3000.75, wanted: 1 });
   await claim(a, a1, { name: "Ada", email: "ada@example.com", value: 1250.75, status: "accepted", userId: UAT_CLAIMANT_ID });
   await claim(a, a1, { name: "Bo", email: "bo@example.com", value: 1250.75, status: "fulfilled" });
   await claim(a, a1, { name: "Cy", email: "cy@example.com", value: 1250.75, status: "thanked" });
-  await claim(a, a2, { name: "Di", email: "di@example.com", value: 8000, status: "pending", type: "role" });
+  await claim(a, a2, { name: "Di", email: "di@example.com", value: 3200, status: "pending", type: "role", hoursPerWeek: 16 });
   made.push(`#${a} active, fractional money, claims in every state`);
 
   // 2. Nothing has happened yet. The empty state is where UIs usually break.

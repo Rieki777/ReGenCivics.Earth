@@ -10,6 +10,8 @@ import { emailGrantsAdmin, isAdminRole, shouldWriteAdminOnUpsert } from "@shared
 // Moved to server/db/_shared.ts so the extracted domain modules can use it
 // too. Imported (not re-exported) because it stays internal to server/db/.
 import { asMutationResult } from "./db/_shared";
+import { sanitizeInput } from "./_core/security";
+import { TRPCError } from "@trpc/server";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -920,6 +922,28 @@ export async function createCampaign(userId: number, data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+
+  // A role need is measured in hours a week (capacityUnit 'hours_per_week',
+  // migration 0249): the hours ARE its capacity, so quantityWanted mirrors
+  // hoursPerWeek and any client quantity is ignored. Checked before any
+  // insert so a bad role never leaves a half-written campaign.
+  //
+  // Only the Roles step's needs (category 'role', kind 'role') are hours
+  // needs. The Other Needs step also sends kind 'role' for the Organizing,
+  // Arts, Ceremony and Wellness categories, but with category 'resource' and
+  // no hours field; those stay count needs with their resource quantity.
+  const resolvedKind = (item: (typeof data.items)[number]) =>
+    item.kind ?? (item.category === 'role' ? 'role' : 'item');
+  const isHoursItem = (item: (typeof data.items)[number]) =>
+    item.category === 'role' && resolvedKind(item) === 'role';
+  for (const item of data.items) {
+    if (!isHoursItem(item)) continue;
+    const hours = Number(item.hoursPerWeek);
+    if (!Number.isInteger(hours) || hours < 1) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Each role needs the hours a week it asks for.' });
+    }
+  }
+
   // Calculate category totals
   const landValue = data.items
     .filter(i => i.category === 'land')
@@ -938,9 +962,9 @@ export async function createCampaign(userId: number, data: {
   // Create campaign
   const campaignResult = await db.insert(campaigns).values({
     userId,
-    title: data.title,
+    title: sanitizeInput(data.title),
     description: data.description,
-    projectName: data.projectName,
+    projectName: sanitizeInput(data.projectName),
     location: data.location,
     financialTarget: data.financialTarget,
     currency: data.currency || 'USD',
@@ -984,13 +1008,18 @@ export async function createCampaign(userId: number, data: {
   
   // Create campaign items
   for (const item of data.items) {
+    const kind = resolvedKind(item);
+    const isRole = isHoursItem(item);
     await db.insert(campaignItems).values({
       campaignId,
       category: item.category,
       // Needs registry taxonomy: wizard sends kind + capitalType; legacy callers get sane defaults.
-      kind: item.kind ?? (item.category === 'role' ? 'role' : 'item'),
+      kind,
       capitalType: item.capitalType ?? (item.category === 'land' ? 'living' : item.category === 'role' ? 'experiential' : 'material'),
-      quantityWanted: item.quantityWanted ?? item.equipmentQuantity ?? item.resourceQuantity ?? 1,
+      capacityUnit: isRole ? 'hours_per_week' : 'count',
+      quantityWanted: isRole
+        ? Number(item.hoursPerWeek)
+        : item.quantityWanted ?? item.equipmentQuantity ?? item.resourceQuantity ?? 1,
       hectares: item.hectares,
       region: item.region,
       features: item.features ? JSON.stringify(item.features) : null,
@@ -1097,15 +1126,29 @@ export async function getCampaignCoverImage(campaignId: number): Promise<Campaig
   return results[0] || null;
 }
 
-export async function deleteCampaignImage(imageId: number, userId: number): Promise<boolean> {
+export async function getCampaignImageById(imageId: number): Promise<CampaignImage | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(campaignImages).where(eq(campaignImages.id, imageId)).limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Delete a campaign image. The uploader may always delete their own; pass
+ * asSteward = true when the caller stewards the image's campaign (the route
+ * checks that through server/lib/project-steward.ts).
+ */
+export async function deleteCampaignImage(imageId: number, userId: number, asSteward = false): Promise<boolean> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const result = await db.delete(campaignImages)
-    .where(and(
-      eq(campaignImages.id, imageId),
-      eq(campaignImages.uploadedByUserId, userId)
-    ));
+    .where(asSteward
+      ? eq(campaignImages.id, imageId)
+      : and(
+          eq(campaignImages.id, imageId),
+          eq(campaignImages.uploadedByUserId, userId)
+        ));
   return asMutationResult(result).affectedRows > 0;
 }
 
@@ -1131,8 +1174,8 @@ export async function setCampaignCoverImage(campaignId: number, imageId: number)
 // Campaign Contribution Queries
 // ============================================
 
-export async function createContribution(data: InsertCampaignContribution): Promise<number> {
-  const db = await getDb();
+export async function createContribution(data: InsertCampaignContribution, tx?: any): Promise<number> {
+  const db = tx ?? (await getDb());
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(campaignContributions).values(data);
@@ -1188,8 +1231,8 @@ export async function updateContribution(id: number, data: Partial<InsertCampaig
 }
 
 export async function updateContributionStatus(
-  id: number, 
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'fulfilled',
+  id: number,
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'fulfilled' | 'released' | 'cancelled',
   ownerNotes?: string
 ): Promise<void> {
   const db = await getDb();
@@ -1416,6 +1459,180 @@ export async function listCampaignUpdates(campaignId: number): Promise<CampaignU
   return await db.select().from(campaignUpdates)
     .where(eq(campaignUpdates.campaignId, campaignId))
     .orderBy(desc(campaignUpdates.updateNumber));
+}
+
+// ============================================
+// Crowdpool: need counters, value totals, email lists (2026-09-24)
+// ============================================
+
+/**
+ * Recompute a need's counters from its contribution rows: claimed is the sum
+ * of quantityPledged over accepted, fulfilled and thanked; delivered over
+ * fulfilled and thanked. Hours needs (shared/roleCapacity.ts isHoursNeed)
+ * never increment their counters, they call this on every change, so the
+ * meter can never pass the hours actually accepted. Pass the transaction
+ * when called inside one. The cancel service calls it for every need of a
+ * campaign, count needs included: the rows are the truth.
+ */
+export async function recomputeNeedCounters(itemId: number, tx?: any): Promise<void> {
+  const exec = tx ?? (await getDb());
+  if (!exec) throw new Error("Database not available");
+  await exec.execute(sql`
+    UPDATE campaign_items ci
+    SET ci.quantityClaimed = (
+          SELECT COALESCE(SUM(cc.quantityPledged), 0) FROM campaign_contributions cc
+          WHERE cc.campaignItemId = ci.id AND cc.status IN ('accepted','fulfilled','thanked')),
+        ci.quantityDelivered = (
+          SELECT COALESCE(SUM(cc.quantityPledged), 0) FROM campaign_contributions cc
+          WHERE cc.campaignItemId = ci.id AND cc.status IN ('fulfilled','thanked'))
+    WHERE ci.id = ${itemId}
+  `);
+}
+
+/**
+ * Recompute a campaign's value columns from its needs, grouped the way
+ * createCampaign groups them (and the way the demo seed recomputes them):
+ * totalValue is every need's value, the four legacy columns go by category.
+ * Called after a steward changes the hours a role needs (its value scales).
+ */
+export async function recomputeCampaignValueTotals(campaignId: number, tx?: any): Promise<void> {
+  const exec = tx ?? (await getDb());
+  if (!exec) throw new Error("Database not available");
+  await exec.execute(sql`
+    UPDATE campaigns c
+    SET c.totalValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id),
+        c.landValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id AND ci.category = 'land'),
+        c.equipmentValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id AND ci.category = 'equipment'),
+        c.rolesValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id AND ci.category = 'role'),
+        c.resourcesValue = (SELECT COALESCE(SUM(ci.estimatedValue), 0) FROM campaign_items ci WHERE ci.campaignId = c.id AND ci.category = 'resource')
+    WHERE c.id = ${campaignId}
+  `);
+}
+
+/** How many people follow a campaign: with an account, and by email only. */
+export async function getCampaignFollowerCounts(campaignId: number): Promise<{ accounts: number; emails: number }> {
+  const db = await getDb();
+  if (!db) return { accounts: 0, emails: 0 };
+  const [acc] = await db.select({ n: sql<number>`COUNT(*)` }).from(userFollows)
+    .where(and(eq(userFollows.targetType, 'campaign'), eq(userFollows.targetId, String(campaignId))));
+  const [em] = await db.select({ n: sql<number>`COUNT(*)` }).from(campaignFollowers)
+    .where(eq(campaignFollowers.campaignId, campaignId));
+  return { accounts: Number(acc?.n ?? 0), emails: Number(em?.n ?? 0) };
+}
+
+export type EmailListRow = { id: number; email: string; name: string | null; unsubscribeToken: string; campaignId?: number };
+
+/**
+ * Email-only campaign followers (campaign_followers). With a campaignId,
+ * that campaign's list; without, every row. Mailed only by admin Outbound.
+ */
+export async function getEmailFollowers(opts: { campaignId?: number } = {}): Promise<EmailListRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const q = db.select({
+    id: campaignFollowers.id,
+    email: campaignFollowers.email,
+    name: campaignFollowers.name,
+    unsubscribeToken: campaignFollowers.unsubscribeToken,
+    campaignId: campaignFollowers.campaignId,
+  }).from(campaignFollowers);
+  return opts.campaignId != null
+    ? await q.where(eq(campaignFollowers.campaignId, opts.campaignId)).orderBy(asc(campaignFollowers.id))
+    : await q.orderBy(asc(campaignFollowers.id));
+}
+
+/** Email-follower counts per campaign, for Outbound's audience picker. */
+export async function getEmailFollowerCountsByCampaign(): Promise<Array<{ campaignId: number; count: number }>> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({
+    campaignId: campaignFollowers.campaignId,
+    count: sql<number>`COUNT(*)`,
+  }).from(campaignFollowers).groupBy(campaignFollowers.campaignId);
+  return rows.map((r) => ({ campaignId: Number(r.campaignId), count: Number(r.count) }));
+}
+
+/** Silent upsert: a repeat signup for the same season changes nothing and reveals nothing. */
+export async function upsertWaitlist(data: { seasonNumber: number; email: string; name?: string | null; unsubscribeToken: string }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(schemaTables.crowdpoolWaitlist)
+    .values({
+      seasonNumber: data.seasonNumber,
+      email: data.email,
+      name: data.name ?? null,
+      unsubscribeToken: data.unsubscribeToken,
+    })
+    .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+}
+
+export async function listWaitlist(seasonNumber: number): Promise<EmailListRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const w = schemaTables.crowdpoolWaitlist;
+  return await db.select({
+    id: w.id,
+    email: w.email,
+    name: w.name,
+    unsubscribeToken: w.unsubscribeToken,
+  }).from(w)
+    .where(eq(w.seasonNumber, seasonNumber))
+    .orderBy(asc(w.id));
+}
+
+export async function getWaitlistCountsBySeason(): Promise<Array<{ seasonNumber: number; count: number }>> {
+  const db = await getDb();
+  if (!db) return [];
+  const w = schemaTables.crowdpoolWaitlist;
+  const rows = await db.select({
+    seasonNumber: w.seasonNumber,
+    count: sql<number>`COUNT(*)`,
+  }).from(w).groupBy(w.seasonNumber).orderBy(asc(w.seasonNumber));
+  return rows.map((r) => ({ seasonNumber: Number(r.seasonNumber), count: Number(r.count) }));
+}
+
+/**
+ * Remove email-follower rows by unsubscribe token. 'this' removes the rows
+ * carrying the token; 'all' removes every campaign_followers row for the
+ * email that token belongs to. Returns the email the token resolved to
+ * (null when it matched nothing) so the caller can finish an 'all' across
+ * the waitlist too. Never logs the token.
+ */
+export async function deleteEmailFollowByToken(token: string, scope: 'this' | 'all'): Promise<{ email: string | null; removed: number }> {
+  const db = await getDb();
+  if (!db) return { email: null, removed: 0 };
+  const [row] = await db.select({ email: campaignFollowers.email }).from(campaignFollowers)
+    .where(eq(campaignFollowers.unsubscribeToken, token)).limit(1);
+  if (!row) return { email: null, removed: 0 };
+  const result = scope === 'all'
+    ? await db.delete(campaignFollowers).where(sql`LOWER(${campaignFollowers.email}) = ${row.email.toLowerCase()}`)
+    : await db.delete(campaignFollowers).where(eq(campaignFollowers.unsubscribeToken, token));
+  return { email: row.email, removed: asMutationResult(result).affectedRows };
+}
+
+/** The waitlist twin of deleteEmailFollowByToken. */
+export async function deleteWaitlistByToken(token: string, scope: 'this' | 'all'): Promise<{ email: string | null; removed: number }> {
+  const db = await getDb();
+  if (!db) return { email: null, removed: 0 };
+  const w = schemaTables.crowdpoolWaitlist;
+  const [row] = await db.select({ email: w.email }).from(w)
+    .where(eq(w.unsubscribeToken, token)).limit(1);
+  if (!row) return { email: null, removed: 0 };
+  const result = scope === 'all'
+    ? await db.delete(w).where(sql`LOWER(${w.email}) = ${row.email.toLowerCase()}`)
+    : await db.delete(w).where(eq(w.unsubscribeToken, token));
+  return { email: row.email, removed: asMutationResult(result).affectedRows };
+}
+
+/** Remove every email-list row (campaign followers and waitlist) for one email address. */
+export async function deleteEmailListRowsForEmail(email: string): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const w = schemaTables.crowdpoolWaitlist;
+  const lower = email.toLowerCase();
+  const a = await db.delete(campaignFollowers).where(sql`LOWER(${campaignFollowers.email}) = ${lower}`);
+  const b = await db.delete(w).where(sql`LOWER(${w.email}) = ${lower}`);
+  return asMutationResult(a).affectedRows + asMutationResult(b).affectedRows;
 }
 
 
@@ -2707,19 +2924,6 @@ export async function getUserRecentReplies(userId: number, limit = 10) {
   return db.select().from(forumReplies).where(eq(forumReplies.authorId, userId)).orderBy(desc(forumReplies.createdAt)).limit(limit);
 }
 
-// Create notification for forum activity
-export async function createForumNotification(data: { userId: number; type: string; title: string; message: string; postId?: number }) {
-  const db = await getDb();
-  if (!db) return;
-  await db.insert(userNotifications).values({
-    userId: data.userId,
-    type: 'system' as any, // Using system type for forum notifications
-    title: data.title,
-    message: data.message,
-    campaignId: data.postId || null, // Reuse campaignId field to store postId for linking
-  });
-}
-
 // â”€â”€â”€ Email Magic Link Token Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createEmailToken(data: { email: string; token: string; expiresAt: Date }): Promise<void> {
@@ -2817,9 +3021,21 @@ export async function getOrgClaimsByUser(userId: number): Promise<OrgClaim[]> {
   return db.select().from(orgClaims).where(eq(orgClaims.userId, userId));
 }
 
+export async function getOrgClaimById(id: number): Promise<OrgClaim | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(orgClaims).where(eq(orgClaims.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
 export type OrgClaimWithClaimant = OrgClaim & {
   claimantName: string | null;
   claimantEmail: string | null;
+  /**
+   * For land_project claims: the linked application's real projectName. The
+   * claimant types orgName themselves, so the admin sees both side by side.
+   */
+  applicationProjectName: string | null;
 };
 
 export async function getAllOrgClaims(): Promise<OrgClaimWithClaimant[]> {
@@ -2830,9 +3046,14 @@ export async function getAllOrgClaims(): Promise<OrgClaimWithClaimant[]> {
       ...getTableColumns(orgClaims),
       claimantName: users.name,
       claimantEmail: users.email,
+      applicationProjectName: applications.projectName,
     })
     .from(orgClaims)
     .leftJoin(users, eq(users.id, orgClaims.userId))
+    .leftJoin(applications, and(
+      eq(orgClaims.orgType, 'land_project'),
+      sql`${applications.id} = CAST(${orgClaims.orgId} AS UNSIGNED)`,
+    ))
     .orderBy(desc(orgClaims.createdAt));
 }
 

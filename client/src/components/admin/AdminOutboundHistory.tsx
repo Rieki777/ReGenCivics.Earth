@@ -15,13 +15,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  NEWSLETTER_SOURCES,
-  type NewsletterSource,
-} from "@/lib/outboundAudience";
+import { choiceFromStoredAudience } from "@/lib/outboundAudience";
 import { isLetterLayout, type LetterLayout } from "@shared/letterLayout";
 import {
-  audienceToWriteSource,
   formatPacificDateTime,
   formatPercent,
   historyCsvFilename,
@@ -61,16 +57,16 @@ function writePrefillFromDetail(detail: {
   layout?: string | null;
   audience?: unknown;
 }): OutboundWritePrefill {
-  const sourceRaw = audienceToWriteSource(detail.audience);
-  const source: NewsletterSource | "all" = (NEWSLETTER_SOURCES as readonly string[]).includes(sourceRaw)
-    ? (sourceRaw as NewsletterSource)
-    : "all";
+  // Duplicate keeps a list audience (campaign followers, a waitlist), so a
+  // copy of a list letter never widens to every subscriber.
+  const choice = choiceFromStoredAudience(detail.audience);
   const layout: LetterLayout = isLetterLayout(detail.layout) ? detail.layout : "announcement";
   return {
     subject: detail.subjectDisplay,
     body: detail.body,
     layout,
-    source,
+    source: choice.kind === "newsletter" ? choice.source : "all",
+    list: choice.kind === "list" ? choice.list : null,
   };
 }
 

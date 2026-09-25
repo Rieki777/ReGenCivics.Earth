@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { CRYPTO_PAYMENT_CONTEXT, type CapitalType, type NeedKind } from "@shared/crowdpoolingTaxonomy";
+import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@shared/roleCapacity";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthDialog } from "@/components/AuthDialog";
 import {
   Leaf,
   Wrench,
@@ -20,7 +24,8 @@ import {
   CheckCircle2,
   CalendarPlus,
   Truck,
-  Gift
+  Gift,
+  UserPlus
 } from "lucide-react";
 
 /** A campaign need passed in when the contributor clicks Claim on a slot card. */
@@ -33,6 +38,13 @@ export interface ContributionNeed {
   quantityClaimed: number;
   quantityDelivered: number;
   estimatedValue: number;
+  /**
+   * 'hours_per_week' on a role measured in hours a week: quantityWanted,
+   * quantityClaimed and quantityDelivered are then hours needed, accepted
+   * and delivered. Missing or 'count' means slots, as before.
+   */
+  capacityUnit?: string | null;
+  hoursPerWeek?: number | null;
   shiftStartsAt?: string | Date | null;
   shiftEndsAt?: string | Date | null;
   loanWindowStart?: string | Date | null;
@@ -45,7 +57,11 @@ interface ContributionModalProps {
   campaignId: number;
   campaignTitle: string;
   currency?: string;
-  onSuccess?: () => void;
+  /**
+   * Called once the server takes the sheet. `practice` is true on an example
+   * campaign: nothing was written, so callers should not refetch or thank.
+   */
+  onSuccess?: (result: { practice: boolean }) => void;
   /** When set, the type picker is skipped and the form is preloaded from this need. */
   need?: ContributionNeed;
 }
@@ -89,6 +105,32 @@ function perUnitValue(need: ContributionNeed): number {
   return need.estimatedValue;
 }
 
+/** A whole number of hours from 1 to 168, or null. */
+export function parseOfferHours(raw: string): number | null {
+  const t = raw.trim();
+  if (!/^[0-9]+$/.test(t)) return null;
+  const n = parseInt(t, 10);
+  if (!Number.isInteger(n) || n < 1 || n > MAX_OFFER_HOURS) return null;
+  return n;
+}
+
+function fillForNeed(need: ContributionNeed) {
+  return roleFillState({
+    kind: String(need.kind),
+    capacityUnit: need.capacityUnit ?? null,
+    quantityWanted: need.quantityWanted || 0,
+    quantityClaimed: need.quantityClaimed || 0,
+    quantityDelivered: need.quantityDelivered || 0,
+    estimatedValue: need.estimatedValue || 0,
+  });
+}
+
+/** The server's price for an offer of `hours` on an hours need. */
+export function offerValue(need: ContributionNeed, hours: number): number {
+  const needed = need.quantityWanted || 0;
+  return scaleRoleValue(need.estimatedValue || 0, needed, Math.min(hours, needed));
+}
+
 function toIcsDate(d: string | Date): string {
   return new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
@@ -104,6 +146,27 @@ export function ContributionModal({
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
+  const { user, isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
+  const [authOpen, setAuthOpen] = useState(false);
+  // The email the offer went out under, kept for the success screen after
+  // the form resets.
+  const [sentEmail, setSentEmail] = useState('');
+  // True when the server answered with a practice run (an example campaign):
+  // the success screen is then a practice receipt.
+  const [practice, setPractice] = useState(false);
+  // The practice receipt's "hear when real campaigns open" form.
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistJoined, setWaitlistJoined] = useState(false);
+  const joinWaitlist = trpc.campaigns.joinWaitlist.useMutation({
+    onSuccess: () => setWaitlistJoined(true),
+    onError: () => { toast.error('Could not save your email. Try again in a moment.'); },
+  });
+
+  // A role measured in hours a week. Legacy roles still on 'count' take the
+  // slot path below, exactly as before.
+  const hoursNeed = !!need && isHoursNeed({ kind: String(need.kind), capacityUnit: need.capacityUnit ?? null });
+  const fill = need ? fillForNeed(need) : null;
 
   // Form state
   const [contributorName, setContributorName] = useState('');
@@ -155,16 +218,52 @@ export function ContributionModal({
       if (mapped === 'role') {
         setRoleTitle(need.title);
       }
+      if (isHoursNeed({ kind: String(need.kind), capacityUnit: need.capacityUnit ?? null })) {
+        // Prefill the open hours, kept inside what one person can offer.
+        // People can offer more or less; the steward decides at accept.
+        const open = fillForNeed(need).open;
+        const start = Math.min(Math.max(open, 1), MAX_OFFER_HOURS);
+        setHoursPerWeek(String(start));
+        setEstimatedValue(String(offerValue(need, start)));
+      }
       if (mapped === 'equipment') {
         setEquipmentName(need.title);
       }
     }
   }, [isOpen, need]);
 
+  // Signed in: start the form from the account, so the offer carries the
+  // email the account signs in with.
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    const u = user as { name?: string | null; email?: string | null };
+    setContributorName((v) => v || u.name || '');
+    setContributorEmail((v) => v || u.email || '');
+  }, [isOpen, user]);
+
+  // Signed out with the sheet open: someone may finish signing in by email
+  // link in another tab. Check again when they come back to this one.
+  useEffect(() => {
+    if (!isOpen || isAuthenticated) return;
+    const recheck = () => { void utils.auth.me.invalidate(); };
+    window.addEventListener('focus', recheck);
+    return () => window.removeEventListener('focus', recheck);
+  }, [isOpen, isAuthenticated, utils]);
+
+  // Once signed in (here or in another tab), the sign-in dialog has done its job.
+  useEffect(() => {
+    if (isAuthenticated) setAuthOpen(false);
+  }, [isAuthenticated]);
+
   const submitMutation = trpc.campaigns.submitContribution.useMutation({
-    onSuccess: () => {
+    onSuccess: (result) => {
+      const isPractice = result?.practice === true;
+      setPractice(isPractice);
+      setSentEmail(contributorEmail.trim());
+      setWaitlistEmail(contributorEmail.trim());
+      setWaitlistJoined(false);
       setStep('success');
-      onSuccess?.();
+      onSuccess?.({ practice: isPractice });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to submit contribution');
@@ -207,7 +306,18 @@ export function ContributionModal({
 
   const handleClose = () => {
     resetForm();
+    setSentEmail('');
+    setPractice(false);
+    setWaitlistEmail('');
+    setWaitlistJoined(false);
     onClose();
+  };
+
+  const handleJoinWaitlist = (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = waitlistEmail.trim();
+    if (!email) return;
+    joinWaitlist.mutate({ email, name: contributorName.trim() || undefined });
   };
 
   /**
@@ -245,6 +355,15 @@ export function ContributionModal({
     }
   };
 
+  // Hours offered on an hours need: never capped by the open hours. The
+  // value preview follows the server's own pricing.
+  const handleOfferHoursChange = (raw: string) => {
+    setHoursPerWeek(raw);
+    if (!need) return;
+    const h = parseOfferHours(raw);
+    if (h !== null) setEstimatedValue(String(offerValue(need, h)));
+  };
+
   const handleSubmit = () => {
     if (!contributionType) return;
 
@@ -254,8 +373,22 @@ export function ContributionModal({
       return;
     }
 
-    const value = parseInt(estimatedValue) || 0;
-    if (value <= 0) {
+    let offerHours: number | undefined;
+    if (hoursNeed || (contributionType === 'role' && hoursPerWeek.trim() !== '')) {
+      const h = parseOfferHours(hoursPerWeek);
+      if (h === null) {
+        toast.error(`Hours a week need to be a whole number from 1 to ${MAX_OFFER_HOURS}.`);
+        return;
+      }
+      offerHours = h;
+    }
+
+    // The server prices an offer on an hours need itself, so the value sent
+    // here is only a preview (a role with no value set still takes offers).
+    const value = hoursNeed && need && offerHours !== undefined
+      ? Math.round(offerValue(need, offerHours))
+      : (parseInt(estimatedValue) || 0);
+    if (!hoursNeed && value <= 0) {
       toast.error('Please enter a valid estimated value');
       return;
     }
@@ -267,7 +400,8 @@ export function ContributionModal({
     submitMutation.mutate({
       campaignId,
       campaignItemId: need?.id,
-      quantityPledged: need ? (parseInt(quantityPledged) || 1) : 1,
+      // On an hours need the server sets quantityPledged from hoursPerWeek.
+      quantityPledged: need && !hoursNeed ? (parseInt(quantityPledged) || 1) : 1,
       isAnonymous,
       referredBy: refParam ? refParam.slice(0, 16) : undefined,
       contributorName: contributorName.trim(),
@@ -288,8 +422,8 @@ export function ContributionModal({
       roleTitle: roleTitle.trim() || undefined,
       // Knowledge sessions record their length in hours on hoursPerWeek.
       hoursPerWeek: contributionType === 'knowledge'
-        ? (sessionLength ? parseInt(sessionLength) : undefined)
-        : (hoursPerWeek ? parseInt(hoursPerWeek) : undefined),
+        ? (parseOfferHours(sessionLength) ?? undefined)
+        : offerHours,
       durationMonths: durationMonths ? parseInt(durationMonths) : undefined,
       resourceName: resourceName.trim() || undefined,
       resourceQuantity: resourceQuantity ? parseInt(resourceQuantity) : undefined,
@@ -327,6 +461,7 @@ export function ContributionModal({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {/* No max-h here on purpose. DialogContent already caps at 100dvh on mobile
           and 90vh from md up. Re-adding max-h-[90vh] put a static vh cap back over
@@ -338,15 +473,18 @@ export function ContributionModal({
               it a long need title wrapped under the X, so tapping what looked like
               the heading closed the modal and discarded the form. */}
           <DialogTitle className="text-[#1a472a] text-left leading-tight pr-12 sm:pr-0">
-            {step === 'success' ? 'Contribution Submitted!' :
+            {step === 'success' ? (practice ? 'Practice run complete' : hoursNeed ? 'Offer sent' : 'Contribution Submitted!') :
+              hoursNeed && need ? `Offer your time: ${need.title}` :
               need ? `Claim: ${need.title}` : 'Contribute to Campaign'}
           </DialogTitle>
           <DialogDescription className="text-[#1a472a]/85">
             {step === 'type' && 'Select what type of contribution you want to make'}
-            {step === 'details' && (need
-              ? `Claiming a ${(KIND_LABELS[need.kind] || 'need').toLowerCase()} need on ${campaignTitle}`
+            {step === 'details' && (hoursNeed
+              ? `Offering hours to a role on ${campaignTitle}`
+              : need
+              ? `Claiming ${need.kind === 'item' ? 'an' : 'a'} ${(KIND_LABELS[need.kind] || 'need').toLowerCase()} need on ${campaignTitle}`
               : `Contributing to: ${campaignTitle}`)}
-            {step === 'success' && 'Thank you for your contribution!'}
+            {step === 'success' && (practice ? `A practice run on ${campaignTitle}` : 'Thank you for your contribution!')}
           </DialogDescription>
         </DialogHeader>
 
@@ -379,6 +517,18 @@ export function ContributionModal({
         {/* Step 2: Enter Details */}
         {step === 'details' && contributionType && (
           <div className="space-y-4 py-4">
+            {!isAuthenticated && (
+              <p className="text-sm text-[#1a472a]/85">
+                <button
+                  type="button"
+                  onClick={() => setAuthOpen(true)}
+                  className="inline-flex items-center min-h-11 py-2 font-semibold text-[#4a7c59] underline underline-offset-2 hover:text-[#1a472a]"
+                >
+                  Have an account? Sign in first
+                </button>
+              </p>
+            )}
+
             {/* Need summary when claiming a slot */}
             {need && (
               <div className="bg-[#f0f7f0] rounded-xl p-3 flex items-center justify-between gap-3">
@@ -388,8 +538,10 @@ export function ContributionModal({
                   </span>
                   <p className="text-sm font-medium text-[#1a472a]">{need.title}</p>
                 </div>
-                <span className="text-xs text-[#1a472a]/80 whitespace-nowrap">
-                  {need.quantityDelivered} of {need.quantityWanted} filled
+                <span className="text-xs text-[#1a472a]/80 text-right">
+                  {hoursNeed && fill
+                    ? `${fill.accepted} of ${fill.needed} hours a week filled`
+                    : `${need.quantityClaimed || 0} of ${need.quantityWanted} filled`}
                 </span>
               </div>
             )}
@@ -419,6 +571,11 @@ export function ContributionModal({
                     onChange={(e) => setContributorEmail(e.target.value)}
                     placeholder="your@email.com"
                   />
+                  {!isAuthenticated && (
+                    <p className="text-xs text-[#1a472a]/85">
+                      Use the email you'd sign in with. If you make an account with it later, this offer links to your account.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -478,7 +635,7 @@ export function ContributionModal({
               </div>
 
               {/* Quantity when the need has multiple slots */}
-              {need && need.quantityWanted > 1 && (
+              {need && !hoursNeed && need.quantityWanted > 1 && (
                 <div className="space-y-2">
                   <Label htmlFor="qty">How many slots? (up to {remainingSlots})</Label>
                   <Input
@@ -559,6 +716,25 @@ export function ContributionModal({
                 </div>
               )}
 
+              {hoursNeed && fill && (
+                <div className="space-y-2">
+                  <Label htmlFor="offerHours">Hours a week you can offer *</Label>
+                  <Input
+                    id="offerHours"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_OFFER_HOURS}
+                    step={1}
+                    value={hoursPerWeek}
+                    onChange={(e) => handleOfferHoursChange(e.target.value)}
+                  />
+                  <p className="text-xs text-[#1a472a]/85">
+                    {fill.open} of {fill.needed} hours a week are still open. You can offer more or less.
+                  </p>
+                </div>
+              )}
+
               {contributionType === 'role' && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 col-span-2">
@@ -570,16 +746,22 @@ export function ContributionModal({
                       placeholder="e.g., Project Manager"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hours">Hours/Week</Label>
-                    <Input
-                      id="hours"
-                      type="number"
-                      value={hoursPerWeek}
-                      onChange={(e) => setHoursPerWeek(e.target.value)}
-                      placeholder="e.g., 20"
-                    />
-                  </div>
+                  {!hoursNeed && (
+                    <div className="space-y-2">
+                      <Label htmlFor="hours">Hours/Week</Label>
+                      <Input
+                        id="hours"
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={MAX_OFFER_HOURS}
+                        step={1}
+                        value={hoursPerWeek}
+                        onChange={(e) => setHoursPerWeek(e.target.value)}
+                        placeholder="e.g., 20"
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="duration">Duration (months)</Label>
                     <Input
@@ -676,7 +858,21 @@ export function ContributionModal({
                 />
               </div>
 
-              {contributionType !== 'financial' && (
+              {hoursNeed && (
+                <div className="rounded-xl bg-[#f0f7f0] p-3">
+                  <p className="text-sm text-[#1a472a]">
+                    Value of your offer:{' '}
+                    <span className="font-semibold">
+                      {new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(estimatedValue) || 0)}
+                    </span>
+                  </p>
+                  <p className="text-xs text-[#1a472a]/85 mt-1">
+                    Your share of this role's value, by the hours you offer.
+                  </p>
+                </div>
+              )}
+
+              {contributionType !== 'financial' && !hoursNeed && (
                 <div className="space-y-2">
                   <Label htmlFor="value">Estimated Value ({currency}) *</Label>
                   <Input
@@ -724,22 +920,101 @@ export function ContributionModal({
                     Submitting...
                   </>
                 ) : (
-                  need ? 'Submit Claim' : 'Submit Contribution'
+                  hoursNeed ? 'Send my offer' : need ? 'Submit Claim' : 'Submit Contribution'
                 )}
               </Button>
             </div>
           </div>
         )}
 
+        {/* Step 3, on an example campaign: a practice receipt. The server
+            wrote nothing (campaigns.submitContribution returns practice:true),
+            so there is no steward to hear back from, no account nudge and no
+            thank-you to wait for. Rye, 2026-09-24 (decision B12c). */}
+        {step === 'success' && practice && (
+          <div className="py-8 text-center" data-testid="practice-receipt">
+            <div className="w-16 h-16 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-[#4a7c59]" />
+            </div>
+            <h3 className="text-xl font-bold text-[#1a472a] mb-2">Practice run complete</h3>
+            <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-5">
+              This was an example campaign, so nothing reached a real project. The first real campaigns open soon.
+            </p>
+            <div className="text-left max-w-sm mx-auto mb-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
+              {waitlistJoined ? (
+                <p className="flex items-start gap-2 text-sm text-[#1a472a]">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#4a7c59]" />
+                  You're on the list. We'll write when the first real campaigns open.
+                </p>
+              ) : (
+                <form onSubmit={handleJoinWaitlist} className="space-y-2">
+                  <Label htmlFor="practice-waitlist-email" className="text-sm text-[#1a472a]">
+                    Want to hear when they open?
+                  </Label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      id="practice-waitlist-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      required
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="bg-white"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={joinWaitlist.isPending}
+                      className="bg-[#4a7c59] hover:bg-[#1a472a] text-white whitespace-nowrap"
+                    >
+                      {joinWaitlist.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Tell me'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button asChild variant="outline" className="border-[#4a7c59] text-[#4a7c59]">
+                <Link href="/campaigns" onClick={handleClose}>Browse campaigns</Link>
+              </Button>
+              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Step 3: Success */}
-        {step === 'success' && (
+        {step === 'success' && !practice && (
           <div className="py-8 text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-[#1a472a] mb-2">
-              {need ? 'Claim Submitted!' : 'Contribution Submitted!'}
+              {hoursNeed ? 'Offer sent' : need ? 'Claim Submitted!' : 'Contribution Submitted!'}
             </h3>
+            {!isAuthenticated && sentEmail && (
+              <div className="text-left max-w-sm mx-auto mb-5 space-y-3">
+                <p className="text-sm text-[#1a472a]/85">
+                  Your offer is with the stewards. We'll email <strong className="break-all">{sentEmail}</strong> when they answer.
+                </p>
+                <div className="rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
+                  <p className="text-sm text-[#1a472a]">
+                    Make a free account with <strong className="break-all">{sentEmail}</strong> and you'll see every answer, delivery and thank-you in your notifications. This offer and any you made before with this email link to your account when you sign in, and show on each project's page.
+                  </p>
+                  <Button
+                    onClick={() => setAuthOpen(true)}
+                    className="mt-3 w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Make my account
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="text-left max-w-sm mx-auto space-y-3 mb-6">
               <div className="flex items-start gap-3">
                 <UserCheck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
@@ -749,10 +1024,14 @@ export function ContributionModal({
                 <Truck className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-[#1a472a]/85">Delivery is when it counts. Progress and recognition land when your contribution arrives.</p>
               </div>
-              <div className="flex items-start gap-3">
-                <Gift className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-[#1a472a]/85">You'll get a thank-you from the project once it's in.</p>
-              </div>
+              {/* Thanks reach account holders in their notifications only; the
+                  signed-out card above says so. */}
+              {isAuthenticated && (
+                <div className="flex items-start gap-3">
+                  <Gift className="w-5 h-5 text-[#4a7c59] mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-[#1a472a]/85">You'll get a thank-you from the project once it's in.</p>
+                </div>
+              )}
             </div>
             {need?.kind === 'shift' && need.shiftStartsAt && need.shiftEndsAt && (
               <Button
@@ -773,5 +1052,12 @@ export function ContributionModal({
         )}
       </DialogContent>
     </Dialog>
+    <AuthDialog
+      open={authOpen}
+      onOpenChange={setAuthOpen}
+      onLogin={() => setAuthOpen(false)}
+      defaultEmail={step === 'success' ? sentEmail : (contributorEmail.trim() || undefined)}
+    />
+    </>
   );
 }

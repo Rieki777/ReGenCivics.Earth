@@ -15,6 +15,8 @@ import { PageTransition } from '@/components/PageTransition';
 import { FlowerOfLifeIcon } from '@/components/FlowerOfLifeIcon';
 import { formatDistanceToNow } from 'date-fns';
 import { typeGlyph, resolveNotificationLink } from '@/components/NotificationBell';
+import { CAMPAIGN_NOTIFICATION_TYPES } from '@/lib/notificationDisplay';
+import { decodeEntities } from '@/utils/sanitize';
 
 const FILTERS: { key: string; label: string; types?: string[] }[] = [
   { key: 'all', label: 'All' },
@@ -22,6 +24,7 @@ const FILTERS: { key: string; label: string; types?: string[] }[] = [
   { key: 'replies', label: 'Replies', types: ['forum_reply', 'thread_followed_activity'] },
   { key: 'gratitude', label: 'Gratitude', types: ['gratitude'] },
   { key: 'guides', label: 'Guide + Elders', types: ['guide_reply', 'elder_reply'] },
+  { key: 'campaigns', label: 'Campaigns', types: [...CAMPAIGN_NOTIFICATION_TYPES] },
 ];
 
 export default function Notifications() {
@@ -102,7 +105,7 @@ export default function Notifications() {
             ) : items.length === 0 ? (
               <div className="p-10 text-center text-[#1a472a]/80">
                 <FlowerOfLifeIcon size={40} className="mx-auto mb-3 opacity-30 text-[#1a472a]" />
-                <p className="text-sm">Nothing here yet. Join a conversation in the <button className="underline text-[#4a7c59]" onClick={() => navigate('/community')}>community</button> and replies will find you.</p>
+                <p className="text-sm">{filter === 'campaigns' ? 'Campaign news will show up here: answers to your offers, deliveries, thank-yous and updates from campaigns you follow.' : <>Nothing here yet. Join a conversation in the <button className="underline text-[#4a7c59]" onClick={() => navigate('/community')}>community</button> and replies will find you.</>}</p>
               </div>
             ) : (
               items.map(item => (
@@ -123,9 +126,9 @@ export default function Notifications() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <h3 className={`text-sm ${!item.isRead ? 'font-semibold' : ''} text-[#1a472a]`}>
-                        {item.groupCount > 1 ? `${item.groupCount} new: ${item.title}` : item.title}
+                        {decodeEntities(item.groupCount > 1 ? `${item.groupCount} new: ${item.title}` : item.title)}
                       </h3>
-                      {item.body && <p className="text-xs text-[#1a472a]/75 mt-1 line-clamp-2">{item.body}</p>}
+                      {item.body && <p className="text-xs text-[#1a472a]/75 mt-1 line-clamp-2">{decodeEntities(item.body)}</p>}
                       <p className="text-xs text-[#1a472a]/75 mt-1">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                       </p>

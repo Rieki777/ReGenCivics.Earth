@@ -8,6 +8,7 @@ import { Resend } from 'resend';
 import { logger } from './logger';
 import { signTrackedUrl } from '../emailTracking';
 import { FUND } from '../../shared/fund';
+import { decodeBasicEntities, textForEmail } from '../../shared/htmlText';
 import {
   WHATSAPP_COMMUNITY_URL,
   DISCORD_INVITE_URL,
@@ -88,6 +89,12 @@ export interface SendEmailParams {
    * Skip the generic branded wrap so the letter header is not doubled.
    */
   skipBrandedWrap?: boolean;
+  /**
+   * 'auth' (sign-in links) draws on its own hourly budget, so campaign
+   * notices and list mail can never use up the shared 50-an-hour cap and
+   * leave people unable to sign in. See checkRateLimits.
+   */
+  budget?: 'auth';
 }
 
 /**
@@ -233,6 +240,12 @@ function wrapLinksWithTracking(html: string, emailLogId?: number): string {
 //     Set EMAIL_RATE_LIMIT_PER_HOUR to override. Use a high value (e.g. 500) to
 //     effectively disable it for bulk sends you've consciously triggered.
 //
+//  3. SIGN-IN BUDGET: sign-in links (budget: 'auth') skip both guards above
+//     and count against their own rolling hour instead (default 200 recipients,
+//     AUTH_EMAIL_RATE_LIMIT_PER_HOUR). Anything that fans out (campaign
+//     notices, digests, Outbound) can then never lock people out of signing
+//     in. The request route has its own per-IP limit (5 a minute).
+//
 // These are in-memory and reset on restart. They supplement EMAIL_HOLD, not replace it.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -245,9 +258,23 @@ const HOUR_MS = 60 * 60 * 1000;
 const HOURLY_LIMIT = parseInt(process.env.EMAIL_RATE_LIMIT_PER_HOUR ?? "50", 10);
 // Sliding window: timestamps of each recipient send in the last hour
 const sendTimestamps: number[] = [];
+const AUTH_HOURLY_LIMIT = parseInt(process.env.AUTH_EMAIL_RATE_LIMIT_PER_HOUR ?? "200", 10);
+const authSendTimestamps: number[] = [];
 
-function checkRateLimits(recipientCount: number, subject: string): { blocked: boolean; reason: string } {
+function checkRateLimits(recipientCount: number, subject: string, budget?: 'auth'): { blocked: boolean; reason: string } {
   const now = Date.now();
+
+  if (budget === 'auth') {
+    const windowStart = now - HOUR_MS;
+    while (authSendTimestamps.length > 0 && authSendTimestamps[0] < windowStart) authSendTimestamps.shift();
+    if (authSendTimestamps.length + recipientCount > AUTH_HOURLY_LIMIT) {
+      return {
+        blocked: true,
+        reason: `AUTH_HOURLY_RATE_LIMIT, ${authSendTimestamps.length} sign-in emails already sent this hour (limit ${AUTH_HOURLY_LIMIT}). Set AUTH_EMAIL_RATE_LIMIT_PER_HOUR to raise this.`,
+      };
+    }
+    return { blocked: false, reason: "" };
+  }
 
   // ── Guard 1: startup burst ──
   const ageMs = now - SERVER_START_TIME;
@@ -275,12 +302,19 @@ function checkRateLimits(recipientCount: number, subject: string): { blocked: bo
   return { blocked: false, reason: "" };
 }
 
-function recordSend(recipientCount: number): void {
+function recordSend(recipientCount: number, budget?: 'auth'): void {
   const now = Date.now();
+  if (budget === 'auth') {
+    for (let i = 0; i < recipientCount; i++) authSendTimestamps.push(now);
+    return;
+  }
   const ageMs = now - SERVER_START_TIME;
   if (ageMs < STARTUP_WINDOW_MS) startupEmailCount += recipientCount;
   for (let i = 0; i < recipientCount; i++) sendTimestamps.push(now);
 }
+
+/** Test hook for the in-memory limiter (server/campaign-notification-prefs.test.ts). */
+export const __emailRateLimitsForTests = { check: checkRateLimits, record: recordSend };
 
 /**
  * Send an email using Resend with tracking
@@ -302,7 +336,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   // ── RATE LIMIT CHECK ──────────────────────────────────────────────────────
   const toList = Array.isArray(params.to) ? params.to : [params.to];
   const recipientCount = toList.length;
-  const { blocked, reason } = checkRateLimits(recipientCount, params.subject);
+  const { blocked, reason } = checkRateLimits(recipientCount, params.subject, params.budget);
   if (blocked) {
     log.error(`BLOCKED by rate limiter, ${reason}`);
     // In production, this would ideally fire a Sentry alert or admin notification.
@@ -310,7 +344,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     return { id: null };
   }
   // Record send before dispatching (optimistic, prevents races)
-  recordSend(recipientCount);
+  recordSend(recipientCount, params.budget);
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
@@ -416,6 +450,92 @@ export async function testEmailConnection(): Promise<boolean> {
  * Email templates for common scenarios
  * All templates include no-reply messaging and social links in footer
  */
+/** Arguments for the three contribution-status emails. */
+export type ContributionEmailArgs = {
+  recipientName: string;
+  contributionTitle: string;
+  campaignTitle: string;
+  projectName: string;
+  /** Absolute URL of the project page. */
+  projectUrl: string;
+  ownerNotes?: string | null;
+  hoursPerWeek?: number | null;
+  roleTitle?: string | null;
+  /** Absolute /sign-in?returnTo=... URL. Never carries the email address. */
+  signUpUrl: string;
+  /** Absolute /campaigns URL for the declined email's button. */
+  browseUrl?: string;
+};
+
+export type CampaignCancelledEmailArgs = {
+  recipientName: string;
+  campaignTitle: string;
+  projectName: string;
+  message?: string | null;
+  suggestions: Array<{ title: string; place?: string | null; url: string }>;
+  browseUrl: string;
+  signUpUrl: string;
+  /**
+   * Who cancelled: the project's stewards, or the ReGen Civics team (an
+   * admin who is not a steward). Unknown (null) reads neutrally.
+   */
+  cancelledBy?: 'stewards' | 'team' | null;
+};
+
+/**
+ * The project page, sign-in and browse links for a campaign email. The
+ * sign-in link returns to the project page and never carries the email
+ * address.
+ */
+export function contributionEmailLinks(projectPath: string): { projectUrl: string; signUpUrl: string; browseUrl: string } {
+  const utm = { campaign: 'contribution-status' };
+  return {
+    projectUrl: toAbsoluteUrl(projectPath, utm),
+    signUpUrl: toAbsoluteUrl(`/sign-in?returnTo=${encodeURIComponent(projectPath)}`, utm),
+    browseUrl: toAbsoluteUrl('/campaigns', utm),
+  };
+}
+
+/** Sample arguments for the admin email previews (server/routes/newsletter.ts). */
+export function sampleContributionEmailArgs(recipientName: string, contributionTitle: string, campaignTitle: string): ContributionEmailArgs {
+  return {
+    recipientName,
+    contributionTitle,
+    campaignTitle,
+    projectName: campaignTitle,
+    ownerNotes: null,
+    ...contributionEmailLinks("/campaigns"),
+  };
+}
+
+function emailButton(url: string, label: string): string {
+  return `<div style="text-align: center; margin: 25px 0;">
+        <a href="${textForEmail(url)}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">${textForEmail(label)}</a>
+      </div>`;
+}
+
+function stewardNoteBlock(heading: string, note?: string | null): string {
+  const text = (note ?? '').trim();
+  if (!text) return '';
+  return `<div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">${textForEmail(heading)}</p>
+        <p style="color: #333; margin: 0; white-space: pre-wrap;">${textForEmail(text)}</p>
+      </div>`;
+}
+
+function accountNudgeBlock(signUpUrl: string): string {
+  return `<div style="background: #fffaf0; padding: 18px 20px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #d4a574;">
+        <p style="color: #333; margin: 0 0 10px 0; line-height: 1.6;">Make a free account with this email address and you'll hear every answer from the stewards in your notifications. Your offers show on each project's page whenever you're signed in.</p>
+        <a href="${textForEmail(signUpUrl)}" style="color: #1a472a; font-weight: bold;">Make your account</a>
+      </div>`;
+}
+
+function teamSignoff(): string {
+  return `<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>`;
+}
+
 export const emailTemplates = {
   landProjectAccepted: (projectName: string, recipientName: string) => ({
     subject: `Congratulations! ${projectName} Passed Our Quality Check`,
@@ -585,68 +705,6 @@ export const emailTemplates = {
     `,
   }),
   
-  contributionAccepted: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
-    subject: `Great News! Your Contribution to "${campaignTitle}" Has Been Accepted`,
-    html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Congratulations, ${recipientName}!</h2>
-      <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to the campaign <strong>"${campaignTitle}"</strong> has been accepted!</p>
-      
-      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border-left: 4px solid #4caf50;">
-        <p style="color: #1a472a; font-size: 18px; margin: 0;">Your contribution is now part of this regenerative project!</p>
-      </div>
-      
-      ${ownerNotes ? `
-      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
-        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
-      </div>
-      ` : ''}
-      
-      <h3 style="color: #4a7c59;">What Happens Next?</h3>
-      <ul style="color: #333; line-height: 1.8;">
-        <li>The campaign owner will reach out to coordinate the details of your contribution</li>
-        <li>You can track the campaign's progress on the ReGen Civics website</li>
-        <li>Connect with other contributors through our community channels</li>
-      </ul>
-      
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">View Campaign</a>
-      </div>
-
-      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
-      </div>
-    `,
-  }),
-
-  contributionRejected: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
-    subject: `Update on Your Contribution to "${campaignTitle}"`,
-    html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
-      <p style="color: #333; line-height: 1.6;">Thank you for your interest in contributing to <strong>"${campaignTitle}"</strong>. After careful consideration, the campaign owner has decided not to accept your contribution <strong>"${contributionTitle}"</strong> at this time.</p>
-      
-      ${ownerNotes ? `
-      <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d4a574;">
-        <p style="color: #8d6e63; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
-        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
-      </div>
-      ` : ''}
-      
-      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="color: #4a7c59; margin-top: 0;">Don't Give Up!</h3>
-        <p style="color: #333; margin: 0;">There are many other regenerative projects that could benefit from your support. Browse our active campaigns to find another project that aligns with your values and resources.</p>
-      </div>
-      
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Browse Campaigns</a>
-      </div>
-      
-      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
-      </div>
-    `,
-  }),
-  
   // ── Investor drip sequence ──────────────────────────────────────────────────
   // Day 3: Fund overview deep-dive
   investorDripDay3: (recipientName: string) => ({
@@ -769,33 +827,76 @@ export const emailTemplates = {
     `,
   }),
 
-  contributionFulfilled: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
-    subject: `Your Contribution to "${campaignTitle}" Has Been Fulfilled!`,
+  // ── Crowdpool contributions (people who contributed WITHOUT an account) ────
+  // Account holders hear about these through the notification spine instead
+  // (server/lib/campaign-notify.ts). Every interpolated value goes through
+  // textForEmail: campaign fields are stored sanitized (entities), and a
+  // steward's note or a contributor's name must never inject markup.
+  contributionAccepted: (a: ContributionEmailArgs) => {
+    const hours = a.hoursPerWeek && a.roleTitle
+      ? `<p style="color: #333; line-height: 1.6;">You're in for ${Number(a.hoursPerWeek)} hours a week as ${textForEmail(a.roleTitle)}.</p>`
+      : '';
+    return {
+      subject: `${decodeBasicEntities(a.projectName)} accepted your offer`,
+      html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Good news, ${textForEmail(a.recipientName)}</h2>
+      <p style="color: #333; line-height: 1.6;">The stewards of ${textForEmail(a.projectName)} accepted <strong>"${textForEmail(a.contributionTitle)}"</strong> for ${textForEmail(a.campaignTitle)}.</p>
+      ${hours}
+      ${stewardNoteBlock('A note from the stewards', a.ownerNotes)}
+      <p style="color: #333; line-height: 1.6;">The stewards will reach out to sort out the details.</p>
+      ${emailButton(a.projectUrl, 'See the project')}
+      ${accountNudgeBlock(a.signUpUrl)}
+      ${teamSignoff()}
+    `,
+    };
+  },
+
+  contributionRejected: (a: ContributionEmailArgs) => ({
+    subject: `An update on your offer to ${decodeBasicEntities(a.projectName)}`,
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
-      <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to <strong>"${campaignTitle}"</strong> has been marked as fulfilled!</p>
-      
-      <div style="background-color: #f0f7f0; background: linear-gradient(135deg, #f0f7f0 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
-        <p style="color: #1a472a; font-size: 20px; margin: 0 0 10px 0; font-weight: bold;">You Made a Difference!</p>
-        <p style="color: #4a7c59; margin: 0;">Your contribution has helped bring this regenerative vision closer to reality.</p>
-      </div>
-      
-      ${ownerNotes ? `
-      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
-        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
-      </div>
-      ` : ''}
-      
-      <p style="color: #333; line-height: 1.6;">You are now part of the ReGenerative Renaissance. Consider sharing your experience with others and exploring more ways to contribute to the movement!</p>
-      
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Explore More Campaigns</a>
-      </div>
-      
-      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
-      </div>
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(a.recipientName)},</h2>
+      <p style="color: #333; line-height: 1.6;">The stewards of ${textForEmail(a.projectName)} can't take <strong>"${textForEmail(a.contributionTitle)}"</strong> right now.</p>
+      ${stewardNoteBlock('A note from the stewards', a.ownerNotes)}
+      <p style="color: #333; line-height: 1.6;">Plenty of land projects need what you offered. Have a look at the live campaigns.</p>
+      ${emailButton(a.browseUrl ?? toAbsoluteUrl('/campaigns', { campaign: 'contribution-status' }), 'Browse campaigns')}
+      ${accountNudgeBlock(a.signUpUrl)}
+      ${teamSignoff()}
     `,
   }),
+
+  contributionFulfilled: (a: ContributionEmailArgs) => ({
+    subject: `Your contribution to ${decodeBasicEntities(a.projectName)} is delivered`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Thank you, ${textForEmail(a.recipientName)}</h2>
+      <p style="color: #333; line-height: 1.6;"><strong>"${textForEmail(a.contributionTitle)}"</strong> is marked delivered. Thank you for showing up for this land.</p>
+      ${stewardNoteBlock('A note from the stewards', a.ownerNotes)}
+      ${emailButton(a.projectUrl, 'See the project')}
+      ${accountNudgeBlock(a.signUpUrl)}
+      ${teamSignoff()}
+    `,
+  }),
+
+  campaignCancelled: (a: CampaignCancelledEmailArgs) => {
+    const suggestions = (a.suggestions ?? []).slice(0, 3);
+    const list = suggestions.length > 0
+      ? `<p style="color: #333; line-height: 1.6;">These campaigns could use your energy right now:</p>
+      <ul style="color: #333; line-height: 1.8; padding-left: 20px;">
+        ${suggestions.map((s) => `<li><a href="${textForEmail(s.url)}" style="color: #1a472a; font-weight: bold;">${textForEmail(s.title)}</a>${s.place ? `, ${textForEmail(s.place)}` : ''}</li>`).join('')}
+      </ul>`
+      : `<p style="color: #333; line-height: 1.6;">Have a look at the live campaigns.</p>`;
+    return {
+      subject: `${decodeBasicEntities(a.campaignTitle)} has been cancelled`,
+      html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(a.recipientName)},</h2>
+      <p style="color: #333; line-height: 1.6;">${a.cancelledBy === 'stewards'
+        ? `The stewards of ${textForEmail(a.projectName)} have cancelled ${textForEmail(a.campaignTitle)}.`
+        : `${textForEmail(a.campaignTitle)} from ${textForEmail(a.projectName)} has been cancelled.`} Anything you offered that was still waiting or accepted is closed, and nothing more is expected from you.</p>
+      ${stewardNoteBlock(a.cancelledBy === 'team' ? 'From the ReGen Civics team' : 'From the stewards', a.message)}
+      ${list}
+      ${emailButton(a.browseUrl, 'Browse campaigns')}
+      ${accountNudgeBlock(a.signUpUrl)}
+      ${teamSignoff()}
+    `,
+    };
+  },
 };

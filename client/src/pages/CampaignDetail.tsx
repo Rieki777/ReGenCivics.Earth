@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -10,8 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   MapPin,
-  Target,
-  Calendar,
   TrendingUp,
   Users,
   Leaf,
@@ -21,26 +19,17 @@ import {
   ExternalLink,
   Heart,
   CheckCircle2,
-  Clock,
   DollarSign,
   User,
   Settings,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  X,
   Bell,
   BellRing,
   Gift,
   Activity,
-  BookOpen,
   Mail,
-  Pin,
-  Coins,
   Loader2,
   Layers,
   Landmark,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,13 +37,18 @@ import { TaoSpinner } from "@/components/TaoSpinner";
 import { ContributionModal, type ContributionNeed } from "@/components/ContributionModal";
 import { EligibilityQuiz } from "@/components/crowdpool/EligibilityQuiz";
 import { PledgeSimulator } from "@/components/crowdpool/PledgeSimulator";
-import { CAPITAL_TYPES, CAPITAL_LABELS, CAPITAL_COLORS, CRYPTO_PAYMENT_CONTEXT, type CapitalType } from "@shared/crowdpoolingTaxonomy";
 import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
 import { BackButton } from "@/components/BackButton";
 import VideoEmbed from "@/components/VideoEmbed";
 import { BlurImage } from "@/components/BlurImage";
 import { CampaignMilestones } from "@/components/CampaignMilestones";
+import { NeedsRegistry } from "@/components/campaign-needs/NeedsRegistry";
+import { CampaignPhotoGallery } from "@/components/campaign-needs/CampaignPhotoGallery";
+import { CampaignUpdatesList } from "@/components/project/CampaignUpdatesList";
+import { CancelledCampaignNotice } from "@/components/project/CancelledCampaignNotice";
+import { decodeBasicEntities } from "@shared/htmlText";
+import { projectPathForCampaignFocus } from "@shared/projectKey";
 
 // Helper to detect device type
 function getDeviceType(): 'desktop' | 'mobile' | 'tablet' {
@@ -80,6 +74,13 @@ export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const [showContributionModal, setShowContributionModal] = useState(false);
   const [selectedNeed, setSelectedNeed] = useState<ContributionNeed | null>(null);
+  // Moving to another campaign (back button, a related campaign link) closes
+  // the sheet; the ContributionModal below is keyed by id, so it starts fresh
+  // and a practice receipt never shows over a different campaign.
+  useEffect(() => {
+    setShowContributionModal(false);
+    setSelectedNeed(null);
+  }, [id]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [subscribeEmail, setSubscribeEmail] = useState('');
   const [showAllActivity, setShowAllActivity] = useState(false);
@@ -187,6 +188,13 @@ export default function CampaignDetail() {
     subscribeMutation.mutate({ campaignId: parseInt(id!), email });
   };
 
+  // Whether the viewer stewards this campaign (creator, the application's
+  // stewards, approved org claim holders, admins). Drives the Manage button.
+  const { data: canSteward } = trpc.campaigns.canSteward.useQuery(
+    { campaignId: parseInt(id!) },
+    { enabled: !!id && isAuthenticated }
+  );
+
   // Fetch related campaigns (active campaigns to show at the bottom)
   const { data: allActiveCampaigns } = trpc.campaigns.list.useQuery(
     { status: 'active' },
@@ -195,6 +203,27 @@ export default function CampaignDetail() {
   const relatedCampaigns = allActiveCampaigns
     ?.filter((c) => c.id !== parseInt(id!))
     .slice(0, 3);
+
+  // A cancelled campaign points its people at live campaigns that could use
+  // their energy (the same suggestions the project page shows).
+  const isCancelled = campaign?.status === 'cancelled';
+  // Example campaigns take practice runs: every way in works, and the server
+  // writes nothing (campaigns.submitContribution returns practice:true).
+  const isExample = !!campaign?.isDemo;
+  const { data: cancelSuggestions } = trpc.campaigns.suggestAlternatives.useQuery(
+    { campaignId: parseInt(id!) },
+    { enabled: !!id && isCancelled }
+  );
+
+  // Start the Follow button from what the server knows (getById carries
+  // isFollowing for the signed-in viewer). Synced once per campaign, so a
+  // later refetch never undoes an optimistic toggle.
+  const followSyncedFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (!campaign || followSyncedFor.current === campaign.id) return;
+    followSyncedFor.current = campaign.id;
+    setIsFollowing(Boolean((campaign as { isFollowing?: boolean }).isFollowing));
+  }, [campaign]);
   
   if (isLoading) {
     return <TaoSpinner fullPage size={72} />;
@@ -221,6 +250,17 @@ export default function CampaignDetail() {
     );
   }
   
+  // The land project's own page (shared/projectKey.ts).
+  const projectPath = projectPathForCampaignFocus(campaign);
+
+  // A cancel with a message posts it as the campaign's last update, titled
+  // "This campaign has been cancelled" (server/lib/campaign-cancel.ts).
+  const latestUpdate = updates && updates.length > 0 ? updates[0] : null;
+  const cancelledMessage = isCancelled && latestUpdate
+    && decodeBasicEntities(latestUpdate.title) === 'This campaign has been cancelled'
+    ? latestUpdate.body
+    : null;
+
   // Calculate progress
   const totalValue = campaign.items.reduce((sum, item) => sum + item.estimatedValue, 0);
   const raisedValue = campaign.pledgedTotal || 0;
@@ -360,11 +400,21 @@ export default function CampaignDetail() {
                   <span>{campaign.location}</span>
                 </div>
               )}
+              <Link
+                href={projectPath}
+                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-[#4a7c59] hover:text-[#1a472a] hover:underline"
+              >
+                <Leaf className="w-4 h-4" />
+                About this land project
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              {/* Manage button for campaign owners */}
-              {isAuthenticated && (user?.id === campaign.userId || user?.role === 'admin') && (
-                <Link href={`/campaign/${id}/manage`}>
+              {/* Manage button for this project's stewards: it opens the
+                  steward tools on the project page. The server decides who
+                  stewards and checks every tool again. */}
+              {canSteward && (
+                <Link href={`${projectPath}#steward-tools`}>
                   <Button
                     variant="outline"
                     size="sm"
@@ -375,7 +425,7 @@ export default function CampaignDetail() {
                   </Button>
                 </Link>
               )}
-              {isAuthenticated && (
+              {isAuthenticated && !isCancelled && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -407,15 +457,17 @@ export default function CampaignDetail() {
                 className="flex-1 md:flex-none"
                 showEmbed={true}
               />
-              <Button
-                size="sm"
-                className="bg-[#4a7c59] hover:bg-[#1a472a] text-white flex-1 md:flex-none"
-                onClick={() => setShowContributionModal(true)}
-                disabled={campaign.status !== 'active'}
-              >
-                <Heart className="w-4 h-4 mr-2" />
-                Contribute
-              </Button>
+              {!isCancelled && (
+                <Button
+                  size="sm"
+                  className="bg-[#4a7c59] hover:bg-[#1a472a] text-white flex-1 md:flex-none"
+                  onClick={() => setShowContributionModal(true)}
+                  disabled={campaign.status !== 'active'}
+                >
+                  <Heart className="w-4 h-4 mr-2" />
+                  Contribute
+                </Button>
+              )}
             </div>
           </div>
           
@@ -423,8 +475,14 @@ export default function CampaignDetail() {
             {campaign.description}
           </p>
 
+          {isExample && campaign.status === 'active' && (
+            <p className="text-sm bg-[#f0f7f0] text-[#1a472a] rounded-xl p-3 mb-6">
+              This is an example campaign. You can try every step, and nothing you send reaches a real project.
+            </p>
+          )}
+
           {/* Email subscribe for visitors without an account */}
-          {!isAuthenticated && (
+          {!isAuthenticated && !isCancelled && (
             <form
               onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }}
               className="flex flex-col sm:flex-row gap-2 mb-6 bg-[#f0f7f0] rounded-xl p-4"
@@ -766,10 +824,19 @@ export default function CampaignDetail() {
           </div>
         )}
         
+        {/* Cancelled: the stewards' closing message and where to go next */}
+        {isCancelled && (
+          <CancelledCampaignNotice
+            message={cancelledMessage}
+            suggestions={cancelSuggestions ?? []}
+          />
+        )}
+
         {/* Needs Registry: needs grouped by the capital they feed */}
         <NeedsRegistry
           items={campaign.items}
           campaignActive={campaign.status === 'active'}
+          claimsHidden={isCancelled}
           formatCurrency={formatCurrency}
           onClaim={(need) => {
             setSelectedNeed(need);
@@ -935,47 +1002,7 @@ export default function CampaignDetail() {
         </div>
 
         {/* Updates journal */}
-        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
-          <h2 className="text-xl font-bold text-[#1a472a] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-            <BookOpen className="w-5 h-5 text-[#4a7c59]" />
-            Updates ({updates?.length ?? 0})
-          </h2>
-          {!updates || updates.length === 0 ? (
-            <p className="text-sm text-[#1a472a]/75">
-              No updates yet. Follow the campaign to hear when the first one lands.
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {updates.map((update) => (
-                <div key={update.id} className="border-l-3 border-[#7dd87d] pl-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="w-6 h-6 rounded-full bg-[#4a7c59] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {update.updateNumber}
-                    </span>
-                    <h3 className="font-bold text-[#1a472a]">{update.title}</h3>
-                  </div>
-                  <p className="text-xs text-[#1a472a]/75 mb-2">
-                    {update.publishedAt ? new Date(update.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
-                  </p>
-                  <p className="text-sm text-[#1a472a]/80 whitespace-pre-line">{update.body}</p>
-                  {Array.isArray(update.imageUrls) && update.imageUrls.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {update.imageUrls.map((url: string, idx: number) => (
-                        <img
-                          key={idx}
-                          src={url}
-                          alt={`${update.title} photo ${idx + 1}`}
-                          className="w-24 h-24 object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <CampaignUpdatesList updates={updates} />
       </div>
       
       {/* Related Campaigns */}
@@ -1031,6 +1058,7 @@ export default function CampaignDetail() {
 
       {/* Contribution Modal */}
       <ContributionModal
+        key={id}
         isOpen={showContributionModal}
         onClose={() => {
           setShowContributionModal(false);
@@ -1040,539 +1068,14 @@ export default function CampaignDetail() {
         campaignTitle={campaign.title}
         currency={campaign.currency || 'USD'}
         need={selectedNeed ?? undefined}
-        onSuccess={() => {
+        onSuccess={({ practice }) => {
+          // A practice run wrote nothing, so there is nothing to refetch.
+          if (practice) return;
           refetch();
           toast.success('Your contribution has been submitted!');
         }}
       />
     </div>
-    </>
-  );
-}
-
-// ---- Needs Registry ----
-
-const KIND_LABELS: Record<string, string> = {
-  item: 'Item',
-  role: 'Role',
-  shift: 'Shift',
-  loan: 'Loan',
-  knowledge: 'Knowledge',
-  crypto: 'Crypto',
-  financial_link: 'Recommended funder',
-};
-
-const KIND_CHIP_CLASSES: Record<string, string> = {
-  item: 'bg-purple-100 text-purple-700',
-  role: 'bg-blue-100 text-blue-700',
-  shift: 'bg-orange-100 text-orange-700',
-  loan: 'bg-amber-100 text-amber-700',
-  knowledge: 'bg-indigo-100 text-indigo-700',
-  crypto: 'bg-emerald-100 text-emerald-700',
-  financial_link: 'bg-gray-100 text-gray-700',
-};
-
-/** Legacy items without a capitalType map from their old category. */
-function capitalForItem(item: any): CapitalType {
-  if (item.capitalType) return item.capitalType;
-  switch (item.category) {
-    case 'land': return 'living';
-    case 'role': return 'experiential';
-    default: return 'material'; // equipment, resource
-  }
-}
-
-function kindForItem(item: any): string {
-  if (item.kind) return item.kind;
-  return item.category === 'role' ? 'role' : 'item';
-}
-
-function titleForItem(item: any): string {
-  if (item.roleTitle) return item.roleTitle;
-  if (item.equipmentName) return item.equipmentName;
-  if (item.resourceName) return item.resourceName;
-  if (item.hectares && item.region) return `${item.hectares} hectares in ${item.region}`;
-  if (item.landDescription) {
-    const firstLine = String(item.landDescription).split('\n')[0];
-    return firstLine.length > 80 ? `${firstLine.slice(0, 77)}...` : firstLine;
-  }
-  return 'Campaign need';
-}
-
-function descriptionForItem(item: any): string | null {
-  if (item.roleDescription) return item.roleDescription;
-  if (item.resourceDescription) return item.resourceDescription;
-  if (item.landDescription && (item.hectares || item.region)) return item.landDescription;
-  return null;
-}
-
-function formatDay(d: string | Date): string {
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/**
- * Reads a shift value into a Date without flipping between UTC and local. A
- * Date passes straight through; a bare "YYYY-MM-DD HH:mm:ss" (no zone) is read
- * as local time the same way the Date path is, so start and end can never end
- * up on different clocks.
- */
-function toLocalDate(d: string | Date): Date {
-  if (d instanceof Date) return d;
-  const s = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(d) ? d.replace(' ', 'T') : d;
-  return new Date(s);
-}
-
-function sameLocalDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
-}
-
-/**
- * A shift window in the viewer's own timezone and locale. Start and end run
- * through one formatter, so an evening shift reads as an evening shift. The
- * date only repeats when the shift crosses midnight, so a two-day shift shows
- * both dates instead of looking like one long night.
- */
-function formatShiftWindow(start: string | Date, end: string | Date): string {
-  const s = toLocalDate(start);
-  const e = toLocalDate(end);
-  if (isNaN(s.getTime()) || isNaN(e.getTime())) return '';
-  const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  const timeOpts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
-  const startLabel = `${s.toLocaleDateString(undefined, dateOpts)}, ${s.toLocaleTimeString(undefined, timeOpts)}`;
-  const endLabel = sameLocalDay(s, e)
-    ? e.toLocaleTimeString(undefined, timeOpts)
-    : `${e.toLocaleDateString(undefined, dateOpts)}, ${e.toLocaleTimeString(undefined, timeOpts)}`;
-  return `${startLabel} to ${endLabel}`;
-}
-
-function NeedsRegistry({
-  items,
-  campaignActive,
-  formatCurrency,
-  onClaim,
-}: {
-  items: any[];
-  campaignActive: boolean;
-  formatCurrency: (amount: number) => string;
-  onClaim: (need: ContributionNeed) => void;
-}) {
-  if (!items || items.length === 0) return null;
-
-  // Pinned needs first, then unfilled needs nearest to complete.
-  const sortNeeds = (a: any, b: any) => {
-    const pinA = a.priorityPinned ? 1 : 0;
-    const pinB = b.priorityPinned ? 1 : 0;
-    if (pinA !== pinB) return pinB - pinA;
-    const ra = (a.quantityClaimed || 0) / (a.quantityWanted || 1);
-    const rb = (b.quantityClaimed || 0) / (b.quantityWanted || 1);
-    const fullA = ra >= 1 ? 1 : 0;
-    const fullB = rb >= 1 ? 1 : 0;
-    if (fullA !== fullB) return fullA - fullB;
-    return rb - ra;
-  };
-
-  const groups = CAPITAL_TYPES
-    .map((capital) => ({
-      capital,
-      items: items.filter((item) => capitalForItem(item) === capital).sort(sortNeeds),
-    }))
-    .filter((g) => g.items.length > 0);
-
-  const coveredCount = groups.length;
-
-  return (
-    <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mb-6 shadow-xl">
-      <div className="flex flex-wrap items-end justify-between gap-2 mb-1">
-        <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-          <Target className="w-5 h-5 text-[#4a7c59]" />
-          What this project needs
-        </h2>
-        <span className="text-xs font-semibold text-[#4a7c59] bg-[#4a7c59]/10 rounded-full px-3 py-1">
-          {coveredCount} of 9 forms of capital
-        </span>
-      </div>
-      <p className="text-sm text-[#1a472a]/75 mb-5">
-        Every kind of value a village runs on, grouped by the capital it feeds. Take a slot and the steward takes it from there.
-      </p>
-
-      {/*
-        The Crowd Pooling Tool is the actual innovation and until now nothing on
-        this page pointed at it: a person arriving here could only think in terms
-        of money, which is the smallest part of what a project needs. This says
-        the quiet part out loud, right where someone is deciding what to give.
-      */}
-      <Link href="/crowd-pooling">
-        <div className="group mb-6 rounded-2xl border border-[#4a7c59]/25 bg-gradient-to-r from-[#f0f7f0] to-[#f0f7f0]/40 p-4 md:p-5 hover:border-[#4a7c59]/60 transition-colors cursor-pointer">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-[#1a472a] p-2 shrink-0">
-              <Sparkles className="w-5 h-5 text-[#7dd87d]" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-[#1a472a] mb-0.5" style={{ fontFamily: 'var(--font-display)' }}>
-                You have more to bring than money
-              </p>
-              <p className="text-sm text-[#1a472a]/80">
-                Hours, tools, land, a skill, a spare room, a network. Add up everything you could
-                bring in the Crowd Pooling Tool, then place it where you want it to go.
-              </p>
-              <span className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-[#4a7c59] group-hover:underline">
-                Total up what you can bring
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-      <div className="space-y-8">
-        {groups.map(({ capital, items: groupItems }) => {
-          const color = CAPITAL_COLORS[capital];
-          return (
-            <div key={capital}>
-              <div
-                className="mb-3 pl-3 border-l-4 rounded-sm"
-                style={{ borderColor: color }}
-              >
-                <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color }}>
-                  {CAPITAL_LABELS[capital].label} Capital
-                </h3>
-                <p className="text-xs text-[#1a472a]/75">{CAPITAL_LABELS[capital].blurb}</p>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                {groupItems.map((item: any) => (
-                  <NeedCard
-                    key={item.id}
-                    item={item}
-                    capital={capital}
-                    accent={color}
-                    campaignActive={campaignActive}
-                    formatCurrency={formatCurrency}
-                    onClaim={onClaim}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function NeedCard({
-  item,
-  capital,
-  accent,
-  campaignActive,
-  formatCurrency,
-  onClaim,
-}: {
-  item: any;
-  capital: CapitalType;
-  accent: string;
-  campaignActive: boolean;
-  formatCurrency: (amount: number) => string;
-  onClaim: (need: ContributionNeed) => void;
-}) {
-  const kind = kindForItem(item);
-  const title = titleForItem(item);
-  const description = descriptionForItem(item);
-  const wanted = item.quantityWanted || 1;
-  const claimed = item.quantityClaimed || 0;
-  const delivered = item.quantityDelivered || 0;
-  const claimedPct = Math.min((claimed / wanted) * 100, 100);
-  const deliveredPct = Math.min((delivered / wanted) * 100, 100);
-  const filled = claimed >= wanted;
-
-  // Fiat asks render as recommended-funder CTA cards. Money never touches us.
-  if (kind === 'financial_link') {
-    const linkUrl = item.videoUrl
-      || (String(item.resourceDescription || item.landDescription || '').match(/https?:\/\/\S+/) || [])[0];
-    return (
-      <Card className="bg-white/95 backdrop-blur border-dashed" style={{ borderColor: `${accent}80` }}>
-        <CardHeader className="p-4 md:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <ExternalLink className="w-6 h-6 flex-shrink-0" style={{ color: accent }} />
-              <div>
-                <CardTitle className="text-[#1a472a] text-base">{title}</CardTitle>
-                <CardDescription>You'll finish this on the recommended funder's site.</CardDescription>
-              </div>
-            </div>
-            {linkUrl && (
-              <a href={linkUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="border-[#4a7c59] text-[#4a7c59]">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open funder site
-                </Button>
-              </a>
-            )}
-          </div>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      className="bg-white backdrop-blur border-l-4 flex flex-col h-full transition-shadow hover:shadow-md"
-      style={{ borderLeftColor: accent }}
-    >
-      <CardHeader className="p-4 md:p-5 pb-3">
-        <div className="flex items-start gap-3">
-          {item.imageUrl && (
-            <img
-              src={item.imageUrl}
-              alt={title}
-              className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
-              loading="lazy"
-            />
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${accent}1a`, color: accent }}
-              >
-                {KIND_LABELS[kind] || kind}
-              </span>
-              {!!item.priorityPinned && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#d4a017]/15 text-[#d4a017] flex items-center gap-1">
-                  <Pin className="w-3 h-3" />
-                  Priority
-                </span>
-              )}
-            </div>
-            <CardTitle className="text-[#1a472a] text-base leading-snug">{title}</CardTitle>
-            {description && (
-              <CardDescription className="mt-1 line-clamp-2 text-sm">{description}</CardDescription>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 md:p-5 pt-0 mt-auto space-y-3">
-        {/* Slot meter: delivered solid in the capital color, claimed lighter */}
-        <div>
-          <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden">
-            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${claimedPct}%`, backgroundColor: `${accent}59` }} />
-            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${deliveredPct}%`, backgroundColor: accent }} />
-          </div>
-          <p className="text-xs text-[#1a472a]/75 mt-1.5">
-            {delivered} of {wanted} delivered
-            {claimed > delivered ? `, ${claimed - delivered} more claimed` : ''}
-          </p>
-        </div>
-        {(item.needDeadline || item.shiftStartsAt || item.loanWindowStart) && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a472a]/75">
-            {item.needDeadline && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" style={{ color: accent }} />
-                Needed by {formatDay(item.needDeadline)}
-              </span>
-            )}
-            {item.shiftStartsAt && item.shiftEndsAt && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" style={{ color: accent }} />
-                {formatShiftWindow(item.shiftStartsAt, item.shiftEndsAt)}
-              </span>
-            )}
-            {item.loanWindowStart && item.loanWindowEnd && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" style={{ color: accent }} />
-                On loan {formatDay(item.loanWindowStart)} to {formatDay(item.loanWindowEnd)}
-              </span>
-            )}
-          </div>
-        )}
-        {kind === 'crypto' && (
-          <p className="text-xs text-[#1a472a]/75 flex items-start gap-1">
-            <Coins className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: accent }} />
-            {CRYPTO_PAYMENT_CONTEXT.helperText}
-          </p>
-        )}
-        <div className="flex items-center justify-between gap-3 pt-1">
-          <div className="text-lg font-bold" style={{ color: accent }}>
-            {formatCurrency(item.estimatedValue || 0)}
-          </div>
-          <Button
-            size="sm"
-            className="text-white"
-            style={{ backgroundColor: filled ? '#9ca3af' : accent }}
-            disabled={!campaignActive || filled}
-            onClick={() =>
-              onClaim({
-                id: item.id,
-                kind,
-                capitalType: capital,
-                title,
-                quantityWanted: wanted,
-                quantityClaimed: claimed,
-                quantityDelivered: delivered,
-                estimatedValue: item.estimatedValue || 0,
-                shiftStartsAt: item.shiftStartsAt,
-                shiftEndsAt: item.shiftEndsAt,
-                loanWindowStart: item.loanWindowStart,
-                loanWindowEnd: item.loanWindowEnd,
-              })
-            }
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            {filled ? 'Filled' : 'Claim'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Photo Gallery component for campaign detail page
-function CampaignPhotoGallery({ images }: { images: any[] }) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  
-  const IMAGE_CATEGORIES: Record<string, string> = {
-    land: 'Land',
-    team: 'Team',
-    progress: 'Progress',
-    infrastructure: 'Infrastructure',
-    community: 'Community',
-    other: 'Other',
-  };
-
-  const handlePrev = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : images.length - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(selectedIndex < images.length - 1 ? selectedIndex + 1 : 0);
-    }
-  };
-
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') handlePrev();
-    if (e.key === 'ArrowRight') handleNext();
-    if (e.key === 'Escape') setSelectedIndex(null);
-  };
-
-  if (images.length === 0) return null;
-
-  // Cover image is the first one (sorted by isCover desc)
-  const coverImage = images[0];
-  const otherImages = images.slice(1);
-
-  return (
-    <>
-      <div className="bg-white/95 backdrop-blur rounded-3xl overflow-hidden mb-6 shadow-xl">
-        {/* Cover / Featured Image */}
-        <div 
-          className="relative cursor-pointer group"
-          onClick={() => setSelectedIndex(0)}
-        >
-          <BlurImage
-            src={coverImage.url}
-            alt={coverImage.caption || 'Campaign cover photo'}
-            className="w-full h-48 md:h-72"
-            loading="lazy"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-            <Camera className="pointer-events-none w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          {coverImage.caption && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-              <p className="text-white text-sm">{coverImage.caption}</p>
-            </div>
-          )}
-          <Badge className="absolute top-3 left-3 bg-[#7dd87d] text-[#1a472a]">
-            <Camera className="w-3 h-3 mr-1" />
-            {images.length} {images.length === 1 ? 'Photo' : 'Photos'}
-          </Badge>
-        </div>
-
-        {/* Thumbnail Grid */}
-        {otherImages.length > 0 && (
-          <div className="p-4">
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-              {otherImages.map((img: any, idx: number) => (
-                <button
-                  key={img.id}
-                  onClick={() => setSelectedIndex(idx + 1)}
-                  className="aspect-square rounded-lg overflow-hidden relative group"
-                >
-                  <BlurImage
-                    src={img.url}
-                    alt={img.caption || `Photo ${idx + 2}`}
-                    className="absolute inset-0"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
-                  <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1.5 py-0.5 rounded">
-                    {IMAGE_CATEGORIES[img.category] || 'Other'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Lightbox */}
-      {selectedIndex !== null && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setSelectedIndex(null)}
-          onKeyDown={handleKeyDown}
-          tabIndex={0}
-          role="dialog"
-          aria-label="Photo viewer"
-        >
-          {/* Close button */}
-          <button 
-            className="absolute top-4 right-4 text-white/80 hover:text-white z-10 p-2"
-            onClick={() => setSelectedIndex(null)}
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {/* Navigation */}
-          {images.length > 1 && (
-            <>
-              <button
-                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 z-10"
-                onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              <button
-                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 z-10"
-                onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-            </>
-          )}
-
-          {/* Image */}
-          <div className="max-w-4xl max-h-[85vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={images[selectedIndex].url}
-              alt={images[selectedIndex].caption || `Photo ${selectedIndex + 1}`}
-              className="max-w-full max-h-[75vh] object-contain rounded-lg"
-            />
-            <div className="mt-3 text-center">
-              {images[selectedIndex].caption && (
-                <p className="text-white/90 text-sm mb-1">{images[selectedIndex].caption}</p>
-              )}
-              <p className="text-white/70 text-xs">
-                {IMAGE_CATEGORIES[images[selectedIndex].category] || 'Other'} - {selectedIndex + 1} of {images.length}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

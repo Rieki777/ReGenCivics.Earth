@@ -34,6 +34,12 @@ describe('AuthDialog', () => {
     expect(screen.queryByText('Sign in to continue')).toBeNull();
   });
 
+  it('seeds the email field from defaultEmail', () => {
+    render(<AuthDialog open={true} onLogin={mockOnLogin} defaultEmail="sam@example.com" />);
+    const emailInput = screen.getByPlaceholderText('you@example.com') as HTMLInputElement;
+    expect(emailInput.value).toBe('sam@example.com');
+  });
+
   it('shows email input', () => {
     render(<AuthDialog open={true} onLogin={mockOnLogin} />);
     const emailInput = screen.getByPlaceholderText('you@example.com');

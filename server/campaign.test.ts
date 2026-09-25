@@ -1,27 +1,13 @@
 /**
  * Tests for Crowd Pooling Campaign Creator
- * Tests password protection and campaign form functionality
+ * Tests campaign form data structures. The shared-password gate
+ * (campaigns.verifyCampaignAccess) was removed 2026-09-24; its absence is
+ * pinned in server/campaign-security.test.ts.
  */
 
 import { describe, expect, it } from "vitest";
 
 describe("CreateCampaign Page", () => {
-  describe("Password Protection", () => {
-    it("should require password 222 to access the campaign creator", () => {
-      // Server default in campaigns.verifyCampaignAccess is "222"
-      // (CAMPAIGN_ACCESS_PASSWORD overrides it in production).
-      const correctPassword = "222";
-      expect(correctPassword).toBe("222");
-    });
-
-    it("should reject incorrect passwords", () => {
-      const incorrectPasswords = ["000", "111", "123", "password", ""];
-      incorrectPasswords.forEach((pwd) => {
-        expect(pwd).not.toBe("222");
-      });
-    });
-  });
-
   describe("Campaign Data Structures", () => {
     it("should have valid land requirement structure", () => {
       const landRequirement = {

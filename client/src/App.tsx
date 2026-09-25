@@ -155,6 +155,9 @@ const CreateCampaign = lazy(() => import("./pages/CreateCampaign"));
 const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
 const CampaignManage = lazy(() => import("./pages/CampaignManage"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
+const ProjectPage = lazy(() => import("./pages/ProjectPage"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const CampaignUpdatesUnsubscribe = lazy(() => import("./pages/CampaignUpdatesUnsubscribe"));
 const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
@@ -368,6 +371,9 @@ function Router() {
       <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>
       <Route path={"/campaign/:id/manage"}><EB><CampaignManage /></EB></Route>
       <Route path={"/campaign/:id/analytics"}><EB><CampaignAnalytics /></EB></Route>
+      <Route path={"/project/:key"}><EB><ProjectPage /></EB></Route>
+      <Route path={"/sign-in"}><EB><SignIn /></EB></Route>
+      <Route path={"/campaign-updates/unsubscribe"}><EB><CampaignUpdatesUnsubscribe /></EB></Route>
       <Route path={"/map"}><EB><MapPage /></EB></Route>
       <Route path={"/risk-disclosure"}><EB><RiskDisclosure /></EB></Route>
       <Route path={"/terms-of-use"}><EB><TermsOfUse /></EB></Route>

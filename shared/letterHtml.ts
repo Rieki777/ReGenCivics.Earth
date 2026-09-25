@@ -17,6 +17,20 @@ export type LetterDocumentExtras = {
    */
   unsubscribeUrl?: string;
   postalAddress?: string;
+  /**
+   * List mail (campaign email followers, the crowdpool waitlist). Replaces
+   * the newsletter footer: says why this person gets the letter and links
+   * their own token unsubscribe page. Never the newsletter prefs link.
+   */
+  listFooter?: ListFooter;
+};
+
+export type ListFooter = {
+  /** e.g. "You asked for news about Harmony Valley on regencivics.earth." */
+  reason: string;
+  /** e.g. "Stop these emails" */
+  linkLabel: string;
+  url: string;
 };
 
 function escapeAttr(value: string): string {
@@ -45,8 +59,31 @@ export function newsletterLegalFooterHtml(
 /** @deprecated Use newsletterLegalFooterHtml. Same helper, same wording. */
 export const managePreferencesFooterHtml = newsletterLegalFooterHtml;
 
+function escapeText(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** CAN-SPAM footer for list mail: the reason, the person's own stop link, the postal address. */
+export function listLegalFooterHtml(footer: ListFooter, postalAddress = NEWSLETTER_POSTAL_ADDRESS): string {
+  const href = footer.url.trim();
+  if (!href) return "";
+  const postal = postalAddress.trim() || NEWSLETTER_POSTAL_ADDRESS;
+  return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
+    ${escapeText(footer.reason)}
+    <a href="${escapeAttr(href)}" style="color:#8a8a8a;">${escapeText(footer.linkLabel || "Stop these emails")}</a><br/>
+    ${escapeAttr(postal)}
+  </p>`;
+}
+
 function prefsHref(extras?: LetterDocumentExtras): string {
   return (extras?.managePreferencesUrl || extras?.unsubscribeUrl || "").trim();
+}
+
+/** The footer a letter carries: the list footer for list mail, else the newsletter prefs footer. */
+export function letterLegalFooter(extras?: LetterDocumentExtras): string {
+  if (extras?.listFooter) return listLegalFooterHtml(extras.listFooter, extras.postalAddress);
+  const href = prefsHref(extras);
+  return href ? newsletterLegalFooterHtml(href, extras?.postalAddress) : "";
 }
 
 function letterHeader(): string {
@@ -100,8 +137,7 @@ export function brandedLetterDocument(
   const signature = signed
     ? ""
     : `<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;"><p style="color:#4a7c59;font-weight:bold;font-family:Georgia,'Times New Roman',serif;margin:0;">The ReGen Civics Team</p></div>`;
-  const href = prefsHref(extras);
-  const legal = href ? newsletterLegalFooterHtml(href, extras?.postalAddress) : "";
+  const legal = letterLegalFooter(extras);
 
   return `<!DOCTYPE html>
 <html>
@@ -137,9 +173,7 @@ export function markdownLetterDocument(
 ): string {
   const inner = markdownToEmailHtml(markdown, layout);
   if (layout === "plain") {
-    const href = prefsHref(extras);
-    const legal = href ? newsletterLegalFooterHtml(href, extras?.postalAddress) : "";
-    return wrapEmailHtml(inner, legal);
+    return wrapEmailHtml(inner, letterLegalFooter(extras));
   }
   return brandedLetterDocument(inner, layout, extras);
 }

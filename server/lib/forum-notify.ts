@@ -91,6 +91,21 @@ export function forumLink(postId: number, replyId?: number | null): string {
   return replyId ? `/community/post/${postId}#reply-${replyId}` : `/community/post/${postId}`;
 }
 
+/**
+ * Clamp to at most `max` characters, counting code points so an emoji is
+ * never cut in half (MySQL varchar lengths count characters too). Adds an
+ * ellipsis when it cuts. Keeps line breaks. Pure.
+ */
+export function clampText(text: string, max: number): string {
+  const chars = Array.from(text ?? "");
+  if (chars.length <= max) return chars.join("");
+  return `${chars.slice(0, Math.max(0, max - 1)).join("").trimEnd()}…`;
+}
+
+/** notifications.title is varchar(255); bodies are clamped to 2000. */
+export const NOTIFICATION_TITLE_MAX = 255;
+export const NOTIFICATION_BODY_MAX = 2000;
+
 // ─── Insert core ─────────────────────────────────────────────────────────────
 
 export interface NotificationInput {
@@ -102,7 +117,29 @@ export interface NotificationInput {
   actorId?: number | null;
   postId?: number | null;
   replyId?: number | null;
+  /** Campaign events: the campaign and, when there is one, the contribution. */
+  campaignId?: number | null;
+  contributionId?: number | null;
   dedupeKey: string;
+}
+
+/** The row insertNotification writes, with title and body clamped. Pure. */
+export function toNotificationRow(input: NotificationInput): typeof notifications.$inferInsert {
+  return {
+    userId: input.userId,
+    type: input.type,
+    // Clamped: a long campaign title used to make the insert throw on the
+    // varchar(255) column, and the caller's catch swallowed the notice.
+    title: clampText(input.title, NOTIFICATION_TITLE_MAX),
+    body: input.body == null ? null : clampText(input.body, NOTIFICATION_BODY_MAX),
+    link: input.link,
+    actorId: input.actorId ?? null,
+    postId: input.postId ?? null,
+    replyId: input.replyId ?? null,
+    campaignId: input.campaignId ?? null,
+    contributionId: input.contributionId ?? null,
+    dedupeKey: input.dedupeKey,
+  };
 }
 
 /**
@@ -119,17 +156,7 @@ export async function insertNotification(input: NotificationInput): Promise<bool
 
   const result: any = await db
     .insert(notifications)
-    .values({
-      userId: input.userId,
-      type: input.type,
-      title: input.title,
-      body: input.body ?? null,
-      link: input.link,
-      actorId: input.actorId ?? null,
-      postId: input.postId ?? null,
-      replyId: input.replyId ?? null,
-      dedupeKey: input.dedupeKey,
-    })
+    .values(toNotificationRow(input))
     .onDuplicateKeyUpdate({ set: { id: sql`id` } });
 
   // mysql2: affectedRows is 1 for a fresh insert, 2 for a duplicate-key update

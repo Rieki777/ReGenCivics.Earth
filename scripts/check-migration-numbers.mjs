@@ -10,12 +10,20 @@
  *
  * Run: node scripts/check-migration-numbers.mjs   (CI runs this on every push)
  */
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const files = readdirSync(join(root, "drizzle")).filter((f) => /^\d{4}_.+\.sql$/.test(f));
+const isMigration = (f) => /^\d{4}_.+\.sql$/.test(f);
+// drizzle/after-deploy/ holds data migrations that must run only after the
+// deploy that needs them reports SUCCESS (run-migration.ts --all never scans
+// it). Their numbers are still taken, so they count here.
+const heldDir = join(root, "drizzle", "after-deploy");
+const files = [
+  ...readdirSync(join(root, "drizzle")).filter(isMigration),
+  ...(existsSync(heldDir) ? readdirSync(heldDir).filter(isMigration) : []),
+];
 
 // Frozen as of 2026-07-16. Do not add to this list; pick the next free number.
 const GRANDFATHERED = new Set([

@@ -57,6 +57,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { LEARN_SLUGS } from "@shared/learnContent";
 import { redirectFor } from "@shared/redirects";
+import { projectPathForApplication } from "@shared/projectKey";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
@@ -990,9 +991,12 @@ async function startServer() {
           country: app.country ?? null,
           websiteUrl: app.websiteUrl ?? null,
           videoUrl: app.videoUrl ?? null,
-          // Projects render on the Civics map; there is no per-project page yet
-          // (improvement 9, on hold). Only URLs that resolve, per SHIPPED_LOG.
-          profileUrl: "https://regencivics.earth/map",
+          // Only URLs that resolve, per SHIPPED_LOG. An approved or active
+          // project has a public project page (/project/:key, 2026-09-24);
+          // one still in review has none yet, so it keeps the map link.
+          profileUrl: app.status === "approved" || app.status === "active"
+            ? `https://regencivics.earth${projectPathForApplication(app.id, app.projectName ?? "")}`
+            : "https://regencivics.earth/map",
           impact: publicImpactSummary(parseImpactData(app.impactData)),
         }));
       const payload = {

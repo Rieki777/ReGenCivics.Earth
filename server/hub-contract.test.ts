@@ -27,9 +27,46 @@ describe("hub contract version", () => {
     expect(doc).not.toMatch(new RegExp(`^\\| ${HUB_CONTRACT.crowdpool + 1} \\|`, "m"));
   });
 
+  it("documents the need's capacityUnit field (version 3)", () => {
+    expect(HUB_CONTRACT.crowdpool).toBeGreaterThanOrEqual(3);
+    expect(doc).toMatch(/capacityUnit/);
+    expect(doc).toMatch(/^\| 3 \|.*hours_per_week/m);
+  });
+
   it("serves the constant, with or without an input object", async () => {
     const caller = metaRouter.createCaller({} as never);
     expect(await caller.contract()).toEqual(HUB_CONTRACT);
     expect(await caller.contract({})).toEqual(HUB_CONTRACT);
+  });
+});
+
+describe("capacityUnit rides out on the village reads", () => {
+  const skipIfNoDb = !process.env.DATABASE_URL;
+
+  it.skipIf(skipIfNoDb)("getItems and getById carry capacityUnit on a role need", async () => {
+    const { adminCaller, anonCaller, cleanupFixtureApplications } = await import("./test-fixtures/crowdpool");
+    const { getDb } = await import("./db");
+    const { campaigns, campaignItems } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const admin = adminCaller();
+    const { id } = await admin.campaigns.create({
+      title: "Test Contract Role",
+      description: "Contract fixture",
+      projectName: "Test Contract Role",
+      financialTarget: 0,
+      items: [{ category: "role", kind: "role", roleTitle: "Grower", hoursPerWeek: 40, estimatedValue: 8000 }],
+    });
+    try {
+      await admin.campaigns.updateStatus({ id, status: "active" });
+      const items = await anonCaller().campaigns.getItems({ campaignId: id });
+      expect(items[0]).toMatchObject({ kind: "role", capacityUnit: "hours_per_week", quantityWanted: 40 });
+      const view = await anonCaller().campaigns.getById({ id });
+      expect(view!.items[0].capacityUnit).toBe("hours_per_week");
+    } finally {
+      const database = await getDb();
+      await database!.delete(campaignItems).where(eq(campaignItems.campaignId, id));
+      await database!.delete(campaigns).where(eq(campaigns.id, id));
+      await cleanupFixtureApplications();
+    }
   });
 });

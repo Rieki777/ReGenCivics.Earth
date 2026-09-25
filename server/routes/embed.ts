@@ -7,6 +7,7 @@ import type { Express, Request, Response } from "express";
 import { getDb } from "../db";
 import { campaigns, applications, events } from "../../drizzle/schema";
 import { eq, desc, sql } from "drizzle-orm";
+import { isPublicCampaign } from "../lib/project-steward";
 
 const BASE_URL = "https://regencivics.earth";
 
@@ -55,7 +56,8 @@ export function registerEmbedRoutes(app: Express) {
     if (!database) return res.send(errorWidget("Service unavailable"));
 
     const [campaign] = await database.select().from(campaigns).where(eq(campaigns.id, id)).limit(1);
-    if (!campaign) return res.send(errorWidget("Campaign not found"));
+    // Embeds are public: an unpublished campaign reads as not found.
+    if (!campaign || !isPublicCampaign(campaign)) return res.send(errorWidget("Campaign not found"));
 
     const title = campaign.title || "Regenerative Land Project";
     const goal = Number(campaign.financialTarget) || 100000;

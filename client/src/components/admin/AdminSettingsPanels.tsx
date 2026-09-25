@@ -710,6 +710,7 @@ export function OrgClaimsAdminPanel() {
   const { data: claims, isLoading } = trpc.orgClaims.listAll.useQuery();
   const approveMutation = trpc.orgClaims.approve.useMutation({
     onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim approved  -  join requests routed to steward"); },
+    onError: (err) => { utils.orgClaims.listAll.invalidate(); toast.error(err.message); },
   });
   const rejectMutation = trpc.orgClaims.reject.useMutation({
     onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim rejected"); },
@@ -749,6 +750,13 @@ export function OrgClaimsAdminPanel() {
                   );
                 })()}
                 <p className="text-xs text-[#1a472a]/75">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · org {claim.orgId}</p>
+                {claim.orgType === 'land_project' && (
+                  <p className={`text-xs ${claim.applicationProjectName && claim.applicationProjectName.trim().toLowerCase() === String(claim.orgName ?? '').trim().toLowerCase() ? 'text-[#1a472a]/75' : 'text-red-700 font-medium'}`}>
+                    {claim.applicationProjectName
+                      ? `Application ${claim.orgId} is "${claim.applicationProjectName}"`
+                      : `No application ${claim.orgId} found`}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={

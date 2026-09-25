@@ -14,7 +14,6 @@ import {
   parseScheduleInstant,
   validateScheduleWindow,
 } from "../../shared/outboundSchedule";
-import { getNewsletterAudience } from "../db/newsletter";
 import { sendEmail } from "../_core/email";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
@@ -26,6 +25,13 @@ import {
   outboundWriteContentReady,
 } from "../../shared/outboundWriteFill";
 import { managePreferencesUrl, previewManagePreferencesUrl, verifyPrefsToken } from "./emailPrefs";
+import { parseAudienceList, type OutboundAudienceList } from "../../shared/outboundHistory";
+import type { LetterDocumentExtras } from "../../shared/letterHtml";
+import {
+  listFooterFor,
+  previewListUnsubscribeUrl,
+  resolveOutboundRecipients,
+} from "./outboundAudience";
 
 const log = logger("newsletter-issue-email");
 
@@ -34,15 +40,35 @@ export const MIN_SEND_GAP_MS = 10 * 60 * 1000;
 export const MAX_SENDS_PER_DAY = 5;
 const SEND_GAP_MS = 150;
 
-export type IssueAudience = { sources: string[]; activeOnly: boolean };
+export type IssueAudience = { sources: string[]; activeOnly: boolean; list?: OutboundAudienceList };
 
+/**
+ * `list` is added ONLY when present and valid, so an audience saved before
+ * lists existed parses to exactly { sources, activeOnly } and its stored
+ * bodyHash (issueBodyHash hashes this object) still matches.
+ */
 export function parseIssueAudience(raw: unknown): IssueAudience {
   if (!raw || typeof raw !== "object") return { sources: [], activeOnly: true };
   const rec = raw as Record<string, unknown>;
   const sources = Array.isArray(rec.sources)
     ? rec.sources.filter((s): s is string => typeof s === "string" && s.length > 0 && s !== "all")
     : [];
-  return { sources, activeOnly: rec.activeOnly !== false };
+  const list = parseAudienceList(rec.list);
+  return list
+    ? { sources, activeOnly: rec.activeOnly !== false, list }
+    : { sources, activeOnly: rec.activeOnly !== false };
+}
+
+/**
+ * The footer extras for a preview of this audience: the newsletter prefs
+ * footer, or for a list the list footer with a placeholder link.
+ */
+export async function previewExtrasForAudience(audience: IssueAudience): Promise<LetterDocumentExtras> {
+  const postalAddress = ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS;
+  if (audience.list) {
+    return { listFooter: await listFooterFor(audience.list, previewListUnsubscribeUrl(audience.list)), postalAddress };
+  }
+  return { managePreferencesUrl: previewUnsubscribeUrl(), postalAddress };
 }
 
 export function issueBodyHash(subject: string, body: string, audience: IssueAudience): string {
@@ -118,7 +144,7 @@ export type PreviewResult = {
 async function snapshotRecipients(issueId: number, audience: IssueAudience) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const subscribers = await getNewsletterAudience({ sources: audience.sources });
+  const subscribers = await resolveOutboundRecipients(audience);
   await db.delete(newsletterIssueRecipients).where(eq(newsletterIssueRecipients.issueId, issueId));
   if (subscribers.length === 0) {
     return [] as Array<{ email: string; name: string | null; source: string | null }>;
@@ -155,13 +181,12 @@ export async function buildIssuePreview(params: {
 
   const audience = parseIssueAudience(issue.audience);
   const recipients = await snapshotRecipients(issue.id, audience);
-  if (recipients.length === 0) throw new Error("No active subscribers match this audience.");
+  if (recipients.length === 0) {
+    throw new Error(audience.list ? "Nobody is on this list yet." : "No active subscribers match this audience.");
+  }
 
   const layout = asLayout(issue.layout);
-  const html = emailDocumentFromMarkdown(issue.body, layout, {
-    managePreferencesUrl: previewUnsubscribeUrl(),
-    postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
-  });
+  const html = emailDocumentFromMarkdown(issue.body, layout, await previewExtrasForAudience(audience));
   const hash = issueBodyHash(issue.subject, issue.body, audience);
   const expiresAt = Date.now() + TOKEN_TTL_MS;
 
@@ -326,25 +351,29 @@ async function dispatchClaimedSend(params: {
     .select()
     .from(newsletterIssueRecipients)
     .where(eq(newsletterIssueRecipients.issueId, params.issue.id));
-  const live = await getNewsletterAudience({ sources: audience.sources });
-  const liveActive = new Set(live.map((row) => row.email.toLowerCase()));
+  // The live re-check: whoever left the list (or unsubscribed) since the
+  // preview is skipped. The same resolver gives each person's footer link.
+  const live = await resolveOutboundRecipients(audience);
+  const liveByEmail = new Map(live.map((row) => [row.email.trim().toLowerCase(), row]));
+  const listFooterReason = audience.list ? (await listFooterFor(audience.list, "")).reason : null;
   const layout = asLayout(params.issue.layout);
 
   let sentCount = 0;
   let failedCount = 0;
   for (const row of snapshot) {
     const email = row.email;
-    if (!liveActive.has(email.toLowerCase())) {
+    const liveRow = liveByEmail.get(email.trim().toLowerCase());
+    if (!liveRow) {
       await db.update(newsletterIssueRecipients).set({ status: "skipped_unsub" })
         .where(eq(newsletterIssueRecipients.id, row.id));
       continue;
     }
     try {
-      const prefsUrl = await signedUnsubscribeUrl(email);
-      const html = emailDocumentFromMarkdown(params.issue.body, layout, {
-        managePreferencesUrl: prefsUrl,
-        postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
-      });
+      const postalAddress = ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS;
+      const extras: LetterDocumentExtras = listFooterReason != null
+        ? { listFooter: { reason: listFooterReason, linkLabel: "Stop these emails", url: liveRow.unsubscribeUrl }, postalAddress }
+        : { managePreferencesUrl: liveRow.unsubscribeUrl, postalAddress };
+      const html = emailDocumentFromMarkdown(params.issue.body, layout, extras);
       const emailLogId = await createEmailLog({
         recipientEmail: email,
         recipientName: row.name ?? undefined,

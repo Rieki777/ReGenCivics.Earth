@@ -14,69 +14,12 @@ import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { decodeEntities } from '@/utils/sanitize';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
+import { typeGlyph, resolveNotificationLink } from '@/lib/notificationDisplay';
 
-// Fallback for rows migrated from the legacy table without a link.
-function legacyLink(type: string): string | null {
-  switch (type) {
-    case 'contribution_accepted':
-    case 'contribution_rejected':
-    case 'new_contribution':
-      return '/profile?tab=contributions';
-    case 'campaign_milestone':
-      return '/crowd-pooling';
-    case 'quest_complete':
-      return '/quest';
-    case 'gratitude':
-      return '/profile?tab=gratitude';
-    case 'claim_complete':
-    case 'claim_failed':
-      return '/profile?tab=contributions';
-    default:
-      return null;
-  }
-}
-
-/** Destination for a notification. Older rows keep whatever link they were
- * created with, and several historical formats are wrong or dead:
- * bare "/profile" (lands on Overview instead of the relevant section),
- * "#bounty-N" anchors (no matching element ever rendered),
- * "/campaigns/N" and "/crowdpooling" (routes are /campaign/:id and
- * /crowd-pooling). Normalize them all here, at click time, so history
- * stays useful without a data migration. */
-export function resolveNotificationLink(item: { type: string; link: string | null }): string | null {
-  const target = item.link || legacyLink(item.type);
-  if (!target) return null;
-  if (item.type === 'gratitude' && target === '/profile') {
-    return '/profile?tab=gratitude';
-  }
-  if ((item.type === 'claim_complete' || item.type === 'claim_failed') && target === '/profile') {
-    return '/profile?tab=contributions';
-  }
-  const bounty = target.match(/#bounty-(\d+)$/);
-  if (bounty) return `/bounties/${bounty[1]}`;
-  const campaign = target.match(/^\/campaigns\/(\d+)/);
-  if (campaign) return `/campaign/${campaign[1]}`;
-  if (target === '/crowdpooling') return '/crowd-pooling';
-  return target;
-}
-
-export function typeGlyph(type: string): string {
-  switch (type) {
-    case 'mention': return '@';
-    case 'forum_reply':
-    case 'thread_followed_activity': return '↩';
-    case 'gratitude': return '🙏';
-    case 'guide_reply':
-    case 'elder_reply': return '🌿';
-    case 'reaction_milestone': return '✨';
-    case 'governance_stage': return '🌀';
-    case 'contribution_accepted': return '✓';
-    case 'contribution_rejected': return '✗';
-    case 'campaign_milestone': return '★';
-    case 'quest_complete': return '⚑';
-    default: return '•';
-  }
-}
+// Glyphs, click targets and the campaign type list live in a pure module so
+// they are unit-tested (server/notification-display.test.ts). Re-exported
+// here because /notifications imports them from the bell.
+export { typeGlyph, resolveNotificationLink } from '@/lib/notificationDisplay';
 
 interface BellItem {
   id: number;
@@ -187,7 +130,10 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-[#7dd87d]/30 z-50 max-h-[70vh] overflow-hidden">
+        // On a phone the bell sits near the middle of the bar, so a 320px panel
+        // anchored to it ran off the left edge. Below sm it is pinned to the
+        // viewport with a 16px gutter instead.
+        <div className="fixed inset-x-4 top-16 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-xl shadow-xl border border-[#7dd87d]/30 z-50 max-h-[70vh] overflow-hidden">
           <div className="flex items-center justify-between p-3 border-b border-[#7dd87d]/20">
             <h3 className="font-bold text-[#1a472a]">Notifications</h3>
             {items.length > 0 && (
@@ -202,7 +148,7 @@ export function NotificationBell() {
             {items.length === 0 ? (
               <div className="p-6 text-center text-[#1a472a]/80">
                 <SeedOfLifeIcon size={32} animate={false} className="mx-auto mb-2 opacity-30 text-[#1a472a]" />
-                <p className="text-sm">Nothing here yet. When someone mentions you or replies to your posts, it lands here.</p>
+                <p className="text-sm">Replies, mentions and campaign news will show up here.</p>
               </div>
             ) : (
               items.map((item) => (

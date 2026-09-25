@@ -4,7 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   campaigns as campaignsTable,
   campaignItems as campaignItemsTable,
@@ -14,9 +14,9 @@ import {
   CrowdPoolingProject,
 } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
-import { canSeeFullRecord, isAdminUser, pickPublic } from "../lib/public-projection";
+import { isAdminUser, pickPublic } from "../lib/public-projection";
 import type { TrpcContext } from "../_core/context";
-import type { Campaign } from "../../drizzle/schema";
+import type { Campaign, CampaignContribution } from "../../drizzle/schema";
 import { sanitizeInput, sanitizeRichText } from "../_core/security";
 import { designCompanionTurn } from "../lib/crowdpool-coach";
 import { getGameVariable, recordScoreEvent, logActivityEvent } from "../game";
@@ -25,19 +25,71 @@ import { generateImage } from "../_core/imageGeneration";
 import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
+import {
+  assertCampaignSteward,
+  canSeeCampaign,
+  canStewardCampaign,
+  canViewCampaign,
+} from "../lib/project-steward";
+import { canTransition, type CampaignStatus } from "../../shared/campaignStatus";
+import {
+  MAX_OFFER_HOURS,
+  MAX_ROLE_HOURS,
+  checkAcceptHours,
+  isHoursNeed,
+  roleFillState,
+  scaleRoleValue,
+} from "../../shared/roleCapacity";
+import { projectPathForCampaignFocus } from "../../shared/projectKey";
+import { regenSeasonSpan } from "../../shared/regenYear";
+import {
+  notifyCampaignApproved,
+  notifyCampaignCompleted,
+  notifyCampaignDeclined,
+  notifyDelivered,
+  notifyHoursChanged,
+  notifyProposalAccepted,
+  notifyProposalDeclined,
+  notifyProposalReceived,
+  notifyReleased,
+  notifyRoleFilled,
+  notifyThanked,
+  notifyUpdatePosted,
+} from "../lib/campaign-notify";
+import { cancelCampaign } from "../lib/campaign-cancel";
+import { suggestAlternatives } from "../lib/campaign-suggest";
 
 /**
- * Statuses a campaign is not published in. A draft is a project still
- * writing its pitch; pending_review and rejected are the review queue.
- * None of the three is the creator's public statement.
+ * The creator, admins, and anyone at all once it is published. Sync, so the
+ * list filter stays cheap. Moved to server/lib/project-steward.ts next to
+ * canViewCampaign (which also admits a campaign's other stewards); re-exported
+ * here for existing importers.
  */
-const UNPUBLISHED_CAMPAIGN_STATUSES: ReadonlyArray<string> = ["draft", "pending_review", "rejected"];
+export { canSeeCampaign };
 
-/** The creator, admins, and anyone at all once it is published. */
-export function canSeeCampaign(user: TrpcContext["user"] | undefined, campaign: Campaign): boolean {
-  if (!UNPUBLISHED_CAMPAIGN_STATUSES.includes(campaign.status)) return true;
-  return canSeeFullRecord(user, campaign.userId);
+/**
+ * Children of a campaign (needs, partner links, activity, updates, images,
+ * contributions) follow the campaign: an unpublished campaign's children are
+ * for its stewards and admins only. Before 2026-09-24 these reads were open
+ * by campaign id, so a draft's needs and journal were readable by anyone
+ * counting upwards even though getById hid the draft itself.
+ */
+async function canReadCampaignChildren(user: TrpcContext["user"] | undefined, campaignId: number): Promise<boolean> {
+  const campaign = await db.getCampaignById(campaignId);
+  if (!campaign) return false;
+  return canViewCampaign(user, campaign);
 }
+
+/** Plain words for a campaign status in an error message. */
+const STATUS_WORDS: Record<string, string> = {
+  draft: "draft",
+  pending_review: "in review",
+  active: "live",
+  funded: "complete", // legacy status; the word is always complete
+  completed: "complete",
+  cancelled: "cancelled",
+  rejected: "sent back",
+};
 
 /**
  * Public columns of a `campaigns` row: everything the pitch is made of.
@@ -66,10 +118,71 @@ export const PUBLIC_CAMPAIGN_FIELDS = [
   "generatedImageUrl", "isDemo", "forumPostId", "seasonId",
 ] as const satisfies ReadonlyArray<keyof Campaign>;
 
+/**
+ * What campaigns.getContributions (a public read) returns per row. Not in the
+ * hub contract. Everything else on a contribution (email, phone, bio, notes,
+ * ownerNotes, userId, referredBy, hyphaBridgeKey, playerContributionId) stays
+ * with the stewards' getContributionsForOwner.
+ */
+export const PUBLIC_CONTRIBUTION_FIELDS = [
+  "id", "campaignId", "campaignItemId", "contributorName", "isAnonymous",
+  "contributionType", "title", "status", "estimatedValue", "quantityPledged",
+  "roleTitle", "hoursPerWeek", "financialAmount", "financialCurrency",
+  "submittedAt", "fulfilledAt", "acknowledgedAt",
+] as const satisfies ReadonlyArray<keyof CampaignContribution>;
+
+/** Offers that stand on a campaign: the only ones visitors see. */
+export const PUBLIC_CONTRIBUTION_STATUSES = ["accepted", "fulfilled", "thanked"] as const;
+
 /** Admins keep the review trail; everyone else gets the projection. */
 export function toPublicCampaign(campaign: Campaign, user: TrpcContext["user"] | undefined) {
   return isAdminUser(user) ? campaign : pickPublic(campaign, PUBLIC_CAMPAIGN_FIELDS);
 }
+
+/**
+ * What campaigns.getById returns for a campaign the viewer may see: the
+ * public projection plus needs, images, cover, contributor count and whether
+ * the viewer follows it. getById is part of the crowdpool hub contract
+ * (villages read it), and the project page (projects.getPublic) builds its
+ * front campaign with this same function, so the two can never drift.
+ * server/projects.test.ts pins the key set.
+ */
+export async function buildCampaignView(campaign: Campaign, user: TrpcContext["user"] | undefined) {
+  const items = await db.getCampaignItems(campaign.id);
+  const images = await db.getCampaignImages(campaign.id);
+  const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
+
+  // Distinct contributor emails across accepted/fulfilled/thanked.
+  const contributorsCount = await db.getCampaignContributorsCount(campaign.id);
+
+  // Whether the signed-in viewer follows this campaign (false for guests).
+  let isFollowing = false;
+  if (user) {
+    const db2 = await getDb();
+    if (db2) {
+      const follow = await db2.select({ id: userFollows.id })
+        .from(userFollows)
+        .where(and(
+          eq(userFollows.userId, user.id),
+          eq(userFollows.targetType, 'campaign'),
+          eq(userFollows.targetId, String(campaign.id)),
+        ))
+        .limit(1);
+      isFollowing = follow.length > 0;
+    }
+  }
+
+  return {
+    ...toPublicCampaign(campaign, user),
+    items,
+    images,
+    coverImage,
+    contributorsCount,
+    isFollowing,
+  };
+}
+
+export type CampaignView = Awaited<ReturnType<typeof buildCampaignView>>;
 
 /** Game variable with a fallback: crowdpool config may not be seeded yet. */
 async function getGameVariableOr(key: string, fallback: number): Promise<number> {
@@ -243,14 +356,233 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lng: nu
   return result;
 }
 
+// ── Contribution status helpers (2026-09-24) ────────────────────────────────
+
+type ContributionRow = NonNullable<Awaited<ReturnType<typeof db.getContributionById>>>;
+type ItemRow = Awaited<ReturnType<typeof db.getCampaignItemById>>;
+type ContributionStatus = ContributionRow['status'];
+
+async function requireDb() {
+  const database = await getDb();
+  if (!database) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+  return database;
+}
+
+function affectedRows(result: any): number {
+  return Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
+}
+
+/** Someone else moved the row between our read and our write. */
+function raced() {
+  return new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this offer. Refresh and try again.' });
+}
+
+/**
+ * Update a contribution only while it is still in one of `from`. Returns the
+ * rows changed (0 when another request got there first).
+ */
+async function conditionalStatusUpdate(
+  id: number,
+  from: string[],
+  patch: Partial<typeof campaignContributionsTable.$inferInsert>,
+  tx?: any,
+): Promise<number> {
+  const exec = tx ?? (await requireDb());
+  const result = await exec.update(campaignContributionsTable)
+    .set(patch)
+    .where(and(
+      eq(campaignContributionsTable.id, id),
+      inArray(campaignContributionsTable.status, from as ContributionStatus[]),
+    ));
+  return affectedRows(result);
+}
+
+/**
+ * Refuse unless the campaign is live, reading its status under a shared lock
+ * so a cancel (which takes the campaign row for update) cannot slip in
+ * between this check and the write that follows in the same transaction.
+ * Lock order everywhere: need rows, then the campaign row, then
+ * contribution rows (server/lib/campaign-cancel.ts takes them the same way).
+ */
+async function assertCampaignOpen(tx: any, campaignId: number, message: string): Promise<void> {
+  const [rows] = await tx.execute(sql`SELECT status FROM campaigns WHERE id = ${campaignId} LOCK IN SHARE MODE`);
+  const status = (rows as any[])[0]?.status;
+  if (status !== 'active') throw new TRPCError({ code: 'BAD_REQUEST', message });
+}
+
+/**
+ * What submitContribution returns on an example (demo) campaign: a practice
+ * run. Rye, 2026-09-24 (decision B12c): "Sending on an example campaign gives
+ * a practice receipt". The sheet works end to end and every input is checked
+ * exactly as on a real campaign, but the server writes no row, moves no
+ * counter or total, and tells nobody. Nobody real stands behind an example
+ * to answer an offer.
+ */
+export const PRACTICE_CONTRIBUTION_RESULT = { id: null, success: true, practice: true } as const;
+
+/** The answer when a steward tries to take on an offer after the campaign closed. */
+const CLOSED_CAMPAIGN_ACCEPT = "This campaign isn't live anymore, so it can't take on offers.";
+
+/** Lock an hours need's row for the rest of the transaction and read its size. */
+async function lockHoursItem(tx: any, itemId: number): Promise<{ quantityWanted: number; estimatedValue: number }> {
+  const [rows] = await tx.execute(sql`
+    SELECT quantityWanted, estimatedValue FROM campaign_items WHERE id = ${itemId} FOR UPDATE
+  `);
+  const row = (rows as any[])[0];
+  if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Need not found' });
+  return { quantityWanted: Number(row.quantityWanted), estimatedValue: Number(row.estimatedValue) };
+}
+
+/** Hours already standing on a need (accepted, fulfilled, thanked), not counting one contribution. */
+async function standingHoursExcluding(tx: any, itemId: number, excludeContributionId: number): Promise<number> {
+  const [rows] = await tx.execute(sql`
+    SELECT COALESCE(SUM(quantityPledged), 0) AS standing FROM campaign_contributions
+    WHERE campaignItemId = ${itemId}
+      AND status IN ('accepted','fulfilled','thanked')
+      AND id <> ${excludeContributionId}
+    FOR UPDATE
+  `);
+  return Number((rows as any[])[0]?.standing ?? 0);
+}
+
+/**
+ * Accept an offer on an hours need at `hours` a week. One transaction: lock
+ * the need, sum the hours already standing, refuse to pass the hours the
+ * role needs, move the row conditionally, recompute the counters from rows.
+ * Concurrent accepts on one role serialize on the need's row lock, so the
+ * accepted hours can never pass the hours needed.
+ */
+async function acceptHoursContribution(args: {
+  contribution: ContributionRow;
+  itemId: number;
+  hours: number;
+  ownerNotes?: string;
+}): Promise<{ hours: number; justFilled: boolean }> {
+  const database = await requireDb();
+  return database.transaction(async (tx) => {
+    const locked = await lockHoursItem(tx, args.itemId);
+    await assertCampaignOpen(tx, args.contribution.campaignId, CLOSED_CAMPAIGN_ACCEPT);
+    const standing = await standingHoursExcluding(tx, args.itemId, args.contribution.id);
+    const check = checkAcceptHours({ requested: args.hours, neededHours: locked.quantityWanted, standingExcludingThis: standing });
+    if (!check.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: check.message });
+    const affected = await conditionalStatusUpdate(args.contribution.id, ['pending', 'rejected'], {
+      status: 'accepted',
+      quantityPledged: args.hours,
+      estimatedValue: scaleRoleValue(locked.estimatedValue, locked.quantityWanted, args.hours),
+      reviewedAt: new Date(),
+      claimExpiresAt: null,
+      ...(args.ownerNotes !== undefined ? { ownerNotes: args.ownerNotes } : {}),
+    }, tx);
+    if (affected === 0) throw raced();
+    await db.recomputeNeedCounters(args.itemId, tx);
+    return { hours: args.hours, justFilled: standing + args.hours >= locked.quantityWanted };
+  });
+}
+
+/**
+ * The delivery payoff for an account holder: a score event and a verified
+ * Living Tree row, plus the Pool Ledger event. NEVER a token credit
+ * (locked decision: no platform tokens for crowdpooling). Runs once, from
+ * the call that actually moved the row to fulfilled.
+ */
+async function deliveryPayoff(contribution: ContributionRow, campaign: Campaign, need: ItemRow): Promise<void> {
+  if (contribution.userId) {
+    try {
+      await recordScoreEvent(
+        contribution.userId,
+        'crowdpool_contribution',
+        'scoring.weights.crowdpool_contribution',
+        'crowdpool',
+        contribution.id,
+      );
+    } catch (err) {
+      console.warn('[Contribution] Score event failed (non-fatal):', err);
+    }
+
+    try {
+      const profile = await db.getPlayerProfileByUserId(contribution.userId);
+      if (profile) {
+        const capitalType = need?.capitalType ?? CONTRIBUTION_TYPE_TO_CAPITAL[contribution.contributionType];
+        const playerContributionId = await db.createPlayerContribution({
+          profileId: profile.id,
+          userId: contribution.userId,
+          capitalType,
+          title: contribution.title,
+          estimatedValue: contribution.estimatedValue,
+          projectName: campaign.projectName,
+          status: 'verified',
+          verifiedAt: new Date(),
+        });
+        await db.updateContribution(contribution.id, { playerContributionId });
+        // Recompute the cached Living Tree total, the same way
+        // playerContributions.create does.
+        const all = await db.getPlayerContributionsByProfileId(profile.id);
+        const total = all.reduce((sum, c) => sum + (c.estimatedValue ?? 0), 0);
+        await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
+      }
+    } catch (err) {
+      console.warn('[Contribution] Living Tree row creation failed (non-fatal):', err);
+    }
+  }
+
+  // Pool Ledger event
+  try {
+    await logActivityEvent(
+      'crowdpool_delivered',
+      'player',
+      contribution.userId || 0,
+      'campaign',
+      contribution.campaignId,
+      { contributionId: contribution.id },
+    );
+  } catch (err) {
+    console.warn('[Contribution] Activity event failed (non-fatal):', err);
+  }
+}
+
+/**
+ * The direct email for someone who offered WITHOUT an account: accepted,
+ * declined, or first delivery. Account holders never get this; the spine
+ * emails them by their prefs. A send failure never fails the steward's action.
+ */
+async function sendContributionStatusEmail(
+  status: 'accepted' | 'rejected' | 'fulfilled',
+  args: { campaign: Campaign; contribution: ContributionRow; item: ItemRow; ownerNotes: string | null },
+): Promise<void> {
+  try {
+    const { sendEmail, emailTemplates, contributionEmailLinks } = await import("../_core/email");
+    const template = status === 'accepted'
+      ? emailTemplates.contributionAccepted
+      : status === 'rejected'
+        ? emailTemplates.contributionRejected
+        : emailTemplates.contributionFulfilled;
+    const hoursNeed = isHoursNeed(args.item);
+    const emailContent = template({
+      recipientName: args.contribution.contributorName,
+      contributionTitle: args.contribution.title,
+      campaignTitle: args.campaign.title,
+      projectName: args.campaign.projectName || args.campaign.title,
+      ownerNotes: args.ownerNotes,
+      hoursPerWeek: hoursNeed ? args.contribution.quantityPledged : null,
+      roleTitle: hoursNeed ? (args.item?.roleTitle ?? args.contribution.roleTitle ?? null) : null,
+      ...contributionEmailLinks(projectPathForCampaignFocus(args.campaign)),
+    });
+    await sendEmail({
+      to: args.contribution.contributorEmail,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      template: `contribution_${status}`,
+      recipientName: args.contribution.contributorName,
+    });
+  } catch (emailError) {
+    console.warn('[Contribution] Failed to send status notification email:', emailError);
+  }
+}
+
 export const campaignsRouter = router({
-  // Verify campaign creator access password (server-side)
-  verifyCampaignAccess: protectedProcedure
-    .input(z.object({ password: z.string() }))
-    .mutation(({ input }) => {
-      const expected = process.env.CAMPAIGN_ACCESS_PASSWORD || "222";
-      return { valid: input.password === expected };
-    }),
+  // verifyCampaignAccess (a shared "222" password on the create page) was
+  // removed 2026-09-24. campaigns.create now checks that the caller stewards
+  // an approved application, which is the real gate.
 
   // List all campaigns (with optional filtering + server-side sort)
   list: publicProcedure
@@ -327,48 +659,18 @@ export const campaignsRouter = router({
       const campaign = await db.getCampaignById(input.id);
       if (!campaign) return null;
       // Enumerable id: without this, every draft and rejected pitch was
-      // readable by anyone counting upwards.
-      if (!canSeeCampaign(ctx.user, campaign)) return null;
+      // readable by anyone counting upwards. Stewards (applicant, approved
+      // steward, claim holders) see their own unpublished campaign.
+      if (!(await canViewCampaign(ctx.user, campaign))) return null;
 
-      // Get campaign items and images
-      const items = await db.getCampaignItems(input.id);
-      const images = await db.getCampaignImages(input.id);
-      const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
-
-      // Distinct contributor emails across accepted/fulfilled/thanked.
-      const contributorsCount = await db.getCampaignContributorsCount(input.id);
-
-      // Whether the signed-in viewer follows this campaign (false for guests).
-      let isFollowing = false;
-      if (ctx.user) {
-        const db2 = await getDb();
-        if (db2) {
-          const follow = await db2.select({ id: userFollows.id })
-            .from(userFollows)
-            .where(and(
-              eq(userFollows.userId, ctx.user.id),
-              eq(userFollows.targetType, 'campaign'),
-              eq(userFollows.targetId, String(input.id)),
-            ))
-            .limit(1);
-          isFollowing = follow.length > 0;
-        }
-      }
-
-      return {
-        ...toPublicCampaign(campaign, ctx.user),
-        items,
-        images,
-        coverImage,
-        contributorsCount,
-        isFollowing,
-      };
+      return await buildCampaignView(campaign, ctx.user);
     }),
 
   // Get campaign items for a campaign
   getItems: publicProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
       return await db.getCampaignItems(input.campaignId);
     }),
 
@@ -377,7 +679,8 @@ export const campaignsRouter = router({
   // numbers, contributors finish on the funder's own site. No PII.
   getPartnerLinks: publicProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
       const db2 = await getDb();
       if (!db2) return [];
       const { campaignPartnerLinks } = await import("../../drizzle/schema");
@@ -492,7 +795,9 @@ export const campaignsRouter = router({
         equipmentCategory: z.string().optional(),
         // Role fields
         roleTitle: z.string().optional(),
-        hoursPerWeek: z.number().optional(),
+        // A role's hours a week, in whole hours. For a role this IS the
+        // capacity (quantityWanted); db.createCampaign requires it.
+        hoursPerWeek: z.number().int().min(1).max(MAX_ROLE_HOURS).optional(),
         durationMonths: z.number().optional(),
         roleDescription: z.string().optional(),
         // Resource fields
@@ -505,6 +810,18 @@ export const campaignsRouter = router({
       })),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Security (2026-09-24): create used to accept any caller and any
+      // applicationId, behind nothing but a shared client-side password. A
+      // campaign now needs an application the caller stewards (applicant or
+      // stewardUserId) that has passed review. Admins are exempt.
+      if (!isAdminUser(ctx.user)) {
+        const refusal = "You can start a campaign for a land project you steward once its application is approved.";
+        if (!input.applicationId) throw new TRPCError({ code: 'FORBIDDEN', message: refusal });
+        const app = await db.getApplicationById(input.applicationId);
+        const ownsIt = !!app && (app.userId === ctx.user.id || app.stewardUserId === ctx.user.id);
+        const approved = !!app && (app.status === 'approved' || app.status === 'active');
+        if (!ownsIt || !approved) throw new TRPCError({ code: 'FORBIDDEN', message: refusal });
+      }
       const campaignId = await db.createCampaign(ctx.user.id, input);
       // Fire-and-forget image generation, don't block mutation response
       generateImage({
@@ -522,9 +839,17 @@ export const campaignsRouter = router({
   getContributions: publicProcedure
     .input(z.object({
       campaignId: z.number(),
-      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled', 'thanked']).optional(),
+      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled', 'thanked', 'expired', 'released', 'cancelled']).optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
+      // Visitors see only offers that stand (accepted, delivered, thanked).
+      // Waiting, declined, released, withdrawn and closed rows are between
+      // the contributor and the stewards; stewards also have
+      // getContributionsForOwner.
+      const campaign = await db.getCampaignById(input.campaignId);
+      const seesAll = !!campaign && (await canStewardCampaign(ctx.user, campaign));
+      if (!seesAll && input.status && !(PUBLIC_CONTRIBUTION_STATUSES as readonly string[]).includes(input.status)) return [];
       // 'fulfilled' means delivered, and thanked rows are still delivered,
       // so the delivered view includes both. Everything else filters exactly.
       let rows;
@@ -536,27 +861,30 @@ export const campaignsRouter = router({
       } else {
         rows = await db.getContributionsByCampaign(input.campaignId);
       }
-      // Strip PII before returning to anonymous callers, and mask names on
-      // contributions marked anonymous (steward still sees them via the owner view).
-      return rows.map(({ contributorEmail: _e, contributorPhone: _p, contributorBio: _b, contributorNotes: _n, ...safe }) => ({
-        ...safe,
-        contributorName: safe.isAnonymous ? 'A contributor' : safe.contributorName,
-      }));
+      if (!seesAll) rows = rows.filter(r => (PUBLIC_CONTRIBUTION_STATUSES as readonly string[]).includes(r.status));
+      // An allowlist, never a denylist: contact details, the stewards' notes
+      // to the contributor (ownerNotes), account ids and bridge keys never go
+      // out. Names on contributions marked anonymous are masked (stewards
+      // still see them in the owner view).
+      return rows.map((r) => {
+        const safe = pickPublic(r, PUBLIC_CONTRIBUTION_FIELDS);
+        return { ...safe, contributorName: safe.isAnonymous ? 'A contributor' : safe.contributorName };
+      });
     }),
 
   // Get contributions with full PII — campaign owner or admin only.
   getContributionsForOwner: protectedProcedure
     .input(z.object({
       campaignId: z.number(),
-      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled']).optional(),
+      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled', 'thanked', 'expired', 'released', 'cancelled']).optional(),
     }))
     .query(async ({ input, ctx }) => {
-      const db2 = await getDb();
-      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const camp = await db2.select({ userId: campaignsTable.userId }).from(campaignsTable).where(eq(campaignsTable.id, input.campaignId)).limit(1);
-      if (!camp[0] || (camp[0].userId !== ctx.user.id && ctx.user.role !== 'admin')) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not the campaign owner' });
-      }
+      // Every project steward sees contributor contact details: they run the
+      // project (OWASP-TOP10 A01, deliberate widening). project-steward.ts is
+      // the only gate.
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'FORBIDDEN', message: "Only this project's stewards can see its offers." });
+      await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can see its offers.");
       return input.status
         ? await db.getContributionsByCampaignAndStatus(input.campaignId, input.status)
         : await db.getContributionsByCampaign(input.campaignId);
@@ -588,7 +916,9 @@ export const campaignsRouter = router({
       equipmentCondition: z.string().optional(),
       // Role-specific
       roleTitle: z.string().optional(),
-      hoursPerWeek: z.number().optional(),
+      // Whole hours a week, 1 to 168. Required when the need is an hours
+      // need (a role measured in hours a week); optional elsewhere.
+      hoursPerWeek: z.number().int().min(1).max(MAX_OFFER_HOURS).optional(),
       durationMonths: z.number().optional(),
       skills: z.array(z.string()).optional(),
       // Resource-specific
@@ -613,23 +943,60 @@ export const campaignsRouter = router({
       if (campaign.status !== 'active') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Campaign is not accepting contributions' });
       }
+      // Example campaigns take practice runs: every check below still runs,
+      // then the practice return further down skips every write.
+      const practice = !!campaign.isDemo;
 
       // Claim against a specific need: guard the slot count and stamp the
       // claim expiry window from the crowdpool.claim_expiry_days_* variables.
       let claimExpiresAt: Date | null = null;
+      let item: Awaited<ReturnType<typeof db.getCampaignItemById>> = null;
+      let quantityPledged = input.quantityPledged;
+      let hoursPerWeek = input.hoursPerWeek;
+      let estimatedValue = input.estimatedValue;
       if (input.campaignItemId) {
-        const item = await db.getCampaignItemById(input.campaignItemId);
+        item = await db.getCampaignItemById(input.campaignItemId);
         if (!item || item.campaignId !== input.campaignId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'That need does not belong to this campaign' });
         }
-        if (item.quantityClaimed + input.quantityPledged > item.quantityWanted) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This need is already fully claimed' });
+        if (isHoursNeed(item)) {
+          // A role measured in hours a week. People offer the hours they
+          // can give; a steward accepts each at a number of hours. Offers
+          // are never refused for partial capacity, only when every hour the
+          // role needs is already accepted. Accepted hours never expire.
+          const offer = input.hoursPerWeek;
+          if (offer === undefined || !Number.isInteger(offer) || offer < 1 || offer > MAX_OFFER_HOURS) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Tell the stewards how many hours a week you can offer, as a whole number.' });
+          }
+          if (roleFillState(item).filled) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'This role is filled right now. Check back later, or follow the campaign for its updates.' });
+          }
+          quantityPledged = offer;
+          hoursPerWeek = offer; // the ORIGINAL offer, kept forever
+          claimExpiresAt = null;
+          // The server prices the offer: its share of the role's value by hours.
+          estimatedValue = scaleRoleValue(item.estimatedValue, item.quantityWanted, Math.min(offer, item.quantityWanted));
+        } else {
+          if (item.quantityClaimed + input.quantityPledged > item.quantityWanted) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'This need is already fully claimed' });
+          }
+          const expiryDays = await claimExpiryDaysForKind(item.kind);
+          claimExpiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
         }
-        const expiryDays = await claimExpiryDaysForKind(item.kind);
-        claimExpiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
       }
 
-      const contributionId = await db.createContribution({
+      // A practice run on an example campaign stops here, after the same
+      // checks a real offer passes: no row, no counter, no notification, no
+      // email (PRACTICE_CONTRIBUTION_RESULT).
+      if (practice) return PRACTICE_CONTRIBUTION_RESULT;
+
+      // Insert only while the campaign is still live: a cancel that commits
+      // after the status check above must not leave a new pending row it
+      // never closed.
+      const database = await requireDb();
+      const contributionId = await database.transaction(async (tx) => {
+        await assertCampaignOpen(tx, input.campaignId, 'Campaign is not accepting contributions');
+        return db.createContribution({
         campaignId: input.campaignId,
         campaignItemId: input.campaignItemId,
         userId: ctx.user?.id,
@@ -647,7 +1014,7 @@ export const campaignsRouter = router({
         equipmentQuantity: input.equipmentQuantity,
         equipmentCondition: input.equipmentCondition,
         roleTitle: input.roleTitle ? sanitizeInput(input.roleTitle) : null,
-        hoursPerWeek: input.hoursPerWeek,
+        hoursPerWeek,
         durationMonths: input.durationMonths,
         skills: input.skills ? JSON.stringify(input.skills) : null,
         resourceName: input.resourceName ? sanitizeInput(input.resourceName) : null,
@@ -656,36 +1023,78 @@ export const campaignsRouter = router({
         financialAmount: input.financialAmount,
         financialCurrency: input.financialCurrency || 'USD',
         paymentMethod: input.paymentMethod,
-        estimatedValue: input.estimatedValue,
+        estimatedValue,
         contributorNotes: input.contributorNotes ? sanitizeInput(input.contributorNotes) : null,
-        quantityPledged: input.quantityPledged,
+        quantityPledged,
         claimExpiresAt,
         isAnonymous: input.isAnonymous ? 1 : 0,
         referredBy: input.referredBy,
         status: 'pending',
+      }, tx);
       });
 
-      // Notify campaign owner (respects notification preferences)
+      // Every project steward hears about the offer on the notification
+      // spine (bell, push, email by their prefs). Never throws.
+      await notifyProposalReceived({
+        campaign,
+        contribution: {
+          id: contributionId,
+          campaignId: input.campaignId,
+          userId: ctx.user?.id ?? null,
+          title: sanitizeInput(input.title),
+          contributorName: input.isAnonymous ? null : sanitizeInput(input.contributorName),
+          quantityPledged,
+          hoursPerWeek: hoursPerWeek ?? null,
+          roleTitle: input.roleTitle ? sanitizeInput(input.roleTitle) : null,
+          campaignItemId: input.campaignItemId ?? null,
+        },
+        item,
+        actorId: ctx.user?.id ?? null,
+      });
+
+      // Rye's site-owner notice (respects notification preferences)
       try {
         await notifyIfEnabled("campaignContributions", {
           title: `New Contribution: ${input.title}`,
-          content: `A new ${input.contributionType} contribution has been submitted to campaign "${campaign.title}".\n\n**Contributor:** ${input.contributorName}\n**Type:** ${input.contributionType}\n**Value:** $${input.estimatedValue.toLocaleString()}\n\nReview it in the campaign dashboard.`,
+          content: `A new ${input.contributionType} contribution has been submitted to campaign "${campaign.title}".\n\n**Contributor:** ${input.contributorName}\n**Type:** ${input.contributionType}\n**Value:** $${estimatedValue.toLocaleString()}\n\nReview it in the campaign dashboard.`,
         });
       } catch (e) {
         console.warn('Failed to send contribution notification:', e);
       }
 
-      return { id: contributionId, success: true };
+      return { id: contributionId, success: true, practice: false as const };
     }),
 
-  // Update contribution status (campaign owner only)
+  // Answer an offer: accept, decline, release, mark delivered, send thanks.
+  // Project stewards only (server/lib/project-steward.ts).
+  //
+  // Transitions (2026-09-24, every need):
+  //   accepted  only from pending or rejected
+  //   rejected  only from pending (an accepted place is released instead)
+  //   released  only from accepted
+  //   fulfilled only from accepted (a freeform offer may go from pending)
+  //   thanked   only from fulfilled
+  // Repeating the status a row already has is a no-op. Before this, any
+  // status other than accepted could be re-accepted, and fulfilled ->
+  // accepted re-added the claim to the need's counter.
+  //
+  // Hours needs (a role measured in hours a week) accept at a number of
+  // hours inside a transaction that locks the need, refuse to pass the hours
+  // the role needs, and recompute the need's counters from the rows.
+  //
+  // Who hears: an account holder hears on the notification spine only (the
+  // spine emails them by their prefs). Someone who offered WITHOUT an account
+  // gets the three direct emails (accepted, declined, first delivery).
   updateContributionStatus: protectedProcedure
     .input(z.object({
       contributionId: z.number(),
-      status: z.enum(['accepted', 'rejected', 'fulfilled', 'thanked']),
-      ownerNotes: z.string().optional(),
+      status: z.enum(['accepted', 'rejected', 'fulfilled', 'thanked', 'released']),
+      ownerNotes: z.string().max(2000).optional(),
       acknowledgedNote: z.string().optional(),
       acknowledgedImageUrl: z.string().optional(),
+      // Hours needs: accept this person at this many hours a week (default:
+      // what they offered).
+      acceptedHours: z.number().int().min(1).max(MAX_ROLE_HOURS).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const contribution = await db.getContributionById(input.contributionId);
@@ -693,228 +1102,342 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
       }
 
-      // Verify user owns the campaign
       const campaign = await db.getCampaignById(contribution.campaignId);
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to manage this campaign' });
-      }
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized to manage this campaign');
 
       const prevStatus = contribution.status;
+      // Stored through sanitizeInput like every other contribution field; the
+      // email templates escape again on the way out.
+      const ownerNotes = input.ownerNotes !== undefined ? sanitizeInput(input.ownerNotes) : undefined;
+      const item = contribution.campaignItemId ? await db.getCampaignItemById(contribution.campaignItemId) : null;
+      const hoursNeed = isHoursNeed(item);
+      const actorId = ctx.user.id;
 
-      if (input.status === 'accepted' || input.status === 'rejected') {
-        await db.updateContributionStatus(input.contributionId, input.status, input.ownerNotes);
+      // A repeat of the status the row already has changes nothing and
+      // tells nobody.
+      if (prevStatus === input.status) return { success: true, changed: false };
 
-        // Accepting a claim reserves its slots on the need (ghost progress).
-        // Guarded on the transition so a repeated call cannot double-reserve.
-        if (input.status === 'accepted' && contribution.campaignItemId && prevStatus !== 'accepted') {
-          const db2 = await getDb();
-          if (db2) {
-            await db2.update(campaignItemsTable)
-              .set({ quantityClaimed: sql`${campaignItemsTable.quantityClaimed} + ${contribution.quantityPledged}` })
-              .where(eq(campaignItemsTable.id, contribution.campaignItemId));
-          }
+      let changed = false;
+      let firstFulfillment = false;
+      let roleJustFilled = false;
+      let acceptedHours: number | null = null;
+
+      if (input.status === 'accepted') {
+        if (prevStatus !== 'pending' && prevStatus !== 'rejected') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only an offer that is waiting can be accepted.' });
         }
-
-        // Update campaign pledged totals
+        // A cancelled or completed campaign takes on nothing new. Cancel
+        // closes pending and accepted rows but leaves declined ones, so
+        // without this a declined offer could be accepted afterwards.
+        if (campaign.status !== 'active') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: CLOSED_CAMPAIGN_ACCEPT });
+        }
+        if (hoursNeed && item) {
+          const result = await acceptHoursContribution({
+            contribution,
+            itemId: item.id,
+            hours: input.acceptedHours ?? contribution.hoursPerWeek ?? contribution.quantityPledged,
+            ownerNotes,
+          });
+          acceptedHours = result.hours;
+          roleJustFilled = result.justFilled;
+        } else {
+          const database = await requireDb();
+          await database.transaction(async (tx) => {
+            const itemId = contribution.campaignItemId;
+            if (itemId) await tx.execute(sql`SELECT id FROM campaign_items WHERE id = ${itemId} FOR UPDATE`);
+            await assertCampaignOpen(tx, contribution.campaignId, CLOSED_CAMPAIGN_ACCEPT);
+            const affected = await conditionalStatusUpdate(contribution.id, ['pending', 'rejected'], {
+              status: 'accepted',
+              reviewedAt: new Date(),
+              ...(ownerNotes !== undefined ? { ownerNotes } : {}),
+            }, tx);
+            if (affected === 0) throw raced();
+            // Accepting a claim reserves its slots on the need (ghost progress).
+            if (itemId) {
+              await tx.update(campaignItemsTable)
+                .set({ quantityClaimed: sql`${campaignItemsTable.quantityClaimed} + ${contribution.quantityPledged}` })
+                .where(eq(campaignItemsTable.id, itemId));
+            }
+          });
+        }
+        changed = true;
         await db.updateCampaignPledgedTotals(contribution.campaignId);
       }
 
-      // Fulfilled is the payoff moment. Idempotent: the whole payoff block is
-      // skipped when fulfilledAt is already set, so a repeated call is a no-op.
-      let firstFulfillment = false;
-      if (input.status === 'fulfilled') {
-        // Claims must be accepted first; legacy freeform contributions (no
-        // need attached) may go straight from pending.
-        const allowedFrom: string[] = contribution.campaignItemId
-          ? ['accepted', 'fulfilled']
-          : ['pending', 'accepted', 'fulfilled'];
-        if (!allowedFrom.includes(prevStatus)) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only accepted contributions can be marked fulfilled' });
+      if (input.status === 'rejected') {
+        if (prevStatus === 'accepted') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This place is already accepted. Use Release to free it up.' });
         }
+        if (prevStatus !== 'pending') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only an offer that is waiting can be declined.' });
+        }
+        const affected = await conditionalStatusUpdate(contribution.id, ['pending'], {
+          status: 'rejected',
+          reviewedAt: new Date(),
+          ...(ownerNotes !== undefined ? { ownerNotes } : {}),
+        });
+        if (affected === 0) throw raced();
+        changed = true;
+        await db.updateCampaignPledgedTotals(contribution.campaignId);
+      }
 
-        firstFulfillment = !contribution.fulfilledAt;
-        if (firstFulfillment) {
-          await db.updateContribution(input.contributionId, {
-            status: 'fulfilled',
-            fulfilledAt: new Date(),
-            ...(input.ownerNotes !== undefined ? { ownerNotes: input.ownerNotes } : {}),
+      if (input.status === 'released') {
+        if (prevStatus !== 'accepted') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only an accepted place can be released.' });
+        }
+        const patch = {
+          status: 'released' as const,
+          reviewedAt: new Date(),
+          ...(ownerNotes !== undefined ? { ownerNotes } : {}),
+        };
+        if (hoursNeed && item) {
+          const database = await requireDb();
+          await database.transaction(async (tx) => {
+            await tx.execute(sql`SELECT id FROM campaign_items WHERE id = ${item.id} FOR UPDATE`);
+            const affected = await conditionalStatusUpdate(contribution.id, ['accepted'], patch, tx);
+            if (affected === 0) throw raced();
+            await db.recomputeNeedCounters(item.id, tx);
           });
-
-          // Delivery confirms the slots (solid progress on the need).
+        } else {
+          const affected = await conditionalStatusUpdate(contribution.id, ['accepted'], patch);
+          if (affected === 0) throw raced();
+          // The slots go back to the need, the same way the nightly sweep
+          // releases an expired claim.
           if (contribution.campaignItemId) {
             const db2 = await getDb();
             if (db2) {
               await db2.update(campaignItemsTable)
-                .set({ quantityDelivered: sql`${campaignItemsTable.quantityDelivered} + ${contribution.quantityPledged}` })
+                .set({ quantityClaimed: sql`GREATEST(${campaignItemsTable.quantityClaimed} - ${contribution.quantityPledged}, 0)` })
                 .where(eq(campaignItemsTable.id, contribution.campaignItemId));
             }
           }
-
-          // Payoff for account holders: score event + Living Tree row.
-          // NEVER a token credit here (locked decision: no platform tokens
-          // for crowdpooling).
-          if (contribution.userId) {
-            try {
-              await recordScoreEvent(
-                contribution.userId,
-                'crowdpool_contribution',
-                'scoring.weights.crowdpool_contribution',
-                'crowdpool',
-                contribution.id,
-              );
-            } catch (err) {
-              console.warn('[Contribution] Score event failed (non-fatal):', err);
-            }
-
-            try {
-              const profile = await db.getPlayerProfileByUserId(contribution.userId);
-              if (profile) {
-                const need = contribution.campaignItemId
-                  ? await db.getCampaignItemById(contribution.campaignItemId)
-                  : null;
-                const capitalType = need?.capitalType ?? CONTRIBUTION_TYPE_TO_CAPITAL[contribution.contributionType];
-                const playerContributionId = await db.createPlayerContribution({
-                  profileId: profile.id,
-                  userId: contribution.userId,
-                  capitalType,
-                  title: contribution.title,
-                  estimatedValue: contribution.estimatedValue,
-                  projectName: campaign.projectName,
-                  status: 'verified',
-                  verifiedAt: new Date(),
-                });
-                await db.updateContribution(input.contributionId, { playerContributionId });
-                // Recompute the cached Living Tree total, the same way
-                // playerContributions.create does.
-                const all = await db.getPlayerContributionsByProfileId(profile.id);
-                const total = all.reduce((sum, c) => sum + (c.estimatedValue ?? 0), 0);
-                await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
-              }
-            } catch (err) {
-              console.warn('[Contribution] Living Tree row creation failed (non-fatal):', err);
-            }
-          }
-
-          // Pool Ledger event
-          try {
-            await logActivityEvent(
-              'crowdpool_delivered',
-              'player',
-              contribution.userId || 0,
-              'campaign',
-              contribution.campaignId,
-              { contributionId: contribution.id },
-            );
-          } catch (err) {
-            console.warn('[Contribution] Activity event failed (non-fatal):', err);
-          }
         }
-      }
-
-      // Recompute after the payoff too. The totals used to refresh only in the
-      // accepted/rejected branch, so a status change here left the stored number
-      // stale until some unrelated accept happened to trigger a recompute. That
-      // made the correction land late and detached from its cause, which is the
-      // half of this defect that made it hard to attribute.
-      if (input.status === 'fulfilled' && firstFulfillment) {
+        changed = true;
         await db.updateCampaignPledgedTotals(contribution.campaignId);
       }
 
+      // Fulfilled is the payoff moment. Idempotent: the payoff runs only for
+      // the call that actually moved the row, so a repeat is a no-op.
+      if (input.status === 'fulfilled') {
+        if (prevStatus === 'thanked') return { success: true, changed: false };
+        if (hoursNeed && item) {
+          // Serving the commitment: only from accepted, and the conditional
+          // update makes delivery idempotent under concurrent clicks.
+          if (prevStatus !== 'accepted') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only accepted contributions can be marked fulfilled' });
+          }
+          const database = await requireDb();
+          firstFulfillment = await database.transaction(async (tx) => {
+            const result: any = await tx.update(campaignContributionsTable)
+              .set({
+                status: 'fulfilled',
+                fulfilledAt: new Date(),
+                ...(ownerNotes !== undefined ? { ownerNotes } : {}),
+              })
+              .where(and(
+                eq(campaignContributionsTable.id, contribution.id),
+                eq(campaignContributionsTable.status, 'accepted'),
+                isNull(campaignContributionsTable.fulfilledAt),
+              ));
+            if (affectedRows(result) !== 1) return false;
+            await db.recomputeNeedCounters(item.id, tx);
+            return true;
+          });
+        } else {
+          // Claims must be accepted first; legacy freeform contributions (no
+          // need attached) may go straight from pending.
+          const allowedFrom: string[] = contribution.campaignItemId
+            ? ['accepted']
+            : ['pending', 'accepted'];
+          if (!allowedFrom.includes(prevStatus)) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only accepted contributions can be marked fulfilled' });
+          }
+          if (!contribution.fulfilledAt) {
+            const affected = await conditionalStatusUpdate(contribution.id, allowedFrom, {
+              status: 'fulfilled',
+              fulfilledAt: new Date(),
+              ...(ownerNotes !== undefined ? { ownerNotes } : {}),
+            });
+            firstFulfillment = affected === 1;
+            // Delivery confirms the slots (solid progress on the need).
+            if (firstFulfillment && contribution.campaignItemId) {
+              const db2 = await getDb();
+              if (db2) {
+                await db2.update(campaignItemsTable)
+                  .set({ quantityDelivered: sql`${campaignItemsTable.quantityDelivered} + ${contribution.quantityPledged}` })
+                  .where(eq(campaignItemsTable.id, contribution.campaignItemId));
+              }
+            }
+          }
+        }
+
+        if (firstFulfillment) {
+          changed = true;
+          await deliveryPayoff(contribution, campaign, item);
+          // Recompute after the payoff too, so the stored totals never lag.
+          await db.updateCampaignPledgedTotals(contribution.campaignId);
+        }
+      }
+
       // Thanked closes the loop: a note is required, a photo is optional.
+      let thanksNote = '';
       if (input.status === 'thanked') {
         if (prevStatus !== 'fulfilled') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only fulfilled contributions can be thanked' });
         }
-        const note = input.acknowledgedNote ? sanitizeInput(input.acknowledgedNote).trim() : '';
-        if (!note) {
+        thanksNote = input.acknowledgedNote ? sanitizeInput(input.acknowledgedNote).trim() : '';
+        if (!thanksNote) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'A thank-you note is required' });
         }
-        await db.updateContribution(input.contributionId, {
+        const affected = await conditionalStatusUpdate(contribution.id, ['fulfilled'], {
           status: 'thanked',
           acknowledgedAt: new Date(),
-          acknowledgedNote: note,
+          acknowledgedNote: thanksNote,
           acknowledgedImageUrl: input.acknowledgedImageUrl,
         });
+        if (affected === 0) throw raced();
+        changed = true;
       }
 
-      // Send email notification to contributor (accepted / rejected /
-      // fulfilled; thanks stays in-app). A repeated fulfilled call sends
-      // nothing.
-      const sendsEmail = input.status === 'accepted' || input.status === 'rejected'
-        || (input.status === 'fulfilled' && firstFulfillment);
-      if (sendsEmail) {
-        try {
-          const { sendEmail, emailTemplates } = await import("../_core/email");
-          const template = input.status === 'accepted'
-            ? emailTemplates.contributionAccepted
-            : input.status === 'rejected'
-              ? emailTemplates.contributionRejected
-              : emailTemplates.contributionFulfilled;
-          const emailContent = template(
-            contribution.contributorName,
-            contribution.title,
-            campaign.title,
-            input.ownerNotes
-          );
+      if (!changed) return { success: true, changed: false };
 
-          await sendEmail({
-            to: contribution.contributorEmail,
-            subject: emailContent.subject,
-            html: emailContent.html,
-            template: `contribution_${input.status}`,
-            recipientName: contribution.contributorName,
+      // ── Tell people ─────────────────────────────────────────────────────
+      const noticeContribution = {
+        ...contribution,
+        quantityPledged: acceptedHours ?? contribution.quantityPledged,
+      };
+      if (contribution.userId) {
+        // Account holders: the notification spine only. It emails them by
+        // their campaignsEmail preference, so there is no direct email here.
+        const args = { campaign, contribution: noticeContribution, item, note: ownerNotes ?? null, actorId };
+        if (input.status === 'accepted') await notifyProposalAccepted(args);
+        else if (input.status === 'rejected') await notifyProposalDeclined(args);
+        else if (input.status === 'released') await notifyReleased(args);
+        else if (input.status === 'fulfilled') await notifyDelivered(args);
+        else if (input.status === 'thanked') await notifyThanked({ ...args, note: thanksNote });
+      } else if (input.status === 'accepted' || input.status === 'rejected' || input.status === 'fulfilled') {
+        // No account: the direct emails they get today. Released and thanks
+        // send nothing (the stewards talk to them directly).
+        await sendContributionStatusEmail(input.status, {
+          campaign,
+          contribution: noticeContribution,
+          item,
+          ownerNotes: ownerNotes ?? null,
+        });
+      }
+      if (roleJustFilled && item) {
+        await notifyRoleFilled({ campaign, item, triggerContributionId: contribution.id, actorId });
+      }
+
+      return { success: true, changed: true, ...(acceptedHours != null ? { acceptedHours, roleFilled: roleJustFilled } : {}) };
+    }),
+
+  // Change the hours an accepted person holds on an hours need. Stewards
+  // only. Lowering frees hours for others; raising is capped at the hours
+  // still open.
+  setAcceptedHours: protectedProcedure
+    .input(z.object({
+      contributionId: z.number(),
+      hours: z.number().int().min(1).max(MAX_ROLE_HOURS),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const contribution = await db.getContributionById(input.contributionId);
+      if (!contribution) throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
+      const campaign = await db.getCampaignById(contribution.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized to manage this campaign');
+
+      const item = contribution.campaignItemId ? await db.getCampaignItemById(contribution.campaignItemId) : null;
+      if (!item || !isHoursNeed(item)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a role measured in hours a week has hours to change.' });
+      }
+      if (contribution.status !== 'accepted') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only an accepted place can have its hours changed.' });
+      }
+      if (campaign.status !== 'active') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "This campaign isn't live anymore, so its hours can't change." });
+      }
+      if (contribution.quantityPledged === input.hours) return { success: true, changed: false };
+
+      const database = await requireDb();
+      const { justFilled } = await database.transaction(async (tx) => {
+        const locked = await lockHoursItem(tx, item.id);
+        await assertCampaignOpen(tx, contribution.campaignId, "This campaign isn't live anymore, so its hours can't change.");
+        const standing = await standingHoursExcluding(tx, item.id, contribution.id);
+        const check = checkAcceptHours({ requested: input.hours, neededHours: locked.quantityWanted, standingExcludingThis: standing });
+        if (!check.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: check.message });
+        const result: any = await tx.update(campaignContributionsTable)
+          .set({
+            quantityPledged: input.hours,
+            estimatedValue: scaleRoleValue(locked.estimatedValue, locked.quantityWanted, input.hours),
+          })
+          .where(and(eq(campaignContributionsTable.id, contribution.id), eq(campaignContributionsTable.status, 'accepted')));
+        if (affectedRows(result) === 0) throw raced();
+        await db.recomputeNeedCounters(item.id, tx);
+        const wasFilled = standing + contribution.quantityPledged >= locked.quantityWanted;
+        return { justFilled: !wasFilled && standing + input.hours >= locked.quantityWanted };
+      });
+      await db.updateCampaignPledgedTotals(contribution.campaignId);
+
+      await notifyHoursChanged({
+        campaign,
+        contribution: { ...contribution, quantityPledged: input.hours },
+        item,
+        hours: input.hours,
+        actorId: ctx.user.id,
+      });
+      // Lowering never tells anyone else; raising to the full role does.
+      if (justFilled) {
+        await notifyRoleFilled({ campaign, item, triggerContributionId: contribution.id, actorId: ctx.user.id });
+      }
+      return { success: true, changed: true };
+    }),
+
+  // Change how many hours a week a role needs. Stewards only. This is how a
+  // steward reopens a filled role for more people, or trims one. It can never
+  // drop below the hours already accepted. Value per hour stays the same.
+  setNeedHours: protectedProcedure
+    .input(z.object({
+      itemId: z.number(),
+      hoursNeeded: z.number().int().min(1).max(MAX_ROLE_HOURS),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const item = await db.getCampaignItemById(input.itemId);
+      if (!item) throw new TRPCError({ code: 'NOT_FOUND', message: 'Need not found' });
+      const campaign = await db.getCampaignById(item.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized to manage this campaign');
+      if (!isHoursNeed(item)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a role measured in hours a week has hours to change.' });
+      }
+      if (['cancelled', 'completed', 'funded'].includes(campaign.status)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "This campaign is closed, so its roles can't change." });
+      }
+
+      const database = await requireDb();
+      await database.transaction(async (tx) => {
+        const locked = await lockHoursItem(tx, item.id);
+        const accepted = await standingHoursExcluding(tx, item.id, 0);
+        if (input.hoursNeeded < accepted) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `${accepted} hours a week are already accepted. Release someone or lower their hours first.`,
           });
-        } catch (emailError) {
-          console.warn('[Contribution] Failed to send status notification email:', emailError);
-          // Don't fail the mutation if email fails
         }
-      }
-
-      // Create in-app notification for the contributor if they have an account
-      const sendsNotification = input.status !== 'fulfilled' || firstFulfillment;
-      if (contribution.userId && sendsNotification) {
-        try {
-          const notificationType = input.status === 'accepted'
-            ? 'contribution_accepted'
-            : input.status === 'rejected'
-              ? 'contribution_rejected'
-              : input.status === 'thanked'
-                ? 'gratitude'
-                : 'system';
-
-          const notificationTitle = input.status === 'accepted'
-            ? `Contribution Accepted!`
-            : input.status === 'rejected'
-              ? `Contribution Update`
-              : input.status === 'thanked'
-                ? `A Thank You From ${campaign.projectName}`
-                : `Contribution Fulfilled`;
-
-          const notificationMessage = input.status === 'accepted'
-            ? `Your contribution "${contribution.title}" to ${campaign.title} has been accepted! ${input.ownerNotes ? `Note: ${input.ownerNotes}` : ''}`
-            : input.status === 'rejected'
-              ? `Your contribution "${contribution.title}" to ${campaign.title} was not accepted. ${input.ownerNotes ? `Reason: ${input.ownerNotes}` : 'Please contact the campaign owner for more details.'}`
-              : input.status === 'thanked'
-                ? `The stewards of ${campaign.title} sent you thanks for "${contribution.title}".`
-                : `Your contribution "${contribution.title}" to ${campaign.title} has been marked as fulfilled. Thank you for your support!`;
-
-          await db.createUserNotification({
-            userId: contribution.userId,
-            type: notificationType as any,
-            title: notificationTitle,
-            message: notificationMessage,
-            campaignId: contribution.campaignId,
-            contributionId: contribution.id,
-          });
-          if (!process.env.VITEST) console.log(`[Notification] In-app notification created for user ${contribution.userId}`);
-        } catch (notifError) {
-          console.warn('[Notification] Failed to create in-app notification:', notifError);
-        }
-      }
-
+        const value = locked.quantityWanted > 0
+          ? scaleRoleValue(locked.estimatedValue, locked.quantityWanted, input.hoursNeeded)
+          : locked.estimatedValue;
+        await tx.update(campaignItemsTable)
+          .set({ quantityWanted: input.hoursNeeded, hoursPerWeek: input.hoursNeeded, estimatedValue: value })
+          .where(eq(campaignItemsTable.id, item.id));
+        await db.recomputeNeedCounters(item.id, tx);
+        await db.recomputeCampaignValueTotals(item.campaignId, tx);
+      });
+      await db.updateCampaignPledgedTotals(item.campaignId);
       return { success: true };
     }),
 
@@ -939,7 +1462,13 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Can only withdraw pending contributions' });
       }
 
-      await db.updateContributionStatus(input.contributionId, 'withdrawn');
+      // Conditional, like every other status write: if a steward accepted it
+      // in the meantime, the withdraw is refused instead of leaving a
+      // 'withdrawn' row whose hours still count on the need.
+      const affected = await conditionalStatusUpdate(input.contributionId, ['pending'], { status: 'withdrawn' });
+      if (affected === 0) {
+        throw new TRPCError({ code: 'CONFLICT', message: 'The stewards just answered this offer. Refresh to see where it stands.' });
+      }
       return { success: true };
     }),
 
@@ -956,9 +1485,9 @@ export const campaignsRouter = router({
       if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
 
       // Steward, the contributor themselves, or an admin may formalize.
-      const isSteward = campaign.userId === ctx.user.id;
+      const isSteward = await canStewardCampaign(ctx.user, campaign);
       const isContributor = contribution.userId != null && contribution.userId === ctx.user.id;
-      if (!isSteward && !isContributor && ctx.user.role !== 'admin') {
+      if (!isSteward && !isContributor) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to formalize this contribution' });
       }
 
@@ -1053,30 +1582,70 @@ export const campaignsRouter = router({
       .map(c => toPublicCampaign(c, ctx.user));
   }),
 
-  // Update campaign status (owner only)
+  // Move a campaign between statuses. Security (2026-09-24): this used to let
+  // a campaign's owner set ANY status, so a creator could publish past review
+  // or mark their own campaign complete. The transition tables in
+  // shared/campaignStatus.ts now decide: stewards send a draft for review and
+  // cancel; publishing, completing and rejecting are admin moves.
   updateStatus: protectedProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected']),
+      reviewNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const campaign = await db.getCampaignById(input.id);
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
+      const role = isAdminUser(ctx.user)
+        ? 'admin'
+        : (await canStewardCampaign(ctx.user, campaign)) ? 'steward' : null;
+      if (!role) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to update this campaign' });
       }
-      await db.updateCampaignStatus(input.id, input.status);
+
+      const from = campaign.status as CampaignStatus;
+      const to = input.status;
+      if (from === to) return { success: true };
+      if (!canTransition(from, to, role)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `A campaign can't move from ${STATUS_WORDS[from] ?? from} to ${STATUS_WORDS[to] ?? to}.`,
+        });
+      }
+
+      if (to === 'cancelled') {
+        // One cancel service: closes offers, recomputes, tells everyone.
+        const result = await cancelCampaign({ campaignId: campaign.id, actor: ctx.user });
+        return { success: true, ...result };
+      }
 
       const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
+      const now = new Date();
+      const patch: Partial<typeof campaignsTable.$inferInsert> = { status: to, updatedAt: now };
       // Going live stamps the clocks the progress tracker counts from.
-      if (input.status === 'active' && !campaign.startedAt && db2) {
-        const now = new Date();
-        await db2.update(campaignsTable)
-          .set({ startedAt: now, publishedAt: now })
-          .where(eq(campaignsTable.id, input.id));
+      if (to === 'active' && !campaign.startedAt) {
+        patch.startedAt = now;
+        patch.publishedAt = now;
+      }
+      if (to === 'completed' && !campaign.completedAt) patch.completedAt = now;
+      if (role === 'admin' && (to === 'active' || to === 'rejected')) {
+        patch.reviewedBy = ctx.user.id;
+        patch.reviewedAt = now;
+        if (input.reviewNotes !== undefined) patch.adminNotes = sanitizeInput(input.reviewNotes);
+      }
+
+      // Conditional on the status we read, so two admins clicking at once
+      // cannot both apply (and double-count fundedCampaignCount below).
+      const result: any = await db2.update(campaignsTable)
+        .set(patch)
+        .where(and(eq(campaignsTable.id, input.id), eq(campaignsTable.status, from)));
+      const affected = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
+      if (affected === 0) {
+        throw new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
       }
 
       // A funded or completed campaign counts toward the land project's
@@ -1084,16 +1653,110 @@ export const campaignsRouter = router({
       // funded and completed cannot double-count.
       const fundedStatuses = ['funded', 'completed'];
       if (
-        fundedStatuses.includes(input.status)
-        && !fundedStatuses.includes(campaign.status)
+        fundedStatuses.includes(to)
+        && !fundedStatuses.includes(from)
         && campaign.applicationId
-        && db2
       ) {
         await db2.update(applicationsTable)
           .set({ fundedCampaignCount: sql`COALESCE(${applicationsTable.fundedCampaignCount}, 0) + 1` })
           .where(eq(applicationsTable.id, campaign.applicationId));
       }
 
+      // Tell the project's stewards (and, on completion, the account holders
+      // who contributed) on the notification spine. Never throws.
+      const reviewNotes = input.reviewNotes !== undefined ? sanitizeInput(input.reviewNotes) : null;
+      if (to === 'active') {
+        await notifyCampaignApproved({ campaign, reviewNotes, reviewedAt: now, actorId: ctx.user.id });
+      } else if (to === 'rejected') {
+        await notifyCampaignDeclined({ campaign, reviewNotes, reviewedAt: now, actorId: ctx.user.id });
+      } else if (fundedStatuses.includes(to) && !fundedStatuses.includes(from)) {
+        await notifyCampaignCompleted({ campaign, actorId: ctx.user.id });
+      }
+
+      return { success: true };
+    }),
+
+  // Cancel a campaign, with an optional message for everyone involved.
+  // Stewards cancel their own (draft, in review or live); admins also a
+  // sent-back one. server/lib/campaign-cancel.ts does the work; a repeat
+  // call returns alreadyCancelled and sends nothing.
+  cancel: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      message: z.string().max(2000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await cancelCampaign({ campaignId: input.id, actor: ctx.user, message: input.message });
+    }),
+
+  // Live campaigns that could use the energy of a cancelled campaign's
+  // people. Public fields only; [] for a campaign the viewer cannot see.
+  suggestAlternatives: publicProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign || !(await canViewCampaign(ctx.user, campaign))) return [];
+      const suggestions = await suggestAlternatives(campaign, 3);
+      return suggestions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        projectName: s.projectName,
+        location: s.location,
+        country: s.country,
+        isDemo: !!s.isDemo,
+        path: s.path,
+      }));
+    }),
+
+  // Whether the signed-in viewer stewards this campaign (the Manage button).
+  canSteward: protectedProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) return false;
+      return await canStewardCampaign(ctx.user, campaign);
+    }),
+
+  // How many people follow a campaign. Counts only, stewards only.
+  followerCounts: protectedProcedure
+    .input(z.object({ campaignId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can see its followers.");
+      return await db.getCampaignFollowerCounts(input.campaignId);
+    }),
+
+  // A steward sends their draft to the review queue. This is how a
+  // play-launched draft (plays.ts) reaches an admin.
+  submitForReview: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.id);
+      if (!campaign) throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can send it for review.");
+      if (campaign.status === 'pending_review') return { success: true };
+      if (!canTransition(campaign.status, 'pending_review', 'steward')) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a draft can be sent for review.' });
+      }
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const result: any = await db2.update(campaignsTable)
+        .set({ status: 'pending_review', updatedAt: new Date() })
+        .where(and(eq(campaignsTable.id, input.id), eq(campaignsTable.status, 'draft')));
+      const affected = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
+      if (affected === 0) {
+        throw new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
+      }
+      try {
+        const { notifyOwner } = await import("../_core/notification");
+        await notifyOwner({
+          title: `Campaign sent for review: ${campaign.title}`,
+          content: `${campaign.title} (${campaign.projectName}) is waiting in the campaign review queue.`,
+        });
+      } catch (err) {
+        console.warn('[Campaign] review notice to the site owner failed (non-fatal):', err);
+      }
       return { success: true };
     }),
 
@@ -1110,7 +1773,9 @@ export const campaignsRouter = router({
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "campaign_follow_email");
       const campaign = await db.getCampaignById(input.campaignId);
-      if (!campaign) {
+      // An unpublished campaign is invisible to visitors, so following it
+      // would leak its title and updates by email. Same answer as a missing id.
+      if (!campaign || !(await canViewCampaign(ctx.user, campaign))) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
       await db.upsertCampaignFollower({
@@ -1122,12 +1787,57 @@ export const campaignsRouter = router({
       return { success: true };
     }),
 
+  // "Tell me when crowdpooling opens." One row per email per Game season;
+  // the season comes from the server clock, never the client. Mailed only
+  // by admin Outbound. Always { ok: true }: never reveals whether an email
+  // is already on the list.
+  joinWaitlist: publicProcedure
+    .input(z.object({
+      email: z.string().email().max(320),
+      name: z.string().max(255).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "campaign_follow_email");
+      await db.upsertWaitlist({
+        seasonNumber: regenSeasonSpan(new Date()).seasonNumber,
+        email: input.email.toLowerCase().trim(),
+        name: input.name ? sanitizeInput(input.name) : null,
+        unsubscribeToken: nanoid(32),
+      });
+      return { ok: true };
+    }),
+
+  // The "Stop these emails" link on every list letter (campaign email
+  // followers and the waitlist). 'this' removes the rows that carry the
+  // token; 'all' removes every follower and waitlist row for that token's
+  // email. Always { ok: true }, so a guessed token reveals nothing. The
+  // token is never logged.
+  unsubscribeEmailFollow: publicProcedure
+    .input(z.object({
+      token: z.string().length(32),
+      scope: z.enum(['this', 'all']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "campaign_list_unsubscribe");
+      try {
+        const a = await db.deleteEmailFollowByToken(input.token, 'this');
+        const b = await db.deleteWaitlistByToken(input.token, 'this');
+        const email = a.email ?? b.email;
+        if (input.scope === 'all' && email) await db.deleteEmailListRowsForEmail(email);
+      } catch {
+        console.warn('[campaign-updates] unsubscribe failed');
+      }
+      return { ok: true };
+    }),
+
   // Follow a campaign with an account. Idempotent.
   follow: protectedProcedure
     .input(z.object({ campaignId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const campaign = await db.getCampaignById(input.campaignId);
-      if (!campaign) {
+      // Following an unpublished campaign would send its title, updates and
+      // cancel message to a stranger's bell and inbox.
+      if (!campaign || !(await canViewCampaign(ctx.user, campaign))) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
       const db2 = await getDb();
@@ -1165,9 +1875,7 @@ export const campaignsRouter = router({
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to post updates for this campaign' });
-      }
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized to post updates for this campaign');
 
       const title = sanitizeInput(input.title);
       const { id, updateNumber } = await db.createCampaignUpdate({
@@ -1178,24 +1886,15 @@ export const campaignsRouter = router({
         imageUrls: input.imageUrls,
       });
 
-      // Fan out to account-holder followers. Best-effort: a notification
-      // failure never blocks publishing.
-      try {
-        const followerIds = await db.getCampaignFollowerUserIds(input.campaignId);
-        for (const userId of followerIds) {
-          if (userId === ctx.user.id) continue;
-          await db.createUserNotification({
-            userId,
-            type: 'campaign_update',
-            title: `Update #${updateNumber} from ${campaign.title}`,
-            message: title,
-            campaignId: input.campaignId,
-            link: `/campaign/${input.campaignId}`,
-          });
-        }
-      } catch (notifError) {
-        console.warn('[Campaign] Update fan-out failed:', notifError);
-      }
+      // Fan out to account-holder followers on the notification spine
+      // (bell, push, and the daily digest for email). Email-only followers
+      // hear in the next letter from the ReGen Civics team (admin Outbound).
+      // Never throws, so a notice failure never blocks publishing.
+      await notifyUpdatePosted({
+        campaign,
+        update: { id, updateNumber, title },
+        authorId: ctx.user.id,
+      });
 
       return { id, updateNumber };
     }),
@@ -1203,7 +1902,8 @@ export const campaignsRouter = router({
   // Public updates journal, newest first.
   listUpdates: publicProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
       return await db.listCampaignUpdates(input.campaignId);
     }),
 
@@ -1213,7 +1913,8 @@ export const campaignsRouter = router({
       campaignId: z.number(),
       limit: z.number().int().min(1).max(100).default(30),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
       const db2 = await getDb();
       if (!db2) return [];
 
@@ -1280,9 +1981,7 @@ export const campaignsRouter = router({
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to view analytics' });
-      }
+      await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can see its numbers.");
 
       const analytics = await db.getCampaignAnalytics(input.campaignId);
       const conversion = await db.getCampaignConversionRate(input.campaignId);
@@ -1313,9 +2012,7 @@ export const campaignsRouter = router({
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to upload images to this campaign' });
-      }
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized to upload images to this campaign');
 
       // Validate file size (max 5MB)
       if (input.fileSize > 5 * 1024 * 1024) {
@@ -1354,7 +2051,8 @@ export const campaignsRouter = router({
   // Get all images for a campaign
   getImages: publicProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
       return await db.getCampaignImages(input.campaignId);
     }),
 
@@ -1362,7 +2060,11 @@ export const campaignsRouter = router({
   deleteImage: protectedProcedure
     .input(z.object({ imageId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const deleted = await db.deleteCampaignImage(input.imageId, ctx.user.id);
+      // The uploader, or any steward of the image's campaign.
+      const image = await db.getCampaignImageById(input.imageId);
+      const campaign = image ? await db.getCampaignById(image.campaignId) : null;
+      const asSteward = !!campaign && (await canStewardCampaign(ctx.user, campaign));
+      const deleted = await db.deleteCampaignImage(input.imageId, ctx.user.id, asSteward);
       if (!deleted) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Image not found or not authorized to delete' });
       }
@@ -1380,9 +2082,7 @@ export const campaignsRouter = router({
       if (!campaign) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
       }
-      if (campaign.userId !== ctx.user.id && ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
-      }
+      await assertCampaignSteward(ctx.user, campaign, 'Not authorized');
       await db.setCampaignCoverImage(input.campaignId, input.imageId);
       return { success: true };
     }),

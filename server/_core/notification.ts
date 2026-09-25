@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { ENV } from "./env";
+import { textForEmail } from "../../shared/htmlText";
 
 export type NotificationPayload = {
   title: string;
@@ -67,7 +68,9 @@ export async function notifyOwner(payload: NotificationPayload): Promise<boolean
         to: [ownerEmail],
         subject: title,
         text: content,
-        html: `<div style="font-family:sans-serif;max-width:600px"><h2>${title}</h2><p style="white-space:pre-wrap">${content}</p></div>`,
+        // Title and content carry user text (campaign titles, contributor names).
+        // Escaped so a crafted title cannot inject markup into the owner email.
+        html: `<div style="font-family:sans-serif;max-width:600px"><h2>${textForEmail(title)}</h2><p style="white-space:pre-wrap">${textForEmail(content)}</p></div>`,
       }),
     });
 

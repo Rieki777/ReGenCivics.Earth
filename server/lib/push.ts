@@ -17,12 +17,38 @@ import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { notifications, pushSubscriptions } from "../../drizzle/schema";
 import type { NotificationInput } from "./forum-notify";
+import { CAMPAIGN_NOTIFICATION_TYPES, parseStoredPrefs } from "./notification-email";
 
 const FAILURE_PRUNE_THRESHOLD = 5;
 
 /** Types that go to push when the user has subscribed. Thread activity and
- * milestones stay in-app only, same reasoning as email. */
-const PUSHABLE_TYPES = new Set(["mention", "forum_reply", "guide_reply", "elder_reply", "gratitude"]);
+ * milestones stay in-app only, same reasoning as email. Campaign notices
+ * push too, except campaign updates, which fan out to every follower at
+ * once and arrive through the bell and the digest instead. */
+const CAMPAIGN_PUSH_TYPES = CAMPAIGN_NOTIFICATION_TYPES.filter((t) => t !== "campaign_update");
+const PUSHABLE_TYPES = new Set<string>([
+  "mention", "forum_reply", "guide_reply", "elder_reply", "gratitude",
+  ...CAMPAIGN_PUSH_TYPES,
+]);
+
+/** Which *Push pref key governs a type. Pure. */
+export function pushPrefKeyFor(type: string): string {
+  if (type === "mention") return "mentionsPush";
+  if (type === "gratitude") return "gratitudePush";
+  if ((CAMPAIGN_PUSH_TYPES as readonly string[]).includes(type)) return "campaignsPush";
+  return "repliesPush";
+}
+
+/** Collapse tag: one per campaign, else one per forum post. Pure. */
+export function pushTagFor(input: Pick<NotificationInput, "campaignId" | "postId">): string | undefined {
+  if (input.campaignId) return `campaign-${input.campaignId}`;
+  if (input.postId) return `post-${input.postId}`;
+  return undefined;
+}
+
+export function isPushableType(type: string): boolean {
+  return PUSHABLE_TYPES.has(type);
+}
 
 export function isPushConfigured(): boolean {
   return Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
@@ -109,7 +135,8 @@ export async function sendPush(userId: number, payload: PushPayload): Promise<nu
 /**
  * Push the OS-level copy of a just-inserted notification. Called from
  * insertNotification only on a FRESH insert; pushedAt is the second guard.
- * Respects per-type push prefs (mentionsPush / repliesPush / gratitudePush
+ * Respects per-type push prefs (mentionsPush / repliesPush / gratitudePush /
+ * campaignsPush
  * on playerProfiles.notificationPrefs, default true — the subscription
  * itself is the master opt-in).
  */
@@ -123,18 +150,14 @@ export async function maybeSendPush(input: NotificationInput): Promise<void> {
   // email module doesn't model; read them loosely with true as default.
   const { getPlayerProfileByUserId } = await import("../db");
   const profile = await getPlayerProfileByUserId(input.userId);
-  const raw = (profile?.notificationPrefs ?? {}) as Record<string, unknown>;
-  const prefKey =
-    input.type === "mention" ? "mentionsPush"
-    : input.type === "gratitude" ? "gratitudePush"
-    : "repliesPush";
-  if (raw[prefKey] === false) return;
+  const raw = parseStoredPrefs(profile?.notificationPrefs);
+  if (raw[pushPrefKeyFor(input.type)] === false) return;
 
   const delivered = await sendPush(input.userId, {
     title: input.title,
     body: input.body,
     url: input.link,
-    tag: input.postId ? `post-${input.postId}` : undefined,
+    tag: pushTagFor(input),
   });
 
   if (delivered > 0) {

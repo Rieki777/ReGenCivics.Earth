@@ -26,13 +26,14 @@ import { Input } from "@/components/ui/input";
 import { SEO, pageSEO } from "@/components/SEO";
 import { pageCopy } from "@/data/pageCopy";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { copyToClipboard } from "@/lib/clipboard";
 import { trpc } from "@/lib/trpc";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useCountUp } from "@/hooks/useCountUp";
 import { cdnImg } from "@/lib/utils";
+import { projectPathForCampaign } from "@shared/projectKey";
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Card model: what the gallery renders, mapped from DB campaign rows
@@ -63,6 +64,8 @@ export interface GalleryCampaign {
   isDemo: boolean;
   daoLink: string | null;
   createdAtMs: number;
+  /** The land project's own page (shared/projectKey.ts). */
+  projectPath?: string;
 }
 
 // Currency symbols
@@ -444,22 +447,34 @@ function HowCrowdPoolingWorks() {
 // ────────────────────────────────────────────────────────────────────────────────
 // "Get Notified" Email Capture (150-14)
 //
-// The subscribe API is per-campaign (campaigns.subscribeByEmail), so this
-// page-level form subscribes the visitor to the flagship campaign: the first
-// active real campaign, or the first demo campaign when no real one is live
-// yet. Per-campaign subscribing lives on each campaign page.
+// Joins the crowdpool waitlist for the current Game season
+// (campaigns.joinWaitlist; the server picks the season). Nobody is emailed
+// automatically: Rye writes to this list from admin Outbound, and every
+// letter carries a "Stop these emails" link. It needs no campaign, so it
+// shows even when the gallery is empty. Per-campaign email follows live on
+// each campaign page.
 // ────────────────────────────────────────────────────────────────────────────────
-function GetNotifiedForm({ campaignId }: { campaignId: number }) {
+function GetNotifiedForm() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const subscribe = trpc.campaigns.subscribeByEmail.useMutation();
+  const subscribe = trpc.campaigns.joinWaitlist.useMutation();
+
+  // A project page with no campaign links here as /campaigns#get-notified.
+  // wouter navigation never scrolls to a hash, so do it once this mounts.
+  useEffect(() => {
+    if (window.location.hash !== "#get-notified") return;
+    const t = window.setTimeout(() => {
+      document.getElementById("get-notified")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
     try {
-      await subscribe.mutateAsync({ campaignId, email, name: name || undefined });
+      await subscribe.mutateAsync({ email: email.trim(), name: name.trim() || undefined });
       setSubmitted(true);
       toast.success("You're on the list!", { description: "We'll email you when crowd pooling opens." });
     } catch {
@@ -616,6 +631,7 @@ export default function CrowdPoolingProjects() {
           isDemo: c.isDemo === 1,
           daoLink: c.daoLink || null,
           createdAtMs: c.createdAt ? new Date(c.createdAt).getTime() : 0,
+          projectPath: projectPathForCampaign(c),
         };
       });
   }, [campaignRows]);
@@ -663,13 +679,6 @@ export default function CrowdPoolingProjects() {
 
   // Impact strip counts real campaigns only; demos are excluded (spec Part D).
   const realLiveCampaigns = campaigns.filter(p => !p.isDemo);
-
-  // Flagship campaign for the page-level notify form: first active real
-  // campaign, else first demo. See GetNotifiedForm comment.
-  const flagship =
-    campaigns.find(p => !p.isDemo && p.status === "active") ??
-    campaigns.find(p => p.isDemo) ??
-    campaigns[0];
 
   const activeCount = campaigns.filter(p => p.status === "active").length;
   const fundedCount = campaigns.filter(p => p.status === "funded").length;
@@ -1081,6 +1090,15 @@ export default function CrowdPoolingProjects() {
                             <ProjectShareSheet project={project} />
                           </div>
                         </div>
+                        {project.projectPath && (
+                          <Link
+                            href={project.projectPath}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center min-h-11 mt-1 px-1 text-sm font-medium text-[#7dd87d] hover:underline"
+                          >
+                            Project page
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
@@ -1117,12 +1135,10 @@ export default function CrowdPoolingProjects() {
             <ImpactStrip projects={realLiveCampaigns} />
           </div>
 
-          {/* Get Notified (150-14): subscribes to the flagship campaign */}
-          {flagship && (
-            <div className="mt-8">
-              <GetNotifiedForm campaignId={flagship.id} />
-            </div>
-          )}
+          {/* Get Notified (150-14): joins the season's crowdpool waitlist */}
+          <div id="get-notified" className="mt-8 scroll-mt-24">
+            <GetNotifiedForm />
+          </div>
 
           {/* CTA Section */}
           <div className="mt-8 bg-gradient-to-br from-[#0d2818]/80 to-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/20 rounded-2xl p-8 text-white text-center">

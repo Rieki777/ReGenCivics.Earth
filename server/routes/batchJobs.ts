@@ -438,22 +438,31 @@ async function getGameVariableOr(key: string, fallback: number): Promise<number>
 }
 
 export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number; reminders: number }> {
-  const { createUserNotification } = await import("../db");
   const { insertNotification } = await import("../lib/forum-notify");
+  const { notifyClaimExpired } = await import("../lib/campaign-notify");
 
   let expired = 0;
   let reminders = 0;
   const touchedCampaigns = new Set<number>();
 
   // Pass 1: expire overdue claims and release their slots.
+  //
+  // Hours needs (a role measured in hours a week, capacityUnit
+  // 'hours_per_week') never expire: an accepted person holds their hours
+  // until a steward releases them. Their claimExpiresAt is NULL already;
+  // the join below skips them anyway, in case an old row still carries a
+  // date. The LEFT JOIN keeps freeform claims (no need attached).
   const [overdueRows] = await db.execute(sql`
     SELECT cc.id, cc.campaignId, cc.campaignItemId, cc.userId, cc.quantityPledged,
-           cc.title, c.userId AS ownerId, c.title AS campaignTitle
+           cc.title, c.userId AS ownerId, c.title AS campaignTitle,
+           c.projectName AS projectName, c.applicationId AS applicationId
     FROM campaign_contributions cc
     JOIN campaigns c ON c.id = cc.campaignId
+    LEFT JOIN campaign_items ci ON ci.id = cc.campaignItemId
     WHERE cc.status = 'accepted'
       AND cc.claimExpiresAt IS NOT NULL
       AND cc.claimExpiresAt < NOW()
+      AND (ci.id IS NULL OR NOT (ci.kind = 'role' AND ci.capacityUnit = 'hours_per_week'))
   `);
 
   for (const claim of ((overdueRows as any[]) ?? [])) {
@@ -473,31 +482,23 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     }
     expired++;
 
-    // Tell both sides. Best-effort: a notification failure never stops the sweep.
-    try {
-      if (claim.userId) {
-        await createUserNotification({
-          userId: claim.userId,
-          type: 'system',
-          title: 'Your claim expired',
-          message: `Your claim "${claim.title}" on ${claim.campaignTitle} passed its delivery window, so the need is open again. You can claim it again any time.`,
-          campaignId: claim.campaignId,
-          contributionId: claim.id,
-          link: `/campaign/${claim.campaignId}`,
-        });
-      }
-      await createUserNotification({
-        userId: claim.ownerId,
-        type: 'system',
-        title: 'A claim expired',
-        message: `The claim "${claim.title}" on ${claim.campaignTitle} expired, so its slots are open again.`,
-        campaignId: claim.campaignId,
-        contributionId: claim.id,
-        link: `/campaign/${claim.campaignId}`,
-      });
-    } catch (err) {
-      console.warn('[crowdpool-sweep] expiry notification failed:', err);
-    }
+    // Tell the contributor and every project steward on the notification
+    // spine. notifyClaimExpired never throws, so the sweep carries on.
+    await notifyClaimExpired({
+      campaign: {
+        id: Number(claim.campaignId),
+        title: String(claim.campaignTitle ?? ''),
+        projectName: claim.projectName ?? null,
+        applicationId: claim.applicationId != null ? Number(claim.applicationId) : null,
+        userId: Number(claim.ownerId),
+      },
+      contribution: {
+        id: Number(claim.id),
+        campaignId: Number(claim.campaignId),
+        userId: claim.userId != null ? Number(claim.userId) : null,
+        title: String(claim.title ?? ''),
+      },
+    });
 
     // An expired claim is no longer a standing pledge, so the campaign's totals
     // have to stop counting it. Without this the value sat in pledgedTotal until
@@ -884,6 +885,17 @@ export const batchJobsRouter = router({
       crowdpoolReminders = result.reminders;
     } catch (e: any) { errors.push(`Step 9 (crowdpool claims): ${e.message}`); }
 
+    let cancellationEmailsSent = 0;
+    try {
+      // Step 9b: Cancellation emails still owed. A cancelled campaign emails
+      // contributors who have no account; a send the hourly email cap held
+      // back leaves cancelNoticedAt NULL, and this retries it daily for
+      // campaigns cancelled in the last 30 days.
+      const { retryPendingCancellationEmails } = await import("../lib/campaign-cancel");
+      const result = await retryPendingCancellationEmails();
+      cancellationEmailsSent = result.sent;
+    } catch (e: any) { errors.push(`Step 9b (cancellation emails): ${e.message}`); }
+
     let partnerLinksChecked = 0;
     let partnerLinksUpdated = 0;
     try {
@@ -908,7 +920,7 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, partnerLinksChecked, partnerLinksUpdated };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, cancellationEmailsSent, partnerLinksChecked, partnerLinksUpdated };
   }),
 
   // Manual trigger for the Free Voyage Giveaway sweep (admin-only). The same work

@@ -1538,6 +1538,10 @@ export const notificationsRouter = router({
       return {
         ...resolvePrefs(profile?.notificationPrefs),
         emailDigestFrequency: profile?.emailDigestFrequency ?? 'monthly',
+        // Prefs live on the player profile. An account without one (a
+        // contributor who signed up from a campaign email) cannot save them
+        // yet, and the settings page says so instead of pretending.
+        hasProfile: !!profile,
       };
     }),
 
@@ -1547,17 +1551,35 @@ export const notificationsRouter = router({
         repliesEmail: z.enum(['immediate', 'daily', 'off']).optional(),
         gratitudeEmail: z.enum(['daily', 'off']).optional(),
         forumInApp: z.boolean().optional(),
+        campaignsEmail: z.enum(['immediate', 'daily', 'off']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { resolvePrefs } = await import("../lib/notification-email");
+        const { mergeNotificationPrefs } = await import("../lib/notification-email");
         const db2 = await getDb();
-        if (!db2) return { success: false };
+        // A thrown error, never { success: false }: the page shows "Saved"
+        // on any answer that is not an error.
+        if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: "We couldn't save that. Try again in a moment." });
         const profile = await db.getPlayerProfileByUserId(ctx.user.id);
-        const merged = { ...resolvePrefs(profile?.notificationPrefs), ...input };
+        if (!profile) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'Make your player profile first, then you can choose which emails you get.',
+          });
+        }
+        // Merge over everything stored, so the legacy toggles
+        // (communityUpdates, questAnnouncements, governanceUpdates) and the
+        // *Push keys survive a save. resolvePrefs alone used to drop them.
+        const merged = mergeNotificationPrefs(profile?.notificationPrefs, input);
         const { playerProfiles } = await import("../../drizzle/schema");
-        await db2.update(playerProfiles)
+        const result: any = await db2.update(playerProfiles)
           .set({ notificationPrefs: merged })
           .where(eq(playerProfiles.userId, ctx.user.id));
+        // Never report a save that wrote nothing. affectedRows counts matched
+        // rows here (mysql2 default), so an unchanged value still reads 1.
+        const matched = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
+        if (matched === 0) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: "We couldn't save that. Try again in a moment." });
+        }
         return { success: true, prefs: merged };
       }),
   }),

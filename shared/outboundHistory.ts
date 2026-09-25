@@ -17,10 +17,33 @@ export const HISTORY_VISIBLE_STATUSES = [
 
 export type HistoryVisibleStatus = (typeof HISTORY_VISIBLE_STATUSES)[number];
 
+/**
+ * A list audience (2026-09-24): people who asked for campaign news by email,
+ * or to hear when crowdpooling opens. When an audience carries `list`, the
+ * list replaces the newsletter `sources`. Mailed only from admin Outbound;
+ * every list letter carries the recipient's own token unsubscribe link.
+ */
+export type OutboundAudienceList =
+  | { kind: "campaign"; campaignId: number }
+  | { kind: "all_campaigns" }
+  | { kind: "waitlist"; seasonNumber: number };
+
 export type HistoryAudience = {
   sources: string[];
   activeOnly: boolean;
+  list?: OutboundAudienceList;
 };
+
+/** A valid list from stored JSON, or null. Unknown shapes are ignored. */
+export function parseAudienceList(raw: unknown): OutboundAudienceList | null {
+  if (!raw || typeof raw !== "object") return null;
+  const rec = raw as Record<string, unknown>;
+  const positiveInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v > 0;
+  if (rec.kind === "campaign" && positiveInt(rec.campaignId)) return { kind: "campaign", campaignId: rec.campaignId };
+  if (rec.kind === "all_campaigns") return { kind: "all_campaigns" };
+  if (rec.kind === "waitlist" && positiveInt(rec.seasonNumber)) return { kind: "waitlist", seasonNumber: rec.seasonNumber };
+  return null;
+}
 
 export type DeliveryLogRow = {
   id: number;
@@ -105,11 +128,25 @@ export function parseHistoryAudience(raw: unknown): HistoryAudience {
   const sources = Array.isArray(rec.sources)
     ? rec.sources.filter((s): s is string => typeof s === "string" && s.length > 0 && s !== "all")
     : [];
-  return { sources, activeOnly: rec.activeOnly !== false };
+  const list = parseAudienceList(rec.list);
+  // `list` only when present, so an old audience parses to exactly
+  // { sources, activeOnly } and its stored hash still matches.
+  return list ? { sources, activeOnly: rec.activeOnly !== false, list } : { sources, activeOnly: rec.activeOnly !== false };
 }
 
-export function summarizeAudience(raw: unknown): string {
-  const { sources } = parseHistoryAudience(raw);
+/** Plain label for a list audience. Pass campaign titles to name a campaign's list. */
+export function summarizeAudienceList(list: OutboundAudienceList, campaignTitles?: Record<number, string>): string {
+  if (list.kind === "campaign") {
+    const title = campaignTitles?.[list.campaignId];
+    return `Email followers of ${title ? title : `campaign ${list.campaignId}`}`;
+  }
+  if (list.kind === "all_campaigns") return "Everyone following a campaign by email";
+  return `Crowdpool waitlist, Season ${list.seasonNumber}`;
+}
+
+export function summarizeAudience(raw: unknown, campaignTitles?: Record<number, string>): string {
+  const { sources, list } = parseHistoryAudience(raw);
+  if (list) return summarizeAudienceList(list, campaignTitles);
   if (sources.length === 0) return "All active subscribers";
   const labels = sources.map(sourceLabel);
   if (labels.length === 1) return `Active ${labels[0]} subscribers`;
@@ -118,8 +155,26 @@ export function summarizeAudience(raw: unknown): string {
 }
 
 export function audienceToWriteSource(raw: unknown): string {
-  const { sources } = parseHistoryAudience(raw);
+  const { sources, list } = parseHistoryAudience(raw);
+  // A list letter has no newsletter source. "list" is never a valid source,
+  // so a caller that ignores audienceToWriteList cannot mistake it for one.
+  if (list) return "list";
   return sources.length === 1 ? sources[0] : "all";
+}
+
+/** The list a letter went to, so Duplicate keeps it and never widens to everyone. */
+export function audienceToWriteList(raw: unknown): OutboundAudienceList | null {
+  return parseHistoryAudience(raw).list ?? null;
+}
+
+/** Campaign ids named by list audiences, for looking up their titles. */
+export function audienceCampaignIds(raws: unknown[]): number[] {
+  const ids = new Set<number>();
+  for (const raw of raws) {
+    const list = parseHistoryAudience(raw).list;
+    if (list?.kind === "campaign") ids.add(list.campaignId);
+  }
+  return Array.from(ids);
 }
 
 /**
@@ -252,6 +307,7 @@ export function attachHistoryStats(
   issues: HistoryIssueInput[],
   recipients: Array<{ issueId: number; emailLogId: number | null; status: string }>,
   logs: DeliveryLogRow[],
+  campaignTitles?: Record<number, string>,
 ): HistoryListItem[] {
   const logsById = new Map(logs.map((log) => [log.id, log]));
   const recipsByIssue = new Map<number, Array<{ emailLogId: number | null; status: string }>>();
@@ -272,7 +328,7 @@ export function attachHistoryStats(
     return {
       ...issue,
       subjectDisplay: cleanLetterSubject(issue.subject),
-      audienceSummary: summarizeAudience(issue.audience),
+      audienceSummary: summarizeAudience(issue.audience, campaignTitles),
       statusLabel: historyStatusLabel(issue.status, issue.failedCount),
       stats,
       when: historyWhen(issue),

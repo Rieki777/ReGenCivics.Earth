@@ -209,6 +209,17 @@ describe("campaign visibility", () => {
       expect(canSeeCampaign(ANON, c), `${status} should stay public`).toBe(true);
     }
   });
+
+  it("keeps a campaign cancelled before it ever went live with its creator and admins", () => {
+    const neverLive = syntheticCampaign({ status: "cancelled", startedAt: null, publishedAt: null });
+    expect(canSeeCampaign(ANON, neverLive)).toBe(false);
+    expect(canSeeCampaign(asUser(99), neverLive)).toBe(false);
+    expect(canSeeCampaign(asUser(42), neverLive)).toBe(true);
+    expect(canSeeCampaign(ADMIN, neverLive)).toBe(true);
+    // Either clock is enough: going live stamps both.
+    expect(canSeeCampaign(ANON, { ...neverLive, startedAt: new Date() })).toBe(true);
+    expect(canSeeCampaign(ANON, { ...neverLive, publishedAt: new Date() })).toBe(true);
+  });
 });
 
 // ── governance ──────────────────────────────────────────────────────────────

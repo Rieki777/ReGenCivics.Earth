@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useSearch } from 'wouter';
+import { projectPathForApplication, projectPathForCampaignFocus } from '@shared/projectKey';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import {
   User,
@@ -1297,6 +1298,14 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                   <div>
                     <p className="text-white font-semibold">{claim.orgName}</p>
                     <p className="text-[#7dd87d] text-xs">{claim.orgType === "land_project" ? "Land Project" : "Alliance Org"} · Verified Steward</p>
+                    {claim.orgType === "land_project" && isDbListing && (
+                      <Link
+                        href={projectPathForApplication(parseInt(claim.orgId), claim.orgName)}
+                        className="inline-block mt-1 text-xs font-medium text-white underline underline-offset-2 hover:text-[#7dd87d]"
+                      >
+                        Open the project page
+                      </Link>
+                    )}
                   </div>
                   {pending.length > 0 && (
                     <span className="text-xs px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] font-medium">
@@ -1801,6 +1810,37 @@ function ReferralStatsCard() {
 }
 
 // ─── Contributions Tab ───────────────────────────────────────────────────────
+/**
+ * Offers made on campaigns before someone had an account link to it by email
+ * on every sign-in. This button runs the same linking on demand, for someone
+ * who stayed signed in here while offering signed out somewhere else.
+ */
+function FindEarlierContributions() {
+  const utils = trpc.useUtils();
+  const [result, setResult] = useState<string | null>(null);
+  const claim = trpc.campaigns.claimMyContributions.useMutation({
+    onSuccess: (r) => {
+      const n = r?.linked ?? 0;
+      setResult(n > 0 ? `Linked ${n} contribution${n === 1 ? "" : "s"} to your account. They show on each project's page.` : "Nothing new to link.");
+      if (n > 0) void utils.campaigns.myContributions.invalidate();
+    },
+    onError: () => setResult("We couldn't check right now. Try again in a moment."),
+  });
+  return (
+    <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center gap-2">
+      <button
+        type="button"
+        onClick={() => { setResult(null); claim.mutate(); }}
+        disabled={claim.isPending}
+        className="inline-flex items-center min-h-11 py-2 text-left text-sm text-[#7dd87d] underline underline-offset-2 hover:text-white disabled:opacity-60"
+      >
+        {claim.isPending ? "Looking..." : "Find contributions I made before I had an account"}
+      </button>
+      {result && <span className="text-sm text-white/80" role="status">{result}</span>}
+    </div>
+  );
+}
+
 function ContributionsTab({
   walletAddress,
   onLinkWallet,
@@ -2312,7 +2352,7 @@ function SubmissionsTab() {
             status={campaign.status}
             statusColor={campaignStatusColor(campaign.status)}
             updatedAt={campaign.updatedAt}
-            primaryAction={{ label: "Manage", href: `/campaign/${campaign.id}/manage` }}
+            primaryAction={{ label: "Manage", href: `${projectPathForCampaignFocus(campaign)}#steward-tools` }}
             secondaryAction={{ label: "Analytics", href: `/campaign/${campaign.id}/analytics` }}
           />
         )}
@@ -2836,6 +2876,7 @@ export default function PlayerProfile() {
                       onSyncTokens={() => syncTokensMutation.mutate()}
                       syncIsPending={syncTokensMutation.isPending}
                     />
+                    <FindEarlierContributions />
                   </div>
                 </AnimatedSection>
                 </ErrorBoundary>

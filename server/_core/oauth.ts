@@ -583,6 +583,9 @@ export function registerOAuthRoutes(app: Express) {
       const verifyUrl = `${ENV.appUrl}/api/auth/email/verify?token=${token}`;
 
       await sendEmail({
+        // Its own hourly budget: campaign notices can never use up the cap
+        // and stop people signing in (server/_core/email.ts).
+        budget: 'auth',
         to: email,
         subject: "Your ReGen Civics login link",
         html: `

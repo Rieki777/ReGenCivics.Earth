@@ -3,7 +3,7 @@
  * Styles stay on the tags because email clients ignore stylesheets.
  */
 import sanitizeHtml from "sanitize-html";
-import { brandedLetterDocument, newsletterLegalFooterHtml, type LetterDocumentExtras } from "../../shared/letterHtml";
+import { brandedLetterDocument, letterLegalFooter, type LetterDocumentExtras } from "../../shared/letterHtml";
 import type { LetterLayout } from "../../shared/letterLayout";
 import { EMAIL_IMAGE_HOSTS, markdownToEmailHtml, wrapEmailHtml } from "../../shared/emailMarkdown";
 
@@ -54,9 +54,9 @@ export function emailDocumentFromMarkdown(
 ): string {
   const inner = sanitizeEmailHtml(markdownToEmailHtml(markdown, layout));
   if (layout === "plain") {
-    const href = (extras?.managePreferencesUrl || extras?.unsubscribeUrl || "").trim();
-    const legal = href ? newsletterLegalFooterHtml(href, extras?.postalAddress) : "";
-    return wrapEmailHtml(inner, legal);
+    // List mail carries its own footer (listFooter); newsletter mail the
+    // prefs footer. shared/letterHtml.ts decides.
+    return wrapEmailHtml(inner, letterLegalFooter(extras));
   }
   return brandedLetterDocument(inner, layout, extras);
 }

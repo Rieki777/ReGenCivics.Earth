@@ -94,6 +94,8 @@ vi.mock("@/lib/trpc", () => ({
                               },
                               listHistory: { useQuery: () => ({ data: [{ id: 11, subjectDisplay: "September letter", status: "scheduled", statusLabel: "Scheduled", audienceSummary: "3 subscribers", recipientCount: 3, sentCount: 0, failedCount: 0, sentAt: null, scheduledFor: "2026-09-11T16:00:00.000Z", createdAt: "2026-09-10T16:00:00.000Z", when: "2026-09-11T16:00:00.000Z", stats: { delivered: 0, opened: 0, clicked: 0, bounced: 0, complained: 0, failed: 0, total: 3, openPercent: null, clickPercent: null, bounceFailCount: 0 } }, { id: 10, subjectDisplay: "Already out", status: "sent", statusLabel: "Sent", audienceSummary: "3 subscribers", recipientCount: 3, sentCount: 3, failedCount: 0, sentAt: "2026-09-01T16:00:00.000Z", scheduledFor: null, createdAt: "2026-09-01T15:00:00.000Z", when: "2026-09-01T16:00:00.000Z", stats: { delivered: 3, opened: 0, clicked: 0, bounced: 0, complained: 0, failed: 0, total: 3, openPercent: 0, clickPercent: 0, bounceFailCount: 0 } }], isLoading: false }) },
                               getHistoryDetail: { useQuery: () => ({ data: null, isLoading: false }) },
+                              // Email-list audiences for the Write picker (campaign followers, waitlists).
+                              listAudiences: { useQuery: () => ({ data: { campaigns: [], allCampaigns: 0, waitlists: [] }, isLoading: false }) },
                   },
                   admin: {
                               broadcast: {

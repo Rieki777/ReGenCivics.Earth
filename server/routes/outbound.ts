@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { adminProcedure, rateLimited, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { newsletterIssues } from "../../drizzle/schema";
+import { campaigns, newsletterIssues } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { emailDocumentFromMarkdown } from "../lib/emailHtml";
 import { loadRecipientLogs } from "../lib/outbound-history";
@@ -11,11 +11,13 @@ import { NEWSLETTER_POSTAL_ADDRESS, isLetterLayout } from "../../shared/letterLa
 import {
   HISTORY_VISIBLE_STATUSES,
   attachHistoryStats,
+  audienceCampaignIds,
   buildHistoryTimeline,
   buildRecipientRows,
   cleanLetterSubject,
 } from "../../shared/outboundHistory";
-import { previewUnsubscribeUrl } from "../lib/newsletter-issue-email";
+import { parseIssueAudience, previewExtrasForAudience } from "../lib/newsletter-issue-email";
+import { listAudienceCounts } from "../lib/outboundAudience";
 import { invokeLLM, isLLMConfigured } from "../_core/llm";
 import {
   attachDraftToLastUserMessage,
@@ -38,10 +40,33 @@ const sourceZ = z.enum([
   "other",
 ]);
 
+/**
+ * A list audience (2026-09-24): one campaign's email followers, everyone
+ * following a campaign by email, or a season's crowdpool waitlist. When set
+ * it replaces `sources`. Resolved at preview and again at send by
+ * server/lib/outboundAudience.ts, with each person's token stop link.
+ */
+const listZ = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("campaign"), campaignId: z.number().int().positive() }),
+  z.object({ kind: z.literal("all_campaigns") }),
+  z.object({ kind: z.literal("waitlist"), seasonNumber: z.number().int().min(1) }),
+]);
+
 const audienceZ = z.object({
   sources: z.array(sourceZ).max(16).default([]),
   activeOnly: z.literal(true).default(true),
+  list: listZ.optional(),
 });
+
+/** Titles for the campaigns list audiences name, so History reads "Email followers of {title}". */
+async function campaignTitlesFor(audiences: unknown[]): Promise<Record<number, string>> {
+  const ids = audienceCampaignIds(audiences);
+  if (ids.length === 0) return {};
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select({ id: campaigns.id, title: campaigns.title }).from(campaigns).where(inArray(campaigns.id, ids));
+  return Object.fromEntries(rows.map((r) => [r.id, r.title]));
+}
 
 function fail(err: unknown, fallback: string): never {
   throw new TRPCError({
@@ -147,7 +172,16 @@ export const outboundRouter = router({
       .limit(50);
     if (issues.length === 0) return [];
     const { recipients, logs } = await loadRecipientLogs(issues.map((row) => row.id));
-    return attachHistoryStats(issues, recipients, logs);
+    const titles = await campaignTitlesFor(issues.map((row) => row.audience));
+    return attachHistoryStats(issues, recipients, logs, titles);
+  }),
+
+  // The list audiences Outbound can send to, with counts from the same
+  // resolver the send uses: each campaign with email followers (cancelled
+  // ones included, so Rye can tell them), everyone following a campaign by
+  // email, and each season's crowdpool waitlist.
+  listAudiences: adminProcedure.query(async () => {
+    return await listAudienceCounts();
   }),
 
   getIssue: adminProcedure
@@ -169,12 +203,10 @@ export const outboundRouter = router({
       const [issue] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, input.issueId)).limit(1);
       if (!issue) throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found." });
       const { recipients, logs } = await loadRecipientLogs([issue.id]);
-      const [item] = attachHistoryStats([issue], recipients, logs);
+      const titles = await campaignTitlesFor([issue.audience]);
+      const [item] = attachHistoryStats([issue], recipients, logs, titles);
       const layout = isLetterLayout(issue.layout) ? issue.layout : "plain";
-      const html = emailDocumentFromMarkdown(issue.body, layout, {
-        managePreferencesUrl: previewUnsubscribeUrl(),
-        postalAddress: ENV.harvestPostalAddress || NEWSLETTER_POSTAL_ADDRESS,
-      });
+      const html = emailDocumentFromMarkdown(issue.body, layout, await previewExtrasForAudience(parseIssueAudience(issue.audience)));
       return {
         ...(item ?? {
           ...issue,

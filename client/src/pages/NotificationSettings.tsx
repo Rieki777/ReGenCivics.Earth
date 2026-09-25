@@ -2,10 +2,12 @@
  * /settings/notifications: per-type email cadence, muted people, and muted
  * threads. Email unsubscribe links land here. The global email switch is
  * emailDigestFrequency 'never' (managed on the profile page); this page
- * covers the forum notification channels.
+ * covers the forum and campaign notification channels. Each save sends only
+ * the key it changes, and the server merges it over everything stored
+ * (mergeNotificationPrefs), so the profile page's toggles survive.
  */
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -90,7 +92,7 @@ function PushSection() {
     <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
       <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
       <p className="text-xs text-[#1a472a]/75 mb-3">
-        Mentions, replies, and gratitude reach this device even when the site is closed.
+        Mentions, replies, gratitude and campaign news reach this device even when the site is closed.
       </p>
       <Button
         variant={localSubscribed ? 'outline' : 'default'}
@@ -154,6 +156,7 @@ export default function NotificationSettings() {
       utils.notifications.prefs.get.invalidate();
       toast.success('Saved');
     },
+    onError: (err) => toast.error(err.message),
   });
   const removeMute = trpc.notifications.mutes.remove.useMutation({
     onSuccess: () => utils.notifications.mutes.listMine.invalidate(),
@@ -189,6 +192,19 @@ export default function NotificationSettings() {
             <div className="p-10 flex justify-center"><TaoSpinner /></div>
           ) : (
             <div className="space-y-4">
+              {prefs.hasProfile === false && (
+                <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
+                  <h2 className="font-bold text-[#1a472a] mb-1">Email</h2>
+                  <p className="text-sm text-[#1a472a]/85 mb-3">
+                    Your email choices are saved on your player profile. Make your profile first, then come back here to choose
+                    which emails you get. Until then, campaign news reaches you by email right away and always shows in the bell.
+                  </p>
+                  <Link href="/profile">
+                    <Button className="bg-[#4a7c59] hover:bg-[#1a472a] text-white">Make my player profile</Button>
+                  </Link>
+                </section>
+              )}
+              {prefs.hasProfile !== false && (
               <section className="bg-white rounded-xl border border-[#e8e4de] p-5 space-y-5">
                 <h2 className="font-bold text-[#1a472a]">Email</h2>
                 <div>
@@ -206,12 +222,21 @@ export default function NotificationSettings() {
                   <CadencePicker idPrefix="gratitude" value={prefs.gratitudeEmail} allowImmediate={false}
                     onChange={(v) => setPrefs.mutate({ gratitudeEmail: v as 'daily' | 'off' })} />
                 </div>
+                <div>
+                  <p id="campaigns-label" className="text-sm font-semibold text-[#1a472a] mb-1">Campaigns you're part of</p>
+                  <p className="text-xs text-[#1a472a]/75 mb-2">
+                    Offers, answers, deliveries, thank-yous and campaign news. Updates from campaigns you follow come in the daily summary.
+                  </p>
+                  <CadencePicker idPrefix="campaigns" value={prefs.campaignsEmail ?? 'immediate'}
+                    onChange={(v) => setPrefs.mutate({ campaignsEmail: v })} />
+                </div>
                 {prefs.emailDigestFrequency === 'never' && (
                   <p className="text-xs text-[#92400e] bg-[#f0ebe3] rounded-lg p-3">
                     Your account email setting is currently "never", so these emails stay paused until you change it on your profile.
                   </p>
                 )}
               </section>
+              )}
 
               <PushSection />
 

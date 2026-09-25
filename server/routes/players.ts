@@ -363,8 +363,13 @@ export const playerProfilesRouter = router({
       if (!profile) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
       }
+      // Merge the three legacy toggles into what is stored and write the
+      // OBJECT. This used to overwrite the whole prefs blob with a
+      // JSON.stringify'd string, which wiped the email and push prefs and
+      // double-encoded the column.
+      const { mergeNotificationPrefs } = await import("../lib/notification-email");
       await db.updatePlayerProfile(profile.id, {
-        notificationPrefs: JSON.stringify({
+        notificationPrefs: mergeNotificationPrefs(profile.notificationPrefs, {
           communityUpdates: input.communityUpdates,
           questAnnouncements: input.questAnnouncements,
           governanceUpdates: input.governanceUpdates,

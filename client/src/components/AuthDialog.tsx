@@ -43,6 +43,8 @@ interface AuthDialogProps {
   onLogin: () => void;
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
+  /** Seeds the email-link field, for example with the email an offer used. */
+  defaultEmail?: string;
 }
 
 export function AuthDialog({
@@ -51,9 +53,10 @@ export function AuthDialog({
   open = false,
   onOpenChange,
   onClose,
+  defaultEmail,
 }: AuthDialogProps) {
   const [internalOpen, setInternalOpen] = useState(open);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail ?? "");
   const [emailSent, setEmailSent] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
@@ -68,6 +71,13 @@ export function AuthDialog({
   useEffect(() => {
     if (!onOpenChange) setInternalOpen(open);
   }, [open, onOpenChange]);
+
+  // Each time the dialog opens, start from the email we were handed (the
+  // person can still change it).
+  useEffect(() => {
+    if (open && defaultEmail && !emailSent) setEmail(defaultEmail);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultEmail]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (onOpenChange) {

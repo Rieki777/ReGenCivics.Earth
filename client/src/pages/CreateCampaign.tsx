@@ -90,6 +90,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CAMPAIGN_TEMPLATES } from '@/data/campaignTemplates';
+import { MAX_ROLE_HOURS, fullTimeLabel } from "@shared/roleCapacity";
 import { CSVImportDialog } from '@/components/CSVImportDialog';
 import { estimateLandPrice, estimateEquipmentPrice, suggestHourlyRate, EQUIPMENT_BASE_PRICES, ROLE_SKILL_LEVELS } from '@/data/regionalCostData';
 import { BackButton } from "@/components/BackButton";
@@ -407,6 +408,12 @@ const currencies = [
 ];
 
 // Helper functions
+/** Whole hours a week for a role: rounded, at least 1, at most MAX_ROLE_HOURS. */
+function wholeRoleHours(raw: string | number): number {
+  const n = Math.round(Number(raw) || 0);
+  return Math.min(MAX_ROLE_HOURS, Math.max(1, n));
+}
+
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 const formatCurrency = (amount: number, symbol: string) => {
@@ -419,73 +426,6 @@ const formatCurrency = (amount: number, symbol: string) => {
 
 export default function CreateCampaign() {
   const { user } = useAuth();
-  const [authenticated, setAuthenticated] = useState(() =>
-    localStorage.getItem("campaign_authenticated") === "true"
-  );
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState(false);
-  const verifyAccess = trpc.campaigns.verifyCampaignAccess.useMutation();
-
-  // Auth gate: redirect unauthenticated users to community (login)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
-          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-            Sign In Required
-          </h2>
-          <p className="text-sm text-[#1a472a]/80 mb-4">You need to be signed in to create campaigns.</p>
-          <a
-            href={getLoginUrl()}
-            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            Sign In
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Password gate: require "222" even for logged-in users
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
-          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-            Campaign Creator Access
-          </h2>
-          <p className="text-sm text-[#1a472a]/80 mb-4">Enter the password to create campaigns</p>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const result = await verifyAccess.mutateAsync({ password: passwordInput });
-              if (result.valid) {
-                localStorage.setItem("campaign_authenticated", "true");
-                setAuthenticated(true);
-              } else {
-                setPasswordError(true);
-              }
-            } catch {
-              setPasswordError(true);
-            }
-          }} className="space-y-3">
-            <Input
-              type="password"
-              placeholder="Enter password"
-              value={passwordInput}
-              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
-            />
-            {passwordError && <p className="text-red-500 text-xs">Incorrect password</p>}
-            <Button type="submit" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
-              Access Campaign Creator
-            </Button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   // Applicant search for campaign creation
   const [applicantSearch, setApplicantSearch] = useState('');
@@ -500,6 +440,10 @@ export default function CreateCampaign() {
     undefined,
     { enabled: !!user }
   );
+  // The server starts a campaign only for an application that is approved
+  // or active (campaigns.create). Offer those; name the ones still in review.
+  const campaignReadyApps = (userApplications ?? []).filter((app: any) => ['approved', 'active'].includes(app.status));
+  const appsInReview = (userApplications ?? []).filter((app: any) => ['submitted', 'under_review'].includes(app.status));
   
   // Campaign data
   const [campaignName, setCampaignName] = useState('');
@@ -726,7 +670,8 @@ export default function CreateCampaign() {
         kind: 'role' as const,
         capitalType: role.capitalType ?? ('experiential' as const),
         roleTitle: role.title,
-        hoursPerWeek: role.hoursPerWeek,
+        // Whole hours a week the role needs (the server requires 1 to 10000).
+        hoursPerWeek: Math.min(MAX_ROLE_HOURS, Math.max(1, Math.round(role.hoursPerWeek || 0))),
         durationMonths: Math.round((role.weeksNeeded || 0) / 4.33), // Convert weeks to months
         roleDescription: role.description,
         estimatedValue: role.customValue ?? role.estimatedValue,
@@ -791,6 +736,31 @@ export default function CreateCampaign() {
     toast.success(`Project "${app.projectName}" loaded! Review and customize your campaign details.`);
   }, []);
 
+  // Every hook above runs on every render. The sign-in gate sits here, after
+  // the last hook: returning before the hooks (as this page used to, twice)
+  // made React throw "Rendered more hooks than during the previous render"
+  // the moment auth resolved. The old shared-password gate is gone; the
+  // server checks that the caller stewards an approved application.
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
+          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Sign In Required
+          </h2>
+          <p className="text-sm text-[#1a472a]/80 mb-4">You need to be signed in to create campaigns.</p>
+          <a
+            href={getLoginUrl()}
+            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Project selection screen (replaces password)
   if (!selectedApplication) {
     return (
@@ -835,12 +805,17 @@ export default function CreateCampaign() {
               </div>
 
               {/* Your Applications (quick access) */}
-              {user && userApplications && userApplications.length > 0 && (
+              {user && appsInReview.length > 0 && (
+                <div className="mb-4 rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/30 p-3 text-sm text-[#1a472a]/85">
+                  {appsInReview.map((app: any) => app.projectName).join(', ')}{' '}
+                  {appsInReview.length === 1 ? 'is' : 'are'} still in review. You can start a campaign once the application is approved.
+                </div>
+              )}
+              {user && campaignReadyApps.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs font-semibold text-[#4a7c59] uppercase tracking-wider mb-2">Your Applications</p>
                   <div className="space-y-2">
-                    {userApplications
-                      .filter((app: any) => ['submitted', 'approved', 'under_review'].includes(app.status))
+                    {campaignReadyApps
                       .map((app: any) => (
                         <button
                           key={`my-${app.id}`}
@@ -863,7 +838,7 @@ export default function CreateCampaign() {
               )}
 
               {/* Divider */}
-              {user && userApplications && userApplications.length > 0 && applicants && applicants.length > 0 && (
+              {user && campaignReadyApps.length > 0 && applicants && applicants.length > 0 && (
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-[#7dd87d]/30" />
                   <span className="text-xs text-[#1a472a]/80">or select from all applicants</span>
@@ -882,8 +857,7 @@ export default function CreateCampaign() {
                   applicants
                     .filter((app: any) => {
                       // Exclude user's own apps (already shown above)
-                      if (!userApplications) return true;
-                      return !userApplications.some((ua: any) => ua.id === app.id);
+                      return !campaignReadyApps.some((ua: any) => ua.id === app.id);
                     })
                     .map((app: any) => (
                       <button
@@ -895,7 +869,6 @@ export default function CreateCampaign() {
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-[#1a472a] group-hover:text-[#1a472a] truncate">{app.projectName}</div>
                             <div className="text-xs text-[#1a472a]/80 mt-1 truncate">
-                              {app.contactName && <span>{app.contactName} - </span>}
                               {app.location}
                             </div>
                             {app.vision && (
@@ -2265,11 +2238,16 @@ function RolesSection({
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={MAX_ROLE_HOURS}
+                      step={1}
+                      aria-label="Hours a week this role needs"
                       value={role.hoursPerWeek}
-                      onChange={(e) => updateRole(role.id, 'hoursPerWeek', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateRole(role.id, 'hoursPerWeek', wholeRoleHours(e.target.value))}
                       className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
                     />
-                    <span className="text-[#1a472a]/80">h/wk</span>
+                    <span className="text-[#1a472a]/80" title={fullTimeLabel(role.hoursPerWeek)}>h/wk</span>
                   </div>
                   <span className="text-[#1a472a]/80">x</span>
                   <div className="flex items-center gap-1">
@@ -2379,13 +2357,25 @@ function RolesSection({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Hours/Week</label>
+              <label htmlFor="role-hours-needed" className="block text-sm font-medium text-[#1a472a] mb-1">Hours a week this role needs</label>
               <Input
+                id="role-hours-needed"
                 type="number"
+                inputMode="numeric"
+                min={1}
+                max={MAX_ROLE_HOURS}
+                step={1}
                 value={formData.hoursPerWeek || ''}
-                onChange={(e) => setFormData({ ...formData, hoursPerWeek: parseInt(e.target.value) || 0 })}
+                onChange={(e) => {
+                  // Empty while typing is fine; Add falls back to 20.
+                  const raw = e.target.value;
+                  setFormData({ ...formData, hoursPerWeek: raw === '' ? 0 : wholeRoleHours(raw) });
+                }}
                 className="bg-white border-[#7dd87d]/30"
               />
+              <p className="text-xs text-[#1a472a]/80 mt-1">
+                40 hours a week is about one full-time person. 120 is about three. Several people can share a role.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#1a472a] mb-1">Weeks Needed</label>

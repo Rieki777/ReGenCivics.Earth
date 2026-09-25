@@ -327,3 +327,17 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Leading slot** vs **scheduled slot**. The leading slot is whatever has the most hands right now. The scheduled slot is what the calendar, reminders and emails follow: the admin pin if set, otherwise the leading slot once it has held the lead for 24 hours. Sessions less than 72 hours out never move.
 
 **Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Signing up is optional: anyone can attend from the calendar feed. Members get reminders, the recaps an admin sends with the Events tab follow-up tool, and an invitation to create a profile. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.
+
+### Project pages and campaign tools (ADR-60, ADR-61)
+
+**Project page**. The public page for one land project at `/project/:key`. It shows the project's live campaign front and centre, its past campaigns, and, to project stewards only, the campaign tools. The key is `{applicationId}-{slug}` for a project with an application and `c{campaignId}-{slug}` for a campaign with none (demos, play-launched drafts). The slug is decoration. Code: `shared/projectKey.ts`.
+
+**Project steward**. Anyone who holds a land project's tools: the campaign creator, the application's applicant, the application's `stewardUserId`, a holder of an approved `land_project` org claim on that application, and admins. Distinct from the Tier-3 citizenship **Steward** (Citizenship tiers above) and the church role. Admins get access but are never on notice lists. Code: `server/lib/project-steward.ts`, the single gate.
+
+**Hours need**. A role need measured in hours a week (`kind = 'role'`, `capacityUnit = 'hours_per_week'`). Its `quantityWanted` is the hours a week the role needs, `quantityClaimed` the hours accepted, `quantityDelivered` the hours delivered. 40 hours a week is about one full-time person, so 120 is about three. Several people can share one role: a steward accepts each person at a number of hours, and the role reads **filled** when accepted hours reach the hours needed. A legacy role still marked `count` is not an hours need until migration 0251 converts it. Code: `shared/roleCapacity.ts` (`isHoursNeed`, `roleFillState`).
+
+**Offer**. The plain-language word the UI uses for a contribution while it is pending ("offers waiting on you"). The data stays `campaign_contributions`. Say "contribution" for the thing itself, never "donation".
+
+**Released**. An accepted place in a need that a steward freed up. The hours or slots go back to the need. Contribution status `released`, reachable only from `accepted`.
+
+**Cancelled (contribution)**. A pending or accepted offer closed because its campaign was cancelled. Contribution status `cancelled`. Delivered and thanked contributions stay as they are.

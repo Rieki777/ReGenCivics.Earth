@@ -12,11 +12,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   NEWSLETTER_SOURCES,
+  audienceChoiceLabel,
+  audienceChoiceValue,
+  audienceFromChoice,
+  listAudienceGroups,
+  listChoiceCount,
   newsletterSourceLabel,
+  parseAudienceChoiceValue,
+  type AudienceChoice,
   type NewsletterSource,
+  type OutboundAudienceList,
 } from "@/lib/outboundAudience";
 import {
   defaultScheduleLocal,
@@ -44,7 +52,14 @@ export type OutboundWritePrefill = {
   body: string;
   layout: LetterLayout;
   source: NewsletterSource | "all";
+  /** An email list (campaign followers, all campaigns, a waitlist). Replaces `source` when set. */
+  list?: OutboundAudienceList | null;
 };
+
+function choiceFromPrefill(prefill?: OutboundWritePrefill | null): AudienceChoice {
+  if (prefill?.list) return { kind: "list", list: prefill.list };
+  return { kind: "newsletter", source: prefill?.source ?? "all" };
+}
 
 export function AdminOutboundWrite({
   prefill,
@@ -58,7 +73,7 @@ export function AdminOutboundWrite({
   const [aiDraftBody, setAiDraftBody] = useState<string | null>(null);
   const [layout, setLayout] = useState<LetterLayout>(prefill?.layout ?? "announcement");
   const [templateKey, setTemplateKey] = useState("nl_blank");
-  const [source, setSource] = useState<NewsletterSource | "all">(prefill?.source ?? "all");
+  const [choice, setChoice] = useState<AudienceChoice>(() => choiceFromPrefill(prefill));
   const [preview, setPreview] = useState<{
     subject: string;
     recipientCount: number;
@@ -75,6 +90,7 @@ export function AdminOutboundWrite({
   const confirmSend = trpc.outbound.confirmSend.useMutation();
   const scheduleSend = trpc.outbound.scheduleSend.useMutation();
   const listActive = trpc.newsletter.listActive.useQuery();
+  const listAudiences = trpc.outbound.listAudiences.useQuery();
 
   useEffect(() => {
     if (!prefill) return;
@@ -83,7 +99,7 @@ export function AdminOutboundWrite({
     setBody(prefill.body);
     setAiDraftBody(null);
     setLayout(prefill.layout);
-    setSource(prefill.source);
+    setChoice(choiceFromPrefill(prefill));
     setPreview(null);
     setResult(null);
   }, [prefill]);
@@ -94,19 +110,20 @@ export function AdminOutboundWrite({
   );
 
   const audienceCount = useMemo(() => {
+    const listCount = listChoiceCount(choice, listAudiences.data);
+    if (listCount !== null) return listCount;
     const rows = listActive.data ?? [];
-    if (source === "all") return rows.length;
-    return rows.filter((row) => (row.source || "other") === source).length;
-  }, [listActive.data, source]);
+    if (choice.kind !== "newsletter" || choice.source === "all") return rows.length;
+    return rows.filter((row) => (row.source || "other") === choice.source).length;
+  }, [listActive.data, listAudiences.data, choice]);
 
-  const audience = {
-    sources: source === "all" ? [] : [source],
-    activeOnly: true as const,
-  };
+  // A list audience replaces the newsletter sources (server/lib/outboundAudience.ts).
+  const audience = audienceFromChoice(choice);
 
-  const audienceLabel = source === "all"
-    ? "active subscribers"
-    : `active ${newsletterSourceLabel(source)} subscribers`;
+  const audienceLabel = audienceChoiceLabel(choice, listAudiences.data);
+  const listGroups = useMemo(() => listAudienceGroups(listAudiences.data, choice), [listAudiences.data, choice]);
+  const countNoun = choice.kind === "list" ? "person" : "active subscriber";
+  const countNounPlural = choice.kind === "list" ? "people" : "active subscribers";
 
   const canPreview = useMemo(
     () => outboundWriteContentReady(subject, body),
@@ -192,7 +209,7 @@ export function AdminOutboundWrite({
       });
       const message = r.duplicate
         ? "Already sent (double-click caught, nothing re-sent)."
-        : `Sent to ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}${r.failedCount ? `, ${r.failedCount} failed` : ""}.`;
+        : `Sent to ${r.recipientCount} ${r.recipientCount === 1 ? "person" : "people"}${r.failedCount ? `, ${r.failedCount} failed` : ""}.`;
       setResult(message);
       toast.success(message);
     } catch (error: unknown) {
@@ -212,7 +229,7 @@ export function AdminOutboundWrite({
         aiDraftBody: aiDraftBody ?? undefined,
       });
       const when = formatPacificSchedule(new Date(r.scheduledFor));
-      const message = `Scheduled for ${when}. ${r.recipientCount} subscriber${r.recipientCount === 1 ? "" : "s"}. Open Sent to cancel or reschedule.`;
+      const message = `Scheduled for ${when}. ${r.recipientCount} ${r.recipientCount === 1 ? "person" : "people"}. Open Sent to cancel or reschedule.`;
       setResult(message);
       toast.success(message);
     } catch (error: unknown) {
@@ -235,14 +252,33 @@ export function AdminOutboundWrite({
           <div className="flex flex-wrap gap-3">
             <div className="space-y-1">
               <Label className="text-[#1a472a] text-xs">Audience</Label>
-              <Select value={source} onValueChange={(v) => { setSource(v as NewsletterSource | "all"); setPreview(null); }}>
-                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/20">
+              <Select
+                value={audienceChoiceValue(choice)}
+                onValueChange={(v) => {
+                  const next = parseAudienceChoiceValue(v);
+                  if (next) { setChoice(next); setPreview(null); }
+                }}
+              >
+                <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/20" aria-label="Audience">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All active subscribers</SelectItem>
-                  {NEWSLETTER_SOURCES.map((s) => (
-                    <SelectItem key={s} value={s}>{newsletterSourceLabel(s)}</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>Newsletter</SelectLabel>
+                    <SelectItem value="nl:all">All active subscribers</SelectItem>
+                    {NEWSLETTER_SOURCES.map((s) => (
+                      <SelectItem key={s} value={`nl:${s}`}>{newsletterSourceLabel(s)}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {listGroups.map((g) => (
+                    <SelectGroup key={g.label}>
+                      <SelectLabel>{g.label}</SelectLabel>
+                      {g.options.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}{o.count !== null ? ` (${o.count})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
@@ -266,9 +302,14 @@ export function AdminOutboundWrite({
               </Select>
             </div>
             <p className="self-end text-sm text-[#1a472a]/80 pb-2">
-              {audienceCount} active subscriber{audienceCount === 1 ? "" : "s"}
+              {audienceCount} {audienceCount === 1 ? countNoun : countNounPlural}
             </p>
           </div>
+          {choice.kind === "list" && (
+            <p className="text-xs text-[#1a472a]/80">
+              {audienceLabel}. Each letter carries that person's own "Stop these emails" link in place of the newsletter preferences footer.
+            </p>
+          )}
 
           <EmailMarkdownComposer
             subject={subject}
@@ -330,7 +371,7 @@ export function AdminOutboundWrite({
                 <span className="font-semibold">Subject:</span> {preview.subject}
               </p>
               <p className="text-sm text-amber-900">
-                This sends to <span className="font-semibold">{preview.recipientCount} subscriber{preview.recipientCount === 1 ? "" : "s"}</span> and cannot be unsent. Confirm is bound to this exact text and audience.
+                This sends to <span className="font-semibold">{preview.recipientCount} {preview.recipientCount === 1 ? "person" : "people"}</span> ({audienceLabel}) and cannot be unsent. Confirm is bound to this exact text and audience.
               </p>
               <iframe
                 title="Send preview"

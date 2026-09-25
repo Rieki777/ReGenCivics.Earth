@@ -37,6 +37,20 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] No `eval` / `new Function` / `vm.runInContext` in user-input paths. (2026-04-25: ok per repo grep)
 - [x] `sanitizeInput` is the chokepoint for user content into DB. (2026-06-30: DONE — moved off hand-rolled regex to the vetted `sanitize-html` library (strict no-tags allowlist), and coverage widened beyond forum to profiles (`players.ts`) and direct messages (`messages.ts`). Campaign/features/gratitude/agreements/claims already covered. `sanitizeRichText` added for future markdown-safe surfaces.)
 - [x] `sanitizeForClient` + URL allowlist (http/https/mailto) on markdown render. (2026-04-25: ok)
+- [x] Contribution and cancellation emails escape every interpolated value (`textForEmail`, `shared/htmlText.ts`); `notifyOwner` escapes title and content. (2026-09-24: DONE, pinned by `server/campaign-security.test.ts` section 6.)
+
+## Campaigns + project stewards
+
+- [x] One steward gate for campaign tools: `server/lib/project-steward.ts`. No inline `campaign.userId` owner checks remain in `server/routes/campaigns.ts`. (2026-09-24: DONE)
+- [x] Campaign status moves follow `shared/campaignStatus.ts`; owners cannot publish, complete, fund or reject. (2026-09-24: DONE, `shared/campaignStatus.test.ts` + `server/campaign-security.test.ts`)
+- [x] `campaigns.create` requires an approved application the caller applied for or stewards (admins exempt); the shared "222" password procedure is removed. (2026-09-24: DONE)
+- [x] `applicantsForCampaign.list` scoped to the caller's own approved or active applications for non-admins. (2026-09-24: DONE)
+- [x] Children of unpublished campaigns (needs, partner links, activity, updates, images, contributions) read `[]` to non-stewards. (2026-09-24: DONE)
+- [x] `orgClaims.approve` checks for a conflicting steward before it approves, so a refused approval grants nothing. (2026-09-24: DONE, `server/campaign-security.test.ts` section 7)
+- [x] Public `campaigns.getContributions` is an allowlist (`PUBLIC_CONTRIBUTION_FIELDS`) and shows visitors only standing offers; no `ownerNotes` or `userId`. (2026-09-24: DONE)
+- [x] Nobody can follow (account or email) a campaign they cannot see; unpublished campaigns never notify followers. (2026-09-24: DONE)
+- [x] Sign-in emails have their own hourly send budget, separate from notice and list mail. (2026-09-24: DONE, `server/campaign-notification-prefs.test.ts`)
+- [ ] Production audit before the deploy: land_project org claims with status approved whose application's `stewardUserId` is NULL or a different user. Reject any that were never meant to be granted. (2026-09-24: OPEN, main session)
 
 ## CSP + security headers
 

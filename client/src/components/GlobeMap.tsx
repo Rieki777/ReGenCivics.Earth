@@ -15,6 +15,8 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X, MessageCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { cdnImg } from "@/lib/utils";
+import { Link } from "wouter";
+import { projectPathForApplication } from "@shared/projectKey";
 
 /** Escape special HTML characters to prevent XSS in innerHTML interpolation. */
 function escapeHtml(str: string): string {
@@ -505,7 +507,9 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
 
 // Renders all public application answers for a DB-backed applicant project.
 // Fetches lazily — only when the card is selected and applicationId is set.
-function ProjectDetailPanel({ applicationId }: { applicationId: number }) {
+function ProjectDetailPanel({ applicationId, status }: { applicationId: number; status?: string }) {
+  // Only an approved or active application has a public project page.
+  const hasProjectPage = status === "approved" || status === "active";
   const { data, isLoading } = trpc.applications.publicDetail.useQuery(
     { id: applicationId },
     { staleTime: 300_000 },
@@ -555,6 +559,17 @@ function ProjectDetailPanel({ applicationId }: { applicationId: number }) {
 
   return (
     <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+      {hasProjectPage && (
+        <Link
+          href={projectPathForApplication(applicationId, data.projectName ?? "")}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-center gap-2 w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-xs font-semibold rounded-xl py-2.5 transition-colors"
+        >
+          <Sprout className="w-3.5 h-3.5 flex-shrink-0" />
+          Open project page
+        </Link>
+      )}
+
       {/* Website button at the top */}
       {data.websiteUrl && (
         <a
@@ -808,7 +823,7 @@ function EntityCard({
             Falls back gracefully (renders nothing) for static Season-1 projects
             that have no application record. */}
         {isSelected && entity.applicationId != null && (
-          <ProjectDetailPanel applicationId={entity.applicationId} />
+          <ProjectDetailPanel applicationId={entity.applicationId} status={entity.status} />
         )}
       </div>
     </div>
