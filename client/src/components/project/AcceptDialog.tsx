@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { decodeBasicEntities } from "@shared/htmlText";
-import { MAX_ROLE_HOURS, checkAcceptHours, isHoursNeed } from "@shared/roleCapacity";
+import { MAX_ROLE_HOURS, checkAcceptHours, isHoursNeed, roleFillState } from "@shared/roleCapacity";
 import { hoursDialogNumbers, stewardActionDescription } from "@shared/stewardQueue";
 import { titleForItem } from "@/lib/needDisplay";
 import type { CampaignNeed, ContributionAction, OwnerContribution } from "./ContributionCard";
@@ -167,6 +167,8 @@ export function AcceptDialog({
         name,
         roleTitle,
         heldHours: contribution?.quantityPledged ?? null,
+        // A filled role that opens up tells the people still waiting on it.
+        roleFilled: !!need && hoursNeed && roleFillState(need).filled,
       })
     : "";
 

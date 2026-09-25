@@ -136,3 +136,32 @@ export function standingHours(rows: Array<{ status: string; quantityPledged: num
   }
   return { accepted, delivered };
 }
+
+/**
+ * Did a role go from filled to open? Returns the hours a week now open when
+ * it did, and 0 otherwise (it was not filled before, or it is still filled).
+ * A role reopens when a steward releases someone, lowers someone's accepted
+ * hours, or raises the hours the role needs. The caller reads both sides
+ * inside the transaction that holds the need's row lock.
+ */
+export function reopenedOpenHours(
+  before: { needed: number; accepted: number },
+  after: { needed: number; accepted: number },
+): number {
+  const neededBefore = whole(before.needed);
+  const neededAfter = whole(after.needed);
+  const acceptedBefore = whole(before.accepted);
+  const acceptedAfter = whole(after.accepted);
+  const wasFilled = neededBefore > 0 && acceptedBefore >= neededBefore;
+  const nowFilled = neededAfter > 0 && acceptedAfter >= neededAfter;
+  if (!wasFilled || nowFilled) return 0;
+  return Math.max(neededAfter - acceptedAfter, 0);
+}
+
+/**
+ * What someone hears when they offer to a role that is filled. It promises no
+ * notice: the "opened up" notice goes to people who already offered to the
+ * role and are still waiting, and following a campaign does not bring it.
+ */
+export const FILLED_ROLE_REFUSAL =
+  "This role is filled right now, so it isn't taking new offers. Check back later, or look at the other needs on this campaign.";

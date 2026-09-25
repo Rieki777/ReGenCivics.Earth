@@ -92,6 +92,44 @@ describe('AuthDialog', () => {
     });
   });
 
+  it('sends the returnTo it was handed with the email request', async () => {
+    render(<AuthDialog open={true} onLogin={mockOnLogin} returnTo="/project/hill-farm#your-contributions" />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.submit(emailInput.closest('form')!);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe('/api/auth/email/request');
+    expect(JSON.parse(init.body)).toEqual({
+      email: 'user@example.com',
+      returnTo: '/project/hill-farm#your-contributions',
+    });
+  });
+
+  it('sends the current page, hash included, when no returnTo is given', async () => {
+    window.history.pushState({}, '', '/project/hill-farm?campaign=3#needs');
+    render(<AuthDialog open={true} onLogin={mockOnLogin} />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.submit(emailInput.closest('form')!);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).returnTo).toBe('/project/hill-farm?campaign=3#needs');
+    window.history.pushState({}, '', '/');
+  });
+
+  it('leaves a secret in the page URL out of the email request', async () => {
+    window.history.pushState({}, '', '/campaign-updates/unsubscribe?token=secret123#top');
+    render(<AuthDialog open={true} onLogin={mockOnLogin} />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.submit(emailInput.closest('form')!);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    const body = mockFetch.mock.calls[0][1].body as string;
+    expect(body).not.toContain('secret123');
+    expect(JSON.parse(body).returnTo).toBe('/campaign-updates/unsubscribe#top');
+    window.history.pushState({}, '', '/');
+  });
+
   it('shows custom title when provided', () => {
     render(<AuthDialog open={true} onLogin={mockOnLogin} title="Join the Community" />);
     expect(screen.getByText('Join the Community')).toBeDefined();

@@ -415,13 +415,13 @@ describe("7. review fixes, 2026-09-24", () => {
     await database!.delete(userFollows).where(eq(userFollows.targetId, String(id)));
   });
 
-  it.skipIf(skipIfNoDb)("saving email choices without a player profile says so instead of 'Saved'", async () => {
+  // The profile-less half of this moved to notification-prefs-without-profile.test.ts,
+  // since those accounts can now save (on the users row).
+  it.skipIf(skipIfNoDb)("saving email choices on a player profile reads back as saved", async () => {
     const NO_PROFILE = 986299;
     const caller = stewardCaller(NO_PROFILE);
     const database = await dbHelpers.getDb();
     await database!.delete(playerProfiles).where(eq(playerProfiles.userId, NO_PROFILE));
-    expect((await caller.notifications.prefs.get()).hasProfile).toBe(false);
-    await expect(caller.notifications.prefs.set({ campaignsEmail: "daily" })).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
 
     await dbHelpers.createPlayerProfile({ userId: NO_PROFILE, displayName: "Prefs Tester" });
     try {

@@ -35,8 +35,10 @@ import { canTransition, type CampaignStatus } from "../../shared/campaignStatus"
 import {
   MAX_OFFER_HOURS,
   MAX_ROLE_HOURS,
+  FILLED_ROLE_REFUSAL,
   checkAcceptHours,
   isHoursNeed,
+  reopenedOpenHours,
   roleFillState,
   scaleRoleValue,
 } from "../../shared/roleCapacity";
@@ -53,6 +55,7 @@ import {
   notifyProposalReceived,
   notifyReleased,
   notifyRoleFilled,
+  notifyRoleReopened,
   notifyThanked,
   notifyUpdatePosted,
 } from "../lib/campaign-notify";
@@ -431,6 +434,23 @@ async function lockHoursItem(tx: any, itemId: number): Promise<{ quantityWanted:
   const row = (rows as any[])[0];
   if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Need not found' });
   return { quantityWanted: Number(row.quantityWanted), estimatedValue: Number(row.estimatedValue) };
+}
+
+/**
+ * One contribution's hours and status, read with a row lock inside the
+ * caller's transaction (after lockHoursItem, so lock order matches every other
+ * hours path). Null when the row is gone.
+ */
+async function lockedContributionHours(
+  tx: any,
+  contributionId: number,
+): Promise<{ hours: number; status: string } | null> {
+  const [rows] = await tx.execute(sql`
+    SELECT quantityPledged, status FROM campaign_contributions WHERE id = ${contributionId} FOR UPDATE
+  `);
+  const row = (rows as any[])[0];
+  if (!row) return null;
+  return { hours: Number(row.quantityPledged ?? 0), status: String(row.status) };
 }
 
 /** Hours already standing on a need (accepted, fulfilled, thanked), not counting one contribution. */
@@ -969,7 +989,7 @@ export const campaignsRouter = router({
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Tell the stewards how many hours a week you can offer, as a whole number.' });
           }
           if (roleFillState(item).filled) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'This role is filled right now. Check back later, or follow the campaign for its updates.' });
+            throw new TRPCError({ code: 'BAD_REQUEST', message: FILLED_ROLE_REFUSAL });
           }
           quantityPledged = offer;
           hoursPerWeek = offer; // the ORIGINAL offer, kept forever
@@ -1123,6 +1143,8 @@ export const campaignsRouter = router({
       let changed = false;
       let firstFulfillment = false;
       let roleJustFilled = false;
+      // Hours a week a release opened on a role that was filled (0: it wasn't).
+      let reopenedHours = 0;
       let acceptedHours: number | null = null;
 
       if (input.status === 'accepted') {
@@ -1196,11 +1218,17 @@ export const campaignsRouter = router({
         };
         if (hoursNeed && item) {
           const database = await requireDb();
-          await database.transaction(async (tx) => {
-            await tx.execute(sql`SELECT id FROM campaign_items WHERE id = ${item.id} FOR UPDATE`);
+          reopenedHours = await database.transaction(async (tx) => {
+            const locked = await lockHoursItem(tx, item.id);
+            const acceptedBefore = await standingHoursExcluding(tx, item.id, 0);
             const affected = await conditionalStatusUpdate(contribution.id, ['accepted'], patch, tx);
             if (affected === 0) throw raced();
             await db.recomputeNeedCounters(item.id, tx);
+            const acceptedAfter = await standingHoursExcluding(tx, item.id, 0);
+            return reopenedOpenHours(
+              { needed: locked.quantityWanted, accepted: acceptedBefore },
+              { needed: locked.quantityWanted, accepted: acceptedAfter },
+            );
           });
         } else {
           const affected = await conditionalStatusUpdate(contribution.id, ['accepted'], patch);
@@ -1332,6 +1360,13 @@ export const campaignsRouter = router({
       if (roleJustFilled && item) {
         await notifyRoleFilled({ campaign, item, triggerContributionId: contribution.id, actorId });
       }
+      // A release that opened a filled role tells the people still waiting
+      // on it (notifyRoleReopened decides who). Never the person released.
+      if (reopenedHours > 0 && item) {
+        await notifyRoleReopened({
+          campaign, item, openHours: reopenedHours, excludeUserIds: [contribution.userId], actorId,
+        });
+      }
 
       return { success: true, changed: true, ...(acceptedHours != null ? { acceptedHours, roleFilled: roleJustFilled } : {}) };
     }),
@@ -1364,9 +1399,19 @@ export const campaignsRouter = router({
       if (contribution.quantityPledged === input.hours) return { success: true, changed: false };
 
       const database = await requireDb();
-      const { justFilled } = await database.transaction(async (tx) => {
+      const { changed, justFilled, reopened } = await database.transaction(async (tx) => {
         const locked = await lockHoursItem(tx, item.id);
         await assertCampaignOpen(tx, contribution.campaignId, "This campaign isn't live anymore, so its hours can't change.");
+        // The hours this person holds right now, read under the lock. The copy
+        // read before the transaction can be stale: two stewards lowering the
+        // same person at once would both see the old figure, and the second
+        // would think the role was still filled and announce a reopening that
+        // the first had already announced.
+        const current = await lockedContributionHours(tx, contribution.id);
+        if (!current || current.status !== 'accepted') throw raced();
+        if (current.hours === input.hours) {
+          return { changed: false, justFilled: false, reopened: 0 };
+        }
         const standing = await standingHoursExcluding(tx, item.id, contribution.id);
         const check = checkAcceptHours({ requested: input.hours, neededHours: locked.quantityWanted, standingExcludingThis: standing });
         if (!check.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: check.message });
@@ -1375,12 +1420,26 @@ export const campaignsRouter = router({
             quantityPledged: input.hours,
             estimatedValue: scaleRoleValue(locked.estimatedValue, locked.quantityWanted, input.hours),
           })
-          .where(and(eq(campaignContributionsTable.id, contribution.id), eq(campaignContributionsTable.status, 'accepted')));
+          .where(and(
+            eq(campaignContributionsTable.id, contribution.id),
+            eq(campaignContributionsTable.status, 'accepted'),
+            // Refuse to write over hours that moved since they were read.
+            eq(campaignContributionsTable.quantityPledged, current.hours),
+          ));
         if (affectedRows(result) === 0) throw raced();
         await db.recomputeNeedCounters(item.id, tx);
-        const wasFilled = standing + contribution.quantityPledged >= locked.quantityWanted;
-        return { justFilled: !wasFilled && standing + input.hours >= locked.quantityWanted };
+        const wasFilled = standing + current.hours >= locked.quantityWanted;
+        return {
+          changed: true,
+          justFilled: !wasFilled && standing + input.hours >= locked.quantityWanted,
+          // Lowering someone's hours on a filled role opens it up again.
+          reopened: reopenedOpenHours(
+            { needed: locked.quantityWanted, accepted: standing + current.hours },
+            { needed: locked.quantityWanted, accepted: standing + input.hours },
+          ),
+        };
       });
+      if (!changed) return { success: true, changed: false };
       await db.updateCampaignPledgedTotals(contribution.campaignId);
 
       await notifyHoursChanged({
@@ -1390,9 +1449,16 @@ export const campaignsRouter = router({
         hours: input.hours,
         actorId: ctx.user.id,
       });
-      // Lowering never tells anyone else; raising to the full role does.
+      // Raising to the full role tells its holders and stewards. Lowering on a
+      // filled role tells the people still waiting on it; the person whose
+      // hours changed hears only above.
       if (justFilled) {
         await notifyRoleFilled({ campaign, item, triggerContributionId: contribution.id, actorId: ctx.user.id });
+      }
+      if (reopened > 0) {
+        await notifyRoleReopened({
+          campaign, item, openHours: reopened, excludeUserIds: [contribution.userId], actorId: ctx.user.id,
+        });
       }
       return { success: true, changed: true };
     }),
@@ -1419,7 +1485,7 @@ export const campaignsRouter = router({
       }
 
       const database = await requireDb();
-      await database.transaction(async (tx) => {
+      const reopened = await database.transaction(async (tx) => {
         const locked = await lockHoursItem(tx, item.id);
         const accepted = await standingHoursExcluding(tx, item.id, 0);
         if (input.hoursNeeded < accepted) {
@@ -1436,8 +1502,17 @@ export const campaignsRouter = router({
           .where(eq(campaignItemsTable.id, item.id));
         await db.recomputeNeedCounters(item.id, tx);
         await db.recomputeCampaignValueTotals(item.campaignId, tx);
+        return reopenedOpenHours(
+          { needed: locked.quantityWanted, accepted },
+          { needed: input.hoursNeeded, accepted },
+        );
       });
       await db.updateCampaignPledgedTotals(item.campaignId);
+      // Raising the hours of a filled role opens it up again: the people
+      // still waiting on it hear about it.
+      if (reopened > 0) {
+        await notifyRoleReopened({ campaign, item, openHours: reopened, actorId: ctx.user.id });
+      }
       return { success: true };
     }),
 

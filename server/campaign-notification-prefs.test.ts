@@ -47,9 +47,9 @@ describe("cadenceFor campaign types", () => {
     expect(cadenceFor("campaign_update", prefs)).toBe("daily");
     expect(cadenceFor("contribution_accepted", prefs)).toBe("immediate");
   });
-  it("sends every fan-out notice (cancel, complete, role filled) by digest, never one email each at once", () => {
+  it("sends every fan-out notice (cancel, complete, role filled, role reopened) by digest, never one email each at once", () => {
     const prefs = resolvePrefs({ campaignsEmail: "immediate" });
-    for (const t of ["campaign_cancelled", "campaign_completed", "role_filled", "campaign_update"]) {
+    for (const t of ["campaign_cancelled", "campaign_completed", "role_filled", "role_reopened", "campaign_update"]) {
       expect(FAN_OUT_CAMPAIGN_TYPES).toContain(t);
       expect(cadenceFor(t, prefs), t).toBe("daily");
     }
@@ -139,6 +139,7 @@ describe("campaign emails and digest", () => {
     const item = (type: string) => ({ id: 1, type, title: "t", link: null, createdAt: new Date() });
     expect(summarizeDigest([item("campaign_update")])).toBe("1 piece of campaign news");
     expect(summarizeDigest([item("campaign_update"), item("role_filled")])).toBe("2 pieces of campaign news");
+    expect(summarizeDigest([item("role_reopened")])).toBe("1 piece of campaign news");
     expect(summarizeDigest([item("system")])).toBe("1 new notice");
   });
 });
@@ -149,6 +150,8 @@ describe("push for campaign notices", () => {
     expect(isPushableType("campaign_cancelled")).toBe(true);
     expect(isPushableType("campaign_update")).toBe(false);
     expect(pushPrefKeyFor("role_filled")).toBe("campaignsPush");
+    expect(isPushableType("role_reopened")).toBe(true);
+    expect(pushPrefKeyFor("role_reopened")).toBe("campaignsPush");
     expect(pushPrefKeyFor("mention")).toBe("mentionsPush");
     expect(pushPrefKeyFor("forum_reply")).toBe("repliesPush");
   });

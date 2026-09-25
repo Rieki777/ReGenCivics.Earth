@@ -1530,18 +1530,17 @@ export const notificationsRouter = router({
     }),
   }),
 
-  // ─── Notification preferences (playerProfiles.notificationPrefs JSON) ─────
+  // ─── Notification preferences ─────────────────────────────────────────────
+  // Stored on the player profile, or on the users row for an account with no
+  // profile. Read and written only through getStoredNotificationPrefs and
+  // saveNotificationPrefs (server/lib/notification-email.ts).
   prefs: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      const { resolvePrefs } = await import("../lib/notification-email");
-      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      const { resolvePrefs, getStoredNotificationPrefs } = await import("../lib/notification-email");
+      const profile = (await db.getPlayerProfileByUserId(ctx.user.id)) ?? null;
       return {
-        ...resolvePrefs(profile?.notificationPrefs),
+        ...resolvePrefs(await getStoredNotificationPrefs(ctx.user.id, profile)),
         emailDigestFrequency: profile?.emailDigestFrequency ?? 'monthly',
-        // Prefs live on the player profile. An account without one (a
-        // contributor who signed up from a campaign email) cannot save them
-        // yet, and the settings page says so instead of pretending.
-        hasProfile: !!profile,
       };
     }),
 
@@ -1554,32 +1553,12 @@ export const notificationsRouter = router({
         campaignsEmail: z.enum(['immediate', 'daily', 'off']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { mergeNotificationPrefs } = await import("../lib/notification-email");
-        const db2 = await getDb();
-        // A thrown error, never { success: false }: the page shows "Saved"
-        // on any answer that is not an error.
-        if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: "We couldn't save that. Try again in a moment." });
-        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
-        if (!profile) {
-          throw new TRPCError({
-            code: 'PRECONDITION_FAILED',
-            message: 'Make your player profile first, then you can choose which emails you get.',
-          });
-        }
-        // Merge over everything stored, so the legacy toggles
-        // (communityUpdates, questAnnouncements, governanceUpdates) and the
-        // *Push keys survive a save. resolvePrefs alone used to drop them.
-        const merged = mergeNotificationPrefs(profile?.notificationPrefs, input);
-        const { playerProfiles } = await import("../../drizzle/schema");
-        const result: any = await db2.update(playerProfiles)
-          .set({ notificationPrefs: merged })
-          .where(eq(playerProfiles.userId, ctx.user.id));
-        // Never report a save that wrote nothing. affectedRows counts matched
-        // rows here (mysql2 default), so an unchanged value still reads 1.
-        const matched = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
-        if (matched === 0) {
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: "We couldn't save that. Try again in a moment." });
-        }
+        const { saveNotificationPrefs } = await import("../lib/notification-email");
+        // Anyone signed in can save, profile or not. The merge keeps the
+        // legacy toggles (communityUpdates, questAnnouncements,
+        // governanceUpdates) and the *Push keys. A failed save throws, never
+        // { success: false }: the page shows "Saved" on any non-error answer.
+        const merged = await saveNotificationPrefs(ctx.user.id, input);
         return { success: true, prefs: merged };
       }),
   }),

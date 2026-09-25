@@ -359,21 +359,15 @@ export const playerProfilesRouter = router({
       governanceUpdates: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
-      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
-      if (!profile) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
-      }
       // Merge the three legacy toggles into what is stored and write the
-      // OBJECT. This used to overwrite the whole prefs blob with a
-      // JSON.stringify'd string, which wiped the email and push prefs and
-      // double-encoded the column.
-      const { mergeNotificationPrefs } = await import("../lib/notification-email");
-      await db.updatePlayerProfile(profile.id, {
-        notificationPrefs: mergeNotificationPrefs(profile.notificationPrefs, {
-          communityUpdates: input.communityUpdates,
-          questAnnouncements: input.questAnnouncements,
-          governanceUpdates: input.governanceUpdates,
-        }),
+      // OBJECT (this used to overwrite the whole blob with a JSON.stringify'd
+      // string, wiping the email and push prefs). saveNotificationPrefs
+      // writes to the profile, or to the users row when there is none.
+      const { saveNotificationPrefs } = await import("../lib/notification-email");
+      await saveNotificationPrefs(ctx.user.id, {
+        communityUpdates: input.communityUpdates,
+        questAnnouncements: input.questAnnouncements,
+        governanceUpdates: input.governanceUpdates,
       });
       return { success: true };
     }),

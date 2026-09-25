@@ -35,6 +35,13 @@ export const users = mysqlTable("users", {
   baseWalletAddress: varchar("baseWalletAddress", { length: 60 }),
   /** Deprecated: was used for Privy session binding. Column kept for data preservation. */
   privyAccessTokenHash: varchar("privyAccessTokenHash", { length: 64 }),
+  /**
+   * Email and push choices for an account with no player profile (0255). The
+   * profile's notificationPrefs wins when it holds any. Read and write only
+   * through getStoredNotificationPrefs / saveNotificationPrefs in
+   * server/lib/notification-email.ts.
+   */
+  notificationPrefs: json("notificationPrefs"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -2197,6 +2204,9 @@ export const emailTokens = mysqlTable("email_tokens", {
   token: varchar("token", { length: 64 }).notNull().unique(),
   expiresAt: timestamp("expiresAt").notNull(),
   usedAt: timestamp("usedAt"),
+  // Where the link opens after sign-in. Stored only after normalizeReturnTo
+  // passes it, and checked again on the way out (migration 0254).
+  returnTo: varchar("returnTo", { length: 512 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -3118,6 +3128,8 @@ export const notifications = mysqlTable("notifications", {
     "campaign_cancelled",
     "campaign_completed",
     "claim_expired",
+    // A filled role opened up again (0256)
+    "role_reopened",
   ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),

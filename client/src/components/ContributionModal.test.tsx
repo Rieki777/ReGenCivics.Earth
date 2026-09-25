@@ -127,6 +127,37 @@ describe('ContributionModal', () => {
     });
   });
 
+  // The email sign-in link from "Make my account" opens the project page's
+  // own contributions section, not the home page.
+  it('sends the project section as the sign-in returnTo from the thank-you step', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    const realFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    window.history.pushState({}, '', '/project/hill-farm?campaign=3#needs');
+    try {
+      const user = userEvent.setup();
+      render(
+        <ContributionModal
+          {...defaultProps}
+          need={{ id: 5, kind: 'item', title: 'Seed trays', quantityWanted: 3, quantityClaimed: 0, quantityDelivered: 0, estimatedValue: 90 }}
+          afterSignUpAnchor="your-contributions"
+        />,
+      );
+      await user.type(screen.getByLabelText('Name *'), 'Ada');
+      await user.type(screen.getByLabelText('Email *'), 'ada@example.com');
+      await user.click(screen.getByRole('button', { name: 'Submit Claim' }));
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false }));
+      await user.click(screen.getByRole('button', { name: /Make my account/ }));
+      await user.click(await screen.findByRole('button', { name: 'Send login link' }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body).toEqual({ email: 'ada@example.com', returnTo: '/project/hill-farm?campaign=3#your-contributions' });
+    } finally {
+      global.fetch = realFetch;
+      window.history.pushState({}, '', '/');
+    }
+  });
+
   it('calls onClose when closed', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   checkAcceptHours,
+  FILLED_ROLE_REFUSAL,
   fullTimeEquivalent,
   fullTimeLabel,
   HOURS_WHOLE_NUMBER_MESSAGE,
   isHoursNeed,
+  reopenedOpenHours,
   roleFillState,
   scaleRoleValue,
   standingHours,
@@ -114,5 +116,31 @@ describe("standingHours", () => {
       { status: "released", quantityPledged: 100 },
       { status: "cancelled", quantityPledged: 100 },
     ])).toEqual({ accepted: 17, delivered: 7 });
+  });
+});
+
+describe("reopenedOpenHours", () => {
+  it("reports the open hours when a filled role opens up", () => {
+    // A release or lowered hours: accepted drops under the hours needed.
+    expect(reopenedOpenHours({ needed: 40, accepted: 40 }, { needed: 40, accepted: 10 })).toBe(30);
+    // Raising the hours the role needs.
+    expect(reopenedOpenHours({ needed: 40, accepted: 40 }, { needed: 60, accepted: 40 })).toBe(20);
+  });
+  it("is 0 when the role was not filled before", () => {
+    expect(reopenedOpenHours({ needed: 40, accepted: 30 }, { needed: 40, accepted: 10 })).toBe(0);
+    expect(reopenedOpenHours({ needed: 40, accepted: 30 }, { needed: 80, accepted: 30 })).toBe(0);
+    expect(reopenedOpenHours({ needed: 0, accepted: 0 }, { needed: 40, accepted: 0 })).toBe(0);
+  });
+  it("is 0 when the role is still filled", () => {
+    expect(reopenedOpenHours({ needed: 40, accepted: 40 }, { needed: 40, accepted: 40 })).toBe(0);
+    expect(reopenedOpenHours({ needed: 60, accepted: 60 }, { needed: 40, accepted: 60 })).toBe(0);
+  });
+});
+
+describe("FILLED_ROLE_REFUSAL", () => {
+  it("promises no notice to followers, since following does not bring the reopened notice", () => {
+    expect(FILLED_ROLE_REFUSAL).toMatch(/filled right now/);
+    expect(FILLED_ROLE_REFUSAL.toLowerCase()).not.toContain("follow");
+    expect(FILLED_ROLE_REFUSAL).not.toContain("\u2014"); // no em-dash
   });
 });

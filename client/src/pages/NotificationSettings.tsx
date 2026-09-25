@@ -4,10 +4,12 @@
  * emailDigestFrequency 'never' (managed on the profile page); this page
  * covers the forum and campaign notification channels. Each save sends only
  * the key it changes, and the server merges it over everything stored
- * (mergeNotificationPrefs), so the profile page's toggles survive.
+ * (mergeNotificationPrefs), so the profile page's toggles survive. Anyone
+ * signed in can save here: an account with no player profile keeps its
+ * choices on the users row.
  */
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -192,19 +194,6 @@ export default function NotificationSettings() {
             <div className="p-10 flex justify-center"><TaoSpinner /></div>
           ) : (
             <div className="space-y-4">
-              {prefs.hasProfile === false && (
-                <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
-                  <h2 className="font-bold text-[#1a472a] mb-1">Email</h2>
-                  <p className="text-sm text-[#1a472a]/85 mb-3">
-                    Your email choices are saved on your player profile. Make your profile first, then come back here to choose
-                    which emails you get. Until then, campaign news reaches you by email right away and always shows in the bell.
-                  </p>
-                  <Link href="/profile">
-                    <Button className="bg-[#4a7c59] hover:bg-[#1a472a] text-white">Make my player profile</Button>
-                  </Link>
-                </section>
-              )}
-              {prefs.hasProfile !== false && (
               <section className="bg-white rounded-xl border border-[#e8e4de] p-5 space-y-5">
                 <h2 className="font-bold text-[#1a472a]">Email</h2>
                 <div>
@@ -225,7 +214,7 @@ export default function NotificationSettings() {
                 <div>
                   <p id="campaigns-label" className="text-sm font-semibold text-[#1a472a] mb-1">Campaigns you're part of</p>
                   <p className="text-xs text-[#1a472a]/75 mb-2">
-                    Offers, answers, deliveries, thank-yous and campaign news. Updates from campaigns you follow come in the daily summary.
+                    Offers, answers, deliveries and thank-yous can come right away. Campaign updates, roles filling or opening up, and campaigns ending come in the daily summary.
                   </p>
                   <CadencePicker idPrefix="campaigns" value={prefs.campaignsEmail ?? 'immediate'}
                     onChange={(v) => setPrefs.mutate({ campaignsEmail: v })} />
@@ -236,7 +225,6 @@ export default function NotificationSettings() {
                   </p>
                 )}
               </section>
-              )}
 
               <PushSection />
 

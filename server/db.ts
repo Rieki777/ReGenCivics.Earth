@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, like, ne, not, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, like, lt, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
@@ -2926,12 +2926,33 @@ export async function getUserRecentReplies(userId: number, limit = 10) {
 
 // â”€â”€â”€ Email Magic Link Token Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export async function createEmailToken(data: { email: string; token: string; expiresAt: Date }): Promise<void> {
+/** How long a sign-in token row is kept after it expires (a day). */
+export const EMAIL_TOKEN_RETENTION_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Store a sign-in token. `returnTo` must already have passed normalizeReturnTo;
+ * null means "no destination" and verify falls back to /profile.
+ */
+export async function createEmailToken(data: {
+  email: string;
+  token: string;
+  expiresAt: Date;
+  returnTo?: string | null;
+}): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   // Clean up old unused tokens for this email before creating a new one
   await db.delete(emailTokens).where(and(eq(emailTokens.email, data.email), isNull(emailTokens.usedAt)));
-  await db.insert(emailTokens).values(data);
+  // Retention: a token lives 15 minutes, so a row more than a day past its
+  // expiry is only a record of who signed in and where they were going.
+  // Clearing them here keeps the table to about a day of rows with no cron.
+  await db.delete(emailTokens).where(lt(emailTokens.expiresAt, new Date(Date.now() - EMAIL_TOKEN_RETENTION_MS)));
+  await db.insert(emailTokens).values({
+    email: data.email,
+    token: data.token,
+    expiresAt: data.expiresAt,
+    returnTo: data.returnTo ?? null,
+  });
 }
 
 export async function findAndConsumeEmailToken(token: string): Promise<EmailToken | null> {

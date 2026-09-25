@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getGoogleLoginUrl } from "@/const";
+import { normalizeReturnTo } from "@shared/oauthReturnTo";
 
 /**
  * Google blocks OAuth inside embedded in-app browsers (Instagram, Facebook,
@@ -45,6 +46,25 @@ interface AuthDialogProps {
   onClose?: () => void;
   /** Seeds the email-link field, for example with the email an offer used. */
   defaultEmail?: string;
+  /**
+   * The same-site path to open after sign-in, for Google and for the email
+   * link. Defaults to the page the dialog is open on. The server keeps only a
+   * value that passes normalizeReturnTo; anything else opens /profile.
+   */
+  returnTo?: string;
+}
+
+/**
+ * The page the dialog is open on, hash included so a section link survives.
+ * Run through normalizeReturnTo here too, so a secret in the URL (an
+ * unsubscribe or preview token) never goes out with the request.
+ */
+function currentPath(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (
+    normalizeReturnTo(window.location.pathname + window.location.search + window.location.hash) ??
+    undefined
+  );
 }
 
 export function AuthDialog({
@@ -54,6 +74,7 @@ export function AuthDialog({
   onOpenChange,
   onClose,
   defaultEmail,
+  returnTo,
 }: AuthDialogProps) {
   const [internalOpen, setInternalOpen] = useState(open);
   const [email, setEmail] = useState(defaultEmail ?? "");
@@ -110,7 +131,9 @@ export function AuthDialog({
       const res = await fetch("/api/auth/email/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        // The server stores returnTo with the token, so the link in the email
+        // opens this page (or the one the caller named) in the new tab.
+        body: JSON.stringify({ email, returnTo: returnTo ?? currentPath() }),
       });
       if (res.ok) {
         setEmailSent(true);
@@ -182,11 +205,7 @@ export function AuthDialog({
                   Safari Intelligent Tracking Prevention, which can wipe
                   sessionStorage during the redirect. */}
               <a
-                href={getGoogleLoginUrl(
-                  typeof window !== "undefined"
-                    ? window.location.pathname + window.location.search
-                    : undefined
-                )}
+                href={getGoogleLoginUrl(returnTo ?? currentPath())}
                 className="flex items-center justify-center gap-3 w-full h-11 rounded-xl bg-white text-[#1a1a19] font-medium text-sm hover:bg-white/90 transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">

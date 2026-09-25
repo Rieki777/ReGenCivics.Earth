@@ -156,6 +156,23 @@ describe("stewardActionDescription", () => {
     expect(stewardActionDescription({ action: "hours", hoursNeed: true, hasAccount: true, name: "Rosa", roleTitle: "Farm Manager" }))
       .toContain("They hear about it in their notifications.");
   });
+  it("says who else hears when a release or lower hours can open a filled role", () => {
+    const release = stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: true, name: "Kai", heldHours: 30, roleFilled: true });
+    expect(release).toBe(
+      "This frees the 30 hours a week Kai holds, so someone else can take them. Kai hears about it in their notifications. "
+        + "If this opens the role, people still waiting on it hear that it has opened up.",
+    );
+    expect(stewardActionDescription({ action: "hours", hoursNeed: true, hasAccount: false, name: "Rosa", roleTitle: "Farm Manager", roleFilled: true }))
+      .toContain("people still waiting on it hear that it has opened up");
+    // A role that is not filled cannot reopen, so the line stays as it was.
+    expect(stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: true, name: "Kai", heldHours: 30, roleFilled: false }))
+      .not.toContain("waiting");
+    expect(stewardActionDescription({ action: "hours", hoursNeed: true, hasAccount: true, name: "Rosa", roleTitle: "Farm Manager" }))
+      .not.toContain("waiting");
+    // Count-based needs send no reopened notice.
+    expect(stewardActionDescription({ action: "release", hoursNeed: false, hasAccount: true, name: "Kai", roleFilled: true }))
+      .not.toContain("waiting");
+  });
   it("keeps the release and thanks branches", () => {
     expect(stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: false, name: "Kai", heldHours: 30 }))
       .toBe("This frees the 30 hours a week Kai holds, so someone else can take them. Kai has no account here yet, so let them know yourself.");

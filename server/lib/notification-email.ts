@@ -6,13 +6,16 @@
  *     server/jobs/notificationDigestJob.ts into one "while you were away"
  *     email. Rows are stamped emailedAt either way so no event ever emails twice.
  *
- * Guard rails: per-user prefs (playerProfiles.notificationPrefs JSON),
- * emailDigestFrequency 'never' as a global off, banned users never emailed,
- * hard cap of 20 notification emails per user per day.
+ * Guard rails: per-user prefs (playerProfiles.notificationPrefs JSON, or
+ * users.notificationPrefs for an account with no player profile; always read
+ * through getStoredNotificationPrefs), emailDigestFrequency 'never' as a
+ * global off, banned users never emailed, hard cap of 20 notification emails
+ * per user per day.
  */
 import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { getDb, isUserBanned, getUserById, getPlayerProfileByUserId } from "../db";
-import { notifications, users } from "../../drizzle/schema";
+import { notifications, playerProfiles, users, type PlayerProfile } from "../../drizzle/schema";
 import type { NotificationInput } from "./forum-notify";
 import { textForEmail } from "../../shared/htmlText";
 
@@ -47,6 +50,7 @@ export const CAMPAIGN_NOTIFICATION_TYPES = [
   "contribution_thanked",
   "contribution_released",
   "role_filled",
+  "role_reopened",
   "campaign_update",
   "campaign_approved",
   "campaign_declined",
@@ -93,6 +97,81 @@ export function mergeNotificationPrefs(raw: unknown, patch: Record<string, unkno
   return { ...stored, ...resolvePrefs(stored), ...clean };
 }
 
+type ProfilePrefs = Pick<PlayerProfile, "notificationPrefs"> | null;
+type ProfileEmailSettings = Pick<PlayerProfile, "notificationPrefs" | "emailDigestFrequency"> | null;
+
+/**
+ * The stored prefs for a user, raw (pass the result to resolvePrefs or
+ * parseStoredPrefs). THE one read rule, so every reader agrees:
+ *   1. the player profile's notificationPrefs, when it holds any;
+ *   2. otherwise users.notificationPrefs (0255). That covers an account with
+ *      no player profile (magic-link and contribution sign-ups), and someone
+ *      who saved there first and made a profile later, so their choices carry
+ *      over until the profile's first save.
+ * Returns null when neither holds anything, which resolves to the defaults.
+ * Pass `profile` when the caller already fetched it (null means "has none");
+ * leave it out to look it up. The SQL in server/jobs/assemblyNotify.ts
+ * mirrors this rule with COALESCE.
+ */
+export async function getStoredNotificationPrefs(
+  userId: number,
+  profile?: ProfilePrefs,
+): Promise<unknown> {
+  const p = profile === undefined ? ((await getPlayerProfileByUserId(userId)) ?? null) : profile;
+  if (p && p.notificationPrefs != null) return p.notificationPrefs;
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db
+    .select({ prefs: users.notificationPrefs })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return row?.prefs ?? null;
+}
+
+/**
+ * What the email paths (immediate send and daily digest) need: the resolved
+ * prefs and whether the account-wide 'never' switch pauses everything.
+ */
+export async function loadEmailPrefs(
+  userId: number,
+  profile?: ProfileEmailSettings,
+): Promise<{ prefs: NotificationPrefs; paused: boolean }> {
+  const p = profile === undefined ? ((await getPlayerProfileByUserId(userId)) ?? null) : profile;
+  return {
+    prefs: resolvePrefs(await getStoredNotificationPrefs(userId, p)),
+    paused: p?.emailDigestFrequency === "never",
+  };
+}
+
+const SAVE_FAILED = "We couldn't save that. Try again in a moment.";
+
+/**
+ * The one way to save notification prefs. Merges the patch over whatever
+ * getStoredNotificationPrefs reads (so legacy toggles and *Push keys survive),
+ * then writes to the player profile when there is one and to the users row
+ * when there is not. Never creates a player profile: that would put a public
+ * profile and a directory entry behind a settings toggle. Throws a TRPCError
+ * rather than reporting a save that wrote nothing.
+ */
+export async function saveNotificationPrefs(
+  userId: number,
+  patch: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: SAVE_FAILED });
+  const profile = (await getPlayerProfileByUserId(userId)) ?? null;
+  const merged = mergeNotificationPrefs(await getStoredNotificationPrefs(userId, profile), patch);
+  const result: any = profile
+    ? await db.update(playerProfiles).set({ notificationPrefs: merged }).where(eq(playerProfiles.userId, userId))
+    : await db.update(users).set({ notificationPrefs: merged }).where(eq(users.id, userId));
+  // affectedRows counts matched rows here (mysql2 default), so saving an
+  // unchanged value still reads 1.
+  const matched = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
+  if (matched === 0) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: SAVE_FAILED });
+  return merged;
+}
+
 /** Hard ceiling on notification emails per user per rolling day. */
 export const DAILY_EMAIL_CAP = 20;
 
@@ -121,7 +200,7 @@ export function resolvePrefs(raw: unknown): NotificationPrefs {
 
 /** Campaign notices that go to many people at once; their email waits for the digest. */
 export const FAN_OUT_CAMPAIGN_TYPES: ReadonlyArray<string> = [
-  "campaign_update", "campaign_cancelled", "campaign_completed", "role_filled",
+  "campaign_update", "campaign_cancelled", "campaign_completed", "role_filled", "role_reopened",
 ];
 
 /**
@@ -143,7 +222,8 @@ export function digestWants(type: string, createdAt: Date, prefs: NotificationPr
 export function cadenceFor(type: string, prefs: NotificationPrefs): EmailCadence {
   if (isCampaignNotificationType(type)) {
     // These fan out to many people at once (every follower, every
-    // contributor, every holder of a role). Immediate mail for them would
+    // contributor, every holder of a role, everyone waiting on a role that
+    // opened up again). Immediate mail for them would
     // burn the shared hourly send cap (server/_core/email.ts) that the
     // direct emails to contributors without an account depend on, so they
     // wait for the daily digest. The bell and push still carry them at once.
@@ -239,9 +319,8 @@ export async function maybeSendImmediateEmail(input: NotificationInput): Promise
     getPlayerProfileByUserId(input.userId),
   ]);
   if (!user?.email) return;
-  if (profile?.emailDigestFrequency === "never") return;
-
-  const prefs = resolvePrefs(profile?.notificationPrefs);
+  const { prefs, paused } = await loadEmailPrefs(input.userId, profile ?? null);
+  if (paused) return;
   if (cadenceFor(input.type, prefs) !== "immediate") return;
 
   if (await isUserBanned(input.userId)) return;

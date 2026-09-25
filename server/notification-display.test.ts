@@ -20,7 +20,7 @@ describe("notification display (bell + /notifications)", () => {
     const fresh = [
       "new_contribution", "campaign_update", "contribution_delivered", "contribution_thanked",
       "contribution_released", "role_filled", "campaign_approved", "campaign_declined",
-      "campaign_cancelled", "campaign_completed", "claim_expired",
+      "campaign_cancelled", "campaign_completed", "claim_expired", "role_reopened",
     ];
     expect(new Set(fresh.map(typeGlyph)).size).toBe(fresh.length);
   });

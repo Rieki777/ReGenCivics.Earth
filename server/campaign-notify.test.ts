@@ -17,6 +17,7 @@ import {
   buildProposalReceived,
   buildReleased,
   buildRoleFilled,
+  buildRoleReopened,
   buildThanked,
   buildUpdatePosted,
   deliver,
@@ -112,6 +113,57 @@ describe("role filled", () => {
     expect(rows.find((r) => r.userId === 1)!.body).toBe(
       "Every hour this role needs is accepted. New offers for it are closed until you release someone or raise the hours.",
     );
+  });
+});
+
+describe("role reopened", () => {
+  const at = new Date("2026-09-24T10:00:00Z");
+  const live = { ...campaign, status: "active" };
+  it("tells people still waiting and people not taken, once each, with the open hours", () => {
+    const rows = buildRoleReopened({
+      campaign: live, item: roleItem, openHours: 30, waitingIds: [21, 22, 21], notSelectedIds: [23, 22],
+      reopenedAt: at, actorId: 2,
+    });
+    expect(rows.map((r) => r.userId)).toEqual([21, 22, 23]);
+    expect(rows[0]).toMatchObject({
+      type: "role_reopened",
+      title: "A role you offered to has opened up",
+      body: "Soil scientist at Seeds & Soil has 30 hours a week open again. Your offer is still with the stewards.",
+      link: `${P}#needs`,
+      campaignId: 7,
+      actorId: 2,
+      dedupeKey: `cp:rolereopened:50:o30:${at.getTime()}:u21`,
+    });
+    // Someone with a waiting offer and a declined one hears the waiting copy only.
+    expect(rows.find((r) => r.userId === 22)!.body).toContain("Your offer is still with the stewards.");
+    expect(rows.find((r) => r.userId === 23)!.body).toBe(
+      "Soil scientist at Seeds & Soil has 30 hours a week open again. If you'd still like to give your time, you're welcome to offer again.",
+    );
+  });
+  it("never the actor, never the person released or anyone excluded", () => {
+    const rows = buildRoleReopened({
+      campaign: live, item: roleItem, openHours: 10, waitingIds: [2, 20, 21], notSelectedIds: [24],
+      excludeIds: [20, 24, null], reopenedAt: at, actorId: 2,
+    });
+    expect(rows.map((r) => r.userId)).toEqual([21]);
+  });
+  it("says 1 hour a week in the singular", () => {
+    const [row] = buildRoleReopened({ campaign: live, item: roleItem, openHours: 1, waitingIds: [21], notSelectedIds: [], reopenedAt: at });
+    expect(row.body).toContain("has 1 hour a week open again.");
+  });
+  it("sends nothing with no open hours or on a campaign that isn't live", () => {
+    const base = { item: roleItem, waitingIds: [21], notSelectedIds: [23], reopenedAt: at };
+    expect(buildRoleReopened({ ...base, campaign: live, openHours: 0 })).toEqual([]);
+    for (const status of ["draft", "pending_review", "rejected", "cancelled", "completed", "funded", "paused"]) {
+      expect(buildRoleReopened({ ...base, campaign: { ...campaign, status }, openHours: 10 }), status).toEqual([]);
+    }
+  });
+  it("the same reopening keys the same; a later reopening is a new notice", () => {
+    const args = { campaign: live, item: roleItem, openHours: 30, waitingIds: [21], notSelectedIds: [], reopenedAt: at };
+    expect(buildRoleReopened(args)[0].dedupeKey).toBe(buildRoleReopened(args)[0].dedupeKey);
+    const later = buildRoleReopened({ ...args, reopenedAt: new Date(at.getTime() + 1) });
+    expect(later[0].dedupeKey).not.toBe(buildRoleReopened(args)[0].dedupeKey);
+    expect(buildRoleReopened(args)[0].dedupeKey.length).toBeLessThanOrEqual(191);
   });
 });
 

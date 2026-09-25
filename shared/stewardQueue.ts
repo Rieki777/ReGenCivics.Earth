@@ -181,6 +181,17 @@ export function hoursDialogNumbers(
  * delivered) and nothing for thanks, release or an hours change, so the
  * dialog says who will hear and when the steward should tell them directly.
  */
+/**
+ * Added to the release and hours dialogs when the role is filled: freeing
+ * hours on it sends a role_reopened notice (server/lib/campaign-notify.ts) to
+ * the people still waiting on it.
+ */
+export const REOPEN_NOTICE_IF_OPENED =
+  "If this opens the role, people still waiting on it hear that it has opened up.";
+
+/** The same, for raising the hours a filled role needs, which always opens it. */
+export const REOPEN_NOTICE_ON_RAISE = "People still waiting on this role hear that it has opened up.";
+
 export function stewardActionDescription(args: {
   action: "accept" | "reject" | "deliver" | "thanks" | "release" | "hours";
   hoursNeed: boolean;
@@ -188,8 +199,11 @@ export function stewardActionDescription(args: {
   name: string;
   roleTitle?: string | null;
   heldHours?: number | null;
+  /** The role is filled right now, so a release or lower hours opens it. */
+  roleFilled?: boolean;
 }): string {
   const { action, hoursNeed, hasAccount, name } = args;
+  const others = hoursNeed && args.roleFilled ? ` ${REOPEN_NOTICE_IF_OPENED}` : "";
   const role = args.roleTitle || "this role";
   const tellThem = `${name} has no account here yet, so let them know yourself.`;
   switch (action) {
@@ -210,11 +224,11 @@ export function stewardActionDescription(args: {
       const freed = hoursNeed
         ? `This frees the ${args.heldHours ?? ""} hours a week ${name} holds, so someone else can take them.`
         : `This frees ${name}'s place on this need, so someone else can take it.`;
-      return hasAccount ? `${freed} ${name} hears about it in their notifications.` : `${freed} ${tellThem}`;
+      return (hasAccount ? `${freed} ${name} hears about it in their notifications.` : `${freed} ${tellThem}`) + others;
     }
     case "hours":
-      return hasAccount
+      return (hasAccount
         ? `Set how many hours a week ${name} holds on ${role}. They hear about it in their notifications.`
-        : `Set how many hours a week ${name} holds on ${role}. ${tellThem}`;
+        : `Set how many hours a week ${name} holds on ${role}. ${tellThem}`) + others;
   }
 }

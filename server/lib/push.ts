@@ -17,7 +17,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { notifications, pushSubscriptions } from "../../drizzle/schema";
 import type { NotificationInput } from "./forum-notify";
-import { CAMPAIGN_NOTIFICATION_TYPES, parseStoredPrefs } from "./notification-email";
+import { CAMPAIGN_NOTIFICATION_TYPES, getStoredNotificationPrefs, parseStoredPrefs } from "./notification-email";
 
 const FAILURE_PRUNE_THRESHOLD = 5;
 
@@ -133,11 +133,21 @@ export async function sendPush(userId: number, payload: PushPayload): Promise<nu
 }
 
 /**
+ * Per-type push pref check. The stored prefs JSON may carry push keys the
+ * email module doesn't model; read them loosely with true as the default.
+ */
+export async function pushWanted(userId: number, type: string): Promise<boolean> {
+  const raw = parseStoredPrefs(await getStoredNotificationPrefs(userId));
+  return raw[pushPrefKeyFor(type)] !== false;
+}
+
+/**
  * Push the OS-level copy of a just-inserted notification. Called from
  * insertNotification only on a FRESH insert; pushedAt is the second guard.
  * Respects per-type push prefs (mentionsPush / repliesPush / gratitudePush /
  * campaignsPush
- * on playerProfiles.notificationPrefs, default true — the subscription
+ * on the stored prefs, read through getStoredNotificationPrefs so an account
+ * with no player profile is honoured too; default true, the subscription
  * itself is the master opt-in).
  */
 export async function maybeSendPush(input: NotificationInput): Promise<void> {
@@ -146,12 +156,7 @@ export async function maybeSendPush(input: NotificationInput): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
-  // Per-type pref check. The stored prefs JSON may carry push keys the
-  // email module doesn't model; read them loosely with true as default.
-  const { getPlayerProfileByUserId } = await import("../db");
-  const profile = await getPlayerProfileByUserId(input.userId);
-  const raw = parseStoredPrefs(profile?.notificationPrefs);
-  if (raw[pushPrefKeyFor(input.type)] === false) return;
+  if (!(await pushWanted(input.userId, input.type))) return;
 
   const delivered = await sendPush(input.userId, {
     title: input.title,

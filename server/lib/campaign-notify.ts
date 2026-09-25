@@ -1,8 +1,8 @@
 /**
  * Campaign notices on the notification spine.
  *
- * Every campaign event (an offer arrives, a steward answers, a role fills, a
- * campaign goes live, completes or is cancelled) writes rows through
+ * Every campaign event (an offer arrives, a steward answers, a role fills or
+ * opens up again, a campaign goes live, completes or is cancelled) writes rows through
  * insertNotification (server/lib/forum-notify.ts), which drives the bell, web
  * push and the recipient's email by their campaignsEmail preference.
  *
@@ -233,6 +233,56 @@ export function buildRoleFilled(args: {
       body: "Every hour this role needs is accepted. New offers for it are closed until you release someone or raise the hours.",
       dedupeKey: key(uid),
     })),
+  ];
+}
+
+/** "1 hour a week", "30 hours a week". */
+function hoursAWeek(n: number): string {
+  return n === 1 ? "1 hour a week" : `${n} hours a week`;
+}
+
+/**
+ * A filled role opened up again (a release, lowered hours or more hours
+ * needed). Goes to account holders who offered to the role and are still
+ * waiting (pending), and to those not taken ('rejected') only when
+ * ROLE_REOPENED_REACHES_DECLINED is on (notifyRoleReopened). Never the actor, never
+ * anyone in `excludeIds` (the person just released, the person whose hours
+ * changed, anyone who already holds hours on the role). Only for a live
+ * campaign. One row per person per reopening: the key carries the need, the
+ * new open hours and the moment it reopened, so a retry of the same event
+ * dedupes and a later reopening is a new notice.
+ */
+export function buildRoleReopened(args: {
+  campaign: NotifyCampaign;
+  item: NotifyItem;
+  openHours: number;
+  waitingIds: number[];
+  notSelectedIds: number[];
+  excludeIds?: Array<number | null | undefined>;
+  reopenedAt: Date;
+  actorId?: number | null;
+}): NotificationInput[] {
+  const { campaign, item } = args;
+  if (campaign.status && campaign.status !== "active") return [];
+  const open = Math.floor(Number(args.openHours) || 0);
+  if (open <= 0) return [];
+  const exclude = [args.actorId, ...(args.excludeIds ?? [])];
+  const waiting = recipientsOf(args.waitingIds, exclude);
+  const notSelected = recipientsOf(args.notSelectedIds, [...exclude, ...waiting]);
+  const lead = `${needTitleOf(item)} at ${projectNameOf(campaign)} has ${hoursAWeek(open)} open again.`;
+  const row = (uid: number, body: string): NotificationInput => ({
+    userId: uid,
+    type: "role_reopened",
+    title: "A role you offered to has opened up",
+    body,
+    link: projectLink(campaign, "needs"),
+    actorId: args.actorId ?? null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:rolereopened:${item.id}:o${open}:${args.reopenedAt.getTime()}:u${uid}`,
+  });
+  return [
+    ...waiting.map((uid) => row(uid, `${lead} Your offer is still with the stewards.`)),
+    ...notSelected.map((uid) => row(uid, `${lead} If you'd still like to give your time, you're welcome to offer again.`)),
   ];
 }
 
@@ -592,6 +642,66 @@ export async function notifyRoleFilled(
       safeStewards(args.campaign),
     ]);
     return deliver(buildRoleFilled({ ...args, holderIds, stewardIds }), deps);
+  });
+}
+
+/**
+ * Whether a reopened role also invites back people whose offer a steward
+ * declined. Off: a steward may have turned someone down for a reason (fit,
+ * safety, a past problem) and has no way to stop the invitation, so only
+ * people whose offer is still waiting hear. Turning this on sends the "you're
+ * welcome to offer again" copy in buildRoleReopened to them too; the steward
+ * dialogs (stewardActionDescription, NeedsGlance) would need to say so.
+ */
+export const ROLE_REOPENED_REACHES_DECLINED = false;
+
+/**
+ * A filled role opened up again. The route computes openHours inside the
+ * transaction that moved the counters (reopenedOpenHours in
+ * shared/roleCapacity.ts) and calls this only when it is above 0.
+ */
+export async function notifyRoleReopened(
+  args: {
+    campaign: NotifyCampaign;
+    item: NotifyItem;
+    openHours: number;
+    excludeUserIds?: Array<number | null | undefined>;
+    actorId?: number | null;
+    at?: Date;
+  },
+  deps: NotifyDeps = {},
+): Promise<number> {
+  return run("role reopened", async () => {
+    const { getDb } = await import("../db");
+    const database = await getDb();
+    if (!database) return 0;
+    const rows = await database
+      .select({ userId: campaignContributions.userId, status: campaignContributions.status })
+      .from(campaignContributions)
+      .where(and(
+        eq(campaignContributions.campaignItemId, args.item.id),
+        isNotNull(campaignContributions.userId),
+        inArray(campaignContributions.status, [
+          "pending",
+          ...(ROLE_REOPENED_REACHES_DECLINED ? (["rejected"] as const) : []),
+          "accepted",
+          "fulfilled",
+          "thanked",
+        ]),
+      ));
+    const idsWith = (statuses: string[]) => rows.filter((r) => statuses.includes(r.status)).map((r) => r.userId);
+    // Someone who already holds hours on this role is in; they hear nothing.
+    const holders = idsWith(["accepted", "fulfilled", "thanked"]);
+    return deliver(buildRoleReopened({
+      campaign: args.campaign,
+      item: args.item,
+      openHours: args.openHours,
+      waitingIds: recipientsOf(idsWith(["pending"])),
+      notSelectedIds: ROLE_REOPENED_REACHES_DECLINED ? recipientsOf(idsWith(["rejected"])) : [],
+      excludeIds: [...(args.excludeUserIds ?? []), ...holders],
+      reopenedAt: args.at ?? new Date(),
+      actorId: args.actorId,
+    }), deps);
   });
 }
 

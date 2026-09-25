@@ -1,23 +1,48 @@
 /**
  * Assembly governance notifications (ASSEMBLY_PAGE_SPEC.md section 8).
  *
- * Subscribers are players with the "Governance updates" toggle on
- * (player_profiles.notificationPrefs.governanceUpdates). Batched hard:
- * at most one governance email per person per day, enforced against
- * email_logs before every send.
+ * Subscribers are people with the "Governance updates" toggle on
+ * (notificationPrefs.governanceUpdates, on the player profile or, for an
+ * account with no profile, on the users row). Batched hard: at most one
+ * governance email per person per day, enforced against email_logs before
+ * every send.
  */
 import { sql } from "drizzle-orm";
 import { getDb } from "../db";
+
+/**
+ * The same rule the settings page reads, in SQL. Mirrors
+ * getStoredNotificationPrefs + parseStoredPrefs (server/lib/notification-email.ts):
+ *
+ * - the profile's prefs when it holds any, else the users row (COALESCE);
+ * - a row the old players.updateNotificationPrefs bug double-encoded holds a
+ *   JSON string whose text is the object, so it is unwrapped first (only when
+ *   that text is itself valid JSON, so one odd row can never fail the query);
+ * - on only when governanceUpdates is the JSON boolean true, the way
+ *   UserNotificationPreferences reads it.
+ *
+ * JSON functions instead of LIKE because MySQL prints a JSON column as
+ * '"k": true' while MariaDB keeps drizzle's '"k":true', and neither spelling
+ * matches a double-encoded row. Written to run on both.
+ */
+const storedPrefs = sql`COALESCE(pp.notificationPrefs, u.notificationPrefs)`;
+const prefsDocument = sql`(CASE
+    WHEN JSON_TYPE(${storedPrefs}) = 'STRING' AND JSON_VALID(JSON_UNQUOTE(${storedPrefs}))
+      THEN JSON_UNQUOTE(${storedPrefs})
+    ELSE ${storedPrefs}
+  END)`;
+const governanceFlag = sql`JSON_EXTRACT(${prefsDocument}, '$.governanceUpdates')`;
+const governanceUpdatesOn = sql`(JSON_TYPE(${governanceFlag}) = 'BOOLEAN' AND JSON_UNQUOTE(${governanceFlag}) = 'true')`;
 
 export async function notifyGovernanceSubscribers(subject: string, html: string): Promise<number> {
   try {
     const db = await getDb();
     if (!db) return 0;
     const [subs] = await db.execute(
-      sql`SELECT u.email, u.name FROM player_profiles pp
-          JOIN users u ON u.id = pp.userId
+      sql`SELECT DISTINCT u.email, u.name FROM users u
+          LEFT JOIN player_profiles pp ON pp.userId = u.id
           WHERE u.email IS NOT NULL
-            AND pp.notificationPrefs LIKE '%"governanceUpdates":true%'
+            AND ${governanceUpdatesOn}
           LIMIT 500`
     );
     const { sendEmail } = await import("../_core/email");

@@ -47,8 +47,9 @@ function stripErrorParams(returnTo: string): string {
     const url = new URL(returnTo, "https://regencivics.earth");
     url.searchParams.delete("error");
     url.searchParams.delete("auth_failed");
-    const out = url.pathname + url.search;
-    return out;
+    // Keep the hash: a section link (#your-contributions) is part of where the
+    // person asked to land.
+    return url.pathname + url.search + url.hash;
   } catch {
     return returnTo;
   }

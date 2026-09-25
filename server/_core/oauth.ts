@@ -13,16 +13,27 @@ import { sendEmail } from "./email";
 import { linkPendingMembersByEmail } from "../routes/roleHolders";
 import { normalizeReturnTo } from "@shared/oauthReturnTo";
 
+/** The longest sign-in waits for the contribution link before redirecting. */
+export const CONTRIBUTION_LINK_WAIT_MS = 3000;
+
 /**
- * Fire-and-forget: link any crowdpool contributions someone made anonymously
- * under this email to their freshly signed-in account, and back-create the
- * delivered ones onto their Living Tree. Best-effort and non-blocking, so it
- * never delays the login redirect. Idempotent, so running it on every login is
- * safe. Dynamically imports the campaigns router to avoid an init-order cycle.
+ * Link any crowdpool contributions someone made anonymously under this email
+ * to their freshly signed-in account, and back-create the delivered ones onto
+ * their Living Tree. Idempotent, so running it on every login is safe.
+ * Dynamically imports the campaigns router to avoid an init-order cycle.
+ *
+ * Sign-in waits for it (up to CONTRIBUTION_LINK_WAIT_MS) before redirecting:
+ * the page it lands on often shows "Your contributions", which reads offers by
+ * userId, so the link has to be in place before that page asks. It never
+ * throws and never blocks sign-in for longer than the cap; past the cap the
+ * work carries on in the background.
  */
-function linkContributionsBestEffort(openId: string, email: string | null | undefined): void {
+async function linkContributionsBeforeRedirect(
+  openId: string,
+  email: string | null | undefined,
+): Promise<void> {
   if (!email) return;
-  void (async () => {
+  const work = (async () => {
     try {
       const database = await db.getDb();
       const user = await db.getUserByOpenId(openId);
@@ -33,6 +44,15 @@ function linkContributionsBestEffort(openId: string, email: string | null | unde
       console.error("[Auth] contribution link failed:", e);
     }
   })();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cap = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, CONTRIBUTION_LINK_WAIT_MS);
+  });
+  try {
+    await Promise.race([work, cap]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 // ─── Chat System Prompt (shared with streaming endpoint) ─────────────────────
@@ -385,7 +405,7 @@ export function registerOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      linkContributionsBestEffort(openId, userInfo.email ?? null);
+      await linkContributionsBeforeRedirect(openId, userInfo.email ?? null);
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: userInfo.name || "",
@@ -477,7 +497,7 @@ export function registerOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      linkContributionsBestEffort(openId, appleUser.email ?? null);
+      await linkContributionsBeforeRedirect(openId, appleUser.email ?? null);
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: name || "",
@@ -568,7 +588,20 @@ export function registerOAuthRoutes(app: Express) {
 
   // ── Email magic link: Request ───────────────────────────────────────────────
   app.post("/api/auth/email/request", async (req: Request, res: Response) => {
-    const { email } = req.body as { email?: string };
+    // Our own sign-in form sends JSON. A plain HTML form on another site can
+    // only send urlencoded or multipart bodies without a CORS preflight, so
+    // refusing everything but JSON (and anything a browser marks cross-site)
+    // stops a hostile page from firing sign-in emails, each of which also
+    // cancels the person's earlier unused link, from its visitors' browsers.
+    if (req.get("sec-fetch-site") === "cross-site") {
+      res.status(403).json({ error: "Cross-site request refused" });
+      return;
+    }
+    if (!req.is("application/json")) {
+      res.status(415).json({ error: "Send the request as JSON" });
+      return;
+    }
+    const { email, returnTo: rawReturnTo } = req.body as { email?: string; returnTo?: unknown };
     if (!email || typeof email !== "string" || !email.includes("@")) {
       res.status(400).json({ error: "Valid email required" });
       return;
@@ -578,7 +611,13 @@ export function registerOAuthRoutes(app: Express) {
       const token = nanoid(32);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-      await db.createEmailToken({ email: email.toLowerCase().trim(), token, expiresAt });
+      // Where the link should open after sign-in. Kept server-side next to the
+      // token so the emailed URL carries nothing a person could hand-edit. Only
+      // a same-site path survives normalizeReturnTo; anything else is dropped
+      // and verify falls back to /profile.
+      const returnTo = normalizeReturnTo(typeof rawReturnTo === "string" ? rawReturnTo : null);
+
+      await db.createEmailToken({ email: email.toLowerCase().trim(), token, expiresAt, returnTo });
 
       const verifyUrl = `${ENV.appUrl}/api/auth/email/verify?token=${token}`;
 
@@ -640,7 +679,7 @@ export function registerOAuthRoutes(app: Express) {
         console.error("[Auth] pending-invite link failed:", e);
       }
 
-      linkContributionsBestEffort(openId, emailToken.email);
+      await linkContributionsBeforeRedirect(openId, emailToken.email);
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: "",
@@ -651,7 +690,10 @@ export function registerOAuthRoutes(app: Express) {
       clearAllSessionCookies(req, res);
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.redirect(302, "/");
+      // Back to the page the person asked from. Re-checked here as well as at
+      // request time, so a row written any other way still cannot send anyone
+      // off-site.
+      res.redirect(302, normalizeReturnTo(emailToken.returnTo) ?? "/profile");
     } catch (error) {
       console.error("[Auth] Email verify failed:", error);
       res.redirect("/?error=auth_failed");

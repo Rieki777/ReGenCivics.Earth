@@ -9,10 +9,10 @@
  * double-fired run never re-emails an event.
  */
 import { and, gte, inArray, isNull, eq, asc } from "drizzle-orm";
-import { getDb, isUserBanned, getPlayerProfileByUserId } from "../db";
+import { getDb, isUserBanned } from "../db";
 import { notifications, users } from "../../drizzle/schema";
 import {
-  resolvePrefs,
+  loadEmailPrefs,
   digestWants,
   renderDigestEmail,
   CAMPAIGN_NOTIFICATION_TYPES,
@@ -74,9 +74,9 @@ export async function runNotificationDigestJob(): Promise<void> {
   let sent = 0;
   for (const [userId, userRows] of byUser) {
     try {
-      const profile = await getPlayerProfileByUserId(userId);
-      if (profile?.emailDigestFrequency === "never") continue;
-      const prefs = resolvePrefs(profile?.notificationPrefs);
+      // Profile prefs, or the users row for an account with no profile.
+      const { prefs, paused } = await loadEmailPrefs(userId);
+      if (paused) continue;
       // Daily-cadence rows, plus immediate ones whose email never went out.
       const wanted = userRows.filter((r) => digestWants(r.type, r.createdAt, prefs));
       if (wanted.length === 0) continue;

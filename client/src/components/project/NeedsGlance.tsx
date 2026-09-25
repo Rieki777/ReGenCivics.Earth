@@ -14,10 +14,17 @@ import { Loader2, Target } from "lucide-react";
 import { CAPITAL_LABELS } from "@shared/crowdpoolingTaxonomy";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { MAX_ROLE_HOURS, fullTimeLabel, isHoursNeed, roleFillState } from "@shared/roleCapacity";
+import { REOPEN_NOTICE_ON_RAISE } from "@shared/stewardQueue";
 import { KIND_CHIP_CLASSES, KIND_LABELS, capitalForItem, kindForItem, titleForItem } from "@/lib/needDisplay";
 import type { CampaignNeed } from "./ContributionCard";
 
-function NeedHoursForm({ item, accepted, onSaved }: { item: CampaignNeed; accepted: number; onSaved: () => void }) {
+function NeedHoursForm({ item, accepted, filled, onSaved }: {
+  item: CampaignNeed;
+  accepted: number;
+  /** The role is filled now, so raising its hours opens it up again. */
+  filled: boolean;
+  onSaved: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [raw, setRaw] = useState(String(item.quantityWanted));
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +87,9 @@ function NeedHoursForm({ item, accepted, onSaved }: { item: CampaignNeed; accept
         <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>Not now</Button>
       </div>
       {!localError && Number.isInteger(value) && <p className="text-xs text-[#1a472a]/75">That is {fullTimeLabel(value)}.</p>}
+      {!localError && filled && value > item.quantityWanted && (
+        <p className="text-xs text-[#1a472a]/75">{REOPEN_NOTICE_ON_RAISE}</p>
+      )}
       {(error || (localError && raw !== "")) && <p className="text-xs text-red-600" role="alert">{error || localError}</p>}
     </form>
   );
@@ -143,7 +153,7 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
                   </p>
                 )}
                 {hours && canEditHours && (
-                  <NeedHoursForm item={item} accepted={fill.accepted} onSaved={onChanged} />
+                  <NeedHoursForm item={item} accepted={fill.accepted} filled={fill.filled} onSaved={onChanged} />
                 )}
               </div>
             );

@@ -114,6 +114,7 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor }: {
         campaignTitle={title}
         currency={front.currency || "USD"}
         need={need ?? undefined}
+        afterSignUpAnchor="your-contributions"
         onSuccess={({ practice }) => {
           // A practice run wrote nothing: no refetch, no "with the stewards".
           if (practice) return;

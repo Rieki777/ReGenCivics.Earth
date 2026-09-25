@@ -14,6 +14,7 @@ export const CAMPAIGN_NOTIFICATION_TYPES = [
   "contribution_thanked",
   "contribution_released",
   "role_filled",
+  "role_reopened",
   "campaign_update",
   "campaign_approved",
   "campaign_declined",
@@ -46,6 +47,7 @@ export function legacyLink(type: string): string | null {
       return "/profile?tab=contributions";
     case "new_contribution":
     case "role_filled":
+    case "role_reopened":
     case "campaign_update":
     case "campaign_approved":
     case "campaign_declined":
@@ -111,6 +113,7 @@ export function typeGlyph(type: string): string {
     case "contribution_thanked": return "💚";
     case "contribution_released": return "↺";
     case "role_filled": return "◉";
+    case "role_reopened": return "🚪";
     case "campaign_approved": return "🌱";
     case "campaign_declined": return "✎";
     case "campaign_cancelled": return "⊘";

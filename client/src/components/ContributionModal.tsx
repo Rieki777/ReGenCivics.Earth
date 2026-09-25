@@ -64,6 +64,18 @@ interface ContributionModalProps {
   onSuccess?: (result: { practice: boolean }) => void;
   /** When set, the type picker is skipped and the form is preloaded from this need. */
   need?: ContributionNeed;
+  /**
+   * Section id on this page to open after someone makes their account from
+   * the thank-you step, for example "your-contributions" on a project page.
+   * The email sign-in link and Google both land there.
+   */
+  afterSignUpAnchor?: string;
+}
+
+/** This page with its hash swapped for `anchor`, as a same-site path. */
+function pathWithAnchor(anchor: string): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.pathname}${window.location.search}#${anchor}`;
 }
 
 type ContributionType = 'land' | 'equipment' | 'role' | 'resource' | 'financial' | 'knowledge';
@@ -142,7 +154,8 @@ export function ContributionModal({
   campaignTitle,
   currency = 'USD',
   onSuccess,
-  need
+  need,
+  afterSignUpAnchor,
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
@@ -1057,6 +1070,7 @@ export function ContributionModal({
       onOpenChange={setAuthOpen}
       onLogin={() => setAuthOpen(false)}
       defaultEmail={step === 'success' ? sentEmail : (contributorEmail.trim() || undefined)}
+      returnTo={step === 'success' && afterSignUpAnchor ? pathWithAnchor(afterSignUpAnchor) : undefined}
     />
     </>
   );

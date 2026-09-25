@@ -7,10 +7,10 @@
  * with "/" and not "//"), else to /profile. The email address is never
  * carried in the URL.
  *
- * Google sign-in comes back to this same URL (AuthDialog passes the current
- * path as its returnTo), sees the session and moves on. The email link opens
- * in a new tab at "/"; when the person comes back to this tab it checks the
- * session again and moves on from here too.
+ * The dialog is handed the destination as its returnTo, so Google and the
+ * email link (which opens in a new tab) both land there directly; the server
+ * stores the email link's destination next to its token. If the person comes
+ * back to this tab instead, it checks the session again and moves on too.
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -75,6 +75,7 @@ export default function SignIn() {
         open={open && !isAuthenticated}
         onOpenChange={setOpen}
         onLogin={() => setOpen(false)}
+        returnTo={destination}
       />
     </div>
   );
