@@ -8,7 +8,7 @@ Status: **confirmed by Rye, 2026-09-24.** The four Season Organizers, their name
 | **Dates** | Loose. Opens at the September 2026 equinox (Selection Day 2026-09-26); the next Handoff Festival is around the September 2027 equinox |
 | **Shape** | Design Season (winter) → Resource Season (spring) → Build Season (summer) → Rest Season (fall), with a recap and passoff at each solstice and equinox. Canonical in `shared/regenYear.ts` (ADR-57, ADR-58, ADR-59) |
 | **Cohort** | 13 land projects, chosen on Selection Day |
-| **What's new** | One organizing role per season, handing off to the next at every turn; the Assembly Steward on /team |
+| **What's new** | One organizing role per season, handing off to the next at every turn; the Assembly Steward on /team; anyone can follow along live, and the crowdpooling round is open to every community project that's ready |
 | **Art style** | Carries forward from Season 1: solarpunk, elven, hand-painted, bioluminescent accents, fruiting plants and comfortable wildlife. Each organizer is painted in their season's village |
 | **Total base budget** | 11,700,000 $ReGen ($117,000) across 18 Game roles: the 14 carried from Season 1 (8,100,000) plus the four organizers (3,600,000) |
 | **Max budget (all bonuses)** | 15,210,000 $ReGen ($152,100) |
@@ -19,13 +19,15 @@ Status: **confirmed by Rye, 2026-09-24.** The four Season Organizers, their name
 
 Rye, 2026-09-24: roles match the flow of the year, with a unique role for organizing each season. Every solstice and equinox holds a **recap and passoff**: the outgoing organizer recaps what the season grew and hands the next organizer the calendar, the open threads, and the people. The September passoff is the **Handoff Festival**, where the north brings the harvest and the south brings the seeds.
 
-The **Season Facilitator** (The Gardener, "keeps the seasons turning") keeps facilitating the incubator weeks and sits in on every passoff. **Still adjustable:** if Rye wants the Facilitator to hold only the whole wheel, the weekly facilitation moves to the Design Season Organizer.
+**Anyone can follow along, and the crowdpool is open to more than the cohort** (Rye, 2026-09-24). Every session streams live. Projects that don't make it into the cohort, and anyone else, can follow the season, and any project that's ready joins the **community crowdpooling round** with the cohort in the Resource Season. There's room for far more than 13, and the more the better. Projects that aren't ready apply for the next season.
+
+**The Lantern-Keeper facilitates the incubator weeks** (Rye, 2026-09-24). The **Season Facilitator** (The Gardener, "keeps the seasons turning") holds the whole wheel: sits in on every recap and passoff, checks in with each organizer through their season, and keeps the season record. It moves into the Seasons Circle, active in all four seasons at about 4 hours a week, and stays at Band 5.
 
 ---
 
 ## The four Season Organizers
 
-Each organizer is active for one season plus the two turns that bracket it: they receive at the opening passoff and hand off at the closing one. Circle for all four: **Seasons Circle** (new).
+Each organizer is active for one season plus the two turns that bracket it: they receive at the opening passoff and hand off at the closing one. Circle for all four: **Seasons Circle** (new), with the Season Facilitator holding the whole wheel.
 
 **Band 7, the top band, for each: 900,000 $ReGen base ($9,000), up to 1,170,000 with Seed and Harvest, about 15 hours a week for their season.** Rye, 2026-09-24: "they're the core role to make it all happen."
 
@@ -42,16 +44,17 @@ Art: generated 2026-09-24 with the `regen-seasonal-roles` template (card + scene
 | **Card / scene** | `/images/roles/design-season-organizer-card.webp`, `-scene.webp` |
 
 **Deliverables:**
-- Receive the wheel at the Handoff Festival and run Selection Day logistics with the Season Facilitator
-- Keep the 13 incubator weeks on track: calendar, room, recordings, reminders, notes
+- Receive the wheel at the Handoff Festival and run Selection Day with the Season Facilitator
+- Facilitate the 13 weekly incubator sessions and keep them on track: calendar, room, recordings, reminders, notes
+- Track each project's milestones and flag blockers
 - Gather each week's design work (Game Guides, governance drafts, token models) into the public record
 - Host the December solstice recap and pass off to the Resource Season Organizer
 
-**Seed:** Every incubator week runs on time with its recording and notes published.
+**Seed:** Every incubator session is held on time, with its recording and notes published.
 **Harvest:** The cohort reaches week 13 with complete Game Guides (target: at least 9 of 13 graduate).
 
-**Powers:** Set the Design Season calendar; invite guest designers to sessions; ask the Tech Circle for tool time on cohort needs; call the December recap and passoff.
-**Rights:** Access to the cohort workspace and recordings; a seat at both passoffs; input on next year's curriculum.
+**Powers:** Set the Design Season calendar and the weekly session schedule; invite guest mentors and designers to sessions; pause a project's timeline if they need breathing room; ask the Tech Circle for tool time on cohort needs; call the December recap and passoff.
+**Rights:** Access to the cohort workspace, the recordings, and every project's progress; a seat at both passoffs; input on next year's curriculum.
 
 **Character:** Calm, bright-eyed person with deep umber skin and a close-cropped crown of silver-frosted curls. Long quilted coat in forest green with glowing thread tracing star maps. Holds a lantern of living crystal whose light unfolds into small floating blueprints.
 
@@ -68,12 +71,12 @@ Art: generated 2026-09-24 with the `regen-seasonal-roles` template (card + scene
 | **Card / scene** | `/images/roles/resource-season-organizer-card.webp`, `-scene.webp` |
 
 **Deliverables:**
-- Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort
+- Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort and every community project that's ready
 - Keep the campaign calendar: stories, live moments, matching pushes, investor conversations
 - Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap
 - Host the March equinox recap and pass off to the Build Season Organizer
 
-**Seed:** The shared launch goes live at the solstice with every graduating project.
+**Seed:** The shared launch goes live at the solstice with every graduating project and every community project that's ready.
 **Harvest:** Graduating projects reach their in-kind asks by close (target: most at 100% of the in-kind ask).
 
 **Powers:** Set the Resource Season calendar; feature campaigns across the site and letters; coordinate the Storyteller and Outreach Writer on the push; call the March recap and passoff.
@@ -143,7 +146,7 @@ The roles table (`/admin -> Role Holders`) is the source of truth; `client/src/d
 
 | Role | Seasons | Change |
 |---|---|---|
-| Season Facilitator | Design | Moved from spring (the incubator is the Design Season) |
+| Season Facilitator | All four | Holds the whole wheel from the Seasons Circle, about 4 hours a week; the weekly incubator sessions moved to the Lantern-Keeper (Rye, 2026-09-24) |
 | Incubator Guide | Design, Resource | Moved from spring and summer, one season earlier with the incubator |
 | Game Designer | Design, Resource | No change |
 | Grand Builder | All four | No change |

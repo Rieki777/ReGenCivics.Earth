@@ -41,7 +41,7 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Dates:** Loose. From the September 2026 equinox (Selection Day 2026-09-26) around the wheel to the next Handoff Festival, about September 2027
 - **Shape:** Design Season (winter), Resource Season (spring), Build Season (summer), Rest Season (fall), with a recap and passoff at each solstice and equinox (`shared/regenYear.ts`, ADR-57, ADR-58, ADR-59)
 - **Roles:** 18 Game roles. The Season 1 roles re-mapped to the flow, the Assembly Steward added to /team, and four Season Organizers at Band 7: The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest)
-- **Key changes:** the incubator is the Design Season; Season Facilitator and Incubator Guide moved one season earlier with it; each season now has its own organizer, handing off at every solstice and equinox
+- **Key changes:** the incubator is the Design Season, and the Lantern-Keeper facilitates its weekly sessions; the Season Facilitator now holds the whole wheel across all four seasons; the Incubator Guide moved one season earlier with the incubator; each season has its own organizer, handing off at every solstice and equinox; anyone can follow along live, and the crowdpooling round is open to every community project that's ready, far more than the 13 in the cohort
 - **Total base budget:** 11,700,000 $ReGen ($117,000); max 15,210,000 with all bonuses
 - **Full details:** [`seasons/season-2-the-first-turn.md`](seasons/season-2-the-first-turn.md)
 

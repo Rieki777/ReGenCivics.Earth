@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-24 (seasons, round 4): Follow along live, crowdpool with the cohort; the Lantern-Keeper runs the incubator weeks
+
+- **Closed, and still open to everyone** (Rye): anyone can follow the season live, any project that's ready can join the **community crowdpooling round** with the cohort (room for far more than 13, the more the better), and anyone who doesn't make it through this season applies for the next one. `shared/applicationWindow.ts` carries it (`FOLLOW_ALONG_LINE`, `CROWDPOOL_ROUND_LINE`, `NEXT_SEASON_LINE`) while `followAlong` is true: applications held and the Design or Resource Season running. In the Build Season it goes back to "apply anytime" by itself.
+- **Where it shows:** the applications notice (with a "Follow along live" link to the new `/schedule#follow-along` anchor), the /season2 hero (following along leads), its FAQ (a new "Can my project crowdpool with the cohort if it isn't selected?"), its selection steps, arc, and closing section (the stale "Pitch by September 14th" steps are replaced with follow along, crowdpool, apply), the /land banner button, /seasons, /schedule, the post-apply page, the applicant email, the crawler prose, the site assistant, llms files, the blog update note, related links, the Bionomics timeline, and the season model's Design and Resource moves.
+- **Audit:** a learn page still said "Season 2 opens September 2026"; a related link said "Season 2 is closed" (the season is live; its applications are closed); /season2 still asked for Season Two nominations. All fixed. Everything else that mentioned Season 2 applications already read the shared module.
+- **The Lantern-Keeper facilitates the 13 weekly incubator sessions** (Rye: "do Lantern Keeper"). The Season Facilitator holds the whole wheel from the Seasons Circle across all four seasons: every recap and passoff, a check-in with each organizer, the season record. It stays Band 5, now about 4 hours a week year-round. The Rainmaker's crowdpool launch includes every ready community project. The three production role rows were updated field by field (dry run first); the Facilitator's "Filled, seeking 1-2 co-facilitators" assignment was left as it is.
+- Source: this session, fourth round.
+
+Carryover: the Season Facilitator's assignment text still seeks co-facilitators, which may belong on the Lantern-Keeper now; how a community project shows it's "ready" for the round is not written down yet.
+
 ## 2026-09-24 (seasons, round 3): Four Season Organizers at the top band; one wheel, many lands; the intake turns with the wheel
 
 - **Four Season Organizers, Band 7** (Rye: "they're the core role to make it all happen"): The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest), each with card and scene art. They are on /team, and each one leads the "Roles in this season" row on /seasons for their season. Each receives the wheel at the turn that opens their season and passes it on at the next. Season 2's base budget is now 11,700,000 $ReGen across 18 Game roles (ADR-59). The Season 1 totals in the records were an arithmetic slip (they said 7,400,000 and 7,800,000; the per-role bases add up to 7,700,000, or 8,100,000 with the Assembly Steward), now corrected.
@@ -22,7 +32,7 @@ Add new entries to the top. Format per entry:
 - **Every /team card shows its own portrait again.** Checking the new cards on production showed 17 of 18 role cards with another role's art for a first-time visitor, and it had been that way since /team began reading the roles table (2026-07-01). The page renders the seed roles while the query loads, then the table's roles sorted by band, into slots keyed by position; `SmartImage` kept its first `src` for life. It now starts over when `src` changes (with a test that fails on the old component), and the cards are keyed by role.
 - Source: this session, third round. Harness story `seasons-page` carries the organizers.
 
-Carryover: a "your application is now being reviewed" email to held applicants when the window opens (not built); organizer role holders to be found; the Season Facilitator keeps the incubator weeks for now, and Rye can move them to the Design Season Organizer.
+Carryover: a "your application is now being reviewed" email to held applicants when the window opens (not built); organizer role holders to be found. (The incubator weeks moved to the Lantern-Keeper in round 4.)
 
 ## 2026-09-24 (seasons, round 2): Design, Resource, Build, Rest; one applications status; the site-wide audit
 

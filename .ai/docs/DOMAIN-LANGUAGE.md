@@ -66,11 +66,13 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 **Handoff Festival**. The September equinox recap and passoff, the biggest of the four: the outgoing cohort celebrates its harvest and hands the wheel to the new cohort on Selection Day.
 
-**Season Organizer**. One organizing role per season, Band 7, confirmed 2026-09-24 (`seasons/season-2-the-first-turn.md`): **The Lantern-Keeper** (Design Season Organizer), **The Rainmaker** (Resource), **The Barn-Raiser** (Build), **The Hearth-Keeper** (Rest). Each receives the wheel at the turn that opens their season and passes it on at the next.
+**Season Organizer**. One organizing role per season, Band 7, confirmed 2026-09-24 (`seasons/season-2-the-first-turn.md`): **The Lantern-Keeper** (Design Season Organizer), **The Rainmaker** (Resource), **The Barn-Raiser** (Build), **The Hearth-Keeper** (Rest). Each receives the wheel at the turn that opens their season and passes it on at the next. The Lantern-Keeper also facilitates the 13 weekly incubator sessions (Rye, 2026-09-24). The **Season Facilitator** (The Gardener) holds the whole wheel across all four seasons: every recap and passoff, a check-in with each organizer, and the season record.
 
 **Shared and local seasons**. Design and Resource are mostly online, so the whole network does them together on one clock (shared). Build and Rest happen on the land, so each project times them to its own climate (local): southern land builds roughly September to March, land near the equator builds in its dry season and rests through the heaviest rains. `REGEN_SEASONS[k].scope` in `shared/regenYear.ts`.
 
 **Your land ring**. The thin outer ring on the /seasons wheel showing the visitor's land's own seasons for Northern, Southern or Near-the-equator land (`REGEN_LANDS`). Guessed from the browser time zone, never from IP; the visitor can switch it.
+
+**Community crowdpooling round**. The crowdpooling round in the Resource Season that any land project can join once it's ready, alongside the Season's graduating cohort, with room for far more than the 13 cohort projects (Rye, 2026-09-24). Projects get ready by following the Design Season live on the SEEDS livestream (`/schedule#follow-along`). Copy lives in `shared/applicationWindow.ts` (`CROWDPOOL_ROUND_LINE`, `FOLLOW_ALONG_LINE`), shown while `intakeStatus().followAlong` is true: applications held, and the Design or Resource Season running.
 
 **Intake window**. When land project applications are reviewed: the Rest Season, from the June solstice to about September 10, for the Season that opens at the next September equinox. Outside it, applications are held quietly and applicants get no email until the window opens. Rolls over each year by itself (`shared/applicationWindow.ts`, `INTAKE_WINDOW`, with an `override`).
 
