@@ -589,8 +589,8 @@ export default function Team() {
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {gameOnly.map((role, index) => (
-                  <RolePortalCard key={`g-${index}`} role={role} />
+                {gameOnly.map((role) => (
+                  <RolePortalCard key={`g-${role.title}`} role={role} />
                 ))}
               </div>
             </div>
@@ -606,8 +606,8 @@ export default function Team() {
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {fundOnly.map((role, index) => (
-                  <RolePortalCard key={`f-${index}`} role={role} />
+                {fundOnly.map((role) => (
+                  <RolePortalCard key={`f-${role.title}`} role={role} />
                 ))}
               </div>
             </div>

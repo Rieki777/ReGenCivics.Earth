@@ -34,6 +34,15 @@ export function SmartImage({
 }: SmartImageProps) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
   const [currentSrc, setCurrentSrc] = useState(src);
+  // A new src starts over. Without this the first src stuck for the life of
+  // the component: /team renders its seed roles while the query loads, then
+  // the DB roles in another order, and 17 of 18 cards kept the wrong portrait.
+  const [lastSrc, setLastSrc] = useState(src);
+  if (src !== lastSrc) {
+    setLastSrc(src);
+    setCurrentSrc(src);
+    setStatus("loading");
+  }
 
   const onError = () => {
     if (fallbackSrc && currentSrc !== fallbackSrc) {
