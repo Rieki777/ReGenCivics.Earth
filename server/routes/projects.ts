@@ -22,7 +22,7 @@ import type { TrpcContext } from "../_core/context";
 import { parseProjectKey, projectPathForApplication, projectPathForCampaign, projectPathForCampaignFocus } from "../../shared/projectKey";
 import { canStewardApplication, canStewardCampaign, isPublicCampaign } from "../lib/project-steward";
 import { suggestAlternatives } from "../lib/campaign-suggest";
-import { buildCampaignView } from "./campaigns";
+import { buildCampaignView, progressSummariesFor } from "./campaigns";
 import { buildStewardQueue } from "../../shared/stewardQueue";
 
 const REVIEW_STATUSES = ["draft", "pending_review", "rejected"];
@@ -136,6 +136,9 @@ export const projectsRouter = router({
       const front = frontRow ? await buildCampaignView(frontRow, ctx.user) : null;
 
       const images = await db.getCampaignImagesForMany(visible.map((c) => c.id));
+      // Each campaign's two-line reading, summary form, from one batched read
+      // (shared/campaignProgress.ts). The front campaign carries the full one.
+      const progress = await progressSummariesFor(visible);
       const campaignsOut = visible.map((c) => {
         const imgs = images[c.id] ?? [];
         const cover = imgs.find((i) => i.isCover === 1) ?? imgs[0] ?? null;
@@ -151,6 +154,7 @@ export const projectsRouter = router({
           currency: c.currency,
           coverImageUrl: cover?.url ?? c.generatedImageUrl ?? c.projectImageUrl ?? null,
           path: projectPathForCampaignFocus(c),
+          progress: progress.get(c.id)!,
         };
       });
 

@@ -21,12 +21,18 @@
  * 'hours_per_week'`, quantityWanted / quantityClaimed / quantityDelivered
  * count hours a week, not people (shared/roleCapacity.ts).
  *
+ * Version 4 (2026-09-25): needs gain neededFrom, neededUntil, acceptsGift,
+ * acceptsLoan and workMode; a lendable thing is kind 'item' with acceptsLoan 1
+ * and new needs never use kind 'loan'; getPartnerLinks returns only verified
+ * rows plus example rows on example campaigns, each with a status; getById
+ * gains progress (shared/campaignProgress.ts).
+ *
  * A map rather than one number, so a later surface (the feedback relay, say)
  * can version itself without bumping crowdpool. Served by `meta.contract`.
  * A hub that predates this file is, by definition, version 1 of everything.
  */
 export const HUB_CONTRACT = {
-  crowdpool: 3,
+  crowdpool: 4,
 } as const;
 
 export type HubContract = { [K in keyof typeof HUB_CONTRACT]: number };

@@ -146,6 +146,25 @@ export const CLOSE_CONDITIONS = {
 } as const;
 
 /**
+ * How much of a campaign's whole ask is money. Ruled 2026-09-24: campaigns
+ * usually ask for 10 to 30 percent in money, the wizard suggests 20, and none
+ * of it is enforced. A share outside the band gets a soft note for stewards and
+ * admins only (moneyShareNote in shared/campaignProgress.ts); nothing blocks,
+ * and 0 ("This project asks for no money") is allowed.
+ *
+ * game_variables: crowdpool.cash_share_min_pct, crowdpool.cash_share_max_pct,
+ * crowdpool.cash_share_default_pct (migration 0257), served to pages by
+ * campaigns.crowdpoolSettings. These values are the fallbacks.
+ */
+export const CASH_SHARE = {
+  softMinPct: 10,
+  softMaxPct: 30,
+  defaultPct: 20,
+  enforced: false,
+  zeroAllowed: true,
+} as const;
+
+/**
  * When a campaign misses its window, the contributor who routed to it chooses.
  * Silence has a consequence, so the consent for it is captured separately at
  * contribution time rather than folded into a general terms tick.

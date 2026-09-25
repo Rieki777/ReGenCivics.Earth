@@ -74,7 +74,7 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 **Community crowdpooling round**. The crowdpooling round in the Resource Season that any land project can join once it's ready, alongside the Season's graduating cohort, with room for far more than the 13 cohort projects (Rye, 2026-09-24). Projects get ready by following the Design Season live on the SEEDS livestream (`/schedule#follow-along`). Copy lives in `shared/applicationWindow.ts` (`CROWDPOOL_ROUND_LINE`, `FOLLOW_ALONG_LINE`), shown while `intakeStatus().followAlong` is true: applications held, and the Design or Resource Season running.
 
-**Ready to crowdpool**. The eight things a land project shows before its campaign is approved for the crowdpooling round, the same for the cohort and for community projects (Rye, 2026-09-24): a legal structure; secure access to the land; a way to send and receive value (what contributors get); a clear game for everyone; the game's governance; the game's economy and financial plan; care and conflict; a campaign ready to run. Each is checked as in place and clear, never scored. Canonical in `shared/crowdpoolReadiness.ts`; shown at `/crowd-pooling#ready`, beside "Send for review" on a project page, and in the campaign review dialog.
+**Ready to crowdpool**. The eight things a land project shows before its campaign is approved for the crowdpooling round, the same for the cohort and for community projects (Rye, 2026-09-24): a legal structure; secure access to the land; a way to send and receive value (what contributors get); a clear game for everyone; the game's governance; the game's economy and financial plan; care and conflict; a campaign ready to run. Each is checked as in place and clear, never scored. Canonical in `shared/crowdpoolReadiness.ts`; shown at `/crowd-pooling#ready`, beside "Send for review" on a project page, and in the campaign review dialog. A steward's ticks are stored on the campaign and shown in the review dialog; a reader's own ticks elsewhere stay in their browser.
 
 **Intake window**. When land project applications are reviewed: the Rest Season, from the June solstice to about September 10, for the Season that opens at the next September equinox. Outside it, applications are held quietly and applicants get no email until the window opens. Rolls over each year by itself (`shared/applicationWindow.ts`, `INTAKE_WINDOW`, with an `override`).
 
@@ -338,8 +338,28 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Hours need**. A role need measured in hours a week (`kind = 'role'`, `capacityUnit = 'hours_per_week'`). Its `quantityWanted` is the hours a week the role needs, `quantityClaimed` the hours accepted, `quantityDelivered` the hours delivered. 40 hours a week is about one full-time person, so 120 is about three. Several people can share one role: a steward accepts each person at a number of hours, and the role reads **filled** when accepted hours reach the hours needed. A legacy role still marked `count` is not an hours need until migration 0251 converts it. Code: `shared/roleCapacity.ts` (`isHoursNeed`, `roleFillState`).
 
-**Offer**. The plain-language word the UI uses for a contribution while it is pending ("offers waiting on you"). The data stays `campaign_contributions`. Say "contribution" for the thing itself, never "donation".
+**Offer**. The plain-language word the UI uses for a contribution while it is pending ("offers waiting on you"). The data stays `campaign_contributions`. Say "contribution" for the thing itself, never "donation". It is also the verb on a thing need (see **Apply, Offer, Sign up**).
 
 **Released**. An accepted place in a need that a steward freed up. The hours or slots go back to the need. Contribution status `released`, reachable only from `accepted`.
 
 **Cancelled (contribution)**. A pending or accepted offer closed because its campaign was cancelled. Contribution status `cancelled`. Delivered and thanked contributions stay as they are.
+
+**Two-line bar**. The progress reading on every campaign surface, in-kind first and money second, computed by `shared/campaignProgress.ts`. The in-kind line counts needs met and confirmed value against the in-kind ask. The money line counts money through verified routes against the money ask, with lent money marked. It replaced the single pooled percentage and the three totals that disagreed. The server returns it as `progress` on `campaigns.getById`, `campaigns.list` and `projects.getPublic`.
+
+**Confirmed (value)**. The value of accepted, delivered and thanked contributions on a need, counted at the need's own value and never past it; a filled need counts in full. The in-kind half lands when confirmed value reaches the in-kind ask (ruling 2026-09-24). Freeform offers (no need attached) show in the whole-ask sheet as other offers and do not count.
+
+**Half landed**. One half of a campaign reached its ask: "Money half landed", "In-kind half landed". A campaign is called complete only when it closes with both.
+
+**Give or lend**. The two ways to offer a thing. The need says which it accepts (`campaign_items.acceptsGift`, `acceptsLoan`). A loan carries an available-from date, an until date and one condition note, and stays at the lender's risk unless the two sides agree otherwise. "Share access" is not built. New needs never use kind `loan`: a lendable thing is kind `item` with `acceptsLoan` 1 (`modesFor` in `shared/crowdpoolNeedAction.ts`).
+
+**Returned**. A steward's record that a lent thing went back to its owner (`campaign_contributions.returnedAt`). It changes no status and no counter.
+
+**Money route**. A way to put money into one project that the project holds outside ReGen Civics: Ma Earth for gifts, Steward for loans (`campaign_partner_links`). It shows on the project page only once a ReGen Civics admin verifies it. Example campaigns carry `example` routes that never link out. Money through a route never passes through ReGen Civics. Distinct from the fund channel, which campaign pages do not describe.
+
+**Verified (route)**. Checked by a ReGen Civics admin with `campaigns.reviewPartnerLink`. A project steward adds a route; only an admin verifies it.
+
+**Apply, Offer, Sign up**. The verb on a need (`needVerb` in `shared/crowdpoolNeedAction.ts`): Apply for roles and knowledge sessions, Offer for things and land, Sign up for shifts. "Apply" on a need is distinct from applying to the incubator at `/apply`.
+
+**Needs tab**. The list of every open need across live campaigns on `/campaigns?tab=needs`, least covered first.
+
+**Readiness ticks**. A project steward's record, per campaign, of which Ready to crowdpool items the project meets (`campaign_readiness_ticks`, keyed by the permanent item keys). The review team sees them.

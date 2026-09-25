@@ -4,6 +4,8 @@ A land project needs many things to become real. Money is one of them, and usual
 the smaller one. Crowdpooling is how a community brings all of it together in one
 season, and how the people who bring it stay connected to what they built.
 
+Campaigns usually ask for 10 to 30 percent of the whole in money. Nothing blocks another share, and 0 is allowed.
+
 This is the human half. The machine half is `shared/crowdpoolModel.ts`, and code
 reads that one so the two cannot drift apart.
 

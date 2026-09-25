@@ -8,7 +8,9 @@ This is the hub's half.
 **Date:** 2026-09-04. Agreed directly with the village-os economics session, which
 measured its half from its own code rather than from its documentation. **Updated
 2026-09-14:** the contract now carries a version number (section 10), and the
-`pledgedTotal` defect in section 4 is fixed.
+`pledgedTotal` defect in section 4 is fixed. **Updated 2026-09-25:** contract version 4
+adds the need window and give-or-lend fields, verified money routes and the `progress`
+reading (section 10).
 
 ---
 
@@ -41,18 +43,35 @@ not change without a message to the village-os session first.
 | `campaigns.getById` | `{id}` | the campaign record, with items, images, coverImage and contributorsCount embedded |
 | `campaigns.getItems` | `{campaignId}` | the needs |
 | `campaigns.getActivity` | `{campaignId}` | the public Pool Ledger |
-| `campaigns.getPartnerLinks` | `{campaignId}` | partner funders and their cached numbers |
+| `campaigns.getPartnerLinks` | `{campaignId}` | money routes (Ma Earth, Steward) and their cached numbers |
 | `meta.contract` | `{}` or nothing | the contract version per surface, section 10 |
 
 **Stable fields.** On a need: `id`, `name`, `kind`, `category`, `capitalType`,
 `description`, `estimatedValue`, `quantityWanted`, `quantityClaimed`,
 `quantityDelivered`, `capacityUnit`, `needDeadline`, `priorityPinned`,
-`groupClaimable`. `capacityUnit` (since version 3) is `count` or
+`groupClaimable`, `neededFrom`, `neededUntil`, `acceptsGift`, `acceptsLoan`,
+`workMode`. `capacityUnit` (since version 3) is `count` or
 `hours_per_week` and says what the three quantity fields count; treat a missing
-value as `count`. On a
+value as `count`. Since version 4, `neededFrom` and `neededUntil` are dates
+(`YYYY-MM-DD`) or null and say when the need is wanted; `acceptsGift` and
+`acceptsLoan` (0 or 1) say how a thing may come, and a legacy `kind` `loan` need
+reads loan only whatever they say; `workMode` is `on_site`, `remote`, `either` or
+null (null means the need doesn't say). Treat a missing `acceptsGift` as 1 and a
+missing `acceptsLoan` as 0. On a
 campaign: the `items` / `images` / `coverImage` / `contributorsCount` embedding, plus
 `startedAt` and `durationDays`, from which the village derives `endsAt` because the
-hub stores no end column.
+hub stores no end column. Since version 4 `getById` also embeds `progress`, the
+hub's own two-line reading (`shared/campaignProgress.ts`). It is informative, not
+stable: its inner shape may grow without a bump, so read only what you need and
+tolerate missing keys.
+
+**Money route rows.** `getPartnerLinks` returns, per row: `id`, `campaignId`,
+`partner`, `label`, `url`, `cachedRaised`, `cachedContributorCount`,
+`cachedPercent`, `cachedCurrency`, `lastFetchedAt` and `status`. Since version 4
+only rows a ReGen Civics admin verified (`status` `verified`) come back, plus
+example rows on example campaigns (`status` `example`), which are not live routes
+and must not link out. Rows a steward added and nobody has checked yet never leave
+the hub, and neither do the review columns.
 
 **The nine capital types are hub-owned and are not changing. The wanted/claimed/delivered
 meter keeps its shape; since version 3, on hours needs it counts hours a week
@@ -219,6 +238,10 @@ this paragraph becomes a requirement.
   Seven values, canonical in `shared/crowdpoolingTaxonomy.ts:20-28` as `NEED_KINDS`.
   This is the one the needs registry keys off, and the one the village bridge reads.
 
+**New needs never use kind `loan`. A lendable thing is kind `item` with `acceptsLoan` 1.**
+Since version 4 the hub stores any incoming `loan` need as `item` with `acceptsGift` 0
+and `acceptsLoan` 1. Legacy `loan` rows stay as they are and read loan only.
+
 `land` is a **category**, never a kind. The village module's field comment listed
 `land` as a kind and omitted `financial_link`, so its list was the right length with
 two wrong members, which is the hardest kind of wrong to notice.
@@ -249,7 +272,7 @@ these two repositories.
 ## 10. The contract version
 
 `meta.contract` returns one integer per public surface a village reads, for example
-`{ "crowdpool": 3 }`. It is `publicProcedure`, no auth, no database, and it accepts
+`{ "crowdpool": 4 }`. It is `publicProcedure`, no auth, no database, and it accepts
 `{}` or no input. The numbers live in `shared/hubContract.ts`; the meanings live here,
 and `server/hub-contract.test.ts` fails if the two drift.
 
@@ -269,6 +292,7 @@ it: a hub that predates the field is by definition an older contract.
 | 1 | `pledgedTotal` sums accepted pledges only, so it is a floor. | the beginning |
 | 2 | `pledgedTotal` sums the standing statuses: accepted, fulfilled and thanked. | `b835c28e`, 2026-09-05 |
 | 3 | On a need whose `kind` is `role` and whose new `capacityUnit` field is `hours_per_week`, `quantityWanted`, `quantityClaimed` and `quantityDelivered` count hours a week (needed, accepted, delivered), not people. Every other need, and any role need still marked `count`, counts units as before. On hours needs the hub refuses an accept past `quantityWanted` and recomputes the counters from contribution rows, so claimed and delivered never pass wanted there. Existing role needs are converted by a data migration after the deploy (`drizzle/after-deploy/0251`); where people already stood on a role past its hours, the conversion raises `quantityWanted` to what stands, so the guarantee holds for converted roles too. A role contribution offered or accepted since version 3 carries its share of the role's value by hours as `estimatedValue`; a contribution converted from slots keeps the value it had. | `198213bc`, 2026-09-24 |
+| 4 | Needs gain `neededFrom`, `neededUntil` (dates, YYYY-MM-DD), `acceptsGift`, `acceptsLoan` (0 or 1) and `workMode` (`on_site`, `remote`, `either` or null). A thing the project would take on loan is now `kind` `item` with `acceptsLoan` 1, and new needs never use `kind` `loan`; legacy `loan` rows read `acceptsGift` 0 and `acceptsLoan` 1 with their custody window copied to `neededFrom` and `neededUntil`. `getPartnerLinks` returns only rows a ReGen Civics admin verified, plus example rows on example campaigns, and each row carries `status` (`verified` or `example`); an `example` row is not a live route and should not link out. `getById` gains `progress`, the hub's own two-line reading (in-kind confirmed against the in-kind ask, money through verified routes against the money ask); `pledgedTotal` and `totalValue` keep their meanings. | `<sha>`, 2026-09-25 |
 
 Ruled by Rye on 2026-09-14, relayed by the village-os economics session: "add a
 version number, not that the history matters right now as nobody is running it, but

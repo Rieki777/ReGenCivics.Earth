@@ -72,7 +72,7 @@ describe("getById keeps its shape (hub contract)", () => {
     const applicationId = await createApprovedApplication(OWNER);
     const id = await makeCampaign(applicationId, "Shape");
     const view = await anonCaller().campaigns.getById({ id });
-    const expected = [...PUBLIC_CAMPAIGN_FIELDS, "items", "images", "coverImage", "contributorsCount", "isFollowing"].sort();
+    const expected = [...PUBLIC_CAMPAIGN_FIELDS, "items", "images", "coverImage", "contributorsCount", "isFollowing", "progress"].sort();
     expect(Object.keys(view!).sort()).toEqual(expected);
     // Same object the project page leads with.
     const page = await anonCaller().projects.getPublic({ key: String(applicationId) });
@@ -98,6 +98,15 @@ describe("keys", () => {
     expect(page.isSteward).toBe(false);
     expect(page.campaigns.map((c) => c.id)).toEqual([id]);
     expect(page.campaigns[0].path).toMatch(new RegExp(`^/project/${applicationId}-`));
+    // campaigns[] carries the summary reading; the front carries the full one.
+    expect(page.campaigns[0].progress).toMatchObject({
+      state: "open",
+      inKind: { ask: 1000, needsTotal: 1, needsMet: 0 },
+      money: { ask: 1000, asksNone: false },
+    });
+    expect(page.campaigns[0].progress).not.toHaveProperty("byNeed");
+    expect(page.campaigns[0].progress.topOpen).toHaveLength(1);
+    expect(page.front!.progress.byCapital).toHaveLength(9);
   });
 
   it.skipIf(skipIfNoDb)("a campaign key for a campaign with an application canonicalizes to the application", async () => {

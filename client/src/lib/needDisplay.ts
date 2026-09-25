@@ -3,7 +3,6 @@
  * (CampaignDetail, NeedsRegistry, NeedCard) and the project page's steward
  * tools (NeedsGlance, ContributionReviewPanel). Pure: no React, no tRPC.
  */
-import type { CapitalType } from "@shared/crowdpoolingTaxonomy";
 
 export const KIND_LABELS: Record<string, string> = {
   item: "Item",
@@ -25,32 +24,12 @@ export const KIND_CHIP_CLASSES: Record<string, string> = {
   financial_link: "bg-gray-100 text-gray-700",
 };
 
-/** Legacy items without a capitalType map from their old category. */
-export function capitalForItem(item: any): CapitalType {
-  if (item.capitalType) return item.capitalType;
-  switch (item.category) {
-    case "land": return "living";
-    case "role": return "experiential";
-    default: return "material"; // equipment, resource
-  }
-}
-
-export function kindForItem(item: any): string {
-  if (item.kind) return item.kind;
-  return item.category === "role" ? "role" : "item";
-}
-
-export function titleForItem(item: any): string {
-  if (item.roleTitle) return item.roleTitle;
-  if (item.equipmentName) return item.equipmentName;
-  if (item.resourceName) return item.resourceName;
-  if (item.hectares && item.region) return `${item.hectares} hectares in ${item.region}`;
-  if (item.landDescription) {
-    const firstLine = String(item.landDescription).split("\n")[0];
-    return firstLine.length > 80 ? `${firstLine.slice(0, 77)}...` : firstLine;
-  }
-  return "Campaign need";
-}
+/**
+ * What a need is and what it is called now live in shared/crowdpoolNeedAction.ts,
+ * so the server (campaign progress, the Needs tab) reads needs the same way.
+ * Re-exported here so existing imports keep working.
+ */
+export { capitalForItem, kindForItem, needTitle as titleForItem } from "@shared/crowdpoolNeedAction";
 
 export function descriptionForItem(item: any): string | null {
   if (item.roleDescription) return item.roleDescription;

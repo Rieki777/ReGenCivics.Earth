@@ -33,6 +33,15 @@ describe("hub contract version", () => {
     expect(doc).toMatch(/^\| 3 \|.*hours_per_week/m);
   });
 
+  it("documents give or lend, the need window and verified routes (version 4)", () => {
+    expect(HUB_CONTRACT.crowdpool).toBeGreaterThanOrEqual(4);
+    expect(doc).toMatch(/^\| 4 \|.*acceptsLoan/m);
+    for (const field of ["neededFrom", "neededUntil", "acceptsGift", "acceptsLoan", "workMode"]) {
+      expect(doc, `the stable need fields must list ${field}`).toContain(field);
+    }
+    expect(doc).toMatch(/New needs never use kind `loan`/);
+  });
+
   it("serves the constant, with or without an input object", async () => {
     const caller = metaRouter.createCaller({} as never);
     expect(await caller.contract()).toEqual(HUB_CONTRACT);
@@ -42,6 +51,9 @@ describe("hub contract version", () => {
 
 describe("capacityUnit rides out on the village reads", () => {
   const skipIfNoDb = !process.env.DATABASE_URL;
+  // The first test pays for importing the whole router (appRouter via the
+  // fixtures), which can pass 5 seconds when other suites load in parallel.
+  const DB_TEST_TIMEOUT = 30_000;
 
   it.skipIf(skipIfNoDb)("getItems and getById carry capacityUnit on a role need", async () => {
     const { adminCaller, anonCaller, cleanupFixtureApplications } = await import("./test-fixtures/crowdpool");
@@ -68,5 +80,46 @@ describe("capacityUnit rides out on the village reads", () => {
       await database!.delete(campaigns).where(eq(campaigns.id, id));
       await cleanupFixtureApplications();
     }
-  });
+  }, DB_TEST_TIMEOUT);
+
+  it.skipIf(skipIfNoDb)("getItems carries the five version 4 fields on a thing need", async () => {
+    const { adminCaller, anonCaller, cleanupFixtureApplications } = await import("./test-fixtures/crowdpool");
+    const { getDb } = await import("./db");
+    const { campaigns, campaignItems } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const admin = adminCaller();
+    const { id } = await admin.campaigns.create({
+      title: "Test Contract Thing",
+      description: "Contract fixture",
+      projectName: "Test Contract Thing",
+      financialTarget: 0,
+      items: [{ category: "equipment", kind: "item", equipmentName: "Test trailer", estimatedValue: 3000 }],
+    });
+    try {
+      await admin.campaigns.updateStatus({ id, status: "active" });
+      const [need] = await anonCaller().campaigns.getItems({ campaignId: id });
+      expect(need).toMatchObject({
+        kind: "item",
+        neededFrom: null,
+        neededUntil: null,
+        acceptsGift: 1,
+        acceptsLoan: 0,
+        workMode: null,
+      });
+      // Dates come back as YYYY-MM-DD strings, never shifted by a timezone.
+      const database = await getDb();
+      await database!.update(campaignItems)
+        .set({ neededFrom: "2027-03-01", neededUntil: "2027-06-30", acceptsLoan: 1 })
+        .where(eq(campaignItems.id, need.id));
+      const [again] = await anonCaller().campaigns.getItems({ campaignId: id });
+      expect(again).toMatchObject({ neededFrom: "2027-03-01", neededUntil: "2027-06-30", acceptsLoan: 1 });
+      const view = await anonCaller().campaigns.getById({ id });
+      expect(view!.items[0]).toMatchObject({ neededFrom: "2027-03-01", acceptsLoan: 1 });
+    } finally {
+      const database = await getDb();
+      await database!.delete(campaignItems).where(eq(campaignItems.campaignId, id));
+      await database!.delete(campaigns).where(eq(campaigns.id, id));
+      await cleanupFixtureApplications();
+    }
+  }, DB_TEST_TIMEOUT);
 });

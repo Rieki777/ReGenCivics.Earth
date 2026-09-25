@@ -43,6 +43,8 @@ import {
   scaleRoleValue,
 } from "../../shared/roleCapacity";
 import { projectPathForCampaignFocus } from "../../shared/projectKey";
+import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, summarizeProgress } from "../../shared/campaignProgress";
+import { CASH_SHARE } from "../../shared/crowdpoolModel";
 import { regenSeasonSpan } from "../../shared/regenYear";
 import {
   notifyCampaignApproved,
@@ -149,9 +151,22 @@ export function toPublicCampaign(campaign: Campaign, user: TrpcContext["user"] |
  * (villages read it), and the project page (projects.getPublic) builds its
  * front campaign with this same function, so the two can never drift.
  * server/projects.test.ts pins the key set.
+ *
+ * `progress` (added 2026-09-25, informative in the hub contract) is the
+ * hub's own two-line reading from shared/campaignProgress.ts: in-kind
+ * confirmed against the in-kind ask, money through verified routes against
+ * the money ask. pledgedTotal and totalValue keep their meanings.
  */
 export async function buildCampaignView(campaign: Campaign, user: TrpcContext["user"] | undefined) {
   const items = await db.getCampaignItems(campaign.id);
+  const progressInputs = (await db.getCampaignProgressInputs([campaign.id], { withItems: false })).get(campaign.id);
+  const progress = computeCampaignProgress({
+    campaign,
+    items,
+    rows: progressInputs?.rows ?? [],
+    lends: progressInputs?.lends ?? [],
+    routes: progressInputs?.routes ?? [],
+  });
   const images = await db.getCampaignImages(campaign.id);
   const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
 
@@ -182,10 +197,25 @@ export async function buildCampaignView(campaign: Campaign, user: TrpcContext["u
     coverImage,
     contributorsCount,
     isFollowing,
+    progress,
   };
 }
 
 export type CampaignView = Awaited<ReturnType<typeof buildCampaignView>>;
+
+/**
+ * The summary progress for many campaigns at once, from one batched read.
+ * Used by campaigns.list rows and projects.getPublic's campaigns[].
+ */
+export async function progressSummariesFor(list: Campaign[]) {
+  const inputs = await db.getCampaignProgressInputs(list.map((c) => c.id));
+  const out = new Map<number, ReturnType<typeof summarizeProgress>>();
+  for (const c of list) {
+    const input = inputs.get(c.id) ?? { items: [], rows: [], lends: [], routes: [] };
+    out.set(c.id, summarizeProgress(computeCampaignProgress({ campaign: c, ...input }), input.items));
+  }
+  return out;
+}
 
 /** Game variable with a fallback: crowdpool config may not be seeded yet. */
 async function getGameVariableOr(key: string, fallback: number): Promise<number> {
@@ -202,19 +232,6 @@ async function claimExpiryDaysForKind(kind: string): Promise<number> {
   if (kind === 'loan') return getGameVariableOr('crowdpool.claim_expiry_days_loan', 14);
   return getGameVariableOr('crowdpool.claim_expiry_days_item', 14);
 }
-
-/**
- * Fallback capital mapping for freeform contributions (no need attached).
- * When the contribution fills a need, the need's capitalType wins.
- */
-const CONTRIBUTION_TYPE_TO_CAPITAL = {
-  land: 'living',
-  equipment: 'material',
-  role: 'experiential',
-  resource: 'material',
-  financial: 'financial',
-  knowledge: 'intellectual',
-} as const;
 
 /**
  * Link anonymous contributions made under a verified email to a now-signed-in
@@ -270,7 +287,7 @@ export async function linkAnonymousContributions(
       const need = c.campaignItemId ? await db.getCampaignItemById(Number(c.campaignItemId)) : null;
       const capitalType =
         need?.capitalType ??
-        CONTRIBUTION_TYPE_TO_CAPITAL[c.contributionType as keyof typeof CONTRIBUTION_TYPE_TO_CAPITAL] ??
+        FREEFORM_TYPE_TO_CAPITAL[c.contributionType as keyof typeof FREEFORM_TYPE_TO_CAPITAL] ??
         'material';
       const playerContributionId = await db.createPlayerContribution({
         profileId: profile.id,
@@ -522,7 +539,7 @@ async function deliveryPayoff(contribution: ContributionRow, campaign: Campaign,
     try {
       const profile = await db.getPlayerProfileByUserId(contribution.userId);
       if (profile) {
-        const capitalType = need?.capitalType ?? CONTRIBUTION_TYPE_TO_CAPITAL[contribution.contributionType];
+        const capitalType = need?.capitalType ?? FREEFORM_TYPE_TO_CAPITAL[contribution.contributionType];
         const playerContributionId = await db.createPlayerContribution({
           profileId: profile.id,
           userId: contribution.userId,
@@ -618,10 +635,12 @@ export const campaignsRouter = router({
       const allowed = campaignList.filter((c) => canSeeCampaign(ctx.user, c));
       // Batch-fetch all images in one query (eliminates N+1)
       const imagesMap = await db.getCampaignImagesForMany(allowed.map(c => c.id));
+      // The two-line reading, summary form, from one batched read.
+      const progressMap = await progressSummariesFor(allowed);
       const rows = allowed.map((c) => {
         const images = imagesMap[c.id] ?? [];
         const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
-        return { ...toPublicCampaign(c, ctx.user), coverImage, imageCount: images.length };
+        return { ...toPublicCampaign(c, ctx.user), coverImage, imageCount: images.length, progress: progressMap.get(c.id)! };
       });
 
       // isDemo rides along via select-all; sorting happens here so every
@@ -694,21 +713,62 @@ export const campaignsRouter = router({
       return await db.getCampaignItems(input.campaignId);
     }),
 
-  // Read-only recommended-funder links (Ma Earth / GoSteward / grants) for a
-  // campaign. Money never touches us: these are display CTAs with nightly-cached
-  // numbers, contributors finish on the funder's own site. No PII.
+  // A campaign's money routes (Ma Earth, Steward) as the public sees them.
+  // Money never passes through ReGen Civics: contributors finish on the
+  // partner's own site, and the numbers are nightly-cached. Only routes a
+  // ReGen Civics admin verified show, plus example routes on example
+  // campaigns (status 'example': shown, never linked out). Explicit columns:
+  // never proofUrl, reviewNote, addedBy or verifiedBy. Hub contract 4.
   getPartnerLinks: publicProcedure
-    .input(z.object({ campaignId: z.number() }))
+    .input(z.object({ campaignId: z.number().int().positive() }))
     .query(async ({ input, ctx }) => {
-      if (!(await canReadCampaignChildren(ctx.user, input.campaignId))) return [];
+      const campaign = await db.getCampaignById(input.campaignId);
+      if (!campaign || !(await canViewCampaign(ctx.user, campaign))) return [];
       const db2 = await getDb();
       if (!db2) return [];
       const { campaignPartnerLinks } = await import("../../drizzle/schema");
+      const shown: Array<'verified' | 'example'> = campaign.isDemo ? ['verified', 'example'] : ['verified'];
       return await db2
-        .select()
+        .select({
+          id: campaignPartnerLinks.id,
+          campaignId: campaignPartnerLinks.campaignId,
+          partner: campaignPartnerLinks.partner,
+          label: campaignPartnerLinks.label,
+          url: campaignPartnerLinks.url,
+          cachedRaised: campaignPartnerLinks.cachedRaised,
+          cachedContributorCount: campaignPartnerLinks.cachedContributorCount,
+          cachedPercent: campaignPartnerLinks.cachedPercent,
+          cachedCurrency: campaignPartnerLinks.cachedCurrency,
+          lastFetchedAt: campaignPartnerLinks.lastFetchedAt,
+          status: campaignPartnerLinks.status,
+        })
         .from(campaignPartnerLinks)
-        .where(eq(campaignPartnerLinks.campaignId, input.campaignId));
+        .where(and(
+          eq(campaignPartnerLinks.campaignId, input.campaignId),
+          inArray(campaignPartnerLinks.status, shown),
+        ))
+        .orderBy(campaignPartnerLinks.id);
     }),
+
+  // The crowdpool settings a page needs to word itself: the soft money-share
+  // band (guidance only, ruling 2026-09-24; never enforced), whether money
+  // moves through this site at all (crowdpool.rails.accept_money), and
+  // whether a Steward loan route can be verified (crowdpool.rails.loan_routes).
+  // No input, no PII, cached by getGameVariable.
+  crowdpoolSettings: publicProcedure.query(async () => {
+    const [softMinPct, softMaxPct, defaultPct, acceptMoney, loanRoutes] = await Promise.all([
+      getGameVariableOr('crowdpool.cash_share_min_pct', CASH_SHARE.softMinPct),
+      getGameVariableOr('crowdpool.cash_share_max_pct', CASH_SHARE.softMaxPct),
+      getGameVariableOr('crowdpool.cash_share_default_pct', CASH_SHARE.defaultPct),
+      getGameVariableOr('crowdpool.rails.accept_money', 0),
+      getGameVariableOr('crowdpool.rails.loan_routes', 0),
+    ]);
+    return {
+      moneyShare: { softMinPct, softMaxPct, defaultPct },
+      moneyMovesHere: acceptMoney === 1,
+      loanRoutesOpen: loanRoutes === 1,
+    };
+  }),
 
   // Server-side geocode for the gallery map. Same-origin so it clears the CSP
   // the browser enforces on a direct Nominatim call. Cached and spaced to

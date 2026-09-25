@@ -1272,9 +1272,23 @@ export const campaignItems = mysqlTable("campaign_items", {
   // Shift needs: the dated work-party window
   shiftStartsAt: timestamp("shiftStartsAt"),
   shiftEndsAt: timestamp("shiftEndsAt"),
-  // Loan needs: the custody window (project is custodian, never P2P)
+  // Legacy kind 'loan' needs: the custody window (project is custodian, never
+  // P2P). New needs carry neededFrom / neededUntil below and never use kind
+  // 'loan'; 0257 copied each legacy loan's window into that pair.
   loanWindowStart: timestamp("loanWindowStart"),
   loanWindowEnd: timestamp("loanWindowEnd"),
+  // (0257) When the need is wanted, 'YYYY-MM-DD'. Strings end to end, so no
+  // timezone can move a day. A role with a start date sets both.
+  neededFrom: date("neededFrom", { mode: "string" }),
+  neededUntil: date("neededUntil", { mode: "string" }),
+  // (0257) How a thing may come: as a gift, on loan, or either. Read through
+  // modesFor() in shared/crowdpoolNeedAction.ts: a legacy kind 'loan' need
+  // reads loan only, and roles, shifts and knowledge ignore both.
+  acceptsGift: tinyint("acceptsGift").default(1).notNull(),
+  acceptsLoan: tinyint("acceptsLoan").default(0).notNull(),
+  // (0257) Where the need happens. NULL means it doesn't say; see
+  // effectiveWorkMode() for how things and shifts read then.
+  workMode: mysqlEnum("workMode", ["on_site", "remote", "either"]),
   groupClaimable: tinyint("groupClaimable").default(0).notNull(), // Partial claims allowed
   priorityPinned: tinyint("priorityPinned").default(0).notNull(), // Sorts first in the registry
   imageUrl: varchar("imageUrl", { length: 512 }),
@@ -1382,6 +1396,18 @@ export const campaignContributions = mysqlTable("campaign_contributions", {
   // daily batch retries non-account emails while it is NULL.
   cancelNoticedAt: timestamp("cancelNoticedAt"),
 
+  // (0257) Give or lend. NULL on rows that predate the choice and on needs
+  // that are not things. A lend carries the dates it is available and must
+  // come back, and one condition note; it stays at the lender's risk unless
+  // the two sides agree otherwise.
+  offerMode: mysqlEnum("offerMode", ["give", "lend"]),
+  availableFrom: date("availableFrom", { mode: "string" }),
+  lendUntil: date("lendUntil", { mode: "string" }),
+  lendTerms: varchar("lendTerms", { length: 300 }),
+  // (0257) A steward's record that a lent thing went back to its owner. It
+  // changes no status and no counter.
+  returnedAt: timestamp("returnedAt"),
+
   // Metadata
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
   reviewedAt: timestamp("reviewedAt"),
@@ -1420,9 +1446,12 @@ export type CampaignUpdate = typeof campaignUpdates.$inferSelect;
 export type InsertCampaignUpdate = typeof campaignUpdates.$inferInsert;
 
 /**
- * Campaign Partner Links (0204). Ma Earth / GoSteward / grant CTAs with
- * nightly-hydrated cached numbers. Money never touches us (decisions 2 + 7):
- * these are read-only display links, contributors complete on the partner site.
+ * Money routes a project holds outside ReGen Civics. A steward adds one
+ * (status pending); an admin verifies it; only verified rows, and example
+ * rows on example campaigns, reach the public. (0204, reshaped by 0257.)
+ * Money through a route never passes through ReGen Civics: contributors
+ * finish on the partner's site, and the cached numbers are hydrated nightly
+ * from verified rows only.
  */
 export const campaignPartnerLinks = mysqlTable("campaign_partner_links", {
   id: int("id").autoincrement().primaryKey(),
@@ -1435,6 +1464,19 @@ export const campaignPartnerLinks = mysqlTable("campaign_partner_links", {
   cachedPercent: int("cachedPercent"),
   lastFetchedAt: timestamp("lastFetchedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  // (0257) Review. 'example' rows sit on example campaigns and never link out.
+  status: mysqlEnum("status", ["pending", "verified", "rejected", "example"]).default("pending").notNull(),
+  // (0257) Admin-only: a link showing the page is the project's own. Never public.
+  proofUrl: varchar("proofUrl", { length: 512 }),
+  // (0257) Why a route was not shown; the project sees it. Never public.
+  reviewNote: varchar("reviewNote", { length: 1000 }),
+  addedBy: int("addedBy"),
+  verifiedBy: int("verifiedBy"),
+  verifiedAt: timestamp("verifiedAt"),
+  // (0257) The currency of the partner page's numbers, set by the admin at
+  // verification (never by the hydration job). Money counts on the two-line
+  // bar only when it matches the campaign's currency.
+  cachedCurrency: varchar("cachedCurrency", { length: 8 }),
 }, (t) => ([
   index("campaign_partner_links_campaign_idx").on(t.campaignId),
 ]));

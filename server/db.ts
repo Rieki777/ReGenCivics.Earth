@@ -1346,6 +1346,163 @@ export async function updateCampaignPledgedTotals(campaignId: number): Promise<v
 }
 
 
+import { campaignPartnerLinks } from "../drizzle/schema";
+import type { ProgressItem, ProgressLend, ProgressRoute, ProgressRow } from "@shared/campaignProgress";
+
+export type CampaignProgressInputs = {
+  items: ProgressItem[];
+  rows: ProgressRow[];
+  lends: ProgressLend[];
+  routes: ProgressRoute[];
+};
+
+/**
+ * Everything shared/campaignProgress.ts needs, for many campaigns in four
+ * batched queries (build spec 2026-09-25, section 4.3):
+ *   1. items: the need fields the progress helper and need lines read;
+ *   2. rows: offered and standing contributions grouped by need, status,
+ *      type and mode, summed. financialValue mirrors getCampaignPledgedTotals
+ *      (`financialAmount || estimatedValue`) exactly;
+ *   3. lends: offered or standing lends not yet returned, soonest first;
+ *   4. routes: verified and example money routes (the helper counts example
+ *      routes only on example campaigns). Never proofUrl, reviewNote,
+ *      addedBy or verifiedBy.
+ * Every value is bound by drizzle, never interpolated. Pass
+ * `withItems: false` when the caller already holds the needs (getById).
+ */
+export async function getCampaignProgressInputs(
+  campaignIds: number[],
+  opts: { withItems?: boolean } = {},
+): Promise<Map<number, CampaignProgressInputs>> {
+  const out = new Map<number, CampaignProgressInputs>();
+  const ids = Array.from(new Set(campaignIds.filter((id) => Number.isInteger(id) && id > 0)));
+  for (const id of ids) out.set(id, { items: [], rows: [], lends: [], routes: [] });
+  if (ids.length === 0) return out;
+  const db = await getDb();
+  if (!db) return out;
+
+  const offered = ["pending", "accepted", "fulfilled", "thanked"] as const;
+  const cc = campaignContributions;
+
+  const [items, rows, lends, routes] = await Promise.all([
+    opts.withItems === false
+      ? Promise.resolve([])
+      : db
+          .select({
+            id: campaignItems.id,
+            campaignId: campaignItems.campaignId,
+            kind: campaignItems.kind,
+            category: campaignItems.category,
+            capitalType: campaignItems.capitalType,
+            capacityUnit: campaignItems.capacityUnit,
+            quantityWanted: campaignItems.quantityWanted,
+            estimatedValue: campaignItems.estimatedValue,
+            priorityPinned: campaignItems.priorityPinned,
+            roleTitle: campaignItems.roleTitle,
+            equipmentName: campaignItems.equipmentName,
+            resourceName: campaignItems.resourceName,
+            hectares: campaignItems.hectares,
+            region: campaignItems.region,
+            landDescription: campaignItems.landDescription,
+            hoursPerWeek: campaignItems.hoursPerWeek,
+            durationMonths: campaignItems.durationMonths,
+            neededFrom: campaignItems.neededFrom,
+            neededUntil: campaignItems.neededUntil,
+            acceptsGift: campaignItems.acceptsGift,
+            acceptsLoan: campaignItems.acceptsLoan,
+            workMode: campaignItems.workMode,
+            shiftStartsAt: campaignItems.shiftStartsAt,
+            shiftEndsAt: campaignItems.shiftEndsAt,
+            createdAt: campaignItems.createdAt,
+          })
+          .from(campaignItems)
+          .where(inArray(campaignItems.campaignId, ids))
+          .orderBy(campaignItems.category, campaignItems.createdAt),
+    db
+      .select({
+        campaignId: cc.campaignId,
+        campaignItemId: cc.campaignItemId,
+        status: cc.status,
+        contributionType: cc.contributionType,
+        offerMode: cc.offerMode,
+        quantity: sql<string>`SUM(${cc.quantityPledged})`,
+        value: sql<string>`SUM(${cc.estimatedValue})`,
+        financialValue: sql<string>`SUM(COALESCE(NULLIF(${cc.financialAmount}, 0), ${cc.estimatedValue}))`,
+        n: sql<string>`COUNT(*)`,
+      })
+      .from(cc)
+      .where(and(inArray(cc.campaignId, ids), inArray(cc.status, [...offered])))
+      .groupBy(cc.campaignId, cc.campaignItemId, cc.status, cc.contributionType, cc.offerMode),
+    db
+      .select({
+        campaignId: cc.campaignId,
+        campaignItemId: cc.campaignItemId,
+        quantityPledged: cc.quantityPledged,
+        availableFrom: cc.availableFrom,
+        lendUntil: cc.lendUntil,
+      })
+      .from(cc)
+      .where(and(
+        inArray(cc.campaignId, ids),
+        eq(cc.offerMode, "lend"),
+        inArray(cc.status, [...offered]),
+        isNull(cc.returnedAt),
+      ))
+      .orderBy(asc(cc.availableFrom), asc(cc.id))
+      .limit(500),
+    db
+      .select({
+        campaignId: campaignPartnerLinks.campaignId,
+        partner: campaignPartnerLinks.partner,
+        status: campaignPartnerLinks.status,
+        cachedRaised: campaignPartnerLinks.cachedRaised,
+        cachedCurrency: campaignPartnerLinks.cachedCurrency,
+        lastFetchedAt: campaignPartnerLinks.lastFetchedAt,
+      })
+      .from(campaignPartnerLinks)
+      .where(and(
+        inArray(campaignPartnerLinks.campaignId, ids),
+        inArray(campaignPartnerLinks.status, ["verified", "example"]),
+      )),
+  ]);
+
+  for (const item of items) {
+    out.get(item.campaignId)?.items.push({ ...item, estimatedValue: Number(item.estimatedValue) || 0 });
+  }
+  for (const r of rows) {
+    out.get(r.campaignId)?.rows.push({
+      campaignItemId: r.campaignItemId,
+      status: r.status,
+      contributionType: r.contributionType,
+      offerMode: r.offerMode,
+      quantity: Number(r.quantity) || 0,
+      value: Number(r.value) || 0,
+      financialValue: Number(r.financialValue) || 0,
+      count: Number(r.n) || 0,
+    });
+  }
+  for (const l of lends) {
+    out.get(l.campaignId)?.lends.push({
+      campaignItemId: l.campaignItemId,
+      quantity: l.quantityPledged,
+      availableFrom: l.availableFrom,
+      lendUntil: l.lendUntil,
+    });
+  }
+  for (const r of routes) {
+    if (r.status !== "verified" && r.status !== "example") continue;
+    out.get(r.campaignId)?.routes.push({
+      partner: r.partner,
+      status: r.status,
+      cachedRaised: r.cachedRaised == null ? null : Number(r.cachedRaised),
+      cachedCurrency: r.cachedCurrency,
+      lastFetchedAt: r.lastFetchedAt,
+    });
+  }
+  return out;
+}
+
+
 export async function updateCampaignStatus(
   campaignId: number,
   status: 'draft' | 'pending_review' | 'active' | 'funded' | 'completed' | 'cancelled' | 'rejected'
