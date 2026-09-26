@@ -6248,7 +6248,7 @@ export const interopTools = mysqlTable("interopTools", {
 export type InteropTool = typeof interopTools.$inferSelect;
 
 /**
- * An interoperability sheet (drizzle/0249_interop_sheets.sql).
+ * An interoperability sheet (drizzle/0260_interop_sheets.sql).
  *
  * Hangs off regen_tools rather than duplicating it: one canonical tool, with
  * the facets that decide whether two projects can actually meet. Filed
