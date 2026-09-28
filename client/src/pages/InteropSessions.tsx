@@ -319,6 +319,15 @@ export default function InteropSessions() {
                   <Calendar className="w-4 h-4" />
                   {seasonTwoOpen ? 'Add all sessions to your calendar' : 'Season Two, and how it works'}
                 </a>
+                {!seasonTwoOpen && (
+                  <a
+                    href="/season-schedule"
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <Clock className="w-4 h-4" />
+                    Season Two's weekly time
+                  </a>
+                )}
               </div>
             </section>
           </AnimatedSection>

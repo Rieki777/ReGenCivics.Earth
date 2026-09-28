@@ -335,6 +335,16 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Signing up is optional: anyone can attend from the calendar feed. Members get reminders, the recaps an admin sends with the Events tab follow-up tool, and an invitation to create a profile. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.
 
+### Season Schedule (ADR-64)
+
+**Season Schedule**. The page (`/season-schedule`) and module (`shared/seasonSchedule.ts`) where a Season's land projects pick its weekly time, share a link to their project, and send notes to the organizers. Reusable for every Season: each Season is one entry in `SEASON_SCHEDULES`, and the page shows `ACTIVE_SEASON`. A separate vote from the Interoperability Circle's; don't mix the two.
+
+**Season time** (the Season's slot). The weekday and Pacific hour a Season's weekly sessions follow. It starts as the **opening time** (Season 2: Saturdays at 11am Pacific) and changes only when a round of voting closes (to the time with the most hands; a tie that includes the current time keeps it) or an admin pins one. Sessions less than 72 hours out, admin-edited sessions and past sessions never move, and a moved session stays inside its own Monday-to-Sunday week.
+
+**Hand** vs **project** (in the Season tally). A hand is one browser's vote for a time; a project is a distinct project name among those hands. Hands decide the time; projects show the organizers how many projects a time works for.
+
+**Season notes**. What a project wants to talk about next, and feedback on the facilitation, sent from `/season-schedule#notes`. Filed against the next session, readable only by admins (Admin, Events, Season Schedule panel), anonymous unless signed.
+
 ### Project pages and campaign tools (ADR-60, ADR-61)
 
 **Project page**. The public page for one land project at `/project/:key`. It shows the project's live campaign front and centre, its past campaigns, and, to project stewards only, the campaign tools. The key is `{applicationId}-{slug}` for a project with an application and `c{campaignId}-{slug}` for a campaign with none (demos, play-launched drafts). The slug is decoration. Code: `shared/projectKey.ts`.

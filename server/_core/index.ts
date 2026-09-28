@@ -1632,6 +1632,10 @@ setTimeout(async () => {
     // so a new week has its reminder config before the reminder pass reads it.
     const { syncInteropCircle } = await import("../lib/interopCircle");
     await syncInteropCircle({ force: true });
+    // Same for each Season's vote: a close moves the episode rows, and marks
+    // the reminders already overdue at the new time, before this pass reads them.
+    const { syncSeasonSchedules } = await import("../lib/seasonSchedule");
+    await syncSeasonSchedules({ force: true });
     const { runAutoEventReminders } = await import("../jobs/eventReminders");
     await runAutoEventReminders();
   };

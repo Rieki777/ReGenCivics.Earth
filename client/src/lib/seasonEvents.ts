@@ -296,6 +296,37 @@ export const NEW_MOON_SESSIONS: OpenAccessSession[] = OPEN_ACCESS_PUBLISHED_DATE
   };
 });
 
+/**
+ * The one-shot Google and Apple adds for one Season 2 week, at whatever time
+ * it actually runs. The land projects' vote can move a week off its catalog
+ * Saturday (ADR-64), so callers pass the live start rather than a date.
+ */
+export function season2EpisodeCalendarLinks(opts: {
+  week: number;
+  title: string;
+  description: string;
+  start: Date;
+  end: Date;
+}): { googleCalendarUrl: string; appleCalendarUrl: string } {
+  const startUtc = toCompactUtc(opts.start);
+  const endUtc = toCompactUtc(opts.end);
+  return {
+    googleCalendarUrl: googleCalUrl({
+      title: `ReGen Civics ${opts.title}`,
+      startUtc,
+      endUtc,
+      description: opts.description,
+    }),
+    appleCalendarUrl: icsDataUrl({
+      uid: season2EpisodeUid(opts.week),
+      summary: `ReGen Civics ${opts.title}`,
+      startUtc,
+      endUtc,
+      description: opts.description,
+    }),
+  };
+}
+
 function episodeFallback(def: EpisodeDef) {
   const { startUtc, endUtc } = sessionPair(def.date);
   const start = parseCompactUtc(startUtc);
@@ -309,18 +340,12 @@ function episodeFallback(def: EpisodeDef) {
     duration: "2 hours",
     description: def.description,
     type: "episode",
-    googleCalendarUrl: googleCalUrl({
-      title: `ReGen Civics ${title}`,
-      startUtc,
-      endUtc,
+    ...season2EpisodeCalendarLinks({
+      week: def.id,
+      title,
       description: def.description,
-    }),
-    appleCalendarUrl: icsDataUrl({
-      uid: season2EpisodeUid(def.id),
-      summary: `ReGen Civics ${title}`,
-      startUtc,
-      endUtc,
-      description: def.description,
+      start,
+      end: parseCompactUtc(endUtc),
     }),
   };
 }

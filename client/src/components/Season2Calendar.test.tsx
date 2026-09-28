@@ -22,6 +22,23 @@ vi.mock("wouter", () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
+// The live schedule comes from the server; before it answers, the hook serves
+// every week on the time the Season opened on, which is what these tests pin.
+vi.mock("@/hooks/useSeasonSchedule", async () => {
+  const { SEASON_SCHEDULES, seasonSessionsOn, seasonSlot } = await import("@shared/seasonSchedule");
+  const config = SEASON_SCHEDULES["Season 2"];
+  return {
+    useSeasonSchedule: () => ({
+      config,
+      sessions: seasonSessionsOn(config, config.opening).map((s) => ({ ...s, title: null, status: "upcoming" })),
+      scheduled: seasonSlot(config.opening.key, config.opening.hourPT),
+      loaded: false,
+      data: undefined,
+      query: {},
+    }),
+  };
+});
+
 const WEEK_1 = episodeTitle(SEASON2_CURRICULUM[0]!);
 const WEEK_13 = episodeTitle(SEASON2_CURRICULUM[12]!);
 

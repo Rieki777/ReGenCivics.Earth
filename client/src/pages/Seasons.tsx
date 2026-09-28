@@ -47,13 +47,12 @@ import { SeasonWheel } from "@/components/SeasonWheel";
 import { SEASON_LOOK } from "@/lib/seasonLook";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
-  SEASON2_EPISODE_DATES,
   SESSION_DURATION_HOURS,
   SESSION_START_HOUR_PT,
   SESSION_TIME_ZONE,
-  sessionEndUtc,
-  sessionStartUtc,
 } from "@shared/sessionClock";
+import type { SeasonSlot } from "@shared/seasonSchedule";
+import { useSeasonSchedule, type SeasonSessionView } from "@/hooks/useSeasonSchedule";
 import { JOIN_PATH, SEEDS_YOUTUBE_URL } from "@shared/sessionLinks";
 import {
   REGEN_SEASONS,
@@ -88,29 +87,38 @@ function hourLabel(h: number) {
 }
 const SESSION_TIME = `${hourLabel(SESSION_START_HOUR_PT)} Pacific`;
 
-/** The thirteen weeks with their real dates, from the shared curriculum and clock. */
-const WEEKS = SEASON2_CURRICULUM.map((ep) => {
-  const ymd = SEASON2_EPISODE_DATES[ep.week - 1];
-  return { ...ep, start: ymd ? sessionStartUtc(ymd) : null };
-});
+type Week = (typeof SEASON2_CURRICULUM)[number] & { start: Date | null; end: Date | null };
+
+/**
+ * The thirteen weeks with their real dates: the shared curriculum, timed by
+ * the Season Schedule. The land projects' vote can move the weekly time
+ * (ADR-64), so the times come from the live schedule, and until it answers
+ * from the time the Season opened on.
+ */
+function weeksFrom(sessions: readonly SeasonSessionView[]): Week[] {
+  return SEASON2_CURRICULUM.map((ep) => {
+    const s = sessions.find((x) => x.week === ep.week);
+    return { ...ep, start: s?.start ?? null, end: s?.end ?? null };
+  });
+}
 
 type Season2Status =
   | { phase: "before"; selectionDay: Date }
   | { phase: "during"; week: number; title: string; next: Date | null }
   | { phase: "after" };
 
-function season2Status(now: Date): Season2Status {
-  const first = WEEKS[0]?.start;
-  const lastYmd = SEASON2_EPISODE_DATES[SEASON2_EPISODE_DATES.length - 1];
+function season2Status(now: Date, weeks: readonly Week[]): Season2Status {
+  const first = weeks[0]?.start;
+  const lastEnd = weeks[weeks.length - 1]?.end;
   if (!first) return { phase: "after" };
   if (now < first) return { phase: "before", selectionDay: first };
-  if (now > sessionEndUtc(lastYmd)) return { phase: "after" };
+  if (lastEnd && now > lastEnd) return { phase: "after" };
   let week = 1;
-  WEEKS.forEach((w) => {
+  weeks.forEach((w) => {
     if (w.start && now >= w.start) week = w.week;
   });
-  const next = WEEKS[week]?.start ?? null;
-  return { phase: "during", week, title: WEEKS[week - 1].title, next };
+  const next = weeks[week]?.start ?? null;
+  return { phase: "during", week, title: weeks[week - 1].title, next };
 }
 
 const localWhen = (() => {
@@ -127,12 +135,23 @@ const localWhen = (() => {
 })();
 
 /**
- * Every live session starts at 11am Pacific for now, the middle of the night
- * across Asia-Pacific (Rye, 2026-09-24: rotate times so every region gets good
- * hours). Until they rotate, tell each visitor when the next one lands for them.
+ * Open Access sessions start at 11am Pacific. The Season's weekly time is the
+ * land projects' pick on the Season Schedule (Rye, 2026-09-28), chosen for the
+ * zones the cohort lives in: Hawaii and across the Americas. Tell each visitor
+ * when the next one lands for them.
  */
-function SessionTimesNote({ now }: { now: Date }) {
-  const next = WEEKS.find((w) => w.start && w.start > now)?.start ?? null;
+function SessionTimesNote({
+  now,
+  weeks,
+  scheduled,
+  voting,
+}: {
+  now: Date;
+  weeks: readonly Week[];
+  scheduled: SeasonSlot;
+  voting: boolean;
+}) {
+  const next = weeks.find((w) => w.start && w.start > now)?.start ?? null;
   let zone = "";
   try {
     zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -150,9 +169,14 @@ function SessionTimesNote({ now }: { now: Date }) {
           Session times for every region
         </h3>
         <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
-          Every live session starts at {SESSION_TIME} for now, which is the middle of the night across
-          Asia-Pacific. We're working toward rotating session times so every region gets good hours.
-          {local ? ` Where you are, the next one lands on ${local}.` : ""}
+          {voting
+            ? `The cohort meets ${scheduled.label} for now, and the land projects are picking the weekly time on the `
+            : `The cohort meets ${scheduled.label}, the time the land projects picked on the `}
+          <Link href="/season-schedule" className="underline underline-offset-2 hover:text-white">
+            Season Schedule
+          </Link>
+          . Open Access Sessions start at {SESSION_TIME}.
+          {local ? ` Where you are, the next Season session lands on ${local}.` : ""}
         </p>
       </div>
     </div>
@@ -297,7 +321,10 @@ function stopStatus(stop: Stop, now: Date): "complete" | "active" | "future" {
 
 export default function Seasons() {
   const now = useMemo(() => new Date(), []);
-  const status = useMemo(() => season2Status(now), [now]);
+  const { sessions, scheduled, data: schedule } = useSeasonSchedule();
+  const weeks = useMemo(() => weeksFrom(sessions), [sessions]);
+  const status = useMemo(() => season2Status(now, weeks), [now, weeks]);
+  const voting = schedule ? !schedule.closed : false;
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
 
@@ -368,7 +395,7 @@ export default function Seasons() {
                       Week {status.week} of 13: {status.title}
                     </h3>
                     <p className="text-white/80 safe-prose">
-                      The cohort meets Saturdays at {SESSION_TIME}, and the sessions stream on the SEEDS
+                      The cohort meets {scheduled.label}, and the sessions stream on the SEEDS
                       channel for anyone who wants to follow along. If your project is ready by the
                       last week, join the community crowdpooling round.
                       {status.next ? ` Next session: ${pacificDay.format(status.next)}.` : ""}
@@ -439,7 +466,7 @@ export default function Seasons() {
               {
                 Icon: Clock,
                 title: `${SESSION_DURATION_HOURS}-hour live sessions`,
-                body: `Every Saturday at ${SESSION_TIME}: examples, tools, lessons, practical how-to's, and open questions.`,
+                body: `Every ${scheduled.day} at ${scheduled.hour} Pacific: examples, tools, lessons, practical how-to's, and open questions.`,
               },
               {
                 Icon: BookOpen,
@@ -480,9 +507,9 @@ export default function Seasons() {
                       The 13 weeks of the Design Season
                     </span>
                     <span className="block text-white/70 text-sm">
-                      {WEEKS[0]?.start && WEEKS[12]?.start
-                        ? `${pacificShort.format(WEEKS[0].start)} to ${pacificShort.format(WEEKS[12].start)}, Saturdays at ${SESSION_TIME}`
-                        : "Saturdays through the winter"}
+                      {weeks[0]?.start && weeks[12]?.start
+                        ? `${pacificShort.format(weeks[0].start)} to ${pacificShort.format(weeks[12].start)}, ${scheduled.label}`
+                        : `${scheduled.days} through the winter`}
                     </span>
                   </div>
                 </div>
@@ -495,7 +522,7 @@ export default function Seasons() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <ol className="mt-4 space-y-2">
-                {WEEKS.map((w) => {
+                {weeks.map((w) => {
                   const isNow = status.phase === "during" && status.week === w.week;
                   return (
                     <li
@@ -816,7 +843,7 @@ export default function Seasons() {
           </div>
 
           <AnimatedSection animation="slide-up">
-            <SessionTimesNote now={now} />
+            <SessionTimesNote now={now} weeks={weeks} scheduled={scheduled} voting={voting} />
           </AnimatedSection>
         </div>
       </section>

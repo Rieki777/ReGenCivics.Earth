@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-28 (seasons): The Season Schedule, where the land projects pick Season Two's weekly time
+
+- **`/season-schedule`** (ADR-64), forked from /interop-sessions and reusable for every Season: the land projects raise a hand for every weekly time they can make among Tuesdays 2pm, Wednesdays 10am, Thursdays 12pm and Saturdays 11am Pacific. Each option shows its first session date, the time in Hawaii, Pacific, Central America, US Central and Brazil plus the reader's own zone, and the November clock-change shift. Voting closes Thursday, October 1 at 5pm Pacific; Week 2 (this Saturday) keeps its time, and the winner starts with Week 3.
+- **The vote moves the rows once**: at the close, every session more than 72 hours out moves to the winning time inside its own week, so calendars, /schedule, reminders and the ICS feeds follow. Ties keep the current time, an admin pin overrides, and reminders already overdue at a new time are marked handled instead of going out late as "In 7 days". `syncCatalogEvents` no longer resets Season 2 times to Saturday.
+- **Kept from the Circle**: a link to each project on a public register ("The projects in Season Two"), and notes for the organizers (what to talk about next, feedback on the facilitation), filed against the next session, admin-only, anonymous unless signed.
+- **One source for the time**: /seasons, the /season2 calendar block and the new page read the live schedule through `useSeasonSchedule`, so "Saturdays at 11am" no longer sits in copy. Admin, Events has the Season Schedule panel: tally, close time, close now, pin, offered times, sessions, and the notes by week.
+- Migration 0281 (`season_schedule_votes`, `season_feedback`). Tests: 33 pure (including Rye's hour window, no overlap with Open Access or the Circle), 5 against a real database.
+- Source: this session. Invitation email drafted for Applications, Approved, Email these applicants.
+
 ## 2026-09-28 (crowdpool, build three): The close date, steward nudges, a private offer link, the arrival note, one Follow; v1.2 wording in code; limits key on the visitor
 
 - **Rye's 2026-09-27 rulings in code**: example campaigns ask for money at about 20% of the whole ask (migration 0263, examples only; production's four get 21,000 / 21,000 / 14,000 / 33,000 with example route figures that never read as landed, and Rewild comes inside the nine-month cap); an in-kind need can't be listed at 0; new campaigns can run at most 273 days; when a filled role opens again, people a steward declined hear too; the sign-in link is limited to 3 per inbox every 15 minutes (plus-tags and Gmail dots count as one inbox, and only links actually sent count, so nobody can lock someone else out).

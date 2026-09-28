@@ -8,7 +8,7 @@
  * story. The subscribe-once CTA is the primary action anyway; the per-date
  * buttons are the fallback.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calendar, ArrowRight, ChevronDown, Youtube } from "lucide-react";
 import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -18,9 +18,8 @@ import {
   openAccessGoogleUrl,
   openAccessIcsUrl,
   parseCompactUtc,
-  season2EpisodeEvents,
+  season2EpisodeCalendarLinks,
   sessionEndUtc,
-  sessionStartUtc,
   upcomingOpenAccessSessions,
   OPEN_ACCESS_PITCH,
   sessionTopic,
@@ -33,8 +32,13 @@ import {
   formatRangeWithReference,
   formatStartWithReference,
 } from "@/lib/calendarLinks";
+import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
+import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 
 const display = { fontFamily: "var(--font-display)" } as const;
+
+const pacificMonthDay = (d: Date) =>
+  d.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "America/Los_Angeles" });
 
 /**
  * Times here are the reader's own. They used to be published as Pacific and
@@ -70,7 +74,34 @@ function MoreDatesToggle({
 
 export function Season2Calendar() {
   const sessions = upcomingOpenAccessSessions();
-  const episodes = season2EpisodeEvents();
+  // The weeks as scheduled, which follows the land projects' vote (ADR-64).
+  // Weeks already over drop off, so the first card is always the next one.
+  const { sessions: seasonSessions } = useSeasonSchedule();
+  const allEpisodes = useMemo(
+    () =>
+      seasonSessions.map((s) => {
+        const episode = SEASON2_CURRICULUM[s.week - 1];
+        const title = s.title ?? (episode ? episodeTitle(episode) : `Week ${s.week}`);
+        return {
+          id: s.week,
+          title,
+          start: s.start,
+          ...season2EpisodeCalendarLinks({
+            week: s.week,
+            title,
+            description: episode?.description ?? "",
+            start: s.start,
+            end: s.end,
+          }),
+          end: s.end,
+        };
+      }),
+    [seasonSessions],
+  );
+  const ahead = allEpisodes.filter((e) => e.end.getTime() > Date.now());
+  const episodes = ahead.length > 0 ? ahead : allEpisodes;
+  const seasonFirst = allEpisodes[0]?.start;
+  const seasonLast = allEpisodes[allEpisodes.length - 1]?.start;
 
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [episodesOpen, setEpisodesOpen] = useState(false);
@@ -176,8 +207,16 @@ export function Season2Calendar() {
           </h3>
         </div>
         <p className="text-white/70 text-sm mb-5">
-          Thirteen weekly sessions, September 26 through December 19, 2026. Selection Day is open to
-          anyone; the rest are cohort working sessions you can follow on the livestream.
+          Thirteen weekly sessions,{" "}
+          {seasonFirst && seasonLast
+            ? `${pacificMonthDay(seasonFirst)} through ${pacificMonthDay(seasonLast)}, 2026`
+            : "September through December 2026"}
+          . Selection Day is open to anyone; the rest are cohort working sessions you can follow on the
+          livestream. The land projects pick the weekly time on the{" "}
+          <Link href="/season-schedule">
+            <span className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">Season Schedule</span>
+          </Link>
+          , and every date here follows it.
         </p>
 
         <div className="rounded-xl border border-[#7dd87d]/30 bg-[#7dd87d]/8 p-5 mb-6">
@@ -209,8 +248,8 @@ export function Season2Calendar() {
             >
               <div className="text-white font-semibold mb-1">{ep.title}</div>
               <div className="text-white/70 text-sm mb-4">
-                {formatLocalDateShort(sessionStartUtc(ep.date))} ·{" "}
-                {formatStartWithReference(sessionStartUtc(ep.date))}
+                {formatLocalDateShort(ep.start)} ·{" "}
+                {formatStartWithReference(ep.start)}
               </div>
               <CalendarCta
                 googleUrl={ep.googleCalendarUrl}

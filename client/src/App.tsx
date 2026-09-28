@@ -107,6 +107,7 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Season2 = lazy(() => import("./pages/Season2"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const InteropSessions = lazy(() => import("./pages/InteropSessions"));
+const SeasonSchedule = lazy(() => import("./pages/SeasonSchedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
@@ -338,6 +339,7 @@ function Router() {
       <Route path={"/season2"}><EB><Season2 /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
       <Route path={"/interop-sessions"}><EB><InteropSessions /></EB></Route>
+      <Route path={"/season-schedule"}><EB><SeasonSchedule /></EB></Route>
       <Route path={"/checkin/:token"}><EB><Checkin /></EB></Route>
       <Route path={"/events/:id"}><EB><EventDetail /></EB></Route>
       <Route path={"/series/:season"}><EB><EventSeries /></EB></Route>

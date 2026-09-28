@@ -51,6 +51,7 @@ import * as db from "../db";
 import crypto from "crypto";
 import { syncCatalogEvents } from "../lib/syncCatalogEvents";
 import { leaveCircle, syncInteropCircle } from "../lib/interopCircle";
+import { syncSeasonSchedules } from "../lib/seasonSchedule";
 import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 import {
@@ -125,6 +126,8 @@ async function ensureEventsSeed() {
     // Weekly Interoperability Circle rows, from the live time vote. Throttled
     // to one run a minute, so this costs nothing on most list calls.
     await syncInteropCircle();
+    // Season episode times, from each Season's vote (ADR-64). Same throttle.
+    await syncSeasonSchedules();
   } catch {
     // Non-fatal, seed runs once, fails silently if table not ready yet
   }

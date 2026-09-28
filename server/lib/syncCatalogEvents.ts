@@ -13,6 +13,10 @@
  *      defined once and this is what carries it into the database, which is
  *      what /schedule, /events/:id and the calendar feeds all read.
  *
+ *      Season 2 *times* are not this file's job any more. They follow the
+ *      Season Schedule vote (server/lib/seasonSchedule.ts, ADR-64), and
+ *      resetting them to Saturday here would undo every move it makes.
+ *
  * `manualOverride` is the escape hatch. events.update sets it, and a row
  * carrying it is skipped entirely: an admin who moves an episode or rewrites a
  * description is not reverted on the next public events.list call. /schedule
@@ -26,11 +30,7 @@ import { getDb } from "../db";
 import {
   catalogOpenAccessRows,
   OPEN_ACCESS_TITLE,
-  sessionEndUtc,
-  sessionStartUtc,
   SEASON2_EPISODE_DATES,
-  zoneName,
-  SESSION_TIME_ZONE,
 } from "@shared/sessionClock";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 import { openAccessDescription } from "@shared/openAccess";
@@ -115,12 +115,8 @@ export async function syncCatalogEvents(): Promise<{ updated: number; inserted: 
   }
 
   for (let i = 0; i < SEASON2_EPISODE_DATES.length; i++) {
-    const ymd = SEASON2_EPISODE_DATES[i];
     const episode = SEASON2_CURRICULUM[i];
     if (!episode) continue;
-    const startTime = sessionStartUtc(ymd);
-    const endTime = sessionEndUtc(ymd);
-    const timezone = zoneName(startTime, SESSION_TIME_ZONE);
     const title = episodeTitle(episode);
 
     const existing = await database
@@ -128,8 +124,6 @@ export async function syncCatalogEvents(): Promise<{ updated: number; inserted: 
         id: events.id,
         title: events.title,
         description: events.description,
-        startTime: events.startTime,
-        timezone: events.timezone,
         manualOverride: events.manualOverride,
       })
       .from(events)
@@ -146,16 +140,12 @@ export async function syncCatalogEvents(): Promise<{ updated: number; inserted: 
     if (!current) continue;
     if (current.manualOverride) continue;
 
-    const drifted =
-      !sameInstant(current.startTime, startTime) ||
-      current.timezone !== timezone ||
-      current.title !== title ||
-      current.description !== episode.description;
+    const drifted = current.title !== title || current.description !== episode.description;
 
     if (drifted) {
       await database
         .update(events)
-        .set({ startTime, endTime, timezone, title, description: episode.description })
+        .set({ title, description: episode.description })
         .where(eq(events.id, current.id));
       updated += 1;
     }

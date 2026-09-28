@@ -6493,6 +6493,51 @@ export const interopTimeVotes = mysqlTable("interopTimeVotes", {
   uniqueIndex("interop_vote_voter_idx").on(table.voterKey),
   index("interop_vote_slot_idx").on(table.slot),
 ]));
+
+/**
+ * The Season Schedule time vote (shared/seasonSchedule.ts, migration 0281).
+ * One row per voter per Season; the land projects raise a hand for every
+ * weekly time they can make, and the vote closes into the Season's time.
+ */
+export const seasonScheduleVotes = mysqlTable("season_schedule_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Matches events.season: "Season 2". */
+  season: varchar("season", { length: 50 }).notNull(),
+  /** Random per-browser id. Opaque to the server. */
+  voterKey: varchar("voterKey", { length: 64 }).notNull(),
+  /** Comma list of the weekdays this voter can make ("tue,sat"). */
+  slots: varchar("slots", { length: 64 }).notNull(),
+  /** Optional, shown beside the vote. */
+  displayName: varchar("displayName", { length: 80 }),
+  /** Optional, so the tally can say how many projects a time works for. */
+  projectName: varchar("projectName", { length: 120 }),
+  /** Optional link the project shares with the cohort. http or https only (cleanRepoUrl). */
+  projectUrl: varchar("projectUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("season_schedule_votes_voter_idx").on(table.season, table.voterKey),
+  index("season_schedule_votes_season_idx").on(table.season),
+]));
+
+/**
+ * Notes for the organizers as a Season runs (migration 0281): what to talk
+ * about at the next session, and how the facilitation is landing. Admin-only
+ * to read. No voter key, so a note left without a name stays anonymous.
+ */
+export const seasonFeedback = mysqlTable("season_feedback", {
+  id: int("id").autoincrement().primaryKey(),
+  season: varchar("season", { length: 50 }).notNull(),
+  /** The week of the next upcoming session when the note was written. */
+  week: int("week"),
+  displayName: varchar("displayName", { length: 80 }),
+  projectName: varchar("projectName", { length: 120 }),
+  topic: text("topic"),
+  facilitation: text("facilitation"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("season_feedback_season_week_idx").on(table.season, table.week),
+]));
 export type InteropTimeVote = typeof interopTimeVotes.$inferSelect;
 
 /**

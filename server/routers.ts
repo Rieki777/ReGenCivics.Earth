@@ -28,6 +28,7 @@ import { recordingsRouter } from "./routes/recordings";
 import { eventsRouter } from "./routes/events";
 import { interopSessionsRouter } from "./routes/interopSessions";
 import { interopSheetsRouter } from "./routes/interopSheets";
+import { seasonScheduleRouter } from "./routes/seasonSchedule";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
@@ -193,6 +194,9 @@ export const appRouter = router({
   // Interoperability Circle (weekly tools working group)
   interopSessions: interopSessionsRouter,
   interopSheets: interopSheetsRouter,
+
+  // Season Schedule: the land projects' vote on each Season's weekly time
+  seasonSchedule: seasonScheduleRouter,
 
   // Events + per-event reminders
   events: eventsRouter,
