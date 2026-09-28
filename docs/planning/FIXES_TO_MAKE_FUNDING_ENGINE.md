@@ -31,12 +31,15 @@ One live check reads as a miss and is not: "43 land projects" on /opportunity is
 
 ## Phase 1: the application kit
 
+Plan v1.3 section 9: the linter by Oct 1 (done in the kit folder), the tables and the packet view by Oct 12. The tables stay unmerged through the Sep 30 to Oct 5 merge freeze.
+
 | # | Fix | Status | Evidence |
 |---|---|---|---|
-| K-1 | Draft linter: portal character and word limits, G5, retired claims, dashes, unconfirmed numbers, AI words, contrast framing | CODED | `scripts/lint-application-draft.mjs` over `shared/applicationLint.mjs`; `server/application-lint.test.ts` passes; guide in the kit folder |
+| K-1 | Draft linter: portal character and word limits, G5, retired claims, dashes, leftover placeholders (`[VERIFY]`, `[DECIDE]`, `$X`, `[N]`), unconfirmed numbers, AI words, contrast framing | DONE for Cowork, CODED in the repo | The kit folder's `lint-application-draft.mjs` is a standalone bundle of the repo code, tested from that folder on a PearX test draft: it failed the placeholder, both G5 phrases, the em-dash, the over-limit answer and the unknown heading (exit 1), and listed the 55 empty required questions on one line. `server/application-lint.test.ts` 12 pass |
 | K-2 | Exact questions for 500 Global, PearX, YC, Techstars and Emergent Ventures | DONE | `app_questions_seed.json` (private): 66, 72, 49, 27 and 23 questions |
 | K-3 | One rulebook: G5 rules and retired claims move to `shared/g5Rules.mjs`, read by the site gate, the draft linter and the admin packet view | CODED | `check-fund-claims.mjs` re-exports the shared rules; a test asserts the gate and the linter hold the same rule objects; the gate's exemption list is exported and imported by its test, so the two cannot drift |
-| K-4 | Question bank, answer bank and answer versions in the database; deadlines, track and stage on the pipeline; packet view with live counts | IN PROGRESS | |
+| K-4 | Question bank, answer bank and answer versions in the database (migration 0277); deadlines, track and stage on the pipeline; the Applications packet view and the Answer bank in /admin/funding; seed, backfill and import scripts (ADR-64) | CODED, merges after the freeze (Oct 5) | Scratch MariaDB (127.0.0.1): 0277 applied; 237 questions over five programs seeded, a second run reports no change; 11 starter answers seeded, 7 flagged as not approvable until their placeholders go; a test draft imported as versions, re-import wrote nothing. Tests: `server/funding-kit.test.ts` 18, `shared/fundingKit.test.ts` 9, `server/funding-kit.integration.test.ts` 6 (refuses any database that is not local). Full unit suite 3256 pass. Harness stories funding-applications, funding-packet and funding-answer-bank render clean at desktop and mobile widths |
+| K-5 | After the Phase 1 deploy: apply 0277, then seed questions, backfill deadlines and seed the answer bank in production | SCRIPTS READY | `npx tsx scripts/run-migration.ts drizzle/0277_funding_application_kit.sql`, then `npx tsx scripts/seed-app-questions.ts --write`, `npx tsx scripts/backfill-funding-deadlines.ts --write`, `npx tsx scripts/seed-answer-bank.ts --write` (each dry-runs first without `--write`) |
 
 ---
 
@@ -67,12 +70,12 @@ One live check reads as a miss and is not: "43 land projects" on /opportunity is
 |---|---|---|
 | C-1 | Phase 0 rewrite, gate, metrics, interest form, kernel store, redirects, docs move (PR #165) | VERIFIED (merged 6183af17, deploy 6c59fa4b SUCCESS, live checks above) |
 | C-2 | Apply migration 0276 and the roles copy sync after the deploy; verify the live site | VERIFIED |
-| C-3 | Application kit: shared rulebook (done), question and answer tables, packet view with live counts (plan v1.3 Phase 1) | IN PROGRESS |
+| C-3 | Application kit: shared rulebook, question and answer tables, packet view with live counts, answer bank, scripts (plan v1.3 Phase 1) | CODED; merge and production seeding after Oct 5 (K-5) |
 | C-4 | Deadline pings on the hourly admin-automations cron (Telegram, 21/7/2 days) | planned Oct 5 to 11 |
 | C-5 | Event quick-add for The Gathering (contacts and touches) | planned by Oct 14 |
 | C-6 | Project funding profiles and a rules-based grant matcher over the 23 applicant projects | planned by Oct 16 |
 | C-7 | Rename the five fund roles with explicit slugs (after the deadlines, with your OK) | planned |
-| C-8 | Contrast audit reads oklab and oklch colors; /loi asterisks; /fund breadcrumb (P0-15) | CODED |
+| C-8 | Contrast audit reads oklab and oklch colors; /loi asterisks; /fund breadcrumb (P0-15) | DONE: merged as 9ee3f77a (PR #166); CI's audit on both sides with the fixed parser: PR 241 against main 247, 6 resolved, none added |
 
 ### WAITING ON YOU before Claude Code can proceed
 
