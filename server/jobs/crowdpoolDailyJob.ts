@@ -12,17 +12,22 @@
  *      7, then never again; a contributor with an account hears once at 14
  *      days (Rye's ruling of 2026-09-27: "to keep things active");
  *   5. finalStretch: followers hear two weeks before the close which needs
- *      are still open (up to three), unless every need is filled.
+ *      are still open (up to three), unless every need is filled;
+ *   6. examplesRoll: each live example near its close date moves forward in
+ *      time, whole, so it reads partway through its window again (examples
+ *      never close, server/lib/example-window.ts, migration 0268). Examples
+ *      only, and it sends nothing.
  *
  * Every step is idempotent: conditional updates, per-row stamps written
  * after a send, and spine dedupe keys (a unique index, so a repeated send is
  * a no-op). Extra runs (a deploy restarts the in-process timer) send nothing
  * new, and a run that stops between a send and its stamp loses nothing: the
- * next run sends again and only the people who missed it get a row. Two game variables pause parts of it
+ * next run sends again and only the people who missed it get a row. Three game variables pause parts of it
  * without a deploy, each off when missing or unreadable:
- * crowdpool.auto_close (steps 1 and 2) and crowdpool.nudges (step 4). The
- * email retry (3) and the final stretch (5) have no switch, as the spec
- * sets them; both are single sends per person, stamped.
+ * crowdpool.auto_close (steps 1 and 2), crowdpool.nudges (step 4) and
+ * crowdpool.examples_roll (step 6). The email retry (3) and the final
+ * stretch (5) have no switch, as the spec sets them; both are single sends
+ * per person, stamped.
  *
  * Where it runs: an in-process daily timer in production only
  * (server/_core/index.ts), POST /api/cron/nightly-batch, and the admin "Run
@@ -39,6 +44,7 @@ import {
   resumeUnnoticedCloses,
 } from "../lib/campaign-close";
 import { retryPendingCampaignEndEmails } from "../lib/campaign-cancel";
+import { rollExampleWindows } from "../lib/example-window";
 import {
   buildFinalStretch,
   buildStewardNudge,
@@ -83,6 +89,8 @@ export type CrowdpoolDailyResult = {
   stewardNudges: number;
   stillWaiting: number;
   finalStretch: number;
+  /** Example campaigns moved forward (step 6). */
+  examplesRolled: number;
   errors: string[];
 };
 
@@ -237,7 +245,7 @@ export async function runCrowdpoolDailyJob(opts: CrowdpoolDailyOptions = {}): Pr
   };
   const out: CrowdpoolDailyResult = {
     closed: 0, completed: 0, released: 0, resumed: 0, emailsRetried: 0,
-    stewardNudges: 0, stillWaiting: 0, finalStretch: 0, errors: [],
+    stewardNudges: 0, stillWaiting: 0, finalStretch: 0, examplesRolled: 0, errors: [],
   };
 
   try {
@@ -269,8 +277,13 @@ export async function runCrowdpoolDailyJob(opts: CrowdpoolDailyOptions = {}): Pr
     out.finalStretch = (await runFinalStretch(scoped)).notices;
   } catch (e: any) { out.errors.push(`finalStretch: ${e?.message ?? e}`); }
 
+  try {
+    const r = await rollExampleWindows({ now, onlyCampaignIds: opts.onlyCampaignIds, dryRun: opts.dryRun, readSwitch: opts.readSwitch });
+    out.examplesRolled = r.moved;
+  } catch (e: any) { out.errors.push(`examplesRoll: ${e?.message ?? e}`); }
+
   console.log(
-    `[crowdpool-daily] closed=${out.closed} completed=${out.completed} released=${out.released} resumed=${out.resumed} emails=${out.emailsRetried} nudges=${out.stewardNudges} stillWaiting=${out.stillWaiting} finalStretch=${out.finalStretch}${opts.dryRun ? " dryRun" : ""}${out.errors.length ? ` errors=${out.errors.length}` : ""}`,
+    `[crowdpool-daily] closed=${out.closed} completed=${out.completed} released=${out.released} resumed=${out.resumed} emails=${out.emailsRetried} nudges=${out.stewardNudges} stillWaiting=${out.stillWaiting} finalStretch=${out.finalStretch} examplesRolled=${out.examplesRolled}${opts.dryRun ? " dryRun" : ""}${out.errors.length ? ` errors=${out.errors.length}` : ""}`,
   );
   return out;
 }
