@@ -9,8 +9,9 @@
  * Register the webhook URL in Riverside dashboard:
  *   Settings > Integrations > Webhooks > https://regencivics.earth/api/webhooks/riverside
  *
- * Set RIVERSIDE_WEBHOOK_SECRET in Railway env vars to the secret from Riverside dashboard.
- * If the secret is not set, signature verification is skipped (dev only).
+ * Set RIVERSIDE_WEBHOOK_SECRET in Railway env vars to the secret from Riverside dashboard,
+ * or, for a sender that cannot sign (a Zapier webhook step), set RIVERSIDE_WEBHOOK_TOKEN and
+ * send it as the x-webhook-token header. See checkRiversideAuth below.
  */
 
 import { Express, Request, Response } from "express";
@@ -93,6 +94,47 @@ function verifySignature(rawBody: string, signature: string | undefined, secret:
   }
 }
 
+/**
+ * Who may call the webhook. This endpoint creates a forum post and emails
+ * every active newsletter subscriber (finalizeRecording), so an
+ * unauthenticated caller could send a mass mail from our domain.
+ *
+ * - RIVERSIDE_WEBHOOK_SECRET set: a valid x-riverside-signature HMAC passes.
+ * - RIVERSIDE_WEBHOOK_TOKEN set: an x-webhook-token header equal to it passes.
+ *   This is for senders that cannot sign, such as a Zapier webhook step.
+ * - Either set: a request must pass one of them.
+ * - Neither set: rejected when NODE_ENV is production. Production runs
+ *   `node dist/index.js` with NODE_ENV unset (measured 2026-09-28), so a
+ *   deployed server is spotted by RAILWAY_ENVIRONMENT_NAME and every unsigned
+ *   call there is logged as an error until one of the two is set. It is still
+ *   accepted, because the live recording pipeline sends unsigned today;
+ *   rejecting it is Rye's call once the Zap carries the token.
+ */
+export function checkRiversideAuth(input: {
+  rawBody: string;
+  signature?: string;
+  token?: string;
+  secret: string;
+  expectedToken: string;
+  nodeEnv?: string;
+  deployed: boolean;
+}): { status: 200 | 401 | 503; error?: string; log?: string } {
+  const { rawBody, signature, token, secret, expectedToken, nodeEnv, deployed } = input;
+  if (secret || expectedToken) {
+    const signed = Boolean(secret) && verifySignature(rawBody, signature, secret);
+    const tokened = Boolean(expectedToken) && typeof token === "string" && timingSafeEqualStr(token, expectedToken);
+    if (signed || tokened) return { status: 200 };
+    return { status: 401, error: "Unauthorized", log: "Missing or invalid signature and token, rejected" };
+  }
+  if (nodeEnv === "production") {
+    return { status: 503, error: "Webhook not configured", log: "Neither RIVERSIDE_WEBHOOK_SECRET nor RIVERSIDE_WEBHOOK_TOKEN is set in production, rejecting" };
+  }
+  if (deployed) {
+    return { status: 200, log: "Unsigned Riverside webhook accepted on a deployed server: set RIVERSIDE_WEBHOOK_TOKEN (and add it to the Zap as x-webhook-token) to close this" };
+  }
+  return { status: 200 };
+}
+
 // ── Route registration ────────────────────────────────────────────────────────
 
 export function registerRiversideWebhookRoutes(app: Express) {
@@ -104,25 +146,21 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // those exact bytes; JSON.stringify(req.body) would re-serialize the
       // parsed object and never match the signature.
       const rawBody: string = (req as any).rawBody ?? JSON.stringify(req.body);
-      const signature = req.headers["x-riverside-signature"] as string | undefined;
-      // Read through ENV (single validated config surface), not process.env.
-      const secret = ENV.riversideWebhookSecret;
-
-      // This endpoint can create a forum post and email every active
-      // newsletter subscriber (finalizeRecording), so an unauthenticated
-      // caller could trigger a mass mail blast. Require the shared secret in
-      // production; only allow the unsigned path in non-prod for local testing.
-      if (secret) {
-        if (!verifySignature(rawBody, signature, secret)) {
-          log.warn("Invalid signature, rejected");
-          return res.status(401).json({ error: "Invalid signature" });
-        }
-      } else if (process.env.NODE_ENV === "production") {
-        log.error("RIVERSIDE_WEBHOOK_SECRET not set in production, rejecting");
-        return res.status(503).json({ error: "Webhook not configured" });
-      } else {
-        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check (non-prod)");
+      const auth = checkRiversideAuth({
+        rawBody,
+        signature: req.headers["x-riverside-signature"] as string | undefined,
+        token: req.headers["x-webhook-token"] as string | undefined,
+        // Read through ENV (single validated config surface), not process.env.
+        secret: ENV.riversideWebhookSecret,
+        expectedToken: ENV.riversideWebhookToken,
+        nodeEnv: process.env.NODE_ENV,
+        deployed: Boolean(process.env.RAILWAY_ENVIRONMENT_NAME),
+      });
+      if (auth.status !== 200) {
+        log.warn(auth.log ?? "Riverside webhook rejected");
+        return res.status(auth.status).json({ error: auth.error });
       }
+      if (auth.log) log.error(auth.log);
 
       let payload: RiversideWebhookPayload;
       try {

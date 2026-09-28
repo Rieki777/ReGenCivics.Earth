@@ -133,6 +133,7 @@ export const ENV = {
   githubWebhookSecret: process.env.GITHUB_WEBHOOK_SECRET ?? "",
   // Riverside.fm webhook signing secret
   riversideWebhookSecret: process.env.RIVERSIDE_WEBHOOK_SECRET ?? "",
+  riversideWebhookToken: process.env.RIVERSIDE_WEBHOOK_TOKEN ?? "",
   // Movement Coordination Engine trigger: the YouTube channel whose
   // upload RSS feed the worker polls every 10 min to discover new
   // recordings. Default is @SEEDSRegenerativeEconomies (confirmed in
