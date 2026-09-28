@@ -2,7 +2,7 @@
 
 Canonical names + one-line definitions for every load-bearing term in ReGen Civics. Reach for this when a term feels ambiguous OR when you're about to redefine something inline.
 
-Last reviewed: 2026-09-27 (the Fund became the cooperative in design; funding engine terms added).
+Last reviewed: 2026-09-28 (ReGen Civics Labs named as the company; 2026-09-27: the Fund became the cooperative in design, funding engine terms added).
 
 ---
 
@@ -13,6 +13,12 @@ Last reviewed: 2026-09-27 (the Fund became the cooperative in design; funding en
 **Game** (capital G). The Infinite Game / new Games / Regenerative Renaissance Game. Quests, seasons, citizenship, contribution scores. Anchored in the new Games (movement, bioregional, regenerative). The Game's tokens are RGVoice (governance) and $ReGen (economic). Audience: players, land projects, alliance partners.
 
 **Bridge** / **The Two Games**. The conceptual + literal connection between the two. ReGen Civics holds both ends of the bridge. Players can participate in the Game without touching the cooperative and vice versa. See `CONTEXT_THE_TWO_GAMES.md`.
+
+---
+
+## Entities (added 2026-09-28)
+
+**ReGen Civics Labs**. The company: a Delaware C-corporation (filing in progress; Delaware requires a designator, so the filing name is ReGen Civics Labs, Inc.) that builds the tools real estate and land projects use to coordinate, and runs ReGen Civics. It is the applicant in the venture lane (accelerators, investors, SBIR) and the first user of the funding engine. Use "ReGen Civics Labs" for the company and "ReGen Civics" for the platform, game and movement. The Cooperative is a separate entity in design; the company never describes it as part of a raise.
 
 ---
 
