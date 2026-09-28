@@ -171,7 +171,7 @@ function SessionTimesNote({
         <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
           {voting
             ? `The cohort meets ${scheduled.label} for now, and the land projects are picking the weekly time on the `
-            : `The cohort meets ${scheduled.label}, the time the land projects picked on the `}
+            : `The cohort meets ${scheduled.label}, following the land projects' vote on the `}
           <Link href="/season-schedule" className="underline underline-offset-2 hover:text-white">
             Season Schedule
           </Link>
@@ -324,7 +324,7 @@ export default function Seasons() {
   const { sessions, scheduled, data: schedule } = useSeasonSchedule();
   const weeks = useMemo(() => weeksFrom(sessions), [sessions]);
   const status = useMemo(() => season2Status(now, weeks), [now, weeks]);
-  const voting = schedule ? !schedule.closed : false;
+  const voting = schedule ? !schedule.following : false;
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
 

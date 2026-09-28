@@ -7,25 +7,27 @@
  * applies is decided in shared/seasonSchedule.ts; this file reads the vote and
  * the settings, applies those rules, and writes the moves.
  *
- * What the sync does, idempotently, for every Season still running:
- *   1. Works out the Season's time: the admin pin, else the vote's leader once
- *      voting has closed, else the time last applied, else the opening time.
- *   2. Records that time as applied, so reopening the vote cannot move a
- *      session until the vote closes again.
+ * What the sync does, idempotently, for every Season still running (ADR-65):
+ *   1. Works out the Season's time: the admin pin; else, once the vote is
+ *      steering, the leader after it has held the lead for a day; else the
+ *      time last applied; else the opening time.
+ *   2. Records that time as applied, and records when the current leader took
+ *      the lead, so the settle rule has a clock to read.
  *   3. Moves upcoming episode rows onto it (planSeasonMoves: never inside the
  *      72-hour freeze, never a row an admin edited, cancelled, live or done).
  *   4. Before each move, marks the reminder offsets already due at the new time
  *      as handled, so the reminder job does not send "In 7 days" to a session
  *      five days out. Later reminders go out on time, carrying the new time.
+ *   5. Emails everyone the sessions' reminders go to, once, with the new time
+ *      and the sessions ahead, the way the Circle tells its members.
  *
- * It sends no email of its own: the organizers announce a new time from Admin.
  * Calendar subscribers get the move through the feed, since the update bumps
  * updatedAt and so the ICS SEQUENCE.
  *
  * syncCatalogEvents keeps the Season 2 titles and descriptions in line with the
  * curriculum and leaves the times to this file.
  */
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   eventAutoReminderSends,
   eventAutoReminders,
@@ -34,15 +36,26 @@ import {
   seasonScheduleVotes,
 } from "../../drizzle/schema";
 import { getDb, getSiteSetting, setSiteSetting } from "../db";
+import { APP_BASE_URL, sendEmail } from "../_core/email";
+import { communityTopicForAudience, resolveAutoReminderRecipients } from "../jobs/eventReminders";
+import { managePreferencesUrl } from "./emailPrefs";
 import { SESSION_TIME_ZONE, zoneName } from "@shared/sessionClock";
-import { parseOffsetMinutes } from "@shared/eventAutoReminders";
+import {
+  ALWAYS_INCLUDED_FOOTER_TEXT,
+  ALWAYS_INCLUDED_STOP_PATH,
+  isAlwaysIncluded,
+  parseOffsetMinutes,
+} from "@shared/eventAutoReminders";
+import { newsletterLegalFooterHtml } from "@shared/letterHtml";
 import {
   SEASON_FACILITATION_MAX,
   SEASON_TOPIC_MAX,
+  cleanNoteText,
   isSeasonSlotKey,
   nextSessionWeek,
   overdueOffsets,
-  parseClosesAt,
+  parseInstant,
+  parseLeaderRecord,
   parseOfferedTimes,
   parseSlotTime,
   parseToggle,
@@ -87,11 +100,6 @@ export async function readSeasonVotes(database: Db, season: string) {
     .limit(VOTE_READ_LIMIT);
 }
 
-/** When this Season's current round of voting closes: the stored date, else the Season's default. */
-export async function seasonClosesAt(config: SeasonScheduleConfig): Promise<Date> {
-  return parseClosesAt(await getSiteSetting(seasonSettingKey(config.season, "closes_at")), config.closesAt);
-}
-
 export type SeasonVotes = Awaited<ReturnType<typeof readSeasonVotes>>;
 
 export type SeasonState = {
@@ -102,32 +110,43 @@ export type SeasonState = {
   /** The raw vote rows (no voter keys), for the register. Never returned to the public as-is. */
   votes: SeasonVotes;
   leader: SeasonSlotKey | null;
+  /** When the current leader took the lead, ms since epoch. */
+  leaderSince: number | null;
   pinned: SeasonSlotKey | null;
   applied: SeasonSlotTime | null;
-  closesAt: Date;
-  closed: boolean;
+  /** When the vote starts steering the schedule. */
+  followsFrom: Date;
+  /** Whether it is steering yet. */
+  following: boolean;
   scheduled: SeasonSlot;
   /** Whether the page asks projects who missed Selection Day for their video. */
   selectionVideos: boolean;
+  /** Whether any of the Season's sessions can still be ahead. */
+  running: boolean;
 };
 
-/** Read the vote and the settings, and say which time the Season follows now. */
+/**
+ * Read the vote and the settings, record a new leader, and say which time the
+ * Season follows now. Like the Circle's resolveCircleState, this writes the
+ * leader record as it reads, so the settle rule always has a start to count from.
+ */
 export async function resolveSeasonState(
   database: Db,
   config: SeasonScheduleConfig,
   now: Date,
   clean: (raw: string | null | undefined) => string | null = plain,
 ): Promise<SeasonState> {
-  const [offeredRaw, closesRaw, pinnedRaw, appliedRaw, videosRaw] = await Promise.all([
+  const [offeredRaw, followsRaw, pinnedRaw, appliedRaw, leaderRaw, videosRaw] = await Promise.all([
     getSiteSetting(seasonSettingKey(config.season, "offered")),
-    getSiteSetting(seasonSettingKey(config.season, "closes_at")),
+    getSiteSetting(seasonSettingKey(config.season, "follows_from")),
     getSiteSetting(seasonSettingKey(config.season, "pinned")),
     getSiteSetting(seasonSettingKey(config.season, "applied")),
+    getSiteSetting(seasonSettingKey(config.season, "leader")),
     getSiteSetting(seasonSettingKey(config.season, "selection_videos")),
   ]);
   const offered = parseOfferedTimes(offeredRaw, config.offered);
-  const closesAt = parseClosesAt(closesRaw, config.closesAt);
-  const closed = now.getTime() >= closesAt.getTime();
+  const followsFrom = parseInstant(followsRaw, config.followsFrom);
+  const following = now.getTime() >= followsFrom.getTime();
   const pinned = isSeasonSlotKey(pinnedRaw) ? pinnedRaw : null;
   const applied = parseSlotTime(appliedRaw);
 
@@ -140,7 +159,24 @@ export async function resolveSeasonState(
   }
   const tally = tallySeasonVotes(rows, offered, clean);
   const leader = seasonLeader(tally.counts, offered, (applied ?? config.opening).key);
-  const slot = resolveSeasonSlot({ pinned, leader, closed, applied, opening: config.opening, offered });
+
+  const record = parseLeaderRecord(leaderRaw);
+  let leaderSince = record && record.slot === leader ? record.since : null;
+  if (leader && leaderSince == null) {
+    leaderSince = now.getTime();
+    await setSiteSetting(seasonSettingKey(config.season, "leader"), JSON.stringify({ slot: leader, since: leaderSince }));
+  }
+
+  const slot = resolveSeasonSlot({
+    pinned,
+    leader,
+    leaderSince,
+    following,
+    applied,
+    opening: config.opening,
+    offered,
+    nowMs: now.getTime(),
+  });
   return {
     season: config.season,
     name: config.name,
@@ -148,22 +184,22 @@ export async function resolveSeasonState(
     tally,
     votes: rows,
     leader,
+    leaderSince,
     pinned,
     applied,
-    closesAt,
-    closed,
+    followsFrom,
+    following,
     scheduled: seasonSlot(slot.key, slot.hourPT),
     selectionVideos: parseToggle(videosRaw, config.selectionVideos),
+    running: stillRunning(config, now),
   };
 }
 
 // ─── Feedback ────────────────────────────────────────────────────────────────
 
-/** Trim and bound a free-text note. React escapes it on the way out; the admin panel is its only reader. */
+/** A note as it may be stored: shared notes are public text, so hidden characters go too. */
 function note(raw: string | null | undefined, max: number): string | null {
-  if (typeof raw !== "string") return null;
-  const trimmed = raw.trim();
-  return trimmed ? trimmed.slice(0, max) : null;
+  return cleanNoteText(raw, max);
 }
 
 /**
@@ -174,7 +210,14 @@ function note(raw: string | null | undefined, max: number): string | null {
 export async function recordSeasonFeedback(
   database: Db,
   config: SeasonScheduleConfig,
-  input: { topic?: string | null; facilitation?: string | null; displayName: string | null; projectName: string | null },
+  input: {
+    topic?: string | null;
+    facilitation?: string | null;
+    displayName: string | null;
+    projectName: string | null;
+    /** The writer's choice: show it on the page for the cohort, or keep it with the organizers. */
+    isPublic?: boolean;
+  },
   now: Date,
 ): Promise<{ week: number | null }> {
   const topic = note(input.topic, SEASON_TOPIC_MAX);
@@ -192,6 +235,7 @@ export async function recordSeasonFeedback(
     projectName: input.projectName,
     topic,
     facilitation,
+    isPublic: input.isPublic ? 1 : 0,
   });
   return { week };
 }
@@ -206,6 +250,7 @@ export async function seasonFeedbackRows(database: Db, season: string, limit = 5
       projectName: seasonFeedback.projectName,
       topic: seasonFeedback.topic,
       facilitation: seasonFeedback.facilitation,
+      isPublic: seasonFeedback.isPublic,
       createdAt: seasonFeedback.createdAt,
     })
     .from(seasonFeedback)
@@ -214,7 +259,35 @@ export async function seasonFeedbackRows(database: Db, season: string, limit = 5
     .limit(limit);
 }
 
-/** How many notes are in for one week. A count only: the page never shows what they say. */
+/**
+ * The notes their writers chose to share, newest first: the cohort's shared
+ * agenda. Text and the signature they chose; no id, nothing else.
+ */
+export async function seasonPublicNotes(database: Db, season: string, limit = 60) {
+  return database
+    .select({
+      week: seasonFeedback.week,
+      displayName: seasonFeedback.displayName,
+      projectName: seasonFeedback.projectName,
+      topic: seasonFeedback.topic,
+      facilitation: seasonFeedback.facilitation,
+      createdAt: seasonFeedback.createdAt,
+    })
+    .from(seasonFeedback)
+    .where(and(eq(seasonFeedback.season, season), eq(seasonFeedback.isPublic, 1)))
+    .orderBy(desc(seasonFeedback.createdAt))
+    .limit(limit);
+}
+
+/** Admin: take a public note down, or put it back up. */
+export async function setSeasonNotePublic(database: Db, season: string, id: number, isPublic: boolean): Promise<void> {
+  await database
+    .update(seasonFeedback)
+    .set({ isPublic: isPublic ? 1 : 0 })
+    .where(and(eq(seasonFeedback.season, season), eq(seasonFeedback.id, id)));
+}
+
+/** How many notes are in for one week, shared or not. A count only. */
 export async function seasonFeedbackCount(database: Db, season: string, week: number): Promise<number> {
   const [row] = await database
     .select({ n: sql<number>`count(*)` })
@@ -264,13 +337,123 @@ export type SeasonSyncResult = {
   slot: SeasonSlotTime;
   moved: number;
   claimedReminders: number;
+  /** Move emails sent. */
+  notified: number;
 };
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+function sessionWhen(start: Date): string {
+  const date = start.toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric", timeZone: SESSION_TIME_ZONE,
+  });
+  const time = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: SESSION_TIME_ZONE });
+  return `${date} at ${time} ${zoneName(start, SESSION_TIME_ZONE)}`;
+}
+
+/**
+ * The footer the reminders use, so a move notice explains itself the same way:
+ * someone the team added to every reminder is told why and how to stop, since
+ * a preferences link would do nothing for them; everyone else gets Manage
+ * email preferences (ADR-55).
+ */
+async function moveFooterHtml(email: string, topic: ReturnType<typeof communityTopicForAudience>): Promise<string> {
+  if (isAlwaysIncluded(email)) {
+    const stop = `${APP_BASE_URL}${ALWAYS_INCLUDED_STOP_PATH}`;
+    return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;">${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:#8a8a8a;">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.</p>`;
+  }
+  return newsletterLegalFooterHtml(await managePreferencesUrl(email, { mute: topic }));
+}
+
+function moveEmailHtml(opts: { name: string | null; seasonName: string; label: string; list: string; footer: string }): string {
+  const p = 'style="color:#444;line-height:1.7;"';
+  const hello = opts.name ? `<p ${p}>Hi ${escapeHtml(opts.name)},</p>` : "";
+  return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+    <div style="background-color:#1a472a;background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+      <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+      <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">${escapeHtml(opts.seasonName)} Season Schedule</p>
+    </div>
+    <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+      <h2 style="color:#1a472a;margin:0 0 10px 0;">${escapeHtml(opts.seasonName)} now meets ${escapeHtml(opts.label)}</h2>
+      ${hello}
+      <p ${p}>The land projects' vote moved the weekly time. Here is every session still to come:</p>
+      <ul ${p}>${opts.list}</ul>
+      <p ${p}>If you subscribed to the ${escapeHtml(opts.seasonName)} calendar, it has already moved. Reminders still come before each session.</p>
+      <p ${p}>If your week changes, change your picks on the Season Schedule and the time moves with the group.</p>
+      <a href="${APP_BASE_URL}/season-schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin-top:8px;">The Season Schedule</a>
+      ${opts.footer}
+    </div>
+  </div>`;
+}
+
+/**
+ * Tell the people these sessions remind that the time moved: one email each,
+ * naming the new time and every session still ahead, the way the Circle tells
+ * its members. The audience is the moved sessions' own reminder audience
+ * (season2_approved for Season 2), so the same people hear it, and their
+ * season2 mute holds.
+ */
+async function notifySeasonMove(
+  database: Db,
+  config: SeasonScheduleConfig,
+  movedIds: number[],
+  label: string,
+  now: Date,
+): Promise<number> {
+  const [reminder] = await database
+    .select({
+      eventId: eventAutoReminders.eventId,
+      enabled: eventAutoReminders.enabled,
+      audienceMode: eventAutoReminders.audienceMode,
+      audienceConfig: eventAutoReminders.audienceConfig,
+    })
+    .from(eventAutoReminders)
+    .where(inArray(eventAutoReminders.eventId, movedIds))
+    .limit(1);
+  if (!reminder || !reminder.enabled) return 0;
+  const recipients = await resolveAutoReminderRecipients({
+    eventId: reminder.eventId,
+    audienceMode: reminder.audienceMode,
+    audienceConfig: reminder.audienceConfig as Parameters<typeof resolveAutoReminderRecipients>[0]["audienceConfig"],
+  });
+  if (!recipients.length) return 0;
+
+  const ahead = (await seasonEpisodeRows(database, config.season)).filter(
+    (r) => r.status === "upcoming" && new Date(r.startTime).getTime() > now.getTime(),
+  );
+  const list = ahead.map((r) => `<li>${escapeHtml(r.title)}: ${sessionWhen(new Date(r.startTime))}</li>`).join("");
+  const topic = communityTopicForAudience(reminder.audienceMode);
+
+  let sent = 0;
+  for (const person of recipients) {
+    try {
+      const footer = await moveFooterHtml(person.email, topic);
+      await sendEmail({
+        to: [person.email],
+        subject: `${config.name} now meets ${label}`,
+        html: moveEmailHtml({ name: person.name ?? null, seasonName: config.name, label, list, footer }),
+        template: "season_schedule_moved",
+        recipientName: person.name ?? undefined,
+      });
+      sent += 1;
+    } catch (err) {
+      console.error("[seasonSchedule] move notice failed:", err);
+    }
+  }
+  return sent;
+}
 
 /** One Season: record the time that applies, then move the rows that should follow it. */
 export async function syncSeason(database: Db, config: SeasonScheduleConfig, now: Date): Promise<SeasonSyncResult> {
   const state = await resolveSeasonState(database, config, now);
   const slot: SeasonSlotTime = { key: state.scheduled.key, hourPT: state.scheduled.hourPT };
-  if (!state.applied || state.applied.key !== slot.key || state.applied.hourPT !== slot.hourPT) {
+  // Email only when the Season's time really changed from one it already had.
+  // A first run (nothing applied yet) or a row being put back on the time it
+  // should have had is housekeeping, and the cohort hears nothing about it.
+  const changed = state.applied != null && (state.applied.key !== slot.key || state.applied.hourPT !== slot.hourPT);
+  if (!state.applied || changed) {
     await setSiteSetting(seasonSettingKey(config.season, "applied"), serializeSlotTime(slot));
   }
 
@@ -302,10 +485,12 @@ export async function syncSeason(database: Db, config: SeasonScheduleConfig, now
       })
       .where(eq(events.id, move.id));
   }
+  let notified = 0;
   if (moves.length) {
     console.log(`[seasonSchedule] ${config.season}: moved ${moves.length} sessions to ${state.scheduled.label}`);
+    if (changed) notified = await notifySeasonMove(database, config, moves.map((m) => m.id), state.scheduled.label, now);
   }
-  return { season: config.season, slot, moved: moves.length, claimedReminders };
+  return { season: config.season, slot, moved: moves.length, claimedReminders, notified };
 }
 
 /** Whether any of a Season's sessions can still be ahead. A finished Season has nothing to move. */

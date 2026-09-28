@@ -2,9 +2,9 @@
  * Season Schedule tRPC router (/season-schedule).
  *
  * The land projects in a Season raise a hand for every weekly time they can
- * make, and when the vote closes the time with the most hands becomes the
- * Season's time (rules in shared/seasonSchedule.ts, the move itself in
- * server/lib/seasonSchedule.ts, ADR-64).
+ * make. From the Season's `followsFrom` on, the schedule follows the vote the
+ * way the Circle's does (rules in shared/seasonSchedule.ts, the move and its
+ * email in server/lib/seasonSchedule.ts, ADR-64 and ADR-65).
  *
  * Public on purpose, like the Interoperability Circle's vote: most project
  * members have no account, so the browser holds a random voterKey and that key
@@ -34,10 +34,11 @@ import { cleanRepoUrl } from "@shared/interopTools";
 import {
   recordSeasonFeedback,
   resolveSeasonState,
-  seasonClosesAt,
   seasonEpisodeRows,
   seasonFeedbackCount,
   seasonFeedbackRows,
+  seasonPublicNotes,
+  setSeasonNotePublic,
   syncSeason,
   syncSeasonSchedules,
 } from "../lib/seasonSchedule";
@@ -62,13 +63,6 @@ function configFor(season: string | undefined): SeasonScheduleConfig {
   const config = seasonConfig(season ?? ACTIVE_SEASON);
   if (!config) throw new TRPCError({ code: "NOT_FOUND", message: "That Season has no schedule." });
   return config;
-}
-
-function closeLabel(d: Date): string {
-  return d.toLocaleString("en-US", {
-    weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit",
-    timeZone: "America/Los_Angeles", timeZoneName: "short",
-  });
 }
 
 async function database() {
@@ -98,12 +92,12 @@ export const seasonScheduleRouter = router({
         now,
       );
       let notesForNext = 0;
-      if (nextWeek != null) {
-        try {
-          notesForNext = await seasonFeedbackCount(db, config.season, nextWeek);
-        } catch (err) {
-          console.error("[seasonSchedule] feedback count failed:", err);
-        }
+      let publicNotes: Awaited<ReturnType<typeof seasonPublicNotes>> = [];
+      try {
+        if (nextWeek != null) notesForNext = await seasonFeedbackCount(db, config.season, nextWeek);
+        publicNotes = await seasonPublicNotes(db, config.season);
+      } catch (err) {
+        console.error("[seasonSchedule] notes read failed:", err);
       }
       return {
         season: state.season,
@@ -112,9 +106,11 @@ export const seasonScheduleRouter = router({
         tally: state.tally.slots,
         voters: state.tally.voters,
         leader: state.leader,
+        leaderSince: state.leaderSince,
         pinned: state.pinned != null,
-        closesAt: state.closesAt,
-        closed: state.closed,
+        followsFrom: state.followsFrom,
+        following: state.following,
+        running: state.running,
         scheduled: state.scheduled,
         // The projects in the room: names, projects and links people chose to
         // share. The links are cleaned again on the way out, so a row written
@@ -122,6 +118,16 @@ export const seasonScheduleRouter = router({
         register: seasonRegister(state.votes, cleanDisplayName, cleanRepoUrl),
         nextWeek,
         notesForNext,
+        // Only the notes their writers chose to share, and only what they chose
+        // to sign them with. Names cleaned again on the way out.
+        publicNotes: publicNotes.map((n) => ({
+          week: n.week,
+          topic: n.topic,
+          facilitation: n.facilitation,
+          displayName: cleanDisplayName(n.displayName),
+          projectName: cleanDisplayName(n.projectName),
+          createdAt: n.createdAt,
+        })),
         selectionVideos: state.selectionVideos,
         sessions: rows
           .filter((r) => r.week != null && r.status !== "cancelled")
@@ -156,13 +162,6 @@ export const seasonScheduleRouter = router({
       const config = configFor(input.season);
       const db = await database();
       const now = new Date();
-      const closesAt = await seasonClosesAt(config);
-      if (now.getTime() >= closesAt.getTime()) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Voting for ${config.name} closed ${closeLabel(closesAt)}.`,
-        });
-      }
 
       // The link is public and ends up in an href, so only http and https
       // survive. Something typed that does not clean is refused out loud,
@@ -180,6 +179,11 @@ export const seasonScheduleRouter = router({
       // list withdraws the hands but keeps the row, because the same row holds
       // the project and link on the register; the tally ignores it.
       const state = await resolveSeasonState(db, config, now);
+      // Voting never closes while the Season runs (ADR-65); after its last
+      // session there is nothing left for a hand to move.
+      if (!state.running) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `${config.name} has finished.` });
+      }
       const offered = new Set(state.offered.map((o) => o.key));
       const stored = serializeSeasonSlots(input.slots.filter((k) => offered.has(k)));
 
@@ -237,11 +241,12 @@ export const seasonScheduleRouter = router({
     }),
 
   /**
-   * Public: a note for the organizers, filed against the next session. What
-   * the cohort wants to talk about, and how the facilitation is landing, taken
-   * in week by week as the Season runs. Only admins can read notes back; the
-   * page shows a count. A note with no name is anonymous: nothing else ties
-   * it to a person.
+   * Public: a note filed against the next session. What the cohort wants to
+   * talk about, and how the facilitation is landing, taken in week by week as
+   * the Season runs. The writer decides whether it shows on the page for the
+   * cohort (Rye, 2026-09-28) or stays with the organizers; private is the
+   * default, and an admin can take a public note down. A note with no name is
+   * anonymous: nothing else ties it to a person.
    */
   sendFeedback: publicProcedure
     .use(rateLimited(NOTE_LIMIT))
@@ -251,6 +256,7 @@ export const seasonScheduleRouter = router({
       facilitation: z.string().max(SEASON_FACILITATION_MAX * 2).optional(),
       displayName: z.string().max(200).optional(),
       projectName: z.string().max(300).optional(),
+      isPublic: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
       const config = configFor(input.season);
@@ -266,18 +272,32 @@ export const seasonScheduleRouter = router({
           facilitation: input.facilitation,
           displayName: cleanDisplayName(input.displayName),
           projectName: cleanDisplayName(input.projectName),
+          isPublic: input.isPublic === true,
         },
         new Date(),
       );
-      return { ok: true as const, week: result.week };
+      return { ok: true as const, week: result.week, isPublic: input.isPublic === true };
     }),
 
-  /** Admin: every note for the Season, newest first. */
+  /** Admin: every note for the Season, shared or not, newest first. */
   adminFeedback: adminProcedure
     .input(z.object({ season: seasonInput }).optional())
     .query(async ({ input }) => {
       const config = configFor(input?.season);
-      return seasonFeedbackRows(await database(), config.season);
+      const rows = await seasonFeedbackRows(await database(), config.season);
+      return rows.map((r) => ({ ...r, isPublic: !!r.isPublic }));
+    }),
+
+  /**
+   * Admin: take a shared note off the page. One way only: publishing a note
+   * its writer kept private is the writer's call, never an admin's.
+   */
+  adminHideNote: adminProcedure
+    .input(z.object({ season: seasonInput, id: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const config = configFor(input.season);
+      await setSeasonNotePublic(await database(), config.season, input.id, false);
+      return { ok: true as const };
     }),
 
   /** Admin: the vote, the settings, and every week with its admin-only flags. */
@@ -291,7 +311,7 @@ export const seasonScheduleRouter = router({
       return {
         ...state,
         opening: config.opening,
-        defaultClosesAt: config.closesAt,
+        defaultFollowsFrom: config.followsFrom,
         sessions: rows.map((r) => ({
           id: r.id,
           week: r.week,
@@ -324,14 +344,15 @@ export const seasonScheduleRouter = router({
     }),
 
   /**
-   * Admin: when this round of voting closes. A time in the past closes it now;
-   * a later time reopens it. null goes back to the Season's default.
+   * Admin: when the vote starts steering the schedule. A time in the past
+   * starts it now; a later time holds the sessions still until then. null
+   * goes back to the Season's default.
    */
-  adminSetClosesAt: adminProcedure
-    .input(z.object({ season: seasonInput, closesAt: z.string().datetime().nullable() }))
+  adminSetFollowsFrom: adminProcedure
+    .input(z.object({ season: seasonInput, followsFrom: z.string().datetime().nullable() }))
     .mutation(async ({ input }) => {
       const config = configFor(input.season);
-      await setSiteSetting(seasonSettingKey(config.season, "closes_at"), input.closesAt ?? "");
+      await setSiteSetting(seasonSettingKey(config.season, "follows_from"), input.followsFrom ?? "");
       const result = await syncSeason(await database(), config, new Date());
       return { ok: true as const, result };
     }),

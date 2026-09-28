@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-28, evening (seasons): The Season Schedule follows its vote live; Friday for Europe; shared notes; Thanksgiving moves
+
+- **Live, like the Circle** (ADR-65, revising ADR-64): voting never closes. From Thursday, October 1 at 5pm Pacific the Season follows the vote: a time that leads for a day moves every session more than 72 hours out, and each move emails the sessions' reminder audience once (same `season2` mute; the always-include list gets its own footer). Before then nothing moves, so the first round can gather.
+- **Friday at 10am Pacific** joins the offer for the projects in Italy and Spain (7pm there, 7am in Hawaii). Central Europe joins the zone lines, with a note for the week Europe changes clocks before the US. Wednesday at 10am already worked for Europe.
+- **Thanksgiving**: a session landing on November 26 or 27 meets Monday, November 23 at the same time instead; the page says so.
+- **Shared notes** (migration 0282): the writer picks "only the organizers" (default) or "the whole cohort"; shared notes show on the page as the agenda, and admins can take one down.
+- Tests: 39 pure (Europe window, Thanksgiving, the settle rule, the clock blip), 6 against a real database (the quiet round, the settle day, the move email, a second move, shared notes, the pin).
+
 ## 2026-09-28 (seasons): The Season Schedule, where the land projects pick Season Two's weekly time
 
 - **`/season-schedule`** (ADR-64), forked from /interop-sessions and reusable for every Season: the land projects raise a hand for every weekly time they can make among Tuesdays 2pm, Wednesdays 10am, Thursdays 12pm and Saturdays 11am Pacific. Each option shows its first session date, the time in Hawaii, Pacific, Central America, US Central and Brazil plus the reader's own zone, and the November clock-change shift. Voting closes Thursday, October 1 at 5pm Pacific; Week 2 (this Saturday) keeps its time, and the winner starts with Week 3.

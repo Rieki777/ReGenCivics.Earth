@@ -335,15 +335,15 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Circle member**. Someone with an active `event_signups` row on the upcoming Circle weeks. Signing up is optional: anyone can attend from the calendar feed. Members get reminders, the recaps an admin sends with the Events tab follow-up tool, and an invitation to create a profile. Joining signs them up for every upcoming week and the sync carries them onto new weeks. Leaving from any Circle email leaves every future week.
 
-### Season Schedule (ADR-64)
+### Season Schedule (ADR-64, ADR-65)
 
 **Season Schedule**. The page (`/season-schedule`) and module (`shared/seasonSchedule.ts`) where a Season's land projects pick its weekly time, share a link to their project, and send notes to the organizers. Reusable for every Season: each Season is one entry in `SEASON_SCHEDULES`, and the page shows `ACTIVE_SEASON`. A separate vote from the Interoperability Circle's; don't mix the two.
 
-**Season time** (the Season's slot). The weekday and Pacific hour a Season's weekly sessions follow. It starts as the **opening time** (Season 2: Saturdays at 11am Pacific) and changes only when a round of voting closes (to the time with the most hands; a tie that includes the current time keeps it) or an admin pins one. Sessions less than 72 hours out, admin-edited sessions and past sessions never move, and a moved session stays inside its own Monday-to-Sunday week.
+**Season time** (the Season's slot). The weekday and Pacific hour a Season's weekly sessions follow. It starts as the **opening time** (Season 2: Saturdays at 11am Pacific). From **followsFrom** (Season 2: Thursday 2026-10-01, 5pm Pacific) it follows the vote like the Circle's: a time that takes the lead and holds it for 24 hours becomes the Season time, a tie that includes the current time keeps it, and an admin pin overrides. Voting never closes while the Season runs. Sessions less than 72 hours out, admin-edited sessions and past sessions never move; a moved session stays inside its own Monday-to-Sunday week, except a day in the Season's `reschedule` list (Thanksgiving and the day after, for Season 2) gives way to its replacement day at the same time. Each move emails the sessions' reminder audience once.
 
 **Hand** vs **project** (in the Season tally). A hand is one browser's vote for a time; a project is a distinct project name among those hands. Hands decide the time; projects show the organizers how many projects a time works for.
 
-**Season notes**. What a project wants to talk about next, and feedback on the facilitation, sent from `/season-schedule#notes`. Filed against the next session, readable only by admins (Admin, Events, Season Schedule panel), anonymous unless signed.
+**Season notes**. What a project wants to talk about next, and feedback on the facilitation, sent from `/season-schedule#notes`. Filed against the next session and anonymous unless signed. The writer chooses who sees it: only the organizers (the default, read in Admin, Events, Season Schedule panel) or the whole cohort, where it joins the **shared agenda** on the page. An admin can take a shared note down but never publish a private one.
 
 ### Project pages and campaign tools (ADR-60, ADR-61)
 

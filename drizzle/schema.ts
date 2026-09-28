@@ -6521,9 +6521,10 @@ export const seasonScheduleVotes = mysqlTable("season_schedule_votes", {
 ]));
 
 /**
- * Notes for the organizers as a Season runs (migration 0281): what to talk
- * about at the next session, and how the facilitation is landing. Admin-only
- * to read. No voter key, so a note left without a name stays anonymous.
+ * Notes as a Season runs (migrations 0281, 0282): what to talk about at the
+ * next session, and how the facilitation is landing. Private to the admins
+ * unless the writer chooses to share it on the page. No voter key, so a note
+ * left without a name stays anonymous.
  */
 export const seasonFeedback = mysqlTable("season_feedback", {
   id: int("id").autoincrement().primaryKey(),
@@ -6534,6 +6535,8 @@ export const seasonFeedback = mysqlTable("season_feedback", {
   projectName: varchar("projectName", { length: 120 }),
   topic: text("topic"),
   facilitation: text("facilitation"),
+  /** The writer's choice: 1 shows it on the page for the cohort (migration 0282). */
+  isPublic: tinyint("isPublic").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("season_feedback_season_week_idx").on(table.season, table.week),

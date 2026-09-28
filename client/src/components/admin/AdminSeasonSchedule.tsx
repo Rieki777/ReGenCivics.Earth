@@ -17,6 +17,7 @@ import { SESSION_TIME_ZONE, wallTimeInZoneToUtc } from "@shared/sessionClock";
 import {
   ACTIVE_SEASON,
   SEASON_FREEZE_HOURS,
+  SEASON_LEAD_SETTLE_HOURS,
   SEASON_SLOT_KEYS,
   seasonSlot,
   type SeasonSlotKey,
@@ -61,7 +62,14 @@ function fromPacificInput(value: string): Date | null {
  * grouped by the week each note was written ahead of. Newest week first.
  */
 function SeasonNotes({ season }: { season: string }) {
+  const utils = trpc.useUtils();
   const notes = trpc.seasonSchedule.adminFeedback.useQuery({ season }, { refetchInterval: 60_000 });
+  const hideNote = trpc.seasonSchedule.adminHideNote.useMutation({
+    onSuccess: () => {
+      void utils.seasonSchedule.adminFeedback.invalidate();
+      void utils.seasonSchedule.state.invalidate();
+    },
+  });
   const byWeek = new Map<string, NonNullable<typeof notes.data>>();
   for (const n of notes.data ?? []) {
     const key = n.week == null ? "After the Season" : `Before Week ${n.week}`;
@@ -74,7 +82,8 @@ function SeasonNotes({ season }: { season: string }) {
         Notes from the cohort ({notes.data?.length ?? 0})
       </p>
       <p className="text-white/40 text-xs mb-3">
-        Topics they want next and feedback on the facilitation, from /season-schedule#notes. Unsigned notes are
+        Topics they want next and feedback on the facilitation, from /season-schedule#notes. Each writer chose
+        whether to share their note on the page; take a shared one down if it should not be there. Unsigned notes are
         anonymous by design: nothing ties them to a vote.
       </p>
       {notes.isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/60" />}
@@ -86,9 +95,25 @@ function SeasonNotes({ season }: { season: string }) {
             <ul className="space-y-2">
               {list.map((n) => (
                 <li key={n.id} className="rounded-lg border border-white/10 p-3">
-                  <p className="text-white/45 text-xs mb-1">
-                    {[n.projectName, n.displayName].filter(Boolean).join(", ") || "Anonymous"} · {when(n.createdAt)}
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <p className="text-white/45 text-xs">
+                      {[n.projectName, n.displayName].filter(Boolean).join(", ") || "Anonymous"} · {when(n.createdAt)} ·{" "}
+                      <span className={n.isPublic ? "text-[#7dd87d]" : "text-white/45"}>
+                        {n.isPublic ? "shared on the page" : "organizers only"}
+                      </span>
+                    </p>
+                    {n.isPublic && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="min-h-11 text-white/60"
+                        disabled={hideNote.isPending}
+                        onClick={() => hideNote.mutate({ season, id: n.id })}
+                      >
+                        Take off the page
+                      </Button>
+                    )}
+                  </div>
                   {n.topic && (
                     <p className="text-white/85 whitespace-pre-wrap">
                       <span className="text-[#7dd87d] font-semibold">Talk about: </span>
@@ -122,18 +147,18 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
   const pin = trpc.seasonSchedule.adminPin.useMutation({ onSuccess: refresh });
   const sync = trpc.seasonSchedule.adminSync.useMutation({ onSuccess: refresh });
   const setOffered = trpc.seasonSchedule.adminSetOffered.useMutation({ onSuccess: refresh });
-  const setClose = trpc.seasonSchedule.adminSetClosesAt.useMutation({ onSuccess: refresh });
+  const setStart = trpc.seasonSchedule.adminSetFollowsFrom.useMutation({ onSuccess: refresh });
   const setVideos = trpc.seasonSchedule.adminSetSelectionVideos.useMutation({ onSuccess: refresh });
 
   const data = state.data;
   const offered = data?.offered ?? [];
-  const busy = pin.isPending || sync.isPending || setOffered.isPending || setClose.isPending;
-  const lastResult = pin.data?.result ?? sync.data?.result ?? setOffered.data?.result ?? setClose.data?.result;
+  const busy = pin.isPending || sync.isPending || setOffered.isPending || setStart.isPending;
+  const lastResult = pin.data?.result ?? sync.data?.result ?? setOffered.data?.result ?? setStart.data?.result;
 
-  const [closeInput, setCloseInput] = useState("");
+  const [startInput, setStartInput] = useState("");
   useEffect(() => {
-    if (data) setCloseInput(toPacificInput(new Date(data.closesAt)));
-  }, [data?.closesAt]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (data) setStartInput(toPacificInput(new Date(data.followsFrom)));
+  }, [data?.followsFrom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Toggle a weekday on or off the offer, keeping every other time's hour. */
   function toggleOffered(key: SeasonSlotKey) {
@@ -150,9 +175,9 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
     });
   }
 
-  function saveClose() {
-    const at = fromPacificInput(closeInput);
-    if (at) setClose.mutate({ season, closesAt: at.toISOString() });
+  function saveStart() {
+    const at = fromPacificInput(startInput);
+    if (at) setStart.mutate({ season, followsFrom: at.toISOString() });
   }
 
   return (
@@ -163,11 +188,11 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
           Season Schedule: {data?.name ?? season}
         </CardTitle>
         <CardDescription className="text-white/60">
-          The land projects vote on /season-schedule. While voting is open, sessions stay where they are. When it
-          closes, the time with the most hands applies to every session more than {SEASON_FREEZE_HOURS}h out (a tie
-          that includes the current time keeps it). A pin overrides the vote. Moving the close later reopens voting.
-          Nothing is emailed automatically: announce the new time from Applications, Approved, Email these
-          applicants. Reminders already overdue at a moved session's new time are skipped, so nobody gets
+          The land projects vote on /season-schedule, and the Season follows the vote like the Circle does. Until
+          the start time below, sessions stay where they are. After it, a time that takes the lead and holds it for
+          {` ${SEASON_LEAD_SETTLE_HOURS}h`} moves every session more than {SEASON_FREEZE_HOURS}h out, and everyone the
+          sessions remind gets one email with the new time. A tie that includes the current time keeps it, and a pin
+          overrides the vote. Reminders already overdue at a moved session's new time are skipped, so nobody gets
           "In 7 days" five days out. Editing a session in the list above locks it in place.
         </CardDescription>
       </CardHeader>
@@ -197,42 +222,45 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
             </div>
 
             <p className="text-white/80">
-              {data.closed ? "Voting closed" : "Voting open until"} {when(data.closesAt)}. {data.tally.voters}{" "}
-              {data.tally.voters === 1 ? "person has" : "people have"} voted. Sessions follow{" "}
+              {data.following ? "Following the vote since" : "Starts following the vote"} {when(data.followsFrom)}.{" "}
+              {data.tally.voters} {data.tally.voters === 1 ? "person has" : "people have"} voted. Sessions follow{" "}
               <span className="text-white font-semibold">{data.scheduled.label}</span>
               {data.pinned ? " (pinned)" : ""}.
+              {data.following && data.leader && data.leader !== data.scheduled.key && !data.pinned && data.leaderSince
+                ? ` ${offered.find((o) => o.key === data.leader)?.label ?? data.leader} leads since ${when(new Date(data.leaderSince))} and takes over after a day in front.`
+                : ""}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="text-white/70" htmlFor="season-close-input">Voting closes (Pacific)</label>
+              <label className="text-white/70" htmlFor="season-start-input">The vote steers from (Pacific)</label>
               <input
-                id="season-close-input"
+                id="season-start-input"
                 type="datetime-local"
-                value={closeInput}
-                onChange={(e) => setCloseInput(e.target.value)}
+                value={startInput}
+                onChange={(e) => setStartInput(e.target.value)}
                 disabled={busy}
                 className="bg-white/5 border border-white/20 rounded-lg px-2 py-1 text-white text-base md:text-sm min-h-11"
               />
-              <Button size="sm" variant="outline" className="min-h-11" onClick={saveClose} disabled={busy || !closeInput}>
-                Save close time
+              <Button size="sm" variant="outline" className="min-h-11" onClick={saveStart} disabled={busy || !startInput}>
+                Save
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="min-h-11"
-                onClick={() => setClose.mutate({ season, closesAt: new Date().toISOString() })}
-                disabled={busy || data.closed}
+                onClick={() => setStart.mutate({ season, followsFrom: new Date().toISOString() })}
+                disabled={busy || data.following}
               >
-                Close voting now
+                Start following now
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 className="min-h-11 text-white/70"
-                onClick={() => setClose.mutate({ season, closesAt: null })}
+                onClick={() => setStart.mutate({ season, followsFrom: null })}
                 disabled={busy}
               >
-                Reset to {when(data.defaultClosesAt)}
+                Reset to {when(data.defaultFollowsFrom)}
               </Button>
             </div>
 
@@ -273,13 +301,14 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
 
             {lastResult && (
               <p className="text-white/60">
-                Last sync: {lastResult.moved} {lastResult.moved === 1 ? "session" : "sessions"} moved, {lastResult.claimedReminders}{" "}
-                overdue {lastResult.claimedReminders === 1 ? "reminder" : "reminders"} skipped.
+                Last sync: {lastResult.moved} {lastResult.moved === 1 ? "session" : "sessions"} moved, {lastResult.notified}{" "}
+                move {lastResult.notified === 1 ? "email" : "emails"} sent, {lastResult.claimedReminders} overdue{" "}
+                {lastResult.claimedReminders === 1 ? "reminder" : "reminders"} skipped.
               </p>
             )}
-            {(setClose.isError || pin.isError || setOffered.isError || sync.isError) && (
+            {(setStart.isError || pin.isError || setOffered.isError || sync.isError) && (
               <p className="text-red-300">
-                {(setClose.error ?? pin.error ?? setOffered.error ?? sync.error)?.message}
+                {(setStart.error ?? pin.error ?? setOffered.error ?? sync.error)?.message}
               </p>
             )}
 

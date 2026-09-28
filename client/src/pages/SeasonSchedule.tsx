@@ -2,15 +2,14 @@
  * Season Schedule (/season-schedule)
  *
  * The land projects in a Season pick its weekly time. Each browser raises a
- * hand for every time it can make; when voting closes, the time with the most
- * hands becomes the Season's time for every session more than three days out
- * (shared/seasonSchedule.ts, ADR-64). Reusable for every Season: the page
- * reads ACTIVE_SEASON and that Season's entry in SEASON_SCHEDULES, so its copy
- * stays general and the invitation email carries the story of the moment.
+ * hand for every time it can make. From the Season's `followsFrom` on, the
+ * schedule follows the vote the way the Circle's does: a new leader takes over
+ * once it has held the lead for a day, for every session more than three days
+ * out (shared/seasonSchedule.ts, ADR-64, ADR-65). Reusable for every Season:
+ * the page reads ACTIVE_SEASON and that Season's entry in SEASON_SCHEDULES, so
+ * its copy stays general and the invitation email carries the moment's story.
  *
- * Forked from /interop-sessions (Rye, 2026-09-28). The rule differs on
- * purpose: the Circle's time follows its vote week to week, while a cohort's
- * time moves once per round, because land projects plan their weeks around it.
+ * Forked from /interop-sessions (Rye, 2026-09-28).
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -29,6 +28,7 @@ import {
   SEASON_FACILITATION_MAX,
   SEASON_FREEZE_HOURS,
   SEASON_TOPIC_MAX,
+  clockBlip,
   clockShift,
   isSeasonSlotKey,
   listJoin,
@@ -116,6 +116,8 @@ export default function SeasonSchedule() {
   const [topic, setTopic] = useState("");
   const [facilitation, setFacilitation] = useState("");
   const [signNote, setSignNote] = useState(false);
+  // Private unless the writer chooses to share it (Rye, 2026-09-28).
+  const [shareNote, setShareNote] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function SeasonSchedule() {
     setLink(readStored(LINK_STORAGE));
   }, [season]);
 
-  // The page turns from "vote" to "result" at the close without a reload.
+  // The page turns from "pick" to "following" at followsFrom without a reload.
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
     return () => window.clearInterval(timer);
@@ -150,20 +152,23 @@ export default function SeasonSchedule() {
     () => data?.offered ?? config.offered.map((o) => seasonSlot(o.key, o.hourPT)),
     [data, config],
   );
-  const closesAt = useMemo(() => (data ? new Date(data.closesAt) : config.closesAt), [data, config]);
-  // The server enforces the close; the browser clock only decides what to show.
-  const closed = data?.closed || now.getTime() >= closesAt.getTime();
+  const followsFrom = useMemo(() => (data ? new Date(data.followsFrom) : config.followsFrom), [data, config]);
+  // The server decides; the browser clock only decides what to show.
+  const following = data?.following || now.getTime() >= followsFrom.getTime();
+  const seasonOver = data ? !data.running : false;
   const tally = useMemo(() => new Map((data?.tally ?? []).map((t) => [t.key, t])), [data]);
   const voters = data?.voters ?? 0;
   const leader = data?.leader ? offered.find((o) => o.key === data.leader) ?? null : null;
   const leaderTally = leader ? tally.get(leader.key) : undefined;
+  // A different time leads and is waiting out its day before the Season moves.
+  const movingSoon = following && !data?.pinned && leader != null && leader.key !== scheduled.key;
 
   /**
-   * The first session each time would hold if voting closed as it stands: the
-   * first week whose session on that time starts after the close plus the
-   * freeze window. Earlier weeks keep the time they have.
+   * The first session each time would hold if it took over as things stand:
+   * the first week whose session on that time starts after the vote starts
+   * steering (or now) plus the freeze window. Earlier weeks keep their time.
    */
-  const cutoff = Math.max(now.getTime(), closesAt.getTime()) + SEASON_FREEZE_HOURS * 3_600_000;
+  const cutoff = Math.max(now.getTime(), followsFrom.getTime()) + SEASON_FREEZE_HOURS * 3_600_000;
   const firstOn = (slot: SeasonSlot): { week: number; start: Date } | null => {
     for (let week = 1; week <= config.weeks.length; week++) {
       const start = seasonSessionStart(config, week, slot);
@@ -183,16 +188,20 @@ export default function SeasonSchedule() {
       if (start) starts.push(start);
     }
     const found = clockShift(starts);
-    if (!found) return null;
-    return { ...found, change: pacificClockChange(starts[0], found.from) };
+    const blip = clockBlip(starts);
+    return {
+      lasting: found ? { ...found, change: pacificClockChange(starts[0], found.from) } : null,
+      blip,
+    };
   }, [offered, firstWeek, config]);
 
   const upcoming = sessions.filter((s) => s.end.getTime() > now.getTime() && s.status !== "cancelled");
   const nextUp = upcoming.find((s) => s.start.getTime() > now.getTime()) ?? null;
   const register = data?.register ?? [];
+  const publicNotes = data?.publicNotes ?? [];
 
   function save(slots: SeasonSlotKey[]) {
-    if (!voterKey || closed) return;
+    if (!voterKey || seasonOver) return;
     writeStored(voteStorage(season), slots.join(","));
     setSlots.mutate({
       season,
@@ -213,6 +222,7 @@ export default function SeasonSchedule() {
       facilitation: facilitation.trim() || undefined,
       displayName: signNote ? name.trim() || undefined : undefined,
       projectName: signNote ? project.trim() || undefined : undefined,
+      isPublic: shareNote,
     });
   }
 
@@ -226,7 +236,7 @@ export default function SeasonSchedule() {
 
   /**
    * Save the name, project and link on their own, so they reach the register
-   * whether or not any hands are up, and after voting closes too.
+   * whether or not any hands are up.
    */
   function saveNames() {
     writeStored(NAME_STORAGE, name);
@@ -246,7 +256,7 @@ export default function SeasonSchedule() {
     <PageWrapper>
       <SEO
         title="Season Schedule | ReGen Civics"
-        description={`The land projects pick when ${config.name} meets each week. Tap every time that works for your project; when voting closes, the time with the most hands becomes the Season's time.`}
+        description={`The land projects pick when ${config.name} meets each week. Tap every time that works for your project; the time with the most hands becomes the Season's time, and it keeps following the vote.`}
         url="https://regencivics.earth/season-schedule"
       />
 
@@ -260,12 +270,12 @@ export default function SeasonSchedule() {
                 Season Schedule · {config.name}
               </p>
               <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4">
-                {closed ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
+                {following ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
               </h1>
               <p className="text-white/75 text-lg max-w-2xl">
-                {closed
-                  ? "The land projects picked this time. Every session below runs at it, and the calendar feed already carries it."
-                  : "The land projects choose the weekly time. Tap every time your project can make, as many as work. When voting closes, the time with the most hands becomes the Season's time."}
+                {following
+                  ? "The land projects pick this time, and it keeps following their vote. Change your picks whenever your week changes, and the Season moves with the group."
+                  : "The land projects choose the weekly time. Tap every time your project can make, as many as work. The time with the most hands becomes the Season's time, and it keeps following the vote as weeks change."}
               </p>
 
               {nextUp && (
@@ -275,7 +285,7 @@ export default function SeasonSchedule() {
                   <p className="text-white/80">
                     {formatLocalDate(nextUp.start)}, {formatStartWithReference(nextUp.start)}
                   </p>
-                  {!closed && firstWeek != null && nextUp.week < firstWeek && (
+                  {!following && firstWeek != null && nextUp.week < firstWeek && (
                     <p className="text-white/65 text-sm mt-2">
                       This one keeps its current time. The time the projects pick starts with Week {firstWeek}.
                     </p>
@@ -290,17 +300,13 @@ export default function SeasonSchedule() {
             <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#e3ac4f]/30 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <Clock className="w-5 h-5 text-[#e3ac4f]" />
-                <p className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">
-                  {closed ? "How the vote landed" : "Live vote"}
-                </p>
+                <p className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">Live vote</p>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                {closed ? "The times on offer" : "Tap every time your project can make"}
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Tap every time your project can make</h2>
               <p className="text-white/75 mb-6">
-                {closed
-                  ? `Voting closed ${pacificWhen(closesAt)}.`
-                  : `Voting closes ${pacificWhen(closesAt)}. Until then every session stays where it is${firstWeek ? `, and the winning time starts with Week ${firstWeek}` : ""}. Change your picks as often as you like before the close.`}
+                {following
+                  ? "The Season follows this vote. When a different time takes the lead and holds it for a day, every session more than three days out moves there, and everyone gets an email with the new time."
+                  : `The vote starts steering the schedule ${pacificWhen(followsFrom)}. Until then every session stays where it is${firstWeek ? `, and the leading time starts with Week ${firstWeek}` : ""}. After that the Season keeps following the vote, so change your picks whenever your week changes.`}
               </p>
 
                 <div className="grid sm:grid-cols-2 gap-3 mb-6">
@@ -343,7 +349,7 @@ export default function SeasonSchedule() {
                   </label>
                   <p className="text-white/45 text-xs sm:self-end">
                     Your project and link go on the public list below, so the cohort can find each other.
-                    {closed ? "" : " Your hands save as you tap."}
+                    {seasonOver ? "" : " Your hands save as you tap."}
                   </p>
                   {saveProject.isError && <p className="text-red-300 text-sm sm:col-span-2">{saveProject.error.message}</p>}
                 </div>
@@ -356,13 +362,13 @@ export default function SeasonSchedule() {
                   const pct = voters > 0 ? Math.round((count / voters) * 100) : 0;
                   const first = firstOn(slot);
                   const isMine = mySlots.includes(slot.key);
-                  const isLeader = !closed && leader?.key === slot.key && count > 0;
-                  const isChosen = closed && scheduled.key === slot.key;
+                  const isLeader = leader?.key === slot.key && count > 0;
+                  const isCurrent = following && scheduled.key === slot.key;
                   return (
                     <div
                       key={slot.key}
                       className={`rounded-xl border p-5 transition-colors ${
-                        isMine || isChosen ? "border-[#7dd87d] bg-[#7dd87d]/10" : "border-white/15 bg-white/5"
+                        isMine || isCurrent ? "border-[#7dd87d] bg-[#7dd87d]/10" : "border-white/15 bg-white/5"
                       }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
@@ -379,19 +385,19 @@ export default function SeasonSchedule() {
                                 Leading
                               </span>
                             )}
-                            {isChosen && (
-                              <span className="text-[#1a472a] bg-[#7dd87d] text-xs font-bold px-2 py-0.5 rounded-full">
-                                Chosen
+                            {isCurrent && (
+                              <span className="text-[#1a472a] bg-[#e3ac4f] text-xs font-bold px-2 py-0.5 rounded-full">
+                                Current time
                               </span>
                             )}
                           </div>
-                          {first && !closed && (
+                          {first && !isCurrent && (
                             <p className="text-white/55 text-sm mt-1">
                               Week {first.week} would meet {pacificDay(first.start)}.
                             </p>
                           )}
                         </div>
-                        {!closed && (
+                        {!seasonOver && (
                           <button
                             type="button"
                             onClick={() => toggleSlot(slot.key)}
@@ -440,36 +446,50 @@ export default function SeasonSchedule() {
                 })}
               </div>
 
-              {shift && shift.change && (
-                <p className="text-white/60 text-sm mt-5">
-                  US clocks change on {pacificDay(shift.change)}. Each session keeps its Pacific time, so from
-                  then it starts an hour {shift.later ? "later" : "earlier"} in {listJoin(shift.zones)}.
-                </p>
-              )}
+              <div className="text-white/60 text-sm mt-5 space-y-2">
+                {shift?.lasting?.change && (
+                  <p>
+                    US clocks change on {pacificDay(shift.lasting.change)}. Each session keeps its Pacific time, so
+                    from then it starts an hour {shift.lasting.later ? "later" : "earlier"} in {listJoin(shift.lasting.zones)}.
+                  </p>
+                )}
+                {shift?.blip && (
+                  <p>
+                    {listJoin(shift.blip.zones)} changes its clocks a week before the US, so in the week of{" "}
+                    {pacificDay(shift.blip.weekOf).replace(/^\w+, /, "")} the session starts an hour{" "}
+                    {shift.blip.earlier ? "earlier" : "later"} there.
+                  </p>
+                )}
+                {config.rescheduleNote && <p>{config.rescheduleNote}</p>}
+              </div>
 
               <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
                 {query.isError && !loaded && (
                   <p className="text-red-300 text-sm">The vote did not load. Try again in a minute.</p>
                 )}
-                {!closed && (
-                  <p className="text-white/75">
-                    {leader && leaderTally
-                      ? <>Leading right now: <span className="text-white font-semibold">{leader.label}</span>, with {hands(leaderTally.hands)}{leaderTally.projects > 0 ? ` from ${leaderTally.projects === 1 ? "1 project" : `${leaderTally.projects} projects`}` : ""}.</>
-                      : <>No hands up yet. The first ones set the lead.</>}
-                  </p>
-                )}
-                {closed && (
+                {following && (
                   <p className="text-white/75">
                     {config.name} meets <span className="text-white font-semibold">{scheduled.label}</span>.
                   </p>
                 )}
-                {data?.pinned && (
-                  <p className="text-white/50 text-sm">The organizers have set this time. The vote keeps its count.</p>
+                <p className="text-white/75">
+                  {leader && leaderTally
+                    ? <>Leading right now: <span className="text-white font-semibold">{leader.label}</span>, with {hands(leaderTally.hands)}{leaderTally.projects > 0 ? ` from ${leaderTally.projects === 1 ? "1 project" : `${leaderTally.projects} projects`}` : ""}.</>
+                    : <>No hands up yet. The first ones set the lead.</>}
+                </p>
+                {movingSoon && leader && (
+                  <p className="text-[#e3ac4f] text-sm">
+                    If {leader.label} holds the lead for a day, sessions more than three days out move there, and
+                    everyone gets an email.
+                  </p>
                 )}
-                {setSlots.isSuccess && !closed && mySlots.length > 0 && (
+                {data?.pinned && (
+                  <p className="text-white/50 text-sm">The organizers have set this time for now. The vote keeps counting.</p>
+                )}
+                {setSlots.isSuccess && mySlots.length > 0 && (
                   <p className="inline-flex items-center gap-2 text-[#7dd87d] text-sm font-semibold">
                     <CheckCircle2 className="w-4 h-4" />
-                    Saved. You can change your picks until voting closes.
+                    Saved. Change your picks whenever your week changes.
                   </p>
                 )}
                 {setSlots.isError && <p className="text-red-300 text-sm">{setSlots.error.message}</p>}
@@ -544,7 +564,8 @@ export default function SeasonSchedule() {
             </section>
           </AnimatedSection>
 
-          {/* Notes for the organizers, taken in week by week as the Season runs. */}
+          {/* Notes, taken in week by week as the Season runs. The writer decides
+              whether each one is shared on the page or kept with the organizers. */}
           <AnimatedSection>
             <section id="notes" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#e3ac4f]/30 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
@@ -554,10 +575,11 @@ export default function SeasonSchedule() {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Help shape the next session</h2>
               <p className="text-white/75 mb-2">
                 Tell us what you want to dig into{data?.nextWeek ? ` at Week ${data.nextWeek}` : " next"}, and how the
-                facilitation is working for you. Every note goes to the organizers, and we read them before each session.
+                facilitation is working for you. We read every note before each session.
               </p>
               <p className="text-white/55 text-sm mb-5">
-                Only the organizers see these. Leave it unsigned and it stays anonymous.
+                You choose: share a note with the whole cohort on this page, or keep it with the organizers. Leave it
+                unsigned and it stays anonymous either way.
                 {data && data.notesForNext > 0
                   ? ` ${data.notesForNext === 1 ? "1 note is" : `${data.notesForNext} notes are`} in for Week ${data.nextWeek} so far.`
                   : ""}
@@ -565,7 +587,8 @@ export default function SeasonSchedule() {
               {sendFeedback.isSuccess && (
                 <p className="inline-flex items-center gap-2 text-[#7dd87d] font-semibold mb-4">
                   <CheckCircle2 className="w-5 h-5" />
-                  Thank you. {sendFeedback.data?.week ? `It is in for Week ${sendFeedback.data.week}.` : "It is in."}
+                  Thank you. {sendFeedback.data?.week ? `It is in for Week ${sendFeedback.data.week}` : "It is in"}
+                  {sendFeedback.data?.isPublic ? ", and shared below." : "."}
                 </p>
               )}
               <form onSubmit={submitFeedback} className="space-y-4">
@@ -602,15 +625,64 @@ export default function SeasonSchedule() {
                     Sign it with {[name.trim(), project.trim()].filter(Boolean).join(", ")}
                   </label>
                 )}
+                <fieldset className="space-y-1">
+                  <legend className="text-white/70 text-sm mb-1">Who sees it</legend>
+                  <label className="flex items-center gap-3 text-white/80 text-sm min-h-11 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="note-visibility"
+                      checked={!shareNote}
+                      onChange={() => setShareNote(false)}
+                      className="w-4 h-4 accent-[#e3ac4f]"
+                    />
+                    Only the organizers
+                  </label>
+                  <label className="flex items-center gap-3 text-white/80 text-sm min-h-11 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="note-visibility"
+                      checked={shareNote}
+                      onChange={() => setShareNote(true)}
+                      className="w-4 h-4 accent-[#e3ac4f]"
+                    />
+                    The whole cohort, on this page
+                  </label>
+                </fieldset>
                 <button
                   type="submit"
                   disabled={sendFeedback.isPending || (!topic.trim() && !facilitation.trim())}
                   className="inline-flex items-center justify-center gap-2 min-h-11 bg-[#e3ac4f] hover:bg-[#edc27a] text-[#1a472a] px-5 py-2 rounded-xl font-semibold transition-colors text-sm disabled:opacity-60"
                 >
-                  {sendFeedback.isPending ? "Sending..." : "Send to the organizers"}
+                  {sendFeedback.isPending ? "Sending..." : shareNote ? "Share it" : "Send to the organizers"}
                 </button>
                 {sendFeedback.isError && <p className="text-red-300 text-sm">{sendFeedback.error.message}</p>}
               </form>
+
+              {publicNotes.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-white/10">
+                  <h3 className="text-white font-bold text-lg mb-1">What the cohort wants to talk about</h3>
+                  <p className="text-white/55 text-sm mb-4">Notes their writers chose to share, newest first.</p>
+                  <ul className="space-y-3">
+                    {publicNotes.map((n, i) => (
+                      <li key={`${n.createdAt}-${i}`} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-white/45 text-xs mb-1">
+                          {n.week ? `Before Week ${n.week}` : "After the Season"}
+                          {n.projectName || n.displayName
+                            ? ` · ${[n.projectName, n.displayName].filter(Boolean).join(", ")}`
+                            : ""}
+                        </p>
+                        {n.topic && <p className="text-white/85 text-sm whitespace-pre-wrap">{n.topic}</p>}
+                        {n.facilitation && (
+                          <p className="text-white/70 text-sm whitespace-pre-wrap mt-1">
+                            <span className="text-[#e3ac4f] font-semibold">On the facilitation: </span>
+                            {n.facilitation}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           </AnimatedSection>
 

@@ -3,26 +3,29 @@
  * vote the land projects use to pick it (Rye, 2026-09-28).
  *
  * Reusable for every Season. Each Season is one entry in SEASON_SCHEDULES: the
- * weeks it runs, the time it opened on, the times on offer, and when its vote
- * closes. The page (/season-schedule), the seasonSchedule router, the events
- * sync (server/lib/seasonSchedule.ts), the admin panel, and the pages that
- * print the Season's time all read this module, so they cannot drift.
+ * weeks it runs, the time it opened on, the times on offer, and when the vote
+ * starts steering the schedule. The page (/season-schedule), the
+ * seasonSchedule router, the events sync (server/lib/seasonSchedule.ts), the
+ * admin panel, and the pages that print the Season's time all read this
+ * module, so they cannot drift.
  *
- * How the vote decides. A cohort plans its weeks around the session, so the
- * time moves at most once per round of voting. That is the difference from the
- * Interoperability Circle, whose time follows its vote week to week (ADR-56):
- *   - While the vote is open, sessions keep the time they have.
- *   - When it closes, the time with the most hands becomes the Season's time
- *     for every session more than SEASON_FREEZE_HOURS out. A tie that includes
- *     the current time keeps it: an even split is no reason to move a cohort.
- *   - An admin pin overrides the vote. Moving the close date later reopens it,
- *     and the sessions stay where they are until it closes again.
+ * How the vote decides (ADR-65, which revised ADR-64 the same day). The
+ * Season follows its vote the way the Interoperability Circle does (ADR-56),
+ * after one quiet first round:
+ *   - Until `followsFrom`, sessions keep the time they have, so the first few
+ *     hands cannot move Week 3 back and forth before most projects have voted.
+ *   - From then on, the time with the most hands becomes the Season's time
+ *     once it has held the lead for SEASON_LEAD_SETTLE_HOURS, and every
+ *     session more than SEASON_FREEZE_HOURS out moves to it. Voting never
+ *     closes: people change their hands as their weeks change.
+ *   - A tie that includes the current time keeps it: an even split is no
+ *     reason to move a cohort. An admin pin overrides the vote.
  *
  * Times are Pacific wall-clock hours, like every other session on the site
  * (shared/sessionClock.ts). Much of the cohort lives where clocks never change
- * (Hawaii, Central America, Brazil), so when US clocks change mid-Season the
- * local time moves by an hour there. clockShift() works that out from the
- * real session dates rather than assuming it.
+ * (Hawaii, Central America, Brazil), and Europe changes a week before the US,
+ * so local times move mid-Season. clockShift() and clockBlip() work that out
+ * from the real session dates rather than assuming it.
  */
 import {
   SEASON2_EPISODE_DATES,
@@ -88,10 +91,20 @@ export interface SeasonScheduleConfig {
   opening: SeasonSlotTime;
   /** The times on offer until an admin changes them. */
   offered: readonly SeasonSlotTime[];
-  /** When the first round of voting closes, until an admin changes it. */
-  closesAt: Date;
+  /**
+   * When the vote starts steering the schedule, until an admin changes it.
+   * Before this, sessions keep their time; after it, they follow the vote.
+   */
+  followsFrom: Date;
   /** Session length in minutes. */
   minutes: number;
+  /**
+   * Days a session must not land on, each mapped to the day it meets instead,
+   * at the same time. Pacific calendar dates, "YYYY-MM-DD".
+   */
+  reschedule?: Readonly<Record<string, string>>;
+  /** What the page says about those days, so nobody is surprised. */
+  rescheduleNote?: string;
   /**
    * Whether the page starts out asking projects who missed Selection Day for
    * their 3 to 5 minute video, so the session can go public with every project
@@ -102,6 +115,13 @@ export interface SeasonScheduleConfig {
 
 /** A session starting inside this window never moves. People have planned around it. */
 export const SEASON_FREEZE_HOURS = 72;
+
+/**
+ * A new leader has to hold the lead this long before sessions move to it, so a
+ * vote that flips back and forth does not move the Season, and email the
+ * cohort, on every flip. The Circle's number (INTEROP_LEAD_SETTLE_HOURS).
+ */
+export const SEASON_LEAD_SETTLE_HOURS = 24;
 
 const WEEKDAY_OF: Record<SeasonSlotKey, number> = {
   sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6,
@@ -116,13 +136,15 @@ const DAYS: Record<SeasonSlotKey, string> = {
  * The Seasons that use the Season Schedule. A new Season adds its entry here
  * and points ACTIVE_SEASON at it; the page, the vote and the sync follow.
  *
- * Season 2's four times come from Rye's ask on 2026-09-28: one weekend day and
- * three weekdays, good hours from Hawaii across the Americas, nobody in Europe
- * to plan around. Every start sits between 10am and 2pm Pacific, which keeps
- * Hawaii at 7am or later and Brazil's finish at 9pm or earlier all Season, on
- * either side of the November clock change. None overlaps a slot the Circle
- * offers or an Open Access session. Saturday is the time the Season opened on,
- * so keeping it on the ballot means "no change" is a real option.
+ * Season 2's times come from Rye's asks on 2026-09-28: one weekend day and
+ * three weekdays with good hours from Hawaii across the Americas, then "one
+ * more time that also works" for the two projects in Italy and Spain (Friday).
+ * Every start sits between 10am and 2pm Pacific, which keeps Hawaii at 7am or
+ * later and Brazil's finish at 9pm or earlier all Season, on either side of
+ * the November clock change. Wednesday and Friday at 10am are 6pm to 7pm in
+ * Central Europe. None overlaps a slot the Circle offers or an Open Access
+ * session. Saturday is the time the Season opened on, so keeping it on the
+ * ballot means "no change" is a real option.
  */
 export const SEASON_SCHEDULES: Readonly<Record<string, SeasonScheduleConfig>> = {
   "Season 2": {
@@ -134,12 +156,18 @@ export const SEASON_SCHEDULES: Readonly<Record<string, SeasonScheduleConfig>> = 
       { key: "tue", hourPT: 14 },
       { key: "wed", hourPT: 10 },
       { key: "thu", hourPT: 12 },
+      { key: "fri", hourPT: 10 },
       { key: "sat", hourPT: 11 },
     ],
     // Thursday, October 1 at 5pm Pacific: long enough after the invitation
     // for every project to answer, early enough that Week 3 can still move.
-    closesAt: wallTimeInZoneToUtc("2026-10-01", 17, 0, SESSION_TIME_ZONE),
+    followsFrom: wallTimeInZoneToUtc("2026-10-01", 17, 0, SESSION_TIME_ZONE),
     minutes: SESSION_DURATION_HOURS * 60,
+    // Thanksgiving and the day after: Week 10 meets the Monday of that week
+    // instead, at the same time (Rye, 2026-09-28).
+    reschedule: { "2026-11-26": "2026-11-23", "2026-11-27": "2026-11-23" },
+    rescheduleNote:
+      "Thanksgiving week: if the Season lands on Thanksgiving or the day after, Week 10 meets Monday, November 23 at the same time.",
     // Selection Day stays private until the projects who missed the call have
     // sent their videos in and been added to it (Rye, 2026-09-28).
     selectionVideos: true,
@@ -184,7 +212,7 @@ export function seasonSlot(key: SeasonSlotKey, hourPT: number): SeasonSlot {
 
 // ─── Stored settings ─────────────────────────────────────────────────────────
 
-export type SeasonSettingPart = "offered" | "closes_at" | "pinned" | "applied" | "selection_videos";
+export type SeasonSettingPart = "offered" | "follows_from" | "pinned" | "applied" | "leader" | "selection_videos";
 
 /** A stored "on" or "off", or the fallback when the setting was never written. */
 export function parseToggle(raw: string | null | undefined, fallback: boolean): boolean {
@@ -257,8 +285,8 @@ export function serializeSlotTime(slot: SeasonSlotTime): string {
   return JSON.stringify({ key: slot.key, hourPT: clampHour(slot.hourPT) });
 }
 
-/** The stored close instant, or the Season's default when missing or unreadable. */
-export function parseClosesAt(raw: string | null | undefined, fallback: Date): Date {
+/** A stored instant (the "follows_from" setting), or the Season's default when missing or unreadable. */
+export function parseInstant(raw: string | null | undefined, fallback: Date): Date {
   if (typeof raw === "string" && raw.trim()) {
     const d = new Date(raw);
     if (Number.isFinite(d.getTime())) return d;
@@ -395,6 +423,37 @@ export const SEASON_TOPIC_MAX = 1000;
 export const SEASON_FACILITATION_MAX = 2000;
 
 /**
+ * Characters that let text hide or disguise itself on a public page: control
+ * characters other than tab and line breaks, zero-width characters, bidi
+ * overrides and the byte-order mark. Built from code points at runtime, so no
+ * escape sequence can land in this file as the character itself.
+ */
+const HIDDEN_TEXT = new RegExp(
+  "[" +
+    [[0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x7f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff, 0xfeff]]
+      .map(([a, b]) => (a === b ? String.fromCodePoint(a) : `${String.fromCodePoint(a)}-${String.fromCodePoint(b)}`))
+      .join("") +
+    "]",
+  "gu",
+);
+
+/**
+ * A note as it may be stored and shown: hidden characters out, line breaks
+ * kept (at most one blank line in a row), trimmed and cut to `max`. React
+ * renders it as text, so no markup survives either way.
+ */
+export function cleanNoteText(raw: string | null | undefined, max: number): string | null {
+  if (typeof raw !== "string") return null;
+  const text = raw
+    .replace(/\r\n?/g, "\n")
+    .replace(HIDDEN_TEXT, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, max);
+  return text ? text : null;
+}
+
+/**
  * The time with the most hands, or null with none. Ties go to the earlier day
  * of the week, except that a tie including the current time keeps it.
  */
@@ -421,16 +480,22 @@ export function seasonLeader(
 
 /**
  * Which time the Season's sessions follow right now. Pure, so the rules above
- * are testable: the pin, then the vote once it has closed, then whatever was
- * last applied, then the time the Season opened on.
+ * are testable. The pin wins. Before the vote starts steering, the time stays
+ * whatever was last applied (or the opening time). After, the leader takes
+ * over once it has held the lead for SEASON_LEAD_SETTLE_HOURS; a leader on the
+ * current day takes over at once, since only its hour can differ.
  */
 export function resolveSeasonSlot(opts: {
   pinned: SeasonSlotKey | null;
   leader: SeasonSlotKey | null;
-  closed: boolean;
+  /** When the current leader took the lead, ms since epoch. */
+  leaderSince: number | null;
+  /** Whether the vote is steering the schedule yet (now >= followsFrom). */
+  following: boolean;
   applied: SeasonSlotTime | null;
   opening: SeasonSlotTime;
   offered: readonly SeasonSlotTime[];
+  nowMs: number;
 }): SeasonSlotTime {
   const onOffer = (key: SeasonSlotKey | null): SeasonSlotTime | null => {
     const o = key ? opts.offered.find((s) => s.key === key) : undefined;
@@ -438,11 +503,27 @@ export function resolveSeasonSlot(opts: {
   };
   const pinned = onOffer(opts.pinned);
   if (pinned) return pinned;
-  if (opts.closed) {
-    const lead = onOffer(opts.leader);
-    if (lead) return lead;
+  const current = opts.applied ?? opts.opening;
+  if (!opts.following) return current;
+  const lead = onOffer(opts.leader);
+  if (!lead) return current;
+  if (lead.key === current.key) return lead;
+  const settled =
+    opts.leaderSince != null && opts.nowMs - opts.leaderSince >= SEASON_LEAD_SETTLE_HOURS * 3_600_000;
+  return settled ? lead : current;
+}
+
+/** The stored leader record: which time led, and since when. */
+export function parseLeaderRecord(raw: string | null | undefined): { slot: SeasonSlotKey; since: number } | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  try {
+    const v = JSON.parse(raw) as { slot?: unknown; since?: unknown };
+    return isSeasonSlotKey(v?.slot) && typeof v.since === "number" && Number.isFinite(v.since)
+      ? { slot: v.slot, since: v.since }
+      : null;
+  } catch {
+    return null;
   }
-  return opts.applied ?? opts.opening;
 }
 
 // ─── Weeks and sessions ──────────────────────────────────────────────────────
@@ -454,14 +535,17 @@ function addDaysYmd(ymd: string, days: number): string {
 
 /**
  * When week `week` (1-based) meets on `slot`: that weekday inside the week's
- * own Monday-to-Sunday (Pacific), at the slot's Pacific hour. DST-correct.
+ * own Monday-to-Sunday (Pacific), at the slot's Pacific hour. DST-correct. A
+ * day the Season must not meet on (config.reschedule) gives way to its
+ * replacement day, at the same hour.
  */
 export function seasonSessionStart(config: SeasonScheduleConfig, week: number, slot: SeasonSlotTime): Date | null {
   const anchor = config.weeks[week - 1];
   if (!anchor) return null;
   const monday = circleWeekKey(wallTimeInZoneToUtc(anchor, 12, 0, SESSION_TIME_ZONE));
   const ymd = addDaysYmd(monday, (WEEKDAY_OF[slot.key] + 6) % 7);
-  return wallTimeInZoneToUtc(ymd, clampHour(slot.hourPT), 0, SESSION_TIME_ZONE);
+  const day = config.reschedule?.[ymd] ?? ymd;
+  return wallTimeInZoneToUtc(day, clampHour(slot.hourPT), 0, SESSION_TIME_ZONE);
 }
 
 export interface SeasonSessionTime {
@@ -533,8 +617,9 @@ export function overdueOffsets(offsets: readonly number[], newStart: Date, now: 
 // ─── Time zones ──────────────────────────────────────────────────────────────
 
 /**
- * The zones the cohort lives in, west to east. No Europe on purpose (Rye,
- * 2026-09-28); the page adds each visitor's own time for everyone else.
+ * The zones the cohort lives in, west to east. Central Europe joined when Rye
+ * asked for a time that also works for the projects in Italy and Spain
+ * (2026-09-28); the page adds each visitor's own time for everyone else.
  */
 export const SEASON_ZONES: readonly { label: string; timeZone: string }[] = [
   { label: "Hawaii", timeZone: "Pacific/Honolulu" },
@@ -542,7 +627,19 @@ export const SEASON_ZONES: readonly { label: string; timeZone: string }[] = [
   { label: "Central America", timeZone: "America/Guatemala" },
   { label: "US Central", timeZone: "America/Chicago" },
   { label: "Brazil", timeZone: "America/Sao_Paulo" },
+  { label: "Central Europe", timeZone: "Europe/Rome" },
 ];
+
+/** Minutes past local midnight, for comparing one session's clock across dates. */
+function minutesIn(d: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  return Number(parts.find((p) => p.type === "hour")?.value) * 60 + Number(parts.find((p) => p.type === "minute")?.value);
+}
 
 function ymdIn(d: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -578,44 +675,75 @@ export function zoneTimes(start: Date): ZoneTime[] {
 }
 
 export interface ClockShift {
-  /** The first session whose local time differs from the first one's. */
+  /** The first session already on the new local time. */
   from: Date;
-  /** Zones where the time moves. */
+  /** Zones where the time moves for good. */
   zones: string[];
   /** Whether the session lands later (true) or earlier in those zones. */
   later: boolean;
 }
 
 /**
- * Whether a run of sessions crosses a clock change that moves the local time
+ * Whether a run of sessions ends on a different local time than it started,
  * somewhere. Sessions keep their Pacific time, so the shift shows up in the
- * zones that change their clocks on a different day, or never.
+ * zones that change their clocks on a different day from the US, or never.
+ * A zone whose time wobbles and comes back (Europe, a week early) is not a
+ * shift; clockBlip() reports that.
  */
 export function clockShift(starts: readonly Date[]): ClockShift | null {
   if (starts.length < 2) return null;
-  const minutesIn = (d: Date, timeZone: string) => {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      hour: "numeric",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(d);
-    return Number(parts.find((p) => p.type === "hour")?.value) * 60 + Number(parts.find((p) => p.type === "minute")?.value);
-  };
   const first = starts[0];
-  for (const start of starts.slice(1)) {
+  const last = starts[starts.length - 1];
+  const zones: string[] = [];
+  let later = false;
+  let from: Date | null = null;
+  for (const z of SEASON_ZONES) {
+    if (z.timeZone === SESSION_TIME_ZONE) continue;
+    const before = minutesIn(first, z.timeZone);
+    const after = minutesIn(last, z.timeZone);
+    if (before === after) continue;
+    zones.push(z.label);
+    later = after > before;
+    const landed = starts.find((s) => minutesIn(s, z.timeZone) === after);
+    if (landed && (!from || landed < from)) from = landed;
+  }
+  return zones.length && from ? { from, zones, later } : null;
+}
+
+export interface ClockBlip {
+  /** The Monday (Pacific) of the week where the time is off. */
+  weekOf: Date;
+  zones: string[];
+  /** Whether that week's session lands earlier (true) or later in those zones. */
+  earlier: boolean;
+}
+
+/**
+ * A week whose local time differs from both the first and the last session's
+ * somewhere: Europe changes its clocks a week before the US, so for one week a
+ * Pacific-anchored session is an hour off there, then lands back where it was.
+ */
+export function clockBlip(starts: readonly Date[]): ClockBlip | null {
+  if (starts.length < 3) return null;
+  const first = starts[0];
+  const last = starts[starts.length - 1];
+  for (const start of starts.slice(1, -1)) {
     const zones: string[] = [];
-    let later = false;
+    let earlier = false;
     for (const z of SEASON_ZONES) {
       if (z.timeZone === SESSION_TIME_ZONE) continue;
-      const before = minutesIn(first, z.timeZone);
-      const after = minutesIn(start, z.timeZone);
-      if (before !== after) {
+      const here = minutesIn(start, z.timeZone);
+      const a = minutesIn(first, z.timeZone);
+      const b = minutesIn(last, z.timeZone);
+      if (here !== a && here !== b) {
         zones.push(z.label);
-        later = after > before;
+        earlier = here < a;
       }
     }
-    if (zones.length) return { from: start, zones, later };
+    if (zones.length) {
+      const weekOf = wallTimeInZoneToUtc(circleWeekKey(start), 12, 0, SESSION_TIME_ZONE);
+      return { weekOf, zones, earlier };
+    }
   }
   return null;
 }

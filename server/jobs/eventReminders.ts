@@ -46,7 +46,7 @@ import {
 
 const log = logger("event-auto-reminders");
 
-function communityTopicForAudience(mode: AutoReminderAudienceMode): EmailTopicKey {
+export function communityTopicForAudience(mode: AutoReminderAudienceMode): EmailTopicKey {
   if (mode === "season2_approved") return "season2";
   if (mode === "open_access") return "open_access";
   return "events";
