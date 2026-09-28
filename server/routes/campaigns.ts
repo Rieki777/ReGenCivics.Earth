@@ -43,10 +43,17 @@ import {
   roleFillState,
   scaleRoleValue,
 } from "../../shared/roleCapacity";
-import { projectPathForCampaignFocus } from "../../shared/projectKey";
-import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, summarizeProgress } from "../../shared/campaignProgress";
+import {
+  parseProjectKey,
+  parseProjectRef,
+  projectPathForCampaignFocus,
+  projectRefFor,
+  projectRefFromKey,
+} from "../../shared/projectKey";
+import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, progressLines, summarizeProgress } from "../../shared/campaignProgress";
+import { serverCurrencyFormatter } from "../lib/currency-format";
 import { CASH_SHARE } from "../../shared/crowdpoolModel";
-import { DURATION, GIVE_LEND, NEED_MARKER } from "../../shared/crowdpoolCopy";
+import { DURATION, FOLLOW, GIVE_LEND, NEED_MARKER } from "../../shared/crowdpoolCopy";
 import { MAX_WINDOW_DAYS } from "../../shared/campaignClose";
 import {
   isMoneyKind,
@@ -61,9 +68,9 @@ import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolRea
 import {
   OPEN_NEEDS_CACHE_KEY,
   OPEN_NEEDS_CACHE_SECONDS,
-  buildOpenNeeds,
   type OpenNeedsResult,
 } from "../../shared/openNeeds";
+import { loadOpenNeeds } from "../lib/open-needs";
 import {
   DUPLICATE_ROUTE_MESSAGE,
   ROUTE_PARTNERS,
@@ -79,6 +86,7 @@ import {
   notifyCampaignApproved,
   notifyCampaignCompleted,
   notifyCampaignDeclined,
+  notifyCampaignOpened,
   notifyDelivered,
   notifyHoursChanged,
   notifyProposalAccepted,
@@ -123,6 +131,7 @@ const STATUS_WORDS: Record<string, string> = {
   completed: "complete",
   cancelled: "cancelled",
   rejected: "sent back",
+  closed: "closed", // the close date passed and it didn't complete
 };
 
 /**
@@ -149,6 +158,7 @@ export const PUBLIC_CAMPAIGN_FIELDS = [
   "pledgedTotal", "pledgedLand", "pledgedEquipment", "pledgedRoles",
   "pledgedResources", "pledgedFinancial",
   "createdAt", "updatedAt", "publishedAt", "completedAt",
+  "closedAt", "closeOutcome",
   "generatedImageUrl", "isDemo", "forumPostId", "seasonId",
 ] as const satisfies ReadonlyArray<keyof Campaign>;
 
@@ -368,7 +378,7 @@ export function checkGiveOrLend(args: {
 const TAKEN_ON_STATUSES = ['accepted', 'fulfilled', 'thanked'] as const;
 
 /** A campaign that is over takes no new routes and keeps its ticks. */
-const CLOSED_CAMPAIGN_STATUSES = ['cancelled', 'completed', 'funded'];
+const CLOSED_CAMPAIGN_STATUSES = ['cancelled', 'completed', 'funded', 'closed'];
 
 async function loadPartnerLink(linkId: number) {
   const database = await requireDb();
@@ -378,6 +388,61 @@ async function loadPartnerLink(linkId: number) {
     .where(eq(campaignPartnerLinksTable.id, linkId))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * The project behind a follow key, when a visitor may follow it: an
+ * application that passed review or has a public campaign, or a campaign the
+ * viewer may see. NOT_FOUND otherwise, with the project page's own words, so
+ * a follow reveals nothing a page would not. `isExample` when every public
+ * campaign of the project is an example.
+ */
+async function resolveFollowableProject(
+  user: TrpcContext["user"] | undefined,
+  key: string,
+): Promise<{ ref: string; isExample: boolean }> {
+  const notFound = () => new TRPCError({ code: 'NOT_FOUND', message: "We couldn't find that project." });
+  const parsed = parseProjectKey(key);
+  if (!parsed) throw notFound();
+  if (parsed.kind === 'campaign') {
+    const campaign = await db.getCampaignById(parsed.id);
+    if (!campaign || !(await canViewCampaign(user, campaign))) throw notFound();
+    return { ref: projectRefFromKey(parsed, campaign), isExample: !!campaign.isDemo };
+  }
+  const database = await requireDb();
+  const [app] = await database
+    .select({ id: applicationsTable.id, status: applicationsTable.status })
+    .from(applicationsTable)
+    .where(eq(applicationsTable.id, parsed.id))
+    .limit(1);
+  if (!app) throw notFound();
+  const linked = await database
+    .select({
+      id: campaignsTable.id,
+      status: campaignsTable.status,
+      startedAt: campaignsTable.startedAt,
+      publishedAt: campaignsTable.publishedAt,
+      isDemo: campaignsTable.isDemo,
+    })
+    .from(campaignsTable)
+    .where(eq(campaignsTable.applicationId, app.id));
+  const visible = linked.filter((c) => isPublicCampaign(c));
+  const appPublic = app.status === 'approved' || app.status === 'active';
+  if (!appPublic && visible.length === 0) throw notFound();
+  return { ref: `a${app.id}`, isExample: visible.length > 0 && visible.every((c) => !!c.isDemo) };
+}
+
+/** Every campaign id on a project ref: the application's campaigns, or the one campaign. */
+async function projectCampaignIds(ref: string): Promise<number[]> {
+  const parsed = parseProjectRef(ref);
+  if (!parsed) return [];
+  if (parsed.kind === 'campaign') return [parsed.id];
+  const database = await requireDb();
+  const rows = await database
+    .select({ id: campaignsTable.id })
+    .from(campaignsTable)
+    .where(eq(campaignsTable.applicationId, parsed.id));
+  return rows.map((r) => r.id);
 }
 
 /** The campaign behind a steward-only call, or FORBIDDEN (never NOT_FOUND: ids are enumerable). */
@@ -792,7 +857,7 @@ export const campaignsRouter = router({
   // List all campaigns (with optional filtering + server-side sort)
   list: publicProcedure
     .input(z.object({
-      status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected']).optional(),
+      status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected', 'closed']).optional(),
       search: z.string().optional(),
       sort: z.enum(['most-funded', 'ending-soon', 'newest', 'most-contributors']).optional(),
     }).optional())
@@ -957,26 +1022,9 @@ export const campaignsRouter = router({
   listOpenNeeds: publicProcedure.query(async (): Promise<OpenNeedsResult> => {
     const cached = await cacheGet<OpenNeedsResult>(OPEN_NEEDS_CACHE_KEY);
     if (cached) return cached;
-    const live = (await db.listCampaigns('active')).filter((c) => isPublicCampaign(c));
-    const ids = live.map((c) => c.id);
-    const inputs = await db.getCampaignProgressInputs(ids);
-    const database = await getDb();
-    const routes = database && ids.length > 0
-      ? await database
-          .select({
-            campaignId: campaignPartnerLinksTable.campaignId,
-            partner: campaignPartnerLinksTable.partner,
-            label: campaignPartnerLinksTable.label,
-            status: campaignPartnerLinksTable.status,
-          })
-          .from(campaignPartnerLinksTable)
-          .where(and(
-            inArray(campaignPartnerLinksTable.campaignId, ids),
-            db.publicRouteWhere({ loanRoutesOpen: await db.loanRoutesOpen(), withExamples: true }),
-          ))
-          .orderBy(campaignPartnerLinksTable.id)
-      : [];
-    const result = buildOpenNeeds({ campaigns: live, inputs, routes });
+    // The body lives in server/lib/open-needs.ts, shared with the close
+    // notices' "these could use you now" line.
+    const result = await loadOpenNeeds();
     await cacheSet(OPEN_NEEDS_CACHE_KEY, result, OPEN_NEEDS_CACHE_SECONDS);
     return result;
   }),
@@ -2233,7 +2281,7 @@ export const campaignsRouter = router({
   updateStatus: protectedProcedure
     .input(z.object({
       id: z.number(),
-      status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected']),
+      status: z.enum(['draft', 'pending_review', 'active', 'funded', 'completed', 'cancelled', 'rejected', 'closed']),
       reviewNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -2310,6 +2358,21 @@ export const campaignsRouter = router({
       const reviewNotes = input.reviewNotes !== undefined ? sanitizeInput(input.reviewNotes) : null;
       if (to === 'active') {
         await notifyCampaignApproved({ campaign, reviewNotes, reviewedAt: now, actorId: ctx.user.id });
+        // Followers of the project hear that crowdpooling opened (build spec
+        // 2026-09-27, section 12.3), with the open needs and the close date
+        // read from the live row. Examples never announce. Never throws.
+        if (!campaign.isDemo) {
+          try {
+            const live = await db.getCampaignById(campaign.id);
+            if (live) {
+              const summary = (await progressSummariesFor([live])).get(live.id);
+              const lines = summary ? progressLines(summary, serverCurrencyFormatter(live.currency)) : null;
+              await notifyCampaignOpened({ campaign: live, openLine: lines?.open ?? null, closes: lines?.closes ?? null, actorId: ctx.user.id });
+            }
+          } catch (err) {
+            console.warn('[Campaign] opening notice failed (non-fatal):', err);
+          }
+        }
       } else if (to === 'rejected') {
         await notifyCampaignDeclined({ campaign, reviewNotes, reviewedAt: now, actorId: ctx.user.id });
       } else if (fundedStatuses.includes(to) && !fundedStatuses.includes(from)) {
@@ -2497,6 +2560,8 @@ export const campaignsRouter = router({
         email: input.email.toLowerCase().trim(),
         name: input.name ? sanitizeInput(input.name) : null,
         unsubscribeToken: nanoid(32),
+        // The follow carries its project, so it reads across seasons (0265).
+        projectRef: projectRefFor(campaign),
       });
       return { success: true };
     }),
@@ -2574,6 +2639,36 @@ export const campaignsRouter = router({
           eq(userFollows.targetId, String(input.campaignId)),
         ));
       return { success: true };
+    }),
+
+  // ---- Follow a project (build spec 2026-09-27, section 12.2) ----
+  // One follow on the project, not one campaign (user_follows.targetType
+  // 'project', ref 'a{applicationId}' or 'c{campaignId}'), so it lasts from
+  // season to season. Its followers hear when crowdpooling opens there and
+  // two weeks before a close. follow/unfollow above stay for old callers.
+
+  followProject: protectedProcedure
+    .input(z.object({ key: z.string().max(120) }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await resolveFollowableProject(ctx.user, input.key);
+      if (project.isExample) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: FOLLOW.exampleRefused });
+      }
+      await db.addProjectFollow(ctx.user.id, project.ref);
+      return { following: true };
+    }),
+
+  // Stop following: the project follow and every campaign follow on the
+  // project's campaigns. Always answers, so it reveals nothing about a key.
+  unfollowProject: protectedProcedure
+    .input(z.object({ key: z.string().max(120) }))
+    .mutation(async ({ ctx, input }) => {
+      const parsed = parseProjectKey(input.key);
+      if (!parsed) return { following: false };
+      const campaign = parsed.kind === 'campaign' ? await db.getCampaignById(parsed.id) : null;
+      const ref = projectRefFromKey(parsed, campaign ?? undefined);
+      await db.removeProjectFollow(ctx.user.id, ref, await projectCampaignIds(ref));
+      return { following: false };
     }),
 
   // Publish a numbered journal entry and fan out to followers.

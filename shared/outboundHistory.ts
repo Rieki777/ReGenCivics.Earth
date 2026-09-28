@@ -26,7 +26,15 @@ export type HistoryVisibleStatus = (typeof HISTORY_VISIBLE_STATUSES)[number];
 export type OutboundAudienceList =
   | { kind: "campaign"; campaignId: number }
   | { kind: "all_campaigns" }
-  | { kind: "waitlist"; seasonNumber: number };
+  | { kind: "waitlist"; seasonNumber: number }
+  /**
+   * The season digest (build spec 2026-09-27, section 12.4): everyone
+   * following a campaign by email plus that season's crowdpool waitlist, one
+   * letter per address. With excludeOffered, anyone who already offered on a
+   * live real campaign is left out. How email-only followers hear, since
+   * platform notices reach account holders only.
+   */
+  | { kind: "season_digest"; seasonNumber: number; excludeOffered: boolean };
 
 export type HistoryAudience = {
   sources: string[];
@@ -42,6 +50,10 @@ export function parseAudienceList(raw: unknown): OutboundAudienceList | null {
   if (rec.kind === "campaign" && positiveInt(rec.campaignId)) return { kind: "campaign", campaignId: rec.campaignId };
   if (rec.kind === "all_campaigns") return { kind: "all_campaigns" };
   if (rec.kind === "waitlist" && positiveInt(rec.seasonNumber)) return { kind: "waitlist", seasonNumber: rec.seasonNumber };
+  if (rec.kind === "season_digest" && positiveInt(rec.seasonNumber)) {
+    // Leaving out people who already offered is the default.
+    return { kind: "season_digest", seasonNumber: rec.seasonNumber, excludeOffered: rec.excludeOffered !== false };
+  }
   return null;
 }
 
@@ -141,6 +153,9 @@ export function summarizeAudienceList(list: OutboundAudienceList, campaignTitles
     return `Email followers of ${title ? title : `campaign ${list.campaignId}`}`;
   }
   if (list.kind === "all_campaigns") return "Everyone following a campaign by email";
+  if (list.kind === "season_digest") {
+    return `Season ${list.seasonNumber} digest: email followers and the waitlist${list.excludeOffered ? ", leaving out people who already offered" : ""}`;
+  }
   return `Crowdpool waitlist, Season ${list.seasonNumber}`;
 }
 

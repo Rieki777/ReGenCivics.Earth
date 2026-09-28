@@ -22,7 +22,7 @@
 
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { sql } from "drizzle-orm";
-import { projectPathForCampaign, projectPathForCampaignFocus } from "../../shared/projectKey";
+import { projectPathForCampaign, projectPathForCampaignFocus, projectRefFor } from "../../shared/projectKey";
 import { isHoursNeed } from "../../shared/roleCapacity";
 import { getCampaignStewardIds } from "../lib/project-steward";
 
@@ -41,7 +41,43 @@ export interface StewardDigestClaim {
 export interface StewardDigestPending {
   title: string;
   contributorName: string;
+  /** Whole days (UTC) the offer has waited since it was sent. No suffix under 1 day. */
+  waitingDays?: number;
 }
+
+/** Offers waiting longer than this get the "have waited" line under the section heading. */
+export const DIGEST_WAITING_LINE_DAYS = 2;
+
+function dayWord(d: number): string {
+  return d === 1 ? "1 day" : `${d} days`;
+}
+
+/** ", waiting 3 days" / ", waiting 1 day" / "" under a day. */
+function waitingSuffix(p: StewardDigestPending): string {
+  const d = Math.floor(Number(p.waitingDays ?? 0));
+  return d >= 1 ? `, waiting ${dayWord(d)}` : "";
+}
+
+/**
+ * "{n} of these have waited more than 2 days. The oldest has waited {d}
+ * days." or null when none has. Build spec 2026-09-27, section 8.4.
+ */
+export function waitingLine(pending: StewardDigestPending[]): string | null {
+  const days = pending.map((p) => Math.floor(Number(p.waitingDays ?? 0)));
+  const over = days.filter((d) => d > DIGEST_WAITING_LINE_DAYS);
+  if (over.length === 0) return null;
+  const oldest = Math.max(...over);
+  const head = over.length === 1 ? "1 of these has waited" : `${over.length} of these have waited`;
+  return `${head} more than ${DIGEST_WAITING_LINE_DAYS} days. The oldest has waited ${dayWord(oldest)}.`;
+}
+
+/** Whole days between an offer's submit time and now, UTC. */
+export function wholeDaysWaited(submittedAt: unknown, now: Date = new Date()): number {
+  const at = submittedAt instanceof Date ? submittedAt : new Date(String(submittedAt ?? ""));
+  if (isNaN(at.getTime())) return 0;
+  return Math.max(0, Math.floor((now.getTime() - at.getTime()) / 86_400_000));
+}
+
 export interface StewardDigestData {
   campaignId: number;
   campaignTitle: string;
@@ -115,7 +151,8 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
   if (data.pendingReviews.length > 0) {
     const { shown, more } = capList(data.pendingReviews, 6);
     const rows =
-      shown.map((p) => li(`<strong>${esc(p.contributorName)}</strong> offered ${esc(p.title)}.`)).join("") +
+      (waitingLine(data.pendingReviews) ? li(`<span style="color:#4a5568;">${esc(waitingLine(data.pendingReviews)!)}</span>`) : "") +
+      shown.map((p) => li(`<strong>${esc(p.contributorName)}</strong> offered ${esc(p.title)}${waitingSuffix(p)}.`)).join("") +
       andMore(more);
     sections.push(
       section(
@@ -272,22 +309,33 @@ async function defaultLoadDigestData(db: any, campaign: StewardCampaignRow): Pro
     ORDER BY claimExpiresAt ASC
   `);
 
+  // New followers this week: email followers of the campaign or its project,
+  // plus account holders whose first follow of the campaign or its project
+  // (0265: a follow is on the project) came in the last 7 days. The same
+  // union getCampaignFollowerCounts counts.
+  const ref = projectRefFor({ id: cid, applicationId: campaign.applicationId ?? null });
   const [followerRows] = await db.execute(sql`
     SELECT
-      (SELECT COUNT(*) FROM campaign_followers
-        WHERE campaignId = ${cid} AND createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY))
+      (SELECT COUNT(DISTINCT LOWER(email)) FROM campaign_followers
+        WHERE (campaignId = ${cid} OR projectRef = ${ref})
+          AND createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY))
       +
-      (SELECT COUNT(*) FROM user_follows
-        WHERE targetType = 'campaign' AND targetId = ${String(cid)}
-          AND createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)) AS cnt
+      (SELECT COUNT(*) FROM (
+        SELECT userId, MIN(createdAt) AS firstAt FROM user_follows
+        WHERE (targetType = 'campaign' AND targetId = ${String(cid)})
+           OR (targetType = 'project' AND targetId = ${ref})
+        GROUP BY userId
+      ) f WHERE f.firstAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)) AS cnt
   `);
 
+  // Oldest first, so the offer that has waited longest leads.
   const [pendRows] = await db.execute(sql`
-    SELECT id, title, contributorName
+    SELECT id, title, contributorName, submittedAt
     FROM campaign_contributions
     WHERE campaignId = ${cid} AND status = 'pending'
-    ORDER BY createdAt ASC
+    ORDER BY submittedAt ASC, id ASC
   `);
+  const now = new Date();
 
   return {
     campaignId: cid,
@@ -314,6 +362,7 @@ async function defaultLoadDigestData(db: any, campaign: StewardCampaignRow): Pro
     pendingReviews: ((pendRows as any[]) ?? []).map((r) => ({
       title: String(r.title ?? "a contribution"),
       contributorName: String(r.contributorName ?? "A contributor"),
+      waitingDays: wholeDaysWaited(r.submittedAt, now),
     })),
   };
 }

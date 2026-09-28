@@ -33,6 +33,7 @@ vi.mock("./_core/imageGeneration", () => ({
 
 import * as dbHelpers from "./db";
 import {
+  campaignContributions,
   campaignFollowers,
   campaigns,
   crowdpoolWaitlist,
@@ -251,5 +252,65 @@ describe("the public list procedures", () => {
     // A single campaign's letter keeps the plain link; the waitlist says so.
     const one = await resolveOutboundRecipients({ sources: [], list: { kind: "campaign", campaignId: campaignB } });
     expect(new URL(one[0].unsubscribeUrl).searchParams.get("list")).toBeNull();
+  });
+});
+
+describe("the season digest (build spec 2026-09-27, section 12.4)", () => {
+  const SEASON = 97; // a season no other suite writes
+  it("History labels it in plain words and Duplicate keeps it", () => {
+    const raw = { sources: [], activeOnly: true, list: { kind: "season_digest", seasonNumber: 2, excludeOffered: true } };
+    expect(summarizeAudience(raw)).toBe("Season 2 digest: email followers and the waitlist, leaving out people who already offered");
+    expect(summarizeAudience({ ...raw, list: { ...raw.list, excludeOffered: false } })).toBe("Season 2 digest: email followers and the waitlist");
+    expect(audienceToWriteList(raw)).toEqual({ kind: "season_digest", seasonNumber: 2, excludeOffered: true });
+    // Leaving out people who already offered is the default.
+    expect(audienceToWriteList({ sources: [], activeOnly: true, list: { kind: "season_digest", seasonNumber: 2 } }))
+      .toEqual({ kind: "season_digest", seasonNumber: 2, excludeOffered: true });
+    expect(audienceToWriteSource(raw)).not.toBe("all");
+    expect(parseIssueAudience({ sources: [], activeOnly: true, list: { kind: "season_digest", seasonNumber: 0 } })).toStrictEqual({ sources: [], activeOnly: true });
+  });
+
+  it.skipIf(skipIfNoDb)("unions email followers and the waitlist, one letter per address, and leaves out people who offered", async () => {
+    // Eve follows by email and is on the waitlist; Finn only waits; Gus follows and has offered on a live campaign.
+    await followerRow(campaignA, mail("eve"), token("eveF"));
+    await dbHelpers.upsertWaitlist({ seasonNumber: SEASON, email: mail("Eve").replace("eve", "EVE"), unsubscribeToken: token("eveW") });
+    await dbHelpers.upsertWaitlist({ seasonNumber: SEASON, email: mail("finn"), unsubscribeToken: token("finnW") });
+    await followerRow(campaignB, mail("gus"), token("gusF"));
+    const { id: live } = await adminCaller().campaigns.create({
+      title: "Test Outbound Live", description: "Outbound fixture", projectName: "Test Outbound Live", currency: "USD", financialTarget: 100,
+      items: [{ category: "resource", resourceName: "Seed", resourceDescription: "Seed", estimatedValue: 100 }],
+    });
+    createdCampaignIds.push(live);
+    await adminCaller().campaigns.updateStatus({ id: live, status: "active" });
+    await anonCaller().campaigns.submitContribution({
+      campaignId: live, contributionType: "resource", title: "Test seed", estimatedValue: 10,
+      contributorName: "Gus", contributorEmail: mail("Gus").replace("gus", "GUS"),
+    });
+    const mine = (rows: Awaited<ReturnType<typeof resolveOutboundRecipients>>) =>
+      rows.filter((r) => r.email.toLowerCase().endsWith(`.${stamp}@outbound-test.example`));
+
+    const all = mine(await resolveOutboundRecipients({ sources: [], list: { kind: "season_digest", seasonNumber: SEASON, excludeOffered: false } }));
+    const emails = all.map((r) => r.email.toLowerCase());
+    expect(emails.filter((e) => e === mail("eve"))).toHaveLength(1);
+    expect(emails).toContain(mail("finn"));
+    expect(emails).toContain(mail("gus"));
+    const eve = all.find((r) => r.email.toLowerCase() === mail("eve"))!;
+    // The follower row came first, so its token is the stop link, which stops everything.
+    expect(eve.unsubscribeUrl).toContain(`token=${token("eveF")}`);
+    expect(new URL(eve.unsubscribeUrl).searchParams.get("list")).toBe("all");
+    expect(eve.source).toBe(`season_digest:${SEASON}`);
+
+    const leavingOut = mine(await resolveOutboundRecipients({ sources: [], list: { kind: "season_digest", seasonNumber: SEASON, excludeOffered: true } }));
+    expect(leavingOut.map((r) => r.email.toLowerCase())).not.toContain(mail("gus"));
+    expect(leavingOut.map((r) => r.email.toLowerCase())).toContain(mail("finn"));
+
+    const { listFooterReason } = await import("./lib/outboundAudience");
+    expect(await listFooterReason({ kind: "season_digest", seasonNumber: SEASON, excludeOffered: true }))
+      .toBe("You asked for news about crowdpooling on regencivics.earth.");
+
+    const counts = await listAudienceCounts();
+    const current = regenSeasonSpan(new Date()).seasonNumber;
+    expect(counts.seasonDigests.map((d) => d.seasonNumber)).toEqual([current, current + 1]);
+    for (const d of counts.seasonDigests) expect(d.countExcluding).toBeLessThanOrEqual(d.count);
+    await dbHelpers.getDb().then((database) => database!.delete(campaignContributions).where(eq(campaignContributions.campaignId, live)));
   });
 });

@@ -10,7 +10,11 @@
  *
  * List audiences (2026-09-24) are people who asked for news by email without
  * an account: one campaign's email followers, everyone following any
- * campaign by email, or one season's crowdpool waitlist. They are mailed
+ * campaign by email, one season's crowdpool waitlist, or (2026-09-27) the
+ * season digest, which is every email follower plus that season's waitlist,
+ * optionally leaving out anyone who already offered on a live campaign. It
+ * is how email-only followers hear about openings and final stretches:
+ * platform notices reach account holders only. They are mailed
  * only from here (Rye's admin Outbound), never automatically, and each
  * letter carries that person's own token unsubscribe link, never the
  * newsletter prefs link.
@@ -21,13 +25,15 @@ import { getNewsletterAudience } from "../db/newsletter";
 import { managePreferencesUrl } from "./emailPrefs";
 import type { ListFooter } from "../../shared/letterHtml";
 import { parseAudienceList, type OutboundAudienceList } from "../../shared/outboundHistory";
+import { OUTBOUND_DIGEST } from "../../shared/crowdpoolCopy";
+import { regenSeasonSpan } from "../../shared/regenYear";
 
 export type OutboundAudienceInput = { sources: string[]; activeOnly?: boolean; list?: OutboundAudienceList };
 
 export type OutboundRecipient = {
   email: string;
   name: string | null;
-  /** newsletter source, or campaign:{id} | all_campaigns | waitlist:{n} (fits varchar 32). */
+  /** newsletter source, or campaign:{id} | all_campaigns | waitlist:{n} | season_digest:{n} (fits varchar 32). */
   source: string | null;
   /** The footer link for this person. Newsletter: signed prefs URL. Lists: token unsubscribe URL. */
   unsubscribeUrl: string;
@@ -46,7 +52,8 @@ export const LIST_LINK_LABEL = "Stop these emails";
 export function listUnsubscribeUrl(token: string, list?: OutboundAudienceList | null): string {
   const url = new URL(LIST_UNSUBSCRIBE_PATH, ENV.appUrl);
   url.searchParams.set("token", token);
-  if (list?.kind === "all_campaigns") url.searchParams.set("list", "all");
+  // A season digest mixes follower and waitlist rows: only "stop all" makes sense.
+  if (list?.kind === "all_campaigns" || list?.kind === "season_digest") url.searchParams.set("list", "all");
   else if (list?.kind === "waitlist") url.searchParams.set("list", "waitlist");
   return url.toString();
 }
@@ -59,12 +66,14 @@ export function previewListUnsubscribeUrl(list?: OutboundAudienceList | null): s
 export function listSource(list: OutboundAudienceList): string {
   if (list.kind === "campaign") return `campaign:${list.campaignId}`;
   if (list.kind === "all_campaigns") return "all_campaigns";
+  if (list.kind === "season_digest") return `season_digest:${list.seasonNumber}`;
   return `waitlist:${list.seasonNumber}`;
 }
 
 /** The footer's reason line for a list, in plain words. */
 export async function listFooterReason(list: OutboundAudienceList): Promise<string> {
   if (list.kind === "waitlist") return "You asked us to tell you when crowdpooling opens.";
+  if (list.kind === "season_digest") return OUTBOUND_DIGEST.footer;
   if (list.kind === "all_campaigns") return "You asked for news about a campaign on regencivics.earth.";
   const campaign = await db.getCampaignById(list.campaignId);
   const { decodeBasicEntities } = await import("../../shared/htmlText");
@@ -92,6 +101,7 @@ function dedupe<T extends { email: string }>(rows: T[]): T[] {
 
 async function resolveList(list: OutboundAudienceList): Promise<OutboundRecipient[]> {
   const source = listSource(list);
+  if (list.kind === "season_digest") return resolveSeasonDigest(list, source);
   const rows = list.kind === "campaign"
     ? await db.getEmailFollowers({ campaignId: list.campaignId })
     : list.kind === "all_campaigns"
@@ -105,6 +115,31 @@ async function resolveList(list: OutboundAudienceList): Promise<OutboundRecipien
     source,
     unsubscribeUrl: listUnsubscribeUrl(r.unsubscribeToken, list),
   }));
+}
+
+/**
+ * The season digest: every email follower (oldest follow first) then that
+ * season's waitlist, one row per lowercased address (the first row's token
+ * wins, so one letter, one stop link), minus, when excludeOffered, every
+ * address with an offer that isn't withdrawn on a live real campaign.
+ */
+async function resolveSeasonDigest(
+  list: Extract<OutboundAudienceList, { kind: "season_digest" }>,
+  source: string,
+): Promise<OutboundRecipient[]> {
+  const [followers, waitlist, offered] = await Promise.all([
+    db.getEmailFollowers(),
+    db.listWaitlist(list.seasonNumber),
+    list.excludeOffered ? db.getOfferedEmailsOnLiveCampaigns() : Promise.resolve(new Set<string>()),
+  ]);
+  return dedupe([...followers, ...waitlist])
+    .filter((r) => !offered.has(String(r.email ?? "").trim().toLowerCase()))
+    .map((r) => ({
+      email: r.email.trim(),
+      name: r.name ?? null,
+      source,
+      unsubscribeUrl: listUnsubscribeUrl(r.unsubscribeToken, list),
+    }));
 }
 
 export async function resolveOutboundRecipients(audience: OutboundAudienceInput): Promise<OutboundRecipient[]> {
@@ -129,6 +164,7 @@ export async function listAudienceCounts(): Promise<{
   campaigns: Array<{ id: number; title: string; isDemo: boolean; status: string; count: number }>;
   allCampaigns: number;
   waitlists: Array<{ seasonNumber: number; count: number }>;
+  seasonDigests: Array<{ seasonNumber: number; count: number; countExcluding: number }>;
 }> {
   const perCampaign = await db.getEmailFollowerCountsByCampaign();
   const campaigns: Array<{ id: number; title: string; isDemo: boolean; status: string; count: number }> = [];
@@ -145,5 +181,15 @@ export async function listAudienceCounts(): Promise<{
   for (const w of await db.getWaitlistCountsBySeason()) {
     waitlists.push({ seasonNumber: w.seasonNumber, count: (await resolveList({ kind: "waitlist", seasonNumber: w.seasonNumber })).length });
   }
-  return { campaigns, allCampaigns, waitlists };
+  // The season digest for the current season and the next.
+  const current = regenSeasonSpan(new Date()).seasonNumber;
+  const seasonDigests: Array<{ seasonNumber: number; count: number; countExcluding: number }> = [];
+  for (const seasonNumber of [current, current + 1]) {
+    seasonDigests.push({
+      seasonNumber,
+      count: (await resolveList({ kind: "season_digest", seasonNumber, excludeOffered: false })).length,
+      countExcluding: (await resolveList({ kind: "season_digest", seasonNumber, excludeOffered: true })).length,
+    });
+  }
+  return { campaigns, allCampaigns, waitlists, seasonDigests };
 }

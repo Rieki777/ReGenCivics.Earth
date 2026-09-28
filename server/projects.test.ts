@@ -79,6 +79,20 @@ describe("getById keeps its shape (hub contract)", () => {
     expect(Object.keys(page.front!).sort()).toEqual(expected);
     expect(page.front!.id).toBe(id);
   });
+
+  it.skipIf(skipIfNoDb)("carries closedAt and closeOutcome (contract 5), and the page tells a viewer whether they follow", async () => {
+    expect(PUBLIC_CAMPAIGN_FIELDS).toContain("closedAt");
+    expect(PUBLIC_CAMPAIGN_FIELDS).toContain("closeOutcome");
+    const applicationId = await createApprovedApplication(OWNER);
+    const id = await makeCampaign(applicationId, "Contract five");
+    const view = await anonCaller().campaigns.getById({ id });
+    expect(view).toMatchObject({ closedAt: null, closeOutcome: null });
+    const page = await anonCaller().projects.getPublic({ key: String(applicationId) });
+    expect(Object.keys(page).sort()).toEqual(
+      ["campaigns", "canonicalPath", "front", "isSteward", "project", "stewardWaiting", "suggestions", "viewer"].sort(),
+    );
+    expect(page.viewer).toEqual({ followsProject: false });
+  });
 });
 
 describe("keys", () => {

@@ -15,6 +15,7 @@ import { TRPCError } from "@trpc/server";
 import { isListableValue } from "@shared/needRules";
 import { ZERO_VALUE } from "@shared/crowdpoolCopy";
 import { decodeBasicEntities } from "@shared/htmlText";
+import { projectRefFor } from "@shared/projectKey";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1697,17 +1698,141 @@ export async function upsertCampaignFollower(data: InsertCampaignFollower): Prom
     .onDuplicateKeyUpdate({ set: { id: sql`id` } });
 }
 
-/** Account holders following a campaign via the polymorphic user_follows table. */
+// ── Project follows (build spec 2026-09-27, section 12; migration 0265) ─────
+// A follow is on the project, `user_follows.targetType = 'project'` with the
+// ref 'a{applicationId}' or 'c{campaignId}' (projectRefFor in
+// shared/projectKey.ts), so it carries from season to season. Old campaign
+// follows stay, and every read below takes the union of the two.
+
+/** The project ref of a campaign ('a{applicationId}' or 'c{id}'), or null when the campaign is gone. */
+export async function getCampaignProjectRef(campaignId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db
+    .select({ id: campaigns.id, applicationId: campaigns.applicationId })
+    .from(campaigns)
+    .where(eq(campaigns.id, campaignId))
+    .limit(1);
+  return row ? projectRefFor(row) : null;
+}
+
+/** The user_follows condition for "follows this campaign": a campaign follow on it, or a project follow on its project. */
+function campaignFollowWhere(campaignId: number, ref: string | null) {
+  const onCampaign = and(eq(userFollows.targetType, 'campaign'), eq(userFollows.targetId, String(campaignId)));
+  return ref ? or(onCampaign, and(eq(userFollows.targetType, 'project'), eq(userFollows.targetId, ref))) : onCampaign;
+}
+
+/**
+ * Account holders following a campaign: campaign follows on it plus project
+ * follows on its project, distinct. Steward updates, the cancel and close
+ * notices, the opening and final-stretch notices all read this one list.
+ */
 export async function getCampaignFollowerUserIds(campaignId: number): Promise<number[]> {
   const db = await getDb();
   if (!db) return [];
+  const ref = await getCampaignProjectRef(campaignId);
+  const rows = await db.selectDistinct({ userId: userFollows.userId }).from(userFollows)
+    .where(campaignFollowWhere(campaignId, ref));
+  return rows.map(r => Number(r.userId));
+}
 
-  const rows = await db.select({ userId: userFollows.userId }).from(userFollows)
-    .where(and(
+/** Follow a project with an account. A repeat is a no-op (the user_follows_uq key). */
+export async function addProjectFollow(userId: number, ref: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(userFollows).ignore().values({ userId, targetType: 'project', targetId: ref });
+}
+
+/**
+ * Stop following a project: the project follow and every campaign follow on
+ * the project's campaigns, so no old campaign follow keeps the notices coming.
+ */
+export async function removeProjectFollow(userId: number, ref: string, campaignIds: number[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(userFollows).where(and(
+    eq(userFollows.userId, userId),
+    eq(userFollows.targetType, 'project'),
+    eq(userFollows.targetId, ref),
+  ));
+  if (campaignIds.length > 0) {
+    await db.delete(userFollows).where(and(
+      eq(userFollows.userId, userId),
       eq(userFollows.targetType, 'campaign'),
-      eq(userFollows.targetId, String(campaignId)),
+      inArray(userFollows.targetId, campaignIds.map(String)),
     ));
-  return rows.map(r => r.userId);
+  }
+}
+
+/** Whether a user follows a project: its project follow, or a campaign follow on any of the given campaigns. */
+export async function userFollowsProject(userId: number, ref: string, campaignIds: number[]): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const onProject = and(eq(userFollows.targetType, 'project'), eq(userFollows.targetId, ref));
+  const where = campaignIds.length > 0
+    ? or(onProject, and(eq(userFollows.targetType, 'campaign'), inArray(userFollows.targetId, campaignIds.map(String))))
+    : onProject;
+  const rows = await db.select({ id: userFollows.id }).from(userFollows)
+    .where(and(eq(userFollows.userId, userId), where))
+    .limit(1);
+  return rows.length > 0;
+}
+
+/**
+ * Of these account holders, the ones with any contribution row on the
+ * campaign, by user id or by their account email matching the email on the
+ * offer (lowercased). The final-stretch notice skips them.
+ */
+export async function accountIdsWithOfferOn(campaignId: number, userIds: number[]): Promise<Set<number>> {
+  const out = new Set<number>();
+  const ids = Array.from(new Set(userIds.filter((id) => Number.isInteger(id) && id > 0)));
+  if (ids.length === 0) return out;
+  const db = await getDb();
+  if (!db) return out;
+  const idList = sql.join(ids.map((id) => sql`${id}`), sql`, `);
+  // By account: any row carrying their user id.
+  const [byId] = await db.execute(sql`
+    SELECT DISTINCT cc.userId AS id
+    FROM campaign_contributions cc
+    WHERE cc.campaignId = ${campaignId} AND cc.userId IN (${idList})
+  `) as any;
+  // By email: a row whose address is their account email, signed in or not.
+  const [byEmail] = await db.execute(sql`
+    SELECT DISTINCT u.id AS id
+    FROM users u
+    JOIN campaign_contributions cc
+      ON cc.campaignId = ${campaignId}
+     AND LOWER(TRIM(cc.contributorEmail)) = LOWER(TRIM(u.email))
+    WHERE u.id IN (${idList}) AND u.email IS NOT NULL AND u.email <> ''
+  `) as any;
+  for (const r of [...((byId as any[]) ?? []), ...((byEmail as any[]) ?? [])]) out.add(Number(r.id));
+  return out;
+}
+
+/**
+ * Every address with a contribution that isn't withdrawn on a live, real
+ * campaign: the email on the offer, and the account email when the offer is
+ * linked to one. Lowercased and trimmed. The Outbound season digest's
+ * "already offered" exclusion.
+ */
+export async function getOfferedEmailsOnLiveCampaigns(): Promise<Set<string>> {
+  const out = new Set<string>();
+  const db = await getDb();
+  if (!db) return out;
+  const [rows] = await db.execute(sql`
+    SELECT LOWER(TRIM(cc.contributorEmail)) AS offerEmail, LOWER(TRIM(u.email)) AS accountEmail
+    FROM campaign_contributions cc
+    JOIN campaigns c ON c.id = cc.campaignId
+    LEFT JOIN users u ON u.id = cc.userId
+    WHERE cc.status <> ${'withdrawn'}
+      AND c.status = ${'active'}
+      AND COALESCE(c.isDemo, 0) = 0
+  `) as any;
+  for (const r of (rows as any[]) ?? []) {
+    if (r.offerEmail) out.add(String(r.offerEmail));
+    if (r.accountEmail) out.add(String(r.accountEmail));
+  }
+  return out;
 }
 
 /**
@@ -1900,14 +2025,22 @@ export async function setNeedMarker(
   return { changed: asMutationResult(result).affectedRows > 0 };
 }
 
-/** How many people follow a campaign: with an account, and by email only. */
+/**
+ * How many people follow a campaign: with an account (campaign follows plus
+ * project follows on its project, distinct people), and by email only (the
+ * campaign's own email followers plus the project's, distinct addresses).
+ */
 export async function getCampaignFollowerCounts(campaignId: number): Promise<{ accounts: number; emails: number }> {
   const db = await getDb();
   if (!db) return { accounts: 0, emails: 0 };
-  const [acc] = await db.select({ n: sql<number>`COUNT(*)` }).from(userFollows)
-    .where(and(eq(userFollows.targetType, 'campaign'), eq(userFollows.targetId, String(campaignId))));
-  const [em] = await db.select({ n: sql<number>`COUNT(*)` }).from(campaignFollowers)
-    .where(eq(campaignFollowers.campaignId, campaignId));
+  const ref = await getCampaignProjectRef(campaignId);
+  const [acc] = await db.select({ n: sql<number>`COUNT(DISTINCT ${userFollows.userId})` }).from(userFollows)
+    .where(campaignFollowWhere(campaignId, ref));
+  const emailWhere = ref
+    ? or(eq(campaignFollowers.campaignId, campaignId), eq(campaignFollowers.projectRef, ref))
+    : eq(campaignFollowers.campaignId, campaignId);
+  const [em] = await db.select({ n: sql<number>`COUNT(DISTINCT LOWER(${campaignFollowers.email}))` }).from(campaignFollowers)
+    .where(emailWhere);
   return { accounts: Number(acc?.n ?? 0), emails: Number(em?.n ?? 0) };
 }
 
@@ -2013,6 +2146,212 @@ export async function deleteWaitlistByToken(token: string, scope: 'this' | 'all'
     ? await db.delete(w).where(sql`LOWER(${w.email}) = ${row.email.toLowerCase()}`)
     : await db.delete(w).where(eq(w.unsubscribeToken, token));
   return { email: row.email, removed: asMutationResult(result).affectedRows };
+}
+
+// ── The close, nudges and the final stretch (build spec 2026-09-27, 8 and 9) ─
+// The rows the daily crowdpool job (server/jobs/crowdpoolDailyJob.ts) works
+// on. Each query is a superset with a day's margin; the pure functions in
+// shared/campaignClose.ts decide what is due, so each date has one
+// definition. Every stamp is a conditional UPDATE, so two runs at once claim
+// a row once. Tests pass `onlyCampaignIds` so a run never touches another
+// suite's campaigns (scratch holds a thousand old fixtures).
+
+const DAY_MS_DB = 86_400_000;
+
+function onlyIds(ids: number[] | undefined) {
+  return ids ? inArray(campaigns.id, ids.length > 0 ? ids : [-1]) : undefined;
+}
+
+/** Real live campaigns whose close date is today or earlier (a day's margin; isDueToClose decides). */
+export async function listCloseCandidates(opts: { now: Date; onlyCampaignIds?: number[] }): Promise<Campaign[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const horizon = new Date(opts.now.getTime() + DAY_MS_DB);
+  return await db.select().from(campaigns).where(and(
+    eq(campaigns.status, 'active'),
+    sql`COALESCE(${campaigns.isDemo}, 0) = 0`,
+    isNull(campaigns.closedAt),
+    sql`COALESCE(${campaigns.startedAt}, ${campaigns.publishedAt}) IS NOT NULL`,
+    sql`${campaigns.durationDays} > 0`,
+    sql`DATE_ADD(COALESCE(${campaigns.startedAt}, ${campaigns.publishedAt}), INTERVAL ${campaigns.durationDays} DAY) <= ${horizon}`,
+    onlyIds(opts.onlyCampaignIds),
+  )).orderBy(asc(campaigns.id));
+}
+
+/**
+ * Closes whose notices did not all go out: the flip landed, the stamp did
+ * not. Only closes older than `leaseMinutes`, so a run never races a close
+ * another run is still telling people about.
+ */
+export async function listUnnoticedCloses(opts: { now: Date; leaseMinutes: number; onlyCampaignIds?: number[] }): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const before = new Date(opts.now.getTime() - opts.leaseMinutes * 60_000);
+  const rows = await db.select({ id: campaigns.id }).from(campaigns).where(and(
+    inArray(campaigns.status, ['closed', 'completed']),
+    isNotNull(campaigns.closeOutcome),
+    isNull(campaigns.closeNoticedAt),
+    sql`${campaigns.closedAt} <= ${before}`,
+    onlyIds(opts.onlyCampaignIds),
+  )).orderBy(asc(campaigns.id));
+  return rows.map((r) => Number(r.id));
+}
+
+/** The close's notices went out. */
+export async function stampCloseNoticed(campaignId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(campaigns).set({ closeNoticedAt: sql`NOW()` as any })
+    .where(and(eq(campaigns.id, campaignId), isNull(campaigns.closeNoticedAt)));
+}
+
+export type NudgeCandidate = {
+  id: number;
+  campaignId: number;
+  userId: number | null;
+  title: string;
+  contributorName: string | null;
+  isAnonymous: number | boolean | null;
+  submittedAt: Date;
+  nudge1At: Date | null;
+  nudge2At: Date | null;
+  waitNoteAt: Date | null;
+  campaignTitle: string;
+  projectName: string | null;
+  applicationId: number | null;
+  ownerId: number;
+  campaignStatus: string;
+};
+
+/**
+ * Offers waiting on stewards 2 to 30 days on real live campaigns, with a
+ * nudge or the contributor's note still unsent (section 8.3). Oldest first,
+ * 500 at most per run.
+ */
+export async function listNudgeCandidates(opts: { now: Date; onlyCampaignIds?: number[] }): Promise<NudgeCandidate[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const twoDays = new Date(opts.now.getTime() - 2 * DAY_MS_DB);
+  const lookback = new Date(opts.now.getTime() - 30 * DAY_MS_DB);
+  const cc = campaignContributions;
+  const rows = await db.select({
+    id: cc.id,
+    campaignId: cc.campaignId,
+    userId: cc.userId,
+    title: cc.title,
+    contributorName: cc.contributorName,
+    isAnonymous: cc.isAnonymous,
+    submittedAt: cc.submittedAt,
+    nudge1At: cc.nudge1At,
+    nudge2At: cc.nudge2At,
+    waitNoteAt: cc.waitNoteAt,
+    campaignTitle: campaigns.title,
+    projectName: campaigns.projectName,
+    applicationId: campaigns.applicationId,
+    ownerId: campaigns.userId,
+    campaignStatus: campaigns.status,
+  })
+    .from(cc)
+    .innerJoin(campaigns, eq(campaigns.id, cc.campaignId))
+    .where(and(
+      eq(cc.status, 'pending'),
+      eq(campaigns.status, 'active'),
+      sql`COALESCE(${campaigns.isDemo}, 0) = 0`,
+      sql`${cc.submittedAt} <= ${twoDays}`,
+      sql`${cc.submittedAt} >= ${lookback}`,
+      or(isNull(cc.nudge1At), isNull(cc.nudge2At), and(isNotNull(cc.userId), isNull(cc.waitNoteAt))),
+      onlyIds(opts.onlyCampaignIds),
+    ))
+    .orderBy(asc(cc.submittedAt), asc(cc.id))
+    .limit(500);
+  return rows as NudgeCandidate[];
+}
+
+/**
+ * Claim a steward nudge step on a waiting offer: true when this call claimed
+ * it. Step 2 also stamps step 1 when it was still empty, so an offer first
+ * found at day 8 is nudged once. `firstStamped` says whether step 1 was
+ * stamped by this claim, so a failed send can hand back exactly what it took.
+ */
+export async function claimNudgeStep(contributionId: number, step: 1 | 2): Promise<{ claimed: boolean; firstStamped: boolean }> {
+  const db = await getDb();
+  if (!db) return { claimed: false, firstStamped: false };
+  const cc = campaignContributions;
+  if (step === 1) {
+    const r = await db.update(cc).set({ nudge1At: sql`NOW()` as any })
+      .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge1At), isNull(cc.nudge2At)));
+    const claimed = asMutationResult(r).affectedRows === 1;
+    return { claimed, firstStamped: claimed };
+  }
+  const [before] = await db.select({ nudge1At: cc.nudge1At }).from(cc).where(eq(cc.id, contributionId)).limit(1);
+  const r = await db.update(cc).set({ nudge2At: sql`NOW()` as any, nudge1At: sql`COALESCE(${cc.nudge1At}, NOW())` as any })
+    .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge2At)));
+  const claimed = asMutationResult(r).affectedRows === 1;
+  return { claimed, firstStamped: claimed && !before?.nudge1At };
+}
+
+/** Hand back a nudge step whose every notice failed, so the next run tries again. */
+export async function releaseNudgeStep(contributionId: number, step: 1 | 2, firstStamped: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const cc = campaignContributions;
+  const set: Record<string, unknown> = step === 1 ? { nudge1At: null } : { nudge2At: null };
+  if (step === 2 && firstStamped) set.nudge1At = null;
+  await db.update(cc).set(set as any).where(eq(cc.id, contributionId));
+}
+
+/** Claim the contributor's "still waiting" note on an offer: true when this call claimed it. */
+export async function claimWaitNote(contributionId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const cc = campaignContributions;
+  const r = await db.update(cc).set({ waitNoteAt: sql`NOW()` as any })
+    .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNotNull(cc.userId), isNull(cc.waitNoteAt)));
+  return asMutationResult(r).affectedRows === 1;
+}
+
+export async function releaseWaitNote(contributionId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(campaignContributions).set({ waitNoteAt: null }).where(eq(campaignContributions.id, contributionId));
+}
+
+/**
+ * Real live campaigns not yet given the final-stretch notice, closing in the
+ * next 2 to 15 days (a day's margin each side; finalStretchDue decides).
+ */
+export async function listFinalStretchCandidates(opts: { now: Date; onlyCampaignIds?: number[] }): Promise<Campaign[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const from = new Date(opts.now.getTime() + 2 * DAY_MS_DB);
+  const to = new Date(opts.now.getTime() + 15 * DAY_MS_DB);
+  const ends = sql`DATE_ADD(COALESCE(${campaigns.startedAt}, ${campaigns.publishedAt}), INTERVAL ${campaigns.durationDays} DAY)`;
+  return await db.select().from(campaigns).where(and(
+    eq(campaigns.status, 'active'),
+    sql`COALESCE(${campaigns.isDemo}, 0) = 0`,
+    isNull(campaigns.finalStretchNoticedAt),
+    isNull(campaigns.closedAt),
+    sql`COALESCE(${campaigns.startedAt}, ${campaigns.publishedAt}) IS NOT NULL`,
+    sql`${campaigns.durationDays} > 0`,
+    sql`${ends} >= ${from}`,
+    sql`${ends} <= ${to}`,
+    onlyIds(opts.onlyCampaignIds),
+  )).orderBy(asc(campaigns.id));
+}
+
+/** Claim the final-stretch notice for a campaign: true when this call claimed it. */
+export async function claimFinalStretch(campaignId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const r = await db.update(campaigns).set({ finalStretchNoticedAt: sql`NOW()` as any })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, 'active'), isNull(campaigns.finalStretchNoticedAt)));
+  return asMutationResult(r).affectedRows === 1;
+}
+
+export async function releaseFinalStretch(campaignId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(campaigns).set({ finalStretchNoticedAt: null }).where(eq(campaigns.id, campaignId));
 }
 
 /** Remove every email-list row (campaign followers and waitlist) for one email address. */

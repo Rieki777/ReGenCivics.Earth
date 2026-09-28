@@ -15,15 +15,22 @@
  *      contributors, account followers), once each, never the actor, with up
  *      to three live campaigns that could use their energy;
  *   6. emails contributors WITHOUT an account in the background, one email
- *      per address, stamping cancelNoticedAt only when the send went out. A
- *      send the hourly cap held back stays NULL and is retried: once after
- *      65 minutes, then by the daily batch for 30 days.
+ *      per address, claiming the rows' cancelNoticedAt before the send and
+ *      handing them back when the send did not go out. A send the hourly
+ *      cap held back is retried: once after 65 minutes, then by the daily
+ *      crowdpool job and the nightly batch for 30 days.
+ *
+ * The email run (sendPendingCampaignEndEmails) also serves the close
+ * (server/lib/campaign-close.ts, build spec 2026-09-27, section 9.5): a
+ * campaign that closed without completing, and one that completed at its
+ * close date with offers still waiting, reach people without an account
+ * through the same cancellation email, worded for the close.
  *
  * Email-only followers (campaign_followers) get no automatic email: Rye
  * reaches them from admin Outbound with the campaign's follower audience.
  */
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import {
   campaigns,
   campaignContributions,
@@ -40,7 +47,16 @@ import { decodeBasicEntities } from "../../shared/htmlText";
 import { projectPathForCampaignFocus } from "../../shared/projectKey";
 import { isAdminUser } from "./public-projection";
 import { UNPUBLISHED_CAMPAIGN_STATUSES, canStewardCampaign, getCampaignStewardIds } from "./project-steward";
-import { notifyCampaignCancelled, recipientsOf } from "./campaign-notify";
+import {
+  buildCampaignClosed,
+  buildOfferClosedAtCompletion,
+  deliver,
+  notifyCampaignCancelled,
+  recipientsOf,
+} from "./campaign-notify";
+import { otherOpenNeeds } from "./open-needs";
+import { closeLinesFor, otherNeedsLine } from "../../shared/campaignClose";
+import { campaignEndsAt, formatCloseDate } from "../../shared/campaignProgress";
 import { placeOf, suggestAlternatives, type CampaignSuggestion } from "./campaign-suggest";
 import type { insertNotification } from "./forum-notify";
 import type { sendEmail as SendEmail } from "../_core/email";
@@ -219,7 +235,7 @@ export async function cancelCampaign(
   // ── 6. Direct emails to contributors without an account, in the background.
   let emailQueued = 0;
   try {
-    emailQueued = (await pendingCancellationGroups(campaign)).groups.length;
+    emailQueued = (await pendingCampaignEndGroups(campaign, "cancelled")).groups.length;
   } catch (err) {
     console.warn("[campaign-cancel] counting pending emails failed:", err);
   }
@@ -254,46 +270,117 @@ export async function cancelCampaign(
 }
 
 // ─── Direct emails to contributors without an account ──────────────────────
+//
+// One run for every way a campaign ends (build spec 2026-09-27, section
+// 9.5): a cancel, a close that didn't complete, and a completion at the close
+// date that closed offers still waiting. People without an account get one
+// email per address through the existing cancellation email, worded for the
+// ending, so they still receive only the three fixed emails plus this one.
 
-type PendingRow = { id: number; contributorEmail: string; contributorName: string };
+/** How a campaign ended, for the email run. Null: nothing to send. */
+export type CampaignEndKind = "cancelled" | "closed" | "completed_unanswered";
+
+export function campaignEndKind(campaign: Pick<Campaign, "status" | "closeOutcome">): CampaignEndKind | null {
+  if (campaign.status === "cancelled") return "cancelled";
+  if (campaign.status === "closed") return "closed";
+  if (campaign.status === "completed" && campaign.closeOutcome === "complete") return "completed_unanswered";
+  return null;
+}
 
 /**
- * Rows still owed a cancellation email, grouped by lowercased trimmed email.
+ * The rows each ending tells people about:
+ *   - cancelled: closed and delivered rows, as before;
+ *   - closed: waiting offers the close closed, accepted offers the close
+ *     released (closeReleasedAt), accepted offers still standing, delivered;
+ *   - completed at the close date: only the waiting offers it closed.
+ */
+function endRowWhere(kind: CampaignEndKind) {
+  const cc = campaignContributions;
+  if (kind === "cancelled") return inArray(cc.status, ["cancelled", "fulfilled", "thanked"]);
+  if (kind === "completed_unanswered") return eq(cc.status, "cancelled");
+  return or(
+    inArray(cc.status, ["cancelled", "accepted", "fulfilled", "thanked"]),
+    and(eq(cc.status, "released"), isNotNull(cc.closeReleasedAt)),
+  );
+}
+
+type PendingRow = {
+  id: number;
+  contributorEmail: string;
+  contributorName: string;
+  status: string;
+  title: string;
+  offerMode: "give" | "lend" | null;
+  lendUntil: string | null;
+  closeReleasedAt: Date | null;
+};
+
+type EndGroup = { email: string; name: string; rowIds: number[]; rows: PendingRow[] };
+
+/**
+ * Every account holder an ending reached on the spine, for telling which
+ * addresses already heard. A cancel: gatherCancelRecipients. A close: the
+ * stewards, every account holder with a row the close tells about, and (for
+ * a close that didn't complete) the followers.
+ */
+async function gatherEndRecipients(campaign: Campaign, kind: CampaignEndKind): Promise<number[]> {
+  if (kind === "cancelled") return gatherCancelRecipients(campaign, { includeFollowers: wasPublished(campaign) });
+  const database = await db.getDb();
+  if (!database) return [];
+  const [stewardIds, contribRows, followerIds] = await Promise.all([
+    getCampaignStewardIds(campaign),
+    database
+      .select({ userId: campaignContributions.userId })
+      .from(campaignContributions)
+      .where(and(eq(campaignContributions.campaignId, campaign.id), isNotNull(campaignContributions.userId), endRowWhere(kind))),
+    kind === "closed" ? db.getCampaignFollowerUserIds(campaign.id) : Promise.resolve([] as number[]),
+  ]);
+  return recipientsOf([...stewardIds, ...contribRows.map((r) => r.userId), ...followerIds]);
+}
+
+/**
+ * Rows still owed an ending email, grouped by lowercased trimmed email.
  * Emails that belong to an account the spine already reached are split out
  * (`spineCovered`) so the caller can stamp them without sending.
  */
-async function pendingCancellationGroups(campaign: Pick<Campaign, "id" | "userId" | "applicationId" | "status" | "startedAt" | "publishedAt">): Promise<{
-  groups: Array<{ email: string; name: string; rowIds: number[] }>;
+async function pendingCampaignEndGroups(campaign: Campaign, kind: CampaignEndKind): Promise<{
+  groups: EndGroup[];
   spineCoveredRowIds: number[];
 }> {
   const database = await db.getDb();
   if (!database) return { groups: [], spineCoveredRowIds: [] };
+  const cc = campaignContributions;
   const rows: PendingRow[] = await database
     .select({
-      id: campaignContributions.id,
-      contributorEmail: campaignContributions.contributorEmail,
-      contributorName: campaignContributions.contributorName,
+      id: cc.id,
+      contributorEmail: cc.contributorEmail,
+      contributorName: cc.contributorName,
+      status: cc.status,
+      title: cc.title,
+      offerMode: cc.offerMode,
+      lendUntil: cc.lendUntil,
+      closeReleasedAt: cc.closeReleasedAt,
     })
-    .from(campaignContributions)
+    .from(cc)
     .where(and(
-      eq(campaignContributions.campaignId, campaign.id),
-      isNull(campaignContributions.userId),
-      isNull(campaignContributions.cancelNoticedAt),
-      inArray(campaignContributions.status, ["cancelled", "fulfilled", "thanked"]),
+      eq(cc.campaignId, campaign.id),
+      isNull(cc.userId),
+      isNull(cc.cancelNoticedAt),
+      endRowWhere(kind),
     ))
-    .orderBy(campaignContributions.id);
+    .orderBy(cc.id);
   if (rows.length === 0) return { groups: [], spineCoveredRowIds: [] };
 
   // An account holder whose earlier offer is still unlinked hears on the
   // spine; they must not get a second, direct email.
-  const recipientIds = await gatherCancelRecipients(campaign, { includeFollowers: wasPublished(campaign) });
+  const recipientIds = await gatherEndRecipients(campaign, kind);
   const covered = new Set<string>();
   if (recipientIds.length > 0) {
     const accounts = await database.select({ email: users.email }).from(users).where(inArray(users.id, recipientIds));
     for (const a of accounts) if (a.email) covered.add(a.email.trim().toLowerCase());
   }
 
-  const groups = new Map<string, { email: string; name: string; rowIds: number[] }>();
+  const groups = new Map<string, EndGroup>();
   const spineCoveredRowIds: number[] = [];
   for (const r of rows) {
     const key = String(r.contributorEmail ?? "").trim().toLowerCase();
@@ -303,8 +390,12 @@ async function pendingCancellationGroups(campaign: Pick<Campaign, "id" | "userId
       continue;
     }
     const g = groups.get(key);
-    if (g) g.rowIds.push(r.id);
-    else groups.set(key, { email: String(r.contributorEmail).trim(), name: r.contributorName, rowIds: [r.id] });
+    if (g) {
+      g.rowIds.push(r.id);
+      g.rows.push(r);
+    } else {
+      groups.set(key, { email: String(r.contributorEmail).trim(), name: r.contributorName, rowIds: [r.id], rows: [r] });
+    }
   }
   return { groups: Array.from(groups.values()), spineCoveredRowIds };
 }
@@ -326,44 +417,88 @@ async function cancellationMessage(campaignId: number): Promise<{ text: string; 
   return text ? { text, authorId: row.authorId } : null;
 }
 
+/** "21 March 2027" for a close, from closedAt (or the close date when it is missing). */
+export function closedOnWords(campaign: Pick<Campaign, "closedAt" | "startedAt" | "publishedAt" | "durationDays" | "status" | "isDemo">): string {
+  const at = campaign.closedAt ? new Date(campaign.closedAt) : campaignEndsAt(campaign as any);
+  return at && !isNaN(at.getTime()) ? formatCloseDate(at) : "its close date";
+}
+
 /**
- * Someone whose cancellation email the hourly cap held back, and who then
- * made an account, has their rows linked (userId set) with cancelNoticedAt
- * still NULL. The email run only looks at rows with no account, and the
- * spine recipients were worked out at cancel time, so without this they
- * would hear nothing. Send them the spine notice now and stamp their rows.
+ * Someone whose ending email the hourly cap held back, and who then made an
+ * account, has their rows linked (userId set) with cancelNoticedAt still
+ * NULL. The email run only looks at rows with no account, and the spine
+ * recipients were worked out at the ending, so without this they would hear
+ * nothing. Send them the spine notice now and stamp their rows.
  */
 async function noticeLinkedAccounts(
   campaign: Campaign,
+  kind: CampaignEndKind,
   deps: Pick<CancelDeps, "insert">,
 ): Promise<number> {
   const database = await db.getDb();
   if (!database) return 0;
+  const cc = campaignContributions;
   const rows = await database
-    .select({ id: campaignContributions.id, userId: campaignContributions.userId })
-    .from(campaignContributions)
+    .select({
+      id: cc.id,
+      userId: cc.userId,
+      status: cc.status,
+      title: cc.title,
+      offerMode: cc.offerMode,
+      lendUntil: cc.lendUntil,
+      closeReleasedAt: cc.closeReleasedAt,
+    })
+    .from(cc)
     .where(and(
-      eq(campaignContributions.campaignId, campaign.id),
-      isNotNull(campaignContributions.userId),
-      isNull(campaignContributions.cancelNoticedAt),
-      inArray(campaignContributions.status, ["cancelled", "fulfilled", "thanked"]),
+      eq(cc.campaignId, campaign.id),
+      isNotNull(cc.userId),
+      isNull(cc.cancelNoticedAt),
+      endRowWhere(kind),
     ));
   if (rows.length === 0) return 0;
   const recipientIds = recipientsOf(rows.map((r) => r.userId));
   try {
-    const [note, suggestions] = await Promise.all([
-      cancellationMessage(campaign.id),
-      suggestAlternatives(campaign, 3),
-    ]);
-    // The dedupe key (cp:cancel:{cid}:u{uid}) keeps anyone who already had
-    // the notice from getting it twice.
-    await notifyCampaignCancelled(
-      { campaign, recipientIds, message: note?.text ?? null, suggestions, actorId: null },
-      { insert: deps.insert },
-    );
-    await database.update(campaignContributions)
+    if (kind === "cancelled") {
+      const [note, suggestions] = await Promise.all([
+        cancellationMessage(campaign.id),
+        suggestAlternatives(campaign, 3),
+      ]);
+      // The dedupe key (cp:cancel:{cid}:u{uid}) keeps anyone who already had
+      // the notice from getting it twice.
+      await notifyCampaignCancelled(
+        { campaign, recipientIds, message: note?.text ?? null, suggestions, actorId: null },
+        { insert: deps.insert },
+      );
+    } else {
+      // A close: the same notice everyone else had (cp:close:{cid}:u{uid}).
+      const project = campaign.projectName || campaign.title;
+      const others = otherNeedsLine(await otherOpenNeeds(campaign.id, 2), project);
+      const byUser = new Map<number, typeof rows>();
+      for (const r of rows) {
+        const list = byUser.get(r.userId!) ?? [];
+        list.push(r);
+        byUser.set(r.userId!, list);
+      }
+      const inputs = kind === "closed"
+        ? buildCampaignClosed({
+            campaign,
+            closedOn: closedOnWords(campaign),
+            stewardIds: [],
+            releasedCount: 0,
+            contributors: Array.from(byUser.entries()).map(([userId, list]) => ({ userId, lines: closeLinesFor(list, project) })),
+            followerIds: [],
+            otherNeedsLine: others,
+          })
+        : buildOfferClosedAtCompletion({
+            campaign,
+            recipients: Array.from(byUser.entries()).map(([userId, list]) => ({ userId, titles: list.map((r) => r.title) })),
+            otherNeedsLine: others,
+          });
+      await deliver(inputs, { insert: deps.insert });
+    }
+    await database.update(cc)
       .set({ cancelNoticedAt: sql`NOW()` as any })
-      .where(inArray(campaignContributions.id, rows.map((r) => r.id)));
+      .where(inArray(cc.id, rows.map((r) => r.id)));
   } catch (err) {
     console.warn("[campaign-cancel] notice to newly linked accounts failed; it stays queued:", err);
     return 0;
@@ -372,27 +507,37 @@ async function noticeLinkedAccounts(
 }
 
 /**
- * Send the cancellation email to every contributor without an account who
- * has not had it yet, one email per address. Stamps cancelNoticedAt on all
- * of that address's rows only when sendEmail returned an id; a held send
- * stays NULL for the next run. Safe to call repeatedly.
+ * Send the ending email to every contributor without an account who has not
+ * had it yet, one email per address: for a cancelled campaign, a campaign
+ * that closed without completing, and one that completed at its close date
+ * (only people whose offer was still waiting). Safe to call repeatedly.
+ *
+ * Claim, then send: before sending to an address, its rows are stamped with
+ * cancelNoticedAt, conditional on the stamp being empty, and the email goes
+ * only when every row was claimed. A send that returns no id (the hourly cap
+ * or EMAIL_HOLD) or throws hands the rows back (NULL) for the retry. Before
+ * 2026-09-27 the send came first and the stamp after, so the 65-minute retry
+ * and the daily batch could both email the same address. When another run
+ * claimed part of an address's rows, that run is emailing the address, so
+ * this one sends nothing: one email per address.
  */
-export async function sendPendingCancellationEmails(
+export async function sendPendingCampaignEndEmails(
   campaignId: number,
   deps: Pick<CancelDeps, "sendEmail" | "insert"> & { cancelledBy?: "stewards" | "team" | null } = {},
 ): Promise<{ found: number; sent: number }> {
   const database = await db.getDb();
   if (!database) return { found: 0, sent: 0 };
   const campaign = await db.getCampaignById(campaignId);
-  if (!campaign || campaign.status !== "cancelled") return { found: 0, sent: 0 };
+  const kind = campaign ? campaignEndKind(campaign) : null;
+  if (!campaign || !kind) return { found: 0, sent: 0 };
 
-  await noticeLinkedAccounts(campaign, deps);
+  await noticeLinkedAccounts(campaign, kind, deps);
 
-  const { groups, spineCoveredRowIds } = await pendingCancellationGroups(campaign);
+  const { groups, spineCoveredRowIds } = await pendingCampaignEndGroups(campaign, kind);
   if (spineCoveredRowIds.length > 0) {
     await database.update(campaignContributions)
       .set({ cancelNoticedAt: sql`NOW()` as any })
-      .where(inArray(campaignContributions.id, spineCoveredRowIds));
+      .where(and(inArray(campaignContributions.id, spineCoveredRowIds), isNull(campaignContributions.cancelNoticedAt)));
   }
   if (groups.length === 0) return { found: 0, sent: 0 };
 
@@ -400,72 +545,127 @@ export async function sendPendingCancellationEmails(
   const send = deps.sendEmail ?? email.sendEmail;
   const projectPath = projectPathForCampaignFocus(campaign);
   const links = email.contributionEmailLinks(projectPath);
-  const [cancelNote, suggestions, stewardIds] = await Promise.all([
-    cancellationMessage(campaign.id),
-    suggestAlternatives(campaign, 3),
-    getCampaignStewardIds(campaign).catch(() => [] as number[]),
-  ]);
-  const message = cancelNote?.text ?? null;
-  // The actor is known on the first run. A later retry works it out from who
-  // wrote the message, and reads neutrally when there was none.
-  const cancelledBy = deps.cancelledBy
-    ?? (cancelNote ? (stewardIds.includes(cancelNote.authorId) ? "stewards" : "team") : null);
-  const suggestionLinks = suggestions.map((s) => ({
-    title: s.title,
-    place: placeOf(s),
-    url: email.toAbsoluteUrl(s.path, { campaign: "campaign-cancelled" }),
-  }));
+  const projectName = campaign.projectName || campaign.title;
+
+  // What every email for this ending shares.
+  let message: string | null = null;
+  let cancelledBy: "stewards" | "team" | null = null;
+  let suggestionLinks: Array<{ title: string; place?: string | null; url: string }> = [];
+  if (kind === "cancelled") {
+    const [cancelNote, suggestions, stewardIds] = await Promise.all([
+      cancellationMessage(campaign.id),
+      suggestAlternatives(campaign, 3),
+      getCampaignStewardIds(campaign).catch(() => [] as number[]),
+    ]);
+    message = cancelNote?.text ?? null;
+    // The actor is known on the first run. A later retry works it out from
+    // who wrote the message, and reads neutrally when there was none.
+    cancelledBy = deps.cancelledBy
+      ?? (cancelNote ? (stewardIds.includes(cancelNote.authorId) ? "stewards" : "team") : null);
+    suggestionLinks = suggestions.map((s) => ({
+      title: s.title,
+      place: placeOf(s),
+      url: email.toAbsoluteUrl(s.path, { campaign: "campaign-cancelled" }),
+    }));
+  } else {
+    suggestionLinks = (await otherOpenNeeds(campaign.id, 3)).map((n) => ({
+      title: decodeBasicEntities(n.title),
+      place: decodeBasicEntities(n.projectName),
+      url: email.toAbsoluteUrl(n.path, { campaign: "campaign-closed" }),
+    }));
+  }
+  const closedOn = kind === "closed" ? closedOnWords(campaign) : null;
+
+  const cc = campaignContributions;
+  const release = (rowIds: number[]) =>
+    database.update(cc).set({ cancelNoticedAt: null }).where(inArray(cc.id, rowIds));
 
   let sent = 0;
   for (const g of groups) {
+    // Claim the address's rows first.
+    let claimed = 0;
+    try {
+      const claim = await database.update(cc)
+        .set({ cancelNoticedAt: sql`NOW()` as any })
+        .where(and(inArray(cc.id, g.rowIds), isNull(cc.cancelNoticedAt)));
+      claimed = affected(claim);
+    } catch (err) {
+      console.warn("[campaign-cancel] claiming an ending email failed; it stays queued:", err);
+      continue;
+    }
+    if (claimed < g.rowIds.length) continue; // another run has this address
     try {
       const content = email.emailTemplates.campaignCancelled({
         recipientName: g.name || "friend",
         campaignTitle: campaign.title,
-        projectName: campaign.projectName || campaign.title,
+        projectName,
         message,
         suggestions: suggestionLinks,
         browseUrl: links.browseUrl,
         signUpUrl: links.signUpUrl,
         cancelledBy,
+        reason: kind,
+        lines: kind === "closed" ? closeLinesFor(g.rows, projectName) : undefined,
+        closedOn,
       });
       const result = await send({
         to: g.email,
         subject: content.subject,
         html: content.html,
-        template: "campaign_cancelled",
+        template: kind === "cancelled" ? "campaign_cancelled" : "campaign_closed",
         recipientName: g.name,
       });
-      if (result?.id) {
-        await database.update(campaignContributions)
-          .set({ cancelNoticedAt: sql`NOW()` as any })
-          .where(inArray(campaignContributions.id, g.rowIds));
-        sent++;
-      }
+      if (result?.id) sent++;
+      else await release(g.rowIds);
     } catch (err) {
-      console.warn("[campaign-cancel] cancellation email failed; it stays queued for the retry:", err);
+      console.warn("[campaign-cancel] ending email failed; it stays queued for the retry:", err);
+      await release(g.rowIds).catch(() => undefined);
     }
   }
   return { found: groups.length, sent };
 }
 
-/** Daily batch: retry owed cancellation emails for campaigns cancelled in the last 30 days. */
-export async function retryPendingCancellationEmails(
-  deps: Pick<CancelDeps, "sendEmail" | "insert"> = {},
+/** The cancel path's name for sendPendingCampaignEndEmails, kept for its callers and tests. */
+export const sendPendingCancellationEmails = sendPendingCampaignEndEmails;
+
+/**
+ * Daily: retry owed ending emails for campaigns cancelled in the last 30
+ * days, and for campaigns the close job closed or completed in the last 30
+ * days. Runs from the crowdpool daily job, the nightly batch (cron and the
+ * admin button). `onlyCampaignIds` scopes a test run.
+ */
+export async function retryPendingCampaignEndEmails(
+  deps: Pick<CancelDeps, "sendEmail" | "insert"> & { onlyCampaignIds?: number[] } = {},
 ): Promise<{ campaigns: number; sent: number }> {
   const database = await db.getDb();
   if (!database) return { campaigns: 0, sent: 0 };
+  const scope = deps.onlyCampaignIds
+    ? inArray(campaigns.id, deps.onlyCampaignIds.length > 0 ? deps.onlyCampaignIds : [-1])
+    : undefined;
   const rows = await database
     .select({ id: campaigns.id })
     .from(campaigns)
-    .where(and(eq(campaigns.status, "cancelled"), sql`${campaigns.updatedAt} > NOW() - INTERVAL 30 DAY`));
+    .where(and(
+      or(
+        and(eq(campaigns.status, "cancelled"), sql`${campaigns.updatedAt} > NOW() - INTERVAL 30 DAY`),
+        and(
+          inArray(campaigns.status, ["closed", "completed"]),
+          isNotNull(campaigns.closeOutcome),
+          sql`${campaigns.closedAt} > NOW() - INTERVAL 30 DAY`,
+        ),
+      ),
+      scope,
+    ));
   let sent = 0;
   for (const r of rows) {
     try {
-      sent += (await sendPendingCancellationEmails(r.id, deps)).sent;
+      sent += (await sendPendingCampaignEndEmails(r.id, { sendEmail: deps.sendEmail, insert: deps.insert })).sent;
     } catch (err) {
       console.warn(`[campaign-cancel] retry for campaign ${r.id} failed:`, err);
     }
   }
   return { campaigns: rows.length, sent };
 }
+
+/** The nightly batch's name for retryPendingCampaignEndEmails, kept for its callers and tests. */
+export const retryPendingCancellationEmails = retryPendingCampaignEndEmails;

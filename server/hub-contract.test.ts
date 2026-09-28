@@ -51,11 +51,61 @@ describe("hub contract version", () => {
     expect(row).toMatch(/`gosteward`\) rows show only while ReGen Civics has loan routes switched on/);
   });
 
+  it("documents the close date: closed, completed on its own, closedAt and closeOutcome (version 5)", () => {
+    expect(HUB_CONTRACT.crowdpool).toBeGreaterThanOrEqual(5);
+    expect(doc).toMatch(/^\| 5 \|.*closed/m);
+    const row = doc.split("\n").find((l) => l.startsWith("| 5 |")) ?? "";
+    expect(row).toMatch(/moves to `completed` on its own/);
+    expect(row).toMatch(/`closedAt`/);
+    expect(row).toMatch(/`closeOutcome` \(`complete`, `did_not_complete`, or null/);
+    expect(row).toMatch(/accepted offers that had not started move to `released`/);
+    // The published statuses list reads closed too.
+    expect(doc).toMatch(/`active`, `funded`, `completed`, `closed` and `cancelled`/);
+  });
+
   it("serves the constant, with or without an input object", async () => {
     const caller = metaRouter.createCaller({} as never);
     expect(await caller.contract()).toEqual(HUB_CONTRACT);
     expect(await caller.contract({})).toEqual(HUB_CONTRACT);
   });
+});
+
+describe("a closed campaign on the village reads (version 5)", () => {
+  const skipIfNoDb = !process.env.DATABASE_URL;
+
+  it.skipIf(skipIfNoDb)("getById and list carry status closed, closedAt and closeOutcome", async () => {
+    const { adminCaller, anonCaller, cleanupFixtureApplications } = await import("./test-fixtures/crowdpool");
+    const { getDb } = await import("./db");
+    const { campaigns, campaignItems } = await import("../drizzle/schema");
+    const { eq, sql } = await import("drizzle-orm");
+    const admin = adminCaller();
+    const { id } = await admin.campaigns.create({
+      title: "Test Contract Closed",
+      description: "Contract fixture",
+      projectName: "Test Contract Closed",
+      financialTarget: 0,
+      items: [{ category: "resource", resourceName: "Seed", resourceDescription: "Seed", estimatedValue: 1000 }],
+    });
+    const database = await getDb();
+    try {
+      await admin.campaigns.updateStatus({ id, status: "active" });
+      // What the close job writes at the close date (server/lib/campaign-close.ts).
+      await database!.execute(sql`
+        UPDATE campaigns SET status = 'closed', closedAt = NOW(), closeOutcome = 'did_not_complete', closeNoticedAt = NOW()
+        WHERE id = ${id}
+      `);
+      const view = await anonCaller().campaigns.getById({ id });
+      expect(view).toMatchObject({ id, status: "closed", closeOutcome: "did_not_complete" });
+      expect(view!.closedAt).toBeInstanceOf(Date);
+      const listed = (await anonCaller().campaigns.list()).find((c) => c.id === id);
+      expect(listed).toMatchObject({ status: "closed", closeOutcome: "did_not_complete" });
+      expect(listed!.closedAt).toBeInstanceOf(Date);
+    } finally {
+      await database!.delete(campaignItems).where(eq(campaignItems.campaignId, id));
+      await database!.delete(campaigns).where(eq(campaigns.id, id));
+      await cleanupFixtureApplications();
+    }
+  }, 30_000);
 });
 
 describe("capacityUnit rides out on the village reads", () => {

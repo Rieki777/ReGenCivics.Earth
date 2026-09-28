@@ -39,7 +39,9 @@ export type CampaignVisibilityRef = Pick<Campaign, "status" | "startedAt" | "pub
 /**
  * Whether anyone at all may see this campaign.
  *
- * Live, complete (and legacy funded) campaigns are public. A cancelled
+ * Live, complete (and legacy funded) campaigns are public, and so is one
+ * that closed at its close date without completing (`closed`, set only by
+ * the close job in server/lib/campaign-close.ts): it went live first. A cancelled
  * campaign is public only if it was ever published: going live stamps
  * startedAt and publishedAt (campaigns.updateStatus), and the demo seed
  * stamps both. A draft or in-review campaign that is cancelled never reached
@@ -63,7 +65,7 @@ export function isPublicCampaign(campaign: CampaignVisibilityRef): boolean {
  * isPublicCampaign as a SQL condition on the `campaigns` table, for any
  * query that builds the public set in the database.
  */
-export const publicCampaignSql: SQL = sql`(${campaigns.status} IN ('active', 'funded', 'completed') OR (${campaigns.status} = 'cancelled' AND (${campaigns.startedAt} IS NOT NULL OR ${campaigns.publishedAt} IS NOT NULL)))`;
+export const publicCampaignSql: SQL = sql`(${campaigns.status} IN ('active', 'funded', 'completed', 'closed') OR (${campaigns.status} = 'cancelled' AND (${campaigns.startedAt} IS NOT NULL OR ${campaigns.publishedAt} IS NOT NULL)))`;
 
 /** Sync check: public (isPublicCampaign), or the creator, or an admin. */
 export function canSeeCampaign(user: SessionUser, campaign: CampaignVisibilityRef & Pick<Campaign, "userId">): boolean {

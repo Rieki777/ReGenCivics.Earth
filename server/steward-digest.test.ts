@@ -20,6 +20,8 @@ vi.mock("./_core/imageGeneration", () => ({
 import {
   composeStewardDigest,
   sendStewardWeeklyDigest,
+  waitingLine,
+  wholeDaysWaited,
   type StewardDigestData,
   type StewardCampaignRow,
 } from "./jobs/stewardDigestJob";
@@ -100,6 +102,45 @@ describe("composeStewardDigest", () => {
         fullData({ unfilledNeeds: [], expiringClaims: [], newFollowers: 0, pendingReviews: [] }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("how long offers have waited (build spec 2026-09-27, section 8.4)", () => {
+  it("each waiting offer says how long it has waited, oldest first as loaded", () => {
+    const { html } = composeStewardDigest(fullData({
+      pendingReviews: [
+        { title: "A tractor", contributorName: "Sam", waitingDays: 9 },
+        { title: "Seeds", contributorName: "Ada", waitingDays: 1 },
+        { title: "Hands", contributorName: "Bo", waitingDays: 0 },
+      ],
+    }))!;
+    expect(html).toContain("<strong>Sam</strong> offered A tractor, waiting 9 days.");
+    expect(html).toContain("<strong>Ada</strong> offered Seeds, waiting 1 day.");
+    // Under a day: no suffix.
+    expect(html).toContain("<strong>Bo</strong> offered Hands.");
+    expect(html).toContain("1 of these has waited more than 2 days. The oldest has waited 9 days.");
+    expect(html.indexOf("1 of these has waited")).toBeLessThan(html.indexOf("<strong>Sam</strong>"));
+  });
+
+  it("the line counts offers over 2 days, in the singular and plural", () => {
+    expect(waitingLine([{ title: "a", contributorName: "x", waitingDays: 2 }])).toBeNull();
+    expect(waitingLine([{ title: "a", contributorName: "x", waitingDays: 3 }])).toBe(
+      "1 of these has waited more than 2 days. The oldest has waited 3 days.",
+    );
+    expect(waitingLine([
+      { title: "a", contributorName: "x", waitingDays: 3 },
+      { title: "b", contributorName: "y", waitingDays: 12 },
+      { title: "c", contributorName: "z" },
+    ])).toBe("2 of these have waited more than 2 days. The oldest has waited 12 days.");
+  });
+
+  it("counts whole days in UTC from the submit time", () => {
+    const now = new Date("2026-09-27T12:00:00Z");
+    expect(wholeDaysWaited(new Date("2026-09-27T01:00:00Z"), now)).toBe(0);
+    expect(wholeDaysWaited(new Date("2026-09-26T11:00:00Z"), now)).toBe(1);
+    expect(wholeDaysWaited("2026-09-17T12:00:00Z", now)).toBe(10);
+    expect(wholeDaysWaited(null, now)).toBe(0);
+    expect(wholeDaysWaited(new Date("2026-09-28T12:00:00Z"), now)).toBe(0);
   });
 });
 
@@ -211,6 +252,26 @@ describe("the default loader", () => {
 
       const none = await sendStewardWeeklyDigest(database, { dryRun: true, onlyCampaignId: demo });
       expect(none.campaigns).toBe(0);
+
+      // A waiting offer reads its days, oldest first; a project follow is a
+      // new follower (build spec 2026-09-27, sections 8.4 and 12.2).
+      const { campaignContributions, userFollows } = await import("../drizzle/schema");
+      const { sql } = await import("drizzle-orm");
+      const offer = await fx.realOffer(fx.anonCaller().campaigns.submitContribution({
+        campaignId: live, contributionType: "role", title: "An offer of hands", estimatedValue: 10,
+        contributorName: "Waiting Wren", contributorEmail: `digest.wait.${stamp}@example.com`,
+      }));
+      await database!.execute(sql`UPDATE campaign_contributions SET submittedAt = NOW() - INTERVAL 4 DAY - INTERVAL 1 HOUR WHERE id = ${offer.id}`);
+      await fx.stewardCaller(owner + 100000).campaigns.followProject({ key: String(applicationId) });
+      try {
+        const later = await sendStewardWeeklyDigest(database, { dryRun: true, onlyCampaignId: live });
+        expect(later.digests[0].html).toContain("<strong>Waiting Wren</strong> offered An offer of hands, waiting 4 days.");
+        expect(later.digests[0].html).toContain("1 of these has waited more than 2 days. The oldest has waited 4 days.");
+        expect(later.digests[0].html).toContain("1 person started following this campaign this week.");
+      } finally {
+        await database!.delete(campaignContributions).where(inArray(campaignContributions.campaignId, [live]));
+        await database!.delete(userFollows).where(inArray(userFollows.userId, [owner + 100000]));
+      }
     } finally {
       if (campaignIds.length) {
         await database!.delete(campaignItems).where(inArray(campaignItems.campaignId, campaignIds));

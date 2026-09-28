@@ -478,6 +478,20 @@ export type CampaignCancelledEmailArgs = {
    * admin who is not a steward). Unknown (null) reads neutrally.
    */
   cancelledBy?: 'stewards' | 'team' | null;
+  /**
+   * Why the campaign ended (build spec 2026-09-27, section 9.5). The close
+   * reuses this one email, so people without an account still get only the
+   * three fixed emails plus this one:
+   *   - 'cancelled' (the default): today's words, unchanged;
+   *   - 'closed': the close date passed and it didn't complete;
+   *   - 'completed_unanswered': it completed at the close date while their
+   *     offer was still waiting.
+   */
+  reason?: 'cancelled' | 'closed' | 'completed_unanswered';
+  /** 'closed': the person's own lines (closeLinesFor), one paragraph each. */
+  lines?: string[];
+  /** 'closed': the day it closed, "21 March 2027". */
+  closedOn?: string | null;
 };
 
 /**
@@ -751,6 +765,39 @@ export const emailTemplates = {
 
   campaignCancelled: (a: CampaignCancelledEmailArgs) => {
     const suggestions = (a.suggestions ?? []).slice(0, 3);
+    const reason = a.reason ?? 'cancelled';
+    if (reason !== 'cancelled') {
+      // The close (closed, or completed while the offer waited). The
+      // suggestions are other open needs: title, project as the place, link.
+      const needList = suggestions.length > 0
+        ? `<p style="color: #333; line-height: 1.6;">These could use your help now:</p>
+      <ul style="color: #333; line-height: 1.8; padding-left: 20px;">
+        ${suggestions.map((s) => `<li><a href="${textForEmail(s.url)}" style="color: #1a472a; font-weight: bold;">${textForEmail(s.title)}</a>${s.place ? `, ${textForEmail(s.place)}` : ''}</li>`).join('')}
+      </ul>`
+        : `<p style="color: #333; line-height: 1.6;">Have a look at the live campaigns.</p>`;
+      const campaign = textForEmail(a.campaignTitle);
+      const project = textForEmail(a.projectName);
+      const lead = reason === 'closed'
+        ? `Crowdpooling for ${campaign} from ${project} closed${a.closedOn ? ` on ${textForEmail(a.closedOn)}` : ''} without completing.`
+        : `${campaign} from ${project} completed before the stewards answered your offer, so it's closed with our thanks.`;
+      const lines = reason === 'closed'
+        ? (a.lines ?? []).filter((l) => l && l.trim()).map((l) => `<p style="color: #333; line-height: 1.6;">${textForEmail(l)}</p>`).join('\n      ')
+        : '';
+      return {
+        subject: reason === 'closed'
+          ? `${decodeBasicEntities(a.campaignTitle)} closed without completing`
+          : `${decodeBasicEntities(a.campaignTitle)} is complete`,
+        html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(a.recipientName)},</h2>
+      <p style="color: #333; line-height: 1.6;">${lead}</p>
+      ${lines}
+      ${needList}
+      ${emailButton(a.browseUrl, 'Browse campaigns')}
+      ${accountNudgeBlock(a.signUpUrl)}
+      ${teamSignoff()}
+    `,
+      };
+    }
     const list = suggestions.length > 0
       ? `<p style="color: #333; line-height: 1.6;">These campaigns could use your energy right now:</p>
       <ul style="color: #333; line-height: 1.8; padding-left: 20px;">

@@ -1,8 +1,9 @@
 /**
  * Campaign notices on the notification spine.
  *
- * Every campaign event (an offer arrives, a steward answers, a role fills or
- * opens up again, a campaign goes live, completes or is cancelled) writes rows through
+ * Every campaign event (an offer arrives, waits, or a steward answers it, a
+ * role fills or opens up again, a campaign goes live, opens to followers,
+ * nears its close date, completes, closes or is cancelled) writes rows through
  * insertNotification (server/lib/forum-notify.ts), which drives the bell, web
  * push and the recipient's email by their campaignsEmail preference.
  *
@@ -561,6 +562,238 @@ export function buildChainConfirmed(args: {
   return out;
 }
 
+// ─── Nudges, the opening, the final stretch and the close (2026-09-27) ──────
+// Build spec 2026-09-27, sections 8.3, 9.3 and 12.3. Every row here is one
+// person, keyed so a retried or concurrent run writes it once.
+
+/** A waiting offer, as the nudge and the "still waiting" note read it. */
+export type NudgeContribution = {
+  id: number;
+  title: string;
+  userId?: number | null;
+  contributorName?: string | null;
+  isAnonymous?: number | boolean | null;
+};
+
+function isOn(v: number | boolean | null | undefined): boolean {
+  return v === true || (typeof v === "number" && v !== 0);
+}
+
+/**
+ * A steward nudge about an offer still waiting on them (type offer_waiting):
+ * step 1 at 2 days, step 2 at a week. Every steward, never the contributor
+ * themselves. `Someone` when the offer is anonymous.
+ */
+export function buildStewardNudge(args: {
+  campaign: NotifyCampaign;
+  contribution: NudgeContribution;
+  stewardIds: number[];
+  step: 1 | 2;
+}): NotificationInput[] {
+  const { campaign, contribution, step } = args;
+  const who = isOn(contribution.isAnonymous) ? "Someone" : plain(contribution.contributorName) || "Someone";
+  const offer = plain(contribution.title) || "something";
+  const camp = campaignTitleOf(campaign);
+  const title = step === 1 ? `${who}'s offer is waiting on you` : `${who} has waited a week to hear back`;
+  const body = step === 1
+    ? `${who} offered "${offer}" to ${camp} 2 days ago. A yes, a no or a question keeps it moving.`
+    : `${who} offered "${offer}" to ${camp} a week ago. If it isn't a fit, a kind no frees them to offer somewhere else.`;
+  return recipientsOf(args.stewardIds, [contribution.userId]).map((uid) => ({
+    userId: uid,
+    type: "offer_waiting" as const,
+    title,
+    body,
+    link: projectLink(campaign, "review"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:nudge:${contribution.id}:s${step}:u${uid}`,
+  }));
+}
+
+/** The contributor's own note at 14 days (type offer_still_waiting). Account holders only. */
+export function buildStillWaiting(args: { campaign: NotifyCampaign; contribution: NudgeContribution }): NotificationInput[] {
+  const { campaign, contribution } = args;
+  const uid = recipientsOf([contribution.userId])[0];
+  if (!uid) return [];
+  const project = projectNameOf(campaign);
+  return [{
+    userId: uid,
+    type: "offer_still_waiting",
+    title: `Your offer to ${project} is still waiting`,
+    body: `The stewards of ${project} haven't answered your offer of "${plain(contribution.title) || "your help"}" yet. It stays open until they do, and you can withdraw it from Your contributions if your plans change.`,
+    link: projectLink(campaign, "your-contributions"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:wait:${contribution.id}:u${uid}`,
+  }];
+}
+
+/**
+ * Crowdpooling opens at a project (type campaign_opened): to its followers,
+ * never its stewards or the admin who opened it. `openLine` is the reading's
+ * open line ("12 needs still open. 5 roles, 4 things, 3 shifts.") and
+ * `closes` its "Closes {date}", each left out when there is none. One per
+ * campaign and person, so a re-approval never repeats it.
+ */
+export function buildCampaignOpened(args: {
+  campaign: NotifyCampaign;
+  followerIds: number[];
+  stewardIds: number[];
+  openLine?: string | null;
+  closes?: string | null;
+  actorId?: number | null;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const project = projectNameOf(campaign);
+  const open = plain(args.openLine);
+  const closes = plain(args.closes);
+  const body = `${project} is asking for help.${open ? ` ${open}` : ""}${closes ? ` ${closes}.` : ""}`;
+  return recipientsOf(args.followerIds, [args.actorId, ...args.stewardIds]).map((uid) => ({
+    userId: uid,
+    type: "campaign_opened" as const,
+    title: `Crowdpooling is open at ${project}`,
+    body,
+    link: projectLink(campaign, "needs"),
+    actorId: args.actorId ?? null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:opened:${campaign.id}:u${uid}`,
+  }));
+}
+
+/**
+ * Two weeks before the close (type campaign_final_stretch): up to three open
+ * needs by name and the close date. Nothing when no need is open. The job
+ * chooses the recipients (followers, minus stewards and anyone who offered).
+ */
+export function buildFinalStretch(args: {
+  campaign: NotifyCampaign;
+  recipientIds: number[];
+  needLines: string[];
+  closesOn: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const lines = args.needLines.map((l) => plain(l)).filter(Boolean).slice(0, 3);
+  if (lines.length === 0) return [];
+  const project = projectNameOf(campaign);
+  const body = `${lines.join("; ")}. Crowdpooling at ${project} closes on ${plain(args.closesOn)}.`;
+  return recipientsOf(args.recipientIds).map((uid) => ({
+    userId: uid,
+    type: "campaign_final_stretch" as const,
+    title: `These needs are still open at ${project}`,
+    body,
+    link: projectLink(campaign, "needs"),
+    actorId: null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:stretch:${campaign.id}:u${uid}`,
+  }));
+}
+
+/**
+ * A campaign closed at its close date without completing (type
+ * campaign_closed). Three kinds of reader, each once, in this order so a
+ * steward who also offered hears as a steward:
+ *   - stewards: how many offers the close released, and what stays with them;
+ *   - account contributors: their own lines (closeLinesFor in
+ *     shared/campaignClose.ts), then the other-needs line;
+ *   - account followers: a short note that they still follow the project.
+ */
+export function buildCampaignClosed(args: {
+  campaign: NotifyCampaign;
+  closedOn: string;
+  stewardIds: number[];
+  releasedCount: number;
+  contributors: Array<{ userId: number | null | undefined; lines: string[] }>;
+  followerIds: number[];
+  otherNeedsLine: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const camp = campaignTitleOf(campaign);
+  const project = projectNameOf(campaign);
+  const closedOn = plain(args.closedOn);
+  const title = `${camp} closed without completing`;
+  const row = (uid: number, body: string, anchor?: string): NotificationInput => ({
+    userId: uid,
+    type: "campaign_closed",
+    title,
+    body,
+    link: projectLink(campaign, anchor),
+    actorId: null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:close:${campaign.id}:u${uid}`,
+  });
+
+  const n = Math.max(0, Math.floor(Number(args.releasedCount) || 0));
+  const released = n === 0
+    ? ""
+    : n === 1
+      ? " 1 offer that hadn't started was released with a thank-you."
+      : ` ${n} offers that hadn't started were released with a thank-you.`;
+  const stewardBody = `Crowdpooling closed on ${closedOn}.${released} Offers already underway stay with you to mark delivered or release. Help already given stays recorded in the project's token.`;
+
+  const stewards = recipientsOf(args.stewardIds);
+  const out: NotificationInput[] = stewards.map((uid) => row(uid, stewardBody, "steward-tools"));
+
+  const seen = new Set<number>(stewards);
+  const other = plain(args.otherNeedsLine);
+  for (const c of args.contributors) {
+    const uid = recipientsOf([c.userId], Array.from(seen))[0];
+    if (!uid) continue;
+    seen.add(uid);
+    const lines = c.lines.map((l) => plain(l)).filter(Boolean);
+    const lead = lines.length > 0 ? lines.join(" ") : `Crowdpooling at ${project} closed on ${closedOn} without completing.`;
+    out.push(row(uid, excerpt(other ? `${lead} ${other}` : lead, 500), "your-contributions"));
+  }
+
+  const followerBody = `Crowdpooling at ${project} closed on ${closedOn} without completing. You still follow ${project}, so you'll hear when it asks again.`;
+  for (const uid of recipientsOf(args.followerIds, Array.from(seen))) out.push(row(uid, followerBody));
+  return out;
+}
+
+/** '"a"', '"a" and "b"', '"a", "b" and 2 more'. */
+function quotedTitles(titles: string[]): string {
+  const q = titles.map((t) => `"${plain(t) || "your help"}"`);
+  if (q.length <= 1) return q[0] ?? `"your help"`;
+  if (q.length === 2) return `${q[0]} and ${q[1]}`;
+  return `${q[0]}, ${q[1]} and ${q.length - 2} more`;
+}
+
+/**
+ * A campaign completed at its close date while someone's offer was still
+ * waiting (type campaign_closed): their offer closes with thanks, then the
+ * other-needs line. One notice per person, however many offers waited.
+ */
+export function buildOfferClosedAtCompletion(args: {
+  campaign: NotifyCampaign;
+  recipients: Array<{ userId: number | null | undefined; titles: string[] }>;
+  otherNeedsLine: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const other = plain(args.otherNeedsLine);
+  const out: NotificationInput[] = [];
+  const seen = new Set<number>();
+  for (const r of args.recipients) {
+    const uid = recipientsOf([r.userId], Array.from(seen))[0];
+    if (!uid || r.titles.length === 0) continue;
+    seen.add(uid);
+    const lead = r.titles.length === 1
+      ? `It completed before the stewards answered your offer of ${quotedTitles(r.titles)}, so your offer is closed with our thanks.`
+      : `It completed before the stewards answered your offers of ${quotedTitles(r.titles)}, so they're closed with our thanks.`;
+    out.push({
+      userId: uid,
+      type: "campaign_closed",
+      title: `${campaignTitleOf(campaign)} is complete`,
+      body: excerpt(other ? `${lead} ${other}` : lead, 500),
+      link: projectLink(campaign, "your-contributions"),
+      actorId: null,
+      campaignId: campaign.id,
+      dedupeKey: `cp:close:${campaign.id}:u${uid}`,
+    });
+  }
+  return out;
+}
+
 // ─── Handlers (DB, never throw) ─────────────────────────────────────────────
 
 /** Insert each row on its own; one failure never stops the rest. Returns rows sent without error. */
@@ -789,6 +1022,32 @@ export async function notifyCampaignCompleted(
       contributorUserIds({ campaignId: args.campaign.id, statuses: ["accepted", "fulfilled", "thanked"] }),
     ]);
     return deliver(buildCampaignCompleted({ ...args, stewardIds, contributorIds }), deps);
+  });
+}
+
+/** Every steward of a campaign, for the daily job's notices. Never throws. */
+export async function stewardIdsOf(campaign: NotifyCampaign): Promise<number[]> {
+  return safeStewards(campaign);
+}
+
+/**
+ * Crowdpooling opened at a project: its followers hear (campaign follows and
+ * project follows, server/db.ts getCampaignFollowerUserIds), never its
+ * stewards or the actor. The route passes the reading's open line and close
+ * date, and calls this only for a real campaign.
+ */
+export async function notifyCampaignOpened(
+  args: { campaign: NotifyCampaign; openLine?: string | null; closes?: string | null; actorId?: number | null },
+  deps: NotifyDeps = {},
+): Promise<number> {
+  return run("campaign opened", async () => {
+    if (args.campaign.status && UNPUBLISHED_STATUSES.includes(args.campaign.status)) return 0;
+    const { getCampaignFollowerUserIds } = await import("../db");
+    const [followerIds, stewardIds] = await Promise.all([
+      getCampaignFollowerUserIds(args.campaign.id),
+      safeStewards(args.campaign),
+    ]);
+    return deliver(buildCampaignOpened({ ...args, followerIds, stewardIds }), deps);
   });
 }
 

@@ -1330,7 +1330,9 @@ async function startServer() {
   // Called once per day by Railway cron: POST /api/cron/nightly-batch
   // Runs a SUBSET of the admin-triggered batchJobs.runNightly procedure:
   //   citizenship tiers, event status sweep, crowdpool claim expiry,
-  //   partner-progress hydration, and gratitude cycle close.
+  //   owed cancellation and close emails (runNightly's Step 9b, missing here
+  //   until 2026-09-27), partner-progress hydration, gratitude cycle close,
+  //   and the daily crowdpool job (closes, nudges, the final stretch).
   // It is not full parity with runNightly, and the comment that used to claim
   // parity hid the fact that gratitude cycles never closed in production
   // (audit 2026-07-28). Anything added to runNightly must be added here too,
@@ -1382,6 +1384,15 @@ async function startServer() {
         await expireCrowdpoolClaims(database);
       } catch (e: any) { errors.push(`crowdpoolClaims: ${e.message}`); }
 
+      // Step 9b: cancellation and close emails still owed to people without
+      // an account (a send the hourly cap held back), retried daily for 30
+      // days. Before 2026-09-27 only the admin button ran this.
+      let cancellationEmailsSent = 0;
+      try {
+        const { retryPendingCancellationEmails } = await import("../lib/campaign-cancel");
+        cancellationEmailsSent = (await retryPendingCancellationEmails()).sent;
+      } catch (e: any) { errors.push(`cancellationEmails: ${e.message}`); }
+
       // Partner-progress hydration: refresh cached Ma Earth / GoSteward numbers
       // on active + funded campaigns. Fetch or parse failures leave stale cache
       // untouched (never zeroed).
@@ -1403,6 +1414,18 @@ async function startServer() {
         gratitudeCredited = g.credited;
       } catch (e: any) { errors.push(`gratitudeCycles: ${e.message}`); }
 
+      // The daily crowdpool job: close campaigns at their close date, finish
+      // interrupted closes, nudge stewards about waiting offers, and tell
+      // followers two weeks before a close. Idempotent; it also runs from an
+      // in-process timer in production. Its own steps report their errors.
+      let crowdpoolDaily: Record<string, unknown> | null = null;
+      try {
+        const { runCrowdpoolDailyJob } = await import("../jobs/crowdpoolDailyJob");
+        const r = await runCrowdpoolDailyJob();
+        crowdpoolDaily = { closed: r.closed, completed: r.completed, released: r.released, resumed: r.resumed, stewardNudges: r.stewardNudges, stillWaiting: r.stillWaiting, finalStretch: r.finalStretch };
+        for (const err of r.errors) errors.push(`crowdpoolDaily: ${err}`);
+      } catch (e: any) { errors.push(`crowdpoolDaily: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`
@@ -1413,7 +1436,7 @@ async function startServer() {
           WHERE id = ${jobId}
         `);
       }
-      res.json({ ok: true, status, promotions, demotions, gratitudeClosed, gratitudeCredited, errors });
+      res.json({ ok: true, status, promotions, demotions, gratitudeClosed, gratitudeCredited, cancellationEmailsSent, crowdpoolDaily, errors });
     } catch (err: any) {
       log.error("cron/nightly-batch", err);
       res.status(500).json({ error: err.message });
@@ -1708,6 +1731,28 @@ setTimeout(async () => {
     try { const { runNeedsOffersMatcherJob } = await import("../jobs/needsOffersMatcher"); await runNeedsOffersMatcherJob(); } catch (e) { log.error("NeedsOffersMatcherJob error", e); }
   }, 24 * 60 * 60 * 1000);
 }, 11 * 60 * 1000); // first run after 11 minutes
+
+// ─── Daily crowdpool job (production only) ───────────────────────────────────
+// Closes campaigns at their close date (complete, or closed: didn't
+// complete), finishes interrupted closes, retries owed close and cancel
+// emails, nudges stewards about offers waiting 2 and 7 days, and tells
+// followers two weeks before a close (server/jobs/crowdpoolDailyJob.ts).
+// Every step is idempotent, so the run 19 minutes after each deploy sends
+// nothing new. Production only: a dev server pointed at a scratch database
+// full of old fixture campaigns must never close them. Paused without a
+// deploy by the crowdpool.auto_close and crowdpool.nudges game variables.
+if (process.env.NODE_ENV === "production") {
+  setTimeout(async () => {
+    const run = async () => {
+      const { runCrowdpoolDailyJob } = await import("../jobs/crowdpoolDailyJob");
+      await runCrowdpoolDailyJob();
+    };
+    try { await run(); } catch (e) { log.error("CrowdpoolDailyJob error", e); }
+    setInterval(async () => {
+      try { await run(); } catch (e) { log.error("CrowdpoolDailyJob error", e); }
+    }, 24 * 60 * 60 * 1000);
+  }, 19 * 60 * 1000); // first run after 19 minutes
+}
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   attachHistoryStats,
+  audienceCampaignIds,
+  audienceToWriteList,
   audienceToWriteSource,
   buildHistoryTimeline,
   buildRecipientRows,
@@ -10,10 +12,12 @@ import {
   historyCsvFilename,
   historyRecipientsCsv,
   historyStatusLabel,
+  parseAudienceList,
   pickHistoryBanner,
   ratePercent,
   rollupDeliveryStats,
   summarizeAudience,
+  summarizeAudienceList,
   type HistoryListItem,
 } from "./outboundHistory";
 
@@ -315,5 +319,27 @@ describe("historyRecipientsCsv", () => {
   it("builds a letter filename from the cleaned subject", () => {
     expect(historyCsvFilename(7, "**Subject:** Spring letter", new Date("2026-09-10T00:00:00.000Z")))
       .toBe("letter-7-spring-letter-2026-09-10.csv");
+  });
+});
+
+describe("the season digest list (build spec 2026-09-27)", () => {
+  it("parses with the exclusion on by default, and refuses a bad season", () => {
+    expect(parseAudienceList({ kind: "season_digest", seasonNumber: 2 })).toEqual({ kind: "season_digest", seasonNumber: 2, excludeOffered: true });
+    expect(parseAudienceList({ kind: "season_digest", seasonNumber: 3, excludeOffered: false })).toEqual({ kind: "season_digest", seasonNumber: 3, excludeOffered: false });
+    expect(parseAudienceList({ kind: "season_digest", seasonNumber: 0 })).toBeNull();
+    expect(parseAudienceList({ kind: "season_digest", seasonNumber: "2" })).toBeNull();
+    expect(parseAudienceList({ kind: "season_digest" })).toBeNull();
+  });
+
+  it("reads in plain words, and says when people who offered are left out", () => {
+    expect(summarizeAudienceList({ kind: "season_digest", seasonNumber: 2, excludeOffered: true }))
+      .toBe("Season 2 digest: email followers and the waitlist, leaving out people who already offered");
+    expect(summarizeAudienceList({ kind: "season_digest", seasonNumber: 2, excludeOffered: false }))
+      .toBe("Season 2 digest: email followers and the waitlist");
+    const raw = { sources: ["footer"], activeOnly: true, list: { kind: "season_digest", seasonNumber: 2, excludeOffered: false } };
+    expect(summarizeAudience(raw)).toBe("Season 2 digest: email followers and the waitlist");
+    expect(audienceToWriteList(raw)).toEqual({ kind: "season_digest", seasonNumber: 2, excludeOffered: false });
+    expect(audienceToWriteSource(raw)).toBe("list");
+    expect(audienceCampaignIds([raw])).toEqual([]);
   });
 });

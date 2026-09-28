@@ -964,10 +964,11 @@ export const batchJobsRouter = router({
 
     let cancellationEmailsSent = 0;
     try {
-      // Step 9b: Cancellation emails still owed. A cancelled campaign emails
-      // contributors who have no account; a send the hourly email cap held
-      // back leaves cancelNoticedAt NULL, and this retries it daily for
-      // campaigns cancelled in the last 30 days.
+      // Step 9b: Cancellation and close emails still owed. A cancelled or
+      // closed campaign emails contributors who have no account; a send the
+      // hourly email cap held back hands its rows back (cancelNoticedAt
+      // NULL), and this retries it daily for 30 days. The crowdpool daily
+      // job (Step 11) runs the same retry; it is idempotent.
       const { retryPendingCancellationEmails } = await import("../lib/campaign-cancel");
       const result = await retryPendingCancellationEmails();
       cancellationEmailsSent = result.sent;
@@ -984,6 +985,25 @@ export const batchJobsRouter = router({
       partnerLinksUpdated = result.updated;
     } catch (e: any) { errors.push(`Step 10 (partner hydration): ${e.message}`); }
 
+    let crowdpoolDaily: {
+      closed: number; completed: number; released: number; resumed: number;
+      stewardNudges: number; stillWaiting: number; finalStretch: number;
+    } | null = null;
+    try {
+      // Step 11: The daily crowdpool job (build spec 2026-09-27, section
+      // 8.5): close campaigns at their close date, finish interrupted
+      // closes, nudge stewards about waiting offers, and tell followers two
+      // weeks before a close. Idempotent; paused by crowdpool.auto_close and
+      // crowdpool.nudges.
+      const { runCrowdpoolDailyJob } = await import("../jobs/crowdpoolDailyJob");
+      const r = await runCrowdpoolDailyJob();
+      crowdpoolDaily = {
+        closed: r.closed, completed: r.completed, released: r.released, resumed: r.resumed,
+        stewardNudges: r.stewardNudges, stillWaiting: r.stillWaiting, finalStretch: r.finalStretch,
+      };
+      for (const err of r.errors) errors.push(`Step 11 (crowdpool daily): ${err}`);
+    } catch (e: any) { errors.push(`Step 11 (crowdpool daily): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -997,7 +1017,7 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, cancellationEmailsSent, partnerLinksChecked, partnerLinksUpdated };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited, crowdpoolClaimsExpired, crowdpoolReminders, cancellationEmailsSent, partnerLinksChecked, partnerLinksUpdated, crowdpoolDaily };
   }),
 
   // Manual trigger for the Free Voyage Giveaway sweep (admin-only). The same work
