@@ -10,13 +10,14 @@ measured its half from its own code rather than from its documentation. **Update
 2026-09-14:** the contract now carries a version number (section 10), and the
 `pledgedTotal` defect in section 4 is fixed. **Updated 2026-09-25:** contract version 4
 adds the need window and give-or-lend fields, verified money routes and the `progress`
-reading (section 10).
+reading (section 10). **Updated 2026-09-27:** the fund-channel mechanic in sections 1, 6
+and 7 is held pending counsel (v1.2); no field, procedure or version changes.
 
 ---
 
 ## 1. Who owns what
 
-**regen-civics owns the fund, the pooling, the index and the campaign.** Every pledge
+**regen-civics owns the pooling and the campaign.** Every pledge
 is created here. Every money column lives here. Every steward decision happens here.
 
 **village-os owns what a village sees.** Its crowdpool module is a read-only bridge,
@@ -193,37 +194,30 @@ correct.
 
 ## 6. The money half, and why it does not cross this boundary
 
-Rye specified the money mechanic on 2026-09-04. Cash does not go to a project. It goes
-to ReGen Civics and buys a share of all thirteen projects at once, which is the index
-fund. The contributor receives 80% of their contribution back as tokens to place
-across the cohort, movable until a project closes, and 20% goes to a community
-treasury. Projects give ReGen Civics a minimum 10% non-dilutive stake, after the
-community says yes. None of it is built yet.
+The fund channel is being redesigned with counsel as a member-owned cooperative; its
+terms are not set and nothing here accepts money. The money mechanic this section
+described from 2026-09-04 is held pending counsel (v1.2, 2026-09-27), and its full text
+is kept outside the repo.
 
 **The boundary sentence, agreed with the village-os session and carried in both
-documents:** crowdpool money is raised by the hub into a fund; the village side reads
-campaign progress and never sees, holds, or moves any of it.
+documents, reworded here on 2026-09-27:** the village side reads campaign progress and
+never sees, holds, or moves any money. Money given through a project's own route (Ma
+Earth, Steward) never passes through the hub either.
 
 The in-kind half stays per-project, and that is the half the bridge shows.
 
-If placement ever needs a village-side read, most likely a per-project earmark total,
-the field shape goes to the village-os session **before** it ships, not after.
+If the fund channel ever needs a village-side read, the field shape goes to the
+village-os session **before** it ships.
 
 ---
 
 ## 7. A flag from the village-os session, recorded
 
-Their economics session raised this and it belongs in the record:
-
-> A contributor getting most of their money back as tokens to place across projects,
-> movable until a project closes, is a signalling instrument that looks a great deal
-> like a vote. If placement is non-binding it is fine; the day it influences an
-> allocation it is a franchise, and it will want the same treatment as anything else
-> carrying weight: say whose weight it is, snapshot it when it counts, and refuse to
-> be moved after the moment it decides.
-
-Rye has ruled placement non-binding and movable until close. The moment that changes,
-this paragraph becomes a requirement.
+Their economics session raised a flag about member signalling on the fund channel. That
+channel's terms are held pending counsel (v1.2, 2026-09-27), and the flag's full text is
+kept with them outside the repo. Its rule stands for any signal that ever decides an
+allocation: say whose weight it is, snapshot it when it counts, and refuse to be moved
+after the moment it decides.
 
 ---
 

@@ -28,13 +28,13 @@ public gallery.
 | 1 | Thirteen land projects prepared at the end of Season 2 | **not built** | Thirteen exists only as copy (`client/src/pages/Season2.tsx:500,508,519-531`). No table groups a cohort. `campaigns.seasonId` exists (`drizzle/schema.ts:1120`) and is never populated. |
 | 2 | A project raises money AND roles, assets, equipment, time, networks | **built** | The 9-capital needs registry is real: `shared/crowdpoolingTaxonomy.ts`, `campaign_items.kind` + `capitalType` + the wanted/claimed/delivered meter. This is the strongest thing in the system. |
 | 3 | A campaign succeeds only if BOTH halves land | **not built** | Nothing computes fundedness. `campaigns.updateStatus` (`server/routes/campaigns.ts:1048`) is a manual flip whose only check is `campaign.userId !== ctx.user.id` (`:1055-1057`). A steward marks their own campaign funded. |
-| 4 | Money goes to ReGen Civics, not the project; the contributor gets a share of all thirteen | **not built, and contradicted** | Every money column in the schema is scoped to one campaign row. There is no pool balance, no fund-level ledger, no cross-campaign anything. `campaign_contributions.campaignId` is `NOT NULL` and singular, so a contribution structurally cannot reach thirteen projects. |
-| 5 | 80% back as tokens to place across the thirteen | **not built, and forbidden** | No placement table, no per-contributor balance, no allocation of any kind. `CROWDPOOLING_PLATFORM_SPEC.md:12` and `:351` forbid exactly this, and the ban is restated in code at `server/routes/campaigns.ts:757-758`. See "the collision" below. |
-| 6 | The other 20% goes to the community treasury | **not built, and blocked by a newer ruling** | No treasury table, account or ledger destination. `server/tokenMintModel.test.ts:113` fails the build if `drizzle/schema.ts` ever declares one. See "the collision". |
+| 4 | Held pending counsel (v1.2, 2026-09-27): how fund-channel money would reach land projects | **held** | The clause and its evidence are kept outside the repo with the other held fund-side terms. |
+| 5 | Held pending counsel (v1.2, 2026-09-27): how members signal where fund-channel money goes | **held** | Kept outside the repo. |
+| 6 | Held pending counsel (v1.2, 2026-09-27): a community treasury share of fund-channel money | **held** | Kept outside the repo. |
 | 7 | The community chooses which projects progress | **not built** | No campaign carries a vote, quorum, signal count or `ratifiedAt`. The ratification engine is real but wired only to the `proposals` table; greps for `campaign` and `crowdpool` across `server/lib/ratification.ts`, `server/lib/evolution.ts` and `server/routes/assembly.ts` return nothing. |
-| 8 | Minimum 10% non-dilutive stake to ReGen Civics | **not built** | Nothing in the repo models a stake, holding, equity position, cap table or portfolio position. No table name matches stake, equity, holding or portfolio. |
-| 9 | The swap is value-for-value, ReGen Civics at $1 a token | **not built** | No valuation field anywhere. Site copy already describes a value-for-value swap to projects, with no code behind it. |
-| 10 | The swap happens ONLY after the community says yes | **not built** | Not enforceable, because neither end exists as data. Today one person can self-serve the entire chain: create the campaign with their own `daoLink` (unvalidated, `campaigns.ts:474`), activate it themselves, accept their own contribution, mark it fulfilled, and call `formalizeOnHypha`. No guard on that path references a vote, quorum, signal or sign-off. |
+| 8 | Held pending counsel (v1.2, 2026-09-27): whether and how the network holds a part of each land project | **held** | Kept outside the repo. |
+| 9 | Held pending counsel (v1.2, 2026-09-27): how any such holding would be valued and exchanged | **held** | Kept outside the repo. |
+| 10 | Held pending counsel (v1.2, 2026-09-27): the community decision that would gate any exchange of holdings. The proof on the right is a live finding about the in-kind path and stays. | **not built** | Not enforceable, because neither end exists as data. Today one person can self-serve the entire chain: create the campaign with their own `daoLink` (unvalidated, `campaigns.ts:474`), activate it themselves, accept their own contribution, mark it fulfilled, and call `formalizeOnHypha`. No guard on that path references a vote, quorum, signal or sign-off. |
 | 11 | Non-cash contributions go to ONE project, not the pool | **built** | This is how the system already works, and it is the one clause the current data model gets right by accident. |
 
 Rye's six answers add five more clauses. **Escrow, the self-set time minimum, the
@@ -63,18 +63,9 @@ no pre-issued treasury... build nothing that assumes one." Enforced for real:
 `server/tokenMintModel.test.ts:113` scans the schema source and fails the build if a
 table named `treasury` or `treasury_balances` is ever declared.
 
-**The reading that dissolves most of this.** Rye said the placement token's job is
-"just tracking what is otherwise true another way", and that placement is "actually
-just a signalling tool" that "doesn't bind". That is not a $ReGen-family platform
-token and it is not a claim on supply. It is a per-contributor signalling ledger
-scoped to one season's cohort. Decision #1 bans crediting the four platform tokens
-for a pledge, which this would not do. R92 bans a pre-issued token treasury, and the
-20% community share is dollars, not token supply.
-
-**So the likely answer is that they do not truly conflict, and both documents should
-say so explicitly before anyone builds.** That is a ruling only Rye can make, and it
-is the first thing on the list, because every other piece of money work sits on top
-of it. The risk of guessing is a build that a green CI gate tears out later.
+Rye ruled on both on 2026-09-05; the rulings are in the decision log of
+`CROWDPOOL_PLAN.md`. The reading of the fund channel that went with them here is held
+pending counsel (v1.2, 2026-09-27), and its text is kept outside the repo.
 
 ---
 
@@ -214,28 +205,10 @@ than incrementing, which is why the money total self-heals instead of drifting.
 
 ## Part 4: the copy already says a different mechanic
 
-`client/src/components/AllocationCalculator.tsx:299-302`, live on `/opportunity`,
-tells investors they may **"Direct up to 90% of your capital to a project you choose
-(10% stays in diversified fund)"**, plus a **3% due-diligence fee capped at $20,000**
-if the chosen project fails council review.
-
-That is 90/10 with a fee. Rye's mechanic is 80/20 with no fee. The same page also uses
-the literal string "80/20" for something else entirely: the carried-interest split of
-profits above an 8% hurdle (`client/src/pages/Opportunity.tsx:872,888`). So an
-investor reading the page today is given two numbers, both wrong for this mechanic,
-one of which is the right digits attached to the wrong noun.
-
-`shared/fund.ts` carries a third: `allocation: "60 / 30 / 10, land / alliance /
-innovation"`. It carries no contribution split at all, which is where one belongs,
-because `scripts/check-fund-claims.mjs` runs in CI and requires every surface
-describing the fund to read from that file.
-
-**Recommendation: do not write the new numbers onto any live page yet.** The fund is
-in formation, `FUND.hasLegalEntity` is `false`, and the statement every surface
-renders says "no capital is accepted and no money moves". Publishing "80% of your
-investment is earmarkable" describes a mechanism that does not exist, which is the
-exact failure `shared/fund.ts` and its CI gate were built to stop. The copy lands when
-the mechanic does.
+Held pending counsel (v1.2, 2026-09-27). This part compared the fund copy on
+`/opportunity` with the fund-channel mechanic. Both are with counsel now, and the text is
+kept outside the repo. Its standing advice holds: no fund-channel number goes onto a
+live page before the mechanic and counsel's answer exist.
 
 ---
 
@@ -250,16 +223,8 @@ the mechanic does.
    threshold, the time minimum and the 9-month window.
 4. **The cohort.** A season's thirteen as an addressable set, which is a `seasonId`
    backfill and a query, not a new subsystem.
-5. **The contribution, the split and the escrow balance.** One fund-level ledger with
-   a source tag, in the shape `user_token_ledger` already uses.
-6. **Placement**, as a mutable per-contributor allocation across the cohort that sums
-   to the placeable balance and can be moved until a project closes.
-7. **The stake.** Model it as a HOLDING with a `backingInstrument` of
-   `recorded_agreement | hypha_onchain | llp_equity`, never as a token. Rye was
-   explicit that each deal is unique and some are equity in a real legal entity. Any
-   design that assumes a token will have to be torn out for the first LLP.
-8. **The gate**, last, because it is the constraint that orders everything else: no
-   swap row may be written before the campaign carries a community decision.
+5. **Held pending counsel (v1.2, 2026-09-27):** the fund-channel steps that followed
+   here. Their text is kept outside the repo.
 
 ---
 
