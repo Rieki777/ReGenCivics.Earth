@@ -190,12 +190,21 @@ describe("FollowControl", () => {
       render(<FollowControl {...project} campaignId={null} />);
       await user.click(screen.getByRole("button", { name: FOLLOW.follow }));
       expect(screen.getByText(FOLLOW.seasonHeading)).toBeInTheDocument();
-      expect(screen.getByText(FOLLOW.seasonBody)).toBeInTheDocument();
+      // A real project: the season, never "real campaigns" (review 2026-09-28).
+      expect(screen.getByText(FOLLOW.seasonBodyProject)).toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/real campaigns/);
       await user.type(screen.getByLabelText(FOLLOW.emailLabel), "sam@example.com");
       await user.click(screen.getByRole("button", { name: FOLLOW.seasonSubmit }));
       expect(called("joinWaitlist")).toHaveBeenCalledWith({ email: "sam@example.com" });
       expect(called("subscribeByEmail")).not.toHaveBeenCalled();
+      await act(async () => {
+        mutations.joinWaitlist.opts.onSuccess?.();
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      });
+      expect(screen.getByRole("status")).toHaveTextContent(FOLLOW.seasonDoneProject);
+      expect(document.body.textContent).not.toMatch(/real campaigns/);
     });
+
 
     it("an example project, signed out: says why, and offers the waitlist", async () => {
       const user = userEvent.setup();

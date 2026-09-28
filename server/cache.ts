@@ -240,10 +240,10 @@ export async function redisRateLimit(
 
   try {
     const multi = redisClient.multi();
-    multi.zRemRangeByScore(key, 0, windowStart);           // drop expired timestamps
-    multi.zAdd(key, { score: now, value: String(now) });   // record current request
-    multi.zCard(key);                                       // count active requests
-    multi.expire(key, Math.ceil(windowMs / 1000) + 1);     // auto-expire key
+    multi.zRemRangeByScore(key, 0, windowStart);                  // drop expired timestamps
+    multi.zAdd(key, { score: now, value: uniqueMember(now) });    // record current request
+    multi.zCard(key);                                              // count active requests
+    multi.expire(key, Math.ceil(windowMs / 1000) + 1);            // auto-expire key
 
     const results = await multi.exec();
     const count = ((results?.[2] as unknown) as number) ?? 0;
@@ -252,6 +252,79 @@ export async function redisRateLimit(
   } catch {
     // Redis error, fail open so rate limit never breaks the app
     return { allowed: true, count: 0, resetAt };
+  }
+}
+
+/**
+ * A sorted-set member no other request shares. A bare timestamp let two
+ * requests in the same millisecond collapse into one entry, so the second
+ * went uncounted.
+ */
+function uniqueMember(now: number): string {
+  return `${now}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** The slice of a Redis MULTI the keyed limit uses, so a test can pass a fake client. */
+export interface KeyedLimitMulti {
+  zRemRangeByScore(key: string, min: number, max: number): KeyedLimitMulti;
+  zAdd(key: string, member: { score: number; value: string }): KeyedLimitMulti;
+  zCard(key: string): KeyedLimitMulti;
+  zRangeWithScores(key: string, start: number, stop: number): KeyedLimitMulti;
+  expire(key: string, seconds: number): KeyedLimitMulti;
+  exec(): Promise<unknown[] | null | undefined>;
+}
+
+/** The slice of the Redis client the keyed limit uses. */
+export interface KeyedLimitRedis {
+  multi(): KeyedLimitMulti;
+  zRem(key: string, member: string): Promise<unknown>;
+}
+
+/**
+ * A sliding-window limit that counts only the requests it lets through
+ * (server/rate-limit.ts checkKeyedLimit, for the sign-in link per email).
+ *
+ * redisRateLimit records every request before it counts, refused ones
+ * included. That suits a per-IP limit, where only the caller's own network
+ * pays. On a key someone else can ask for (an email address), it let a
+ * stranger send one request every few minutes and keep the address over the
+ * limit forever: each refusal pushed the window forward again, so the owner
+ * never got a new link (security review 2026-09-28).
+ *
+ * Here a refused request is removed again straight after it is counted, so
+ * it never extends the window. resetAt is when the oldest counted request
+ * leaves the window, which is when one more would pass. Fails open on a
+ * Redis error, like redisRateLimit.
+ */
+export async function redisKeyedLimit(
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+  client: KeyedLimitRedis | null = redisClient && isConnected ? (redisClient as unknown as KeyedLimitRedis) : null,
+  now: number = Date.now()
+): Promise<{ allowed: boolean; count: number; resetAt: number }> {
+  if (!client) return { allowed: true, count: 0, resetAt: now + windowMs };
+  const member = uniqueMember(now);
+  try {
+    const results = await client
+      .multi()
+      .zRemRangeByScore(key, 0, now - windowMs)
+      .zAdd(key, { score: now, value: member })
+      .zCard(key)
+      .zRangeWithScores(key, 0, 0)
+      .expire(key, Math.ceil(windowMs / 1000) + 1)
+      .exec();
+    const count = Number(results?.[2] ?? 0);
+    if (count <= maxRequests) return { allowed: true, count, resetAt: now + windowMs };
+
+    // Refused: take this request back out, so it never counts toward the window.
+    await client.zRem(key, member);
+    const oldest = results?.[3] as Array<{ score: number | string }> | undefined;
+    const oldestScore = Number(oldest?.[0]?.score);
+    const resetAt = Number.isFinite(oldestScore) && oldestScore < now ? oldestScore + windowMs : now + windowMs;
+    return { allowed: false, count: count - 1, resetAt };
+  } catch {
+    return { allowed: true, count: 0, resetAt: now + windowMs };
   }
 }
 

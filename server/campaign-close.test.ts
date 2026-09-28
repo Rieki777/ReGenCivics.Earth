@@ -337,6 +337,8 @@ describe("a close that completed", () => {
       contributorName: "Gia", contributorEmail: "acc.gift@example.com", estimatedValue: 10,
     }));
     await stewardCaller(OWNER).campaigns.updateContributionStatus({ contributionId: taken.id, status: "accepted" });
+    // An accepted thing carries a delivery window until the close.
+    expect((await row(taken.id)).claimExpiresAt).not.toBeNull();
     await makeDue(f.id);
     const send = vi.fn().mockResolvedValue({ id: "sent" });
     const insert = vi.fn().mockResolvedValue(true);
@@ -359,6 +361,10 @@ describe("a close that completed", () => {
     expect((await row(waitingAcc.id)).status).toBe("cancelled");
     expect((await row(waitingAnon.id)).status).toBe("cancelled");
     expect((await row(taken.id)).status).toBe("accepted");
+    // Review 2026-09-28: the window is cleared on completion too, so the
+    // nightly sweep (claimExpiresAt IS NOT NULL) can never expire the place
+    // and tell anyone "the need is open again" on a completed campaign.
+    expect((await row(taken.id)).claimExpiresAt).toBeNull();
 
     const notices = insert.mock.calls.map((call) => call[0] as any);
     const completed = notices.filter((n) => n.type === "campaign_completed");

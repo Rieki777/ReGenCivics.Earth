@@ -332,6 +332,7 @@ function SeasonFallback({ variant, projectName, isExample, defaultEmail }: {
             bodyWhenSignedOut={!isExample}
             defaultEmail={defaultEmail}
             focusOnMount
+            wording={isExample ? "examples" : "season"}
           />
         </div>
       )}
@@ -370,12 +371,19 @@ function SeasonFollow({ variant, heading, defaultEmail }: {
  * Otherwise: a labelled email field and "Tell me". `lead` goes first when
  * given (the fallback panel's reason); the body says what happens next.
  */
-function SeasonForm({ tone, lead, defaultEmail, focusOnMount = false, bodyWhenSignedOut = true }: {
+function SeasonForm({ tone, lead, defaultEmail, focusOnMount = false, bodyWhenSignedOut = true, wording = "examples" }: {
   tone: "dark" | "light";
   lead?: string;
   defaultEmail?: string;
   focusOnMount?: boolean;
   bodyWhenSignedOut?: boolean;
+  /**
+   * "examples" where only example campaigns show (the gallery, the practice
+   * receipt, an example project): "when real campaigns open". "season"
+   * behind Follow on a real project with nothing live: "when crowdpooling
+   * opens for the season".
+   */
+  wording?: "examples" | "season";
 }) {
   const { user, isAuthenticated } = useAuth();
   const accountEmail = isAuthenticated && typeof user?.email === "string" && isEmailLike(user.email) ? user.email.trim() : null;
@@ -427,7 +435,11 @@ function SeasonForm({ tone, lead, defaultEmail, focusOnMount = false, bodyWhenSi
 
   const dark = tone === "dark";
   const text = dark ? "text-white/80" : "text-[#1a472a]/85";
-  const body = accountEmail ? FOLLOW.seasonBodySignedIn(accountEmail) : bodyWhenSignedOut ? FOLLOW.seasonBody : null;
+  const season = wording === "season";
+  const body = accountEmail
+    ? (season ? FOLLOW.seasonBodyProjectSignedIn(accountEmail) : FOLLOW.seasonBodySignedIn(accountEmail))
+    : bodyWhenSignedOut ? (season ? FOLLOW.seasonBodyProject : FOLLOW.seasonBody) : null;
+  const doneLine = season ? FOLLOW.seasonDoneProject : FOLLOW.seasonDone;
   const errorClass = dark ? "text-sm font-medium text-[#ffb4a8]" : "text-sm font-medium text-red-700";
 
   return (
@@ -441,7 +453,7 @@ function SeasonForm({ tone, lead, defaultEmail, focusOnMount = false, bodyWhenSi
           : "sr-only"}
       >
         {done && <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${dark ? "" : "text-[#4a7c59]"}`} aria-hidden="true" />}
-        {done ? FOLLOW.seasonDone : ""}
+        {done ? doneLine : ""}
       </p>
       {!done && (
         <form noValidate onSubmit={submit} className="space-y-2">

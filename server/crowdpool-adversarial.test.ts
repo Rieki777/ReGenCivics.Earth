@@ -69,7 +69,7 @@ function ctxFor(userId: number, ip: string): TrpcContext {
   return {
     user,
     authMethod: 'legacy',
-    req: { protocol: 'https', headers: { 'x-forwarded-for': ip } } as unknown as TrpcContext['req'],
+    req: { protocol: 'https', ip, headers: { 'x-forwarded-for': ip } } as unknown as TrpcContext['req'],
     res: { clearCookie: () => {} } as unknown as TrpcContext['res'],
   };
 }

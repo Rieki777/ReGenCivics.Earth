@@ -28,10 +28,31 @@ export const EMAIL_LINK_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 export const EMAIL_LINK_LIMIT = (m: number) =>
   `We've sent 3 sign-in links to this email in the last 15 minutes. Check your inbox and spam folder for the newest one, or try again in about ${m} minute${m === 1 ? "" : "s"}.`;
 
-/** The limiter key for an address: a SHA-256 of it, so no address sits in Redis or a log. */
+/**
+ * The inbox an address lands in, for counting only. Case and spaces never
+ * made a new address, and neither do a "+tag" (most providers deliver
+ * name+anything to name) or the dots in a Gmail address (Gmail ignores
+ * them, and googlemail.com is the same inbox). Without this, name+1@,
+ * name+2@ and n.ame@gmail.com each got three fresh links, all to one
+ * mailbox (security review 2026-09-28). The link still goes to the address
+ * as typed; this only decides what counts as the same inbox.
+ */
+export function canonicalInboxForLimit(email: string): string {
+  const lower = email.trim().toLowerCase();
+  const at = lower.lastIndexOf("@");
+  if (at <= 0 || at === lower.length - 1) return lower;
+  let local = lower.slice(0, at);
+  let domain = lower.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > 0) local = local.slice(0, plus);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "") || local;
+  return `${local}@${domain}`;
+}
+
+/** The limiter key for an address: a SHA-256 of its inbox, so no address sits in Redis or a log. */
 export function emailLinkLimitKey(email: string): string {
-  const normalised = email.trim().toLowerCase();
-  return `authmail:${crypto.createHash("sha256").update(normalised).digest("hex")}`;
+  return `authmail:${crypto.createHash("sha256").update(canonicalInboxForLimit(email)).digest("hex")}`;
 }
 
 /** The longest sign-in waits for the contribution link before redirecting. */
@@ -631,9 +652,11 @@ export function registerOAuthRoutes(app: Express) {
       return;
     }
 
-    // Three links per address per 15 minutes, whatever network asks. Case and
-    // spaces don't make a new address. Checked before a token is made, so a
-    // refused request cancels nobody's earlier link.
+    // Three links per inbox per 15 minutes, whatever network asks. Case,
+    // spaces, a "+tag" and Gmail's dots don't make a new inbox. Checked
+    // before a token is made, so a refused request cancels nobody's earlier
+    // link, and refused requests never count, so nobody can keep an inbox
+    // locked out by asking over and over.
     const limit = await checkKeyedLimit(emailLinkLimitKey(email), EMAIL_LINK_LIMIT_MAX, EMAIL_LINK_LIMIT_WINDOW_MS);
     if (!limit.allowed) {
       const retrySeconds = Math.max(1, Math.ceil(limit.retryAfterMs / 1000));

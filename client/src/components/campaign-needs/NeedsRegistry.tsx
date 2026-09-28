@@ -53,6 +53,7 @@ export function NeedsRegistry({
   filter = [],
   projectName,
   isExample = false,
+  showTokenLine = true,
   children,
 }: {
   items: any[];
@@ -68,6 +69,8 @@ export function NeedsRegistry({
   /** For the token line; left out when not given. */
   projectName?: string;
   isExample?: boolean;
+  /** False once the campaign has ended: the token line speaks to someone about to help. */
+  showTokenLine?: boolean;
   /** Shown at the end of the list (the "Something else to offer?" card). */
   children?: ReactNode;
 }) {
@@ -102,7 +105,7 @@ export function NeedsRegistry({
     }))
     .filter((g) => g.items.length > 0);
 
-  const tokenLine = isExample ? TOKEN_PRACTICE_LINE : projectName ? TOKEN_LINE(projectName) : null;
+  const tokenLine = !showTokenLine ? null : isExample ? TOKEN_PRACTICE_LINE : projectName ? TOKEN_LINE(projectName) : null;
 
   return (
     <div className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 mb-6 shadow-xl">

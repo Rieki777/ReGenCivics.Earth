@@ -14,6 +14,10 @@
  *
  * Example campaigns show the card disabled with the example line. A
  * cancelled or closed campaign keeps its notes as they are.
+ *
+ * Clear asks first: accepted people lose where to go and what to bring the
+ * moment it's gone, so one tap next to Save must not do it (review
+ * 2026-09-28). Focus goes to Keep it, the safe choice.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -81,7 +85,10 @@ export function ArrivalNoteCard({
   const [target, setTarget] = useState<number>(0);
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [emptyError, setEmptyError] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
   const firstRef = useRef<HTMLTextAreaElement>(null);
+  const clearRef = useRef<HTMLButtonElement>(null);
+  const keepRef = useRef<HTMLButtonElement>(null);
 
   const current = useMemo(() => (notes ?? []).find((n) => n.campaignItemId === target) ?? null, [notes, target]);
 
@@ -93,11 +100,16 @@ export function ArrivalNoteCard({
     }
     setFields(next);
     setEmptyError(false);
+    setConfirmingClear(false);
   }, [current, target]);
+
+  useEffect(() => {
+    if (confirmingClear) keepRef.current?.focus();
+  }, [confirmingClear]);
 
   const disabled = isExample || !canEdit;
 
-  const submit = async (values: Fields, cleared: boolean) => {
+  const submit = async (values: Fields, cleared: boolean): Promise<boolean> => {
     try {
       await save.mutateAsync({
         campaignId,
@@ -106,8 +118,10 @@ export function ArrivalNoteCard({
       });
       await utils.campaigns.getArrivalNotes.invalidate({ campaignId });
       toast.success(cleared ? ARRIVAL.cleared : ARRIVAL.saved);
+      return true;
     } catch (err) {
       toast.error((err as { message?: string })?.message || ARRIVAL.saveFailed);
+      return false;
     }
   };
 
@@ -125,10 +139,23 @@ export function ArrivalNoteCard({
     void submit(trimmed, false);
   };
 
-  const onClear = () => {
+  const askToClear = () => {
     if (disabled) return;
     setEmptyError(false);
-    void submit({ ...EMPTY }, true);
+    setConfirmingClear(true);
+  };
+
+  const keepNote = () => {
+    setConfirmingClear(false);
+    requestAnimationFrame(() => clearRef.current?.focus());
+  };
+
+  const onClear = async () => {
+    if (disabled) return;
+    const ok = await submit({ ...EMPTY }, true);
+    setConfirmingClear(false);
+    // The Clear button goes with the note, so focus starts the note afresh.
+    if (ok) requestAnimationFrame(() => firstRef.current?.focus());
   };
 
   return (
@@ -210,12 +237,26 @@ export function ArrivalNoteCard({
               {save.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {ARRIVAL.save}
             </Button>
-            {current && (
-              <Button type="button" variant="outline" onClick={onClear} disabled={save.isPending} className="min-h-11 border-[#1a472a]/30 text-[#1a472a]">
+            {current && !confirmingClear && (
+              <Button ref={clearRef} type="button" variant="outline" onClick={askToClear} disabled={save.isPending} className="min-h-11 border-[#1a472a]/30 text-[#1a472a]">
                 {ARRIVAL.clear}
               </Button>
             )}
           </div>
+          {current && confirmingClear && (
+            <div role="group" aria-labelledby="arrival-clear-question" className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2" data-testid="arrival-clear-confirm">
+              <p id="arrival-clear-question" className="text-sm font-semibold text-[#1a472a]">{ARRIVAL.clearConfirm}</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button ref={keepRef} type="button" variant="outline" onClick={keepNote} disabled={save.isPending} className="min-h-11 border-[#1a472a]/30 text-[#1a472a] bg-white dark:bg-white">
+                  {ARRIVAL.clearKeep}
+                </Button>
+                <Button type="button" onClick={() => void onClear()} disabled={save.isPending} className="min-h-11 bg-red-700 hover:bg-red-800 text-white">
+                  {save.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
+                  {ARRIVAL.clearYes}
+                </Button>
+              </div>
+            </div>
+          )}
         </fieldset>
       </form>
     </section>

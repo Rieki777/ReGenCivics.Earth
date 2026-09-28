@@ -3685,6 +3685,7 @@ export function FinancialTargetSection({
             <span className="text-[#1a472a]/75">days</span>
           </div>
 
+          {/* Unselected presets in #1a472a: #4a7c59 on #f0f7f0 was 4.46:1 (review 2026-09-28). */}
           <div className="flex flex-wrap gap-2">
             {DURATION_PRESETS.map(({ days, label }) => (
               <button
@@ -3695,7 +3696,7 @@ export function FinancialTargetSection({
                 className={`px-3 py-1.5 min-h-11 rounded-full text-sm font-medium transition-colors ${
                   durationDays === days
                     ? 'bg-[#4a7c59] text-white'
-                    : 'bg-[#f0f7f0] text-[#4a7c59] hover:bg-[#e0efe0]'
+                    : 'bg-[#f0f7f0] text-[#1a472a] hover:bg-[#e0efe0]'
                 }`}
               >
                 {label}

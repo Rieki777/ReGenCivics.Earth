@@ -60,6 +60,9 @@ User-generated content reaching an LLM (forum posts, video transcripts, profile 
 | Posting to a forum reply from an automated source | Bot user? Voice rules? Rate-limited? |
 | Sending content to Claude / an LLM | Sanitized? User PII? Output written to where? |
 | Touching user input in HTML | Through `sanitizeInput` or escaped on render? |
+| Reading the caller's IP for a limit or a log | `req.ip` under `trust proxy`, never the first `X-Forwarded-For` entry, which the client writes (`getClientIp`, 2026-09-28). |
+| Limiting on a key someone else can name (an email address, a username) | Count only the requests you let through, or a stranger can keep the key locked for good; fold variants that reach the same inbox (`checkKeyedLimit`, 2026-09-28). |
+| Putting a secret in a URL fragment | Scrub fragments from every error and analytics tool before it ships (`client/src/lib/sentryScrub.ts`). |
 
 ---
 

@@ -89,10 +89,16 @@ export function MoneyBlock({
   routes,
   money,
   currency,
+  ended = false,
 }: {
   routes: MoneyRoute[] | undefined;
   money: Pick<(CampaignProgress | CampaignProgressSummary)["money"], "asksNone">;
   currency: string;
+  /**
+   * The campaign is over (complete, cancelled, closed): one line saying so,
+   * with no route buttons and no "needs above are open to you".
+   */
+  ended?: boolean;
 }) {
   const shown = (routes ?? []).filter(
     (r): r is MoneyRoute & { partner: ShownPartner } => isShownPartner(r.partner) && (r.status === "verified" || r.status === "example"),
@@ -103,7 +109,9 @@ export function MoneyBlock({
   const allVerified = shown.length > 0 && shown.every((r) => r.status === "verified");
 
   let body;
-  if (money.asksNone) {
+  if (ended) {
+    body = <p className="text-sm text-[#1a472a]/85">{MONEY_BLOCK.ended}</p>;
+  } else if (money.asksNone) {
     body = <p className="text-sm text-[#1a472a]/85">{MONEY_BLOCK.asksNone}</p>;
   } else if (routes === undefined) {
     // Still loading: never say "no money route yet" on a page that has one.

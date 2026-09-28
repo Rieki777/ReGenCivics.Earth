@@ -45,13 +45,16 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   const initSentry = () => {
     if (sentryLoaded) return;
     sentryLoaded = true;
-    import("@sentry/react").then((Sentry) => {
+    Promise.all([import("@sentry/react"), import("@/lib/sentryScrub")]).then(([Sentry, scrub]) => {
       Sentry.init({
         dsn: import.meta.env.VITE_SENTRY_DSN,
         sampleRate: 1.0,
         tracesSampleRate: 0.1,
         environment: import.meta.env.MODE,
         integrations: [Sentry.browserTracingIntegration()],
+        // No URL fragment ever reaches Sentry: the offer status link keeps a
+        // private token there (client/src/lib/sentryScrub.ts).
+        ...scrub.sentryPrivacyOptions(),
       });
     });
   };

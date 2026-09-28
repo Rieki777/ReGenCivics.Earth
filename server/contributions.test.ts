@@ -61,6 +61,7 @@ function createAuthContext(ip?: string): TrpcContext {
     authMethod: 'legacy',
     req: {
       protocol: 'https',
+      ...(ip ? { ip } : {}),
       headers: ip ? { 'x-forwarded-for': ip } : {},
     } as TrpcContext['req'],
     res: {

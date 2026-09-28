@@ -14,11 +14,19 @@
  * Words for these rules live in shared/crowdpoolCopy.ts (ZERO_VALUE).
  */
 
-/** A need is listed only with a value above 0 (ruling 2026-09-27), so "confirmed value reaches the in-kind ask" and "every need filled" agree. */
+/**
+ * A need is listed only with a value above 0 (ruling 2026-09-27), so
+ * "confirmed value reaches the in-kind ask" and "every need filled" agree.
+ *
+ * Tested at the cent: campaign_items.estimatedValue is DECIMAL(18,2), and
+ * MySQL and MariaDB round 0.004 to 0.00 with a note, not an error, even in
+ * strict mode. So anything under half a cent would pass a plain "> 0" and
+ * be stored as a need at 0 (review 2026-09-28).
+ */
 export function isListableValue(v: unknown): boolean {
   if (v == null || v === "" || typeof v === "boolean") return false;
   const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) && n > 0;
+  return Number.isFinite(n) && Math.round(n * 100) > 0;
 }
 
 /** The indexes of the needs whose value is not listable, in order. */

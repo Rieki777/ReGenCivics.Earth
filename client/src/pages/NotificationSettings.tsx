@@ -212,9 +212,12 @@ export default function NotificationSettings() {
                     onChange={(v) => setPrefs.mutate({ gratitudeEmail: v as 'daily' | 'off' })} />
                 </div>
                 <div>
-                  <p id="campaigns-label" className="text-sm font-semibold text-[#1a472a] mb-1">Campaigns you're part of</p>
+                  {/* campaign_opened and campaign_final_stretch reach people who only
+                      follow a project, and this setting carries them, so the label
+                      and the summary line name follows too (review 2026-09-28). */}
+                  <p id="campaigns-label" className="text-sm font-semibold text-[#1a472a] mb-1">Campaigns you're part of or follow</p>
                   <p className="text-xs text-[#1a472a]/75 mb-2">
-                    Offers, answers, deliveries and thank-yous can come right away. Campaign updates, roles filling or opening up, and campaigns ending come in the daily summary.
+                    Offers, answers, deliveries and thank-yous can come right away. Campaign updates, roles filling or opening up, campaigns ending, and projects you follow opening or closing soon come in the daily summary.
                   </p>
                   <CadencePicker idPrefix="campaigns" value={prefs.campaignsEmail ?? 'immediate'}
                     onChange={(v) => setPrefs.mutate({ campaignsEmail: v })} />

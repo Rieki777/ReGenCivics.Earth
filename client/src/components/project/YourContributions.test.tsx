@@ -109,6 +109,30 @@ describe("YourContributions", () => {
     expect(live?.textContent).toBe(LINK.withdrawn);
   });
 
+  it("hands focus back to the row's Withdraw on Keep it, and to the section heading after a withdraw (review 2026-09-28)", async () => {
+    mine = [row(3, "pending", "Seed trays")];
+    withdrawMock.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+    render(<YourContributions {...props} />);
+    const opener = screen.getByRole("button", { name: YOUR_OFFERS.withdrawLabel("Seed trays") });
+
+    await user.click(opener);
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: LINK.withdrawKeep }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    await user.click(opener);
+    await screen.findByRole("dialog");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    await user.click(opener);
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: LINK.withdrawConfirm }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Your contributions" })));
+  });
+
   it("keeps the dialog open with the server's words when a withdraw is refused", async () => {
     mine = [row(3, "pending", "Seed trays")];
     withdrawMock.mockRejectedValue({ message: "The stewards just answered this offer. Refresh to see where it stands." });

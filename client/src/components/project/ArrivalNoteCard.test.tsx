@@ -105,10 +105,38 @@ describe("ArrivalNoteCard", () => {
     expect(saveMock).toHaveBeenLastCalledWith(expect.objectContaining({ campaignId: 44, campaignItemId: 2, askFor: "Maria", whatToBring: "Straps & a spare tyre" }));
 
     await user.click(screen.getByRole("button", { name: ARRIVAL.clear }));
+    await user.click(screen.getByRole("button", { name: ARRIVAL.clearYes }));
     expect(saveMock).toHaveBeenLastCalledWith({
       campaignId: 44, campaignItemId: 2, whereToGo: "", whatToBring: "", askFor: "", meals: "", beds: "", gettingThere: "",
     });
     await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith(ARRIVAL.cleared));
+  });
+
+  it("Clear asks first: one tap deletes nothing, Keep it goes back, Clear it clears (review 2026-09-28)", async () => {
+    notes = [row(0, { whereToGo: "Main gate" })];
+    const user = userEvent.setup();
+    render(<ArrivalNoteCard campaignId={44} items={items} isExample={false} canEdit />);
+    const clear = screen.getByRole("button", { name: ARRIVAL.clear });
+    await user.click(clear);
+    // Nothing is sent on the first tap.
+    expect(saveMock).not.toHaveBeenCalled();
+    const group = screen.getByRole("group", { name: ARRIVAL.clearConfirm });
+    expect(group).toBeDefined();
+    const keep = screen.getByRole("button", { name: ARRIVAL.clearKeep });
+    await waitFor(() => expect(document.activeElement).toBe(keep));
+    // Keep it: the note stays, and focus goes back to Clear.
+    await user.click(keep);
+    expect(saveMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("group", { name: ARRIVAL.clearConfirm })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: ARRIVAL.clear })));
+    expect((screen.getByLabelText(ARRIVAL.fields.whereToGo) as HTMLTextAreaElement).value).toBe("Main gate");
+    // Clear, then Clear it: the note for everyone is cleared.
+    await user.click(screen.getByRole("button", { name: ARRIVAL.clear }));
+    await user.click(screen.getByRole("button", { name: ARRIVAL.clearYes }));
+    expect(saveMock).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenLastCalledWith({ campaignId: 44, whereToGo: "", whatToBring: "", askFor: "", meals: "", beds: "", gettingThere: "" });
+    await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith(ARRIVAL.cleared));
+    expect(ARRIVAL.clearConfirm).toBe("Clear this note? The people you accepted stop seeing it straight away.");
   });
 
   it("shows a character count near each field's limit", () => {

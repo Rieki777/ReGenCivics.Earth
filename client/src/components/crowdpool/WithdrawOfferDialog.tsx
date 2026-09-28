@@ -3,6 +3,14 @@
  * One dialog for the offer status page and for Your contributions, so the
  * words and the two choices are the same in both places. The caller does the
  * withdrawing; this only asks.
+ *
+ * It opens through state, with no DialogTrigger, so Radix had nowhere to
+ * send focus when it closed and dropped it on <body>: after Keep it, Escape
+ * or the X, a keyboard or screen reader user landed back at the top of a
+ * long page (review 2026-09-28). Focus now goes back to the Withdraw button
+ * that opened it (useReturnFocus). After a withdraw that button goes away
+ * with the offer's waiting state, so the caller names where focus goes
+ * instead (closeFocusTarget).
  */
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useReturnFocus } from "@/hooks/useReturnFocus";
 import { LINK } from "@shared/crowdpoolCopy";
 
 export function WithdrawOfferDialog({
@@ -22,6 +31,7 @@ export function WithdrawOfferDialog({
   onConfirm,
   pending,
   error,
+  closeFocusTarget,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,10 +39,26 @@ export function WithdrawOfferDialog({
   pending: boolean;
   /** A refusal from the server, shown inside the dialog. */
   error?: string | null;
+  /**
+   * Read when the dialog closes: the element to focus, or null to go back
+   * to the button that opened it. Callers return a steady element after a
+   * withdraw, since the Withdraw button is about to go.
+   */
+  closeFocusTarget?: () => HTMLElement | null;
 }) {
+  const returnFocus = useReturnFocus(open);
+  const onCloseAutoFocus = (event: Event) => {
+    const target = closeFocusTarget?.() ?? null;
+    if (target && target.isConnected) {
+      event.preventDefault();
+      target.focus();
+      return;
+    }
+    returnFocus(event);
+  };
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!pending) onOpenChange(o); }}>
-      <DialogContent className="max-w-md bg-white text-[#1a472a] light-form-island">
+      <DialogContent className="max-w-md bg-white text-[#1a472a] light-form-island" onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle className="text-[#1a472a] text-left pr-12 sm:pr-0">{LINK.withdrawTitle}</DialogTitle>
           <DialogDescription className="text-[#1a472a]/85 text-left">{LINK.withdrawBody}</DialogDescription>

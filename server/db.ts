@@ -2419,52 +2419,36 @@ export async function listNudgeCandidates(opts: { now: Date; onlyCampaignIds?: n
 }
 
 /**
- * Claim a steward nudge step on a waiting offer: true when this call claimed
- * it. Step 2 also stamps step 1 when it was still empty, so an offer first
- * found at day 8 is nudged once. `firstStamped` says whether step 1 was
- * stamped by this claim, so a failed send can hand back exactly what it took.
+ * Stamp a steward nudge step on a waiting offer once its notices went out:
+ * true when this call stamped it (false when another run got there first).
+ * Step 2 also stamps step 1 when it was still empty, so an offer first found
+ * at day 8 is nudged once.
+ *
+ * The job sends first and stamps after (build spec 2026-09-27, section 8.3).
+ * The spine's unique dedupe key makes a repeated or concurrent send a no-op,
+ * so a run that stops between the send and the stamp loses nothing: the
+ * next run sends again, and only the people who missed it get a row.
  */
-export async function claimNudgeStep(contributionId: number, step: 1 | 2): Promise<{ claimed: boolean; firstStamped: boolean }> {
+export async function stampNudgeStep(contributionId: number, step: 1 | 2): Promise<boolean> {
   const db = await getDb();
-  if (!db) return { claimed: false, firstStamped: false };
+  if (!db) return false;
   const cc = campaignContributions;
-  if (step === 1) {
-    const r = await db.update(cc).set({ nudge1At: sql`NOW()` as any })
-      .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge1At), isNull(cc.nudge2At)));
-    const claimed = asMutationResult(r).affectedRows === 1;
-    return { claimed, firstStamped: claimed };
-  }
-  const [before] = await db.select({ nudge1At: cc.nudge1At }).from(cc).where(eq(cc.id, contributionId)).limit(1);
-  const r = await db.update(cc).set({ nudge2At: sql`NOW()` as any, nudge1At: sql`COALESCE(${cc.nudge1At}, NOW())` as any })
-    .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge2At)));
-  const claimed = asMutationResult(r).affectedRows === 1;
-  return { claimed, firstStamped: claimed && !before?.nudge1At };
+  const r = step === 1
+    ? await db.update(cc).set({ nudge1At: sql`NOW()` as any })
+      .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge1At), isNull(cc.nudge2At)))
+    : await db.update(cc).set({ nudge2At: sql`NOW()` as any, nudge1At: sql`COALESCE(${cc.nudge1At}, NOW())` as any })
+      .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNull(cc.nudge2At)));
+  return asMutationResult(r).affectedRows === 1;
 }
 
-/** Hand back a nudge step whose every notice failed, so the next run tries again. */
-export async function releaseNudgeStep(contributionId: number, step: 1 | 2, firstStamped: boolean): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  const cc = campaignContributions;
-  const set: Record<string, unknown> = step === 1 ? { nudge1At: null } : { nudge2At: null };
-  if (step === 2 && firstStamped) set.nudge1At = null;
-  await db.update(cc).set(set as any).where(eq(cc.id, contributionId));
-}
-
-/** Claim the contributor's "still waiting" note on an offer: true when this call claimed it. */
-export async function claimWaitNote(contributionId: number): Promise<boolean> {
+/** Stamp the contributor's "still waiting" note once it went out: true when this call stamped it. */
+export async function stampWaitNote(contributionId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   const cc = campaignContributions;
   const r = await db.update(cc).set({ waitNoteAt: sql`NOW()` as any })
     .where(and(eq(cc.id, contributionId), eq(cc.status, 'pending'), isNotNull(cc.userId), isNull(cc.waitNoteAt)));
   return asMutationResult(r).affectedRows === 1;
-}
-
-export async function releaseWaitNote(contributionId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(campaignContributions).set({ waitNoteAt: null }).where(eq(campaignContributions.id, contributionId));
 }
 
 /**
@@ -2490,19 +2474,13 @@ export async function listFinalStretchCandidates(opts: { now: Date; onlyCampaign
   )).orderBy(asc(campaigns.id));
 }
 
-/** Claim the final-stretch notice for a campaign: true when this call claimed it. */
-export async function claimFinalStretch(campaignId: number): Promise<boolean> {
+/** Stamp the final-stretch notice once every follower's notice went out: true when this call stamped it. */
+export async function stampFinalStretch(campaignId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   const r = await db.update(campaigns).set({ finalStretchNoticedAt: sql`NOW()` as any })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, 'active'), isNull(campaigns.finalStretchNoticedAt)));
   return asMutationResult(r).affectedRows === 1;
-}
-
-export async function releaseFinalStretch(campaignId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(campaigns).set({ finalStretchNoticedAt: null }).where(eq(campaigns.id, campaignId));
 }
 
 /** Remove every email-list row (campaign followers and waitlist) for one email address. */

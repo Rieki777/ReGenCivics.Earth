@@ -46,7 +46,9 @@ export function ctxFor(userId: number, role: Role = "user", ip = nextFixtureIp()
   return {
     user,
     authMethod: "legacy",
-    req: { protocol: "https", headers: { "x-forwarded-for": ip } } as unknown as TrpcContext["req"],
+    // The limiter keys on req.ip (server/rate-limit.ts getClientIp), which Express
+    // fills from the proxy chain; a plain object carries it directly.
+    req: { protocol: "https", ip, headers: { "x-forwarded-for": ip } } as unknown as TrpcContext["req"],
     res: { clearCookie: () => {} } as unknown as TrpcContext["res"],
   };
 }

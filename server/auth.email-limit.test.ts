@@ -33,6 +33,7 @@ import {
   EMAIL_LINK_LIMIT,
   EMAIL_LINK_LIMIT_MAX,
   EMAIL_LINK_LIMIT_WINDOW_MS,
+  canonicalInboxForLimit,
   emailLinkLimitKey,
   registerOAuthRoutes,
 } from "./_core/oauth";
@@ -112,6 +113,22 @@ describe("three sign-in links per email per 15 minutes", () => {
     expect((await requestLink("kai@limit.example.test")).status).toBe(429);
   });
 
+  it("a +tag or Gmail's dots reach the same inbox, so they count as one address", async () => {
+    // Security review 2026-09-28: each of these got its own three links.
+    expect((await requestLink("secrev.probe@gmail.com")).status).toBe(200);
+    expect((await requestLink("s.e.c.revprobe+1@gmail.com")).status).toBe(200);
+    expect((await requestLink("secrevprobe+2@googlemail.com")).status).toBe(200);
+    expect((await requestLink("secrevprobe@gmail.com")).status).toBe(429);
+    expect((await requestLink("sec.rev.probe+3@Gmail.com")).status).toBe(429);
+    // A tag on another provider also lands in one inbox.
+    for (let i = 0; i < 3; i++) expect((await requestLink(`mo+${i}@limit.example.test`)).status).toBe(200);
+    expect((await requestLink("mo@limit.example.test")).status).toBe(429);
+    // Dots only fold on Gmail: elsewhere they can be different people.
+    expect((await requestLink("m.o@limit.example.test")).status).toBe(200);
+    // Each link still went to the address as typed.
+    expect(sendMock.mock.calls.map((c) => (c[0] as { to: string }).to)).toContain("s.e.c.revprobe+1@gmail.com");
+  });
+
   it("another address still passes", async () => {
     for (let i = 0; i < 3; i++) await requestLink("full@limit.example.test");
     expect((await requestLink("full@limit.example.test")).status).toBe(429);
@@ -139,6 +156,17 @@ describe("the limiter key and the message", () => {
     expect(key).not.toContain("rosa");
     expect(key).not.toContain("@");
     expect(emailLinkLimitKey("ROSA@EXAMPLE.TEST")).toBe(key);
+  });
+
+  it("counts the inbox: +tags dropped everywhere, dots dropped on Gmail only", () => {
+    expect(canonicalInboxForLimit(" Name+News@Example.Test ")).toBe("name@example.test");
+    expect(canonicalInboxForLimit("n.a.me+x@gmail.com")).toBe("name@gmail.com");
+    expect(canonicalInboxForLimit("n.ame@googlemail.com")).toBe("name@gmail.com");
+    expect(canonicalInboxForLimit("n.ame@example.test")).toBe("n.ame@example.test");
+    // Nothing to fold: kept as typed (lowercased).
+    expect(canonicalInboxForLimit("+only@example.test")).toBe("+only@example.test");
+    expect(emailLinkLimitKey("name+1@gmail.com")).toBe(emailLinkLimitKey("N.A.M.E@googlemail.com"));
+    expect(emailLinkLimitKey("name@example.test")).not.toBe(emailLinkLimitKey("name@gmail.com"));
   });
 
   it("says minute or minutes", () => {

@@ -49,6 +49,18 @@ describe("MoneyBlock", () => {
     expect(screen.queryByText(/as of/)).toBeNull();
   });
 
+  it("a campaign that has ended says it takes no more money, with no cards and no 'open to you' (review 2026-09-28)", () => {
+    render(<MoneyBlock routes={[maearth, steward]} money={asks} currency="USD" ended />);
+    expect(screen.getByText(MONEY_BLOCK.ended)).toBeInTheDocument();
+    expect(MONEY_BLOCK.ended).toBe("This campaign has ended, so it takes no more money.");
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/open to you|where you can help/);
+    // The anchor the whole-ask sheet scrolls to is still there.
+    expect(document.getElementById("money")).not.toBeNull();
+    render(<MoneyBlock routes={[]} money={{ asksNone: true }} currency="USD" ended />);
+    expect(screen.getAllByText(MONEY_BLOCK.ended)).toHaveLength(2);
+  });
+
   it("never shows a route that is not verified or an example", () => {
     render(<MoneyBlock routes={[{ ...maearth, status: "pending" }, { ...steward, status: "rejected" }]} money={asks} currency="USD" />);
     expect(screen.getByText("This project has no money route yet. Its needs above are open to you.")).toBeInTheDocument();

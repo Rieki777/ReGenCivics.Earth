@@ -10,6 +10,13 @@ describe("isListableValue (ruling 2026-09-27: no need at 0)", () => {
     expect(isListableValue("0.5")).toBe(true);
   });
 
+  it("tests at the cent, the way the DECIMAL(18,2) column stores it", () => {
+    // 0.004 is stored as 0.00: a need at 0 (review 2026-09-28).
+    for (const v of [0.004, 0.0049, "0.001", 1e-9]) expect(isListableValue(v), String(v)).toBe(false);
+    // 0.005 rounds up to 0.01 in the column, so it lists.
+    for (const v of [0.005, 0.01, "0.01"]) expect(isListableValue(v), String(v)).toBe(true);
+  });
+
   it("refuses 0, negatives and anything that isn't a finite number", () => {
     for (const v of [0, -0, -1, -0.01, "0", "", "  ", "abc", "12abc", null, undefined, Number.NaN, Infinity, -Infinity, true, false, {}]) {
       expect(isListableValue(v), String(v)).toBe(false);

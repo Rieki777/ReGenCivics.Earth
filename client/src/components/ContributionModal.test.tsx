@@ -300,6 +300,30 @@ describe('ContributionModal', () => {
       expect(toastMock.success).toHaveBeenCalledWith('Link copied');
     });
 
+    it('opens at its top, so "Offer sent" and the email line are the first thing seen (review 2026-09-28)', async () => {
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      await user.type(screen.getByLabelText('Name *'), 'Ada');
+      await user.type(screen.getByLabelText('Email *'), 'ada@example.com');
+      // The person scrolled down the long form to reach Send my offer.
+      const sheet = document.querySelector<HTMLElement>('[data-slot="dialog-content"]')!;
+      let top = 543;
+      Object.defineProperty(sheet, 'scrollTop', { configurable: true, get: () => top, set: (v: number) => { top = v; } });
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(top).toBe(543);
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false }));
+      expect(screen.getByTestId('receipt')).toBeDefined();
+      expect(top).toBe(0);
+    });
+
+    it('draws Close in white on its green, the contrast that reads (review 2026-09-28: 4.04:1 before)', async () => {
+      await sendAndAnswer({ id: 12, success: true, practice: false });
+      const close = within(screen.getByTestId('receipt')).getByRole('button', { name: 'Close' });
+      expect(close.className).toContain('bg-[#4a7c59]');
+      expect(close.className).toContain('text-white');
+      expect(close.className).not.toContain('text-primary-foreground');
+    });
+
     it('raises no toast of its own: the receipt is the confirmation', async () => {
       await sendAndAnswer({ id: 12, success: true, practice: false });
       expect(toastMock.success).not.toHaveBeenCalled();

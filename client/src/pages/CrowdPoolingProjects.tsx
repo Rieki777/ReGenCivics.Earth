@@ -42,6 +42,7 @@ import {
 import { NeedsTab } from "@/components/crowdpool/NeedsTab";
 import { SeasonDefaults } from "@/components/crowdpool/SeasonDefaults";
 import { FollowControl } from "@/components/crowdpool/FollowControl";
+import { GET_NOTIFIED_ID, goToGetNotified } from "@/lib/getNotified";
 import { Button } from "@/components/ui/button";
 import { SEO, pageSEO } from "@/components/SEO";
 import { pageCopy } from "@/data/pageCopy";
@@ -162,7 +163,7 @@ function HowCrowdPoolingWorks() {
 
 /** Scroll to the one #get-notified on the page (the Needs tab or the page foot). */
 function scrollToGetNotified() {
-  document.getElementById("get-notified")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById(GET_NOTIFIED_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function GetNotified() {
@@ -431,7 +432,8 @@ export default function CrowdPoolingProjects() {
                 href="#get-notified"
                 onClick={(e) => {
                   e.preventDefault();
-                  scrollToGetNotified();
+                  // Scroll there and move focus into the form (client/src/lib/getNotified.ts).
+                  goToGetNotified();
                 }}
                 className="inline-flex items-center justify-center min-h-11 rounded-md px-3 bg-amber-500/20 border border-amber-400/40 text-amber-200 hover:bg-amber-500/30 hover:text-white text-xs sm:text-sm font-medium whitespace-nowrap"
               >

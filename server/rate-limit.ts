@@ -6,7 +6,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
-import { redisRateLimit, isCacheAvailable } from "./cache";
+import { redisKeyedLimit, redisRateLimit, isCacheAvailable } from "./cache";
 
 // Configuration
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
@@ -126,15 +126,19 @@ function memoryRateLimit(
 }
 
 // ── IP extraction ─────────────────────────────────────────────────────────────
-function getClientIp(req: TrpcContext["req"]): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
-  }
-  if (Array.isArray(forwarded)) {
-    return forwarded[0].trim();
-  }
-  return req.socket?.remoteAddress || "unknown";
+/**
+ * The caller's address, as Express works it out under `trust proxy`
+ * (server/_core/index.ts sets 1 hop: Railway's edge, which appends the
+ * address it saw to X-Forwarded-For). req.ip is that appended entry.
+ *
+ * This used to read the FIRST X-Forwarded-For entry, which is whatever the
+ * client sent, so changing it on each request gave a fresh counter every
+ * time and no per-IP limit held (security review 2026-09-28). Every other
+ * limiter here (rateLimitMiddleware, the tRPC LLM guard, the webhooks)
+ * already used req.ip.
+ */
+export function getClientIp(req: TrpcContext["req"]): string {
+  return req.ip || req.socket?.remoteAddress || "unknown";
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -184,10 +188,13 @@ export async function checkRateLimit(
  * for from many networks. Callers pass a key that holds no personal data (a
  * SHA-256 of the address, never the address), since it lands in Redis.
  *
- * retryAfterMs is how long until one more request would pass: in this process,
- * until the oldest counted request leaves the window. Redis (redisRateLimit)
- * also counts refused requests, so there it is the whole window, which is how
- * long a caller has to wait without trying. Never throws: a Redis error fails
+ * Only requests it lets through are counted, on both paths. Anyone can ask
+ * for someone else's address, so a refused request must never push the
+ * window forward, or a stranger could keep an address locked out of sign-in
+ * for good (redisKeyedLimit in server/cache.ts has the story).
+ *
+ * retryAfterMs is how long until one more request would pass: until the
+ * oldest counted request leaves the window. Never throws: a Redis error fails
  * open, the same as checkRateLimit.
  */
 export async function checkKeyedLimit(
@@ -196,7 +203,7 @@ export async function checkKeyedLimit(
   windowMs: number
 ): Promise<{ allowed: boolean; retryAfterMs: number }> {
   const { allowed, resetAt } = isCacheAvailable()
-    ? await redisRateLimit(key, max, windowMs)
+    ? await redisKeyedLimit(key, max, windowMs)
     : memoryRateLimit(key, max, windowMs, keyedStore);
   return { allowed, retryAfterMs: allowed ? 0 : Math.max(0, resetAt - Date.now()) };
 }

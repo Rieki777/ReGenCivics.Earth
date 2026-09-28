@@ -260,6 +260,15 @@ export async function closeCampaign(campaignId: number, deps: CloseDeps = {}): P
           .set({ claimExpiresAt: null })
           .where(and(inArray(campaignContributions.id, stand), eq(campaignContributions.status, "accepted")));
       }
+    } else {
+      // Complete: every accepted place stays, and none can lapse any more.
+      // The nightly sweep (expireCrowdpoolClaims) ignores campaign status,
+      // so a delivery window left in place would later tell the person "the
+      // need is open again" on a campaign that takes no offers (review
+      // 2026-09-28).
+      await tx.update(campaignContributions)
+        .set({ claimExpiresAt: null })
+        .where(and(eq(campaignContributions.campaignId, campaignId), eq(campaignContributions.status, "accepted")));
     }
 
     const items = await tx.select({ id: campaignItems.id }).from(campaignItems).where(eq(campaignItems.campaignId, campaignId));

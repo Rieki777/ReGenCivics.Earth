@@ -501,12 +501,18 @@ export function buildClaimExpired(args: {
   const out: NotificationInput[] = [];
   const contributorId = recipientsOf([contribution.userId])[0];
   const needTitle = plain(contribution.title);
+  // A campaign that is no longer live (completed, closed, cancelled) takes no
+  // offers, so the need is not "open again" there (review 2026-09-28). An
+  // unknown status reads as live, as before.
+  const ended = campaign.status != null && campaign.status !== "active";
   if (contributorId) {
     out.push({
       userId: contributorId,
       type: "claim_expired",
       title: "Your place closed",
-      body: `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can offer again any time.`,
+      body: ended
+        ? `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it's closed with our thanks.`
+        : `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can offer again any time.`,
       link: projectLink(campaign, "your-contributions"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -518,7 +524,9 @@ export function buildClaimExpired(args: {
       userId: uid,
       type: "claim_expired",
       title: "A place closed",
-      body: `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it is open again.`,
+      body: ended
+        ? `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it's closed.`
+        : `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it is open again.`,
       link: projectLink(campaign, "review"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -583,25 +591,43 @@ function isOn(v: number | boolean | null | undefined): boolean {
   return v === true || (typeof v === "number" && v !== 0);
 }
 
+/** "2 days ago", "a week ago" at exactly 7, "12 days ago": how long an offer has waited. */
+export function waitedAgo(days: number): string {
+  if (days === 7) return "a week ago";
+  if (days <= 1) return days === 1 ? "yesterday" : "today";
+  return `${days} days ago`;
+}
+
 /**
  * A steward nudge about an offer still waiting on them (type offer_waiting):
- * step 1 at 2 days, step 2 at a week. Every steward, never the contributor
- * themselves. `Someone` when the offer is anonymous.
+ * step 1 from 2 days, step 2 from a week. Every steward, never the
+ * contributor themselves. `Someone` when the offer is anonymous.
+ *
+ * The words say how long it really waited (`waitedDays`, whole days from
+ * submittedAt). On the daily run step 1 goes out on day 2 and step 2 on day
+ * 7, which read "2 days ago" and "a week"; after the switch was paused, or
+ * on a first run over a backlog, an offer 20 days old says 20 days, not "a
+ * week" (review 2026-09-28). Without `waitedDays` it reads 2 or 7.
  */
 export function buildStewardNudge(args: {
   campaign: NotifyCampaign;
   contribution: NudgeContribution;
   stewardIds: number[];
   step: 1 | 2;
+  waitedDays?: number;
 }): NotificationInput[] {
   const { campaign, contribution, step } = args;
   const who = isOn(contribution.isAnonymous) ? "Someone" : plain(contribution.contributorName) || "Someone";
   const offer = plain(contribution.title) || "something";
   const camp = campaignTitleOf(campaign);
-  const title = step === 1 ? `${who}'s offer is waiting on you` : `${who} has waited a week to hear back`;
+  const days = Number.isFinite(args.waitedDays) ? Math.max(0, Math.floor(args.waitedDays as number)) : step === 1 ? 2 : 7;
+  const ago = waitedAgo(days);
+  const title = step === 1
+    ? `${who}'s offer is waiting on you`
+    : `${who} has waited ${days === 7 ? "a week" : `${days} days`} to hear back`;
   const body = step === 1
-    ? `${who} offered "${offer}" to ${camp} 2 days ago. A yes, a no or a question keeps it moving.`
-    : `${who} offered "${offer}" to ${camp} a week ago. If it isn't a fit, a kind no frees them to offer somewhere else.`;
+    ? `${who} offered "${offer}" to ${camp} ${ago}. A yes, a no or a question keeps it moving.`
+    : `${who} offered "${offer}" to ${camp} ${ago}. If it isn't a fit, a kind no frees them to offer somewhere else.`;
   return recipientsOf(args.stewardIds, [contribution.userId]).map((uid) => ({
     userId: uid,
     type: "offer_waiting" as const,

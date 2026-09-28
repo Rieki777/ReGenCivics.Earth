@@ -102,11 +102,29 @@ export default function OfferStatus() {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  // After a withdraw the Withdraw button goes, so the dialog hands focus to
+  // the step line, which says what happened (review 2026-09-28).
+  const withdrewRef = useRef(false);
+  const stepLineRef = useRef<HTMLParagraphElement>(null);
 
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState<string | null>(null);
   const [noteSent, setNoteSent] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement>(null);
+  const noteSentRef = useRef<HTMLParagraphElement>(null);
+  // Repeat presses while a note is on its way are ignored here, so the
+  // button never has to be disabled (a disabled button drops focus).
+  const sendingRef = useRef(false);
+
+  // The note went: the confirmation takes the focus and comes into view, so
+  // it can't sit unseen under the bottom navigation (review 2026-09-28).
+  useEffect(() => {
+    if (!noteSent) return;
+    const el = noteSentRef.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    el.scrollIntoView?.({ block: "center" });
+  }, [noteSent]);
 
   const [authOpen, setAuthOpen] = useState(false);
 
@@ -139,6 +157,7 @@ export default function OfferStatus() {
     setWithdrawError(null);
     try {
       await withdrawMutation.mutateAsync({ token });
+      withdrewRef.current = true;
       setWithdrawOpen(false);
       setLiveMessage(LINK.withdrawn);
       await load();
@@ -158,6 +177,8 @@ export default function OfferStatus() {
       return;
     }
     setNoteError(null);
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     try {
       await replyMutation.mutateAsync({ token, message });
       setNote("");
@@ -165,6 +186,8 @@ export default function OfferStatus() {
     } catch (err) {
       setNoteError(errorMessage(err, LINK.replyFailed));
       noteRef.current?.focus();
+    } finally {
+      sendingRef.current = false;
     }
   };
 
@@ -229,7 +252,7 @@ export default function OfferStatus() {
                   <li
                     key={s.key}
                     aria-current={s.state === "current" ? "step" : undefined}
-                    className={`flex items-center gap-2 text-sm ${s.state === "todo" ? "text-[#1a472a]/60" : "text-[#1a472a]"}`}
+                    className={`flex items-center gap-2 text-sm ${s.state === "todo" ? "text-[#1a472a]/75" : "text-[#1a472a]"}`}
                   >
                     {s.state === "done" && <CheckCircle2 className="w-4 h-4 text-[#4a7c59] flex-shrink-0" aria-hidden="true" />}
                     {s.state === "current" && <CircleDot className="w-4 h-4 text-[#1a472a] flex-shrink-0" aria-hidden="true" />}
@@ -244,7 +267,7 @@ export default function OfferStatus() {
                   </li>
                 ))}
               </ol>
-              <p className="mt-3 text-[#1a472a]/90" data-testid="offer-step-line">{view.stepLine}</p>
+              <p ref={stepLineRef} tabIndex={-1} className="mt-3 text-[#1a472a]/90 outline-none" data-testid="offer-step-line">{view.stepLine}</p>
             </section>
 
             {view.stewardNote && (
@@ -275,7 +298,7 @@ export default function OfferStatus() {
               <div>
                 <Button
                   variant="outline"
-                  onClick={() => { setWithdrawError(null); setWithdrawOpen(true); }}
+                  onClick={() => { setWithdrawError(null); withdrewRef.current = false; setWithdrawOpen(true); }}
                   className="w-full sm:w-auto min-h-11 border-[#1a472a]/40 text-[#1a472a]"
                 >
                   {LINK.withdraw}
@@ -301,10 +324,12 @@ export default function OfferStatus() {
                 {noteError && (
                   <p id="offer-note-error" role="alert" className="text-sm text-red-700">{noteError}</p>
                 )}
-                <p className="text-sm text-[#1a472a]" aria-live="polite">{noteSent ? LINK.replySent : ""}</p>
+                <p ref={noteSentRef} tabIndex={-1} className="text-sm text-[#1a472a] outline-none scroll-mb-24" aria-live="polite" data-testid="offer-note-sent">
+                  {noteSent ? LINK.replySent : ""}
+                </p>
                 <Button
                   type="submit"
-                  disabled={replyMutation.isPending}
+                  aria-busy={replyMutation.isPending || undefined}
                   className="w-full sm:w-auto min-h-11 bg-[#1a472a] hover:bg-[#0f2e1a] text-white"
                 >
                   {replyMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
@@ -343,6 +368,7 @@ export default function OfferStatus() {
         onConfirm={confirmWithdraw}
         pending={withdrawMutation.isPending}
         error={withdrawError}
+        closeFocusTarget={() => (withdrewRef.current ? stepLineRef.current : null)}
       />
       <AuthDialog
         open={authOpen}

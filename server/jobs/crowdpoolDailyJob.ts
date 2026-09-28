@@ -14,9 +14,11 @@
  *   5. finalStretch: followers hear two weeks before the close which needs
  *      are still open (up to three), unless every need is filled.
  *
- * Every step is idempotent: conditional updates, per-row stamps claimed
- * before a send, and spine dedupe keys. Extra runs (a deploy restarts the
- * in-process timer) send nothing new. Two game variables pause parts of it
+ * Every step is idempotent: conditional updates, per-row stamps written
+ * after a send, and spine dedupe keys (a unique index, so a repeated send is
+ * a no-op). Extra runs (a deploy restarts the in-process timer) send nothing
+ * new, and a run that stops between a send and its stamp loses nothing: the
+ * next run sends again and only the people who missed it get a row. Two game variables pause parts of it
  * without a deploy, each off when missing or unreadable:
  * crowdpool.auto_close (steps 1 and 2) and crowdpool.nudges (step 4). The
  * email retry (3) and the final stretch (5) have no switch, as the spec
@@ -104,12 +106,24 @@ function campaignOf(row: {
   };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whole days an offer has waited, for the nudge's words. */
+export function waitedDaysOf(submittedAt: Date | string, now: Date): number {
+  const t = new Date(submittedAt).getTime();
+  return Number.isFinite(t) ? Math.max(0, Math.floor((now.getTime() - t) / DAY_MS)) : 0;
+}
+
 /**
  * Step 4. Steward nudges at 2 and 7 days, and the contributor's note at 14.
- * Each step is claimed on the offer's row before its notices go (a
- * conditional stamp, so two runs at once send it once, and a steward added
- * later never gets an old step); when every notice of a step fails, the
- * claim is handed back for the next run.
+ *
+ * Send, then stamp (build spec 2026-09-27, section 8.3). Each notice carries
+ * a dedupe key on the spine's unique index, so two runs at once, or a run
+ * after one that stopped halfway, give each person one row. The stamp goes
+ * on once every notice of the step went through, so a failed insert is
+ * tried again next run, and a steward added after the stamp never gets an
+ * old step. (Build 3 claimed the stamp first; a restart between the claim
+ * and the sends dropped those notices for good. Review 2026-09-28.)
  */
 export async function runNudges(opts: CrowdpoolDailyOptions = {}): Promise<{ stewardNudges: number; stillWaiting: number; paused: boolean }> {
   if (!(await crowdpoolSwitchOn(NUDGES_SWITCH, opts))) return { stewardNudges: 0, stillWaiting: 0, paused: true };
@@ -138,27 +152,26 @@ export async function runNudges(opts: CrowdpoolDailyOptions = {}): Promise<{ ste
         }
         return ids;
       };
+      const inputs = buildStewardNudge({
+        campaign, contribution, stewardIds: await stewardsFor(), step,
+        waitedDays: waitedDaysOf(row.submittedAt, now),
+      });
       if (opts.dryRun) {
-        stewardNudges += buildStewardNudge({ campaign, contribution, stewardIds: await stewardsFor(), step }).length;
+        stewardNudges += inputs.length;
       } else {
-        const claim = await db.claimNudgeStep(contribution.id, step);
-        if (claim.claimed) {
-          const inputs = buildStewardNudge({ campaign, contribution, stewardIds: await stewardsFor(), step });
-          const ok = await deliver(inputs, { insert: opts.insert });
-          if (inputs.length > 0 && ok === 0) await db.releaseNudgeStep(contribution.id, step, claim.firstStamped);
-          else stewardNudges += ok;
-        }
+        const ok = await deliver(inputs, { insert: opts.insert });
+        // Counted by the run that stamps; a run that lost the race sent only no-ops.
+        if (ok === inputs.length && (await db.stampNudgeStep(contribution.id, step))) stewardNudges += ok;
       }
     }
 
     if (stillWaitingDue(row, now)) {
+      const inputs = buildStillWaiting({ campaign, contribution });
       if (opts.dryRun) {
-        stillWaiting += buildStillWaiting({ campaign, contribution }).length;
-      } else if (await db.claimWaitNote(contribution.id)) {
-        const inputs = buildStillWaiting({ campaign, contribution });
+        stillWaiting += inputs.length;
+      } else {
         const ok = await deliver(inputs, { insert: opts.insert });
-        if (inputs.length > 0 && ok === 0) await db.releaseWaitNote(contribution.id);
-        else stillWaiting += ok;
+        if (ok === inputs.length && (await db.stampWaitNote(contribution.id))) stillWaiting += ok;
       }
     }
   }
@@ -169,8 +182,10 @@ export async function runNudges(opts: CrowdpoolDailyOptions = {}): Promise<{ ste
  * Step 5. Two weeks before a close, followers who have not offered hear
  * which needs are still open. Nothing is sent, and nothing stamped, while
  * every need is filled, so a need that opens again inside the window is
- * still announced. The campaign's claim (finalStretchNoticedAt) is taken
- * before the notices go and handed back when every one of them fails.
+ * still announced. Send, then stamp finalStretchNoticedAt once every
+ * follower's notice went through: a run that stops halfway leaves it
+ * unstamped, and the next run reaches the rest (dedupe keys make the ones
+ * already sent no-ops).
  */
 export async function runFinalStretch(opts: CrowdpoolDailyOptions = {}): Promise<{ campaigns: number; notices: number }> {
   const now = opts.now ?? new Date();
@@ -198,12 +213,9 @@ export async function runFinalStretch(opts: CrowdpoolDailyOptions = {}): Promise
       notices += built.length;
       continue;
     }
-    if (!(await db.claimFinalStretch(c.id))) continue;
     const ok = await deliver(built, { insert: opts.insert });
-    if (built.length > 0 && ok === 0) {
-      await db.releaseFinalStretch(c.id);
-      continue;
-    }
+    if (ok !== built.length) continue;
+    if (!(await db.stampFinalStretch(c.id))) continue;
     campaigns++;
     notices += ok;
   }

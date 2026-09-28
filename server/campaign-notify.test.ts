@@ -43,6 +43,7 @@ import {
   notifyRoleReopened,
   recipientsOf,
   ROLE_REOPENED_REACHES_DECLINED,
+  waitedAgo,
 } from "./lib/campaign-notify";
 import { toNotificationRow } from "./lib/forum-notify";
 import { ARRIVAL } from "../shared/crowdpoolCopy";
@@ -382,6 +383,19 @@ describe("sweep and chain notices", () => {
     });
     for (const r of rows) expect(`${r.title} ${r.body}`).not.toMatch(/\bclaim/i);
   });
+  it("claim expired on a campaign that ended never says the need is open again", () => {
+    // Review 2026-09-28: the nightly sweep ignores campaign status, and a
+    // completed or closed campaign takes no offers.
+    for (const status of ["completed", "closed", "cancelled"]) {
+      const rows = buildClaimExpired({ campaign: { ...campaign, status }, contribution, stewardIds: [1] });
+      expect(rows[0].body).toBe('Your place for "Soil testing" on Plant 400 trees passed its delivery window, so it\'s closed with our thanks.');
+      expect(rows[1].body).toBe('The place for "Soil testing" on Plant 400 trees passed its delivery window, so it\'s closed.');
+      for (const r of rows) expect(r.body).not.toMatch(/open again|offer again/);
+    }
+    // Live, the old words stay.
+    const live = buildClaimExpired({ campaign: { ...campaign, status: "active" }, contribution, stewardIds: [1] });
+    expect(live[0].body).toContain("so the need is open again");
+  });
   it("chain confirmed", () => {
     const rows = buildChainConfirmed({ campaign, contribution, stewardIds: [1, 20], txLink: "https://basescan.org/tx/0xabc" });
     expect(rows.map((r) => r.userId)).toEqual([20, 1]);
@@ -460,6 +474,28 @@ describe("steward nudges (offer_waiting)", () => {
   });
   it("no stewards, no rows", () => {
     expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [], step: 1 })).toEqual([]);
+  });
+  it("says how long the offer really waited (review 2026-09-28)", () => {
+    // The daily run: day 2 and day 7 keep the spec's words.
+    expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 1, waitedDays: 2 })[0].body)
+      .toBe('Ada offered "Seed & tools" to Plant 400 trees 2 days ago. A yes, a no or a question keeps it moving.');
+    expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 2, waitedDays: 7 })[0].title)
+      .toBe("Ada has waited a week to hear back");
+    // After a pause, or a first run over a backlog.
+    const [five] = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 1, waitedDays: 5 });
+    expect(five.body).toBe('Ada offered "Seed & tools" to Plant 400 trees 5 days ago. A yes, a no or a question keeps it moving.');
+    const [twenty] = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 2, waitedDays: 20 });
+    expect(twenty.title).toBe("Ada has waited 20 days to hear back");
+    expect(twenty.body).toBe('Ada offered "Seed & tools" to Plant 400 trees 20 days ago. If it isn\'t a fit, a kind no frees them to offer somewhere else.');
+    expect(`${twenty.title} ${twenty.body}`).not.toContain("week");
+    // The dedupe key never depends on the words.
+    expect(twenty.dedupeKey).toBe("cp:nudge:410:s2:u1");
+  });
+  it("words the wait in days", () => {
+    expect(waitedAgo(2)).toBe("2 days ago");
+    expect(waitedAgo(7)).toBe("a week ago");
+    expect(waitedAgo(8)).toBe("8 days ago");
+    expect(waitedAgo(1)).toBe("yesterday");
   });
 });
 

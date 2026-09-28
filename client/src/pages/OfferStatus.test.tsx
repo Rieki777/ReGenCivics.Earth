@@ -223,6 +223,72 @@ describe("the page", () => {
     expect(field.getAttribute("aria-invalid")).toBe("true");
   });
 
+  it("draws the steps still to come at a contrast that reads (review 2026-09-28: /60 was 3.42:1)", async () => {
+    openAt(`#${TOKEN}`);
+    viewMock.mockResolvedValue(view());
+    render(<OfferStatus />);
+    await screen.findByText(LINK.forCampaign("A trailer", "Spring Build"));
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    for (const todo of items.slice(2)) {
+      expect(todo.className).toContain("text-[#1a472a]/75");
+      expect(todo.className).not.toContain("/60");
+    }
+  });
+
+  it("Keep it, Escape and a withdraw each leave focus somewhere useful, never on the page body", async () => {
+    openAt(`#${TOKEN}`);
+    viewMock.mockResolvedValueOnce(view()).mockResolvedValueOnce(view({
+      status: "withdrawn", canWithdraw: false, canReply: false, stepLine: OFFER_STEPS.endings.withdrawn,
+      ending: { key: "withdrawn", text: OFFER_STEPS.endings.withdrawn },
+    }));
+    withdrawMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<OfferStatus />);
+    const opener = await screen.findByRole("button", { name: LINK.withdraw });
+
+    // Keep it: back to the button that opened the dialog.
+    await user.click(opener);
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: LINK.withdrawKeep }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    // Escape: the same.
+    await user.click(opener);
+    await screen.findByRole("dialog");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    // Withdraw: the button goes, so focus lands on the step line, which says what happened.
+    await user.click(opener);
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: LINK.withdrawConfirm }));
+    await screen.findByText(OFFER_STEPS.endings.withdrawn);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("offer-step-line")));
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it("after a note goes, the confirmation takes the focus; a second press while it's on its way sends once", async () => {
+    openAt(`#${TOKEN}`);
+    viewMock.mockResolvedValue(view());
+    let resolveReply: (v: unknown) => void = () => {};
+    replyMock.mockImplementationOnce(() => new Promise((r) => { resolveReply = r; }));
+    const user = userEvent.setup();
+    render(<OfferStatus />);
+    const field = await screen.findByLabelText(LINK.replyLabel);
+    await user.type(field, "Can I bring it Friday?");
+    const send = screen.getByRole("button", { name: LINK.replySend });
+    await user.click(send);
+    await user.click(send);
+    expect(replyMock).toHaveBeenCalledTimes(1);
+    // Never disabled, so focus stays on the button while the note is on its way.
+    expect((send as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(send);
+    await act(async () => { resolveReply({ ok: true }); });
+    const sent = await screen.findByTestId("offer-note-sent");
+    await waitFor(() => expect(sent.textContent).toBe(LINK.replySent));
+    await waitFor(() => expect(document.activeElement).toBe(sent));
+  });
+
   it("is read-only once the offer is on an account, and points to sign-in", async () => {
     openAt(`#${TOKEN}`);
     viewMock.mockResolvedValue(view({ linkedToAccount: true, canWithdraw: false, canReply: false }));

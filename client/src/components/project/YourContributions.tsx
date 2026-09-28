@@ -16,7 +16,7 @@
  *     status page (campaigns.withdrawContribution, which checks the owner by
  *     account or by the offer's email without case).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Gift, HandHeart, MapPin } from "lucide-react";
@@ -72,6 +72,10 @@ export function YourContributions({
   const [withdrawing, setWithdrawing] = useState<number | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  // After a withdraw the row's Withdraw button goes, so focus lands on this
+  // section's heading instead of the top of the page (review 2026-09-28).
+  const withdrewRef = useRef(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   const mine = (data ?? []).filter((c) => ids.has(c.campaignId));
   if (mine.length === 0) return null;
@@ -85,6 +89,7 @@ export function YourContributions({
     setWithdrawError(null);
     try {
       await withdraw.mutateAsync({ contributionId: withdrawing });
+      withdrewRef.current = true;
       setWithdrawing(null);
       setLiveMessage(LINK.withdrawn);
       await utils.campaigns.myContributions.invalidate();
@@ -156,7 +161,7 @@ export function YourContributions({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => { setWithdrawError(null); setWithdrawing(c.id); }}
+                  onClick={() => { setWithdrawError(null); withdrewRef.current = false; setWithdrawing(c.id); }}
                   aria-label={YOUR_OFFERS.withdrawLabel(title)}
                   className="min-h-11 border-[#1a472a]/30 text-[#1a472a] bg-white"
                 >
@@ -197,6 +202,7 @@ export function YourContributions({
         onConfirm={confirmWithdraw}
         pending={withdraw.isPending}
         error={withdrawError}
+        closeFocusTarget={() => (withdrewRef.current ? headingRef.current : null)}
       />
     </>
   );
@@ -204,7 +210,7 @@ export function YourContributions({
   if (variant === "inline") {
     return (
       <div id="your-contributions" className="scroll-mt-24 mb-6">
-        <h3 className="text-base font-bold text-[#1a472a] mb-2 flex items-center gap-2">
+        <h3 ref={headingRef} tabIndex={-1} className="text-base font-bold text-[#1a472a] mb-2 flex items-center gap-2 outline-none">
           <HandHeart className="w-4 h-4 text-[#4a7c59]" aria-hidden="true" />
           Your contributions
         </h3>
@@ -215,7 +221,7 @@ export function YourContributions({
 
   return (
     <section id="your-contributions" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 mb-6 shadow-xl scroll-mt-24">
-      <h2 className="text-xl font-bold text-[#1a472a] mb-3 flex items-center gap-2" style={{ fontFamily: "var(--font-display)" }}>
+      <h2 ref={headingRef} tabIndex={-1} className="text-xl font-bold text-[#1a472a] mb-3 flex items-center gap-2 outline-none" style={{ fontFamily: "var(--font-display)" }}>
         <HandHeart className="w-5 h-5 text-[#4a7c59]" />
         Your contributions
       </h2>

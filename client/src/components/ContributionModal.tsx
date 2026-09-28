@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -216,6 +216,16 @@ export function ContributionModal({
   followsProject = false,
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
+  // The receipt, practice or real. At 375px the form is long, so people
+  // scroll down to send; the receipt then opened at the form's old scroll
+  // offset, with "Offer sent" and "We'll email you" above the view. The
+  // sheet goes back to its top when the receipt shows (review 2026-09-28).
+  const receiptRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (step !== 'success') return;
+    const sheet = receiptRef.current?.closest<HTMLElement>('[data-slot="dialog-content"]');
+    if (sheet) sheet.scrollTop = 0;
+  }, [step]);
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
@@ -1126,7 +1136,7 @@ export function ContributionModal({
             so there is no steward to hear back from, no account nudge and no
             thank-you to wait for. Rye, 2026-09-24 (decision B12c). */}
         {step === 'success' && practice && (
-          <div className="py-8 text-center" data-testid="practice-receipt">
+          <div ref={receiptRef} className="py-8 text-center" data-testid="practice-receipt">
             <div role="status">
               <div className="w-16 h-16 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
@@ -1147,7 +1157,7 @@ export function ContributionModal({
               <Button asChild variant="outline" className="border-[#4a7c59] text-[#1a472a]">
                 <Link href="/campaigns" onClick={handleClose}>Browse campaigns</Link>
               </Button>
-              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
+              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                 Close
               </Button>
             </div>
@@ -1156,7 +1166,7 @@ export function ContributionModal({
 
         {/* Step 3: the receipt (spec 10.4). It is the confirmation: no toast repeats it. */}
         {step === 'success' && !practice && (
-          <div className="py-6" data-testid="receipt">
+          <div ref={receiptRef} className="py-6" data-testid="receipt">
             <div role="status" className="text-center">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-green-700" aria-hidden="true" />
@@ -1203,7 +1213,9 @@ export function ContributionModal({
                   defaultEmail={sentEmail || undefined}
                 />
               )}
-              <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]">
+              {/* text-white: the default text-primary-foreground drew near-black on
+                  #4a7c59, 4.04:1 (review 2026-09-28). White is 4.86:1. */}
+              <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                 {RECEIPT.close}
               </Button>
             </div>

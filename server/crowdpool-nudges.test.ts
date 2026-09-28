@@ -9,6 +9,10 @@
  * and examples get nothing. Two runs at once nudge once. A steward added
  * after step 1 never gets a late step 1. crowdpool.nudges = 0 pauses it.
  *
+ * The job sends, then stamps (review 2026-09-28). The concurrency tests use
+ * spine(), an insert that enforces the notifications table's unique
+ * dedupeKey the way ON DUPLICATE KEY does, so "once" means one row per key.
+ *
  * Run against the SCRATCH database, never production. Every run is scoped
  * to this file's own campaigns (onlyCampaignIds).
  */
@@ -106,6 +110,17 @@ async function aged(contributionId: number, days: number, hours = 1) {
 const row = async (id: number) => (await dbHelpers.getContributionById(id))!;
 const calls = (insert: ReturnType<typeof vi.fn>) => insert.mock.calls.map((c) => c[0] as any);
 
+/** The spine's unique dedupeKey index in memory: a repeat is a no-op, as ON DUPLICATE KEY makes it. */
+function spine() {
+  const rows = new Map<string, any>();
+  const insert = vi.fn(async (n: any) => {
+    if (rows.has(n.dedupeKey)) return false;
+    rows.set(n.dedupeKey, n);
+    return true;
+  });
+  return { insert, rows };
+}
+
 describe("steward nudges", () => {
   it.skipIf(skipIfNoDb)("step 1 at 2 days, step 2 at 7, each to every steward once, then never again", async () => {
     const f = await liveCampaign("Steps");
@@ -158,8 +173,10 @@ describe("steward nudges", () => {
       `cp:nudge:${late}:s2:u${CO_STEWARD}`,
       `cp:nudge:${late}:s2:u${OWNER}`,
     ].sort());
-    // Anonymous: the stewards read "Someone".
-    expect(calls(insert)[0].title).toBe("Someone has waited a week to hear back");
+    // Anonymous: the stewards read "Someone", and the words say how long it
+    // really waited (review 2026-09-28), not "a week".
+    expect(calls(insert)[0].title).toBe("Someone has waited 8 days to hear back");
+    expect(calls(insert)[0].body).toContain("8 days ago");
     expect((await row(late)).nudge1At).not.toBeNull();
     expect((await row(late)).nudge2At).not.toBeNull();
     expect((await row(ancient)).nudge1At).toBeNull();
@@ -187,13 +204,43 @@ describe("steward nudges", () => {
     const f = await liveCampaign("Concurrent");
     const id = await offer(f.id, f.needId, { email: "twice.nudge@example.com", name: "Tw" });
     await aged(id, 2);
-    const insert = vi.fn().mockResolvedValue(true);
-    await Promise.all([
-      runNudges({ onlyCampaignIds: [f.id], insert, readSwitch: on }),
-      runNudges({ onlyCampaignIds: [f.id], insert, readSwitch: on }),
-      runNudges({ onlyCampaignIds: [f.id], insert, readSwitch: on }),
+    const s = spine();
+    const results = await Promise.all([
+      runNudges({ onlyCampaignIds: [f.id], insert: s.insert, readSwitch: on }),
+      runNudges({ onlyCampaignIds: [f.id], insert: s.insert, readSwitch: on }),
+      runNudges({ onlyCampaignIds: [f.id], insert: s.insert, readSwitch: on }),
     ]);
-    expect(calls(insert).map((n) => n.userId).sort()).toEqual([OWNER, CO_STEWARD].sort());
+    // One row per steward, and only the run that stamped counts them.
+    expect([...s.rows.keys()].sort()).toEqual([`cp:nudge:${id}:s1:u${CO_STEWARD}`, `cp:nudge:${id}:s1:u${OWNER}`].sort());
+    expect(results.reduce((n, r) => n + r.stewardNudges, 0)).toBe(2);
+    expect((await row(id)).nudge1At).not.toBeNull();
+  }, DB_TIMEOUT);
+
+  it.skipIf(skipIfNoDb)("a run that stops between the sends and the stamp loses nothing: the next run reaches the rest, once each", async () => {
+    const f = await liveCampaign("Stopped");
+    const id = await offer(f.id, f.needId, { email: "stopped.nudge@example.com", name: "Sto" });
+    await aged(id, 2);
+    const s = spine();
+    // The first steward's notice lands, then the run dies on the second.
+    let n = 0;
+    const dying = vi.fn(async (input: any) => {
+      n += 1;
+      if (n === 2) throw new Error("process stopped");
+      return s.insert(input);
+    });
+    expect((await runNudges({ onlyCampaignIds: [f.id], insert: dying, readSwitch: on })).stewardNudges).toBe(0);
+    expect(s.rows.size).toBe(1);
+    // Nothing was stamped, so the step is still owed.
+    expect((await row(id)).nudge1At).toBeNull();
+
+    const next = await runNudges({ onlyCampaignIds: [f.id], insert: s.insert, readSwitch: on });
+    expect(next.stewardNudges).toBe(2);
+    expect([...s.rows.keys()].sort()).toEqual([`cp:nudge:${id}:s1:u${CO_STEWARD}`, `cp:nudge:${id}:s1:u${OWNER}`].sort());
+    expect((await row(id)).nudge1At).not.toBeNull();
+    // And never again.
+    s.insert.mockClear();
+    await runNudges({ onlyCampaignIds: [f.id], insert: s.insert, readSwitch: on });
+    expect(s.insert).not.toHaveBeenCalled();
   }, DB_TIMEOUT);
 
   it.skipIf(skipIfNoDb)("a steward added after step 1 never gets a late step 1, and does get step 2", async () => {

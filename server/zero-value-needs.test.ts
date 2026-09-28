@@ -98,6 +98,14 @@ describe("a need can't be listed at 0", () => {
     expect(await campaignsTitled("Negative direct")).toBe(0);
   });
 
+  it.skipIf(skipIfNoDb)("refuses a need under half a cent, which the column would store as 0.00", async () => {
+    // Review 2026-09-28: DECIMAL(18,2) rounds 0.004 to 0.00 with a note, not
+    // an error, so a plain "> 0" let a need at 0 through.
+    await expect(create("Half a cent", [seeds, { category: "resource", resourceName: "Half a cent", estimatedValue: 0.004 }]))
+      .rejects.toMatchObject({ code: "BAD_REQUEST", message: ZERO_VALUE.server("Half a cent") });
+    expect(await campaignsTitled("Half a cent")).toBe(0);
+  });
+
   it.skipIf(skipIfNoDb)("accepts a need at 0.01", async () => {
     const { id } = await create("Penny", [{ ...seeds, estimatedValue: 0.01 }]);
     const items = await dbHelpers.getCampaignItems(id);

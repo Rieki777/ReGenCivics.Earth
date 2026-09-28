@@ -187,6 +187,11 @@ describe("a campaign runs nine months at most", () => {
 
     const presets = ["30d", "60d", "90d", "4mo", "6mo", "9mo"].map((label) => screen.getByRole("button", { name: label }));
     expect(presets).toHaveLength(6);
+    // Unselected presets read at #1a472a on #f0f7f0 (review 2026-09-28: #4a7c59 there was 4.46:1).
+    for (const p of presets.filter((b) => b.getAttribute("aria-pressed") !== "true")) {
+      expect(p.className).toContain("text-[#1a472a]");
+      expect(p.className).not.toContain("text-[#4a7c59]");
+    }
     expect(screen.queryByRole("button", { name: "1yr" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "9mo" }));
     expect(days).toHaveValue(270);

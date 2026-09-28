@@ -306,6 +306,61 @@ describe("two weeks before the close", () => {
     expect((insert.mock.calls[0][0] as any).userId).toBe(FAN);
   }, DB_TIMEOUT);
 
+  it.skipIf(skipIfNoDb)("a run that stops halfway through the followers: the next run reaches the rest, once each", async () => {
+    // Review 2026-09-28: the campaign was claimed before the sends, so a stop
+    // halfway left the rest of the followers without a notice for good.
+    const applicationId = await createApprovedApplication(OWNER);
+    const id = await campaignFor(applicationId, "Stretch stop", [seed("Seed"), seed("Tools", 2)]);
+    await stewardCaller(FAN).campaigns.followProject({ key: String(applicationId) });
+    await stewardCaller(CAMPAIGN_FAN).campaigns.follow({ campaignId: id });
+    await inTheWindow(id);
+    // The spine's unique dedupeKey, in memory.
+    const rows = new Map<string, any>();
+    const spineInsert = vi.fn(async (n: any) => {
+      if (rows.has(n.dedupeKey)) return false;
+      rows.set(n.dedupeKey, n);
+      return true;
+    });
+    let n = 0;
+    const dying = vi.fn(async (input: any) => {
+      n += 1;
+      if (n === 2) throw new Error("process stopped");
+      return spineInsert(input);
+    });
+    expect(await runFinalStretch({ onlyCampaignIds: [id], insert: dying })).toEqual({ campaigns: 0, notices: 0 });
+    expect(rows.size).toBe(1);
+    expect((await dbHelpers.getCampaignById(id))!.finalStretchNoticedAt).toBeNull();
+
+    expect(await runFinalStretch({ onlyCampaignIds: [id], insert: spineInsert })).toEqual({ campaigns: 1, notices: 2 });
+    expect([...rows.keys()].sort()).toEqual([`cp:stretch:${id}:u${CAMPAIGN_FAN}`, `cp:stretch:${id}:u${FAN}`].sort());
+    expect((await dbHelpers.getCampaignById(id))!.finalStretchNoticedAt).not.toBeNull();
+    // Two runs at once afterwards: nothing new.
+    spineInsert.mockClear();
+    await Promise.all([runFinalStretch({ onlyCampaignIds: [id], insert: spineInsert }), runFinalStretch({ onlyCampaignIds: [id], insert: spineInsert })]);
+    expect(spineInsert).not.toHaveBeenCalled();
+  }, DB_TIMEOUT);
+
+  it.skipIf(skipIfNoDb)("two runs at once give each follower one row, and one run counts them", async () => {
+    const applicationId = await createApprovedApplication(OWNER);
+    const id = await campaignFor(applicationId, "Stretch race", [seed("Seed")]);
+    await stewardCaller(FAN).campaigns.followProject({ key: String(applicationId) });
+    await stewardCaller(CAMPAIGN_FAN).campaigns.follow({ campaignId: id });
+    await inTheWindow(id);
+    const rows = new Map<string, any>();
+    const spineInsert = vi.fn(async (n: any) => {
+      if (rows.has(n.dedupeKey)) return false;
+      rows.set(n.dedupeKey, n);
+      return true;
+    });
+    const results = await Promise.all([
+      runFinalStretch({ onlyCampaignIds: [id], insert: spineInsert }),
+      runFinalStretch({ onlyCampaignIds: [id], insert: spineInsert }),
+    ]);
+    expect(rows.size).toBe(2);
+    expect(results.reduce((s, r) => s + r.notices, 0)).toBe(2);
+    expect(results.reduce((s, r) => s + r.campaigns, 0)).toBe(1);
+  }, DB_TIMEOUT);
+
   it.skipIf(skipIfNoDb)("too early, too late and too new to be live a week: nothing", async () => {
     const applicationId = await createApprovedApplication(OWNER);
     const early = await campaignFor(applicationId, "Early");

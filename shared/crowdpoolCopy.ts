@@ -124,6 +124,8 @@ export const MONEY_BLOCK = {
   loading: "Loading the ways to put money in.",
   asksNone: "This project asks for no money. Its needs above are where you can help.",
   noRoute: "This project has no money route yet. Its needs above are open to you.",
+  /** A campaign that has ended (complete, cancelled, closed) takes nothing new. */
+  ended: "This campaign has ended, so it takes no more money.",
   maearth: {
     title: "Give through Ma Earth",
     body: "Ma Earth pools gifts and can match them with grant money, so a small gift grows.",
@@ -608,6 +610,11 @@ export const ARRIVAL = {
   count: (n: number, max: number) => `${n} of ${max} characters`,
   show: "Read the arrival note",
   hide: "Hide the arrival note",
+  // Clear asks first (review 2026-09-28): one tap used to delete the note
+  // for everyone accepted, with no way back.
+  clearConfirm: "Clear this note? The people you accepted stop seeing it straight away.",
+  clearYes: "Clear it",
+  clearKeep: "Keep it",
 } as const;
 
 /** Withdraw in Your contributions (build spec 2026-09-27, section 10.6). The dialog reuses LINK's words. */
@@ -649,6 +656,13 @@ export const FOLLOW = {
   // for someone signed in, who gives no email because we have theirs.
   followingProject: (project: string) => `Following ${project}`,
   seasonBodySignedIn: (email: string) => `We'll write to ${email} when real campaigns open.`,
+  // On a real project with nothing live, the same season form sits behind
+  // Follow. "Real campaigns" there read as if this project weren't real, so
+  // it speaks of the season (review 2026-09-28). "Real campaigns" stays for
+  // the gallery, examples and the practice receipt, where only examples show.
+  seasonBodyProject: "Leave your email and we'll write when crowdpooling opens for the season.",
+  seasonBodyProjectSignedIn: (email: string) => `We'll write to ${email} when crowdpooling opens for the season.`,
+  seasonDoneProject: "You're on the list. We'll write when crowdpooling opens for the season.",
 } as const;
 
 /** "Needed to start", a steward-only mark on needs (section 13). */

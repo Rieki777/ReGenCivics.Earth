@@ -462,7 +462,8 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
   const [overdueRows] = await db.execute(sql`
     SELECT cc.id, cc.campaignId, cc.campaignItemId, cc.userId, cc.quantityPledged,
            cc.title, c.userId AS ownerId, c.title AS campaignTitle,
-           c.projectName AS projectName, c.applicationId AS applicationId
+           c.projectName AS projectName, c.applicationId AS applicationId,
+           c.status AS campaignStatus
     FROM campaign_contributions cc
     JOIN campaigns c ON c.id = cc.campaignId
     LEFT JOIN campaign_items ci ON ci.id = cc.campaignItemId
@@ -499,6 +500,8 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
         projectName: claim.projectName ?? null,
         applicationId: claim.applicationId != null ? Number(claim.applicationId) : null,
         userId: Number(claim.ownerId),
+        // An ended campaign takes no offers, so its notice doesn't say "open again".
+        status: claim.campaignStatus != null ? String(claim.campaignStatus) : null,
       },
       contribution: {
         id: Number(claim.id),
