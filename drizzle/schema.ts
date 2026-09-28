@@ -4457,7 +4457,7 @@ export const playViews = mysqlTable("play_views", {
 export const adminAutomations = mysqlTable("admin_automations", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
-  type: mysqlEnum("type", ["briefing_digest", "attention_digest", "registry_action", "brain_morning"]).notNull(),
+  type: mysqlEnum("type", ["briefing_digest", "attention_digest", "registry_action", "brain_morning", "funding_deadlines"]).notNull(),
   cadence: mysqlEnum("cadence", ["hourly", "daily", "every_other_day", "weekly"]).default("daily").notNull(),
   enabled: tinyint("enabled").default(1).notNull(),
   /** Optional registry action id + input for type=registry_action (future). */
@@ -6073,6 +6073,23 @@ export const answerVersions = mysqlTable("answer_versions", {
   unique("answer_versions_question_uq").on(table.questionId, table.version),
 ]));
 export type AnswerVersionRow = typeof answerVersions.$inferSelect;
+
+/**
+ * Every funding deadline ping sent (drizzle/0278). The unique key on
+ * (pipelineId, deadlineAt, threshold) makes each 21-, 7- and 2-day ping go out
+ * exactly once: a runner claims a ping by inserting its row before sending,
+ * and a failed send deletes the claim (server/funding/deadlines.ts).
+ */
+export const fundingDeadlinePings = mysqlTable("funding_deadline_pings", {
+  id: int("id").autoincrement().primaryKey(),
+  pipelineId: int("pipelineId").notNull(),
+  deadlineAt: timestamp("deadlineAt").notNull(),
+  /** Days before the deadline: 21, 7 or 2. */
+  threshold: int("threshold").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("funding_deadline_pings_once_uq").on(table.pipelineId, table.deadlineAt, table.threshold),
+]));
 
 /** Every stage move on a funder row, for the funnel (drizzle/0277). */
 export const fundingStageHistory = mysqlTable("funding_stage_history", {

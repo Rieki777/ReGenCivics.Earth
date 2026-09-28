@@ -33,6 +33,7 @@ import {
   type WeekMetrics,
 } from "../lib/brain-items";
 import { notifyOwner } from "../webhooks/telegram-brain";
+import { runFundingDeadlines } from "../funding/deadlines";
 import { ENV } from "../_core/env";
 
 type AutomationRow = typeof adminAutomations.$inferSelect;
@@ -51,6 +52,14 @@ type AutomationRow = typeof adminAutomations.$inferSelect;
 // and the row is seeded by scripts/seed-brain-morning-automation.ts.
 
 export const BRAIN_MORNING_TYPE = "brain_morning";
+
+/**
+ * Funding deadline pings (funding engine Phase 2, drizzle/0278): due on every
+ * hourly tick. The job is idempotent through funding_deadline_pings, so an
+ * hourly run sends only what has newly come due, and a cadence gate that
+ * slipped by a minute would only make a ping late.
+ */
+export const FUNDING_DEADLINES_TYPE = "funding_deadlines";
 const BRAIN_MORNING_HOUR_PT = 8;
 const BRAIN_MORNING_ZONE = "America/Los_Angeles";
 
@@ -208,6 +217,8 @@ async function runAutomation(auto: AutomationRow): Promise<string> {
   let summary: string;
   if (type === BRAIN_MORNING_TYPE) {
     summary = await runBrainMorning();
+  } else if (type === FUNDING_DEADLINES_TYPE) {
+    summary = await runFundingDeadlines();
   } else if (auto.type === "registry_action") {
     // The standing automation row is the implicit approval; the registry
     // helper still rejects blocked-tier actions and zod-validates input.
@@ -242,6 +253,7 @@ export function automationDue(
   now: Date = new Date(),
 ): boolean {
   if (type === BRAIN_MORNING_TYPE) return morningDue(now, lastRunAt);
+  if (type === FUNDING_DEADLINES_TYPE) return true;
   return cadenceDue(cadence, lastRunAt, now);
 }
 
