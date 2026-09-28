@@ -145,9 +145,32 @@ export function securityHeadersMiddleware(_req: Request, res: Response, next: Ne
   next();
 }
 
+// The in-memory fallback forgets windows that have ended, so it cannot grow
+// without bound while Redis is down (every mounted route has its own key).
+const rateLimitSweep = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of Array.from(rateLimitFallback.entries())) {
+    if (now >= record.resetTime) rateLimitFallback.delete(key);
+  }
+}, 10 * 60 * 1000);
+rateLimitSweep.unref?.();
+
+/** The counter key for a request: one per IP per full route path. */
+export function rateLimitRouteKey(req: Pick<Request, 'baseUrl' | 'path'>): string {
+  // Inside app.use('/api/auth/email/request', ...) Express strips the mount,
+  // so req.path is '/' and req.baseUrl holds the mount. Keyed on req.path
+  // alone, every mounted limiter (sign-in link, OAuth, webhooks, newsletter,
+  // forum, proposals, governance) shared one counter per IP, with whichever
+  // window wrote it first (build spec 2026-09-27, finding F1). Express
+  // matches paths case-insensitively, so the key is lowercased: a case
+  // variant of the same route cannot open a fresh counter.
+  return `${req.baseUrl || ''}${req.path || ''}`.toLowerCase().replace(/\//g, '_');
+}
+
 /**
  * Rate Limiting Middleware
- * Prevents abuse of public endpoints
+ * Prevents abuse of public endpoints. Each mounted route counts on its own
+ * (rateLimitRouteKey), per IP.
  */
 export function rateLimitMiddleware(
   windowMs: number = 15 * 60 * 1000,
@@ -155,7 +178,7 @@ export function rateLimitMiddleware(
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip || 'unknown';
-    const routeKey = req.path.replace(/\//g, '_');
+    const routeKey = rateLimitRouteKey(req);
     const key = `ratelimit:${routeKey}:${ip}`;
     const now = Date.now();
     const windowSec = Math.ceil(windowMs / 1000);

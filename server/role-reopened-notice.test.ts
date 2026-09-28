@@ -5,8 +5,9 @@
  * A role measured in hours a week reads filled once its accepted hours reach
  * the hours it needs. It opens up again on a release, on lowered hours, or on
  * more hours needed. Each of those sends one role_reopened notice to account
- * holders still waiting on the role (pending). People a steward declined hear
- * nothing (ROLE_REOPENED_REACHES_DECLINED is off).
+ * holders still waiting on the role (pending) and, since the ruling of
+ * 2026-09-27 (ROLE_REOPENED_REACHES_DECLINED on), to people a steward
+ * declined, who are welcome to offer again.
  * Never the person released or changed, never anyone already holding hours
  * on the role, never the steward who acted, never someone without an account.
  *
@@ -140,15 +141,16 @@ afterAll(async () => {
 });
 
 describe("a filled role opens up again", () => {
-  it.skipIf(skipIfNoDb)("a release tells people still waiting, once each, never the person released or anyone declined", async () => {
+  it.skipIf(skipIfNoDb)("a release tells people still waiting and people declined, once each, never the person released", async () => {
     const { campaignId, itemId, holder } = await filledRole("Release");
     insertMock.mockClear();
     sendMock.mockClear();
 
     await status(holder.id, "released");
 
-    // NOT_TAKEN was declined and hears nothing; BOTH also has a waiting offer.
-    expect(reopenedTo()).toEqual([BOTH, WAITING].sort());
+    // NOT_TAKEN was declined and hears it too (ruling 2026-09-27); BOTH also
+    // has a waiting offer, so BOTH hears the waiting copy once.
+    expect(reopenedTo()).toEqual([BOTH, NOT_TAKEN, WAITING].sort());
     const got = reopened();
     for (const r of got) {
       expect(r.title).toBe("A role you offered to has opened up");
@@ -158,7 +160,8 @@ describe("a filled role opens up again", () => {
     }
     expect(got.find((r) => r.userId === WAITING)!.body).toContain("Your offer is still with the stewards.");
     expect(got.find((r) => r.userId === BOTH)!.body).toContain("Your offer is still with the stewards.");
-    for (const r of got) expect(r.body).not.toContain("offer again");
+    expect(got.find((r) => r.userId === NOT_TAKEN)!.body).toContain("If you'd still like to give your time, you're welcome to offer again.");
+    for (const r of got.filter((x) => x.userId !== NOT_TAKEN)) expect(r.body).not.toContain("offer again");
     // The released person hears their own notice, nothing more.
     expect(rows().filter((r) => r.userId === HOLDER).map((r) => r.type)).toEqual(["contribution_released"]);
     // No direct email: account holders hear on the spine, the anonymous offer hears nothing.
@@ -176,7 +179,7 @@ describe("a filled role opens up again", () => {
     insertMock.mockClear();
 
     await steward().setAcceptedHours({ contributionId: holder.id, hours: 20 });
-    expect(reopenedTo()).toEqual([BOTH, WAITING].sort());
+    expect(reopenedTo()).toEqual([BOTH, NOT_TAKEN, WAITING].sort());
     for (const r of reopened()) expect(r.body).toContain("has 10 hours a week open again.");
     // The person whose hours changed hears only their hours notice.
     expect(rows().filter((r) => r.userId === HOLDER).map((r) => r.type)).toEqual(["contribution_accepted"]);
@@ -206,7 +209,7 @@ describe("a filled role opens up again", () => {
       ]);
       expect(results.every((r) => r.status === "fulfilled")).toBe(true);
       // One reopening, so one notice each for WAITING and BOTH.
-      expect(reopenedTo()).toEqual([BOTH, WAITING].sort());
+      expect(reopenedTo()).toEqual([BOTH, NOT_TAKEN, WAITING].sort());
     }
   });
 
@@ -215,7 +218,7 @@ describe("a filled role opens up again", () => {
     insertMock.mockClear();
 
     await steward().setNeedHours({ itemId, hoursNeeded: 60 });
-    expect(reopenedTo()).toEqual([BOTH, WAITING].sort());
+    expect(reopenedTo()).toEqual([BOTH, NOT_TAKEN, WAITING].sort());
     for (const r of reopened()) expect(r.body).toContain("has 20 hours a week open again.");
     expect(reopened().some((r) => [HOLDER, HOLDER_TWO, CO_STEWARD, APPLICANT].includes(r.userId))).toBe(false);
 
@@ -245,7 +248,7 @@ describe("a filled role opens up again", () => {
     const { campaignId, itemId, holder } = await filledRole("Twice");
     await status(holder.id, "released");
     const first = reopened().map((r) => r.dedupeKey);
-    expect(first).toHaveLength(2);
+    expect(first).toHaveLength(3);
 
     // Fill it again with WAITING's 10 plus a fresh 20, then release WAITING.
     const database = await dbHelpers.getDb();
@@ -262,7 +265,8 @@ describe("a filled role opens up again", () => {
     const second = reopened();
     // WAITING was just released, so they hear nothing this time. HOLDER was
     // released last time and still has a 5-hour offer waiting, so they hear.
-    expect(second.map((r) => r.userId).sort()).toEqual([BOTH, HOLDER].sort());
+    // NOT_TAKEN, declined, hears each reopening.
+    expect(second.map((r) => r.userId).sort()).toEqual([BOTH, HOLDER, NOT_TAKEN].sort());
     for (const r of second) expect(r.body).toContain("has 10 hours a week open again.");
     for (const key of second.map((r) => r.dedupeKey)) expect(first).not.toContain(key);
   });

@@ -5,6 +5,9 @@
  * (server/lib/project-steward.ts), so a signed-in stranger who forced this
  * open would get FORBIDDEN on every button.
  *
+ * "Needed to start" marks (campaigns.getNeedMarkers) feed the needs list,
+ * where stewards set them, and the "How it's going" line.
+ *
  * Anchors: #steward-tools, #review, #claims, #money-routes, #needs,
  * #updates-composer, #followers, #campaign-status. The steward digest and the
  * old /campaign/:id/manage links land on these.
@@ -86,6 +89,9 @@ export function StewardTools({
   );
   const { data: followers } = trpc.campaigns.followerCounts.useQuery({ campaignId }, { retry: false });
   const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const { data: needMarkers } = trpc.campaigns.getNeedMarkers.useQuery({ campaignId }, { retry: false });
+  // Marks stay as they are once a campaign is over, and examples keep none.
+  const canMark = !closed && status !== "closed" && !front.isDemo;
 
   // The wizard's "campaign created" confirmation, carried across its page load.
   useEffect(() => {
@@ -158,6 +164,7 @@ export function StewardTools({
           contributorsCount={front.contributorsCount ?? 0}
           counts={counts}
           formatCurrency={formatCurrency}
+          neededToStart={needMarkers?.itemIds}
         />
       </div>
 
@@ -177,7 +184,14 @@ export function StewardTools({
         currencySymbol={currencySymbolFor(front.currency)}
       />
 
-      <NeedsGlance items={front.items} canEditHours={!closed} onChanged={refreshAll} />
+      <NeedsGlance
+        items={front.items}
+        canEditHours={!closed}
+        onChanged={refreshAll}
+        campaignId={campaignId}
+        markedIds={needMarkers?.itemIds}
+        canMark={canMark}
+      />
 
       <div className="grid gap-6 md:grid-cols-2 items-start">
         {!closed ? (

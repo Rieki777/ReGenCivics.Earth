@@ -65,41 +65,51 @@ function maxForAction(action: string): number {
 // ── In-memory fallback (single-process only) ─────────────────────────────────
 interface RateLimitEntry {
   timestamps: number[];
+  /** The window this entry counts over, so the sweep keeps longer windows whole. */
+  windowMs: number;
 }
 const memoryStore = new Map<string, RateLimitEntry>();
+/** checkKeyedLimit's entries: any key (an email hash, say), any window. */
+const keyedStore = new Map<string, RateLimitEntry>();
 
-// Clean up the in-memory store every 10 minutes
-setInterval(() => {
+// Clean up the in-memory stores every 10 minutes
+const sweep = setInterval(() => {
   const now = Date.now();
-  Array.from(memoryStore.entries()).forEach(([key, entry]) => {
-    entry.timestamps = entry.timestamps.filter(
-      (ts: number) => now - ts < RATE_LIMIT_WINDOW_MS
-    );
-    if (entry.timestamps.length === 0) {
-      memoryStore.delete(key);
-    }
-  });
+  for (const store of [memoryStore, keyedStore]) {
+    Array.from(store.entries()).forEach(([key, entry]) => {
+      entry.timestamps = entry.timestamps.filter(
+        (ts: number) => now - ts < entry.windowMs
+      );
+      if (entry.timestamps.length === 0) {
+        store.delete(key);
+      }
+    });
+  }
 }, 10 * 60 * 1000);
+sweep.unref?.();
 
 function memoryRateLimit(
   key: string,
-  max: number = MAX_SUBMISSIONS_PER_WINDOW
+  max: number = MAX_SUBMISSIONS_PER_WINDOW,
+  windowMs: number = RATE_LIMIT_WINDOW_MS,
+  store: Map<string, RateLimitEntry> = memoryStore
 ): { allowed: boolean; count: number; resetAt: number } {
   const now = Date.now();
-  let entry = memoryStore.get(key);
+  let entry = store.get(key);
   if (!entry) {
-    entry = { timestamps: [] };
-    memoryStore.set(key, entry);
+    entry = { timestamps: [], windowMs };
+    store.set(key, entry);
   }
+  entry.windowMs = windowMs;
 
   entry.timestamps = entry.timestamps.filter(
-    (ts) => now - ts < RATE_LIMIT_WINDOW_MS
+    (ts) => now - ts < windowMs
   );
 
   const count = entry.timestamps.length;
   const allowed = count < max;
   const oldestTs = entry.timestamps[0] ?? now;
-  const resetAt = oldestTs + RATE_LIMIT_WINDOW_MS;
+  const resetAt = oldestTs + windowMs;
 
   if (allowed) {
     entry.timestamps.push(now);
@@ -144,7 +154,7 @@ export async function checkRateLimit(
       RATE_LIMIT_WINDOW_MS
     ));
   } else {
-    ({ allowed, resetAt } = memoryRateLimit(key, max));
+    ({ allowed, resetAt } = memoryRateLimit(key, max, RATE_LIMIT_WINDOW_MS));
   }
 
   if (!allowed) {
@@ -157,6 +167,36 @@ export async function checkRateLimit(
       message: `You've reached the maximum number of submissions (${max} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
+}
+
+/**
+ * A sliding-window limit on any key (Redis when connected, else this process).
+ *
+ * For limits that are not per IP: the sign-in link counts per email address
+ * (server/_core/oauth.ts, 3 per 15 minutes), because one address can be asked
+ * for from many networks. Callers pass a key that holds no personal data (a
+ * SHA-256 of the address, never the address), since it lands in Redis.
+ *
+ * retryAfterMs is how long until one more request would pass: in this process,
+ * until the oldest counted request leaves the window. Redis (redisRateLimit)
+ * also counts refused requests, so there it is the whole window, which is how
+ * long a caller has to wait without trying. Never throws: a Redis error fails
+ * open, the same as checkRateLimit.
+ */
+export async function checkKeyedLimit(
+  key: string,
+  max: number,
+  windowMs: number
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const { allowed, resetAt } = isCacheAvailable()
+    ? await redisRateLimit(key, max, windowMs)
+    : memoryRateLimit(key, max, windowMs, keyedStore);
+  return { allowed, retryAfterMs: allowed ? 0 : Math.max(0, resetAt - Date.now()) };
+}
+
+/** Tests only: forget every in-process keyed limit. */
+export function __resetKeyedLimitsForTests(): void {
+  keyedStore.clear();
 }
 
 /**

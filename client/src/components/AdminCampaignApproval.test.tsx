@@ -10,13 +10,14 @@ let financialTarget = 0;
 let loanRoutesOpen = false;
 let routes: Array<Record<string, unknown>> = [];
 
-const items = [
+const baseItems: Array<Record<string, unknown> & { id: number }> = [
   {
     id: 11, campaignId: 44, kind: "item", category: "equipment", capitalType: "material", capacityUnit: "count",
     quantityWanted: 1, quantityClaimed: 0, quantityDelivered: 0, estimatedValue: 1000,
     equipmentName: "Wood chipper", neededFrom: "2026-10-01", neededUntil: "2026-12-15", acceptsGift: 1, acceptsLoan: 1,
   },
 ];
+let items = baseItems;
 
 const campaign = () => {
   const base = {
@@ -42,7 +43,7 @@ const campaign = () => {
   };
   return {
     ...base,
-    progress: computeCampaignProgress({ campaign: base, items, rows: [], lends: [], routes: [] }),
+    progress: computeCampaignProgress({ campaign: base, items: items as any[], rows: [], lends: [], routes: [] }),
   };
 };
 
@@ -76,7 +77,7 @@ vi.mock("@/lib/trpc", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import { AdminCampaignApproval } from "./AdminCampaignApproval";
+import { AdminCampaignApproval, zeroValueNeedCount } from "./AdminCampaignApproval";
 
 async function openReview() {
   render(<AdminCampaignApproval />);
@@ -92,6 +93,7 @@ describe("AdminCampaignApproval", () => {
     financialTarget = 0;
     loanRoutesOpen = false;
     routes = [];
+    items = baseItems;
   });
 
   it("sends review notes with an approval", async () => {
@@ -243,5 +245,45 @@ describe("AdminCampaignApproval", () => {
     await openReview();
     expect(screen.getByTestId(`project-tick-${CROWDPOOL_READINESS[0].key}`)).toHaveTextContent("The project ticked this on 20 September 2026.");
     expect(screen.getByTestId(`project-tick-${CROWDPOOL_READINESS[1].key}`)).toHaveTextContent("Not ticked by the project.");
+  });
+
+  it("flags in-kind needs listed at 0 above the needs, and nothing when none are", async () => {
+    await openReview();
+    expect(screen.queryByTestId("zero-value-needs")).toBeNull();
+  });
+
+  it("says 1 need in the singular", async () => {
+    const zero = (id: number, over: Record<string, unknown> = {}) => ({
+      ...baseItems[0], id, equipmentName: `Need ${id}`, estimatedValue: 0, ...over,
+    });
+    items = [...baseItems, zero(12)];
+    await openReview();
+    expect(screen.getByTestId("zero-value-needs")).toHaveTextContent("1 need is listed at 0. Ask the project to give it a value.");
+  });
+
+  it("uses the plural for several, and money kinds don't count", async () => {
+    items = [
+      ...baseItems,
+      { ...baseItems[0], id: 12, estimatedValue: 0 },
+      { ...baseItems[0], id: 13, estimatedValue: "0.00" },
+      { ...baseItems[0], id: 14, kind: "crypto", estimatedValue: 0 },
+    ];
+    await openReview();
+    expect(screen.getByTestId("zero-value-needs")).toHaveTextContent("2 needs are listed at 0. Ask the project to give each one a value.");
+  });
+});
+
+describe("zeroValueNeedCount", () => {
+  it("counts in-kind needs not above 0, and leaves money kinds out", () => {
+    expect(zeroValueNeedCount(undefined)).toBe(0);
+    expect(zeroValueNeedCount([
+      { kind: "item", estimatedValue: 1000 },
+      { kind: "role", estimatedValue: 0 },
+      { kind: "item", estimatedValue: "0.00" },
+      { kind: "item", estimatedValue: null },
+      { kind: "crypto", estimatedValue: 0 },
+      { kind: "financial_link", estimatedValue: 0 },
+      { kind: "item", estimatedValue: 0.01 },
+    ])).toBe(3);
   });
 });

@@ -244,8 +244,9 @@ function hoursAWeek(n: number): string {
 /**
  * A filled role opened up again (a release, lowered hours or more hours
  * needed). Goes to account holders who offered to the role and are still
- * waiting (pending), and to those not taken ('rejected') only when
- * ROLE_REOPENED_REACHES_DECLINED is on (notifyRoleReopened). Never the actor, never
+ * waiting (pending), and to those not taken ('rejected'), whom
+ * notifyRoleReopened passes while ROLE_REOPENED_REACHES_DECLINED is on (it is,
+ * from the ruling of 2026-09-27). Never the actor, never
  * anyone in `excludeIds` (the person just released, the person whose hours
  * changed, anyone who already holds hours on the role). Only for a live
  * campaign. One row per person per reopening: the key carries the need, the
@@ -647,13 +648,14 @@ export async function notifyRoleFilled(
 
 /**
  * Whether a reopened role also invites back people whose offer a steward
- * declined. Off: a steward may have turned someone down for a reason (fit,
- * safety, a past problem) and has no way to stop the invitation, so only
- * people whose offer is still waiting hear. Turning this on sends the "you're
- * welcome to offer again" copy in buildRoleReopened to them too; the steward
- * dialogs (stewardActionDescription, NeedsGlance) would need to say so.
+ * declined. On since Rye's ruling of 2026-09-27: people a steward declined
+ * hear too, and the steward's dialog says so before they act
+ * (REOPEN_NOTICE_* in shared/stewardQueue.ts, read by
+ * stewardActionDescription and NeedsGlance). They get the "you're welcome to
+ * offer again" copy in buildRoleReopened; someone with a waiting offer as
+ * well hears the waiting copy only.
  */
-export const ROLE_REOPENED_REACHES_DECLINED = false;
+export const ROLE_REOPENED_REACHES_DECLINED = true;
 
 /**
  * A filled role opened up again. The route computes openHours inside the

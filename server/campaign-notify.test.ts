@@ -1,8 +1,20 @@
 /**
  * Campaign notices: every row of the event catalogue (spec 6.2), built by the
- * pure builders in server/lib/campaign-notify.ts. No database.
+ * pure builders in server/lib/campaign-notify.ts. No database (notifyRoleReopened
+ * reads a fake one).
  */
 import { describe, expect, it, vi } from "vitest";
+
+// notifyRoleReopened reads the role's offers through getDb. A fake database
+// hands it rows, so the flag's effect is read without a real one.
+const fakeDb = vi.hoisted(() => ({ rows: [] as Array<{ userId: number; status: string }> }));
+vi.mock("./db", async (orig) => ({
+  ...(await orig<typeof import("./db")>()),
+  getDb: vi.fn(async () => ({
+    select: () => ({ from: () => ({ where: async () => fakeDb.rows }) }),
+  })),
+}));
+
 import {
   buildCampaignApproved,
   buildCampaignCancelled,
@@ -21,7 +33,9 @@ import {
   buildThanked,
   buildUpdatePosted,
   deliver,
+  notifyRoleReopened,
   recipientsOf,
+  ROLE_REOPENED_REACHES_DECLINED,
 } from "./lib/campaign-notify";
 import { toNotificationRow } from "./lib/forum-notify";
 
@@ -154,7 +168,7 @@ describe("role reopened", () => {
   it("sends nothing with no open hours or on a campaign that isn't live", () => {
     const base = { item: roleItem, waitingIds: [21], notSelectedIds: [23], reopenedAt: at };
     expect(buildRoleReopened({ ...base, campaign: live, openHours: 0 })).toEqual([]);
-    for (const status of ["draft", "pending_review", "rejected", "cancelled", "completed", "funded", "paused"]) {
+    for (const status of ["draft", "pending_review", "rejected", "cancelled", "completed", "funded", "closed", "paused"]) {
       expect(buildRoleReopened({ ...base, campaign: { ...campaign, status }, openHours: 10 }), status).toEqual([]);
     }
   });
@@ -164,6 +178,52 @@ describe("role reopened", () => {
     const later = buildRoleReopened({ ...args, reopenedAt: new Date(at.getTime() + 1) });
     expect(later[0].dedupeKey).not.toBe(buildRoleReopened(args)[0].dedupeKey);
     expect(buildRoleReopened(args)[0].dedupeKey.length).toBeLessThanOrEqual(191);
+  });
+});
+
+describe("role reopened reaches the people a steward declined (ruling 2026-09-27)", () => {
+  const at = new Date("2026-09-27T10:00:00Z");
+  const live = { ...campaign, status: "active" };
+
+  it("the flag is on", () => {
+    expect(ROLE_REOPENED_REACHES_DECLINED).toBe(true);
+  });
+
+  it("declined people hear with the offer-again copy; never the actor, holders or excluded ids", async () => {
+    fakeDb.rows = [
+      { userId: 21, status: "pending" },
+      { userId: 23, status: "rejected" },
+      { userId: 22, status: "rejected" },
+      { userId: 22, status: "pending" },
+      // A holder who was once declined is in, and hears nothing.
+      { userId: 30, status: "accepted" },
+      { userId: 30, status: "rejected" },
+      // The steward who acted, and the person just released.
+      { userId: 2, status: "rejected" },
+      { userId: 25, status: "rejected" },
+    ];
+    const insert = vi.fn().mockResolvedValue(true);
+    const sent = await notifyRoleReopened(
+      { campaign: live, item: roleItem, openHours: 20, excludeUserIds: [25], actorId: 2, at },
+      { insert },
+    );
+    const rows = insert.mock.calls.map((c) => c[0]);
+    expect(sent).toBe(3);
+    expect(rows.map((r) => r.userId)).toEqual([21, 22, 23]);
+    expect(rows.find((r) => r.userId === 22)!.body).toContain("Your offer is still with the stewards.");
+    expect(rows.find((r) => r.userId === 23)!.body).toBe(
+      "Soil scientist at Seeds & Soil has 20 hours a week open again. If you'd still like to give your time, you're welcome to offer again.",
+    );
+    for (const r of rows) expect(r.dedupeKey).toBe(`cp:rolereopened:50:o20:${at.getTime()}:u${r.userId}`);
+  });
+
+  it("only on a live campaign", async () => {
+    fakeDb.rows = [{ userId: 23, status: "rejected" }];
+    for (const status of ["cancelled", "completed", "closed"]) {
+      const insert = vi.fn().mockResolvedValue(true);
+      expect(await notifyRoleReopened({ campaign: { ...campaign, status }, item: roleItem, openHours: 10, at }, { insert }), status).toBe(0);
+      expect(insert).not.toHaveBeenCalled();
+    }
   });
 });
 

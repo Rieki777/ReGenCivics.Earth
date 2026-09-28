@@ -14,6 +14,10 @@
  * Tabs: Active, Needs (every open need across live campaigns, from
  * campaigns.listOpenNeeds; ?tab=needs opens it), Upcoming, Complete.
  *
+ * Above the tabs, SeasonDefaults gives the season's default opening day and
+ * "What we look for", both labelled as defaults (build spec 2026-09-27,
+ * section 14).
+ *
  * Spec: build spec 2026-09-25, sections 9.2 and 17 (lane 5); earlier,
  * CROWDPOOLING_PLATFORM_SPEC.md Part D.
  */
@@ -36,6 +40,7 @@ import {
   type GallerySort,
 } from "@/components/crowdpool/GalleryCard";
 import { NeedsTab } from "@/components/crowdpool/NeedsTab";
+import { SeasonDefaults } from "@/components/crowdpool/SeasonDefaults";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SEO, pageSEO } from "@/components/SEO";
@@ -498,6 +503,9 @@ export default function CrowdPoolingProjects() {
               </Link>
             </span>
           </div>
+
+          {/* The season's default opening day and what we look for, above the tabs */}
+          <SeasonDefaults />
 
           {/* How It Works collapsible (150-16) */}
           <HowCrowdPoolingWorks />

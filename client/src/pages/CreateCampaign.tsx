@@ -14,6 +14,17 @@
  * Needs carry when they are wanted and, for things, whether the project would
  * take them as a gift, on loan, or both (campaigns.create neededFrom,
  * neededUntil, acceptsGift, acceptsLoan, workMode).
+ *
+ * No need at 0 (ruling 2026-09-27, shared/needRules.ts): each Add checks the
+ * value it will list (a custom value, else the estimate, times the quantity
+ * for equipment) and stops on the field with ZERO_VALUE.field. A listed need
+ * at 0 (a coach suggestion with no value, a CSV row, a value cleared on its
+ * row) shows the same message on its row with its value field open, and
+ * Create moves to the first such row and focuses it. The server refuses one
+ * too (db.createCampaign), naming it.
+ *
+ * A campaign runs nine months at most, 273 days (ruling 2026-09-04, enforced
+ * from 2026-09-27 because the close date is binding).
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -115,8 +126,10 @@ import { DesignCompanion, type CompanionSuggestion } from '@/components/crowdpoo
 import { EligibilityQuiz, partnerForRecommendation } from '@/components/crowdpool/EligibilityQuiz';
 import { moneySharePct, moneyShareNote, suggestedMoneyAsk } from '@shared/campaignProgress';
 import { roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
-import { MONEY_STEP, NEED_FORM } from '@shared/crowdpoolCopy';
+import { DURATION, DURATION_FIELD, MONEY_STEP, NEED_FORM, ZERO_VALUE } from '@shared/crowdpoolCopy';
 import { CASH_SHARE } from '@shared/crowdpoolModel';
+import { isListableValue } from '@shared/needRules';
+import { MAX_WINDOW_DAYS } from '@shared/campaignClose';
 import { rememberCreatedCampaign } from '@/lib/createdNotice';
 // The server's own route check (pure, no server dependencies), run here so a
 // mistyped link is caught before the campaign is sent. The server runs it again.
@@ -183,6 +196,112 @@ interface OtherNeed extends ThingTerms {
   customValue: number | null;
   /** Knowledge sessions: where they happen. */
   workMode?: WorkMode;
+}
+
+/** The duration presets, up to nine months (273 days at most). */
+const DURATION_PRESETS = [
+  { days: 30, label: '30d' },
+  { days: 60, label: '60d' },
+  { days: 90, label: '90d' },
+  { days: 120, label: '4mo' },
+  { days: 180, label: '6mo' },
+  { days: 270, label: '9mo' },
+] as const;
+
+// ── No need at 0 (ruling 2026-09-27) ─────────────────────────────────────────
+
+/** The value each listed need sends as estimatedValue, the same sums the totals use. */
+export const landValueOf = (l: Pick<LandRequirement, 'customValue' | 'estimatedValue'>) => l.customValue ?? l.estimatedValue;
+export const equipmentValueOf = (e: Pick<EquipmentItem, 'customValue' | 'estimatedValue' | 'quantity'>) =>
+  (e.customValue ?? e.estimatedValue) * e.quantity;
+export const roleValueOf = (r: Pick<RoleRequirement, 'customValue' | 'estimatedValue'>) => r.customValue ?? r.estimatedValue;
+export const otherValueOf = (o: Pick<OtherNeed, 'customValue' | 'estimatedValue'>) => o.customValue ?? o.estimatedValue;
+
+/** The id of a listed need's value input, so Create can focus the first need at 0. */
+export const needValueId = (rowId: string) => `need-value-${rowId}`;
+
+/** A typed value: a number above 0, or 0 (which the row then flags). */
+function parseNeedValue(raw: string): number {
+  const n = parseFloat(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * The first listed need whose value can't be listed, in step order (Land,
+ * Equipment, Roles, Other Needs), with the wizard step it sits on. Null when
+ * every need is above 0.
+ */
+export function firstZeroValueNeed(lists: {
+  land: LandRequirement[];
+  equipment: EquipmentItem[];
+  roles: RoleRequirement[];
+  other: OtherNeed[];
+}): { step: number; id: string } | null {
+  const steps: Array<[number, Array<{ id: string }>, (row: any) => number]> = [
+    [0, lists.land, landValueOf],
+    [1, lists.equipment, equipmentValueOf],
+    [2, lists.roles, roleValueOf],
+    [3, lists.other, otherValueOf],
+  ];
+  for (const [step, rows, valueOf] of steps) {
+    const zero = rows.find((row) => !isListableValue(valueOf(row)));
+    if (zero) return { step, id: zero.id };
+  }
+  return null;
+}
+
+/** The message under a need's value when it can't be listed at 0. */
+function ZeroValueMessage({ id }: { id: string }) {
+  return <p id={id} role="alert" className="mt-1 text-sm font-medium text-red-700">{ZERO_VALUE.field}</p>;
+}
+
+/**
+ * A listed need's value, open on its row while the need is at 0 (and while
+ * the steward is fixing it, so the field doesn't vanish mid-typing).
+ */
+function RowValueField({
+  rowId,
+  value,
+  currencySymbol,
+  onChange,
+  onFocus,
+}: {
+  rowId: string;
+  value: number;
+  currencySymbol: string;
+  onChange: (value: number) => void;
+  onFocus: () => void;
+}) {
+  const id = needValueId(rowId);
+  const invalid = !isListableValue(value);
+  return (
+    <div className="mt-2">
+      <label htmlFor={id} className="block text-sm font-medium text-[#1a472a] mb-1">{ZERO_VALUE.valueLabel(currencySymbol)}</label>
+      <Input
+        id={id}
+        type="number"
+        inputMode="decimal"
+        min={0}
+        value={value || ''}
+        onFocus={onFocus}
+        onChange={(e) => onChange(parseNeedValue(e.target.value))}
+        aria-invalid={invalid}
+        aria-describedby={invalid ? `${id}-error` : undefined}
+        className="w-40 min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
+      />
+      {invalid && <ZeroValueMessage id={`${id}-error`} />}
+    </div>
+  );
+}
+
+/** Row ids whose value field stays open once the steward starts fixing it. */
+function useOpenValueFields(): [(id: string) => boolean, (id: string) => void] {
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const isOpen = useCallback((id: string) => open.has(id), [open]);
+  const keepOpen = useCallback((id: string) => {
+    setOpen((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  }, []);
+  return [isOpen, keepOpen];
 }
 
 // Constants
@@ -711,6 +830,8 @@ export default function CreateCampaign() {
           kind: lend ? 'item' : suggested,
           title: s.title,
           description: s.rationale || '',
+          // A suggestion with no value arrives at 0: its row shows
+          // ZERO_VALUE.field with the value field open (ruling 2026-09-27).
           estimatedValue: Math.max(0, Math.round(s.estimatedValue || 0)),
           customValue: null,
           ...(lend ? { acceptsGift: false, acceptsLoan: true } : {}),
@@ -734,6 +855,19 @@ export default function CreateCampaign() {
     
     if (landRequirements.length === 0 && equipment.length === 0 && roles.length === 0 && otherNeeds.length === 0) {
       toast.error('Please add at least one need to your campaign');
+      return;
+    }
+
+    // No need at 0: go to the first one, where its row shows the message and
+    // its value field, and put the cursor there.
+    const zero = firstZeroValueNeed({ land: landRequirements, equipment, roles, other: otherNeeds });
+    if (zero) {
+      setCurrentStep(zero.step);
+      setTimeout(() => {
+        const field = document.getElementById(needValueId(zero.id));
+        field?.focus();
+        field?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      }, 0);
       return;
     }
 
@@ -1725,10 +1859,20 @@ function LandSection({
   });
   // Fair-value band from area and a regional per-hectare price, when asked.
   const [landBand, setLandBand] = useState<ValuationBand | null>(null);
+  // The Add check: a need can't be listed at 0 (ruling 2026-09-27).
+  const [valueError, setValueError] = useState(false);
+  const [isValueOpen, keepValueOpen] = useOpenValueFields();
 
   const estimatedValue = estimateLandPrice(formData.hectares || 0, formData.regions || []);
   
   const handleAddLand = () => {
+    // The custom value, when one is set, is the value listed.
+    const customValue = formData.customValue ?? null;
+    if (!isListableValue(customValue ?? estimatedValue)) {
+      setValueError(true);
+      document.getElementById('land-custom-value')?.focus();
+      return;
+    }
     const newLand: LandRequirement = {
       id: generateId(),
       hectares: formData.hectares || 0,
@@ -1737,11 +1881,12 @@ function LandSection({
       description: formData.description || '',
       videoUrl: formData.videoUrl || '',
       estimatedValue: estimatedValue,
-      customValue: null,
+      customValue,
     };
     setRequirements([...requirements, newLand]);
     setFormData({ hectares: 0, regions: [], features: [], description: '', videoUrl: '' });
     setLandBand(null);
+    setValueError(false);
     setShowForm(false);
     toast.success('Land requirement added');
   };
@@ -1749,6 +1894,10 @@ function LandSection({
   const handleRemove = (id: string) => {
     setRequirements(requirements.filter(r => r.id !== id));
     toast.success('Land requirement removed');
+  };
+
+  const updateLandValue = (id: string, value: number) => {
+    setRequirements(requirements.map(r => r.id === id ? { ...r, customValue: value } : r));
   };
   
   const toggleFeature = (featureId: string) => {
@@ -1803,6 +1952,15 @@ function LandSection({
                       </span>
                     ))}
                   </div>
+                  {(!isListableValue(landValueOf(req)) || isValueOpen(req.id)) && (
+                    <RowValueField
+                      rowId={req.id}
+                      value={landValueOf(req)}
+                      currencySymbol={currencySymbol}
+                      onFocus={() => keepValueOpen(req.id)}
+                      onChange={(v) => updateLandValue(req.id, v)}
+                    />
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-[#1a472a]">
@@ -1967,7 +2125,7 @@ function LandSection({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, customValue: landBand.mid })}
+                        onClick={() => { setValueError(false); setFormData({ ...formData, customValue: landBand.mid }); }}
                         className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                       >
                         Use {formatFullCurrency(landBand.mid, currencySymbol)}
@@ -1977,14 +2135,18 @@ function LandSection({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
+                <label htmlFor="land-custom-value" className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
                 <Input
+                  id="land-custom-value"
                   type="number"
                   value={formData.customValue || ''}
-                  onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
+                  onChange={(e) => { setValueError(false); setFormData({ ...formData, customValue: parseFloat(e.target.value) || null }); }}
                   placeholder={`Leave empty to use ${formatCurrency(estimatedValue, currencySymbol)}`}
+                  aria-invalid={valueError}
+                  aria-describedby={valueError ? 'land-custom-value-error' : undefined}
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
+                {valueError && <ZeroValueMessage id="land-custom-value-error" />}
               </div>
             </div>
             
@@ -2045,6 +2207,8 @@ function EquipmentSection({
     acceptsLoan: false,
   };
   const [formData, setFormData] = useState<Partial<EquipmentItem>>(emptyForm);
+  // The Add check: a need can't be listed at 0 (ruling 2026-09-27).
+  const [valueError, setValueError] = useState(false);
 
   // Equipment and vehicle templates start as "gift or loan": a tool lent for
   // a season is worth as much to the project as one given.
@@ -2065,6 +2229,13 @@ function EquipmentSection({
   };
   
   const handleAddCustom = () => {
+    // The Estimated Value field writes customValue; it is the value listed.
+    const perUnit = formData.customValue ?? formData.estimatedValue ?? 0;
+    if (!isListableValue(perUnit * (formData.quantity || 1))) {
+      setValueError(true);
+      document.getElementById('equipment-new-value')?.focus();
+      return;
+    }
     const newEquipment: EquipmentItem = {
       id: generateId(),
       category: formData.category || 'Other',
@@ -2072,7 +2243,7 @@ function EquipmentSection({
       quantity: formData.quantity || 1,
       description: formData.description || '',
       estimatedValue: formData.estimatedValue || 0,
-      customValue: null,
+      customValue: formData.customValue ?? null,
       neededFrom: formData.neededFrom,
       neededUntil: formData.neededUntil,
       acceptsGift: formData.acceptsGift ?? true,
@@ -2080,6 +2251,7 @@ function EquipmentSection({
     };
     setEquipment([...equipment, newEquipment]);
     setFormData(emptyForm);
+    setValueError(false);
     setShowForm(false);
     toast.success('Equipment added');
   };
@@ -2168,17 +2340,22 @@ function EquipmentSection({
                   <div className="flex items-center">
                     <span className="text-sm text-[#1a472a]/80 mr-1">{currencySymbol}</span>
                     <Input
+                      id={needValueId(item.id)}
                       type="number"
+                      aria-label={ZERO_VALUE.valueLabel(currencySymbol)}
                       value={item.customValue ?? item.estimatedValue}
-                      onChange={(e) => updateValue(item.id, parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateValue(item.id, parseNeedValue(e.target.value))}
+                      aria-invalid={!isListableValue(equipmentValueOf(item))}
+                      aria-describedby={!isListableValue(equipmentValueOf(item)) ? `${needValueId(item.id)}-error` : undefined}
                       className="w-20 h-8 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-right"
                     />
                   </div>
                 </div>
                 <span className="font-bold text-[#1a472a] text-right">
-                  = {formatCurrency((item.customValue ?? item.estimatedValue) * item.quantity, currencySymbol)}
+                  = {formatCurrency(equipmentValueOf(item), currencySymbol)}
                 </span>
               </div>
+              {!isListableValue(equipmentValueOf(item)) && <ZeroValueMessage id={`${needValueId(item.id)}-error`} />}
               {thingSummary(item, false) && (
                 <p className="text-xs text-[#1a472a]/85 mt-2">{thingSummary(item, false)}</p>
               )}
@@ -2264,14 +2441,18 @@ function EquipmentSection({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Estimated Value ({currencySymbol})</label>
+              <label htmlFor="equipment-new-value" className="block text-sm font-medium text-[#1a472a] mb-1">Estimated Value ({currencySymbol})</label>
               <Input
+                id="equipment-new-value"
                 type="number"
                 value={(formData.customValue ?? formData.estimatedValue) || ''}
-                onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
+                onChange={(e) => { setValueError(false); setFormData({ ...formData, customValue: parseFloat(e.target.value) || null }); }}
                 placeholder="Enter value"
+                aria-invalid={valueError}
+                aria-describedby={valueError ? 'equipment-new-value-error' : undefined}
                 className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
+              {valueError && <ZeroValueMessage id="equipment-new-value-error" />}
               <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
             </div>
             <div>
@@ -2347,7 +2528,12 @@ function RolesSection({
     workMode: 'on_site',
   });
   
-  const calculatedValue = (formData.hoursPerWeek || 0) * (formData.weeksNeeded || 0) * (formData.hourlyRate || 0);
+  // The figures Add keeps (an empty field falls back to 20 hours, 52 weeks,
+  // 30 an hour), so the value shown is the value listed.
+  const calculatedValue = (formData.hoursPerWeek || 20) * (formData.weeksNeeded || 52) * (formData.hourlyRate || 30);
+  // The Add check: a need can't be listed at 0 (ruling 2026-09-27).
+  const [valueError, setValueError] = useState(false);
+  const [isValueOpen, keepValueOpen] = useOpenValueFields();
   
   const handleAddFromTemplate = (capital: CapitalType, role: RoleTemplate) => {
     const newRole: RoleRequirement = {
@@ -2367,6 +2553,13 @@ function RolesSection({
   };
 
   const handleAddCustom = () => {
+    // A custom value (typed, or the fair-value suggestion) is the value listed.
+    const customValue = formData.customValue ?? null;
+    if (!isListableValue(customValue ?? calculatedValue)) {
+      setValueError(true);
+      document.getElementById('role-new-custom-value')?.focus();
+      return;
+    }
     const newRole: RoleRequirement = {
       id: generateId(),
       title: formData.title || '',
@@ -2377,13 +2570,14 @@ function RolesSection({
       weeksNeeded: formData.weeksNeeded || 52,
       hourlyRate: formData.hourlyRate || 30,
       estimatedValue: calculatedValue,
-      customValue: null,
+      customValue,
       startsOn: formData.startsOn,
       workMode: formData.workMode ?? 'on_site',
     };
     setRoles([...roles, newRole]);
     setFormData({ title: '', category: '', description: '', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 30, workMode: 'on_site' });
     setRoleBand(null);
+    setValueError(false);
     setShowForm(false);
     toast.success('Role added');
   };
@@ -2500,6 +2694,15 @@ function RolesSection({
                     {formatCurrency(role.customValue ?? role.estimatedValue, currencySymbol)}
                   </span>
                 </div>
+                {(!isListableValue(roleValueOf(role)) || isValueOpen(role.id)) && (
+                  <RowValueField
+                    rowId={role.id}
+                    value={roleValueOf(role)}
+                    currencySymbol={currencySymbol}
+                    onFocus={() => keepValueOpen(role.id)}
+                    onChange={(v) => updateRoleTerms(role.id, { customValue: v })}
+                  />
+                )}
                 <p className="text-xs text-[#1a472a]/85">{roleSummary(role)}</p>
                 <details>
                   <summary className="cursor-pointer min-h-11 flex items-center text-sm font-medium text-[#4a7c59]">
@@ -2663,7 +2866,7 @@ function RolesSection({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, customValue: roleBand.mid })}
+                        onClick={() => { setValueError(false); setFormData({ ...formData, customValue: roleBand.mid }); }}
                         className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                       >
                         Use {formatFullCurrency(roleBand.mid, currencySymbol)}
@@ -2673,14 +2876,18 @@ function RolesSection({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
+                <label htmlFor="role-new-custom-value" className="block text-sm font-medium text-[#1a472a] mb-1">Custom Value (optional)</label>
                 <Input
+                  id="role-new-custom-value"
                   type="number"
                   value={formData.customValue || ''}
-                  onChange={(e) => setFormData({ ...formData, customValue: parseFloat(e.target.value) || null })}
+                  onChange={(e) => { setValueError(false); setFormData({ ...formData, customValue: parseFloat(e.target.value) || null }); }}
                   placeholder={`Leave empty to use ${formatCurrency(calculatedValue, currencySymbol)}`}
+                  aria-invalid={valueError}
+                  aria-describedby={valueError ? 'role-new-custom-value-error' : undefined}
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
                 />
+                {valueError && <ZeroValueMessage id="role-new-custom-value-error" />}
                 <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
               </div>
             </div>
@@ -2747,6 +2954,9 @@ function OtherNeedsSection({
   const listRef = React.useRef<HTMLDivElement>(null);
   // Fair-value band around the figure entered, filled when the coach is asked.
   const [otherBand, setOtherBand] = useState<ValuationBand | null>(null);
+  // The Add check: a need can't be listed at 0 (ruling 2026-09-27).
+  const [valueError, setValueError] = useState(false);
+  const [isValueOpen, keepValueOpen] = useOpenValueFields();
 
   const openFormWithCategory = (categoryKey: string) => {
     const cat = categoryForKey(categoryKey);
@@ -2768,6 +2978,11 @@ function OtherNeedsSection({
   };
 
   const handleAdd = () => {
+    if (!isListableValue(formData.customValue ?? formData.estimatedValue ?? 0)) {
+      setValueError(true);
+      document.getElementById('need-new-value')?.focus();
+      return;
+    }
     const cat = categoryForKey(formData.category || 'other');
     const kind = cat?.kind ?? 'item';
     const newNeed: OtherNeed = {
@@ -2792,6 +3007,7 @@ function OtherNeedsSection({
     setNeeds([...needs, newNeed]);
     setFormData({ category: 'other', title: '', description: '', estimatedValue: 0 });
     setOtherBand(null);
+    setValueError(false);
     setShowForm(false);
     toast.success('Item added');
     // Scroll back to the category list so user can keep adding
@@ -2870,6 +3086,15 @@ function OtherNeedsSection({
                     </Button>
                   </div>
                 </div>
+                {(!isListableValue(otherValueOf(need)) || isValueOpen(need.id)) && (
+                  <RowValueField
+                    rowId={need.id}
+                    value={otherValueOf(need)}
+                    currencySymbol={currencySymbol}
+                    onFocus={() => keepValueOpen(need.id)}
+                    onChange={(v) => updateNeed(need.id, { customValue: v })}
+                  />
+                )}
                 {summary && <p className="text-xs text-[#1a472a]/85 mt-2">{summary}</p>}
                 {(needKind === 'item' || needKind === 'knowledge') && (
                   <details className="mt-1">
@@ -2956,14 +3181,18 @@ function OtherNeedsSection({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Estimated Value ({currencySymbol})</label>
+              <label htmlFor="need-new-value" className="block text-sm font-medium text-[#1a472a] mb-1">Estimated Value ({currencySymbol})</label>
               <Input
+                id="need-new-value"
                 type="number"
                 value={formData.estimatedValue || ''}
-                onChange={(e) => setFormData({ ...formData, estimatedValue: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => { setValueError(false); setFormData({ ...formData, estimatedValue: parseFloat(e.target.value) || 0 }); }}
                 placeholder="0"
+                aria-invalid={valueError}
+                aria-describedby={valueError ? 'need-new-value-error' : undefined}
                 className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
               />
+              {valueError && <ZeroValueMessage id="need-new-value-error" />}
             </div>
             {categoryForKey(formData.category || 'other')?.kind === 'knowledge' ? (
               <WorkModeField
@@ -2998,7 +3227,7 @@ function OtherNeedsSection({
                     <Button
                       type="button"
                       size="sm"
-                      onClick={() => setFormData({ ...formData, estimatedValue: otherBand.mid })}
+                      onClick={() => { setValueError(false); setFormData({ ...formData, estimatedValue: otherBand.mid }); }}
                       className="mt-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg h-8 text-xs"
                     >
                       Use {formatFullCurrency(otherBand.mid, currencySymbol)}
@@ -3239,6 +3468,13 @@ export function FinancialTargetSection({
   };
   const focusRoute = (partner: RoutePartner) =>
     document.getElementById(`route-${partner}`)?.focus();
+  // Nine months at most (MAX_WINDOW_DAYS, 273). A longer figure is brought
+  // back to 273 and the line says why.
+  const [durationCapped, setDurationCapped] = useState(false);
+  const setDays = (n: number) => {
+    setDurationCapped(n > MAX_WINDOW_DAYS);
+    setDurationDays(Math.min(MAX_WINDOW_DAYS, Math.max(1, n)));
+  };
 
   return (
     // The light color scheme draws the native radios (nothing chosen yet)
@@ -3432,50 +3668,53 @@ export function FinancialTargetSection({
           <Calendar className="w-5 h-5 text-[#4a7c59]" />
           Campaign Duration
         </h3>
-        <p className="text-sm text-[#1a472a]/80 mb-4">
-          How long should your campaign run? Choose between 1 and 365 days.
-        </p>
+        <p className="text-sm text-[#1a472a]/80 mb-4">{DURATION.intro}</p>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-3 flex-1">
             <Input
               type="number"
               min={1}
-              max={365}
+              max={MAX_WINDOW_DAYS}
               value={durationDays}
-              onChange={(e) => {
-                const val = Math.min(365, Math.max(1, parseInt(e.target.value) || 90));
-                setDurationDays(val);
-              }}
+              aria-label={DURATION_FIELD.daysLabel}
+              aria-describedby={durationCapped ? 'duration-capped' : undefined}
+              onChange={(e) => setDays(parseInt(e.target.value) || 90)}
               className="w-24 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center text-lg font-bold"
             />
             <span className="text-[#1a472a]/75">days</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {[30, 60, 90, 120, 180, 365].map((d) => (
+            {DURATION_PRESETS.map(({ days, label }) => (
               <button
-                key={d}
-                onClick={() => setDurationDays(d)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  durationDays === d
+                key={days}
+                type="button"
+                onClick={() => setDays(days)}
+                aria-pressed={durationDays === days}
+                className={`px-3 py-1.5 min-h-11 rounded-full text-sm font-medium transition-colors ${
+                  durationDays === days
                     ? 'bg-[#4a7c59] text-white'
                     : 'bg-[#f0f7f0] text-[#4a7c59] hover:bg-[#e0efe0]'
                 }`}
               >
-                {d <= 90 ? `${d}d` : d === 120 ? '4mo' : d === 180 ? '6mo' : '1yr'}
+                {label}
               </button>
             ))}
           </div>
         </div>
+        {durationCapped && (
+          <p id="duration-capped" className="mt-2 text-sm font-medium text-[#1a472a]" aria-live="polite">{DURATION.tooLong}</p>
+        )}
 
         <div className="mt-3">
           <input
             type="range"
             min={1}
-            max={365}
+            max={MAX_WINDOW_DAYS}
             value={durationDays}
-            onChange={(e) => setDurationDays(parseInt(e.target.value))}
+            aria-label={DURATION_FIELD.daysLabel}
+            onChange={(e) => setDays(parseInt(e.target.value) || 1)}
             className="w-full h-2 bg-gradient-to-r from-[#f0f7f0] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-xs text-[#1a472a]/80 mt-1">
@@ -3484,7 +3723,7 @@ export function FinancialTargetSection({
               {durationDays} day{durationDays !== 1 ? 's' : ''}
               {durationDays >= 30 ? ` (~${Math.round(durationDays / 30)} month${Math.round(durationDays / 30) !== 1 ? 's' : ''})` : ''}
             </span>
-            <span>1 year</span>
+            <span>{DURATION_FIELD.rangeEnd}</span>
           </div>
         </div>
       </div>

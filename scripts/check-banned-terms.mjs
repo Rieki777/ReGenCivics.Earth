@@ -63,6 +63,7 @@ export const GUARDED_FILES = [
   "client/src/components/crowdpool/NeedsTab.tsx",
   "client/src/components/crowdpool/GalleryCard.tsx",
   "client/src/components/crowdpool/PledgeSimulator.tsx",
+  "client/src/components/crowdpool/SeasonDefaults.tsx",
   "client/src/components/ContributionModal.tsx",
   "shared/crowdpoolCopy.ts",
   "shared/campaignProgress.ts",

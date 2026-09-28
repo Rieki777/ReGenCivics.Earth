@@ -8,14 +8,31 @@
  *
  * The money-share note is guidance for stewards only (ruling 2026-09-24):
  * contributors never see it, and nothing blocks on it.
+ *
+ * "Needed to start: 2 of 3 met." counts the needs the stewards marked
+ * (campaigns.getNeedMarkers) that are filled in the same reading. Stewards
+ * only; it changes nothing about completion.
  */
 import { Link } from "wouter";
 import { BarChart3, CheckCircle2, Clock, PackageCheck, Users } from "lucide-react";
 import { moneyShareNote, type CampaignProgress, type CampaignProgressSummary } from "@shared/campaignProgress";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
+import { NEED_MARKER } from "@shared/crowdpoolCopy";
 import { TwoLineBar } from "@/components/crowdpool/TwoLineBar";
 
 export type MoneyShareBand = { softMinPct: number; softMaxPct: number };
+
+/** How many marked needs are filled, from the full reading (a summary has no per-need rows). */
+export function neededToStartMet(
+  progress: CampaignProgress | CampaignProgressSummary,
+  markedIds: number[] | undefined,
+): { met: number; n: number } {
+  const ids = Array.from(new Set(markedIds ?? []));
+  const byNeed = "byNeed" in progress ? progress.byNeed : undefined;
+  // A mark on a need the reading doesn't hold (a money kind, say) isn't counted.
+  const known = byNeed ? ids.filter((id) => byNeed[id]) : [];
+  return { met: known.filter((id) => byNeed![id].filled).length, n: known.length };
+}
 
 export function CampaignStewardStats({
   campaignId,
@@ -24,6 +41,7 @@ export function CampaignStewardStats({
   contributorsCount,
   counts,
   formatCurrency,
+  neededToStart,
 }: {
   campaignId: number;
   progress: CampaignProgress | CampaignProgressSummary;
@@ -32,7 +50,10 @@ export function CampaignStewardStats({
   contributorsCount: number;
   counts: { waiting: number; accepted: number; delivered: number };
   formatCurrency: (amount: number) => string;
+  /** Needs marked "Needed to start"; the line shows when at least one is. */
+  neededToStart?: number[];
 }) {
+  const marks = neededToStartMet(progress, neededToStart);
   const note = moneyShareNote({
     inKindAsk: progress.inKind.ask,
     moneyAsk: progress.money.ask,
@@ -55,6 +76,11 @@ export function CampaignStewardStats({
       {/* The bar already says "This project asks for no money". */}
       {note.line && !progress.money.asksNone && (
         <p className={`mt-2 text-sm ${note.outside ? "text-[#1a472a] font-medium" : "text-[#1a472a]/80"}`}>{note.line}</p>
+      )}
+      {marks.n > 0 && (
+        <p className="mt-2 text-sm font-medium text-[#1a472a]" data-testid="needed-to-start-line">
+          {NEED_MARKER.statsLine(marks.met, marks.n)}
+        </p>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
         {tiles.map((t) => (

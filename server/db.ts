@@ -12,6 +12,9 @@ import { emailGrantsAdmin, isAdminRole, shouldWriteAdminOnUpsert } from "@shared
 import { asMutationResult } from "./db/_shared";
 import { sanitizeInput } from "./_core/security";
 import { TRPCError } from "@trpc/server";
+import { isListableValue } from "@shared/needRules";
+import { ZERO_VALUE } from "@shared/crowdpoolCopy";
+import { decodeBasicEntities } from "@shared/htmlText";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -942,7 +945,10 @@ export async function createCampaign(userId: number, data: {
   //   - a thing takes a gift, a loan, or both, never neither;
   //   - kind 'loan' from any caller (the design companion can suggest it)
   //     is stored as kind 'item' that takes loans only. New needs never get
-  //     kind 'loan' (hub contract 4).
+  //     kind 'loan' (hub contract 4);
+  //   - a need is never listed at 0 (ruling 2026-09-27, shared/needRules.ts):
+  //     with every need above 0, "confirmed value reaches the in-kind ask"
+  //     and "every need filled" agree. The message names the need.
   for (const item of data.items) {
     const kind = item.kind ?? (item.category === 'role' ? 'role' : 'item');
     if (kind === 'crypto' || kind === 'financial_link') {
@@ -950,6 +956,12 @@ export async function createCampaign(userId: number, data: {
         code: 'BAD_REQUEST',
         message: "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
       });
+    }
+    if (!isListableValue(item.estimatedValue)) {
+      const named = decodeBasicEntities(
+        String(item.roleTitle || item.equipmentName || item.resourceName || item.landDescription || 'A need'),
+      ).trim().slice(0, 80) || 'A need';
+      throw new TRPCError({ code: 'BAD_REQUEST', message: ZERO_VALUE.server(named) });
     }
     if (item.neededFrom && item.neededUntil && item.neededUntil < item.neededFrom) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: "A need can't end before it starts." });
@@ -1838,6 +1850,53 @@ export async function setReadinessTick(
   const result = await db
     .delete(campaignReadinessTicks)
     .where(and(eq(campaignReadinessTicks.campaignId, campaignId), eq(campaignReadinessTicks.itemKey, itemKey)));
+  return { changed: asMutationResult(result).affectedRows > 0 };
+}
+
+// ── "Needed to start" (build spec 2026-09-27, section 13; migration 0267) ────
+// A steward's private mark on a need the project can't begin without. It
+// lives in campaign_need_markers, never on campaign_items: getItems and
+// getById return every campaign_items column, so a column there would be
+// public (finding F6). It changes nothing about completion.
+import { campaignNeedMarkers } from "../drizzle/schema";
+
+/** The needs of a campaign its stewards marked "Needed to start", oldest mark first. */
+export async function getNeedMarkerItemIds(campaignId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ campaignItemId: campaignNeedMarkers.campaignItemId })
+    .from(campaignNeedMarkers)
+    .where(eq(campaignNeedMarkers.campaignId, campaignId))
+    .orderBy(asc(campaignNeedMarkers.markedAt), asc(campaignNeedMarkers.id));
+  return rows.map((r) => Number(r.campaignItemId));
+}
+
+/**
+ * Mark (insert) or unmark (delete) one need. A repeat mark keeps the first
+ * steward and time; a repeat unmark changes nothing. The caller checks the
+ * steward, the campaign and the need's kind (campaigns.setNeededToStart).
+ */
+export async function setNeedMarker(
+  campaignId: number,
+  campaignItemId: number,
+  userId: number,
+  marked: boolean,
+): Promise<{ changed: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (marked) {
+    // INSERT IGNORE on the campaignItemId unique key: 1 row when this call
+    // marked it, 0 when it was already marked.
+    const result = await db
+      .insert(campaignNeedMarkers)
+      .ignore()
+      .values({ campaignId, campaignItemId, markedBy: userId });
+    return { changed: asMutationResult(result).affectedRows === 1 };
+  }
+  const result = await db
+    .delete(campaignNeedMarkers)
+    .where(and(eq(campaignNeedMarkers.campaignId, campaignId), eq(campaignNeedMarkers.campaignItemId, campaignItemId)));
   return { changed: asMutationResult(result).affectedRows > 0 };
 }
 

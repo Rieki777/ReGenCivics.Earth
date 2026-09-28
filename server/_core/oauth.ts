@@ -13,6 +13,26 @@ import { nanoid } from "nanoid";
 import { sendEmail } from "./email";
 import { linkPendingMembersByEmail } from "../routes/roleHolders";
 import { normalizeReturnTo } from "@shared/oauthReturnTo";
+import { checkKeyedLimit } from "../rate-limit";
+
+/**
+ * Sign-in links per email address (ruling 2026-09-27: about 3 every 15
+ * minutes), on top of the per-IP limit in server/_core/index.ts. It cannot
+ * count email_tokens rows: createEmailToken deletes the earlier unused tokens
+ * for an address, so the table never holds more than one live row per email.
+ */
+export const EMAIL_LINK_LIMIT_MAX = 3;
+export const EMAIL_LINK_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+/** The 429 message when an address has had its sign-in links for now. */
+export const EMAIL_LINK_LIMIT = (m: number) =>
+  `We've sent 3 sign-in links to this email in the last 15 minutes. Check your inbox and spam folder for the newest one, or try again in about ${m} minute${m === 1 ? "" : "s"}.`;
+
+/** The limiter key for an address: a SHA-256 of it, so no address sits in Redis or a log. */
+export function emailLinkLimitKey(email: string): string {
+  const normalised = email.trim().toLowerCase();
+  return `authmail:${crypto.createHash("sha256").update(normalised).digest("hex")}`;
+}
 
 /** The longest sign-in waits for the contribution link before redirecting. */
 export const CONTRIBUTION_LINK_WAIT_MS = 3000;
@@ -608,6 +628,18 @@ export function registerOAuthRoutes(app: Express) {
     const { email, returnTo: rawReturnTo } = req.body as { email?: string; returnTo?: unknown };
     if (!email || typeof email !== "string" || !email.includes("@")) {
       res.status(400).json({ error: "Valid email required" });
+      return;
+    }
+
+    // Three links per address per 15 minutes, whatever network asks. Case and
+    // spaces don't make a new address. Checked before a token is made, so a
+    // refused request cancels nobody's earlier link.
+    const limit = await checkKeyedLimit(emailLinkLimitKey(email), EMAIL_LINK_LIMIT_MAX, EMAIL_LINK_LIMIT_WINDOW_MS);
+    if (!limit.allowed) {
+      const retrySeconds = Math.max(1, Math.ceil(limit.retryAfterMs / 1000));
+      const minutes = Math.max(1, Math.ceil(limit.retryAfterMs / 60_000));
+      res.set("Retry-After", String(retrySeconds));
+      res.status(429).json({ error: EMAIL_LINK_LIMIT(minutes) });
       return;
     }
 

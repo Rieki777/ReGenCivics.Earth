@@ -46,7 +46,8 @@ import {
 import { projectPathForCampaignFocus } from "../../shared/projectKey";
 import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, summarizeProgress } from "../../shared/campaignProgress";
 import { CASH_SHARE } from "../../shared/crowdpoolModel";
-import { GIVE_LEND } from "../../shared/crowdpoolCopy";
+import { DURATION, GIVE_LEND, NEED_MARKER } from "../../shared/crowdpoolCopy";
+import { MAX_WINDOW_DAYS } from "../../shared/campaignClose";
 import {
   isMoneyKind,
   isThingKind,
@@ -1232,7 +1233,9 @@ export const campaignsRouter = router({
       videoUrl: z.string().optional(),
       projectImageUrl: z.string().optional(),
       daoLink: z.string().optional(),
-      durationDays: z.number().min(1).max(365).default(90),
+      // Nine months at most (ruling 2026-09-04, enforced from 2026-09-27):
+      // the close date is binding, so a longer campaign would break it.
+      durationDays: z.number().int().min(1).max(MAX_WINDOW_DAYS, DURATION.tooLong).default(90),
       items: z.array(z.object({
         category: z.enum(['land', 'equipment', 'role', 'resource']),
         // Needs registry taxonomy (shared/crowdpoolingTaxonomy.ts). Enum literals
@@ -2432,6 +2435,42 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: "That isn't one of the Ready to crowdpool items." });
       }
       const { changed } = await db.setReadinessTick(campaign.id, input.key, ctx.user.id, input.ticked);
+      return { success: true, changed };
+    }),
+
+  // ---- "Needed to start" (build spec 2026-09-27, section 13) ----
+  // A steward's private mark on the needs the project can't begin without.
+  // Stewards and admins only, through server/lib/project-steward.ts. Stored
+  // in campaign_need_markers, which no public read touches. Completion stays
+  // at 100% of the in-kind ask (ruling 2026-09-27, question 11).
+
+  getNeedMarkers: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, NEED_MARKER.stewardsOnly);
+      return { itemIds: await db.getNeedMarkerItemIds(campaign.id) };
+    }),
+
+  setNeededToStart: protectedProcedure
+    .input(z.object({
+      campaignItemId: z.number().int().positive(),
+      marked: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // A need that doesn't exist answers like one the caller can't steward.
+      const item = await db.getCampaignItemById(input.campaignItemId);
+      if (!item) throw new TRPCError({ code: 'FORBIDDEN', message: NEED_MARKER.stewardsOnly });
+      const campaign = await stewardCampaign(ctx.user, item.campaignId, NEED_MARKER.stewardsOnly);
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: NEED_MARKER.exampleRefused });
+      }
+      if (CLOSED_CAMPAIGN_STATUSES.includes(campaign.status) || campaign.status === 'closed') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: NEED_MARKER.closedRefused });
+      }
+      if (isMoneyKind(String(item.kind ?? ''))) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: NEED_MARKER.moneyRefused });
+      }
+      const { changed } = await db.setNeedMarker(campaign.id, item.id, ctx.user.id, input.marked);
       return { success: true, changed };
     }),
 

@@ -431,12 +431,20 @@ export const ZERO_VALUE = {
     Number(n) === 1
       ? "1 need is listed at 0. Ask the project to give it a value."
       : `${n} needs are listed at 0. Ask the project to give each one a value.`,
+  /** The value field a listed need at 0 opens on its row in the wizard (lane 2 addition). */
+  valueLabel: (currencySymbol: string) => `What it's worth (${currencySymbol})`,
 } as const;
 
 /** The nine-month cap on new campaigns (ruling 2026-09-04, enforced from 2026-09-27). */
 export const DURATION = {
   intro: "How long should your campaign run? Up to nine months, 273 days.",
   tooLong: "A campaign runs nine months at most, 273 days.",
+} as const;
+
+/** The wizard's day field and the end of its range (lane 2 additions beside DURATION). */
+export const DURATION_FIELD = {
+  daysLabel: "Days the campaign runs",
+  rangeEnd: "9 months",
 } as const;
 
 /** One need on another project, offered when a campaign closes, an offer is declined or a place is released. */
@@ -607,6 +615,12 @@ export const NEED_MARKER = {
   statsLine: (met: number, n: number) => `Needed to start: ${met} of ${n} met.`,
   moneyRefused: "Money isn't a need, so it can't be marked.",
   saveFailed: "Couldn't save that. Try again.",
+  /** Refusals from campaigns.setNeededToStart (lane 2 additions). */
+  stewardsOnly: "Only this project's stewards can mark its needs.",
+  exampleRefused: "Example campaigns keep their example records.",
+  closedRefused: "This campaign is closed, so its marks stay as they are.",
+  /** The chip on a marked need in the steward's needs list. */
+  chip: "Needed to start",
 } as const;
 
 /**
@@ -621,6 +635,8 @@ export const SEASON_DEFAULTS = {
     `Season ${seasonNumber} crowdpooling opened on ${date}, the default opening day on the Year wheel. Each project can choose its own day.`,
   lookForLead: "What we look for, by default: ",
   lookForLink: "the Ready to crowdpool list",
+  /** The block's name for screen readers (lane 2 addition). */
+  label: "Season defaults",
 } as const;
 
 /** The Outbound season digest audience for email-only followers (section 12.4). */
