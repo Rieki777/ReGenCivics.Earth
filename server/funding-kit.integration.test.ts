@@ -24,6 +24,7 @@ import {
 } from "./funding/kit";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { shortenToFit } from "./funding/shorten";
 
 const url = process.env.DATABASE_URL ?? "";
 const LOCAL = /@(127\.0\.0\.1|localhost)(:\d+)?\//.test(url);
@@ -133,6 +134,26 @@ describe.skipIf(!LOCAL)("application kit (integration)", () => {
     expect(result.question.answerId).toBe(row.id);
     const [after] = await db.select().from(answerBank).where(eq(answerBank.id, row.id));
     expect(after.usedCount).toBe(row.usedCount + 1);
+  });
+
+  it("shortens an over-limit draft to fit, telling the model how far over it landed, and stores nothing", async () => {
+    const long = "We help regenerative land projects hold together for decades.";
+    await saveQuestionDraft(db, { questionId: q1, body: long, userId: 1 });
+    const prompts: string[] = [];
+    const replies = ["We help land projects hold together for many decades now.", `"We help land projects hold${EM_DASH}together."`];
+    const result = await shortenToFit(db, q1, { invoke: async (_system, user) => (prompts.push(user), replies.shift() ?? "") });
+    expect(result.tries).toBe(2);
+    expect(result.fits).toBe(true);
+    // Quotes and the em-dash are cleaned off the model's reply.
+    expect(result.proposal).toBe("We help land projects hold, together.");
+    expect(prompts[1]).toContain("still over 40");
+    const [row] = await db.select().from(appQuestions).where(eq(appQuestions.id, q1));
+    expect(row.answerDraft).toBe(long);
+  });
+
+  it("marks a proposal that adds a number the draft did not have", async () => {
+    const result = await shortenToFit(db, q1, { invoke: async () => "We help 66 land projects hold together." });
+    expect(result.lint?.errors.join(" ")).toContain("added a number that is not in your draft: 66");
   });
 
   it("records a stage move through adminFunding.update and derives appStatus", async () => {
