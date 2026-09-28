@@ -349,6 +349,88 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       </article>
     `,
   },
+
+  // ── Routes the phase -2 agent baseline measured as blank ─────────────────
+  // Each of the four below was an empty shell to any agent that does not run
+  // JavaScript. The prose is taken from the live page, read in a browser on
+  // 2026-09-27, and condensed: no claim here is written fresh. That rule is
+  // the point rather than a style preference. The baseline caught models
+  // inventing a "Village Subscription", a "whole systems village as a service
+  // model" and "30+ organizations in the Alliance" against a registry holding
+  // fifteen, and this file is exactly where an invention would be quoted back
+  // as fact.
+
+  "/season2": {
+    html: `
+      <article>
+        <h1>Season Two: thirteen seats, selected on the Equinox</h1>
+        <p>Season Two selects thirteen regenerative land projects across every stage, scale, and approach to regeneration. The cohort builds its models together, then launches, with every community project that is ready, into one shared crowdpooling campaign where the world decides what to pool into. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance.</p>
+        <p><strong>Season Two applications are closed.</strong> You can follow along live, and you can apply for the next season at any time: applications are held, and no emails go out about them until the next season is closer.</p>
+        <h2>How a season works</h2>
+        <ul>
+          <li><strong>Selected.</strong> A season council of players from past seasons picks thirteen projects on the Equinox, built for range across maturity, scale, and approach.</li>
+          <li><strong>Built.</strong> Thirteen teams design their governance, legal, economic and financial models together, reviewing each other's work against the standard an investor will actually apply.</li>
+          <li><strong>Graduated.</strong> After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and the aim is all thirteen. Community projects that are ready join them.</li>
+          <li><strong>Pooled and funded.</strong> The world decides which projects to pool money, land, equipment and labor into. What comes through becomes the foundation of the index fund.</li>
+        </ul>
+        <h2>What it costs</h2>
+        <p>No fee to apply and no fee to take part. What a project brings is its team's time and a token swap that makes the alliance and the project co-invested in each other. Every model, template, legal structure and framework built during the season is open-sourced, because charging admission to the on-ramp would work against growing the ReGenerative Renaissance.</p>
+        <p>Thirteen weeks of accelerator covering governance, legal structure, economics and financing, designed alongside twelve other projects. A network that carries some of what usually falls on one or two founders. A shared crowdpooling launch, then a place in the index fund, so a project raises alongside the network rather than alone.</p>
+        <p>See <a href="/apply">how to apply for the next season</a>, <a href="/schedule">the upcoming sessions</a>, or <a href="/crowd-pooling">how crowd pooling works</a>.</p>
+      </article>
+    `,
+  },
+
+  "/crowd-pooling": {
+    html: `
+      <article>
+        <h1>Crowd Pooling: contribute land, money, skills, time and knowledge</h1>
+        <p>Crowd pooling lets a person contribute directly to regenerative land projects at a scale that works for them, with money, land, skills, time and knowledge rather than money alone. You set a budget, pick projects, and see how a contribution compounds with others. Land projects use the same tool to pool capital from many contributors and aggregate the total.</p>
+        <h2>Why crowd pooling</h2>
+        <ul>
+          <li><strong>Reduce the financial burden.</strong> Recognising all forms of capital, not just money, lowers the funding a project appears to need.</li>
+          <li><strong>Reach assets that were never for sale.</strong> Land that is not on the market can still join a vision.</li>
+          <li><strong>Equal contributions over time.</strong> A process where everyone can bring an equal contribution regardless of their financial situation.</li>
+          <li><strong>Regenerative foundations from the start.</strong> The diverse base of a regenerative economic system, built in at the onset rather than retrofitted.</li>
+        </ul>
+        <h2>How to use the tool</h2>
+        <p>Name the project and a target total value, add immediate contributions such as land, money or equipment, add future value commitments such as roles you will fill, then download a contribution summary to share with projects. A reusable proposal can be submitted to more than one project.</p>
+        <p>Related: <a href="/campaigns">land project campaigns</a>, the <a href="/calculator">contribution calculator</a> across the nine forms of capital, and <a href="/season2">the Season Two cohort launch</a>.</p>
+      </article>
+    `,
+  },
+
+  "/game-mechanics": {
+    html: `
+      <article>
+        <h1>Game mechanics: every variable visible and tunable</h1>
+        <p>Every variable in the ReGen Games is visible and tunable. The page publishes live values and a simulator showing how a change would affect scoring, harvest shares and gratitude budgets.</p>
+        <h2>Citizenship tiers</h2>
+        <p>You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets and governance weight.</p>
+        <p>The page covers live variables, how bounties are valued, the game simulator, gratitude system variables and the Living Tree. See also <a href="/game">the Infinite Game</a>, <a href="/bionomics">the living economy</a> and <a href="/glossary">the glossary</a>.</p>
+      </article>
+    `,
+  },
+
+  "/connect": {
+    html: `
+      <article>
+        <h1>Connect: which path calls to you</h1>
+        <p>A short form that routes a person to the right part of ReGen Civics, so what follows is relevant to them. More than one path can apply, and the form can be filled in more than once.</p>
+        <h2>The seven paths</h2>
+        <ul>
+          <li><strong>Land Partner.</strong> I steward or own land and would like to explore joining the Alliance.</li>
+          <li><strong>Create with ReGens.</strong> I want to co-create with one or more of the Alliance organizations.</li>
+          <li><strong>Alliance Partner.</strong> I represent an organization and want to explore joining the Alliance.</li>
+          <li><strong>Finance the Renaissance.</strong> I represent a fund or institution interested in systemic regeneration.</li>
+          <li><strong>Live.</strong> I want to co-create with one or more of the ReGen land projects.</li>
+          <li><strong>Role in ReGen Civics.</strong> Apply for a role directly.</li>
+          <li><strong>Something else.</strong> A unique way to contribute.</li>
+        </ul>
+        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/opportunity">the investment opportunity</a> and <a href="/schedule">the upcoming sessions</a>.</p>
+      </article>
+    `,
+  },
 };
 
 export function getStaticPageContent(reqPath: string): CrawlerContent | null {

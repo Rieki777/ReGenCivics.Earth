@@ -100,6 +100,22 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     expect(html).toContain('"@type":"ItemList"');
   });
 
+  // Routes the phase -2 baseline measured as blank, now carrying prose taken
+  // from the live page. One assertion each, on a distinctive sentence rather
+  // than a length, so a page that regresses to the shell fails here even if
+  // something else server-renders a header into the body.
+  it.each([
+    ["/season2", "thirteen regenerative land projects"],
+    ["/crowd-pooling", "money, land, skills, time and knowledge"],
+    ["/game-mechanics", "visible and tunable"],
+    ["/connect", "which path calls to you"],
+  ])("serves prose on %s", async (path, phrase) => {
+    const html = await (await fetch(`${base}${path}`)).text();
+    expect(html.toLowerCase()).toContain(phrase.toLowerCase());
+    expect(html).toContain('id="__crawler_content__"');
+    expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+  });
+
   it("leaves a route with no authored content empty, so the check can fail", async () => {
     // The known negative. Without one, every assertion above would also pass
     // against a server that injected the same blob into every response.
