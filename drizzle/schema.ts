@@ -6246,3 +6246,70 @@ export const interopTools = mysqlTable("interopTools", {
   index("interop_tools_updated_idx").on(table.updatedAt),
 ]));
 export type InteropTool = typeof interopTools.$inferSelect;
+
+/**
+ * An interoperability sheet (drizzle/0260_interop_sheets.sql).
+ *
+ * Hangs off regen_tools rather than duplicating it: one canonical tool, with
+ * the facets that decide whether two projects can actually meet. Filed
+ * anonymously, so it carries its own submitter columns instead of relying on
+ * regen_tools.submittedBy, which is a user id.
+ */
+export const interopSheets = mysqlTable("interopSheets", {
+  id: int("id").autoincrement().primaryKey(),
+  toolId: int("toolId").notNull(),
+  /** Denormalised: the Circle page renders before an admin has approved the tool. */
+  toolName: varchar("toolName", { length: 255 }).notNull(),
+  protocols: json("protocols"),
+  dataFormats: json("dataFormats"),
+  identityModels: json("identityModels"),
+  surfaces: json("surfaces"),
+  summary: text("summary"),
+  integrationNotes: text("integrationNotes"),
+  docKey: varchar("docKey", { length: 500 }),
+  docName: varchar("docName", { length: 255 }),
+  docContentType: varchar("docContentType", { length: 120 }),
+  docBytes: int("docBytes"),
+  voterKey: varchar("voterKey", { length: 64 }),
+  email: varchar("email", { length: 320 }),
+  contactName: varchar("contactName", { length: 120 }),
+  /**
+   * Where the tool is on the journey. "Not assessed" is the absence of a
+   * sheet, so it is derived rather than stored and cannot contradict the data.
+   */
+  stage: mysqlEnum("stage", ["pending", "interoperable", "declined"]).default("pending").notNull(),
+  stageNote: text("stageNote"),
+  stagedAt: timestamp("stagedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("interop_sheets_tool_idx").on(table.toolId),
+  index("interop_sheets_stage_idx").on(table.stage),
+  index("interop_sheets_voter_idx").on(table.voterKey),
+  index("interop_sheets_updated_idx").on(table.updatedAt),
+]));
+export type InteropSheet = typeof interopSheets.$inferSelect;
+
+/**
+ * A proposal for the shared standard: something somebody thinks the group
+ * should adopt, which the sheets do not yet show as common ground.
+ */
+export const interopProposals = mysqlTable("interopProposals", {
+  id: int("id").autoincrement().primaryKey(),
+  axis: varchar("axis", { length: 32 }).notNull(),
+  term: varchar("term", { length: 120 }).notNull(),
+  /** Matching key, so a proposal and a sheet term match whatever the spelling. */
+  termKey: varchar("termKey", { length: 120 }).notNull(),
+  rationale: text("rationale"),
+  status: mysqlEnum("status", ["proposed", "adopted", "declined"]).default("proposed").notNull(),
+  voterKey: varchar("voterKey", { length: 64 }),
+  email: varchar("email", { length: 320 }),
+  contactName: varchar("contactName", { length: 120 }),
+  decidedAt: timestamp("decidedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("interop_proposals_axis_term_idx").on(table.axis, table.termKey),
+  index("interop_proposals_status_idx").on(table.status),
+]));
+export type InteropProposal = typeof interopProposals.$inferSelect;
