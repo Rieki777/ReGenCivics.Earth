@@ -1,6 +1,6 @@
 -- 0262_ally_steward_sage_wiring.sql
 --
--- Ally Steward + Sage measurement wiring (QUEST_PAGE_AND_PATH_PROGRESSION_SPEC §3.3–3.4).
+-- Ally Steward + Sage measurement wiring (QUEST_PAGE_AND_PATH_PROGRESSION_SPEC).
 --
 -- 1) regen_civics_swaps — durable log of confirmed resource swaps AND token
 --    swaps with ReGen Civics. Ally Steward requires at least one confirmed
@@ -8,7 +8,7 @@
 --
 --    Resource rows: who, what exchanged, when, confirmation.
 --    Token rows carry placeholders a future Hypha-on-Base bridge can fill:
---    counterparty "ReGen Civics", chain "base", venue "hypha", tx ref, token,
+--    counterparty ReGen Civics, chain base, venue hypha, tx ref, token,
 --    amounts, direction, status, time. NO live RPC / wallet / issuance here.
 --
 --    Writes are admin/server only (see server/db/regenCivicsSwaps.ts). There
@@ -18,6 +18,9 @@
 --    for Sage. Sage bar: Steward on at least one path AND percentile in the
 --    top 20% (percentile >= 80) for >= 80% of season days that have snapshots.
 --    No snapshots = unmet.
+--
+-- Column COMMENTs omit semicolons so statement-splitters that split on ";"
+-- do not break mid-string.
 --
 -- ADDITIVE ONLY. MariaDB / MySQL 8+ compatible.
 
@@ -30,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `regen_civics_swaps` (
   -- Resource swap: what was exchanged (tools, materials, labor, etc.)
   `resourceDescription` TEXT NULL,
 
-  -- Token swap: Hypha-on-Base bridge placeholders (filled later; no live chain I/O)
+  -- Token swap: Hypha-on-Base bridge placeholders (filled later, no live chain I/O)
   `counterparty` VARCHAR(128) NULL COMMENT 'Always ReGen Civics for token swaps',
   `chain` VARCHAR(32) NULL COMMENT 'e.g. base',
   `venue` VARCHAR(32) NULL COMMENT 'e.g. hypha',
@@ -58,7 +61,7 @@ CREATE TABLE IF NOT EXISTS `daily_contribution_snapshots` (
   `snapshotDate` DATE NOT NULL COMMENT 'UTC calendar day of the snapshot',
   `score` DOUBLE NOT NULL DEFAULT 0,
   `rank` INT NOT NULL COMMENT '1 = highest score that day',
-  `percentile` DOUBLE NOT NULL COMMENT '0-100; >= 80 means top 20%',
+  `percentile` DOUBLE NOT NULL COMMENT '0 to 100, top 20% is at least 80',
   `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE KEY `daily_contribution_snapshots_user_date_uq` (`userId`, `snapshotDate`),
