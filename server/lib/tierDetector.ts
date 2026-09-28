@@ -48,6 +48,19 @@ import {
   canonicalQuestKey,
 } from "@shared/questPools";
 import { getGameVariableOr } from "../game";
+import { evaluateAllySteward } from "./allyStewardCriteria";
+import { evaluateSage } from "./sageCriteria";
+import { getAllyStewardSwapEvidence } from "../db/regenCivicsSwaps";
+import { getUserCurrentSeasonSnapshots } from "../db/dailyContributionSnapshots";
+
+// Re-export pure evaluators so tests can import from this module.
+export { evaluateAllySteward } from "./allyStewardCriteria";
+export {
+  evaluateSage,
+  SAGE_TOP_PERCENTILE,
+  SAGE_MIN_TOP_DAY_RATIO,
+} from "./sageCriteria";
+export { getCurrentSeason, getCurrentSeasonDateRange } from "./currentSeason";
 
 // The questPools constants are the FALLBACKS now — live values come from the
 // registry (paths.*, seeded 0221) so thresholds and bonus amounts are
@@ -480,7 +493,7 @@ async function checkLandProjectSteward(userId: number): Promise<CriterionResult>
 }
 
 // ---------------------------------------------------------------------------
-// Alliance Partner path: partial implementation.
+// Alliance Partner path: Co-Creator + Steward (swap log) implemented.
 // ---------------------------------------------------------------------------
 
 async function checkAllyCoCreator(userId: number): Promise<CriterionResult> {
@@ -551,34 +564,37 @@ async function checkAllyCoCreator(userId: number): Promise<CriterionResult> {
   };
 }
 
-async function checkAllySteward(_userId: number): Promise<CriterionResult> {
-  // TODO: requires "conducted resource swap AND token swap with
-  // ReGen Civics" tracking. Both swap types likely live in proposals
-  // or a dedicated swap log once introduced. Stubbed.
+async function checkAllySteward(userId: number): Promise<CriterionResult> {
+  // Spec §3.3 Alliance Partner Steward: confirmed resource swap AND
+  // confirmed token swap with ReGen Civics. Empty swap log = unmet.
+  // Writes are admin/server only (regenCivicsSwaps helpers).
+  const evidence = await getAllyStewardSwapEvidence(userId);
+  const result = evaluateAllySteward(evidence);
   return {
-    met: false,
-    note: "Alliance Steward criterion not yet implementable (schema gaps)",
+    met: result.met,
+    note: result.note,
+    evidence: result.evidence,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Sage: cross-path contribution percentile.
+// Sage: Steward + current-season daily contribution top-20% bar.
 // ---------------------------------------------------------------------------
 
-async function checkSage(_userId: number): Promise<CriterionResult> {
-  // TODO: requires daily contribution score snapshots + a sliding
-  // window of the current season's days. Per spec section 3.4 + open
-  // question #5 (resolved): user's daily contribution score must rank
-  // in the top 80th percentile for at least 80% of season days.
-  //
-  // Implementation needs:
-  //   - daily_contribution_snapshots table (userId, snapshotDate, score, rank, percentile)
-  //   - a "current season" helper (existing seasons table or computed)
-  //   - aggregate query: count days where percentile >= 80, divide by total season days
-  // Stubbed until the snapshots table exists.
+async function checkSage(userId: number): Promise<CriterionResult> {
+  // Spec §3.4 + open Q#5 (resolved, written bar — no interim substitute):
+  // Steward on at least one path (caller already gates this) AND daily
+  // contribution percentile in the top 20% (percentile >= 80) for >= 80%
+  // of current-season days that have snapshots. No snapshots = unmet.
+  const snapshots = await getUserCurrentSeasonSnapshots(userId);
+  const result = evaluateSage({
+    hasStewardOnAnyPath: true,
+    snapshots,
+  });
   return {
-    met: false,
-    note: "Sage criterion not yet implementable (no daily snapshot table)",
+    met: result.met,
+    note: result.note,
+    evidence: result.evidence,
   };
 }
 
