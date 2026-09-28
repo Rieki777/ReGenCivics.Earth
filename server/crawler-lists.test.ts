@@ -11,11 +11,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const rows = vi.hoisted(() => ({ campaigns: [] as any[], bounties: [] as any[] }));
+const rows = vi.hoisted(() => ({ campaigns: [] as any[], bounties: [] as any[], agreements: [] as any[] }));
 
 vi.mock("./db", () => ({
   listCampaigns: async () => rows.campaigns,
   getOpenBountiesSnapshot: async () => rows.bounties,
+  listCommunityAgreements: async () => rows.agreements,
 }));
 
 function items(jsonld: unknown) {
@@ -27,6 +28,7 @@ function items(jsonld: unknown) {
 beforeEach(() => {
   rows.campaigns = [];
   rows.bounties = [];
+  rows.agreements = [];
   // Both builders cache for ten minutes, so each case needs fresh module state.
   vi.resetModules();
 });
@@ -35,6 +37,8 @@ const campaigns = () =>
   import("./_core/crawler-content").then((m) => m.getCampaignsListContent());
 const bounties = () =>
   import("./_core/crawler-content").then((m) => m.getBountiesListContent());
+const guidelines = () =>
+  import("./_core/crawler-content").then((m) => m.getGuidelinesContent());
 
 describe("/campaigns", () => {
   it("lists what is open, with a link to each campaign", async () => {
@@ -106,5 +110,33 @@ describe("/bounties", () => {
     const b = await bounties();
     expect(b!.bodyHtml).not.toContain("internal-uuid-9f3");
     expect(JSON.stringify(b!.jsonld)).not.toContain("internal-uuid-9f3");
+  });
+});
+
+describe("/community/guidelines", () => {
+  it("groups active agreements by category", async () => {
+    rows.agreements = [
+      { id: 1, title: "Honesty", description: "Share what you actually experienced.", category: "Forum Conduct" },
+      { id: 2, title: "No spam", description: "No repeated low-effort posts.", category: "Moderation" },
+    ];
+    const g = await guidelines();
+    expect(g!.bodyHtml).toContain("Forum Conduct");
+    expect(g!.bodyHtml).toContain("Moderation");
+    expect(g!.bodyHtml).toContain("Honesty");
+    expect(g!.bodyHtml).toContain("2 agreements are active");
+  });
+
+  it("says the agreements evolve, because the page says so", async () => {
+    // Built from rows rather than frozen prose for this reason: the community
+    // proposes and votes on these, so a hardcoded copy would be a promise the
+    // community did not make.
+    rows.agreements = [{ id: 1, title: "A", description: "B", category: "C" }];
+    const g = await guidelines();
+    expect(g!.bodyHtml).toContain("evolve as the community does");
+  });
+
+  it("says so plainly when none are active", async () => {
+    const g = await guidelines();
+    expect(g!.bodyHtml).toContain("No agreements are active yet");
   });
 });

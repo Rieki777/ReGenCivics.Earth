@@ -1370,8 +1370,73 @@ export function getLegalContent(slug: string): CrawlerContent | null {
   };
 }
 
+/**
+ * /community/guidelines: the community agreements, from rows.
+ *
+ * Built from the table rather than written, because the page says in its own
+ * words that these "evolve as the community does": they are proposed and voted
+ * on, so a frozen copy would be a promise the community did not make. Only
+ * active agreements are listed, for the same reason.
+ */
+export async function getGuidelinesContent(): Promise<CrawlerContent | null> {
+  return cachedList("guidelines", async () => {
+    const rows = await db.listCommunityAgreements("votes", "active", 50);
+    const url = `${SITE}/community/guidelines`;
+
+    const byCategory = new Map<string, any[]>();
+    for (const r of rows as any[]) {
+      const key = r.category || "General";
+      if (!byCategory.has(key)) byCategory.set(key, []);
+      byCategory.get(key)!.push(r);
+    }
+
+    const sections = [...byCategory.entries()]
+      .map(
+        ([category, items]) => `
+        <section>
+          <h2>${escapeHtml(category)}</h2>
+          ${items
+            .map(
+              (a) => `
+          <h3>${escapeHtml(a.title ?? "")}</h3>
+          ${a.description ? textToHtml(String(a.description)) : ""}`,
+            )
+            .join("\n")}
+        </section>`,
+      )
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} ${rows.length === 1 ? "agreement is" : "agreements are"} active.`
+      : `No agreements are active yet.`;
+
+    const inner = `
+      <article>
+        <h1>Community agreements</h1>
+        <p>The Gathering Grove is a space for people building a regenerative world, and these agreements keep it honest, generous and worth showing up for. ${lead} They evolve as the community does: anyone signed in can propose a change, and the community votes.</p>
+        ${sections}
+        <p>The forum is open to read without an account: <a href="${SITE}/community">the Gathering Grove</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Community agreements",
+      url,
+      (rows as any[]).map((a) => ({
+        "@type": "CreativeWork",
+        name: a.title ?? "",
+        description: a.description ? String(a.description).slice(0, 300) : undefined,
+        url,
+      })),
+    );
+
+    return { title: "Community agreements", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   if (reqPath === "/schedule") return getScheduleContent();
+  if (reqPath === "/community/guidelines") return getGuidelinesContent();
   const legal = reqPath.match(/^\/(privacy-policy|terms-of-use|risk-disclosure|disclaimers)$/);
   if (legal) return getLegalContent(legal[1]);
   if (reqPath === "/campaigns") return getCampaignsListContent();
