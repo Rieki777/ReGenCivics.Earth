@@ -244,12 +244,23 @@ async function up() {
 
   // 6. A partner link on one campaign only, so both branches of the conditional
   //    panel are visible side by side.
+  //
+  //    These campaigns are real (isDemo 0) edge cases, so their money figures
+  //    stay as they are (the 20% rule of 2026-09-27 and migration 0263 cover
+  //    example campaigns only). The link is written 'verified' in the
+  //    campaign's currency: an 'example' route on a real campaign never shows
+  //    on its project page (publicRouteWhere shows example rows only on
+  //    example campaigns) while the Needs tab would still list it (finding
+  //    F11), so 'verified' is the only status that shows the route here.
   await conn.query(
-    `INSERT INTO campaign_partner_links (campaignId, partner, label, url, cachedRaised, cachedContributorCount, cachedPercent, lastFetchedAt)
-     VALUES (?, 'maearth', 'Ma Earth', 'https://maearth.com/projects/uat', 12345.67, 41, 35, NOW())`,
+    `INSERT INTO campaign_partner_links
+       (campaignId, partner, label, url, cachedRaised, cachedContributorCount, cachedPercent, lastFetchedAt,
+        status, cachedCurrency, verifiedAt)
+     VALUES (?, 'maearth', 'Ma Earth', 'https://maearth.com/projects/uat', 12345.67, 41, 35, NOW(),
+             'verified', 'CHF', NOW())`,
     [a],
   );
-  made.push(`#${a} has a Ma Earth link; the others have none`);
+  made.push(`#${a} has a verified Ma Earth link; the others have none`);
 
   // Recompute the cached totals the same way the server does, so the seeded state
   // is one the application could actually have produced.

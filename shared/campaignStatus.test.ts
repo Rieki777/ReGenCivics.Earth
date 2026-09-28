@@ -6,9 +6,9 @@ import { describe, expect, it } from "vitest";
 import { CAMPAIGN_STATUSES, canTransition, cancellableFrom } from "./campaignStatus";
 
 describe("steward transitions", () => {
-  it("can never reach active, completed, funded or rejected from any status", () => {
+  it("can never reach active, completed, funded, rejected or closed from any status", () => {
     for (const from of CAMPAIGN_STATUSES) {
-      for (const to of ["active", "completed", "funded", "rejected"]) {
+      for (const to of ["active", "completed", "funded", "rejected", "closed"]) {
         expect(canTransition(from, to, "steward"), `${from} -> ${to}`).toBe(false);
       }
     }
@@ -43,6 +43,17 @@ describe("terminal statuses", () => {
         expect(canTransition("completed", to, role)).toBe(false);
       }
     }
+  });
+  it("closed (0264) is a status no one can move a campaign into or out of", () => {
+    expect(CAMPAIGN_STATUSES).toContain("closed");
+    for (const role of ["admin", "steward"] as const) {
+      for (const s of CAMPAIGN_STATUSES) {
+        expect(canTransition(s, "closed", role), `${role}: ${s} -> closed`).toBe(false);
+        expect(canTransition("closed", s, role), `${role}: closed -> ${s}`).toBe(false);
+      }
+    }
+    expect(cancellableFrom("admin")).not.toContain("closed");
+    expect(cancellableFrom("steward")).not.toContain("closed");
   });
   it("a status is never a transition to itself, and unknown statuses are refused", () => {
     for (const s of CAMPAIGN_STATUSES) expect(canTransition(s, s, "admin")).toBe(false);

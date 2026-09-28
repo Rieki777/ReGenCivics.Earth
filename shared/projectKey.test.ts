@@ -8,6 +8,9 @@ import {
   canonicalRedirectTarget,
   campaignRedirectTarget,
   projectPathForCampaignFocus,
+  projectRefFor,
+  projectRefFromKey,
+  parseProjectRef,
 } from "./projectKey";
 
 describe("slugifyProjectName", () => {
@@ -110,5 +113,36 @@ describe("campaignRedirectTarget", () => {
     expect(campaignRedirectTarget(sole, "?ref=abc", "#need-5")).toBe("/project/c12-hill-farm?campaign=12&ref=abc#need-5");
     expect(campaignRedirectTarget(sole, "", "need-5")).toBe("/project/c12-hill-farm?campaign=12#need-5");
     expect(campaignRedirectTarget(sole, "", "#")).toBe("/project/c12-hill-farm?campaign=12");
+  });
+});
+
+describe("project follow refs (0265)", () => {
+  it("names a project by its application, or by its campaign when it has none", () => {
+    expect(projectRefFor({ id: 12, applicationId: 42 })).toBe("a42");
+    expect(projectRefFor({ id: 12, applicationId: null })).toBe("c12");
+    expect(projectRefFor({ id: 12, applicationId: undefined })).toBe("c12");
+  });
+
+  it("gives the same ref from a page key as from the campaign", () => {
+    const linked = { id: 12, applicationId: 42 };
+    const sole = { id: 7, applicationId: null };
+    expect(projectRefFromKey(parseProjectKey("42-harmony-valley")!)).toBe("a42");
+    // A campaign key for a campaign that has an application follows the application.
+    expect(projectRefFromKey(parseProjectKey("c12-season-2")!, linked)).toBe(projectRefFor(linked));
+    expect(projectRefFromKey(parseProjectKey("c7-hill-farm")!, sole)).toBe(projectRefFor(sole));
+    expect(projectRefFromKey(parseProjectKey("c7-hill-farm")!)).toBe("c7");
+    expect(projectRefFromKey(parseProjectKey("c7")!, null)).toBe("c7");
+  });
+
+  it("fits the 24-character column", () => {
+    expect(projectRefFor({ id: Number.MAX_SAFE_INTEGER, applicationId: null }).length).toBeLessThanOrEqual(24);
+  });
+
+  it("parses a ref back, and refuses anything else", () => {
+    expect(parseProjectRef("a42")).toEqual({ kind: "application", id: 42 });
+    expect(parseProjectRef("c7")).toEqual({ kind: "campaign", id: 7 });
+    for (const junk of ["", "42", "a", "a0", "c-1", "A42", "a42-x", "b3", "a" + "9".repeat(30)]) {
+      expect(parseProjectRef(junk), junk).toBeNull();
+    }
   });
 });

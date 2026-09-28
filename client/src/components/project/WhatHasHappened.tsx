@@ -31,6 +31,8 @@ const ICONS: Record<TimelineEntry["kind"], typeof History> = {
   opened: Flag,
   complete: CheckCircle2,
   cancelled: XCircle,
+  // (0264) The close date passed and the campaign didn't complete.
+  closed: CalendarClock,
 };
 
 function dayLabel(iso: string | null): string {

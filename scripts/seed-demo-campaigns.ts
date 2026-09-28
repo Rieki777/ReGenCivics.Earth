@@ -26,17 +26,29 @@
  * count hours. A re-seed writes hours directly, so it never undoes
  * migration 0251. The Permaculture Design Lead shows a partial fill: 40
  * hours a week needed, 10 accepted, 20 more offered and waiting.
+ *
+ * Money (ruling 2026-09-27, migration 0263): examples ask for money at about
+ * 20% of the whole ask. Each demo's financialTarget is exampleMoneyAsk(sum of
+ * its in-kind needs), a round thousand near a quarter of the in-kind ask, and
+ * each partner link's cachedRaised is exampleRouteFigures(moneyAsk, links),
+ * about 40% of the money ask in the ratio the literal figures below keep, so
+ * no example reads as landed. Both come from shared/exampleCampaignFigures.ts,
+ * the same rule 0263 applies in SQL. Partner links are written status
+ * 'example' in the demo's currency. There are no crypto needs and no money
+ * contributions: money isn't a need, and no money moves through the site.
+ * Every demo runs at most nine months (Rewild Britain 270 days).
  */
 import "dotenv/config";
 import mysql from "mysql2/promise";
+import { exampleMoneyAsk, exampleRouteFigures } from "../shared/exampleCampaignFigures";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type NeedKind = "item" | "role" | "shift" | "loan" | "knowledge" | "crypto";
+type NeedKind = "item" | "role" | "shift" | "loan" | "knowledge";
 type CapitalType =
   | "intellectual" | "social" | "material" | "financial" | "living"
   | "cultural" | "spiritual" | "experiential" | "health";
-type ContributionType = "land" | "equipment" | "role" | "resource" | "financial" | "knowledge";
+type ContributionType = "land" | "equipment" | "role" | "resource" | "knowledge";
 type ContributionStatus = "pending" | "accepted" | "fulfilled" | "thanked" | "expired";
 
 type DemoNeed = {
@@ -82,6 +94,7 @@ type DemoPartnerLink = {
   partner: "maearth" | "gosteward";
   label: string;
   url: string;
+  /** The ratio between a demo's routes. The seeded figure is exampleRouteFigures(moneyAsk, links). */
   cachedRaised: number;
   cachedContributorCount: number;
   cachedPercent: number;
@@ -92,7 +105,7 @@ type DemoCampaign = {
   description: string;
   location: string;
   currency: string;
-  financialTarget: number;
+  /** At most 273 days, the nine-month cap (ruling 2026-09-04). */
   durationDays: number;
   startedDaysAgo: number;
   projectImageUrl: string;
@@ -141,7 +154,7 @@ function roleHoursOf(need: DemoNeed): number {
 function legacyCategory(kind: NeedKind): "equipment" | "role" | "resource" {
   if (kind === "role" || kind === "shift" || kind === "knowledge") return "role";
   if (kind === "loan") return "equipment";
-  return "resource"; // item, crypto
+  return "resource"; // item
 }
 
 // ── The four demo campaigns ──────────────────────────────────────────────────
@@ -154,7 +167,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
       "A 150-acre regenerative community focused on permaculture, food forests, and sustainable housing for 50 families.",
     location: "Costa Rica, Guanacaste Province",
     currency: "USD",
-    financialTarget: 500000,
     durationDays: 120,
     startedDaysAgo: 40,
     projectImageUrl: "https://assets.regencivics.earth/ptLdEEmSgyEQKzmF.jpg",
@@ -279,13 +291,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         description: "Two sessions with an experienced water retention designer to finalize the swale and pond layout before the rains.",
         quantityWanted: 1, estimatedValue: 800,
       },
-      // Crypto (decision 7: trackable money on-platform)
-      {
-        key: "crypto-infra", kind: "crypto", capitalType: "financial",
-        name: "Crypto contribution (USDC on Base)", unit: "USD",
-        description: "Crypto pledges toward the water and solar infrastructure. Pledged on-platform, delivered on receipt. Fiat gifts and loans go through our partners below.",
-        quantityWanted: 25000, estimatedValue: 25000, groupClaimable: true,
-      },
     ],
     contributions: [
       {
@@ -346,16 +351,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         type: "role", title: "Six of us for the planting day",
         quantity: 6, estimatedValue: 600, status: "accepted", submittedDaysAgo: 6,
       },
-      {
-        needKey: "crypto-infra", name: "Anonymous", email: "anon.giver@example.com",
-        type: "financial", title: "5000 USDC toward the water system",
-        quantity: 5000, estimatedValue: 5000, status: "accepted", isAnonymous: true, submittedDaysAgo: 8,
-      },
-      {
-        needKey: "crypto-infra", name: "Jonah Petrides", email: "jonah.petrides@example.com",
-        type: "financial", title: "3500 USDC for solar",
-        quantity: 3500, estimatedValue: 3500, status: "fulfilled", submittedDaysAgo: 18,
-      },
     ],
     updates: [
       {
@@ -392,7 +387,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
       "Converting 200 hectares of degraded farmland into a thriving regenerative agriculture demonstration site.",
     location: "Portugal, Alentejo Region",
     currency: "EUR",
-    financialTarget: 350000,
     durationDays: 160,
     startedDaysAgo: 45,
     projectImageUrl: "https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg",
@@ -497,12 +491,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         description: "A day walking the land with an experienced keyline designer to check our survey before the excavator arrives.",
         quantityWanted: 1, estimatedValue: 900,
       },
-      {
-        key: "crypto-tn", kind: "crypto", capitalType: "financial",
-        name: "Crypto contribution (USDC on Base)", unit: "EUR",
-        description: "Crypto pledges toward sapling purchases and the dam repair. Fiat gifts and loans route through our partners below.",
-        quantityWanted: 18000, estimatedValue: 18000, groupClaimable: true,
-      },
     ],
     contributions: [
       {
@@ -550,11 +538,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         type: "knowledge", title: "Keyline walk-through",
         quantity: 1, estimatedValue: 900, status: "expired", submittedDaysAgo: 44,
       },
-      {
-        needKey: "crypto-tn", name: "Fen Marlowe", email: "fen.marlowe@example.com",
-        type: "financial", title: "2500 USDC for saplings",
-        quantity: 2500, estimatedValue: 2500, status: "fulfilled", submittedDaysAgo: 20,
-      },
     ],
     updates: [
       {
@@ -587,7 +570,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
       "An indigenous-led project creating a learning center for traditional ecological knowledge and modern regenerative practices.",
     location: "Ecuador, Andes Mountains",
     currency: "USD",
-    financialTarget: 250000,
     durationDays: 180,
     startedDaysAgo: 30,
     projectImageUrl: "https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg",
@@ -692,12 +674,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         description: "Help our educators shape the Kichwa and Spanish learning materials into a course others can teach.",
         quantityWanted: 1, estimatedValue: 700,
       },
-      {
-        key: "crypto-pl", kind: "crypto", capitalType: "financial",
-        name: "Crypto contribution (USDC on Base)", unit: "USD",
-        description: "Crypto pledges toward the micro-hydro system and the archive. Fiat gifts route through our partners below.",
-        quantityWanted: 15000, estimatedValue: 15000, groupClaimable: true,
-      },
     ],
     contributions: [
       {
@@ -739,11 +715,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         type: "resource", title: "Four bedding sets",
         quantity: 4, estimatedValue: 400, status: "expired", submittedDaysAgo: 29,
       },
-      {
-        needKey: "crypto-pl", name: "Anonymous", email: "quiet.friend@example.com",
-        type: "financial", title: "2000 USDC for the micro-hydro",
-        quantity: 2000, estimatedValue: 2000, status: "accepted", isAnonymous: true, submittedDaysAgo: 7,
-      },
     ],
     updates: [
       {
@@ -776,8 +747,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
       "A 500-acre rewilding project restoring native forests and creating wildlife corridors in the Scottish Highlands.",
     location: "Scotland, Highlands",
     currency: "GBP",
-    financialTarget: 750000,
-    durationDays: 300,
+    durationDays: 270,
     startedDaysAgo: 60,
     projectImageUrl: "https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg",
     daoLink: "https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution",
@@ -887,12 +857,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         description: "Two site days with a peatland specialist to plan the rewetting of the upper bog before winter.",
         quantityWanted: 1, estimatedValue: 1000,
       },
-      {
-        key: "crypto-rb", kind: "crypto", capitalType: "financial",
-        name: "Crypto contribution (USDC on Base)", unit: "GBP",
-        description: "Crypto pledges toward fencing and the monitoring grid. Fiat gifts and loans route through our partners below.",
-        quantityWanted: 30000, estimatedValue: 30000, groupClaimable: true,
-      },
     ],
     contributions: [
       {
@@ -937,16 +901,6 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
         needKey: "atv-loan", name: "Old offer (released)", email: "quad.gone@example.com",
         type: "equipment", title: "Quad bike loan",
         quantity: 1, estimatedValue: 2400, status: "expired", submittedDaysAgo: 55,
-      },
-      {
-        needKey: "crypto-rb", name: "Anonymous", email: "highland.friend@example.com",
-        type: "financial", title: "4000 USDC for the fencing fund",
-        quantity: 4000, estimatedValue: 4000, status: "accepted", isAnonymous: true, submittedDaysAgo: 9,
-      },
-      {
-        needKey: "crypto-rb", name: "Skye Meadowsweet", email: "skye.meadow@example.com",
-        type: "financial", title: "1500 USDC for camera traps",
-        quantity: 1500, estimatedValue: 1500, status: "fulfilled", submittedDaysAgo: 22,
       },
     ],
     updates: [
@@ -1012,9 +966,13 @@ async function main() {
 
     // ── Upsert the campaign row (keyed by title + isDemo) ──────────────────
     const startedAt = daysAgo(demo.startedDaysAgo);
+    // Money at about 20% of the whole ask (ruling 2026-09-27, migration 0263).
+    const inKindAsk = demo.needs.reduce((sum, n) => sum + n.estimatedValue, 0);
+    const moneyAsk = exampleMoneyAsk(inKindAsk);
+    const routeFigures = exampleRouteFigures(moneyAsk, demo.partnerLinks);
     const campaignFields = [
       demo.description, demo.title, demo.location, demo.currency,
-      demo.financialTarget, demo.durationDays, startedAt, startedAt,
+      moneyAsk, demo.durationDays, startedAt, startedAt,
       demo.projectImageUrl, demo.videoUrl ?? null, demo.daoLink ?? null,
       demo.story.vision, demo.story.landStatus, demo.story.landSize,
       demo.story.currentPhase, demo.story.timeline, demo.story.legalStructure,
@@ -1113,8 +1071,8 @@ async function main() {
           need.durationMonths ?? null,
           need.kind === "loan" ? need.name : null,
           need.kind === "loan" ? need.quantityWanted : null,
-          need.kind === "item" || need.kind === "crypto" ? need.name : null,
-          need.kind === "item" || need.kind === "crypto" ? need.quantityWanted : null,
+          need.kind === "item" ? need.name : null,
+          need.kind === "item" ? need.quantityWanted : null,
           need.unit ?? null,
           !isRoleLike ? need.description : null,
         ],
@@ -1242,15 +1200,19 @@ async function main() {
     console.log(`  updates: ${demo.updates.length}`);
 
     // ── Partner links ──────────────────────────────────────────────────────
-    for (const p of demo.partnerLinks) {
+    // Example routes (0257): shown on example campaigns, never linked out, in
+    // the demo's currency, about 40% of the money ask (0263).
+    for (const [i, p] of demo.partnerLinks.entries()) {
       await conn.execute(
         `INSERT INTO campaign_partner_links
-           (campaignId, partner, label, url, cachedRaised, cachedContributorCount, cachedPercent, lastFetchedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [campaignId, p.partner, p.label, p.url, p.cachedRaised, p.cachedContributorCount, p.cachedPercent],
+           (campaignId, partner, label, url, cachedRaised, cachedContributorCount, cachedPercent, lastFetchedAt,
+            status, cachedCurrency)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'example', ?)`,
+        [campaignId, p.partner, p.label, p.url, routeFigures[i], p.cachedContributorCount, p.cachedPercent, demo.currency],
       );
     }
-    console.log(`  partner links: ${demo.partnerLinks.map((p) => p.partner).join(", ")}`);
+    console.log(`  money ask: ${moneyAsk} ${demo.currency} (in-kind ask ${inKindAsk})`);
+    console.log(`  partner links: ${demo.partnerLinks.map((p, i) => `${p.partner} ${routeFigures[i]}`).join(", ")}`);
   }
 
   await conn.end();

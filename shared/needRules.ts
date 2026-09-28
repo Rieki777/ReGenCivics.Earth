@@ -1,0 +1,31 @@
+/**
+ * Rules a need must meet before it is listed. Pure, shared by the campaign
+ * wizard (client/src/pages/CreateCampaign.tsx), db.createCampaign and the
+ * admin review dialog.
+ *
+ * Ruling 2026-09-27: an in-kind need cannot be listed at 0. A need at 0 adds
+ * nothing to the in-kind ask, so while it is open the confirmed value could
+ * reach the ask with a need still unfilled. With every need above 0,
+ * "confirmed value reaches 100% of the in-kind ask" and "every need filled"
+ * always agree. Existing needs at 0 are left as they are: the progress helper
+ * keeps the in-kind half short of landing until they fill
+ * (shared/campaignProgress.ts, "the stricter reading").
+ *
+ * Words for these rules live in shared/crowdpoolCopy.ts (ZERO_VALUE).
+ */
+
+/** A need is listed only with a value above 0 (ruling 2026-09-27), so "confirmed value reaches the in-kind ask" and "every need filled" agree. */
+export function isListableValue(v: unknown): boolean {
+  if (v == null || v === "" || typeof v === "boolean") return false;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) && n > 0;
+}
+
+/** The indexes of the needs whose value is not listable, in order. */
+export function zeroValueNeedIndexes(items: Array<{ estimatedValue: unknown }>): number[] {
+  const out: number[] = [];
+  items.forEach((item, i) => {
+    if (!isListableValue(item?.estimatedValue)) out.push(i);
+  });
+  return out;
+}

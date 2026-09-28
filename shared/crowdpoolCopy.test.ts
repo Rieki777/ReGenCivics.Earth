@@ -36,13 +36,23 @@ function writingRuleBreaks(text: string): string[] {
   return out;
 }
 
+/** Functions that take structured arguments get these instead of sample text. */
+const SAMPLE_ARGS: Record<string, unknown[]> = {
+  "CLOSE.otherNeeds": [
+    [
+      { verb: "Apply", title: "Grazing hand", projectName: "Terra Nova" },
+      { verb: "Offer", title: "Seed garlic", projectName: "Pachamama" },
+    ],
+  ],
+};
+
 /** Every string an export can produce: plain strings, object values, array items, and functions called with sample text. */
 function collect(value: unknown, path: string, out: Array<[string, string]>): void {
   if (typeof value === "string") {
     out.push([path, value]);
   } else if (typeof value === "function") {
-    const args = ["Harmony Valley", "Spring Build", "Ma Earth"].slice(0, Math.max(value.length, 1));
-    collect((value as (...a: string[]) => unknown)(...args), `${path}()`, out);
+    const args = SAMPLE_ARGS[path] ?? ["Harmony Valley", "Spring Build", "Ma Earth"].slice(0, Math.max(value.length, 1));
+    collect((value as (...a: unknown[]) => unknown)(...args), `${path}()`, out);
   } else if (Array.isArray(value)) {
     value.forEach((v, i) => collect(v, `${path}[${i}]`, out));
   } else if (value && typeof value === "object") {
@@ -86,9 +96,58 @@ describe("shared/crowdpoolCopy", () => {
       noMoneyHere: "No money moves through this site yet.",
       maEarthEitherWay: "Gifts through Ma Earth go to the project either way.",
       stewardsAnswer: "Stewards are asked to answer every offer and post what happens.",
+      ifNotComplete:
+        "If it doesn't complete, help already given stays recorded in the project's token, lent things go home on the agreed date or sooner if you ask, and offers that haven't started are released with our thanks.",
     });
     expect(EXAMPLE_BANNER).toBe("This is an example campaign. You can try every step, and nothing you send reaches a real project.");
     expect(ASKS_NO_MONEY).toBe("This project asks for no money");
+  });
+
+  it("says help stays recorded in the project's token in the new copy, and never that tokens are earned", () => {
+    const BUILD_3 = ["ZERO_VALUE", "DURATION", "CLOSE", "LINK", "OFFER_STEPS", "ARRIVAL", "FOLLOW", "NEED_MARKER", "SEASON_DEFAULTS", "OUTBOUND_DIGEST"];
+    const fresh: Array<[string, string]> = [["STRIP.ifNotComplete", STRIP.ifNotComplete]];
+    for (const name of BUILD_3) collect((copy as Record<string, unknown>)[name], name, fresh);
+    expect(fresh.length).toBeGreaterThan(90);
+    for (const [path, text] of fresh) {
+      expect(text, path).not.toMatch(/\bearn/i);
+      if (/\btoken\b/i.test(text)) expect(text, path).toMatch(/stays recorded/);
+    }
+  });
+
+  it("carries the build 3 copy exactly where the spec fixes it", () => {
+    expect(copy.ZERO_VALUE.field).toBe("Add what this need is worth. A need can't be listed at 0.");
+    expect(copy.ZERO_VALUE.server("Cedar posts")).toBe('"Cedar posts" is listed at 0. Give it a value above 0 so it counts toward the whole ask.');
+    expect(copy.ZERO_VALUE.review(1)).toBe("1 need is listed at 0. Ask the project to give it a value.");
+    expect(copy.ZERO_VALUE.review(3)).toBe("3 needs are listed at 0. Ask the project to give each one a value.");
+    expect(copy.DURATION).toEqual({
+      intro: "How long should your campaign run? Up to nine months, 273 days.",
+      tooLong: "A campaign runs nine months at most, 273 days.",
+    });
+    expect(copy.CLOSE.afterLine).toBe(
+      "Help already given stays recorded in the project's token. Lent things go home on the agreed date, or sooner if you ask. Offers that hadn't started were released with our thanks.",
+    );
+    expect(copy.CLOSE.otherNeeds([{ verb: "Apply", title: "Grazing hand", projectName: "Terra Nova" }])).toBe(
+      "These could use you now: Apply Grazing hand at Terra Nova.",
+    );
+    expect(copy.CLOSE.followInstead("Harmony Valley")).toBe("Follow Harmony Valley to hear when it asks again.");
+    expect(copy.LINK.replyLimit).toBe("You've sent a few notes today. The stewards will see them, and you can send more tomorrow.");
+    expect(copy.LINK.linkedAction).toBe("This offer is on your account now. Sign in to change it.");
+    expect(copy.LINK.title("Harmony Valley")).toBe("Your offer to Harmony Valley");
+    expect(copy.LINK.forCampaign("A trailer", "Spring Build")).toBe("A trailer, for Spring Build");
+    expect(copy.OFFER_STEPS.steps.acceptedHours(6)).toBe("Accepted for 6 hours a week");
+    expect(copy.ARRIVAL.needsYou("Farm hand")).toBe("Needs you: read the arrival note for Farm hand");
+    expect(copy.FOLLOW.emailIntro("Harmony Valley")).toBe(
+      "Get news from Harmony Valley by email. News comes in the season letters from the ReGen Civics team, and a free account brings it to your notifications too.",
+    );
+    expect(copy.FOLLOW.emailDone("Harmony Valley")).toBe("You're on the list for news from Harmony Valley.");
+    expect(copy.NEED_MARKER.statsLine(2, 3)).toBe("Needed to start: 2 of 3 met.");
+    expect(copy.SEASON_DEFAULTS.upcoming("21 December 2026", 2)).toBe(
+      "Default opening day: 21 December 2026. Season 2 crowdpooling opens together at the December solstice, when the Resource Season opens on the Year wheel. Each project can choose its own day.",
+    );
+    expect(copy.SEASON_DEFAULTS.open("21 December 2026", 2)).toBe(
+      "Season 2 crowdpooling opened on 21 December 2026, the default opening day on the Year wheel. Each project can choose its own day.",
+    );
+    expect(copy.OUTBOUND_DIGEST.choice(2, 41)).toBe("Season 2: email followers and the waitlist (41)");
   });
 
   it("the rule checker catches what it should", () => {
