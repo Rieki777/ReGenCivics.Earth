@@ -392,3 +392,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Funding profile**. A land project's answers for grant matching, keyed by its application: who would apply (the legal wrapper), whether it sells farm products, where the land is, what it does, whether it can bring a match, whether it has an independent technical advisor, and its partner farms. Filled by the project's stewards on the project page. Optional identity flags are opt-in and private.
 
 **Near miss** (grant match). A program a project could apply to after changing exactly one thing it can change, such as adding an independent technical advisor or applying through a partner. Being in the wrong place, or excluded by a funder's rule, is never a near miss.
+
+**Touch** (funding contact). One logged conversation with a person at a funder or in the field, on any channel (an event, a call, an email), with an optional next step and follow-up day (`funding_touches`). A due follow-up appears as an Open in Gmail link: the app never sends, and a contact marked do-not-contact never appears among the follow-ups.
+
+**Warmth**. How well we know a contact: 0 cold, 1 met, 2 warm, 3 champion. A later conversation can raise it, never lower it by itself.
