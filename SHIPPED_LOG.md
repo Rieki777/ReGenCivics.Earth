@@ -13,6 +13,18 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-27 (funding engine, Phase 0): The cooperative in design replaces the fund on every public surface; one gate for upside language
+
+- **The fund is now a member-owned cooperative in design** (ADR-62): `shared/fund.ts` exports `COOP` ("a cooperative regenerative society"), and /fund, /opportunity, /loi, the home banner, Team role copy, JSON-LD, crawler prose, emails, the AI chat prompts and blog posts describe it. Return, IRR, yield, appreciation, listing and offer language is gone; the investor form, risk disclosure and return calculator are removed (their old pages are kept in the git tag `archive/fund-pages-2026-09-27`). /loi is a no-amount interest form (`coop_interest`). Token awards on the Team page are no longer priced in dollars.
+- **Gate G5**: `scripts/check-fund-claims.mjs` fails CI on upside phrases across every public surface, the README and CONTEXT_THE_TWO_GAMES.md, and on traction numbers in the summary surfaces crawlers read.
+- **Numbers live in one admin-only place** (`metrics`, migration 0275): nothing public shows a traction number until Rye confirms and publishes it. `stats.getPublicStats` is admin-only. The positioning kernel moved out of the public repo into versioned `funding_prompts`.
+- **Four routes redirect** (/about, /projects, /crowdpool, /investor-contact), plus /investor, /risk-disclosure and /investmentform. 100 root planning docs moved to docs/planning/, docs/ and archive/ (ADR-63).
+- **Follow-ups (PR #166)**: the contrast audit reads `oklab()`/`oklch()` colors (Tailwind 4 opacity modifiers had made /loi report 21 false failures, and oklch text was skipped site-wide), the /loi asterisks meet contrast, and the /fund breadcrumb reads "The Cooperative".
+- **Verified live** after deploys 6c59fa4b and 651f0011: gate rules over the llms files and 11 routes' server HTML, all redirects, the admin-only stats, the empty public metrics, the new banner (migration 0276), and the Team copy sync (25 roles, 135 fields). PRs #165 and #166.
+- Source: `docs/planning/FIXES_TO_MAKE_FUNDING_ENGINE.md`; the plan and research are private (gitignored `docs/private/`).
+
+Carryover: five deleted files (the old investor deck PDF and four images) are still served from Cloudflare's cache until Rye purges them (R-14). Four Railway cron services have failed auth on every run since at least Aug 31, because a bare `$CRON_SECRET` never expands (R-15). The application kit (PR #167) and deadline pings (PR #168) wait for the Sep 30 to Oct 5 merge freeze.
+
 ## 2026-09-25 (crowdpool, build two): The two-line bar, give or lend, money routes, one phone-first project page, the Needs tab
 
 - **One progress reading, in-kind first** (`shared/campaignProgress.ts`): every surface (project page, gallery, steward stats, admin review, share text, OG card, embed) reads the same two lines: "In-kind: 8 of 14 needs met ($61,000 of $90,000 confirmed)" then "Money: $12,000 of $20,000 through partner routes", plus what is still open. No percentage headline, no over-goal state, text statuses per need, `aria-valuetext` equal to the visible line. A 0% money campaign reads "This project asks for no money". The in-kind line opens the whole ask in the nine forms of capital. The three totals that disagreed are gone.
