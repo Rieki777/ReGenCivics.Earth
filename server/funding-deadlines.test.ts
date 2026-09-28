@@ -27,7 +27,7 @@ describe("currentThreshold", () => {
 });
 
 describe("planPings", () => {
-  const row = (over: Partial<DeadlineRow>): DeadlineRow => ({ id: 1, name: "PearX", cycle: "W27", appStatus: "preparing", deadlineAt: at(6), ...over });
+  const row = (over: Partial<DeadlineRow>): DeadlineRow => ({ id: 1, applicationId: 0, name: "PearX", cycle: "W27", appStatus: "preparing", deadlineAt: at(6), ...over });
 
   it("pings each open row once for its current window, soonest first", () => {
     const plan = planPings([row({ id: 1, deadlineAt: at(6) }), row({ id: 2, name: "500 Global", cycle: "Batch 37", deadlineAt: at(1.5) }), row({ id: 3, deadlineAt: at(30) })], new Set(), NOW);
@@ -39,7 +39,7 @@ describe("planPings", () => {
 
   it("skips a ping already sent and sends the next window when it opens", () => {
     const r = row({ id: 1, deadlineAt: at(6) });
-    const sent = new Set([pingKey(1, r.deadlineAt, 7)]);
+    const sent = new Set([pingKey(1, 0, r.deadlineAt, 7)]);
     expect(planPings([r], sent, NOW)).toEqual([]);
     // Four days later the 2-day window opens: a new key, a new ping.
     const later = new Date(NOW.getTime() + 4.5 * DAY);
@@ -48,14 +48,24 @@ describe("planPings", () => {
 
   it("starts over when the deadline moves", () => {
     const moved = row({ id: 1, deadlineAt: at(5) });
-    const sent = new Set([pingKey(1, at(6), 7)]);
+    const sent = new Set([pingKey(1, 0, at(6), 7)]);
     expect(planPings([moved], sent, NOW).map((p) => p.threshold)).toEqual([7]);
   });
 
-  it("never pings a row that is submitted, in review, decided or parked", () => {
+  it("never pings a ReGen row that is submitted, in review, decided or parked", () => {
     for (const appStatus of ["submitted", "in_review", "awarded", "declined", "parked"]) {
       expect(planPings([row({ appStatus })], new Set(), NOW), appStatus).toEqual([]);
     }
+  });
+
+  it("pings the same program once per project that is working on it", () => {
+    const program = { id: 5, name: "Western SARE Farmer/Rancher", cycle: null, appStatus: "pursuing", deadlineAt: at(6) };
+    const rows = [
+      { ...program, applicationId: 41, projectName: "Harmony Valley" },
+      { ...program, applicationId: 42, projectName: "Cedar Commons" },
+    ];
+    expect(planPings(rows, new Set(), NOW).map((p) => p.applicationId)).toEqual([41, 42]);
+    expect(planPings(rows, new Set([pingKey(5, 41, at(6), 7)]), NOW).map((p) => p.applicationId)).toEqual([42]);
   });
 });
 
@@ -63,8 +73,9 @@ describe("pingMessage", () => {
   it("names each program, its Pacific deadline and what is left in its packet", () => {
     const pings = planPings(
       [
-        { id: 2, name: "500 Global", cycle: "Batch 37", appStatus: "preparing", deadlineAt: new Date("2026-10-02T07:00:00.000Z") },
-        { id: 1, name: "PearX", cycle: "W27", appStatus: "preparing", deadlineAt: new Date("2026-10-05T06:59:00.000Z") },
+        { id: 2, applicationId: 0, name: "500 Global", cycle: "Batch 37", appStatus: "preparing", deadlineAt: new Date("2026-10-02T07:00:00.000Z") },
+        { id: 1, applicationId: 0, name: "PearX", cycle: "W27", appStatus: "preparing", deadlineAt: new Date("2026-10-05T06:59:00.000Z") },
+        { id: 5, applicationId: 41, projectName: "Harmony Valley", name: "Western SARE Farmer/Rancher", cycle: null, appStatus: "drafting", deadlineAt: new Date("2026-10-03T07:00:00.000Z") },
       ],
       new Set(),
       NOW,
@@ -74,7 +85,9 @@ describe("pingMessage", () => {
     expect(text).toContain("4 days: 500 Global Batch 37, due Fri, Oct 2, 12:00 AM PT.");
     expect(text).toContain("Packet: 41 of 66 answered, 7 required still empty, 3 to fix.");
     expect(text).toContain("7 days: PearX W27, due Sun, Oct 4, 11:59 PM PT.");
-    expect(text).toContain("Submitting stays with you.");
+    expect(text).toContain("Land projects\n5 days: Harmony Valley, Western SARE Farmer/Rancher, due Sat, Oct 3, 12:00 AM PT.");
+    expect(text.indexOf("ReGen Civics")).toBeLessThan(text.indexOf("Land projects"));
+    expect(text).toContain("Submitting stays with you and with each project.");
     expect(lintProse(text)).toEqual([]);
     expect(text).not.toMatch(/[–—]/);
   });

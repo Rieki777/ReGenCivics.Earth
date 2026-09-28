@@ -46,9 +46,11 @@ describe.skipIf(!LOCAL)("funding deadline pings (integration)", () => {
   });
 
   const mine = (text: string) => text.split("\n").filter((l) => l.includes(RUN));
+  // Integration files run in parallel on one database: each run sees only this file's rows.
+  const mineOnly = (r: { id: number }) => ids.includes(r.id);
 
   it("releases its claims when the send fails, so nothing is recorded", async () => {
-    const summary = await runFundingDeadlines({ now: () => now, send: async () => false });
+    const summary = await runFundingDeadlines({ now: () => now, send: async () => false, rowFilter: mineOnly });
     expect(summary).toContain("Not sent");
     const pings = await db.select().from(fundingDeadlinePings).where(inArray(fundingDeadlinePings.pipelineId, ids));
     expect(pings).toEqual([]);
@@ -56,7 +58,7 @@ describe.skipIf(!LOCAL)("funding deadline pings (integration)", () => {
 
   it("sends each due ping once, in one message, and never the settled or distant rows", async () => {
     const sent: string[] = [];
-    await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true) });
+    await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true), rowFilter: mineOnly });
     const lines = mine(sent.join("\n"));
     expect(lines).toHaveLength(2);
     expect(lines[0]).toMatch(new RegExp(`^2 days: Ping soon ${RUN} B1, due `));
@@ -67,7 +69,7 @@ describe.skipIf(!LOCAL)("funding deadline pings (integration)", () => {
 
   it("sends nothing new on the next tick", async () => {
     const sent: string[] = [];
-    await runFundingDeadlines({ now: () => new Date(now.getTime() + 3_600_000), send: async (t) => (sent.push(t), true) });
+    await runFundingDeadlines({ now: () => new Date(now.getTime() + 3_600_000), send: async (t) => (sent.push(t), true), rowFilter: mineOnly });
     expect(mine(sent.join("\n"))).toEqual([]);
   });
 
@@ -77,7 +79,7 @@ describe.skipIf(!LOCAL)("funding deadline pings (integration)", () => {
       .set({ deadlineAt: new Date(now.getTime() + 5 * DAY) })
       .where(eq(fundingPipeline.id, ids[1]));
     const sent: string[] = [];
-    await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true) });
+    await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true), rowFilter: mineOnly });
     expect(mine(sent.join("\n"))).toEqual([expect.stringMatching(new RegExp(`^5 days: Ping week ${RUN} W1, due `))]);
   });
 });

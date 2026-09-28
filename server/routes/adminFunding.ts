@@ -30,7 +30,7 @@
  *    prepares, humans submit.
  */
 import { z } from "zod";
-import { and, asc, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, like, ne, or, sql, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -83,6 +83,13 @@ const appStatusSchema = z.enum(APP_STATUSES);
  * application backwards, or to reopen a declined one.
  */
 const AUTO_ADVANCE_FROM: ReadonlySet<string> = new Set(["not_started", "researching"]);
+
+/**
+ * The pipeline is ReGen Civics' own funders. Grant programs for land projects
+ * (audience 'project', drizzle/0279) live in the same table for the matcher,
+ * and appear under Project matches instead of here.
+ */
+const OWN_FUNDERS = ne(fundingPipeline.audience, "project");
 
 /** Priority sort order for the default listing: P1 first, allies last. */
 const PRIORITY_RANK = sql`FIELD(${fundingPipeline.priority}, 'P1', 'P2', 'P3', 'ADV', 'ALLY')`;
@@ -165,7 +172,7 @@ export const adminFundingRouter = router({
     .query(async ({ input }) => {
       const db = await requireDb();
 
-      const conditions: SQL[] = [];
+      const conditions: SQL[] = [OWN_FUNDERS];
       if (input?.priority) conditions.push(eq(fundingPipeline.priority, input.priority));
       if (input?.appStatus) conditions.push(eq(fundingPipeline.appStatus, input.appStatus));
       if (input?.category) conditions.push(eq(fundingPipeline.category, input.category));
@@ -207,6 +214,7 @@ export const adminFundingRouter = router({
     const rows = await db
       .selectDistinct({ category: fundingPipeline.category })
       .from(fundingPipeline)
+      .where(OWN_FUNDERS)
       .orderBy(asc(fundingPipeline.category));
     return rows.map((r) => r.category).filter(Boolean);
   }),
@@ -218,11 +226,13 @@ export const adminFundingRouter = router({
     const byPriorityRows = await db
       .select({ priority: fundingPipeline.priority, n: sql<number>`COUNT(*)` })
       .from(fundingPipeline)
+      .where(OWN_FUNDERS)
       .groupBy(fundingPipeline.priority);
 
     const byStatusRows = await db
       .select({ appStatus: fundingPipeline.appStatus, n: sql<number>`COUNT(*)` })
       .from(fundingPipeline)
+      .where(OWN_FUNDERS)
       .groupBy(fundingPipeline.appStatus);
 
     const byPriority: Record<string, number> = {};
