@@ -77,7 +77,7 @@ export function AdminRecordingsTab() {
             <Radio className="w-12 h-12 mx-auto text-[#1a472a]/85 mb-4" />
             <p className="text-[#1a472a]/85">No recordings yet.</p>
             <p className="text-sm text-[#1a472a]/85 mt-2">
-              Once you set up the recording webhook at <code className="bg-muted px-1 rounded text-xs">https://regencivics.earth/api/webhooks/riverside</code>, recordings will appear here automatically after each session.
+              New videos on the ReGen Civics YouTube channel appear here on their own, shortly after they're published.
             </p>
           </CardContent>
         </Card>
@@ -202,10 +202,9 @@ export function AdminRecordingsTab() {
 
       <Card className="border-dashed">
         <CardContent className="py-6">
-          <p className="text-sm text-[#1a472a]/85 font-medium mb-2">Webhook setup</p>
-          <p className="text-xs text-[#1a472a]/85">In Riverside: Settings → Integrations → Webhooks → add URL:</p>
-          <code className="text-xs bg-muted px-2 py-1 rounded block mt-1 break-all">https://regencivics.earth/api/webhooks/riverside</code>
-          <p className="text-xs text-[#1a472a]/85 mt-2">Set <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> in Railway to the signing secret from Riverside.</p>
+          <p className="text-sm text-[#1a472a]/85 font-medium mb-2">Where recordings come from</p>
+          <p className="text-xs text-[#1a472a]/85">The site checks the YouTube channel's public feed on a schedule and adds each new video here with its transcript and summary, then sends the newsletter email and the forum post. No outside service is involved.</p>
+          <p className="text-xs text-[#1a472a]/85 mt-2">The older Riverside webhook is off. It turns on only if <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> is set in Railway.</p>
         </CardContent>
       </Card>
     </div>

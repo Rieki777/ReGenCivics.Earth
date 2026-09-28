@@ -99,7 +99,7 @@ Everything on this surface is deterministic admin work (plain tRPC mutations, no
 
 ## The Riverside webhook, secondary
 
-`server/webhooks/riverside.ts` (POST `/api/webhooks/riverside`) is a secondary ingest path, kept for now. If Riverside or a Make/Zapier scenario posts a recording, it upserts into `recordings` and calls the same `finalizeRecording` and `sendRecordingEmail` module the pipeline uses, so a recording is never published twice regardless of which path ingested it. The webhook secret is optional; when `RIVERSIDE_WEBHOOK_SECRET` is unset, signature verification is skipped (dev only). The YouTube poll is the primary trigger. Keep the webhook if a non-YouTube source ever needs to push a recording, otherwise it can be retired.
+`server/webhooks/riverside.ts` (POST `/api/webhooks/riverside`) is a secondary ingest path, and it is **off unless `RIVERSIDE_WEBHOOK_SECRET` is set** (2026-09-28). The YouTube poll is the only trigger in use: on 2026-09-28 all 18 recordings on production came from the pipeline (`riversideId` `yt:...`) and none from the webhook, and no Zapier or Make scenario feeds the site. When the secret is set, a signed Riverside post upserts into `recordings` and calls the same `finalizeRecording` and `sendRecordingEmail` module the pipeline uses, so a recording is never published twice. It used to skip the signature check whenever `NODE_ENV` wasn't `production`, and production runs with `NODE_ENV` unset, so until 2026-09-28 anyone could post to it and trigger the newsletter email; `checkRiversideAuth` now refuses every call without a secret, in every environment. Keep it only if a non-YouTube source ever needs to push a recording; otherwise it can be deleted.
 
 ## Webhook signature fix (Stage 0)
 
