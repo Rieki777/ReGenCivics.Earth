@@ -25,7 +25,7 @@ graph TB
     end
 
     subgraph storage["Storage & Services"]
-        s3["S3<br/>Images & Files"]
+        s3["Cloudflare R2<br/>Images & Files"]
         resend["Resend<br/>Email"]
         anthropic["Anthropic API<br/>AI Features"]
     end
